@@ -1,0 +1,1335 @@
+package main
+
+import (
+	tassert "github.com/stretchr/testify/assert"
+	"testing"
+)
+
+func testCodeGen(t *testing.T, src, expected string) {
+	got := codegen(infer(parser(NewTokenStream(src))))
+	if got != expected {
+		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+func TestCodeGen1(t *testing.T) {
+	src := `
+fn add(a, b int) int {
+	return a + b
+}`
+	expected := `func add(a, b int) int {
+	return a + b
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen2(t *testing.T) {
+	src := `
+fn add(a, b i64) i64? {
+	if a == 0 {
+		return None
+	}
+	return Some(a + b)
+}`
+	expected := `func add(a, b int64) Option[int64] {
+	if a == 0 {
+		return MakeOptionNone[int64]()
+	}
+	return MakeOptionSome(a + b)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen4(t *testing.T) {
+	src := `
+fn add(a, b i64) Option[i64] {
+	if a == 0 {
+		return None
+	}
+	return Some(a + b)
+}`
+	expected := `func add(a, b int64) Option[int64] {
+	if a == 0 {
+		return MakeOptionNone[int64]()
+	}
+	return MakeOptionSome(a + b)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen6(t *testing.T) {
+	src := `
+fn add(a, b i64) i64! {
+	if a == 0 {
+		return Err(errors.New("a cannot be zero"))
+	}
+	return Ok(a + b)
+}`
+	expected := `func add(a, b int64) Result[int64] {
+	if a == 0 {
+		return MakeResultErr[int64](errors.New("a cannot be zero"))
+	}
+	return MakeResultOk(a + b)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen5(t *testing.T) {
+	src := `
+fn add(a, b i64) Result[i64] {
+	if a == 0 {
+		return Err(errors.New("a cannot be zero"))
+	}
+	return Ok(a + b)
+}`
+	expected := `func add(a, b int64) Result[int64] {
+	if a == 0 {
+		return MakeResultErr[int64](errors.New("a cannot be zero"))
+	}
+	return MakeResultOk(a + b)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen3(t *testing.T) {
+//	src := `
+//import "fmt"
+//fn add(a, b int) int? {
+//	if a == 0 {
+//		return None
+//	}
+//	return Some(a + b)
+//}
+//fn main() {
+//	opt := add(1, 2)
+//	// match opt {
+//	// 	Some(val) => println(val),
+//	// 	None      => println("none"),
+//	// }
+//	// if let Some(val) = opt {
+//	// 	println(val)
+//	// }
+//	fmt.Println(opt.unwrap())
+//}`
+//	expected := `
+//import "fmt"
+//type addOpt struct {
+//	a int
+//	b int
+//}
+//func add(a, b int) (addOpt, bool) {
+//	if a == 0 {
+//		return *new(addOpt), false
+//	}
+//	return addOpt{a: a, b: b}, true
+//}
+//func main() {
+//	addOpt := add(1, 2)
+//	if addOpt.IsSome() {
+//		println(addOpt.Unwrap())
+//	} else {
+//		println("none")
+//	}
+//	if res.IsSome() {
+//		println(addOpt.Unwrap())
+//	}
+//	println(addOpt.Unwrap())
+//}`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen8(t *testing.T) {
+	src := `
+fn map[T any](a []T, f fn(T) T) []T {
+	return make([]T, 0)
+}
+`
+	expected := `func map[T any](a []T, f func(T) T) []T {
+	return make([]T, 0)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//	func TestCodeGen7(t *testing.T) {
+//		src := `
+//
+//	fn addOne(a i64) i64 {
+//		return a + 1
+//	}
+//
+//	fn map[T any](a []T, f fn(T) T) []T {
+//		out := make([]T, len(a))
+//		for e := range a {
+//			out = append(out, f(e))
+//		}
+//		return out
+//	}
+//
+//	fn main() {
+//		someArr := []int{1, 2, 3}
+//		map(someArr, addOne)
+//		map(someArr, |el| { return el + 1 })
+//		map(someArr, |el| { el + 1 })
+//		map(someArr, { $0 + 1 })
+//	}
+//
+// `
+//
+//		expected := `func addOne(a i64) int64 {
+//		return a + 1
+//	}
+//
+//	func map[T any](a []T, f func(T) T) []T {
+//		out := make([]T, len(a))
+//		for e := range a {
+//			out = append(out, f(e))
+//		}
+//		return out
+//	}
+//
+//	fn main() {
+//		someArr := []int{1, 2, 3}
+//		map(someArr, addOne)
+//		map(someArr, func(el int) { return el + 1 })
+//		map(someArr, func(el int) { return el + 1 })
+//		map(someArr, func(el int) { return el + 1 })
+//	}
+//
+// `
+//
+//		got := codegen(infer(parser(lexer(src))))
+//		if got != expected {
+//			t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//		}
+//	}
+
+func TestCodeGen9_optionalReturnKeyword(t *testing.T) {
+	src := `
+fn add(a, b int) int { a + b }
+fn add1(a, b int) int { return a + b }`
+	expected := `func add(a, b int) int {
+	return a + b
+}
+func add1(a, b int) int {
+	return a + b
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen10(t *testing.T) {
+	src := `
+fn f1(f fn() int) int { f() }
+fn f2() int { 42 }
+fn main() {
+	f1(f2)
+}`
+	expected := `func f1(f func() int) int {
+	return f()
+}
+func f2() int {
+	return 42
+}
+func main() {
+	f1(f2)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen11(t *testing.T) {
+	src := `
+fn f1(f fn() i64) i64 { f() }
+fn main() {
+	f1({ 42 })
+}`
+	expected := `func f1(f func() int64) int64 {
+	return f()
+}
+func main() {
+	f1(func() int64 {
+		return 42
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen12(t *testing.T) {
+//	src := `
+//fn f1(f fn(i64) i64) i64 { f(1) }
+//fn main() {
+//	f1(|a| { a + 1 })
+//}`
+//	expected := `func f1(f func(int64) int64) int64 {
+//	return f(1)
+//}
+//func main() {
+//	f1(func(a int64) int64 {
+//		return a + 1
+//	})
+//}
+//`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen13(t *testing.T) {
+	src := `
+fn f1(f fn(i64) i64) i64 { f(1) }
+fn main() {
+	f1({ $0 + 1 })
+}`
+	expected := `func f1(f func(int64) int64) int64 {
+	return f(1)
+}
+func main() {
+	f1(func(aglArg0 int64) int64 {
+		return aglArg0 + 1
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen14(t *testing.T) {
+	src := `
+fn main() {
+	a := make([]int, 0)
+	fmt.Println(a)
+}`
+	expected := `func main() {
+	a := make([]int, 0)
+	fmt.Println(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen15(t *testing.T) {
+	src := `
+fn main() {
+	mut a := 42
+	a = 43
+	fmt.Println(a)
+}`
+	expected := `func main() {
+	a := 42
+	a = 43
+	fmt.Println(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen16(t *testing.T) {
+	src := `
+fn main() {
+	for _, c := range "test" {
+		fmt.Println(c)
+	}
+}`
+	expected := `func main() {
+	for _, c := range "test" {
+		fmt.Println(c)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen17(t *testing.T) {
+	src := `
+fn main() {
+	if 2 % 2 == 0 {
+		fmt.Println("test")
+	}
+}`
+	expected := `func main() {
+	if 2 % 2 == 0 {
+		fmt.Println("test")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen18(t *testing.T) {
+	src := `
+fn main() {
+	a := []int{1, 2, 3}
+}`
+	expected := `func main() {
+	a := []int{1, 2, 3}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen19(t *testing.T) {
+	src := `
+fn findEvenNumber(arr []int) int? {
+   for _, num := range arr {
+       if num % 2 == 0 {
+           return Some(num)
+       }
+   }
+   return None
+}`
+	expected := `func findEvenNumber(arr []int) Option[int] {
+	for _, num := range arr {
+		if num % 2 == 0 {
+			return MakeOptionSome(num)
+		}
+	}
+	return MakeOptionNone[int]()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen20(t *testing.T) {
+	src := `
+fn findEvenNumber(arr []int) int? {
+   for _, num := range arr {
+       if num % 2 == 0 {
+           return Some(num)
+       }
+   }
+   return None
+}
+fn main() {
+	tmp := findEvenNumber([]int{1, 2, 3, 4})
+	fmt.Println(tmp.unwrap())
+}`
+	expected := `func findEvenNumber(arr []int) Option[int] {
+	for _, num := range arr {
+		if num % 2 == 0 {
+			return MakeOptionSome(num)
+		}
+	}
+	return MakeOptionNone[int]()
+}
+func main() {
+	tmp := findEvenNumber([]int{1, 2, 3, 4})
+	fmt.Println(tmp.Unwrap())
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen21(t *testing.T) {
+//	src := `
+//fn findEvenNumber(arr []int) int? {
+//   for _, num := range arr {
+//       if num % 2 == 0 {
+//           return Some(num)
+//       }
+//   }
+//   return None
+//}
+//fn main() {
+//	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).unwrap())
+//}`
+//	expected := `func findEvenNumber(arr []int) Option[int] {
+//	for _, num := range arr {
+//		if num % 2 == 0 {
+//			return MakeOptionSome(num)
+//		}
+//	}
+//	return MakeOptionNone[int]()
+//}
+//func main() {
+//	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
+//}
+//`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen22(t *testing.T) {
+	src := `
+fn main() {
+	a := 1
+	a++
+}`
+	expected := `func main() {
+	a := 1
+	a++
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen23(t *testing.T) {
+	src := `
+fn findEvenNumber(arr []int) int? {
+   for _, num := range arr {
+       if num % 2 == 0 {
+           return Some(num)
+       }
+   }
+   return None
+}
+fn main() {
+	foundInt := findEvenNumber([]int{1, 2, 3, 4})?
+}`
+	expected := `func findEvenNumber(arr []int) Option[int] {
+	for _, num := range arr {
+		if num % 2 == 0 {
+			return MakeOptionSome(num)
+		}
+	}
+	return MakeOptionNone[int]()
+}
+func main() {
+	foundInt := findEvenNumber([]int{1, 2, 3, 4}).Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen24(t *testing.T) {
+	src := `
+fn parseInt(s string) int! {
+	return Ok(42)
+}
+fn main() {
+	parseInt("42")!
+}`
+	expected := `func parseInt(s string) Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	parseInt("42").Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen25(t *testing.T) {
+	src := `
+fn parseInt(s1 string) int! {
+	return Err(errors.New("some error"))
+}
+fn inter(s2 string) int! {
+	a := parseInt(s2)!
+	return Ok(a + 1)
+}
+fn main() {
+	inter("hello")!
+}`
+	expected := `func parseInt(s1 string) Result[int] {
+	return MakeResultErr[int](errors.New("some error"))
+}
+func inter(s2 string) Result[int] {
+	res := parseInt(s2)
+	if res.IsErr() {
+		return res
+	}
+	a := res.Unwrap()
+	return MakeResultOk(a + 1)
+}
+func main() {
+	inter("hello").Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen26(t *testing.T) {
+	src := `
+fn add(a, b int) int {
+	return a + b
+}
+fn main() {
+	fmt.Println(add(1, 2))
+}`
+	expected := `func add(a, b int) int {
+	return a + b
+}
+func main() {
+	fmt.Println(add(1, 2))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen27(t *testing.T) {
+	src := `
+fn main() {
+	fmt.Println("1")
+	fmt.Println("2")
+	fmt.Println("3")
+	fmt.Println("4")
+}`
+	expected := `func main() {
+	fmt.Println("1")
+	fmt.Println("2")
+	fmt.Println("3")
+	fmt.Println("4")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen28(t *testing.T) {
+//	src := `package main
+//import "strconv"
+//fn parseInt(s string) int! {
+//	num := strconv.Atoi(s)!
+//	return Ok(num)
+//}`
+//	expected := `package main
+//import "strconv"
+//func parseInt(s string) Result[int] {
+//	res, err := strconv.Atoi(s)
+//	if err != nil {
+//		return MakeResultErr[int](err)
+//	}
+//	num := res
+//	return MakeResultOk(num)
+//}
+//`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+//func TestCodeGen29(t *testing.T) {
+//	src := `
+//type Person struct {
+//	name string
+//	age int
+//}
+//pub type Animal struct {
+//	name string
+//	age int
+//}
+//`
+//	expected := `type aglPrivPerson struct {
+//	name string
+//	age int
+//}
+//type Animal struct {
+//	name string
+//	age int
+//}`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen30(t *testing.T) {
+	src := `
+fn main() {
+	a := 0
+	a += 1
+	a -= 1
+	a *= 1
+	a /= 1
+	a %= 1
+	a &= 1
+	a |= 1
+	a ^= 1
+	a <<= 1
+	a >>= 1
+	a &^= 1
+	a++
+	a--
+}
+`
+	expected := `func main() {
+	a := 0
+	a += 1
+	a -= 1
+	a *= 1
+	a /= 1
+	a %= 1
+	a &= 1
+	a |= 1
+	a ^= 1
+	a <<= 1
+	a >>= 1
+	a &^= 1
+	a++
+	a--
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen31_VecBuiltInFilter(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.filter({ $0 % 2 == 0 })
+}
+`
+	expected := `func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglVecFilter(a, func(aglArg0 int64) bool {
+		return aglArg0 % 2 == 0
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_VecBuiltInFilter2(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.filter({ $0 % 2 == 0 })
+	c := b.map({ $0 + 1 })
+}
+`
+	expected := `func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglVecFilter(a, func(aglArg0 int64) bool {
+		return aglArg0 % 2 == 0
+	})
+	c := AglVecMap(b, func(aglArg0 int64) int64 {
+		return aglArg0 + 1
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_VecBuiltInFilter3(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1}
+	b := a.filter({ $0 == 1 }).map({ $0 }).reduce(0, { $0 + $1 })
+}
+`
+	expected := `func main() {
+	a := []int64{1}
+	b := AglReduce(AglVecMap(AglVecFilter(a, func(aglArg0 int64) bool {
+		return aglArg0 == 1
+	}), func(aglArg0 int64) int64 {
+		return aglArg0
+	}), 0, func(aglArg0 int64, aglArg1 int64) int64 {
+		return aglArg0 + aglArg1
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_VecBuiltInMap1(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.map({ $0 + 1 })
+}
+`
+	expected := `func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglVecMap(a, func(aglArg0 int64) int64 {
+		return aglArg0 + 1
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_VecBuiltInMap3(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.map({ "a" })
+}
+`
+	expected := `func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglVecMap(a, func(aglArg0 int64) string {
+		return "a"
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_VecBuiltInMap2(t *testing.T) {
+	src := `
+fn main() {
+	a := []int{1, 2, 3, 4}
+	b := a.map(strconv.Itoa)
+}
+`
+	expected := `func main() {
+	a := []int{1, 2, 3, 4}
+	b := AglVecMap(a, strconv.Itoa)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen33_VecBuiltInReduce(t *testing.T) {
+	src := `
+fn main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.reduce(0, { $0 + $1 })
+	assert(b == 10, "b should be 10")
+}
+`
+	expected := `func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
+		return aglArg0 + aglArg1
+	})
+	AglAssert(b == 10, "assert failed 'b == 10' line 5" + " " + "b should be 10")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen34_Assert(t *testing.T) {
+	src := `
+fn main() {
+	assert(1 != 2)
+	assert(1 != 2, "1 should not be 2")
+}
+`
+	expected := `func main() {
+	AglAssert(1 != 2, "assert failed '1 != 2' line 3")
+	AglAssert(1 != 2, "assert failed '1 != 2' line 4" + " " + "1 should not be 2")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen35(t *testing.T) {
+//	src := "" +
+//		"fn main() {\n" +
+//		"\ta := 42\n" +
+//		"\tfmt.Println(`${a}`)\n" +
+//		"}\n"
+//	expected := `func main() {
+//	a := 42
+//	fmt.Println(fmt.Sprintf("%d", a))
+//}
+//`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen_Reduce1(t *testing.T) {
+	src := `
+fn main() {
+	a := []int{1, 2, 3, 4}
+	b := a.filter({ $0 % 2 == 0 })
+	c := b.map({ $0 + 1 })
+	d := c.reduce(0, { $0 + $1 })
+	assert(d == 8)
+}
+`
+	expected := `func main() {
+	a := []int{1, 2, 3, 4}
+	b := AglVecFilter(a, func(aglArg0 int) bool {
+		return aglArg0 % 2 == 0
+	})
+	c := AglVecMap(b, func(aglArg0 int) int {
+		return aglArg0 + 1
+	})
+	d := AglReduce(c, 0, func(aglArg0 int, aglArg1 int) int {
+		return aglArg0 + aglArg1
+	})
+	AglAssert(d == 8, "assert failed 'd == 8' line 7")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen35(t *testing.T) {
+	src := `
+fn main() {
+	by := os.ReadFile("test.txt")!
+	fmt.Println(by)
+}
+`
+	expected := `func main() {
+	res, err := os.ReadFile("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	by := res
+	fmt.Println(by)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen36(t *testing.T) {
+	src := `
+fn testOption() int? {
+	return None
+}
+fn main() {
+	res := testOption()
+	assert(res == None)
+	assert(testOption() == None)
+}
+`
+	expected := `func testOption() Option[int] {
+	return MakeOptionNone[int]()
+}
+func main() {
+	res := testOption()
+	AglAssert(res == MakeOptionNone[int](), "assert failed 'res == None' line 7")
+	AglAssert(testOption() == MakeOptionNone[int](), "assert failed 'testOption() == None' line 8")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_Tuple1(t *testing.T) {
+	src := `
+fn main() {
+	res := (1, "hello", true)
+	assert(res.0 == 1)
+	assert(res.1 == "hello")
+	assert(res.2 == true)
+}
+`
+	expected := `type AglTupleStruct1 struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
+func main() {
+	res := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 4")
+	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 5")
+	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 6")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_TupleDestructuring1(t *testing.T) {
+	src := `
+fn main() {
+	(a, b, c) := (1, "hello", true)
+	assert(a == 1)
+	assert(b == "hello")
+	assert(c == true)
+}
+`
+	expected := `type AglTupleStruct1 struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
+func main() {
+	aglVar1 := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	a, b, c := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
+	AglAssert(a == 1, "assert failed 'a == 1' line 4")
+	AglAssert(b == "hello", "assert failed 'b == "hello"' line 5")
+	AglAssert(c == true, "assert failed 'c == true' line 6")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_Tuple2(t *testing.T) {
+	src := `
+fn testTuple() (u8, string, bool) {
+	return (1, "hello", true)
+}
+fn main() {
+	res := testTuple()
+	assert(res.0 == 1)
+	assert(res.1 == "hello")
+	assert(res.2 == true)
+}
+`
+	expected := `type AglTupleStruct1 struct {
+	Arg0 uint8
+	Arg1 string
+	Arg2 bool
+}
+func testTuple() AglTupleStruct1 {
+	return AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+}
+func main() {
+	res := testTuple()
+	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 7")
+	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 8")
+	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 9")
+}
+`
+	got := codegen(infer(parser(NewTokenStream(src))))
+	if got != expected {
+		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+//func TestCodeGen37(t *testing.T) {
+//	src := `
+//type Dog struct {
+//	name string?
+//}
+//type Person struct {
+//	dog Dog?
+//}
+//fn getPersonDogName(p Person) string? {
+//	return p.getDog()?.getName()?
+//}
+//fn main() {
+//	person1 := Person{dog: Dog{name: Some("foo")}}
+//	person2 := Person{dog: Some(Dog{name: None})}
+//	person3 := Person{dog: None}
+//	assert(person1.getDog()?.getName()? == "foo")
+//	assert(person2.getDog()?.getName()? == None)
+//	assert(person3.getDog()?.getName()? == None)
+//}
+//`
+//	expected := `...`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
+//}
+
+func TestCodeGen38(t *testing.T) {
+	src := `
+type Person struct {
+	name string
+	age int
+	ssn string?
+	nicknames Option[[]string]
+	testArray []string
+	testArrayOfOpt []Option[string]
+}
+`
+	expected := `type Person struct {
+	name string
+	age int
+	ssn Option[string]
+	nicknames Option[[]string]
+	testArray []string
+	testArrayOfOpt []Option[string]
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen39(t *testing.T) {
+//	src := `
+//type Person struct {
+//	name string
+//}
+//
+//fn (p Person) getName() string {
+//	return p.name
+//}
+//`
+//	expected := `type Person struct {
+//	name string
+//}
+//func (p Person) getName() string {
+//	return p.name
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
+func TestCodeGen40(t *testing.T) {
+	src := `
+fn addOne(i int) int { return i + 1 }
+fn main() {
+	a := true
+	addOne(a)
+}
+`
+	tassert.PanicsWithValue(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
+
+func TestCodeGen41(t *testing.T) {
+	src := `
+fn addOne(i int) int { return i + 1 }
+fn main() {
+	addOne(true)
+}
+`
+	tassert.PanicsWithValue(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
+
+func TestCodeGen_Variadic1(t *testing.T) {
+	src := `
+fn variadic(a, b u8, c ...string) int {
+	return 1
+}
+fn main() {
+	variadic(1, 2, "a", "b", "c")
+}
+`
+	expected := `func variadic(a, b uint8, c ...string) int {
+	return 1
+}
+func main() {
+	variadic(1, 2, "a", "b", "c")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_Variadic2(t *testing.T) {
+	src := `
+fn variadic(a, b u8, c ...string) int {
+	return 1
+}
+fn main() {
+	variadic(1)
+}
+`
+	tassert.PanicsWithValue(t, "6:2 not enough arguments in call to variadic", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
+
+func TestCodeGen_Variadic3(t *testing.T) {
+	src := `
+fn variadic(a, b u8, c ...string) int {
+	return 1
+}
+fn main() {
+	variadic(1, 2, "a", 3, "c")
+}
+`
+	tassert.PanicsWithValue(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
+
+func TestCodeGen42(t *testing.T) {
+	src := `
+fn someFn() {
+}
+fn main() {
+}
+`
+	expected := `func someFn() {
+}
+func main() {
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen43(t *testing.T) {
+//	src := `
+//fn main() {
+//	a := 1u8
+//	b := 2u16
+//	c := 3u32
+//	d := 4u64
+//	e := 5i8
+//	f := 6i16
+//	g := 7i32
+//	h := 8i64
+//	i := 9f32
+//	j := 10f64
+//}
+//`
+//	expected := `func main() {
+//	a := uint(42)
+//	a := uint8(42)
+//	a := uint16(42)
+//	a := uint32(42)
+//	a := uint64(42)
+//	a := int8(42)
+//	a := int16(42)
+//	a := int32(42)
+//	a := int64(42)
+//	a := float32(42)
+//	a := float64(42)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
+func TestCodeGen44(t *testing.T) {
+	src := `
+fn main() {
+	a := 1
+	if a == 1 {
+		fmt.Println("a == 1")
+	} else if a == 2 {
+		fmt.Println("a == 2")
+	} else {
+		fmt.Println("else")
+	}
+}
+`
+	expected := `func main() {
+	a := 1
+	if a == 1 {
+		fmt.Println("a == 1")
+	} else if a == 2 {
+		fmt.Println("a == 2")
+	} else {
+		fmt.Println("else")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen45(t *testing.T) {
+	src := `
+fn main() {
+	a := 1
+	if a == 1 {
+	} else if a == 2 {
+	} else {
+	}
+}
+`
+	expected := `func main() {
+	a := 1
+	if a == 1 {
+	} else if a == 2 {
+	} else {
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen46(t *testing.T) {
+	src := `
+fn main() {
+	a := 1 == 1 || 2 == 2 && 3 == 3
+}
+`
+	expected := `func main() {
+	a := 1 == 1 || 2 == 2 && 3 == 3
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen47(t *testing.T) {
+	src := `
+fn test(v bool) {}
+fn main() {
+	test(true)
+	test(1 == 1)
+	test(1 == 1 && 2 == 2)
+	test("a" == "b")
+}
+`
+	expected := `func test(v bool) {
+}
+func main() {
+	test(true)
+	test(1 == 1)
+	test(1 == 1 && 2 == 2)
+	test("a" == "b")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen48(t *testing.T) {
+	src := `
+fn test(v bool) {}
+fn main() {
+	test("a" == 42)
+}
+`
+	tassert.PanicsWithValue(t, "4:7 mismatched types string and UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
+
+func TestCodeGen49(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3}
+	s := a.sum()
+	assert(s == 6)
+}
+`
+	expected := `func main() {
+	a := []uint8{1, 2, 3}
+	s := AglVecSum(a)
+	AglAssert(s == 6, "assert failed 's == 6' line 5")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen50(t *testing.T) {
+//	src := `
+//fn main() {
+//	a := []string{"a", "b", "c"}
+//}
+//`
+//	tassert.PanicsWithValue(t, "should fail for non numbers", func() { codegen(infer(parser(NewTokenStream(src)))) })
+//}
+
+func TestCodeGen51(t *testing.T) {
+	src := `
+type Person struct {
+}
+fn (p Person) speak() string {
+}
+fn main() {
+}
+`
+	expected := `type Person struct {
+}
+func (p Person) speak() string {
+}
+func main() {
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen52(t *testing.T) {
+	src := `
+type Person struct {
+}
+fn (p Person) method1() Person! {
+	return Ok(p)
+}
+fn (p Person) method2() Person! {
+	return Ok(p)
+}
+fn main() {
+	p := Person{}
+	a := p.method1()!
+}
+`
+	expected := `type Person struct {
+}
+func (p Person) method1() Result[Person] {
+	return MakeResultOk(p)
+}
+func (p Person) method2() Result[Person] {
+	return MakeResultOk(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
