@@ -138,9 +138,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 				if callExpr1, ok := s.x.(*CallExpr); ok {
 					callExpr1.SetType(env.Get(callExpr1.fun.(*IdentExpr).lit).(*FuncType).ret)
 				} else if id, ok := s.x.(*IdentExpr); ok {
-					if rhs.GetType() != nil {
-						callExpr.SetType(rhs.typ)
-					} else {
+					if rhs.GetType() == nil {
 						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
 						callExpr.SetType(rhs.typ.(*FuncType).ret)
 					}
