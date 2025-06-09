@@ -132,19 +132,18 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 			lhsID.SetType(rhs.typ)
 		}
 	case *BubbleResultExpr:
-		if callExpr, ok := rhs.x.(*CallExpr); ok {
-			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
-				rhs.SetType(rhsID.GetType())
-			} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
-				if id, ok := s.x.(*IdentExpr); ok {
-					if rhs.GetType() == nil {
-						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
-						callExpr.SetType(rhs.typ.(*FuncType).ret)
-					}
+		callExpr := MustCast[*CallExpr](rhs.x)
+		if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
+			rhs.SetType(rhsID.GetType())
+		} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
+			if id, ok := s.x.(*IdentExpr); ok {
+				if rhs.GetType() == nil {
+					rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
+					callExpr.SetType(rhs.typ.(*FuncType).ret)
 				}
 			}
-			lhsID.SetType(callExpr.typ)
 		}
+		lhsID.SetType(callExpr.typ)
 	default:
 		lhsID.SetType(stmt.rhs.GetType())
 	}

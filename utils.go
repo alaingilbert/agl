@@ -40,6 +40,15 @@ func Cast[T any](origin any) (T, bool) {
 	return val, ok
 }
 
+// MustCast ...
+func MustCast[T any](origin any) T {
+	v, ok := Cast[T](origin)
+	if !ok {
+		panic("")
+	}
+	return v
+}
+
 // TryCast ...
 func TryCast[T any](origin any) bool {
 	_, ok := Cast[T](origin)
