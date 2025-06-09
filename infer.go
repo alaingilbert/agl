@@ -120,11 +120,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	lhsID := MustCast[*IdentExpr](lhs)
 	switch rhs := stmt.rhs.(type) {
 	case *CallExpr:
-		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
-			lhsID.SetType(rhsID.GetType().(*FuncType).ret)
-		} else if _, ok := rhs.fun.(*SelectorExpr); ok {
-			lhsID.SetType(rhs.typ)
-		}
+		lhsID.SetType(stmt.rhs.GetType())
 	case *BubbleResultExpr:
 		callExpr := MustCast[*CallExpr](rhs.x)
 		if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
@@ -137,7 +133,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 				}
 			}
 		}
-		lhsID.SetType(callExpr.typ)
+		lhsID.SetType(stmt.rhs.GetType())
 	default:
 		lhsID.SetType(stmt.rhs.GetType())
 	}
