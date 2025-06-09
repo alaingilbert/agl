@@ -47,6 +47,9 @@ func parseFuncTypeFromString(s string, env *Env) *FuncType {
 
 func infer(s *ast) *ast {
 	env := NewEnv()
+	for _, e := range s.enums {
+		inferEnumType(e, env)
+	}
 	for _, s := range s.structs {
 		inferStructType(s, env)
 	}
@@ -238,13 +241,17 @@ func inferTupleExpr(expr *TupleExpr, env *Env, optType Typ) {
 
 func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 	selType := env.Get(expr.x.(*IdentExpr).lit)
-	if v, ok := selType.(TupleTypeTyp); ok {
+	switch v := selType.(type) {
+	case TupleTypeTyp:
 		argIdx, err := strconv.Atoi(expr.sel.lit)
 		if err != nil {
 			panic("tuple arg index must be int")
 		}
 		expr.x.SetType(v)
 		expr.SetType(v.elts[argIdx])
+	case *EnumType:
+		expr.x.SetType(selType)
+		expr.SetType(selType)
 	}
 }
 
@@ -465,6 +472,10 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		}
 		expr.args[1].SetTypeForce(fs.typ)
 	}
+}
+
+func inferEnumType(e *EnumStmt, env *Env) {
+	env.Define(e.lit, &EnumType{name: e.lit})
 }
 
 func inferStructType(s *structStmt, env *Env) {

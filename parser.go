@@ -20,7 +20,13 @@ func parser(ts *TokenStream) *ast {
 			ts.Next()
 			s.imports = append(s.imports, &importStmt{lit: ts.Next().lit})
 		} else if ts.Peek().typ == TYPE {
-			s.structs = append(s.structs, parseStructTypeDecl(ts))
+			ss := parseTypeDecl(ts)
+			switch sss := ss.(type) {
+			case *EnumStmt:
+				s.enums = append(s.enums, sss)
+			case *structStmt:
+				s.structs = append(s.structs, sss)
+			}
 		} else if ts.Peek().typ == FN {
 			s.funcs = append(s.funcs, parseFnStmt(ts, false))
 		} else if ts.Peek().typ == INLINECOMMENT {
@@ -247,13 +253,34 @@ func parseFnStmt(ts *TokenStream, isPub bool) *funcStmt {
 	return fs
 }
 
-func parseStructTypeDecl(ts *TokenStream) (out *structStmt) {
-	//if isPub {
-	//	assert(tokens[*i].typ == PUB)
-	//	*i++
-	//}
+func parseTypeDecl(ts *TokenStream) (out Stmt) {
 	assert(ts.Next().typ == TYPE)
 	lit := ts.Next().lit
+	if ts.Peek().typ == STRUCT {
+		return parseStructTypeDecl(ts, lit)
+	} else if ts.Peek().typ == ENUM {
+		return parseEnumTypeDecl(ts, lit)
+	}
+	panic("")
+}
+
+func parseEnumTypeDecl(ts *TokenStream, lit string) (out *EnumStmt) {
+	assert(ts.Next().typ == ENUM)
+	assert(ts.Next().typ == LBRACE)
+	fields := make([]*IdentExpr, 0)
+	for {
+		if ts.Peek().typ == RBRACE {
+			break
+		}
+		id := parseIdentExpr(ts)
+		assert(ts.Next().typ == COMMA)
+		fields = append(fields, id)
+	}
+	assert(ts.Next().typ == RBRACE)
+	return &EnumStmt{lit: lit, fields: fields}
+}
+
+func parseStructTypeDecl(ts *TokenStream, lit string) (out *structStmt) {
 	assert(ts.Next().typ == STRUCT)
 	assert(ts.Next().typ == LBRACE)
 	fields := make([]*Field, 0)
@@ -819,6 +846,16 @@ func (a ArrayTypeTyp) String() string {
 	return fmt.Sprintf("ArrayType(%s)", a.elt)
 }
 
+type EnumType struct {
+	BaseTyp
+	name   string
+	fields []string
+}
+
+func (e EnumType) String() string { return fmt.Sprintf("EnumType(%s)", e.name) }
+
+func (e EnumType) GoStr() string { return fmt.Sprintf("%s", e.name) }
+
 type StructType struct {
 	BaseTyp
 	name   string
@@ -1160,6 +1197,15 @@ type TupleExpr1 struct {
 type packageStmt struct {
 	lit string
 }
+
+type EnumStmt struct {
+	BaseStmt
+	pub    bool
+	lit    string
+	fields []*IdentExpr
+}
+
+func (e EnumStmt) String() string { return fmt.Sprintf("EnumStmt(%v)", e.lit) }
 
 type structStmt struct {
 	BaseStmt

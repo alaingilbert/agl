@@ -1364,3 +1364,44 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen54(t *testing.T) {
+	src := `
+type Color enum {
+	red,
+	green,
+	blue,
+}
+fn takeColor(c Color) {}
+fn main() {
+	color := Color.red
+	takeColor(color)
+}
+`
+	expected := `type Color int
+const (
+	AglEnum_Color_red Color = iota + 1
+	AglEnum_Color_green
+	AglEnum_Color_blue
+)
+func (c Color) String() string {
+	switch c {
+	case AglEnum_Color_red:
+		return "red"
+	case AglEnum_Color_green:
+		return "green"
+	case AglEnum_Color_blue:
+		return "blue"
+	default:
+		panic("")
+	}
+}
+func takeColor(c Color) {
+}
+func main() {
+	color := AglEnum_Color_red
+	takeColor(color)
+}
+`
+	testCodeGen(t, src, expected)
+}

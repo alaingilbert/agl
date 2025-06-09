@@ -5,4 +5,5 @@ type ast struct {
 	imports     []*importStmt
 	funcs       []*funcStmt
 	structs     []*structStmt
+	enums       []*EnumStmt
 }
