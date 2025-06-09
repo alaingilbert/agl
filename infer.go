@@ -135,9 +135,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
 				rhs.SetType(rhsID.GetType())
 			} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
-				if callExpr1, ok := s.x.(*CallExpr); ok {
-					callExpr1.SetType(env.Get(callExpr1.fun.(*IdentExpr).lit).(*FuncType).ret)
-				} else if id, ok := s.x.(*IdentExpr); ok {
+				if id, ok := s.x.(*IdentExpr); ok {
 					if rhs.GetType() == nil {
 						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
 						callExpr.SetType(rhs.typ.(*FuncType).ret)
@@ -145,20 +143,6 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 				}
 			}
 			lhsID.SetType(callExpr.typ)
-		} else if rhs, ok := stmt.rhs.(*BubbleOptionExpr); ok {
-			if rhs, ok := rhs.x.(*CallExpr); ok {
-				if rhsID, ok := rhs.fun.(*IdentExpr); ok {
-					rhs.SetType(rhsID.GetType())
-					lhsID.SetType(rhs.typ.(*FuncType).ret)
-				} else if s, ok := rhs.fun.(*SelectorExpr); ok {
-					if callExpr, ok := s.x.(*CallExpr); ok {
-						callExpr.SetType(env.Get(callExpr.fun.(*IdentExpr).lit).(*FuncType).ret)
-					} else if id, ok := s.x.(*IdentExpr); ok {
-						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)).(*FuncType).ret)
-					}
-				}
-				lhsID.SetType(rhs.typ)
-			}
 		}
 	} else {
 		lhsID.SetType(stmt.rhs.GetType())
