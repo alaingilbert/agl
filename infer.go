@@ -196,20 +196,18 @@ func inferIdentExpr(expr *IdentExpr, env *Env) {
 func tryConvertType(e Expr, optType Typ) {
 	if e.GetType() == nil {
 		e.SetType(optType)
-	} else {
-		if _, ok := e.GetType().(UntypedNumType); ok {
-			if TryCast[U8Type](optType) ||
-				TryCast[U16Type](optType) ||
-				TryCast[U32Type](optType) ||
-				TryCast[U64Type](optType) ||
-				TryCast[I8Type](optType) ||
-				TryCast[I16Type](optType) ||
-				TryCast[I32Type](optType) ||
-				TryCast[I64Type](optType) ||
-				TryCast[IntType](optType) ||
-				TryCast[UintType](optType) {
-				e.SetType(optType)
-			}
+	} else if _, ok := e.GetType().(UntypedNumType); ok {
+		if TryCast[U8Type](optType) ||
+			TryCast[U16Type](optType) ||
+			TryCast[U32Type](optType) ||
+			TryCast[U64Type](optType) ||
+			TryCast[I8Type](optType) ||
+			TryCast[I16Type](optType) ||
+			TryCast[I32Type](optType) ||
+			TryCast[I64Type](optType) ||
+			TryCast[IntType](optType) ||
+			TryCast[UintType](optType) {
+			e.SetType(optType)
 		}
 	}
 }
