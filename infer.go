@@ -269,7 +269,6 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 			TryCast[F32Type](expr.lhs.GetType())) &&
 			TryCast[UntypedNumType](expr.rhs.GetType()) {
 			expr.rhs.SetType(expr.lhs.GetType())
-			expr.SetType(expr.lhs.GetType())
 		}
 		if (TryCast[I64Type](expr.rhs.GetType()) ||
 			TryCast[I32Type](expr.rhs.GetType()) ||
@@ -284,12 +283,13 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 			TryCast[F32Type](expr.rhs.GetType())) &&
 			TryCast[UntypedNumType](expr.lhs.GetType()) {
 			expr.lhs.SetType(expr.rhs.GetType())
-			expr.SetType(expr.rhs.GetType())
 		}
 	}
 	switch expr.op.typ {
 	case EQL, NEQ, LOR, LAND, LTE, LT, GTE, GT:
-		expr.SetTypeForce(BoolType{})
+		expr.SetType(BoolType{})
+	case ADD, MINUS, QUO, MUL, REM:
+		expr.SetType(expr.lhs.GetType())
 	default:
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
