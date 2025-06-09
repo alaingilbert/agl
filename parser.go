@@ -932,7 +932,7 @@ func (b *BaseExpr) SetType(typ Typ) {
 	//		return
 	//	}
 	//	if !TryCast[UntypedNumType](b.typ) {
-	//		panic("set type twice")
+	//		panic(fmt.Sprintf("set type twice: %v %v", b.typ, typ))
 	//	}
 	//}
 	b.typ = typ
