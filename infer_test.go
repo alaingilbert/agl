@@ -19,7 +19,7 @@ fn fn8(a, b i64) i64? { return Some(a + b) }
 fn fn9(a, b string) string { return a + b }
 fn fn10(a, b i64) i64! { return Ok(a + b) }
 `
-	i := infer(parser(NewTokenStream(src)))
+	i, _ := infer(parser(NewTokenStream(src)))
 	if _, ok := i.funcs[0].out.expr.GetType().(IntType); !ok {
 		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[0].out.expr.GetType()))
 	}

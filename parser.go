@@ -531,8 +531,12 @@ func parseExpr2(ts *TokenStream, prec int) Expr {
 			return sel
 		case LBRACE:
 			assert(ts.Next().typ == LBRACE)
+			var elts []Expr
+			if ts.Peek().typ != RBRACE {
+				elts = parseElementList(ts, prec)
+			}
 			assert(ts.Next().typ == RBRACE)
-			return &CompositeLitExpr{typ: ident}
+			return &CompositeLitExpr{typ: ident, elts: elts}
 		case LPAREN:
 			return parseCallExpr(ts, ident, prec)
 		default:
@@ -580,6 +584,23 @@ func parseExpr2(ts *TokenStream, prec int) Expr {
 		return nil
 		// panic(fmt.Sprintf("unknown expr %v", token))
 	}
+}
+
+func parseElementList(ts *TokenStream, prec int) (elts []Expr) {
+	for ts.Peek().typ != RBRACE {
+		elts = append(elts, parseElement(ts, prec))
+		if ts.Peek().typ == RBRACE {
+			break
+		}
+		assert(ts.Next().typ == COMMA)
+	}
+	return
+}
+
+func parseElement(ts *TokenStream, prec int) Expr {
+	key := parseExpr(ts, prec)
+	assert(ts.Next().typ == COLON)
+	return &KeyValueExpr{key: key, value: parseExpr(ts, prec)}
 }
 
 func precForToken(op Tok) int {
@@ -1026,6 +1047,16 @@ func (a *AnonFnExpr) Pos() Pos {
 
 func (a *AnonFnExpr) String() string {
 	return fmt.Sprintf("AnonFnExpr(...)")
+}
+
+type KeyValueExpr struct {
+	BaseExpr
+	key   Expr
+	value Expr
+}
+
+func (k KeyValueExpr) String() string {
+	return fmt.Sprintf("KeyValueExpr(%v, %v)", k.key, k.value)
 }
 
 type EllipsisExpr struct {
