@@ -601,21 +601,25 @@ func addPrefix(s, prefix string) string {
 func genBubbleResultExpr(e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	// TODO: res should be an incrementing tmp numbered variable
 	fmt.Println("?", e.x, e.x.GetType())
+	// Native void unwrapping
 	tmpl1 := `res, err := %s
 if err != nil {
 	panic(err)
 }
 `
+	// Non-native void unwrapping
 	tmpl2 := `res := %s
 if res.IsErr() {
 	return res
 }
 `
+	// Native error propagation
 	tmpl3 := `res, err := %s
 if err != nil {
 	return MakeResultErr[%s](err)
 }
 `
+	// Non-native error propagation
 	tmpl4 := `res := %s
 if res.IsErr() {
 	return res
