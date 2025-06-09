@@ -912,9 +912,10 @@ type BaseExpr struct {
 	typ Typ
 }
 
-func printCallers() {
-	for i := 1; i < 100; i++ {
-		pc, _, _, ok := runtime.Caller(i)
+func printCallers(n int) {
+	fmt.Println("--- callers ---")
+	for i := 0; i < n; i++ {
+		pc, _, _, ok := runtime.Caller(i + 2)
 		if !ok {
 			break
 		}
@@ -925,7 +926,7 @@ func printCallers() {
 }
 
 func (b *BaseExpr) SetType(typ Typ) {
-	//printCallers()
+	//printCallers(100)
 	//if b.typ != nil {
 	//	if b.typ == typ {
 	//		return
