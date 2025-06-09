@@ -638,6 +638,10 @@ type Field struct {
 	typeExpr Expr
 }
 
+func (f Field) String() string {
+	return fmt.Sprintf("Field(%v %v)", f.names, f.typeExpr)
+}
+
 type FieldList struct {
 	list []*Field
 }
@@ -907,6 +911,9 @@ type BaseExpr struct {
 }
 
 func (b *BaseExpr) SetType(typ Typ) {
+	//if b.typ != nil {
+	//	panic("set type twice")
+	//}
 	b.typ = typ
 }
 
