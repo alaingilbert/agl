@@ -122,10 +122,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	case *CallExpr:
 		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
 			lhsID.SetType(rhsID.GetType().(*FuncType).ret)
-		} else if s, ok := rhs.fun.(*SelectorExpr); ok {
-			if callExpr, ok := s.x.(*CallExpr); ok {
-				inferCallExpr(callExpr, env)
-			}
+		} else if _, ok := rhs.fun.(*SelectorExpr); ok {
 			lhsID.SetType(rhs.typ)
 		}
 	case *BubbleResultExpr:
