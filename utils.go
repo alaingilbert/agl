@@ -13,7 +13,7 @@ func assert(pred bool, msg ...string) {
 		if len(msg) > 0 {
 			m = msg[0]
 		}
-		panic(m)
+		panic(NewAglError(m))
 	}
 }
 
@@ -23,7 +23,7 @@ func assertf(pred bool, format string, a ...any) {
 		if len(format) > 0 {
 			m = fmt.Sprintf(format, a...)
 		}
-		panic(m)
+		panic(NewAglError(m))
 	}
 }
 
