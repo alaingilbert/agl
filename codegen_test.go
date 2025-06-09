@@ -1062,7 +1062,7 @@ fn main() {
 	addOne(a)
 }
 `
-	tassert.PanicsWithValue(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
 
 func TestCodeGen41(t *testing.T) {
@@ -1072,7 +1072,7 @@ fn main() {
 	addOne(true)
 }
 `
-	tassert.PanicsWithValue(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
 
 func TestCodeGen_Variadic1(t *testing.T) {
@@ -1103,7 +1103,7 @@ fn main() {
 	variadic(1)
 }
 `
-	tassert.PanicsWithValue(t, "6:2 not enough arguments in call to variadic", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "6:2 not enough arguments in call to variadic", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
 
 func TestCodeGen_Variadic3(t *testing.T) {
@@ -1115,7 +1115,7 @@ fn main() {
 	variadic(1, 2, "a", 3, "c")
 }
 `
-	tassert.PanicsWithValue(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
 
 func TestCodeGen42(t *testing.T) {
@@ -1255,7 +1255,7 @@ fn main() {
 	test("a" == 42)
 }
 `
-	tassert.PanicsWithValue(t, "4:7 mismatched types string and UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
 
 func TestCodeGen49(t *testing.T) {
