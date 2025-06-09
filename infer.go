@@ -601,9 +601,9 @@ func getFuncArgsType(f *funcStmt, env *Env) (out []Typ, variadic bool) {
 
 func inferFuncArgsType(f *funcStmt, env *Env) (out []Typ) {
 	for _, arg := range f.args.list {
+		t := env.GetType(arg.typeExpr)
+		arg.typeExpr.SetType(t)
 		for _, name := range arg.names {
-			t := env.GetType(arg.typeExpr)
-			arg.typeExpr.SetType(t)
 			env.Define(name.lit, t)
 			out = append(out, t)
 		}
