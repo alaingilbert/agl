@@ -601,24 +601,35 @@ func addPrefix(s, prefix string) string {
 func genBubbleResultExpr(e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	// TODO: res should be an incrementing tmp numbered variable
 	fmt.Println("?", e.x, e.x.GetType())
+	tmpl1 := `res, err := %s
+if err != nil {
+	panic(err)
+}
+`
+	tmpl2 := `res := %s
+if res.IsErr() {
+	return res
+}
+`
+	tmpl3 := `res, err := %s
+if err != nil {
+	return MakeResultErr[%s](err)
+}
+`
+	tmpl4 := `res := %s
+if res.IsErr() {
+	return res
+}
+`
 	if TryCast[ResultType](e.x.GetType()) {
 		if TryCast[VoidType](retTyp) && TryCast[*FuncType](e.GetType()) && e.GetType().(*FuncType).isNative {
 			before1, content1 := genExpr(e.x, prefix, retTyp)
 			if e.GetType().(*FuncType).isNative {
-				before := NewBeforeStmt(addPrefix(`res, err := `+content1+`
-if err != nil {
-	panic(err)
-}
-`, prefix))
+				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
 				out := `res`
 				return append(before1, before), out
 			}
-
-			before := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsErr() {
-	return res
-}
-`, prefix))
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl2, content1), prefix))
 			out := `res.Unwrap()`
 			return append(before1, before), out
 		}
@@ -626,20 +637,12 @@ if res.IsErr() {
 		if retTypType, ok := retTyp.(ResultType); ok {
 			before1, content1 := genExpr(e.x, prefix, retTyp)
 			if e.GetType().(*FuncType).isNative {
-				before := NewBeforeStmt(addPrefix(`res, err := `+content1+`
-if err != nil {
-	return MakeResultErr[`+retTypType.wrappedType.GoStr()+`](err)
-}
-`, prefix))
+				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
 				out := `res`
 				return append(before1, before), out
 			}
 
-			before := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsErr() {
-	return res
-}
-`, prefix))
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl4, content1), prefix))
 			out := `res.Unwrap()`
 			return append(before1, before), out
 		} else {
