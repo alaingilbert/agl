@@ -131,10 +131,8 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 				}
 			}
 		}
-		lhsID.SetType(stmt.rhs.GetType())
-	default:
-		lhsID.SetType(stmt.rhs.GetType())
 	}
+	lhsID.SetType(stmt.rhs.GetType())
 	assignFn(lhsID.lit, lhsID.typ)
 }
 
