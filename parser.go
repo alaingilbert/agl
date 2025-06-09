@@ -912,7 +912,12 @@ type BaseExpr struct {
 
 func (b *BaseExpr) SetType(typ Typ) {
 	//if b.typ != nil {
-	//	panic("set type twice")
+	//	if b.typ == typ {
+	//		return
+	//	}
+	//	if !TryCast[UntypedNumType](b.typ) {
+	//		panic("set type twice")
+	//	}
 	//}
 	b.typ = typ
 }
