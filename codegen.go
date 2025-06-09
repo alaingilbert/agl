@@ -10,6 +10,7 @@ func codegen(a *ast) (out string) {
 	var before []IBefore
 	out += genPackage(a)
 	out += genImports(a)
+	out += genEnums(a)
 	out += genStructs(a)
 	before1, content1 := genFunctions(a)
 	before = append(before, before1...)
@@ -30,6 +31,14 @@ func genPackage(a *ast) (out string) {
 func genImports(a *ast) (out string) {
 	for _, i := range a.imports {
 		out += fmt.Sprintf("import %s\n", i.lit)
+	}
+	return
+}
+
+func genEnums(a *ast) (out string) {
+	for _, s := range a.enums {
+		_, content := genStmt(s, "", nil)
+		out += content
 	}
 	return
 }
@@ -119,6 +128,8 @@ func genStmts(stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out st
 
 func genStmt(stmt Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	switch s := stmt.(type) {
+	case *EnumStmt:
+		return genEnumStmt(s)
 	case *structStmt:
 		return genStructStmt(s)
 	case *funcStmt:
@@ -201,6 +212,27 @@ func genExpr(e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
 	}
 	return nil, ""
+}
+
+func genEnumStmt(s *EnumStmt) (before []IBefore, out string) {
+	out += fmt.Sprintf("type %s int\n", s.lit)
+	out += "const (\n"
+	for i, name := range s.fields {
+		if i == 0 {
+			out += fmt.Sprintf("\tAglEnum_%s_%s %s = iota + 1\n", s.lit, name.lit, s.lit)
+		} else {
+			out += fmt.Sprintf("\tAglEnum_%s_%s\n", s.lit, name.lit)
+		}
+	}
+	out += ")\n"
+	out += `func (c Color) String() string {
+	switch c {
+`
+	for _, name := range s.fields {
+		out += fmt.Sprintf("\tcase AglEnum_%s_%s:\n\t\treturn \"%s\"\n", s.lit, name.lit, name.lit)
+	}
+	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
+	return
 }
 
 func genStructStmt(s *structStmt) (before []IBefore, out string) {
@@ -522,8 +554,11 @@ func genSelectorExpr(expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, 
 	before = append(before, before1...)
 	before = append(before, before2...)
 	// Rename tuple .0 .1 .2 ... to .Arg0 .Arg1 .Arg2 ...
-	if _, ok := expr.x.GetType().(TupleTypeTyp); ok {
+	switch expr.x.GetType().(type) {
+	case TupleTypeTyp:
 		content2 = fmt.Sprintf("Arg%s", content2)
+	case *EnumType:
+		return before, fmt.Sprintf("AglEnum_%s_%s", content1, content2)
 	}
 	return before, fmt.Sprintf("%s.%s", content1, content2)
 }
