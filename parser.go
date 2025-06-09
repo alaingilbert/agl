@@ -445,11 +445,9 @@ loop:
 		case QUESTION:
 			ts.Next()
 			x = &BubbleOptionExpr{x: x}
-			break loop
 		case BANG:
 			ts.Next()
 			x = &BubbleResultExpr{x: x}
-			break loop
 		case DOT:
 			ts.Next()
 			id := parseIdentExpr(ts)

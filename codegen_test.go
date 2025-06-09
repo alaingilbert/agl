@@ -1315,7 +1315,7 @@ fn (p Person) method2() Person! {
 }
 fn main() {
 	p := Person{}
-	a := p.method1()!
+	a := p.method1()!.method1()
 }
 `
 	expected := `type Person struct {
@@ -1328,7 +1328,7 @@ func (p Person) method2() Result[Person] {
 }
 func main() {
 	p := Person{}
-	a := p.method1().Unwrap()
+	a := p.method1().Unwrap().method1()
 }
 `
 	testCodeGen(t, src, expected)
