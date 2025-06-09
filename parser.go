@@ -66,6 +66,8 @@ func parseFnSignature(ts *TokenStream) *funcType {
 				tok := ts.Next()
 				if ts.Peek().typ == LBRACKET || ts.Peek().typ == LPAREN { // method
 
+					out.recv = fields1
+
 					// Optional function name
 					if tok.typ == IDENT {
 						out.name = tok.lit
@@ -82,10 +84,10 @@ func parseFnSignature(ts *TokenStream) *funcType {
 						assert(ts.Next().typ == RBRACKET)
 						tok = ts.Next()
 					}
+					assert(out.typeParams == nil, "Method cannot have type parameters")
 
 					assert(tok.typ == LPAREN)
-					params := parseParametersList(ts, RPAREN)
-					out.params = params
+					out.params = parseParametersList(ts, RPAREN)
 					assert(ts.Next().typ == RPAREN)
 
 					// Output
@@ -93,7 +95,6 @@ func parseFnSignature(ts *TokenStream) *funcType {
 						out.result.expr = parseType(ts)
 					}
 
-					out.recv = fields1
 					return out
 				}
 				ts.Back()

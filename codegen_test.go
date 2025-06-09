@@ -1405,3 +1405,33 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+//func TestCodeGen_GenericMethod(t *testing.T) {
+//	src := `
+//type Person struct {
+//}
+//fn (p Person) speak[T any, U any](a T, b U) string {
+//	fmt.Println(a)
+//}
+//fn main() {
+//	p1 := Person{}
+//	p1.speak("hello", 123)
+//	p1.speak(123, "hello")
+//}
+//`
+//	expected := `type Person struct {
+//}
+//func (p Person) speak__string_int(a string) string {
+//	fmt.Println(a)
+//}
+//func (p Person) speak__int_string(a int) string {
+//	fmt.Println(a)
+//}
+//func main() {
+//	p1 := Person{}
+//	p1.speak__string_int("hello", 123)
+//	p1.speak__int_string(123, "hello")
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
