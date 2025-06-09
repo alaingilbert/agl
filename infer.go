@@ -119,8 +119,6 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 
 	lhsID := MustCast[*IdentExpr](lhs)
 	switch rhs := stmt.rhs.(type) {
-	case *CallExpr:
-		lhsID.SetType(stmt.rhs.GetType())
 	case *BubbleResultExpr:
 		callExpr := MustCast[*CallExpr](rhs.x)
 		if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
