@@ -108,9 +108,9 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	}
 
 	if lhs, ok := lhs.(*TupleExpr); ok {
-		assert(TryCast[*TupleExpr](stmt.rhs))
+		MustCast[*TupleExpr](stmt.rhs)
 		for i, x := range stmt.rhs.(*TupleExpr).exprs {
-			assert(TryCast[*IdentExpr](lhs.exprs[i]))
+			MustCast[*IdentExpr](lhs.exprs[i])
 			lhs.exprs[i].SetType(x.GetType())
 			assignFn(lhs.exprs[i].(*IdentExpr).lit, x.GetType())
 		}
@@ -121,15 +121,16 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	switch rhs := stmt.rhs.(type) {
 	case *BubbleResultExpr:
 		callExpr := MustCast[*CallExpr](rhs.x)
-		if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
-			rhs.SetType(rhsID.GetType())
-		} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
+		switch s := callExpr.fun.(type) {
+		case *SelectorExpr:
 			if id, ok := s.x.(*IdentExpr); ok {
 				if rhs.GetType() == nil {
 					rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
 					callExpr.SetType(rhs.typ.(*FuncType).ret)
 				}
 			}
+		case *IdentExpr:
+			rhs.SetType(s.GetType())
 		}
 	}
 	lhsID.SetType(stmt.rhs.GetType())
