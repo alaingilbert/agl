@@ -400,9 +400,6 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 					expr.SetType(filterFnType.ret)
 				}
 			}
-			for _, e := range expr.args {
-				inferExpr(e, nil, env)
-			}
 			if l := env.Get(id.lit); l != nil {
 				id.SetType(l)
 				if lT, ok := l.(*StructType); ok {
