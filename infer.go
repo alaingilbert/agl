@@ -124,20 +124,16 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	if rhs, ok := stmt.rhs.(*CallExpr); ok {
 		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
 			lhsID.SetType(rhsID.GetType().(*FuncType).ret)
-			assignFn(lhsID.lit, lhsID.typ)
 		} else if s, ok := rhs.fun.(*SelectorExpr); ok {
 			if callExpr, ok := s.x.(*CallExpr); ok {
 				inferCallExpr(callExpr, env)
 			}
 			lhsID.SetType(rhs.typ)
-			assignFn(lhsID.lit, lhsID.typ)
 		}
 	} else if rhs, ok := stmt.rhs.(*BubbleResultExpr); ok {
 		if callExpr, ok := rhs.x.(*CallExpr); ok {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
 				rhs.SetType(rhsID.GetType())
-				lhsID.SetType(rhs.typ.(*FuncType).ret)
-				assignFn(lhsID.lit, lhsID.typ)
 			} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
 				if callExpr1, ok := s.x.(*CallExpr); ok {
 					callExpr1.SetType(env.Get(callExpr1.fun.(*IdentExpr).lit).(*FuncType).ret)
@@ -156,7 +152,6 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 				if rhsID, ok := rhs.fun.(*IdentExpr); ok {
 					rhs.SetType(rhsID.GetType())
 					lhsID.SetType(rhs.typ.(*FuncType).ret)
-					assignFn(lhsID.lit, lhsID.typ)
 				} else if s, ok := rhs.fun.(*SelectorExpr); ok {
 					if callExpr, ok := s.x.(*CallExpr); ok {
 						callExpr.SetType(env.Get(callExpr.fun.(*IdentExpr).lit).(*FuncType).ret)
@@ -169,9 +164,8 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 		}
 	} else {
 		lhsID.SetType(stmt.rhs.GetType())
-		assignFn(lhsID.lit, lhsID.typ)
-		//panic("")
 	}
+	assignFn(lhsID.lit, lhsID.typ)
 }
 
 func inferExprs(e []Expr, env *Env) {
