@@ -34,6 +34,9 @@ func parseFuncTypeFromString(s string, env *Env) *FuncType {
 		}
 	}
 	ret := nenv.GetType(ft.result.expr)
+	if v, ok := ret.(ResultType); ok {
+		v.native = true
+	}
 	return &FuncType{
 		typeParams: typeParams,
 		params:     params,
@@ -129,8 +132,6 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 					callExpr.SetType(rhs.typ.(*FuncType).ret)
 				}
 			}
-		case *IdentExpr:
-			rhs.SetType(s.GetType())
 		}
 	}
 	lhsID.SetType(stmt.rhs.GetType())
