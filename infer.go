@@ -289,7 +289,7 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	}
 	switch expr.op.typ {
 	case EQL, NEQ, LOR, LAND, LTE, LT, GTE, GT:
-		expr.SetType(BoolType{})
+		expr.SetTypeForce(BoolType{})
 	default:
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
@@ -324,6 +324,9 @@ func cmpTypes(a, b Typ) bool {
 	}
 	if aa, ok := a.(*FuncType); ok {
 		if bb, ok := b.(*FuncType); ok {
+			if aa.GoStr() == bb.GoStr() {
+				return true
+			}
 			if !cmpTypes(aa.ret, bb.ret) {
 				return false
 			}
@@ -431,7 +434,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs.typ = getFuncType(fs, NewEnv())
 		fs.typ.(*FuncType).params[0] = idT.(ArrayTypeTyp).elt
 		expr.args[0].SetType(fs.typ)
-		expr.SetType(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
 
 	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
@@ -447,7 +450,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
 		//inferExprs(expr.args, env)
-		expr.SetType(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
 
 	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "reduce" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmpOrdered](acc R, el T) R")) // TODO cmp.Ordered
@@ -459,7 +462,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			fs.typ.(*FuncType).params[0] = elTyp
 			fs.typ.(*FuncType).ReplaceGenericParameter("R", fs.typ.(*FuncType).params[0])
 		}
-		expr.args[1].SetType(fs.typ)
+		expr.args[1].SetTypeForce(fs.typ)
 	}
 }
 

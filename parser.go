@@ -905,6 +905,7 @@ type Expr interface {
 	Node
 	GetType() Typ
 	SetType(Typ)
+	SetTypeForce(Typ)
 	AglStr() string
 }
 
@@ -927,15 +928,29 @@ func printCallers(n int) {
 }
 
 func (b *BaseExpr) SetType(typ Typ) {
+	b.setType(typ, false)
+}
+
+func (b *BaseExpr) SetTypeForce(typ Typ) {
+	b.setType(typ, true)
+}
+
+func (b *BaseExpr) setType(typ Typ, force bool) {
 	//printCallers(100)
-	//if b.typ != nil {
-	//	if b.typ == typ {
-	//		return
-	//	}
-	//	if !TryCast[UntypedNumType](b.typ) {
-	//		panic(fmt.Sprintf("set type twice: %v %v", b.typ, typ))
-	//	}
-	//}
+	if !force && b.typ != nil {
+		if cmpTypes(b.typ, typ) {
+			return
+		}
+		if !TryCast[UntypedNumType](b.typ) {
+			if v, ok := b.typ.(*FuncType); ok {
+				fmt.Printf("%v\n", v.GoStr())
+			}
+			if v, ok := typ.(*FuncType); ok {
+				fmt.Printf("%v\n", v.GoStr())
+			}
+			panic(fmt.Sprintf("set type twice: curr: %v, new: %v", b.typ, typ))
+		}
+	}
 	b.typ = typ
 }
 
