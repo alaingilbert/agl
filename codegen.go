@@ -225,9 +225,7 @@ func genEnumStmt(s *EnumStmt) (before []IBefore, out string) {
 		}
 	}
 	out += ")\n"
-	out += `func (c Color) String() string {
-	switch c {
-`
+	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v {\n", s.lit)
 	for _, name := range s.fields {
 		out += fmt.Sprintf("\tcase AglEnum_%s_%s:\n\t\treturn \"%s\"\n", s.lit, name.lit, name.lit)
 	}

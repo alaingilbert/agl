@@ -1384,8 +1384,8 @@ const (
 	AglEnum_Color_green
 	AglEnum_Color_blue
 )
-func (c Color) String() string {
-	switch c {
+func (v Color) String() string {
+	switch v {
 	case AglEnum_Color_red:
 		return "red"
 	case AglEnum_Color_green:
