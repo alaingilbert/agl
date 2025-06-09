@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"path"
+	"runtime"
 	"strings"
 )
 
@@ -910,7 +912,20 @@ type BaseExpr struct {
 	typ Typ
 }
 
+func printCallers() {
+	for i := 1; i < 100; i++ {
+		pc, _, _, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+		f := runtime.FuncForPC(pc)
+		file, line := f.FileLine(pc)
+		fmt.Printf("%s:%d %s\n", path.Base(file), line, f.Name())
+	}
+}
+
 func (b *BaseExpr) SetType(typ Typ) {
+	//printCallers()
 	//if b.typ != nil {
 	//	if b.typ == typ {
 	//		return
