@@ -121,7 +121,8 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	if !CastInto[*IdentExpr](lhs, &lhsID) {
 		panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(stmt.lhs)))
 	}
-	if rhs, ok := stmt.rhs.(*CallExpr); ok {
+	switch rhs := stmt.rhs.(type) {
+	case *CallExpr:
 		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
 			lhsID.SetType(rhsID.GetType().(*FuncType).ret)
 		} else if s, ok := rhs.fun.(*SelectorExpr); ok {
@@ -130,7 +131,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 			}
 			lhsID.SetType(rhs.typ)
 		}
-	} else if rhs, ok := stmt.rhs.(*BubbleResultExpr); ok {
+	case *BubbleResultExpr:
 		if callExpr, ok := rhs.x.(*CallExpr); ok {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
 				rhs.SetType(rhsID.GetType())
@@ -144,7 +145,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 			}
 			lhsID.SetType(callExpr.typ)
 		}
-	} else {
+	default:
 		lhsID.SetType(stmt.rhs.GetType())
 	}
 	assignFn(lhsID.lit, lhsID.typ)
