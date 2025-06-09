@@ -764,6 +764,7 @@ type F32Type struct{ BaseTyp }
 type ResultType struct {
 	BaseTyp
 	wrappedType Typ
+	native      bool
 }
 
 func (r ResultType) GoStr() string {

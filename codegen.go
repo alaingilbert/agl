@@ -640,7 +640,7 @@ if res.IsErr() {
 
 		if retTypType, ok := retTyp.(ResultType); ok {
 			before1, content1 := genExpr(e.x, prefix, retTyp)
-			if e.GetType().(*FuncType).isNative {
+			if e.GetType().(ResultType).native {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
 				out := `res`
 				return append(before1, before), out
