@@ -123,52 +123,52 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	}
 	if rhs, ok := stmt.rhs.(*CallExpr); ok {
 		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
-			lhsID.typ = rhsID.GetType().(*FuncType).ret
+			lhsID.SetType(rhsID.GetType().(*FuncType).ret)
 			assignFn(lhsID.lit, lhsID.typ)
 		} else if s, ok := rhs.fun.(*SelectorExpr); ok {
 			if callExpr, ok := s.x.(*CallExpr); ok {
 				inferCallExpr(callExpr, env)
 			}
-			lhsID.typ = rhs.typ
+			lhsID.SetType(rhs.typ)
 			assignFn(lhsID.lit, lhsID.typ)
 		}
 	} else if rhs, ok := stmt.rhs.(*BubbleResultExpr); ok {
 		if callExpr, ok := rhs.x.(*CallExpr); ok {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
-				rhs.typ = rhsID.GetType()
-				lhsID.typ = rhs.typ.(*FuncType).ret
+				rhs.SetType(rhsID.GetType())
+				lhsID.SetType(rhs.typ.(*FuncType).ret)
 				assignFn(lhsID.lit, lhsID.typ)
 			} else if s, ok := callExpr.fun.(*SelectorExpr); ok {
 				if callExpr1, ok := s.x.(*CallExpr); ok {
-					callExpr1.typ = env.Get(callExpr1.fun.(*IdentExpr).lit).(*FuncType).ret
+					callExpr1.SetType(env.Get(callExpr1.fun.(*IdentExpr).lit).(*FuncType).ret)
 				} else if id, ok := s.x.(*IdentExpr); ok {
 					if rhs.GetType() != nil {
-						callExpr.typ = rhs.typ
+						callExpr.SetType(rhs.typ)
 					} else {
 						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
-						callExpr.typ = rhs.typ.(*FuncType).ret
+						callExpr.SetType(rhs.typ.(*FuncType).ret)
 					}
 				}
 			}
-			lhsID.typ = callExpr.typ
+			lhsID.SetType(callExpr.typ)
 		} else if rhs, ok := stmt.rhs.(*BubbleOptionExpr); ok {
 			if rhs, ok := rhs.x.(*CallExpr); ok {
 				if rhsID, ok := rhs.fun.(*IdentExpr); ok {
-					rhs.typ = rhsID.GetType()
-					lhsID.typ = rhs.typ.(*FuncType).ret
+					rhs.SetType(rhsID.GetType())
+					lhsID.SetType(rhs.typ.(*FuncType).ret)
 					assignFn(lhsID.lit, lhsID.typ)
 				} else if s, ok := rhs.fun.(*SelectorExpr); ok {
 					if callExpr, ok := s.x.(*CallExpr); ok {
-						callExpr.typ = env.Get(callExpr.fun.(*IdentExpr).lit).(*FuncType).ret
+						callExpr.SetType(env.Get(callExpr.fun.(*IdentExpr).lit).(*FuncType).ret)
 					} else if id, ok := s.x.(*IdentExpr); ok {
-						rhs.typ = env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)).(*FuncType).ret
+						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)).(*FuncType).ret)
 					}
 				}
-				lhsID.typ = rhs.typ
+				lhsID.SetType(rhs.typ)
 			}
 		}
 	} else {
-		lhsID.typ = stmt.rhs.GetType()
+		lhsID.SetType(stmt.rhs.GetType())
 		assignFn(lhsID.lit, lhsID.typ)
 		//panic("")
 	}
@@ -190,9 +190,9 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 	case *BubbleResultExpr:
 		inferExpr(expr.x, nil, env)
 		fmt.Println("??????????", expr, expr.x.GetType())
-		expr.typ = expr.x.GetType()
+		expr.SetType(expr.x.GetType())
 	case *NumberExpr:
-		expr.typ = UntypedNumType{}
+		expr.SetType(UntypedNumType{})
 	case *NoneExpr:
 	case *SomeExpr:
 	case *OkExpr:
@@ -208,15 +208,15 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 	case *MakeExpr:
 		inferExprs(expr.exprs, env)
 	case *VecExpr:
-		expr.typ = ArrayTypeTyp{elt: env.Get(expr.typStr)}
+		expr.SetType(ArrayTypeTyp{elt: env.Get(expr.typStr)})
 	case *StringExpr:
-		expr.typ = StringType{}
+		expr.SetType(StringType{})
 	case *AnonFnExpr:
 		inferAnonFnExpr(expr, env.Clone(), optType)
 	case *TrueExpr:
-		expr.typ = BoolType{}
+		expr.SetType(BoolType{})
 	case *FalseExpr:
-		expr.typ = BoolType{}
+		expr.SetType(BoolType{})
 	case *CompositeLitExpr:
 		expr.SetType(env.Get(expr.typ.(*IdentExpr).lit))
 	default:
@@ -228,7 +228,7 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 }
 
 func inferIdentExpr(expr *IdentExpr, env *Env) {
-	expr.typ = env.Get(expr.lit)
+	expr.SetType(env.Get(expr.lit))
 }
 
 func tryConvertType(e Expr, optType Typ) {
@@ -258,20 +258,20 @@ func inferTupleExpr(expr *TupleExpr, env *Env, optType Typ) {
 		expected := optType.(TupleTypeTyp).elts
 		for i, x := range expr.exprs {
 			if _, ok := x.GetType().(UntypedNumType); ok {
-				x.(*NumberExpr).typ = expected[i]
+				x.SetType(expected[i])
 			}
 		}
 	} else {
 		tupleTyp := TupleTypeTyp{elts: make([]Typ, len(expr.exprs)), name: fmt.Sprintf("%s%d", TupleStructPrefix, env.structCounter.Add(1))}
 		for i, x := range expr.exprs {
 			if _, ok := x.GetType().(UntypedNumType); ok {
-				x.(*NumberExpr).typ = IntType{}
+				x.SetType(IntType{})
 				tupleTyp.elts[i] = x.(*NumberExpr).typ
 			} else {
 				tupleTyp.elts[i] = x.GetType()
 			}
 		}
-		expr.typ = tupleTyp
+		expr.SetType(tupleTyp)
 	}
 }
 
@@ -282,8 +282,8 @@ func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 		if err != nil {
 			panic("tuple arg index must be int")
 		}
-		expr.x.(*IdentExpr).typ = v
-		expr.typ = v.elts[argIdx]
+		expr.x.SetType(v)
+		expr.SetType(v.elts[argIdx])
 	}
 }
 
@@ -291,7 +291,7 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	inferExpr(expr.lhs, nil, env)
 	inferExpr(expr.rhs, nil, env)
 	if TryCast[OptionType](expr.lhs.GetType()) && TryCast[*NoneExpr](expr.rhs) && expr.rhs.GetType() == nil {
-		expr.rhs.(*NoneExpr).typ = expr.lhs.GetType()
+		expr.rhs.SetType(expr.lhs.GetType())
 	}
 	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
 		// TODO
@@ -307,8 +307,8 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 			TryCast[F64Type](expr.lhs.GetType()) ||
 			TryCast[F32Type](expr.lhs.GetType())) &&
 			TryCast[UntypedNumType](expr.rhs.GetType()) {
-			expr.rhs.(*NumberExpr).typ = expr.lhs.GetType()
-			expr.typ = expr.lhs.GetType()
+			expr.rhs.SetType(expr.lhs.GetType())
+			expr.SetType(expr.lhs.GetType())
 		}
 		if (TryCast[I64Type](expr.rhs.GetType()) ||
 			TryCast[I32Type](expr.rhs.GetType()) ||
@@ -472,8 +472,8 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		fs.typ = getFuncType(fs, NewEnv())
 		fs.typ.(*FuncType).params[0] = idT.(ArrayTypeTyp).elt
-		expr.args[0].(*AnonFnExpr).typ = fs.typ
-		expr.typ = ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]}
+		expr.args[0].SetType(fs.typ)
+		expr.SetType(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
 
 	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
@@ -481,7 +481,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs.typ.(*FuncType).params[0] = idT.(ArrayTypeTyp).elt
 		switch arg0 := expr.args[0].(type) {
 		case *AnonFnExpr:
-			arg0.typ = fs.typ
+			arg0.SetType(fs.typ)
 		case *SelectorExpr:
 			t := env.Get(fmt.Sprintf("%s.%s", arg0.x.(*IdentExpr).lit, arg0.sel.lit))
 			fmt.Println("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(*FuncType).params[0], t.(*FuncType).ret)
@@ -489,7 +489,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
 		//inferExprs(expr.args, env)
-		expr.typ = ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]}
+		expr.SetType(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
 
 	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "reduce" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmpOrdered](acc R, el T) R")) // TODO cmp.Ordered
@@ -501,7 +501,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			fs.typ.(*FuncType).params[0] = elTyp
 			fs.typ.(*FuncType).ReplaceGenericParameter("R", fs.typ.(*FuncType).params[0])
 		}
-		expr.args[1].(*AnonFnExpr).typ = fs.typ
+		expr.args[1].SetType(fs.typ)
 	}
 }
 
@@ -624,7 +624,7 @@ func inferFuncOutType(f *funcStmt, env *Env) (out Typ) {
 		f.out.expr.SetType(t)
 		return t
 	}
-	f.out.expr = &VoidExpr{BaseExpr: BaseExpr{typ: VoidType{}}}
-	f.out.expr.(*VoidExpr).typ = VoidType{}
+	f.out.expr = &VoidExpr{}
+	f.out.expr.SetType(VoidType{})
 	return VoidType{}
 }
