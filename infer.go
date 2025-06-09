@@ -45,7 +45,7 @@ func parseFuncTypeFromString(s string, env *Env) *FuncType {
 	}
 }
 
-func infer(s *ast) *ast {
+func infer(s *ast) (*ast, *Env) {
 	env := NewEnv()
 	for _, e := range s.enums {
 		inferEnumType(e, env)
@@ -68,7 +68,7 @@ func infer(s *ast) *ast {
 		fOutTyp := f.out.expr.GetType()
 		inferStmts(f.stmts, fOutTyp, newEnv)
 	}
-	return s
+	return s, env
 }
 
 func inferStmts(stmts []Stmt, returnTyp Typ, env *Env) {

@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-func codegen(a *ast) (out string) {
+func codegen(a *ast, env *Env) (out string) {
 	var before []IBefore
 	out += genPackage(a)
 	out += genImports(a)
-	out += genEnums(a)
-	out += genStructs(a)
-	before1, content1 := genFunctions(a)
+	out += genEnums(env, a)
+	out += genStructs(env, a)
+	before1, content1 := genFunctions(a, env)
 	before = append(before, before1...)
 	for _, b := range before {
 		out += b.Content()
@@ -35,25 +35,25 @@ func genImports(a *ast) (out string) {
 	return
 }
 
-func genEnums(a *ast) (out string) {
+func genEnums(env *Env, a *ast) (out string) {
 	for _, s := range a.enums {
-		_, content := genStmt(s, "", nil)
+		_, content := genStmt(env, s, "", nil)
 		out += content
 	}
 	return
 }
 
-func genStructs(a *ast) (out string) {
+func genStructs(env *Env, a *ast) (out string) {
 	for _, s := range a.structs {
-		_, content := genStmt(s, "", nil)
+		_, content := genStmt(env, s, "", nil)
 		out += content
 	}
 	return
 }
 
-func genFunctions(a *ast) (before []IBefore, out string) {
+func genFunctions(a *ast, env *Env) (before []IBefore, out string) {
 	for _, f := range a.funcs {
-		before1, content1 := genStmt(f, "", nil)
+		before1, content1 := genStmt(env, f, "", nil)
 		before = append(before, before1...)
 		out += content1
 	}
@@ -105,9 +105,9 @@ func NewBeforeFn(content string) *BeforeFn {
 	return &BeforeFn{BaseBefore{w: content}}
 }
 
-func genStmts(stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genStmts(env *Env, stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	for _, stmt := range stmts {
-		before1, content1 := genStmt(stmt, prefix, retTyp)
+		before1, content1 := genStmt(env, stmt, prefix, retTyp)
 		before = append(before, before1...)
 		for _, b := range before {
 			if v, ok := b.(*BeforeStmt); ok {
@@ -126,95 +126,97 @@ func genStmts(stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out st
 	return
 }
 
-func genStmt(stmt Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	switch s := stmt.(type) {
 	case *EnumStmt:
-		return genEnumStmt(s)
+		return genEnumStmt(env, s)
 	case *structStmt:
-		return genStructStmt(s)
+		return genStructStmt(env, s)
 	case *funcStmt:
-		return genFuncStmt(s)
+		return genFuncStmt(env, s)
 	case *IfStmt:
-		return genIfStmt(s, prefix, retTyp)
+		return genIfStmt(env, s, prefix, retTyp)
 	case *ReturnStmt:
-		return genReturnStmt(s, prefix, retTyp)
+		return genReturnStmt(env, s, prefix, retTyp)
 	case *AssignStmt:
-		return genAssignStmt(s, prefix, retTyp)
+		return genAssignStmt(env, s, prefix, retTyp)
 	case *InlineCommentStmt:
-		return genInlineCommentStmt(s, prefix, retTyp)
+		return genInlineCommentStmt(env, s, prefix, retTyp)
 	case *ExprStmt:
-		return genExprStmt(s, prefix, retTyp)
+		return genExprStmt(env, s, prefix, retTyp)
 	case *ForRangeStmt:
-		return genForRangeStmt(s, prefix, retTyp)
+		return genForRangeStmt(env, s, prefix, retTyp)
 	case *IncDecStmt:
-		return genIncDecStmt(s, prefix, retTyp)
+		return genIncDecStmt(env, s, prefix, retTyp)
 	case *AssertStmt:
-		return genAssertStmt(s, prefix, retTyp)
+		return genAssertStmt(env, s, prefix, retTyp)
 	case *BlockStmt:
-		return genBlockStmt(s, prefix, retTyp)
+		return genBlockStmt(env, s, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
 	return
 }
 
-func genExpr(e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 	switch expr := e.(type) {
 	case *BinOpExpr:
-		return genBinOpExpr(expr, prefix, retTyp)
+		return genBinOpExpr(env, expr, prefix, retTyp)
 	case *NumberExpr:
-		return genNumberExpr(expr, prefix, retTyp)
+		return genNumberExpr(env, expr, prefix, retTyp)
 	case *IdentExpr:
-		return genIdentExpr(expr, prefix, retTyp)
+		return genIdentExpr(env, expr, prefix, retTyp)
 	case *VoidExpr:
-		return genVoidExpr(expr, prefix, retTyp)
+		return genVoidExpr(env, expr, prefix, retTyp)
 	case *TrueExpr:
-		return genTrueExpr(expr, prefix, retTyp)
+		return genTrueExpr(env, expr, prefix, retTyp)
 	case *FalseExpr:
-		return genFalseExpr(expr, prefix, retTyp)
+		return genFalseExpr(env, expr, prefix, retTyp)
 	case *NoneExpr:
-		return genNoneExpr(expr, prefix, retTyp)
+		return genNoneExpr(env, expr, prefix, retTyp)
 	case *MemberExpr:
-		return genMemberExpr(expr, prefix, retTyp)
+		return genMemberExpr(env, expr, prefix, retTyp)
 	case *ParenExpr:
-		return genParenExpr(expr, prefix, retTyp)
+		return genParenExpr(env, expr, prefix, retTyp)
 	case *StringExpr:
-		return genStringExpr(expr, prefix, retTyp)
+		return genStringExpr(env, expr, prefix, retTyp)
 	case *SomeExpr:
-		return genSomeExpr(expr, prefix, retTyp)
+		return genSomeExpr(env, expr, prefix, retTyp)
 	case *OkExpr:
-		return genOkExpr(expr, prefix, retTyp)
+		return genOkExpr(env, expr, prefix, retTyp)
 	case *ErrExpr:
-		return genErrExpr(expr, prefix, retTyp)
+		return genErrExpr(env, expr, prefix, retTyp)
 	case *TupleExpr:
-		return genTupleExpr(expr, prefix, retTyp)
+		return genTupleExpr(env, expr, prefix, retTyp)
 	case *CallExpr:
-		return genCallExpr(expr, prefix, retTyp)
+		return genCallExpr(env, expr, prefix, retTyp)
 	case *BubbleOptionExpr:
-		return genBubbleOptionExpr(expr, prefix, retTyp)
+		return genBubbleOptionExpr(env, expr, prefix, retTyp)
 	case *BubbleResultExpr:
-		return genBubbleResultExpr(expr, prefix, retTyp)
+		return genBubbleResultExpr(env, expr, prefix, retTyp)
 	case *SelectorExpr:
-		return genSelectorExpr(expr, prefix, retTyp)
+		return genSelectorExpr(env, expr, prefix, retTyp)
 	case *VecExpr:
-		return genVecExpr(expr, prefix, retTyp)
+		return genVecExpr(env, expr, prefix, retTyp)
 	case *MakeExpr:
-		return genMakeExpr(expr, prefix, retTyp)
+		return genMakeExpr(env, expr, prefix, retTyp)
 	case *MutExpr:
-		return genMutExpr(expr, prefix, retTyp)
+		return genMutExpr(env, expr, prefix, retTyp)
 	case *Field:
-		return genField(expr, prefix, retTyp)
+		return genField(env, expr, prefix, retTyp)
 	case *AnonFnExpr:
-		return genAnonFnExpr(expr, prefix, retTyp)
+		return genAnonFnExpr(env, expr, prefix, retTyp)
 	case *CompositeLitExpr:
-		return genCompositeLit(expr, prefix, retTyp)
+		return genCompositeLit(env, expr, prefix, retTyp)
+	case *KeyValueExpr:
+		return genKeyValueExpr(env, expr, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
 	}
 	return nil, ""
 }
 
-func genEnumStmt(s *EnumStmt) (before []IBefore, out string) {
+func genEnumStmt(env *Env, s *EnumStmt) (before []IBefore, out string) {
 	out += fmt.Sprintf("type %s int\n", s.lit)
 	out += "const (\n"
 	for i, name := range s.fields {
@@ -233,21 +235,21 @@ func genEnumStmt(s *EnumStmt) (before []IBefore, out string) {
 	return
 }
 
-func genStructStmt(s *structStmt) (before []IBefore, out string) {
+func genStructStmt(env *Env, s *structStmt) (before []IBefore, out string) {
 	var namePrefix string
 	if !s.pub {
 		namePrefix = "aglPriv"
 	}
 	var fields string
 	for _, f := range s.fields {
-		_, ft := genExpr(f, "\t", nil)
+		_, ft := genExpr(env, f, "\t", nil)
 		fields += fmt.Sprintf("\t%s\n", ft)
 	}
 	out += fmt.Sprintf("type %s%s struct {\n%s}\n", namePrefix, s.lit, fields)
 	return
 }
 
-func genFuncStmt(f *funcStmt) (before []IBefore, out string) {
+func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
 	var recv string
 	if f.recv != nil {
 		var args1 []string
@@ -304,36 +306,36 @@ func genFuncStmt(f *funcStmt) (before []IBefore, out string) {
 			f.stmts[0] = &ReturnStmt{expr: e.x}
 		}
 	}
-	before1, stmtsStr := genStmts(f.stmts, "\t", f.out.expr.GetType())
+	before1, stmtsStr := genStmts(env, f.stmts, "\t", f.out.expr.GetType())
 	before = append(before, before1...)
 	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, f.name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
 	return
 }
 
-func genInlineCommentStmt(stmt *InlineCommentStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genInlineCommentStmt(env *Env, stmt *InlineCommentStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	out += prefix + fmt.Sprintf("%s", stmt.lit) + "\n"
 	return
 }
 
-func genExprStmt(stmt *ExprStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(stmt.x, prefix, retTyp)
+func genExprStmt(env *Env, stmt *ExprStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content := genExpr(env, stmt.x, prefix, retTyp)
 	before = append(before, before1...)
 	out += prefix + content + "\n"
 	return
 }
 
-func genIncDecStmt(stmt *IncDecStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(stmt.x, prefix, retTyp)
+func genIncDecStmt(env *Env, stmt *IncDecStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content := genExpr(env, stmt.x, prefix, retTyp)
 	before = append(before, before1...)
 	out += prefix + content + stmt.tok.lit + "\n"
 	return
 }
 
-func genForRangeStmt(stmt *ForRangeStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(stmt.id1, prefix, retTyp)
-	before2, content2 := genExpr(stmt.id2, prefix, retTyp)
-	before3, content3 := genExpr(stmt.expr, prefix, retTyp)
-	before4, content4 := genStmts(stmt.stmts, prefix+"\t", retTyp)
+func genForRangeStmt(env *Env, stmt *ForRangeStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.id1, prefix, retTyp)
+	before2, content2 := genExpr(env, stmt.id2, prefix, retTyp)
+	before3, content3 := genExpr(env, stmt.expr, prefix, retTyp)
+	before4, content4 := genStmts(env, stmt.stmts, prefix+"\t", retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	before = append(before, before3...)
@@ -347,7 +349,7 @@ func genForRangeStmt(stmt *ForRangeStmt, prefix string, retTyp Typ) (before []IB
 	return
 }
 
-func genAssignStmt(stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	// LHS
 	var lhs string
 	var after string
@@ -361,13 +363,13 @@ func genAssignStmt(stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefor
 		}
 		after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 	} else {
-		before1, content1 := genExpr(stmt.lhs, prefix, retTyp)
+		before1, content1 := genExpr(env, stmt.lhs, prefix, retTyp)
 		before = append(before, before1...)
 		lhs = content1
 	}
 
 	// RHS
-	before2, content2 := genExpr(stmt.rhs, prefix, retTyp)
+	before2, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
 	before = append(before, before2...)
 
 	// Output
@@ -376,22 +378,22 @@ func genAssignStmt(stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefor
 	return
 }
 
-func genReturnStmt(stmt *ReturnStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(stmt.expr, prefix, retTyp)
+func genReturnStmt(env *Env, stmt *ReturnStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content := genExpr(env, stmt.expr, prefix, retTyp)
 	before = append(before, before1...)
 	out += prefix + "return " + content + "\n"
 	return
 }
 
-func genIfStmt(stmt *IfStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(stmt.cond, prefix, retTyp)
-	before2, content2 := genStmts(stmt.body, prefix+"\t", retTyp)
+func genIfStmt(env *Env, stmt *IfStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.cond, prefix, retTyp)
+	before2, content2 := genStmts(env, stmt.body, prefix+"\t", retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	out += prefix + "if " + content1 + " {\n"
 	out += content2
 	if stmt.Else != nil {
-		before3, content3 := genStmt(stmt.Else, prefix, retTyp)
+		before3, content3 := genStmt(env, stmt.Else, prefix, retTyp)
 		before = append(before, before3...)
 		out += prefix + "} else " + strings.TrimSpace(content3) + "\n"
 	} else {
@@ -400,8 +402,8 @@ func genIfStmt(stmt *IfStmt, prefix string, retTyp Typ) (before []IBefore, out s
 	return
 }
 
-func genBlockStmt(stmt *BlockStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genStmts(stmt.stmts, prefix, retTyp)
+func genBlockStmt(env *Env, stmt *BlockStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genStmts(env, stmt.stmts, prefix, retTyp)
 	before = append(before, before1...)
 	out += "{\n"
 	if content1 != "" {
@@ -411,13 +413,13 @@ func genBlockStmt(stmt *BlockStmt, prefix string, retTyp Typ) (before []IBefore,
 	return
 }
 
-func genAssertStmt(stmt *AssertStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(stmt.x, prefix, retTyp)
+func genAssertStmt(env *Env, stmt *AssertStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.x, prefix, retTyp)
 	before = append(before, before1...)
 	var content2 string
 	if stmt.msg != nil {
 		var before2 []IBefore
-		before2, content2 = genExpr(stmt.msg, prefix, retTyp)
+		before2, content2 = genExpr(env, stmt.msg, prefix, retTyp)
 		before = append(before, before2...)
 	}
 	aug := fmt.Sprintf(`"assert failed '%s' line %v"`, stmt.x.AglStr(), stmt.Pos().Row)
@@ -428,99 +430,131 @@ func genAssertStmt(stmt *AssertStmt, prefix string, retTyp Typ) (before []IBefor
 	return
 }
 
-func genExprs(e []Expr, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genExprs(env *Env, e []Expr, prefix string, retTyp Typ) (before []IBefore, out string) {
 	var tmp []string
 	for _, expr := range e {
-		before1, content1 := genExpr(expr, prefix, retTyp)
+		before1, content1 := genExpr(env, expr, prefix, retTyp)
 		before = append(before, before1...)
 		tmp = append(tmp, content1)
 	}
 	return before, strings.Join(tmp, ", ")
 }
 
-func genVoidExpr(expr *VoidExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genVoidExpr(env *Env, expr *VoidExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, ""
 }
 
-func genTrueExpr(expr *TrueExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genTrueExpr(env *Env, expr *TrueExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, "true"
 }
 
-func genFalseExpr(expr *FalseExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genFalseExpr(env *Env, expr *FalseExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, "false"
 }
 
-func genMutExpr(expr *MutExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	return genExpr(expr.x, prefix, retTyp)
+func genMutExpr(env *Env, expr *MutExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	return genExpr(env, expr.x, prefix, retTyp)
 }
 
-func genField(expr *Field, prefix string, retTyp Typ) ([]IBefore, string) {
-	before1, content1 := genExpr(expr.names[0], prefix, retTyp)
+func genField(env *Env, expr *Field, prefix string, retTyp Typ) ([]IBefore, string) {
+	before1, content1 := genExpr(env, expr.names[0], prefix, retTyp)
 	return before1, fmt.Sprintf("%s %s", content1, expr.typeExpr.GetType().GoStr())
 }
 
-func genNumberExpr(expr *NumberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genNumberExpr(env *Env, expr *NumberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
-func genMemberExpr(expr *MemberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genMemberExpr(env *Env, expr *MemberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, "." + expr.name
 }
 
-func genParenExpr(expr *ParenExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(expr.subExpr, prefix, retTyp)
+func genParenExpr(env *Env, expr *ParenExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before, content := genExpr(env, expr.subExpr, prefix, retTyp)
 	return before, fmt.Sprintf("(%s)", content)
 }
 
-func genStringExpr(expr *StringExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genStringExpr(env *Env, expr *StringExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
-func genSomeExpr(expr *SomeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(expr.expr, prefix, retTyp)
+func genSomeExpr(env *Env, expr *SomeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before, content := genExpr(env, expr.expr, prefix, retTyp)
 	return before, fmt.Sprintf("MakeOptionSome(%s)", content)
 }
 
-func genNoneExpr(expr *NoneExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genNoneExpr(env *Env, expr *NoneExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("MakeOptionNone[%s]()", expr.typ.(OptionType).wrappedType.GoStr())
 }
 
-func genOkExpr(expr *OkExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(expr.expr, prefix, retTyp)
+func genOkExpr(env *Env, expr *OkExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before, content := genExpr(env, expr.expr, prefix, retTyp)
 	return before, fmt.Sprintf("MakeResultOk(%s)", content)
 }
 
-func genErrExpr(expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(expr.expr, prefix, retTyp)
+func genErrExpr(env *Env, expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before, content := genExpr(env, expr.expr, prefix, retTyp)
 	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(ResultType).wrappedType.GoStr(), content)
 }
 
-func genMakeExpr(expr *MakeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before1, content1 := genExprs(expr.exprs, prefix, retTyp)
+func genMakeExpr(env *Env, expr *MakeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before1, content1 := genExprs(env, expr.exprs, prefix, retTyp)
 	return before1, fmt.Sprintf("make(%s)", content1)
 }
 
-func genBinOpExpr(expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genBinOpExpr(env *Env, expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	var before []IBefore
-	before1, content1 := genExpr(expr.lhs, prefix, retTyp)
-	before2, content2 := genExpr(expr.rhs, prefix, retTyp)
+	op := expr.op.lit
+	before1, content1 := genExpr(env, expr.lhs, prefix, retTyp)
+	before2, content2 := genExpr(env, expr.rhs, prefix, retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
-	return before, fmt.Sprintf("%s %s %s", content1, expr.op.lit, content2)
+	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
+		if TryCast[*StructType](expr.lhs.GetType()) && TryCast[*StructType](expr.rhs.GetType()) {
+			lhsName := expr.lhs.GetType().(*StructType).name
+			rhsName := expr.rhs.GetType().(*StructType).name
+			if lhsName == rhsName {
+				if (op == "==" || op == "!=") && env.Get(lhsName+".__EQL") != nil {
+					if op == "==" {
+						return before, fmt.Sprintf("%s.__EQL(%s)", content1, content2)
+					} else {
+						return before, fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
+					}
+				}
+			}
+		}
+	}
+	return before, fmt.Sprintf("%s %s %s", content1, op, content2)
 }
 
-func genIdentExpr(expr *IdentExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genIdentExpr(env *Env, expr *IdentExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	if strings.HasPrefix(expr.lit, "$") {
 		expr.lit = strings.Replace(expr.lit, "$", "aglArg", 1)
 	}
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
-func genCompositeLit(expr *CompositeLitExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	return nil, fmt.Sprintf("%v{}", expr.typ.(*IdentExpr).lit)
+func genKeyValueExpr(env *Env, expr *KeyValueExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.key, prefix, retTyp)
+	before2, content2 := genExpr(env, expr.value, prefix, retTyp)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	out += fmt.Sprintf("%s: %s", content1, content2)
+	return
 }
 
-func genAnonFnExpr(expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genCompositeLit(env *Env, expr *CompositeLitExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	var tmp []string
+	var before []IBefore
+	for _, elt := range expr.elts {
+		before1, content1 := genExpr(env, elt, prefix, retTyp)
+		before = append(before, before1...)
+		tmp = append(tmp, content1)
+	}
+	return before, fmt.Sprintf("%v{%s}", expr.typ.(*IdentExpr).lit, strings.Join(tmp, ", "))
+}
+
+func genAnonFnExpr(env *Env, expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	t := expr.typ.(*FuncType)
 	var argsT string
 	if len(t.params) > 0 {
@@ -541,14 +575,14 @@ func genAnonFnExpr(expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, stri
 			expr.stmts[0] = &ReturnStmt{expr: e.x}
 		}
 	}
-	before1, content1 := genStmts(expr.stmts, prefix+"\t", retTyp)
+	before1, content1 := genStmts(env, expr.stmts, prefix+"\t", retTyp)
 	return before1, fmt.Sprintf("func(%s)%s {\n%s%s}", argsT, retT, content1, prefix) // TODO
 }
 
-func genSelectorExpr(expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	var before []IBefore
-	before1, content1 := genExpr(expr.x, prefix, retTyp)
-	before2, content2 := genExpr(expr.sel, prefix, retTyp)
+	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+	before2, content2 := genExpr(env, expr.sel, prefix, retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	// Rename tuple .0 .1 .2 ... to .Arg0 .Arg1 .Arg2 ...
@@ -561,14 +595,14 @@ func genSelectorExpr(expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, 
 	return before, fmt.Sprintf("%s.%s", content1, content2)
 }
 
-func genVecExpr(expr *VecExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genVecExpr(env *Env, expr *VecExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	var before []IBefore
 	out := fmt.Sprintf("%s", expr.GetType().GoStr())
 	if expr.exprs != nil {
 		out += "{"
 		var tmp []string
 		for _, e := range expr.exprs {
-			before1, content1 := genExpr(e, prefix, retTyp)
+			before1, content1 := genExpr(env, e, prefix, retTyp)
 			before = append(before, before1...)
 			tmp = append(tmp, content1)
 		}
@@ -578,8 +612,8 @@ func genVecExpr(expr *VecExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	return before, out
 }
 
-func genTupleExpr(expr *TupleExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, _ := genExprs(expr.exprs, prefix, retTyp)
+func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	before, _ := genExprs(env, expr.exprs, prefix, retTyp)
 	structName := expr.GetType().(TupleTypeTyp).name
 	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	for i, x := range expr.exprs {
@@ -589,17 +623,17 @@ func genTupleExpr(expr *TupleExpr, prefix string, retTyp Typ) ([]IBefore, string
 	before = append(before, NewBeforeFn(structStr)) // TODO Add in public scope (when function output)
 	var fields []string
 	for i, x := range expr.exprs {
-		before1, content1 := genExpr(x, prefix, retTyp)
+		before1, content1 := genExpr(env, x, prefix, retTyp)
 		before = append(before, before1...)
 		fields = append(fields, fmt.Sprintf("Arg%d: %s", i, content1))
 	}
 	return before, fmt.Sprintf("%s{%s}", structName, strings.Join(fields, ", "))
 }
 
-func genBubbleOptionExpr(e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	if TryCast[OptionType](e.x.GetType()) {
 		if _, ok := retTyp.(ResultType); ok {
-			before1, content1 := genExpr(e.x, prefix, retTyp)
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			// TODO: res should be an incrementing tmp numbered variable
 			before := NewBeforeStmt(addPrefix(`res := `+content1+`
 if res.IsNone() {
@@ -609,7 +643,7 @@ if res.IsNone() {
 			out := `res.Unwrap()`
 			return append(before1, before), out
 		} else {
-			before1, content1 := genExpr(e.x, prefix, retTyp)
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			out := fmt.Sprintf("%s.Unwrap()", content1)
 			return before1, out
 		}
@@ -631,7 +665,7 @@ func addPrefix(s, prefix string) string {
 	return strings.Join(newArr, "\n")
 }
 
-func genBubbleResultExpr(e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genBubbleResultExpr(env *Env, e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	// TODO: res should be an incrementing tmp numbered variable
 	fmt.Println("?", e.x, e.x.GetType())
 	// Native void unwrapping
@@ -660,7 +694,7 @@ if res.IsErr() {
 `
 	if TryCast[ResultType](e.x.GetType()) {
 		if TryCast[VoidType](retTyp) && TryCast[*FuncType](e.GetType()) && e.GetType().(*FuncType).isNative {
-			before1, content1 := genExpr(e.x, prefix, retTyp)
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			if e.GetType().(*FuncType).isNative {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
 				out := `res`
@@ -672,7 +706,7 @@ if res.IsErr() {
 		}
 
 		if retTypType, ok := retTyp.(ResultType); ok {
-			before1, content1 := genExpr(e.x, prefix, retTyp)
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			if e.GetType().(ResultType).native {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
 				out := `res`
@@ -683,7 +717,7 @@ if res.IsErr() {
 			out := `res.Unwrap()`
 			return append(before1, before), out
 		} else {
-			before1, content1 := genExpr(e.x, prefix, retTyp)
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			out := fmt.Sprintf("%s.Unwrap()", content1)
 			return before1, out
 		}
@@ -692,39 +726,39 @@ if res.IsErr() {
 	}
 }
 
-func genCallExpr(e *CallExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	var before []IBefore
 	switch expr := e.fun.(type) {
 	case *SelectorExpr:
 		if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "filter" {
-			before1, content1 := genExpr(expr.x, prefix, retTyp)
-			before2, content2 := genExpr(e.args[0], prefix, retTyp) // TODO resolve generic parameter to concrete type
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+			before2, content2 := genExpr(env, e.args[0], prefix, retTyp) // TODO resolve generic parameter to concrete type
 			before = append(before, before1...)
 			before = append(before, before2...)
 			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
 		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "map" {
-			before1, content1 := genExpr(expr.x, prefix, retTyp)
-			before2, content2 := genExpr(e.args[0], prefix, retTyp)
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
 			before = append(before, before1...)
 			before = append(before, before2...)
 			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
 		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "reduce" {
-			before1, content1 := genExpr(expr.x, prefix, retTyp)
-			before2, content2 := genExpr(e.args[0], prefix, retTyp)
-			before3, content3 := genExpr(e.args[1], prefix, retTyp)
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+			before3, content3 := genExpr(env, e.args[1], prefix, retTyp)
 			before = append(before, before1...)
 			before = append(before, before2...)
 			before = append(before, before3...)
 			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
 		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "sum" {
-			before1, content1 := genExpr(expr.x, prefix, retTyp)
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before = append(before, before1...)
 			return before, fmt.Sprintf("AglVecSum(%s)", content1)
 		}
 		if TryCast[OptionType](expr.x.GetType()) ||
 			TryCast[ResultType](expr.x.GetType()) {
 			if expr.sel.lit == "unwrap" {
-				_, content := genExpr(expr.x, prefix, retTyp)
+				_, content := genExpr(env, expr.x, prefix, retTyp)
 				return nil, fmt.Sprintf(`%s.Unwrap()`, content)
 			}
 		}
@@ -732,8 +766,8 @@ func genCallExpr(e *CallExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 		//default:
 		//panic(fmt.Sprintf("unknown function type: %s %v", reflect.TypeOf(expr.fun), expr.fun))
 	}
-	before1, content := genExpr(e.fun, prefix, retTyp)
-	before2, content2 := genExprs(e.args, prefix, retTyp)
+	before1, content := genExpr(env, e.fun, prefix, retTyp)
+	before2, content2 := genExprs(env, e.args, prefix, retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	return before, fmt.Sprintf("%s(%s)", content, content2)
