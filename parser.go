@@ -1125,6 +1125,8 @@ type VoidExpr struct {
 	BaseExpr
 }
 
+func (v VoidExpr) String() string { return "VoidExpr" }
+
 type FuncOut struct {
 	expr Expr
 }
