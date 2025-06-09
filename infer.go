@@ -117,10 +117,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 		return
 	}
 
-	var lhsID *IdentExpr
-	if !CastInto[*IdentExpr](lhs, &lhsID) {
-		panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(stmt.lhs)))
-	}
+	lhsID := MustCast[*IdentExpr](lhs)
 	switch rhs := stmt.rhs.(type) {
 	case *CallExpr:
 		if rhsID, ok := rhs.fun.(*IdentExpr); ok {
