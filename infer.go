@@ -135,6 +135,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	} else if rhs, ok := stmt.rhs.(*BubbleResultExpr); ok {
 		if callExpr, ok := rhs.x.(*CallExpr); ok {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
+				fmt.Println("??", rhs, rhs.typ, rhsID.GetType().GoStr())
 				rhs.SetType(rhsID.GetType())
 				lhsID.SetType(rhs.typ.(*FuncType).ret)
 				assignFn(lhsID.lit, lhsID.typ)
@@ -189,7 +190,6 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		inferExpr(expr.x, nil, env)
 	case *BubbleResultExpr:
 		inferExpr(expr.x, nil, env)
-		fmt.Println("??????????", expr, expr.x.GetType())
 		expr.SetType(expr.x.GetType())
 	case *NumberExpr:
 		expr.SetType(UntypedNumType{})
