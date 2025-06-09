@@ -416,6 +416,7 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		default:
 			inferExpr(id, nil, env)
 			idT := id.GetType()
+			expr.SetType(idT)
 			inferVecExtensions(env, idT, exprT, expr)
 		}
 		inferExprs(expr.args, env)

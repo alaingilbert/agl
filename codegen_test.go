@@ -1333,3 +1333,34 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen53(t *testing.T) {
+	src := `
+type Person struct {
+}
+fn (p Person) method1() Person! {
+	return Ok(p)
+}
+fn (p Person) method2() Person! {
+	return Ok(p)
+}
+fn main() {
+	p := Person{}
+	a := p.method1()!.method1()!
+}
+`
+	expected := `type Person struct {
+}
+func (p Person) method1() Result[Person] {
+	return MakeResultOk(p)
+}
+func (p Person) method2() Result[Person] {
+	return MakeResultOk(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1().Unwrap().method1().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
