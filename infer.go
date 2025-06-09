@@ -135,7 +135,6 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	} else if rhs, ok := stmt.rhs.(*BubbleResultExpr); ok {
 		if callExpr, ok := rhs.x.(*CallExpr); ok {
 			if rhsID, ok := callExpr.fun.(*IdentExpr); ok {
-				fmt.Println("??", rhs, rhs.typ, rhsID.GetType().GoStr())
 				rhs.SetType(rhsID.GetType())
 				lhsID.SetType(rhs.typ.(*FuncType).ret)
 				assignFn(lhsID.lit, lhsID.typ)
