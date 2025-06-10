@@ -1556,3 +1556,34 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen_ErrPropagationInOption(t *testing.T) {
+	src := `
+fn errFn() ! {
+    return Err("some error")
+}
+fn maybeInt() int? {
+	errFn()!
+	return Some(42)
+}
+fn main() {
+    maybeInt()?
+}
+`
+	expected := `func errFn() Result[AglVoid] {
+	return MakeResultErr[AglVoid](errors.New("some error"))
+}
+func maybeInt() Option[int] {
+	res := errFn()
+	if res.IsErr() {
+		return MakeOptionNone[int]()
+	}
+	res.Unwrap()
+	return MakeOptionSome(42)
+}
+func main() {
+	maybeInt().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
