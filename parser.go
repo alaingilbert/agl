@@ -30,6 +30,8 @@ func parser(ts *TokenStream) *ast {
 			s.funcs = append(s.funcs, parseFnStmt(ts, false))
 		} else if ts.Peek().typ == INLINECOMMENT {
 			ts.Next()
+		} else {
+			assertf(false, "%s: syntax error: non-declaration statement outside function body", ts.Peek().Pos)
 		}
 	}
 	return s
