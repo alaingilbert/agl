@@ -2043,7 +2043,7 @@ fn main() {
 `
 	expected := `func main() {
 	a := []uint8{1, 2, 3, 4, 5}
-	var b u8 = AglVecFind(a, func(aglArg0 uint8) bool {
+	var b uint8 = AglVecFind(a, func(aglArg0 uint8) bool {
 		return aglArg0 == 2
 	}).Unwrap()
 	fmt.Println(b)
