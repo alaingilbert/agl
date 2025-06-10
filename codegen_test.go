@@ -1884,3 +1884,20 @@ fn main() {
 `
 	tassert.NotPanics(t, testCodeGenFn(src2))
 }
+
+func TestCodeGen_FunctionImplicitReturn(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	maybeInt()
+}
+`
+	expected := `func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	maybeInt()
+}
+`
+	testCodeGen(t, src, expected)
+}
