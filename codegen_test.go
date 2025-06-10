@@ -1489,3 +1489,16 @@ fn main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen_56(t *testing.T) {
+	src := `
+type Color enum {
+    blue,
+    red,
+}
+fn main() {
+    color := Color.red1
+}
+`
+	tassert.PanicsWithError(t, "enum Color has no field red1", func() { codegen(infer(parser(NewTokenStream(src)))) })
+}
