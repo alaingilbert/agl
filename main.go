@@ -73,7 +73,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	out := codegen(infer(parser(NewTokenStream(string(by)))))
+	out := NewGenerator(infer(parser(NewTokenStream(string(by))))).Generate()
 	fmt.Println(out)
 	return nil
 }

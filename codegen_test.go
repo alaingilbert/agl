@@ -8,7 +8,7 @@ import (
 func testCodeGen(t *testing.T, src, expected string) {
 	ts := NewTokenStream(src)
 	a, e := infer(parser(ts))
-	got := codegen(a, e)
+	got := NewGenerator(a, e).Generate()
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
 	}
@@ -980,10 +980,7 @@ func main() {
 	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 9")
 }
 `
-	got := codegen(infer(parser(NewTokenStream(src))))
-	if got != expected {
-		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-	}
+	testCodeGen(t, src, expected)
 }
 
 //func TestCodeGen37(t *testing.T) {
@@ -1064,7 +1061,7 @@ fn main() {
 	addOne(a)
 }
 `
-	tassert.PanicsWithError(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen41(t *testing.T) {
@@ -1074,7 +1071,7 @@ fn main() {
 	addOne(true)
 }
 `
-	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen_Variadic1(t *testing.T) {
@@ -1105,7 +1102,7 @@ fn main() {
 	variadic(1)
 }
 `
-	tassert.PanicsWithError(t, "6:2 not enough arguments in call to variadic", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "6:2 not enough arguments in call to variadic", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen_Variadic3(t *testing.T) {
@@ -1117,7 +1114,7 @@ fn main() {
 	variadic(1, 2, "a", 3, "c")
 }
 `
-	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen42(t *testing.T) {
@@ -1257,7 +1254,7 @@ fn main() {
 	test("a" == 42)
 }
 `
-	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen49(t *testing.T) {
@@ -1500,7 +1497,7 @@ fn main() {
 	color := Color.red1
 }
 `
-	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", func() { codegen(infer(parser(NewTokenStream(src)))) })
+	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
 }
 
 func TestCodeGen57(t *testing.T) {
