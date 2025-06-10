@@ -34,7 +34,7 @@ func parseFuncTypeFromString(s string, env *Env) *FuncType {
 		}
 	}
 	ret := nenv.GetType(ft.out.expr)
-	if v, ok := ret.(ResultType); ok {
+	if v, ok := ret.(*ResultType); ok {
 		v.native = true
 	}
 	return &FuncType{
@@ -379,14 +379,16 @@ func cmpTypes(a, b Typ) bool {
 	if TryCast[OptionType](a) && TryCast[OptionType](b) {
 		return cmpTypes(a.(OptionType).wrappedType, b.(OptionType).wrappedType)
 	}
-	if TryCast[ResultType](a) && TryCast[ResultType](b) {
-		return cmpTypes(a.(ResultType).wrappedType, b.(ResultType).wrappedType)
+	if TryCast[*ResultType](a) && TryCast[*ResultType](b) {
+		return cmpTypes(a.(*ResultType).wrappedType, b.(*ResultType).wrappedType)
 	}
 	return false
 }
 
 func inferCallExpr(expr *CallExpr, env *Env) {
 	switch exprT := expr.fun.(type) {
+	case *VecExpr:
+		expr.fun.SetType(ArrayTypeTyp{elt: env.Get(exprT.typStr)})
 	case *IdentExpr:
 		if exprTT := env.Get(exprT.lit); exprTT != nil {
 			ft := exprTT.(*FuncType)
@@ -443,6 +445,13 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 				if lT, ok := l.(*StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
 					expr.SetType(env.Get(name).(*FuncType).ret)
+				} else if _, ok := l.(PackageType); ok {
+					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
+					if t := env.Get(name); t != nil {
+						expr.SetType(t.(*FuncType).ret)
+					} else {
+						panic(fmt.Sprintf("no function %s", name))
+					}
 				}
 			}
 			idT := id.GetType()
@@ -455,10 +464,15 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		}
 		inferExprs(expr.args, env)
 	default:
-		panic(fmt.Sprintf("unexpected type %v", to(expr)))
+		panic(fmt.Sprintf("unexpected type %v %v", expr.fun, expr.fun.GetType()))
 	}
 	if expr.fun.GetType() != nil {
-		expr.SetType(expr.fun.GetType().(*FuncType).ret)
+		if v, ok := expr.fun.GetType().(*FuncType); ok {
+			expr.SetType(v.ret)
+		} else { // Type casting
+			p("?HERE", expr, expr.typ)
+			// TODO
+		}
 	}
 }
 

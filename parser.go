@@ -576,7 +576,14 @@ func parseExpr2(ts *TokenStream, prec int) Expr {
 			panic("")
 		}
 	case LBRACKET:
-		return parseVecExpr(ts, prec)
+		var x Expr = parseVecExpr(ts, prec)
+		if ts.Peek().typ == LPAREN {
+			assert(ts.Next().typ == LPAREN)
+			e := parseExpr(ts, 1)
+			assert(ts.Next().typ == RPAREN)
+			x = &CallExpr{fun: x, args: []Expr{e}}
+		}
+		return x
 	case MUT:
 		ts.Next()
 		return &MutExpr{x: parseExpr(ts, prec)}
@@ -882,11 +889,11 @@ type ResultType struct {
 	native      bool
 }
 
-func (r ResultType) GoStr() string {
+func (r *ResultType) GoStr() string {
 	return fmt.Sprintf("Result[%s]", r.wrappedType.GoStr())
 }
 
-func (r ResultType) String() string {
+func (r *ResultType) String() string {
 	return fmt.Sprintf("ResultType(%s)", r.wrappedType)
 }
 
