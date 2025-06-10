@@ -1465,6 +1465,96 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen_Enum3(t *testing.T) {
+	src := `
+type Color enum {
+	red,
+	other(u8, string),
+}
+fn main() {
+	(a, b) := Color.other(1, "yellow")
+}
+`
+	expected := `type ColorTag int
+const (
+	Color_red ColorTag = iota + 1
+	Color_other
+)
+type Color struct {
+	tag ColorTag
+	other0 uint8
+	other1 string
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_red:
+		return "red"
+	case Color_other:
+		return "other"
+	default:
+		panic("")
+	}
+}
+func Make_Color_red() Color {
+	return Color{tag: Color_red}
+}
+func Make_Color_other(arg0 uint8, arg1 string) Color {
+	return Color{tag: Color_other, other0: arg0, other1: arg1}
+}
+func main() {
+	aglVar1 := Make_Color_other(1, "yellow")
+	a, b := aglVar1.other0, aglVar1.other1
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_Enum4(t *testing.T) {
+	src := `
+type Color enum {
+	red,
+	other(u8, string),
+}
+fn main() {
+	other := Color.other(1, "yellow")
+	(a, b) := other
+}
+`
+	expected := `type ColorTag int
+const (
+	Color_red ColorTag = iota + 1
+	Color_other
+)
+type Color struct {
+	tag ColorTag
+	other0 uint8
+	other1 string
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_red:
+		return "red"
+	case Color_other:
+		return "other"
+	default:
+		panic("")
+	}
+}
+func Make_Color_red() Color {
+	return Color{tag: Color_red}
+}
+func Make_Color_other(arg0 uint8, arg1 string) Color {
+	return Color{tag: Color_other, other0: arg0, other1: arg1}
+}
+func main() {
+	other := Make_Color_other(1, "yellow")
+	aglVar1 := other
+	a, b := aglVar1.other0, aglVar1.other1
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_GenericMethod(t *testing.T) {
 //	src := `
 //type Person struct {

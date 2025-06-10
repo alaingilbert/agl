@@ -961,12 +961,17 @@ func (e InterfaceType) GoStr() string { return e.name }
 type EnumType struct {
 	BaseTyp
 	name   string
-	fields []string
+	fields []EnumFieldType
 }
 
 func (e EnumType) String() string { return fmt.Sprintf("EnumType(%s)", e.name) }
 
 func (e EnumType) GoStr() string { return fmt.Sprintf("%s", e.name) }
+
+type EnumFieldType struct {
+	name string
+	elts []string
+}
 
 type StructType struct {
 	BaseTyp

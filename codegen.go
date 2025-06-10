@@ -404,14 +404,33 @@ func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (befor
 	var lhs string
 	var after string
 	if TryCast[*TupleExpr](stmt.lhs) {
-		lhs = AglVariablePrefix + "1"
-		var names []string
-		var exprs []string
-		for i, x := range stmt.lhs.(*TupleExpr).exprs {
-			names = append(names, x.(*IdentExpr).lit)
-			exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+		if TryCast[*EnumType](stmt.rhs.GetType()) {
+			lhs = AglVariablePrefix + "1"
+			var sel string
+			switch v := stmt.rhs.(type) {
+			case *CallExpr:
+				sel = v.fun.(*SelectorExpr).sel.lit
+			case *IdentExpr:
+				sel = v.lit
+			}
+
+			var names []string
+			var exprs []string
+			for i, x := range stmt.lhs.(*TupleExpr).exprs {
+				names = append(names, x.(*IdentExpr).lit)
+				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
+			}
+			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+		} else {
+			lhs = AglVariablePrefix + "1"
+			var names []string
+			var exprs []string
+			for i, x := range stmt.lhs.(*TupleExpr).exprs {
+				names = append(names, x.(*IdentExpr).lit)
+				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+			}
+			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
-		after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 	} else {
 		before1, content1 := genExpr(env, stmt.lhs, prefix, retTyp)
 		before = append(before, before1...)
