@@ -85,7 +85,9 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 	case *IfStmt:
 		inferExpr(stmt.cond, returnTyp, env)
 		inferStmts(stmt.body, returnTyp, env)
-		inferStmt(stmt.Else, returnTyp, env)
+		if stmt.Else != nil {
+			inferStmt(stmt.Else, returnTyp, env)
+		}
 	case *ReturnStmt:
 		inferExpr(stmt.expr, returnTyp, env)
 	case *AssertStmt:
