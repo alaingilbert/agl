@@ -508,7 +508,11 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 }
 
 func genInterfaceStmt(env *Env, stmt *InterfaceStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	out += fmt.Sprintf("type %s interface {\n}\n", stmt.lit)
+	out += fmt.Sprintf("type %s interface {\n", stmt.lit)
+	for _, e := range stmt.elts {
+		out += "\t" + e.(*FuncExpr).GetType().(*FuncType).InterfaceStr() + "\n"
+	}
+	out += "}\n"
 	return
 }
 
