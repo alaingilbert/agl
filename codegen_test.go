@@ -1960,3 +1960,29 @@ type Writer interface {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen_ValueSpec1(t *testing.T) {
+	src := `
+fn main() {
+	var a int? = None
+}
+`
+	expected := `func main() {
+	var a Option[int] = MakeOptionNone[int]()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_ValueSpec2(t *testing.T) {
+	src := `
+fn main() {
+	var a int?
+}
+`
+	expected := `func main() {
+	var a Option[int]
+}
+`
+	testCodeGen(t, src, expected)
+}

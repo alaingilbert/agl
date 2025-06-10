@@ -173,6 +173,8 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genBlockStmt(env, s, prefix, retTyp)
 	case *InterfaceStmt:
 		return genInterfaceStmt(env, s, prefix, retTyp)
+	case *ValueSpec:
+		return genValueSpec(env, s, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
@@ -504,6 +506,34 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 	} else {
 		out += prefix + "}\n"
 	}
+	return
+}
+
+func genValueSpec(env *Env, stmt *ValueSpec, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.names[0], prefix, retTyp)
+	before = append(before, before1...)
+	var before2, before3 []IBefore
+	var content2, content3 string
+	if TryCast[*BubbleOptionExpr](stmt.typ) {
+		// TODO genType()
+		before2, content2 = genExpr(env, stmt.typ.(*BubbleOptionExpr).x, prefix, retTyp)
+		before = append(before, before2...)
+		content2 = fmt.Sprintf("Option[%s]", content2)
+	} else if TryCast[*BubbleResultExpr](stmt.typ) {
+		before2, content2 = genExpr(env, stmt.typ.(*BubbleResultExpr).x, prefix, retTyp)
+		before = append(before, before2...)
+		content2 = fmt.Sprintf("Result[%s]", content2)
+	} else {
+		before2, content2 = genExpr(env, stmt.typ, prefix, retTyp)
+		before = append(before, before2...)
+	}
+	out += prefix + fmt.Sprintf("var %s %s", content1, content2)
+	if len(stmt.values) > 0 {
+		before3, content3 = genExpr(env, stmt.values[0], prefix, retTyp)
+		before = append(before, before3...)
+		out += fmt.Sprintf(" = %s", content3)
+	}
+	out += "\n"
 	return
 }
 

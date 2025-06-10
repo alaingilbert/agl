@@ -370,6 +370,17 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 		}
 	}
 	switch ts.Peek().typ {
+	case VAR:
+		assert(ts.Next().typ == VAR)
+		id := parseIdentExpr(ts)
+		t := parseType(ts)
+		var values []Expr
+		if ts.Peek().typ == ASSIGN {
+			assert(ts.Next().typ == ASSIGN)
+			value := parseExpr(ts, 1)
+			values = []Expr{value}
+		}
+		return &ValueSpec{names: []*IdentExpr{id}, typ: t, values: values}
 	case IF:
 		return parseIfStmt(ts)
 	case RETURN:

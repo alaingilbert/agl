@@ -93,6 +93,8 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 	switch stmt := s.(type) {
 	case *AssignStmt:
 		inferAssignStmt(stmt, env)
+	case *ValueSpec:
+		inferValueSpecStmt(stmt, env)
 	case *IfStmt:
 		inferExpr(stmt.cond, returnTyp, env)
 		inferStmts(stmt.body, returnTyp, env)
@@ -141,6 +143,20 @@ func inferAssertStmt(stmt *AssertStmt, env *Env) {
 	if stmt.msg != nil {
 		inferExpr(stmt.msg, nil, env)
 	}
+}
+
+func inferValueSpecStmt(stmt *ValueSpec, env *Env) {
+	inferExpr(stmt.typ, nil, env)
+	var rhsT Typ
+	if len(stmt.values) > 0 {
+		inferExpr(stmt.values[0], stmt.typ.GetType(), env)
+		rhsT = stmt.values[0].GetType()
+	} else {
+		rhsT = stmt.typ.GetType()
+	}
+	lhs := stmt.names[0]
+	env.Define(lhs.lit, rhsT)
+	lhs.SetType(rhsT)
 }
 
 func inferAssignStmt(stmt *AssignStmt, env *Env) {
@@ -195,6 +211,7 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		inferCallExpr(expr, env)
 	case *BubbleOptionExpr:
 		inferExpr(expr.x, nil, env)
+		expr.SetType(OptionType{wrappedType: expr.x.GetType()})
 	case *BubbleResultExpr:
 		inferExpr(expr.x, nil, env)
 		expr.SetType(expr.x.GetType())
