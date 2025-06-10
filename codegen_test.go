@@ -1521,3 +1521,22 @@ fn main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen58(t *testing.T) {
+	src := `
+fn test() int! {
+    return Err("test")
+}
+fn main() {
+    test()!
+}
+`
+	expected := `func test() Result[int] {
+	return MakeResultErr[int](errors.New("test"))
+}
+func main() {
+	test().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}

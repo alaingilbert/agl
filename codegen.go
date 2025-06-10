@@ -497,7 +497,11 @@ func genOkExpr(env *Env, expr *OkExpr, prefix string, retTyp Typ) ([]IBefore, st
 }
 
 func genErrExpr(env *Env, expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(env, expr.expr, prefix, retTyp)
+	newExpr := expr.expr
+	if v, ok := expr.expr.(*StringExpr); ok {
+		newExpr = &CallExpr{fun: &SelectorExpr{x: &IdentExpr{lit: "errors"}, sel: &IdentExpr{lit: "New"}}, args: []Expr{v}}
+	}
+	before, content := genExpr(env, newExpr, prefix, retTyp)
 	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(ResultType).wrappedType.GoStr(), content)
 }
 
