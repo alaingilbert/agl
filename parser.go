@@ -1267,6 +1267,10 @@ type MakeExpr struct {
 	exprs []Expr
 }
 
+func (m MakeExpr) String() string {
+	return fmt.Sprintf("MakeExpr(%v)", m.exprs)
+}
+
 type NoneExpr struct {
 	BaseExpr
 }
