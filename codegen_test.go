@@ -1377,33 +1377,92 @@ fn main() {
 	takeColor(color)
 }
 `
-	expected := `type Color int
+	expected := `type ColorTag int
 const (
-	AglEnum_Color_red Color = iota + 1
-	AglEnum_Color_green
-	AglEnum_Color_blue
+	Color_red ColorTag = iota + 1
+	Color_green
+	Color_blue
 )
+type Color struct {
+	tag ColorTag
+}
 func (v Color) String() string {
-	switch v {
-	case AglEnum_Color_red:
+	switch v.tag {
+	case Color_red:
 		return "red"
-	case AglEnum_Color_green:
+	case Color_green:
 		return "green"
-	case AglEnum_Color_blue:
+	case Color_blue:
 		return "blue"
 	default:
 		panic("")
 	}
 }
+func Make_Color_red() Color {
+	return Color{tag: Color_red}
+}
+func Make_Color_green() Color {
+	return Color{tag: Color_green}
+}
+func Make_Color_blue() Color {
+	return Color{tag: Color_blue}
+}
 func takeColor(c Color) {
 }
 func main() {
-	color := AglEnum_Color_red
+	color := Make_Color_red()
 	takeColor(color)
 }
 `
 	testCodeGen(t, src, expected)
 }
+
+//func TestCodeGen_Enum2(t *testing.T) {
+//	src := `
+//type Color enum {
+//	red,
+//	other(string)
+//}
+//fn takeColor(c Color) {}
+//fn main() {
+//	color1 := Color.red
+//	color2 := Color.other("yellow")
+//}
+//`
+//	expected := `type ColorTag int
+//const (
+//	AglEnum_Color_red ColorTag = iota + 1
+//	AglEnum_Color_other
+//)
+//func (v Color) String() string {
+//	switch v {
+//	case AglEnum_Color_red:
+//		return "red"
+//	case AglEnum_Color_other:
+//		return "other"
+//	default:
+//		panic("")
+//	}
+//}
+//type Color struct {
+//	tag ColorTag
+//	other string
+//}
+//func Make_Color_red() Color {
+//	return Color{tag: AglEnum_Color_red}
+//}
+//func Make_Color_other(arg0 string) Color {
+//	return Color{tag: AglEnum_Color_other, other: arg0}
+//}
+//func takeColor(c Color) {
+//}
+//func main() {
+//	color1 := Make_Color_red()
+//	color2 := Make_Color_other("yellow")
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
 //func TestCodeGen_GenericMethod(t *testing.T) {
 //	src := `
