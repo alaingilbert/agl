@@ -139,6 +139,18 @@ func IndexOf[T comparable](arr []T, needle T) (idx int) {
 	return Second(FindIdx(arr, predicate))
 }
 
+// Find looks through each value in the list, returning the first one that passes a truth test (predicate),
+// or nil if no value passes the test.
+// The function returns as soon as it finds an acceptable element, and doesn't traverse the entire list
+func Find[T any](arr []T, predicate func(T) bool) (out *T) {
+	return FindIter(SliceSeq(arr), predicate)
+}
+
+// FindIter ...
+func FindIter[T any](it iter.Seq[T], predicate func(T) bool) (out *T) {
+	return First(FindIdxIter(it, predicate))
+}
+
 // FindIdx ...
 func FindIdx[T any](arr []T, predicate func(T) bool) (*T, int) {
 	return FindIdxIter(SliceSeq(arr), predicate)
