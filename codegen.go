@@ -509,6 +509,9 @@ func genBinOpExpr(env *Env, expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefo
 	before2, content2 := genExpr(env, expr.rhs, prefix, retTyp)
 	before = append(before, before1...)
 	before = append(before, before2...)
+	if op == "in" {
+		return before, fmt.Sprintf("AglVecIn(%s, %s)", content2, content1)
+	}
 	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
 		if TryCast[*StructType](expr.lhs.GetType()) && TryCast[*StructType](expr.rhs.GetType()) {
 			lhsName := expr.lhs.GetType().(*StructType).name

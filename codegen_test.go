@@ -1502,3 +1502,22 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", func() { codegen(infer(parser(NewTokenStream(src)))) })
 }
+
+func TestCodeGen57(t *testing.T) {
+	src := `
+fn main() {
+	a := []int{1, 2, 3}
+	if 2 in a {
+		fmt.Println("found")
+	}
+}
+`
+	expected := `func main() {
+	a := []int{1, 2, 3}
+	if AglVecIn(a, 2) {
+		fmt.Println("found")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}

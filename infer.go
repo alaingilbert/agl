@@ -264,6 +264,20 @@ func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 	}
 }
 
+func isNumericType(t Typ) bool {
+	return TryCast[I64Type](t) ||
+		TryCast[I32Type](t) ||
+		TryCast[I16Type](t) ||
+		TryCast[I8Type](t) ||
+		TryCast[IntType](t) ||
+		TryCast[U64Type](t) ||
+		TryCast[U32Type](t) ||
+		TryCast[U16Type](t) ||
+		TryCast[U8Type](t) ||
+		TryCast[F64Type](t) ||
+		TryCast[F32Type](t)
+}
+
 func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	inferExpr(expr.lhs, nil, env)
 	inferExpr(expr.rhs, nil, env)
@@ -271,33 +285,10 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 		expr.rhs.SetType(expr.lhs.GetType())
 	}
 	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
-		// TODO
-		if (TryCast[I64Type](expr.lhs.GetType()) ||
-			TryCast[I32Type](expr.lhs.GetType()) ||
-			TryCast[I16Type](expr.lhs.GetType()) ||
-			TryCast[I8Type](expr.lhs.GetType()) ||
-			TryCast[IntType](expr.lhs.GetType()) ||
-			TryCast[U64Type](expr.lhs.GetType()) ||
-			TryCast[U32Type](expr.lhs.GetType()) ||
-			TryCast[U16Type](expr.lhs.GetType()) ||
-			TryCast[U8Type](expr.lhs.GetType()) ||
-			TryCast[F64Type](expr.lhs.GetType()) ||
-			TryCast[F32Type](expr.lhs.GetType())) &&
-			TryCast[UntypedNumType](expr.rhs.GetType()) {
+		if isNumericType(expr.lhs.GetType()) && TryCast[UntypedNumType](expr.rhs.GetType()) {
 			expr.rhs.SetType(expr.lhs.GetType())
 		}
-		if (TryCast[I64Type](expr.rhs.GetType()) ||
-			TryCast[I32Type](expr.rhs.GetType()) ||
-			TryCast[I16Type](expr.rhs.GetType()) ||
-			TryCast[I8Type](expr.rhs.GetType()) ||
-			TryCast[IntType](expr.rhs.GetType()) ||
-			TryCast[U64Type](expr.rhs.GetType()) ||
-			TryCast[U32Type](expr.rhs.GetType()) ||
-			TryCast[U16Type](expr.rhs.GetType()) ||
-			TryCast[U8Type](expr.rhs.GetType()) ||
-			TryCast[F64Type](expr.rhs.GetType()) ||
-			TryCast[F32Type](expr.rhs.GetType())) &&
-			TryCast[UntypedNumType](expr.lhs.GetType()) {
+		if isNumericType(expr.rhs.GetType()) && TryCast[UntypedNumType](expr.lhs.GetType()) {
 			expr.lhs.SetType(expr.rhs.GetType())
 		}
 	}
@@ -306,6 +297,11 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 		expr.SetType(BoolType{})
 	case ADD, MINUS, QUO, MUL, REM:
 		expr.SetType(expr.lhs.GetType())
+	case IN:
+		MustCast[ArrayTypeTyp](expr.rhs.GetType())
+		eltT := expr.rhs.GetType().(ArrayTypeTyp).elt
+		assertf(cmpTypesLoose(expr.lhs.GetType(), eltT), "%s mismatched types %s and %s for 'in' operator", expr.Pos(), expr.lhs.GetType(), eltT)
+		return
 	default:
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
@@ -332,6 +328,16 @@ func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
 			}
 		}
 	}
+}
+
+func cmpTypesLoose(a, b Typ) bool {
+	if isNumericType(a) && TryCast[UntypedNumType](b) {
+		return true
+	}
+	if isNumericType(b) && TryCast[UntypedNumType](a) {
+		return true
+	}
+	return cmpTypes(a, b)
 }
 
 func cmpTypes(a, b Typ) bool {
