@@ -14,6 +14,12 @@ func testCodeGen(t *testing.T, src, expected string) {
 	}
 }
 
+func testCodeGenFn(src string) func() {
+	return func() {
+		NewGenerator(infer(parser(NewTokenStream(src)))).Generate()
+	}
+}
+
 func TestCodeGen1(t *testing.T) {
 	src := `
 fn add(a, b int) int {
@@ -1061,7 +1067,7 @@ fn main() {
 	addOne(a)
 }
 `
-	tassert.PanicsWithError(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "5:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", testCodeGenFn(src))
 }
 
 func TestCodeGen41(t *testing.T) {
@@ -1071,7 +1077,7 @@ fn main() {
 	addOne(true)
 }
 `
-	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", testCodeGenFn(src))
 }
 
 func TestCodeGen_Variadic1(t *testing.T) {
@@ -1102,7 +1108,7 @@ fn main() {
 	variadic(1)
 }
 `
-	tassert.PanicsWithError(t, "6:2 not enough arguments in call to variadic", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "6:2 not enough arguments in call to variadic", testCodeGenFn(src))
 }
 
 func TestCodeGen_Variadic3(t *testing.T) {
@@ -1114,7 +1120,7 @@ fn main() {
 	variadic(1, 2, "a", 3, "c")
 }
 `
-	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", testCodeGenFn(src))
 }
 
 func TestCodeGen42(t *testing.T) {
@@ -1254,7 +1260,7 @@ fn main() {
 	test("a" == 42)
 }
 `
-	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", testCodeGenFn(src))
 }
 
 func TestCodeGen49(t *testing.T) {
@@ -1647,7 +1653,7 @@ fn main() {
 	color := Color.red1
 }
 `
-	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", func() { NewGenerator(infer(parser(NewTokenStream(src)))).Generate() })
+	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", testCodeGenFn(src))
 }
 
 func TestCodeGen57(t *testing.T) {
@@ -1867,7 +1873,7 @@ fn main() {
 	fmt.Println(a)
 }
 `
-	tassert.PanicsWithError(t, "6:14: undefined identifier a", func() { NewGenerator(infer(parser(NewTokenStream(src1)))).Generate() })
+	tassert.PanicsWithError(t, "6:14: undefined identifier a", testCodeGenFn(src1))
 	src2 := `
 fn maybeInt() int? { return Some(42) }
 fn main() {
@@ -1876,5 +1882,5 @@ fn main() {
 	}
 }
 `
-	tassert.NotPanics(t, func() { NewGenerator(infer(parser(NewTokenStream(src2)))).Generate() })
+	tassert.NotPanics(t, testCodeGenFn(src2))
 }
