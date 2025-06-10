@@ -453,7 +453,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			arg0.SetType(fs.typ)
 		case *SelectorExpr:
 			t := env.Get(fmt.Sprintf("%s.%s", arg0.x.(*IdentExpr).lit, arg0.sel.lit))
-			fmt.Println("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(*FuncType).params[0], t.(*FuncType).ret)
+			p("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(*FuncType).params[0], t.(*FuncType).ret)
 		default:
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
