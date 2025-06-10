@@ -1281,6 +1281,8 @@ type IfStmt struct {
 	Else Stmt
 }
 
+func (i IfStmt) String() string { return "IfStmt(...)" }
+
 func (i IfStmt) Pos() Pos { return i.cond.Pos() }
 
 type BlockStmt struct {
@@ -1352,6 +1354,10 @@ type AssignStmt struct {
 	lhs Expr
 	rhs Expr
 	tok Tok
+}
+
+func (a AssignStmt) String() string {
+	return fmt.Sprintf("AssignStmt(%v %v)", a.lhs, a.tok)
 }
 
 type CompositeLitExpr struct {
