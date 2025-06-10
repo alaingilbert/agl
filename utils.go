@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"iter"
 	"os"
 	"reflect"
 )
@@ -125,4 +126,46 @@ func TernaryOrZero[T any](predicate bool, a T) (zero T) {
 // Or return "a" if it is non-zero otherwise "b"
 func Or[T comparable](a, b T) (zero T) {
 	return Ternary(a != zero, a, b)
+}
+
+// InArray returns either or not a string is in an array
+func InArray[T comparable](needle T, haystack []T) bool {
+	return IndexOf(haystack, needle) > -1
+}
+
+// IndexOf ...
+func IndexOf[T comparable](arr []T, needle T) (idx int) {
+	predicate := func(el T) bool { return el == needle }
+	return Second(FindIdx(arr, predicate))
+}
+
+// FindIdx ...
+func FindIdx[T any](arr []T, predicate func(T) bool) (*T, int) {
+	return FindIdxIter(SliceSeq(arr), predicate)
+}
+
+// FindIdxIter ...
+func FindIdxIter[T any](it iter.Seq[T], predicate func(T) bool) (*T, int) {
+	var i int
+	for el := range it {
+		if predicate(el) {
+			return &el, i
+		}
+		i++
+	}
+	return nil, -1
+}
+
+func First[T any](a T, _ ...any) T { return a }
+
+func Second[T any](_ any, a T, _ ...any) T { return a }
+
+func SliceSeq[T any](s []T) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, v := range s {
+			if !yield(v) {
+				return
+			}
+		}
+	}
 }
