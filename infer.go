@@ -185,7 +185,7 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 	case *MakeExpr:
 		inferExprs(expr.exprs, env)
 	case *VecExpr:
-		expr.SetType(ArrayTypeTyp{elt: env.Get(expr.typStr)})
+		expr.SetType(ArrayType{elt: env.Get(expr.typStr)})
 	case *StringExpr:
 		expr.SetType(StringType{})
 	case *AnonFnExpr:
@@ -307,8 +307,8 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	case ADD, MINUS, QUO, MUL, REM:
 		expr.SetType(expr.lhs.GetType())
 	case IN:
-		MustCast[ArrayTypeTyp](expr.rhs.GetType())
-		eltT := expr.rhs.GetType().(ArrayTypeTyp).elt
+		MustCast[ArrayType](expr.rhs.GetType())
+		eltT := expr.rhs.GetType().(ArrayType).elt
 		assertf(cmpTypesLoose(expr.lhs.GetType(), eltT), "%s mismatched types %s and %s for 'in' operator", expr.Pos(), expr.lhs.GetType(), eltT)
 		return
 	default:
@@ -388,7 +388,7 @@ func cmpTypes(a, b Typ) bool {
 func inferCallExpr(expr *CallExpr, env *Env) {
 	switch exprT := expr.fun.(type) {
 	case *VecExpr:
-		expr.fun.SetType(ArrayTypeTyp{elt: env.Get(exprT.typStr)})
+		expr.fun.SetType(ArrayType{elt: env.Get(exprT.typStr)})
 	case *IdentExpr:
 		if exprTT := env.Get(exprT.lit); exprTT != nil {
 			ft := exprTT.(*FuncType)
@@ -417,7 +417,7 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 	case *SelectorExpr:
 		switch id := exprT.x.(type) {
 		case *IdentExpr:
-			if arr, ok := env.GetType(id).(ArrayTypeTyp); ok {
+			if arr, ok := env.GetType(id).(ArrayType); ok {
 				if exprT.sel.lit == "filter" {
 					filterFnType := env.Get("agl.Vec.filter").(*FuncType)
 					filterFnType.ReplaceGenericParameter("T", arr.elt)
@@ -476,18 +476,18 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 }
 
 func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) {
-	if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "filter" {
+	if TryCast[ArrayType](idT) && exprT.sel.lit == "filter" {
 		clbFnStr := "fn [T any](e T) bool"
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(*FuncType).params[0] = idT.(ArrayTypeTyp).elt
+		fs.typ.(*FuncType).params[0] = idT.(ArrayType).elt
 		expr.args[0].SetType(fs.typ)
-		expr.SetTypeForce(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayType{elt: fs.typ.(*FuncType).params[0]})
 
-	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "map" {
+	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
 		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(*FuncType).params[0] = idT.(ArrayTypeTyp).elt
+		fs.typ.(*FuncType).params[0] = idT.(ArrayType).elt
 		switch arg0 := expr.args[0].(type) {
 		case *AnonFnExpr:
 			arg0.SetType(fs.typ)
@@ -498,13 +498,13 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
 		//inferExprs(expr.args, env)
-		expr.SetTypeForce(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayType{elt: fs.typ.(*FuncType).params[0]})
 
-	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "reduce" {
+	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "reduce" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmp.Ordered](acc R, el T) R")) // TODO cmp.Ordered
 		fs.typ = getFuncType(fs, NewEnv())
 		inferExpr(expr.args[0], nil, env)
-		elTyp := idT.(ArrayTypeTyp).elt
+		elTyp := idT.(ArrayType).elt
 		fs.typ.(*FuncType).params[1] = elTyp
 		if _, ok := expr.args[0].(*NumberExpr).typ.(UntypedNumType); ok {
 			fs.typ.(*FuncType).params[0] = elTyp

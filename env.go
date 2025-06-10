@@ -86,7 +86,7 @@ func (e *Env) GetType(x Expr) Typ {
 	case *BubbleResultExpr:
 		return &ResultType{wrappedType: e.GetType(v.x)}
 	case *ArrayTypeExpr:
-		return ArrayTypeTyp{elt: e.GetType(v.elt)}
+		return ArrayType{elt: e.GetType(v.elt)}
 	case *SelectorExpr:
 		return nil
 	case *TrueExpr:

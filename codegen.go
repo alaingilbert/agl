@@ -805,19 +805,19 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 	var before []IBefore
 	switch expr := e.fun.(type) {
 	case *SelectorExpr:
-		if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "filter" {
+		if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "filter" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before2, content2 := genExpr(env, e.args[0], prefix, retTyp) // TODO resolve generic parameter to concrete type
 			before = append(before, before1...)
 			before = append(before, before2...)
 			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
-		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "map" {
+		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "map" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
 			before = append(before, before1...)
 			before = append(before, before2...)
 			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
-		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "reduce" {
+		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "reduce" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
 			before3, content3 := genExpr(env, e.args[1], prefix, retTyp)
@@ -825,7 +825,7 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 			before = append(before, before2...)
 			before = append(before, before3...)
 			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
-		} else if TryCast[ArrayTypeTyp](expr.x.GetType()) && expr.sel.lit == "sum" {
+		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "sum" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before = append(before, before1...)
 			return before, fmt.Sprintf("AglVecSum(%s)", content1)
