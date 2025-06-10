@@ -93,6 +93,8 @@ func (e *Env) GetType(x Expr) Typ {
 		return nil
 	case *VecExpr:
 		return nil
+	case *VoidExpr:
+		return VoidType{}
 	case *BinOpExpr:
 		return nil
 	case *TupleType:

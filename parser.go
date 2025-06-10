@@ -239,6 +239,9 @@ func parseType(ts *TokenStream) Expr {
 		} else {
 			panic("not implemented")
 		}
+	} else if ts.Peek().typ == BANG {
+		ts.Next()
+		return &BubbleResultExpr{x: &VoidExpr{}}
 	}
 	panic(fmt.Sprintf("unknown type %v", ts.Peek()))
 }
@@ -737,7 +740,7 @@ type VoidType struct{ BaseTyp }
 
 func (v VoidType) String() string { return "VoidType" }
 
-func (v VoidType) GoStr() string { return "" }
+func (v VoidType) GoStr() string { return "AglVoid" }
 
 type IntType struct{ BaseTyp }
 

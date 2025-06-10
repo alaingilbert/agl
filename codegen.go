@@ -296,8 +296,10 @@ func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
 	}
 	var o string
 	if f.out.expr != nil {
-		o += f.out.expr.GetType().GoStr()
-		o = Ternary(o != "", " "+o, "")
+		if _, ok := f.out.expr.GetType().(VoidType); !ok {
+			o += f.out.expr.GetType().GoStr()
+			o = Ternary(o != "", " "+o, "")
+		}
 	}
 
 	// If the function body only has 1 stmt, auto add "return" of the only expression value
@@ -312,6 +314,7 @@ func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
 	if name == "==" {
 		name = "__EQL"
 	}
+
 	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
 	return
 }
@@ -788,6 +791,8 @@ func genCore() string {
 package main
 
 import "cmp"
+
+type AglVoid struct{}
 
 type Option[T any] struct {
 	t *T

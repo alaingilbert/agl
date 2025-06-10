@@ -1540,3 +1540,22 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen59(t *testing.T) {
+	src := `
+fn test() ! {
+    return Err("test")
+}
+fn main() {
+    test()!
+}
+`
+	expected := `func test() Result[AglVoid] {
+	return MakeResultErr[AglVoid](errors.New("test"))
+}
+func main() {
+	test().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
