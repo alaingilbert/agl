@@ -308,7 +308,11 @@ func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
 	}
 	before1, stmtsStr := genStmts(env, f.stmts, "\t", f.out.expr.GetType())
 	before = append(before, before1...)
-	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, f.name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
+	name := f.name
+	if name == "==" {
+		name = "__EQL"
+	}
+	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
 	return
 }
 

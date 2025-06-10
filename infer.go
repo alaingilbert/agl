@@ -56,7 +56,11 @@ func infer(s *ast) (*ast, *Env) {
 	for _, f := range s.funcs {
 		newEnv := env.Clone()
 		if f.recv != nil {
-			name := f.recv.list[0].typeExpr.(*IdentExpr).lit + "." + f.name
+			fnName := f.name
+			if fnName == "==" {
+				fnName = "__EQL"
+			}
+			name := f.recv.list[0].typeExpr.(*IdentExpr).lit + "." + fnName
 			env.Define(name, getFuncType(f, newEnv))
 		} else {
 			env.Define(f.name, getFuncType(f, newEnv))
