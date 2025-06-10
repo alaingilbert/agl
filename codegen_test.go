@@ -1587,3 +1587,17 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen60(t *testing.T) {
+	src := `
+type Writer interface {}
+fn main() {
+}
+`
+	expected := `type Writer interface {
+}
+func main() {
+}
+`
+	testCodeGen(t, src, expected)
+}
