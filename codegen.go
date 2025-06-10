@@ -238,21 +238,27 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 }
 
 func genEnumStmt(env *Env, s *EnumStmt) (before []IBefore, out string) {
-	out += fmt.Sprintf("type %s int\n", s.lit)
+	out += fmt.Sprintf("type %sTag int\n", s.lit)
 	out += "const (\n"
 	for i, name := range s.fields {
 		if i == 0 {
-			out += fmt.Sprintf("\tAglEnum_%s_%s %s = iota + 1\n", s.lit, name.lit, s.lit)
+			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", s.lit, name.lit, s.lit)
 		} else {
-			out += fmt.Sprintf("\tAglEnum_%s_%s\n", s.lit, name.lit)
+			out += fmt.Sprintf("\t%s_%s\n", s.lit, name.lit)
 		}
 	}
 	out += ")\n"
-	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v {\n", s.lit)
+	out += fmt.Sprintf("type %s struct {\n", s.lit)
+	out += fmt.Sprintf("\ttag %sTag\n", s.lit)
+	out += "}\n"
+	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", s.lit)
 	for _, name := range s.fields {
-		out += fmt.Sprintf("\tcase AglEnum_%s_%s:\n\t\treturn \"%s\"\n", s.lit, name.lit, name.lit)
+		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", s.lit, name.lit, name.lit)
 	}
 	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
+	for _, name := range s.fields {
+		out += fmt.Sprintf("func Make_%s_%s() %s {\n\treturn %s{tag: %s_%s}\n}\n", s.lit, name.lit, s.lit, s.lit, s.lit, name.lit)
+	}
 	return
 }
 
@@ -639,7 +645,7 @@ func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([
 	case TupleType:
 		content2 = fmt.Sprintf("Arg%s", content2)
 	case *EnumType:
-		return before, fmt.Sprintf("AglEnum_%s_%s", content1, content2)
+		return before, fmt.Sprintf("Make_%s_%s()", content1, content2)
 	}
 	return before, fmt.Sprintf("%s.%s", content1, content2)
 }
