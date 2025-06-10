@@ -524,8 +524,7 @@ func genValueSpec(env *Env, stmt *ValueSpec, prefix string, retTyp Typ) (before 
 		before = append(before, before2...)
 		content2 = fmt.Sprintf("Result[%s]", content2)
 	} else {
-		before2, content2 = genExpr(env, stmt.typ, prefix, retTyp)
-		before = append(before, before2...)
+		content2 = stmt.typ.GetType().GoStr()
 	}
 	out += prefix + fmt.Sprintf("var %s %s", content1, content2)
 	if len(stmt.values) > 0 {
