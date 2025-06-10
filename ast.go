@@ -742,6 +742,15 @@ func (e ExprStmt) String() string {
 	return fmt.Sprintf("ExprStmt(%v)", e.x)
 }
 
+type ValueSpec struct {
+	BaseStmt
+	names  []*IdentExpr
+	typ    Expr
+	values []Expr
+}
+
+func (v ValueSpec) String() string { return fmt.Sprintf("ValueSpec(%v)", v.names) }
+
 type AssignStmt struct {
 	BaseStmt
 	lhs Expr
