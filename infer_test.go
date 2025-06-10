@@ -49,7 +49,7 @@ fn fn10(a, b i64) i64! { return Ok(a + b) }
 	if _, ok := i.funcs[8].out.expr.GetType().(StringType); !ok {
 		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[8].out.expr.GetType()))
 	}
-	if tt, ok := i.funcs[9].out.expr.GetType().(ResultType); !ok {
+	if tt, ok := i.funcs[9].out.expr.GetType().(*ResultType); !ok {
 		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))
 	} else if _, ok := tt.wrappedType.(I64Type); !ok {
 		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))

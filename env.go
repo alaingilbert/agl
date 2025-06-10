@@ -32,12 +32,14 @@ func NewEnv() *Env {
 	env.Define("any", AnyType{})
 	env.Define("byte", ByteType{})
 	env.Define("cmp.Ordered", AnyType{})
+	env.Define("fmt.Println", parseFuncTypeFromString("fn(a ...any) int!", env))
 	env.Define("strconv.Atoi", parseFuncTypeFromString("fn(string) int!", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromString("fn(int) string", env))
 	env.Define("strconv.ParseInt", parseFuncTypeFromString("fn(s string, base int, bitSize int) i64!", env))
 	env.Define("strconv.ParseUInt", parseFuncTypeFromString("fn(s string, base int, bitSize int) u64!", env))
 	env.Define("strconv.ParseFloat", parseFuncTypeFromString("fn(s string, bitSize int) f64!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromString("fn(name string) Result[[]byte]", env))
+	env.Define("os.WriteFile", parseFuncTypeFromString("fn(name string, data []byte, perm os.FileMode) !", env))
 	env.Define("agl.Vec.filter", parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", env))
 	env.Define("agl.Vec.map", parseFuncTypeFromString("fn map[T, R any](a []T, f fn(T) R) []R", env))
 	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmp.Ordered](a []T, r R, f fn(a R, e T) R) R", env))
@@ -82,7 +84,7 @@ func (e *Env) GetType(x Expr) Typ {
 	case *BubbleOptionExpr:
 		return OptionType{wrappedType: e.GetType(v.x)}
 	case *BubbleResultExpr:
-		return ResultType{wrappedType: e.GetType(v.x)}
+		return &ResultType{wrappedType: e.GetType(v.x)}
 	case *ArrayTypeExpr:
 		return ArrayTypeTyp{elt: e.GetType(v.elt)}
 	case *SelectorExpr:

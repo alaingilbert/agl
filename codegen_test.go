@@ -874,7 +874,7 @@ fn main() {
 	if err != nil {
 		panic(err)
 	}
-	by := res
+	by := AglIdentity(res)
 	fmt.Println(by)
 }
 `
@@ -1643,6 +1643,33 @@ func test(w Writer) {
 func main() {
 	w := WriterA{}
 	test(w)
+	fmt.Println("done")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen61(t *testing.T) {
+	src := `
+package main
+
+import "os"
+import "fmt"
+
+fn main() {
+	os.WriteFile("test.txt", []byte("test"), 0755)!
+	fmt.Println("done")
+}
+`
+	expected := `package main
+import "os"
+import "fmt"
+func main() {
+	res, err := os.WriteFile("test.txt", []byte("test"), 0755)
+	if err != nil {
+		panic(err)
+	}
+	AglIdentity(res)
 	fmt.Println("done")
 }
 `
