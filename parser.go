@@ -317,14 +317,20 @@ func parseInterfaceTypeDecl(ts *TokenStream, lit string) (out *InterfaceStmt) {
 func parseEnumTypeDecl(ts *TokenStream, lit string) (out *EnumStmt) {
 	assert(ts.Next().typ == ENUM)
 	assert(ts.Next().typ == LBRACE)
-	fields := make([]*IdentExpr, 0)
+	fields := make([]*EnumField, 0)
 	for {
 		if ts.Peek().typ == RBRACE {
 			break
 		}
 		id := parseIdentExpr(ts)
+		var args []Expr
+		if ts.Peek().typ == LPAREN {
+			assert(ts.Next().typ == LPAREN)
+			args = parseTypes(ts, RPAREN)
+			assert(ts.Next().typ == RPAREN)
+		}
 		assert(ts.Next().typ == COMMA)
-		fields = append(fields, id)
+		fields = append(fields, &EnumField{name: id, elts: args})
 	}
 	assert(ts.Next().typ == RBRACE)
 	return &EnumStmt{lit: lit, fields: fields}
@@ -1325,10 +1331,15 @@ type EnumStmt struct {
 	BaseStmt
 	pub    bool
 	lit    string
-	fields []*IdentExpr
+	fields []*EnumField
 }
 
 func (e EnumStmt) String() string { return fmt.Sprintf("EnumStmt(%v)", e.lit) }
+
+type EnumField struct {
+	name *IdentExpr
+	elts []Expr
+}
 
 type structStmt struct {
 	BaseStmt
