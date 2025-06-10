@@ -500,6 +500,10 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 					filterFnType := env.Get("agl.Vec.sum").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					expr.SetType(filterFnType.ret)
+				} else if exprT.sel.lit == "find" {
+					filterFnType := env.Get("agl.Vec.find").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					expr.SetType(filterFnType.ret)
 				}
 			}
 			if l := env.Get(id.lit); l != nil {
@@ -537,6 +541,14 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 
 func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) {
 	if TryCast[ArrayType](idT) && exprT.sel.lit == "filter" {
+		clbFnStr := "fn [T any](e T) bool"
+		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
+		ft := getFuncType(fs, NewEnv())
+		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
+		expr.args[0].SetTypeForce(ft)
+		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
+
+	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "find" {
 		clbFnStr := "fn [T any](e T) bool"
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		ft := getFuncType(fs, NewEnv())

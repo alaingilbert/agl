@@ -926,6 +926,12 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 			before = append(before, before1...)
 			before = append(before, before2...)
 			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
+		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "find" {
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+			before = append(before, before1...)
+			before = append(before, before2...)
+			return before, fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
 		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "map" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
@@ -1109,5 +1115,14 @@ func AglTypeAssert[T any](v any) Option[T] {
 }
 
 func AglIdentity[T any](v T) T { return v }
+
+func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
+	for _, v := range a {
+		if f(v) {
+			return MakeOptionSome(v)
+		}
+	}
+	return MakeOptionNone[T]()
+}
 `
 }

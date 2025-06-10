@@ -43,6 +43,7 @@ func NewEnv() *Env {
 	env.Define("agl.Vec.filter", parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", env))
 	env.Define("agl.Vec.map", parseFuncTypeFromString("fn map[T, R any](a []T, f fn(T) R) []R", env))
 	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmp.Ordered](a []T, r R, f fn(a R, e T) R) R", env))
+	env.Define("agl.Vec.find", parseFuncTypeFromString("fn find[T any](a []T, f fn(e T) bool) T?", env))
 	env.Define("agl.Vec.sum", parseFuncTypeFromString("fn sum[T cmp.Ordered](a []T) T", env))
 	env.Define("agl.Option.is_some", parseFuncTypeFromString("fn is_some() bool", env))
 	env.Define("agl.Option.is_none", parseFuncTypeFromString("fn is_none() bool", env))
