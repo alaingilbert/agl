@@ -1658,19 +1658,17 @@ import "fmt"
 
 fn main() {
 	os.WriteFile("test.txt", []byte("test"), 0755)!
-	fmt.Println("done")
 }
 `
 	expected := `package main
 import "os"
 import "fmt"
 func main() {
-	res, err := os.WriteFile("test.txt", []byte("test"), 0755)
+	err := os.WriteFile("test.txt", []byte("test"), 0755)
 	if err != nil {
 		panic(err)
 	}
-	AglIdentity(res)
-	fmt.Println("done")
+	AglNoop[struct{}]()
 }
 `
 	testCodeGen(t, src, expected)
