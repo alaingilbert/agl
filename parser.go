@@ -404,11 +404,11 @@ func parseInlineComment(ts *TokenStream) *InlineCommentStmt {
 }
 
 func parseIfStmt(ts *TokenStream) *IfStmt {
-	ts.Next() // if
+	assert(ts.Next().typ == IF)
 	expr := parseExpr(ts, 1)
-	ts.Next() // {
+	assert(ts.Next().typ == LBRACE)
 	stmts := parseStmts(ts)
-	ts.Next() // }
+	assert(ts.Next().typ == RBRACE)
 	var elseStmt Stmt
 	if ts.Peek().typ == ELSE {
 		ts.Next() // else
