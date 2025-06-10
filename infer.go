@@ -169,7 +169,12 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 
 	if lhs, ok := lhs.(*TupleExpr); ok {
 		if TryCast[*EnumType](stmt.rhs.GetType()) {
-			// TODO
+			for i, e := range lhs.exprs {
+				lit := stmt.rhs.(*CallExpr).fun.(*SelectorExpr).sel.lit
+				f := Find(stmt.rhs.GetType().(*EnumType).fields, func(f EnumFieldType) bool { return f.name == lit })
+				assert(f != nil)
+				assignFn(e.(*IdentExpr).lit, env.Get(f.elts[i]))
+			}
 			return
 		}
 		MustCast[*TupleExpr](stmt.rhs)
