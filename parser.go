@@ -406,6 +406,11 @@ func parseInlineComment(ts *TokenStream) *InlineCommentStmt {
 func parseIfStmt(ts *TokenStream) *IfStmt {
 	assert(ts.Next().typ == IF)
 	expr := parseExpr(ts, 1)
+	if ts.Peek().typ == IN {
+		tok := ts.Next()
+		expr2 := parsePrimaryExpr(ts, 1)
+		expr = &BinOpExpr{lhs: expr, rhs: expr2, op: tok}
+	}
 	assert(ts.Next().typ == LBRACE)
 	stmts := parseStmts(ts)
 	assert(ts.Next().typ == RBRACE)
