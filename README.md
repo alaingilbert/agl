@@ -9,6 +9,40 @@
 - Array built-in map/reduce/filter methods
 - Compile down to Go code
 
+## Error propagation
+
+### Result propagation
+
+```go
+fn getInt() int! {
+	return Ok(42)
+}
+fn intermediate() int! {
+	num := getInt()! // Propagate 'Err' value to the caller
+	return Ok(num + 1)
+}
+fn main() {
+	num := intermediate()! // crash on 'Err' value
+	fmt.Println(num)
+}
+```
+
+### Option propagation
+
+```go
+fn maybeInt() int? {
+	return Some(42)
+}
+fn intermediate() int? {
+	num := maybeInt()? // Propagate 'None' value to the caller
+	return Some(num + 1)
+}
+fn main() {
+	num := intermediate()? // crash on 'None' value
+	fmt.Println(num)
+}
+```
+
 ## Destructuring
 
 ```go
