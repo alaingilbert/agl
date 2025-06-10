@@ -195,6 +195,7 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		inferIdentExpr(expr, env)
 	case *MakeExpr:
 		inferExprs(expr.exprs, env)
+		expr.SetType(expr.exprs[0].GetType())
 	case *VecExpr:
 		expr.SetType(ArrayType{elt: env.Get(expr.typStr)})
 	case *StringExpr:
