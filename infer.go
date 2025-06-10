@@ -221,7 +221,9 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 }
 
 func inferIdentExpr(expr *IdentExpr, env *Env) {
-	expr.SetType(env.Get(expr.lit))
+	v := env.Get(expr.lit)
+	assertf(v != nil, "%s: undefined identifier %s", expr.Pos(), expr.lit)
+	expr.SetType(v)
 }
 
 func tryConvertType(e Expr, optType Typ) {
