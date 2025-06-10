@@ -795,24 +795,21 @@ func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefo
 }
 
 func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	if TryCast[OptionType](e.x.GetType()) {
-		if _, ok := retTyp.(*ResultType); ok {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			// TODO: res should be an incrementing tmp numbered variable
-			before := NewBeforeStmt(addPrefix(`res := `+content1+`
+	assert(TryCast[OptionType](e.x.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
+	if _, ok := retTyp.(*ResultType); ok {
+		before1, content1 := genExpr(env, e.x, prefix, retTyp)
+		// TODO: res should be an incrementing tmp numbered variable
+		before := NewBeforeStmt(addPrefix(`res := `+content1+`
 if res.IsNone() {
 	return res
 }
 `, prefix))
-			out := `res.Unwrap()`
-			return append(before1, before), out
-		} else {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			out := fmt.Sprintf("%s.Unwrap()", content1)
-			return before1, out
-		}
+		out := `res.Unwrap()`
+		return append(before1, before), out
 	} else {
-		panic(fmt.Sprintf("BubbleOptionExpr: %v", e.x))
+		before1, content1 := genExpr(env, e.x, prefix, retTyp)
+		out := fmt.Sprintf("%s.Unwrap()", content1)
+		return before1, out
 	}
 }
 
