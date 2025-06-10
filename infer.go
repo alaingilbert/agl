@@ -170,7 +170,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	if lhs, ok := lhs.(*TupleExpr); ok {
 		if TryCast[*EnumType](stmt.rhs.GetType()) {
 			for i, e := range lhs.exprs {
-				lit := stmt.rhs.(*CallExpr).fun.(*SelectorExpr).sel.lit
+				lit := stmt.rhs.GetType().(*EnumType).subTyp
 				fields := stmt.rhs.GetType().(*EnumType).fields
 				// AGL: fields.find({ $0.name == lit })
 				f := Find(fields, func(f EnumFieldType) bool { return f.name == lit })
@@ -514,8 +514,8 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 				} else if _, ok := l.(PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
 					expr.SetType(env.Get(name).(FuncType).ret)
-				} else if _, ok := l.(*EnumType); ok {
-					expr.SetType(l)
+				} else if o, ok := l.(*EnumType); ok {
+					expr.SetType(&EnumType{name: o.name, subTyp: exprT.sel.lit, fields: o.fields})
 				}
 			}
 			idT := id.GetType()
