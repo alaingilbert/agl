@@ -83,7 +83,9 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 	case *AssignStmt:
 		inferAssignStmt(stmt, env)
 	case *IfStmt:
+		inferExpr(stmt.cond, returnTyp, env)
 		inferStmts(stmt.body, returnTyp, env)
+		inferStmt(stmt.Else, returnTyp, env)
 	case *ReturnStmt:
 		inferExpr(stmt.expr, returnTyp, env)
 	case *AssertStmt:
@@ -93,6 +95,8 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 	case *InlineCommentStmt:
 	case *ForRangeStmt:
 	case *IncDecStmt:
+	case *BlockStmt:
+		inferStmts(stmt.stmts, returnTyp, env)
 	default:
 		panic(fmt.Sprintf("unexpected type %v", to(stmt)))
 	}
