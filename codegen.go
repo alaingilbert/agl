@@ -510,7 +510,7 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 func genInterfaceStmt(env *Env, stmt *InterfaceStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
 	out += fmt.Sprintf("type %s interface {\n", stmt.lit)
 	for _, e := range stmt.elts {
-		out += "\t" + e.(*FuncExpr).GetType().(*FuncType).InterfaceStr() + "\n"
+		out += "\t" + e.(*FuncExpr).GetType().(FuncType).InterfaceStr() + "\n"
 	}
 	out += "}\n"
 	return
@@ -685,7 +685,7 @@ func genCompositeLit(env *Env, expr *CompositeLitExpr, prefix string, retTyp Typ
 }
 
 func genAnonFnExpr(env *Env, expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	t := expr.typ.(*FuncType)
+	t := expr.typ.(FuncType)
 	var argsT string
 	if len(t.params) > 0 {
 		var tmp []string
@@ -833,9 +833,9 @@ if res.IsErr() {
 }
 `
 	if TryCast[*ResultType](e.x.GetType()) {
-		if TryCast[VoidType](retTyp) && TryCast[*FuncType](e.GetType()) && e.GetType().(*FuncType).isNative {
+		if TryCast[VoidType](retTyp) && TryCast[FuncType](e.GetType()) && e.GetType().(FuncType).isNative {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.GetType().(*FuncType).isNative {
+			if e.GetType().(FuncType).isNative {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
 				out := `res`
 				return append(before1, before), out

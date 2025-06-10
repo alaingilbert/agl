@@ -121,7 +121,7 @@ func (e *Env) GetType(x Expr) Typ {
 				params = append(params, fieldT)
 			}
 		}
-		return &FuncType{
+		return FuncType{
 			params: params,
 			ret:    e.GetType(v.out.expr),
 		}

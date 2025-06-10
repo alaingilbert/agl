@@ -11,7 +11,7 @@ const (
 	AglVariablePrefix = "aglVar"
 )
 
-func funcExprToFuncType(fe *FuncExpr, env *Env) *FuncType {
+func funcExprToFuncType(fe *FuncExpr, env *Env) FuncType {
 	var typeParams []Typ
 	if fe.typeParams != nil {
 		for _, p := range fe.typeParams.list {
@@ -35,7 +35,7 @@ func funcExprToFuncType(fe *FuncExpr, env *Env) *FuncType {
 	if v, ok := ret.(*ResultType); ok {
 		v.native = true
 	}
-	return &FuncType{
+	return FuncType{
 		name:       fe.name,
 		typeParams: typeParams,
 		params:     params,
@@ -44,7 +44,7 @@ func funcExprToFuncType(fe *FuncExpr, env *Env) *FuncType {
 	}
 }
 
-func parseFuncTypeFromString(s string, env *Env) *FuncType {
+func parseFuncTypeFromString(s string, env *Env) FuncType {
 	nenv := env.Clone()
 	ft := parseFnSignature(NewTokenStream(s))
 	return funcExprToFuncType(ft, nenv)
@@ -174,7 +174,7 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 			if id, ok := s.x.(*IdentExpr); ok {
 				if rhs.GetType() == nil {
 					rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
-					callExpr.SetType(rhs.typ.(*FuncType).ret)
+					callExpr.SetType(rhs.typ.(FuncType).ret)
 				}
 			}
 		}
@@ -351,6 +351,7 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	default:
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
+	p("??", expr.lhs, expr.lhs.GetType())
 	assertf(cmpTypes(expr.lhs.GetType(), expr.rhs.GetType()), "%s mismatched types %s and %s", expr.Pos(), expr.lhs.GetType(), expr.rhs.GetType())
 }
 
@@ -359,7 +360,7 @@ func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
 		expr.SetType(optType)
 	}
 	if expr.GetType() != nil {
-		for i, p := range expr.typ.(*FuncType).params {
+		for i, p := range expr.typ.(FuncType).params {
 			env.Define(fmt.Sprintf("$%d", i), p)
 		}
 	}
@@ -367,9 +368,10 @@ func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
 	if len(expr.stmts) == 1 && TryCast[*ExprStmt](expr.stmts[0]) { // implicit return
 		if expr.stmts[0].(*ExprStmt).x.GetType() != nil {
 			if expr.typ != nil {
-				ft := expr.typ.(*FuncType)
+				ft := expr.typ.(FuncType)
 				if t, ok := ft.ret.(*GenericType); ok {
-					ft.ReplaceGenericParameter(t.name, expr.stmts[0].(*ExprStmt).x.GetType())
+					ft = ft.ReplaceGenericParameter(t.name, expr.stmts[0].(*ExprStmt).x.GetType())
+					expr.SetTypeForce(ft)
 				}
 			}
 		}
@@ -387,14 +389,8 @@ func cmpTypesLoose(a, b Typ) bool {
 }
 
 func cmpTypes(a, b Typ) bool {
-	if a == b {
-		return true
-	}
-	if TryCast[*InterfaceType](a) {
-		return true
-	}
-	if aa, ok := a.(*FuncType); ok {
-		if bb, ok := b.(*FuncType); ok {
+	if aa, ok := a.(FuncType); ok {
+		if bb, ok := b.(FuncType); ok {
 			if aa.GoStr() == bb.GoStr() {
 				return true
 			}
@@ -413,6 +409,12 @@ func cmpTypes(a, b Typ) bool {
 		}
 		return false
 	}
+	if TryCast[*InterfaceType](a) {
+		return true
+	}
+	if a == b {
+		return true
+	}
 	if TryCast[OptionType](a) && TryCast[OptionType](b) {
 		return cmpTypes(a.(OptionType).wrappedType, b.(OptionType).wrappedType)
 	}
@@ -428,7 +430,7 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		expr.fun.SetType(ArrayType{elt: env.Get(exprT.typStr)})
 	case *IdentExpr:
 		if exprTT := env.Get(exprT.lit); exprTT != nil {
-			ft := exprTT.(*FuncType)
+			ft := exprTT.(FuncType)
 			oParams := ft.params
 			variadic := ft.variadic
 			if variadic {
@@ -456,24 +458,24 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		case *IdentExpr:
 			if arr, ok := env.GetType(id).(ArrayType); ok {
 				if exprT.sel.lit == "filter" {
-					filterFnType := env.Get("agl.Vec.filter").(*FuncType)
-					filterFnType.ReplaceGenericParameter("T", arr.elt)
+					filterFnType := env.Get("agl.Vec.filter").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					expr.args[0].SetType(filterFnType.params[1])
 					expr.SetType(filterFnType.ret)
 				} else if exprT.sel.lit == "map" {
-					filterFnType := env.Get("agl.Vec.map").(*FuncType)
-					filterFnType.ReplaceGenericParameter("T", arr.elt)
+					filterFnType := env.Get("agl.Vec.map").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					expr.args[0].SetType(filterFnType.params[1])
 					expr.SetType(filterFnType.ret)
 				} else if exprT.sel.lit == "reduce" {
-					filterFnType := env.Get("agl.Vec.reduce").(*FuncType)
-					filterFnType.ReplaceGenericParameter("R", env.GetType(expr.args[0]))
-					filterFnType.ReplaceGenericParameter("T", arr.elt)
+					filterFnType := env.Get("agl.Vec.reduce").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("R", env.GetType(expr.args[0]))
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					expr.args[1].SetType(filterFnType.params[2])
 					expr.SetType(filterFnType.ret)
 				} else if exprT.sel.lit == "sum" {
-					filterFnType := env.Get("agl.Vec.sum").(*FuncType)
-					filterFnType.ReplaceGenericParameter("T", arr.elt)
+					filterFnType := env.Get("agl.Vec.sum").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					expr.SetType(filterFnType.ret)
 				}
 			}
@@ -481,10 +483,10 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 				id.SetType(l)
 				if lT, ok := l.(*StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
-					expr.SetType(env.Get(name).(*FuncType).ret)
+					expr.SetType(env.Get(name).(FuncType).ret)
 				} else if _, ok := l.(PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
-					expr.SetType(env.Get(name).(*FuncType).ret)
+					expr.SetType(env.Get(name).(FuncType).ret)
 				} else if _, ok := l.(*EnumType); ok {
 					expr.SetType(l)
 				}
@@ -502,7 +504,7 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		panic(fmt.Sprintf("unexpected type %v %v", expr.fun, expr.fun.GetType()))
 	}
 	if expr.fun.GetType() != nil {
-		if v, ok := expr.fun.GetType().(*FuncType); ok {
+		if v, ok := expr.fun.GetType().(FuncType); ok {
 			expr.SetType(v.ret)
 		} else { // Type casting
 			// TODO
@@ -515,35 +517,36 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		clbFnStr := "fn [T any](e T) bool"
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(*FuncType).params[0] = idT.(ArrayType).elt
+		fs.typ.(FuncType).params[0] = idT.(ArrayType).elt
+		p("???", expr.args[0].(*AnonFnExpr).typ.(FuncType).GoStr())
 		expr.args[0].SetType(fs.typ)
-		expr.SetTypeForce(ArrayType{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayType{elt: fs.typ.(FuncType).params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
 		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(*FuncType).params[0] = idT.(ArrayType).elt
+		fs.typ.(FuncType).params[0] = idT.(ArrayType).elt
 		switch arg0 := expr.args[0].(type) {
 		case *AnonFnExpr:
 			arg0.SetType(fs.typ)
 		case *SelectorExpr:
 			t := env.Get(fmt.Sprintf("%s.%s", arg0.x.(*IdentExpr).lit, arg0.sel.lit))
-			p("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(*FuncType).params[0], t.(*FuncType).ret)
+			p("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(FuncType).params[0], t.(FuncType).ret)
 		default:
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
 		//inferExprs(expr.args, env)
-		expr.SetTypeForce(ArrayType{elt: fs.typ.(*FuncType).params[0]})
+		expr.SetTypeForce(ArrayType{elt: fs.typ.(FuncType).params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "reduce" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmp.Ordered](acc R, el T) R")) // TODO cmp.Ordered
 		fs.typ = getFuncType(fs, NewEnv())
 		inferExpr(expr.args[0], nil, env)
 		elTyp := idT.(ArrayType).elt
-		fs.typ.(*FuncType).params[1] = elTyp
+		fs.typ.(FuncType).params[1] = elTyp
 		if _, ok := expr.args[0].(*NumberExpr).typ.(UntypedNumType); ok {
-			fs.typ.(*FuncType).params[0] = elTyp
-			fs.typ.(*FuncType).ReplaceGenericParameter("R", fs.typ.(*FuncType).params[0])
+			fs.typ.(FuncType).params[0] = elTyp
+			fs.SetTypeForce(fs.typ.(FuncType).ReplaceGenericParameter("R", fs.typ.(FuncType).params[0]))
 		}
 		expr.args[1].SetTypeForce(fs.typ)
 	}
@@ -585,10 +588,10 @@ func inferStructTypeFieldsType(s *structStmt, env *Env) {
 	}
 }
 
-func getFuncType(f *FuncExpr, env *Env) *FuncType {
+func getFuncType(f *FuncExpr, env *Env) FuncType {
 	getFuncTypeParamsType(f, env)
 	params, variadic := getFuncArgsType(f, env)
-	return &FuncType{
+	return FuncType{
 		params:   params,
 		ret:      getFuncOutType(f, env),
 		variadic: variadic,
@@ -598,7 +601,7 @@ func getFuncType(f *FuncExpr, env *Env) *FuncType {
 func inferFuncType(f *FuncExpr, env *Env) {
 	inferFuncRecvType(f, env)
 	inferFuncTypeParamsType(f, env)
-	f.typ = &FuncType{
+	f.typ = FuncType{
 		params: inferFuncArgsType(f, env),
 		ret:    inferFuncOutType(f, env),
 	}

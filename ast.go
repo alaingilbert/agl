@@ -57,10 +57,10 @@ func (b *BaseExpr) setType(typ Typ, force bool) {
 			return
 		}
 		if !TryCast[UntypedNumType](b.typ) {
-			if v, ok := b.typ.(*FuncType); ok {
+			if v, ok := b.typ.(FuncType); ok {
 				fmt.Printf("%v\n", v.GoStr())
 			}
-			if v, ok := typ.(*FuncType); ok {
+			if v, ok := typ.(FuncType); ok {
 				fmt.Printf("%v\n", v.GoStr())
 			}
 			panic(fmt.Sprintf("set type twice: curr: %v, new: %v", b.typ, typ))
@@ -313,34 +313,35 @@ type FuncType struct {
 	isNative   bool
 }
 
-func (f *FuncType) ReplaceGenericParameter(name string, typ Typ) {
+func (f FuncType) ReplaceGenericParameter(name string, typ Typ) FuncType {
 	if v, ok := f.ret.(*GenericType); ok {
 		if v.name == name {
 			f.ret = typ
 		}
-	} else if v, ok := f.ret.(*FuncType); ok {
-		v.ReplaceGenericParameter(name, typ)
+	} else if v, ok := f.ret.(FuncType); ok {
+		f.ret = v.ReplaceGenericParameter(name, typ)
 	}
 	for i, p := range f.params {
 		if v, ok := p.(*GenericType); ok {
 			if v.name == name {
 				f.params[i] = typ
 			}
-		} else if v, ok := p.(*FuncType); ok {
-			v.ReplaceGenericParameter(name, typ)
+		} else if v, ok := p.(FuncType); ok {
+			f.params[i] = v.ReplaceGenericParameter(name, typ)
 		}
 	}
+	return f
 }
 
-func (f *FuncType) GoStr() string {
+func (f FuncType) GoStr() string {
 	return f.goStr(true)
 }
 
-func (f *FuncType) InterfaceStr() string {
+func (f FuncType) InterfaceStr() string {
 	return f.goStr(false)
 }
 
-func (f *FuncType) goStr(includeFunc bool) string {
+func (f FuncType) goStr(includeFunc bool) string {
 	var typeParamsStr string
 	var typeParams []string
 	for _, p := range f.typeParams {
@@ -370,7 +371,7 @@ func (f *FuncType) goStr(includeFunc bool) string {
 	return fmt.Sprintf("%s%s%s(%s)%s", funcStr, typeParamsStr, name, strings.Join(paramsStr, ", "), retStr)
 }
 
-func (f *FuncType) String() string {
+func (f FuncType) String() string {
 	return fmt.Sprintf("FuncType(...)")
 }
 
