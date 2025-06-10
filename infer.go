@@ -57,8 +57,8 @@ func infer(s *ast) (*ast, *Env) {
 		newEnv := env.Clone()
 		if f.recv != nil {
 			fnName := f.name
-			if fnName == "==" {
-				fnName = "__EQL"
+			if newName, ok := overloadMapping[fnName]; ok {
+				fnName = newName
 			}
 			name := f.recv.list[0].typeExpr.(*IdentExpr).lit + "." + fnName
 			env.Define(name, getFuncType(f, newEnv))

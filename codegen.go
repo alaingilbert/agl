@@ -311,8 +311,8 @@ func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
 	before1, stmtsStr := genStmts(env, f.stmts, "\t", f.out.expr.GetType())
 	before = append(before, before1...)
 	name := f.name
-	if name == "==" {
-		name = "__EQL"
+	if newName, ok := overloadMapping[name]; ok {
+		name = newName
 	}
 
 	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
