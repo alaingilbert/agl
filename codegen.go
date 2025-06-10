@@ -149,7 +149,7 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genEnumStmt(env, s)
 	case *structStmt:
 		return genStructStmt(env, s)
-	case *funcStmt:
+	case *FuncExpr:
 		return genFuncStmt(env, s)
 	case *IfStmt:
 		return genIfStmt(env, s, prefix, retTyp)
@@ -270,7 +270,7 @@ func genStructStmt(env *Env, s *structStmt) (before []IBefore, out string) {
 	return
 }
 
-func genFuncStmt(env *Env, f *funcStmt) (before []IBefore, out string) {
+func genFuncStmt(env *Env, f *FuncExpr) (before []IBefore, out string) {
 	var recv string
 	if f.recv != nil {
 		var args1 []string

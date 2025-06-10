@@ -3,7 +3,7 @@ package main
 type ast struct {
 	packageStmt *packageStmt
 	imports     []*importStmt
-	funcs       []*funcStmt
+	funcs       []*FuncExpr
 	structs     []*structStmt
 	interfaces  []*InterfaceStmt
 	enums       []*EnumStmt

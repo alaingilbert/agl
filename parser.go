@@ -38,14 +38,14 @@ func parser(ts *TokenStream) *ast {
 	return s
 }
 
-func parseFnSignatureStmt(ts *TokenStream) *funcStmt {
+func parseFnSignatureStmt(ts *TokenStream) *FuncExpr {
 	ft := parseFnSignature(ts)
-	return &funcStmt{
+	return &FuncExpr{
 		recv:       ft.recv,
 		name:       ft.name,
 		typeParams: ft.typeParams,
-		args:       ft.params,
-		out:        ft.result,
+		args:       ft.args,
+		out:        ft.out,
 	}
 }
 
@@ -61,8 +61,8 @@ var overloadMapping = map[string]string{
 	"%":  "__REM",
 }
 
-func parseFnSignature(ts *TokenStream) *funcType {
-	out := &funcType{}
+func parseFnSignature(ts *TokenStream) *FuncExpr {
+	out := &FuncExpr{}
 	assert(ts.Next().typ == FN)
 
 	var recv *FieldList
@@ -74,7 +74,7 @@ func parseFnSignature(ts *TokenStream) *funcType {
 			fields1 := params
 			assert(ts.Next().typ == RPAREN)
 
-			out.params = fields1
+			out.args = fields1
 
 			if ts.Peek().typ == IDENT || // fn/methods
 				InArray(ts.Peek().typ, overloadOps) { // Op overloading
@@ -84,16 +84,18 @@ func parseFnSignature(ts *TokenStream) *funcType {
 					out.recv = fields1
 
 					// Optional function name
+					var name string
 					if tok.typ == IDENT {
-						out.name = tok.lit
+						name = tok.lit
 						tok = ts.Next()
 					} else if tok.typ != LPAREN && tok.typ != LBRACKET { // Allow use of reserved words as function names (map)
-						out.name = tok.lit
+						name = tok.lit
 						tok = ts.Next()
 					} else if InArray(ts.Peek().typ, overloadOps) { // Op overloading
-						out.name = tok.lit
+						name = tok.lit
 						tok = ts.Next()
 					}
+					out.name = name
 
 					// Type parameters
 					if tok.typ == LBRACKET {
@@ -105,12 +107,12 @@ func parseFnSignature(ts *TokenStream) *funcType {
 					assert(out.typeParams == nil, "Method cannot have type parameters")
 
 					assert(tok.typ == LPAREN)
-					out.params = parseParametersList(ts, RPAREN)
+					out.args = parseParametersList(ts, RPAREN)
 					assert(ts.Next().typ == RPAREN)
 
 					// Output
 					if ts.Peek().typ != EOF && ts.Peek().typ != LBRACE {
-						out.result.expr = parseType(ts)
+						out.out.expr = parseType(ts)
 					}
 
 					return out
@@ -120,7 +122,7 @@ func parseFnSignature(ts *TokenStream) *funcType {
 
 			// Output
 			if ts.Peek().typ != LBRACE {
-				out.result.expr = parseType(ts)
+				out.out.expr = parseType(ts)
 			}
 
 			return out
@@ -131,13 +133,15 @@ func parseFnSignature(ts *TokenStream) *funcType {
 
 	// Optional function name
 	tok := ts.Next()
+	var name string
 	if tok.typ == IDENT {
-		out.name = tok.lit
+		name = tok.lit
 		tok = ts.Next()
 	} else if tok.typ != LPAREN && tok.typ != LBRACKET { // Allow use of reserved words as function names (map)
-		out.name = tok.lit
+		name = tok.lit
 		tok = ts.Next()
 	}
+	out.name = name
 
 	// Type parameters
 	if tok.typ == LBRACKET {
@@ -149,12 +153,12 @@ func parseFnSignature(ts *TokenStream) *funcType {
 
 	assert(tok.typ == LPAREN)
 	params := parseParametersList(ts, RPAREN)
-	out.params = params
+	out.args = params
 	assert(ts.Next().typ == RPAREN)
 
 	// Output
 	if ts.Peek().typ != EOF && ts.Peek().typ != LBRACE {
-		out.result.expr = parseType(ts)
+		out.out.expr = parseType(ts)
 	}
 
 	return out
@@ -213,21 +217,23 @@ func parseTypes(ts *TokenStream, closing int) []Expr {
 func parseType(ts *TokenStream) Expr {
 	if ts.Peek().typ == IDENT {
 		e := NewIdentExpr(ts.Next())
-		if ts.Peek().typ == QUESTION {
+		switch ts.Peek().typ {
+		case QUESTION:
 			ts.Next()
 			return &BubbleOptionExpr{x: e}
-		} else if ts.Peek().typ == BANG {
+		case BANG:
 			ts.Next()
 			return &BubbleResultExpr{x: e}
+		default:
+			return e
 		}
-		return e
 	} else if ts.Peek().typ == ELLIPSIS {
 		ts.Next()
 		return &EllipsisExpr{x: parseType(ts)}
 	} else if ts.Peek().typ == LBRACKET {
 		ts.Next()
 		assert(ts.Next().typ == RBRACKET)
-		return &ArrayType{elt: parseType(ts)}
+		return &ArrayTypeExpr{elt: parseType(ts)}
 	} else if ts.Peek().typ == FN {
 		return parseFnSignature(ts)
 	} else if ts.Peek().typ == OPTION {
@@ -249,7 +255,7 @@ func parseType(ts *TokenStream) Expr {
 		if len(exprs) == 1 {
 			return exprs[0]
 		} else if len(exprs) > 1 {
-			return &TupleType{exprs: exprs}
+			return &TupleTypeExpr{exprs: exprs}
 		} else {
 			panic("not implemented")
 		}
@@ -260,15 +266,15 @@ func parseType(ts *TokenStream) Expr {
 	panic(fmt.Sprintf("unknown type %v", ts.Peek()))
 }
 
-func parseFnStmt(ts *TokenStream, isPub bool) *funcStmt {
+func parseFnStmt(ts *TokenStream, isPub bool) *FuncExpr {
 	ft := parseFnSignature(ts)
 	assert(ts.Next().typ == LBRACE)
-	fs := &funcStmt{
+	fs := &FuncExpr{
 		recv:       ft.recv,
 		name:       ft.name,
 		typeParams: ft.typeParams,
-		args:       ft.params,
-		out:        ft.result,
+		args:       ft.args,
+		out:        ft.out,
 	}
 	fs.stmts = parseStmts(ts)
 	assert(ts.Next().typ == RBRACE)
@@ -923,7 +929,7 @@ func (a ArrayTypeTyp) GoStr() string {
 }
 
 func (a ArrayTypeTyp) String() string {
-	return fmt.Sprintf("ArrayType(%s)", a.elt)
+	return fmt.Sprintf("ArrayTypeExpr(%s)", a.elt)
 }
 
 type InterfaceType struct {
@@ -1161,22 +1167,22 @@ func (i IdentExpr) GetType() Typ {
 	return i.typ
 }
 
-type TupleType struct {
+type TupleTypeExpr struct {
 	BaseExpr
 	exprs []Expr
 }
 
-func (t TupleType) String() string {
-	return fmt.Sprintf("TupleType(%v)", t.exprs)
+func (t TupleTypeExpr) String() string {
+	return fmt.Sprintf("TupleTypeExpr(%v)", t.exprs)
 }
 
-type ArrayType struct {
+type ArrayTypeExpr struct {
 	BaseExpr
 	elt Expr
 }
 
-func (a ArrayType) String() string {
-	return fmt.Sprintf("ArrayType(%v)", a.elt)
+func (a ArrayTypeExpr) String() string {
+	return fmt.Sprintf("ArrayTypeExpr(%v)", a.elt)
 }
 
 type ParenExpr struct {
@@ -1324,21 +1330,8 @@ type importStmt struct {
 	lit string
 }
 
-type funcType struct {
+type FuncExpr struct {
 	BaseExpr
-	name       string
-	recv       *FieldList
-	typeParams *FieldList
-	params     *FieldList
-	result     FuncOut
-}
-
-func (f *funcType) String() string {
-	return fmt.Sprintf("funcType(...)")
-}
-
-type funcStmt struct {
-	BaseStmt
 	name       string
 	recv       *FieldList
 	typeParams *FieldList
@@ -1346,6 +1339,10 @@ type funcStmt struct {
 	out        FuncOut
 	stmts      []Stmt
 	typ        Typ
+}
+
+func (f *FuncExpr) String() string {
+	return fmt.Sprintf("FuncExpr(...)")
 }
 
 type IfStmt struct {
