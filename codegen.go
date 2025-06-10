@@ -713,6 +713,13 @@ if res.IsErr() {
 	return res
 }
 `
+
+	// Non-native error propagation in function that returns Option
+	tmpl5 := `res := %s
+if res.IsErr() {
+	return MakeOptionNone[%s]()
+}
+`
 	if TryCast[ResultType](e.x.GetType()) {
 		if TryCast[VoidType](retTyp) && TryCast[*FuncType](e.GetType()) && e.GetType().(*FuncType).isNative {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
@@ -737,6 +744,13 @@ if res.IsErr() {
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl4, content1), prefix))
 			out := `res.Unwrap()`
 			return append(before1, before), out
+
+		} else if _, ok := retTyp.(OptionType); ok {
+			before1, content1 := genExpr(env, e.x, prefix, retTyp)
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl5, content1, "int"), prefix))
+			out := `res.Unwrap()`
+			return append(before1, before), out
+			
 		} else {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			out := fmt.Sprintf("%s.Unwrap()", content1)
