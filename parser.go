@@ -218,6 +218,10 @@ func parseType(ts *TokenStream) Expr {
 	if ts.Peek().typ == IDENT {
 		e := NewIdentExpr(ts.Next())
 		switch ts.Peek().typ {
+		case DOT:
+			ts.Next()
+			assert(ts.Peek().typ == IDENT)
+			return &SelectorExpr{x: e, sel: NewIdentExpr(ts.Next())}
 		case QUESTION:
 			ts.Next()
 			return &BubbleOptionExpr{x: e}
