@@ -47,6 +47,18 @@ func parseFnSignatureStmt(ts *TokenStream) *funcStmt {
 	}
 }
 
+var overloadOps = []int{EQL, NEQ, ADD, MINUS, MUL, QUO, REM}
+
+var overloadMapping = map[string]string{
+	"==": "__EQL",
+	"!=": "__EQL",
+	"+":  "__ADD",
+	"-":  "__SUB",
+	"*":  "__MUL",
+	"/":  "__QUO",
+	"%":  "__REM",
+}
+
 func parseFnSignature(ts *TokenStream) *funcType {
 	out := &funcType{}
 	assert(ts.Next().typ == FN)
@@ -63,7 +75,7 @@ func parseFnSignature(ts *TokenStream) *funcType {
 			out.params = fields1
 
 			if ts.Peek().typ == IDENT || // fn/methods
-				ts.Peek().typ == EQL { // Op overloading
+				InArray(ts.Peek().typ, overloadOps) { // Op overloading
 				tok := ts.Next()
 				if ts.Peek().typ == LBRACKET || ts.Peek().typ == LPAREN { // method
 
@@ -76,7 +88,7 @@ func parseFnSignature(ts *TokenStream) *funcType {
 					} else if tok.typ != LPAREN && tok.typ != LBRACKET { // Allow use of reserved words as function names (map)
 						out.name = tok.lit
 						tok = ts.Next()
-					} else if tok.typ == EQL { // Op overloading
+					} else if InArray(ts.Peek().typ, overloadOps) { // Op overloading
 						out.name = tok.lit
 						tok = ts.Next()
 					}
