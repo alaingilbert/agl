@@ -1914,3 +1914,18 @@ type Writer interface {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen65(t *testing.T) {
+	src := `
+type Writer interface {
+	fn write(p []byte) int!
+	fn another() bool
+}
+`
+	expected := `type Writer interface {
+	write([]byte) Result[int]
+	another() bool
+}
+`
+	testCodeGen(t, src, expected)
+}
