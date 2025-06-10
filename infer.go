@@ -256,6 +256,9 @@ func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 		expr.x.SetType(v)
 		expr.SetType(v.elts[argIdx])
 	case *EnumType:
+		enumName := expr.x.(*IdentExpr).lit
+		fieldName := expr.sel.lit
+		assertf(InArray(fieldName, v.fields), "enum %s has no field %s", enumName, fieldName)
 		expr.x.SetType(selType)
 		expr.SetType(selType)
 	}
