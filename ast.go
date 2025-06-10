@@ -792,6 +792,8 @@ type BubbleOptionExpr struct {
 	x Expr
 }
 
+func (o BubbleOptionExpr) String() string { return fmt.Sprintf("BubbleOptionExpr(%v)", o.x) }
+
 type ChainExpr struct {
 	BaseExpr
 	x  Expr
