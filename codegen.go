@@ -781,7 +781,14 @@ if res.IsErr() {
 		} else {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			if e.x.GetType().(*ResultType).native {
-				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
+				tmpl := tmpl1
+				if _, ok := e.GetType().(*ResultType).wrappedType.(VoidType); ok {
+					tmpl = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+					before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
+					out := `AglNoop[struct{}]()`
+					return append(before1, before), out
+				}
+				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
 				out := `AglIdentity(res)`
 				return append(before1, before), out
 			}

@@ -470,7 +470,6 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		if v, ok := expr.fun.GetType().(*FuncType); ok {
 			expr.SetType(v.ret)
 		} else { // Type casting
-			p("?HERE", expr, expr.typ)
 			// TODO
 		}
 	}
