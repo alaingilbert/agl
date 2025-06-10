@@ -482,15 +482,11 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 				if lT, ok := l.(*StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
 					expr.SetType(env.Get(name).(*FuncType).ret)
-				} else if _, ok := l.(*EnumType); ok {
-					expr.SetType(l)
 				} else if _, ok := l.(PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
-					if t := env.Get(name); t != nil {
-						expr.SetType(t.(*FuncType).ret)
-					} else {
-						panic(fmt.Sprintf("no function %s", name))
-					}
+					expr.SetType(env.Get(name).(*FuncType).ret)
+				} else if _, ok := l.(*EnumType); ok {
+					expr.SetType(l)
 				}
 			}
 			idT := id.GetType()
