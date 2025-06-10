@@ -930,16 +930,16 @@ func (t TupleTypeTyp) String() string {
 	return fmt.Sprintf("TupleTypeTyp(%s)", strings.Join(strs, ", "))
 }
 
-type ArrayTypeTyp struct {
+type ArrayType struct {
 	BaseTyp
 	elt Typ
 }
 
-func (a ArrayTypeTyp) GoStr() string {
+func (a ArrayType) GoStr() string {
 	return "[]" + a.elt.GoStr()
 }
 
-func (a ArrayTypeTyp) String() string {
+func (a ArrayType) String() string {
 	return fmt.Sprintf("ArrayTypeExpr(%s)", a.elt)
 }
 
