@@ -42,6 +42,10 @@ func NewEnv() *Env {
 	env.Define("agl.Vec.map", parseFuncTypeFromString("fn map[T, R any](a []T, f fn(T) R) []R", env))
 	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmpOrdered](a []T, r R, f fn(a R, e T) R) R", env))
 	env.Define("agl.Vec.sum", parseFuncTypeFromString("fn sum[T cmpOrdered](a []T) T", env))
+	env.Define("agl.Option.is_some", parseFuncTypeFromString("fn is_some() bool", env))
+	env.Define("agl.Option.is_none", parseFuncTypeFromString("fn is_none() bool", env))
+	env.Define("agl.Result.is_ok", parseFuncTypeFromString("fn is_ok() bool", env))
+	env.Define("agl.Result.is_err", parseFuncTypeFromString("fn is_err() bool", env))
 	return env
 }
 
@@ -79,7 +83,7 @@ func (e *Env) GetType(x Expr) Typ {
 		return OptionType{wrappedType: e.GetType(v.x)}
 	case *BubbleResultExpr:
 		return ResultType{wrappedType: e.GetType(v.x)}
-	case *ArrayType:
+	case *ArrayTypeExpr:
 		return ArrayTypeTyp{elt: e.GetType(v.elt)}
 	case *TrueExpr:
 		return BoolType{}
@@ -97,16 +101,16 @@ func (e *Env) GetType(x Expr) Typ {
 		return VoidType{}
 	case *BinOpExpr:
 		return nil
-	case *TupleType:
+	case *TupleTypeExpr:
 		var elements []Typ
 		for _, el := range v.exprs {
 			elements = append(elements, e.GetType(el))
 		}
 		structName := fmt.Sprintf("%s%d", TupleStructPrefix, e.structCounter.Add(1))
 		return TupleTypeTyp{elts: elements, name: structName}
-	case *funcType:
+	case *FuncExpr:
 		var params []Typ
-		for _, field := range v.params.list {
+		for _, field := range v.args.list {
 			fieldT := e.GetType(field.typeExpr)
 			n := max(len(field.names), 1)
 			for i := 0; i < n; i++ {
@@ -115,7 +119,7 @@ func (e *Env) GetType(x Expr) Typ {
 		}
 		return &FuncType{
 			params: params,
-			ret:    e.GetType(v.result.expr),
+			ret:    e.GetType(v.out.expr),
 		}
 	default:
 		panic(fmt.Sprintf("unexpected type %v, %v", reflect.TypeOf(v), v))

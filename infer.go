@@ -26,14 +26,14 @@ func parseFuncTypeFromString(s string, env *Env) *FuncType {
 		}
 	}
 	var params []Typ
-	for _, field := range ft.params.list {
+	for _, field := range ft.args.list {
 		t := nenv.GetType(field.typeExpr)
 		n := max(len(field.names), 1)
 		for i := 0; i < n; i++ {
 			params = append(params, t)
 		}
 	}
-	ret := nenv.GetType(ft.result.expr)
+	ret := nenv.GetType(ft.out.expr)
 	if v, ok := ret.(ResultType); ok {
 		v.native = true
 	}
@@ -85,7 +85,6 @@ func inferStmts(stmts []Stmt, returnTyp Typ, env *Env) {
 }
 
 func inferStmt(s Stmt, returnTyp Typ, env *Env) {
-	//fmt.Println("inferStmt:", s)
 	switch stmt := s.(type) {
 	case *AssignStmt:
 		inferAssignStmt(stmt, env)
@@ -161,7 +160,6 @@ func inferExprs(e []Expr, env *Env) {
 }
 
 func inferExpr(e Expr, optType Typ, env *Env) {
-	//fmt.Println("inferExpr:", e)
 	switch expr := e.(type) {
 	case *CallExpr:
 		inferCallExpr(expr, env)
@@ -532,7 +530,7 @@ func inferStructTypeFieldsType(s *structStmt, env *Env) {
 	}
 }
 
-func getFuncType(f *funcStmt, env *Env) *FuncType {
+func getFuncType(f *FuncExpr, env *Env) *FuncType {
 	getFuncTypeParamsType(f, env)
 	params, variadic := getFuncArgsType(f, env)
 	return &FuncType{
@@ -542,7 +540,7 @@ func getFuncType(f *funcStmt, env *Env) *FuncType {
 	}
 }
 
-func inferFuncType(f *funcStmt, env *Env) {
+func inferFuncType(f *FuncExpr, env *Env) {
 	inferFuncRecvType(f, env)
 	inferFuncTypeParamsType(f, env)
 	f.typ = &FuncType{
@@ -551,7 +549,7 @@ func inferFuncType(f *funcStmt, env *Env) {
 	}
 }
 
-func getFuncTypeParamsType(f *funcStmt, env *Env) {
+func getFuncTypeParamsType(f *FuncExpr, env *Env) {
 	if f.typeParams != nil {
 		for _, e := range f.typeParams.list {
 			for _, name := range e.names {
@@ -562,7 +560,7 @@ func getFuncTypeParamsType(f *funcStmt, env *Env) {
 	}
 }
 
-func inferFuncRecvType(f *funcStmt, env *Env) {
+func inferFuncRecvType(f *FuncExpr, env *Env) {
 	if f.recv != nil {
 		for _, e := range f.recv.list {
 			t := env.Get(e.typeExpr.(*IdentExpr).lit)
@@ -571,7 +569,7 @@ func inferFuncRecvType(f *funcStmt, env *Env) {
 	}
 }
 
-func inferFuncTypeParamsType(f *funcStmt, env *Env) {
+func inferFuncTypeParamsType(f *FuncExpr, env *Env) {
 	if f.typeParams != nil {
 		for _, e := range f.typeParams.list {
 			for _, name := range e.names {
@@ -601,7 +599,7 @@ func (t *GenericType) String() string {
 	return fmt.Sprintf("GenType(%s %s)", t.name, t.constraints[0].GoStr())
 }
 
-func getFuncArgsType(f *funcStmt, env *Env) (out []Typ, variadic bool) {
+func getFuncArgsType(f *FuncExpr, env *Env) (out []Typ, variadic bool) {
 	for _, arg := range f.args.list {
 		if _, ok := arg.typeExpr.(*EllipsisExpr); ok {
 			variadic = true
@@ -613,7 +611,7 @@ func getFuncArgsType(f *funcStmt, env *Env) (out []Typ, variadic bool) {
 	return
 }
 
-func inferFuncArgsType(f *funcStmt, env *Env) (out []Typ) {
+func inferFuncArgsType(f *FuncExpr, env *Env) (out []Typ) {
 	for _, arg := range f.args.list {
 		t := env.GetType(arg.typeExpr)
 		arg.typeExpr.SetType(t)
@@ -625,14 +623,14 @@ func inferFuncArgsType(f *funcStmt, env *Env) (out []Typ) {
 	return
 }
 
-func getFuncOutType(f *funcStmt, env *Env) (out Typ) {
+func getFuncOutType(f *FuncExpr, env *Env) (out Typ) {
 	if f.out.expr != nil {
 		return env.GetType(f.out.expr)
 	}
 	return VoidType{}
 }
 
-func inferFuncOutType(f *funcStmt, env *Env) (out Typ) {
+func inferFuncOutType(f *FuncExpr, env *Env) (out Typ) {
 	if f.out.expr != nil {
 		t := env.GetType(f.out.expr)
 		f.out.expr.SetType(t)
