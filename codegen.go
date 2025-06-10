@@ -153,6 +153,8 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genFuncStmt(env, s)
 	case *IfStmt:
 		return genIfStmt(env, s, prefix, retTyp)
+	case *IfLetStmt:
+		return genIfLetStmt(env, s, prefix, retTyp)
 	case *ReturnStmt:
 		return genReturnStmt(env, s, prefix, retTyp)
 	case *AssignStmt:
@@ -465,6 +467,40 @@ func genIfStmt(env *Env, stmt *IfStmt, prefix string, retTyp Typ) (before []IBef
 		before3, content3 := genStmt(env, stmt.Else, prefix, retTyp)
 		before = append(before, before3...)
 		out += prefix + "} else " + strings.TrimSpace(content3) + "\n"
+	} else {
+		out += prefix + "}\n"
+	}
+	return
+}
+
+func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	p(stmt.lhs)
+	var tmp string
+	if TryCast[*SomeExpr](stmt.lhs) {
+		id := stmt.lhs.(*SomeExpr).expr.(*IdentExpr).lit
+		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+		tmp += "if res := " + content2 + "; res.IsSome() {\n"
+		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
+	} else if TryCast[*OkExpr](stmt.lhs) {
+		id := stmt.lhs.(*OkExpr).expr.(*IdentExpr).lit
+		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+		tmp += "if res := " + content2 + "; res.IsOk() {\n"
+		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
+	} else if TryCast[*ErrExpr](stmt.lhs) {
+		id := stmt.lhs.(*ErrExpr).expr.(*IdentExpr).lit
+		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+		tmp += "if res := " + content2 + "; res.IsErr() {\n"
+		tmp += addPrefix("\t"+id+" := res.Err()\n", prefix)
+	}
+
+	before3, content3 := genStmts(env, stmt.body, prefix+"\t", retTyp)
+	before = append(before, before3...)
+	out += prefix + tmp
+	out += content3
+	if stmt.Else != nil {
+		before4, content4 := genStmt(env, stmt.Else, prefix, retTyp)
+		before = append(before, before4...)
+		out += prefix + "} else " + strings.TrimSpace(content4) + "\n"
 	} else {
 		out += prefix + "}\n"
 	}
@@ -963,6 +999,10 @@ func (r Result[T]) Unwrap() T {
 		panic(fmt.Sprintf("unwrap on an Err value: %s", r.e))
 	}
 	return *r.t
+}
+
+func (r Result[T]) Err() error {
+	return r.e
 }
 
 func MakeResultOk[T any](t T) Result[T] {
