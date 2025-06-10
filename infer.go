@@ -525,7 +525,10 @@ func inferInterfaceType(e *InterfaceStmt, env *Env) {
 func inferEnumType(e *EnumStmt, env *Env) {
 	var fields []string
 	for _, f := range e.fields {
-		fields = append(fields, f.lit)
+		fields = append(fields, f.name.lit)
+		for _, e := range f.elts {
+			inferExpr(e, nil, env)
+		}
 	}
 	env.Define(e.lit, &EnumType{name: e.lit, fields: fields})
 }

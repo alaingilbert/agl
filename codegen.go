@@ -240,24 +240,40 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 func genEnumStmt(env *Env, s *EnumStmt) (before []IBefore, out string) {
 	out += fmt.Sprintf("type %sTag int\n", s.lit)
 	out += "const (\n"
-	for i, name := range s.fields {
+	for i, field := range s.fields {
 		if i == 0 {
-			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", s.lit, name.lit, s.lit)
+			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", s.lit, field.name.lit, s.lit)
 		} else {
-			out += fmt.Sprintf("\t%s_%s\n", s.lit, name.lit)
+			out += fmt.Sprintf("\t%s_%s\n", s.lit, field.name.lit)
 		}
 	}
 	out += ")\n"
 	out += fmt.Sprintf("type %s struct {\n", s.lit)
 	out += fmt.Sprintf("\ttag %sTag\n", s.lit)
+	for _, field := range s.fields {
+		for i, el := range field.elts {
+			out += fmt.Sprintf("\t%s%d %s\n", field.name.lit, i, el.GetType().GoStr())
+		}
+	}
 	out += "}\n"
 	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", s.lit)
-	for _, name := range s.fields {
-		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", s.lit, name.lit, name.lit)
+	for _, field := range s.fields {
+		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", s.lit, field.name.lit, field.name.lit)
 	}
 	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
-	for _, name := range s.fields {
-		out += fmt.Sprintf("func Make_%s_%s() %s {\n\treturn %s{tag: %s_%s}\n}\n", s.lit, name.lit, s.lit, s.lit, s.lit, name.lit)
+	for _, field := range s.fields {
+		var tmp []string
+		var tmp1 []string
+		for i, el := range field.elts {
+			tmp = append(tmp, fmt.Sprintf("arg%d %s", i, el.GetType().GoStr()))
+			tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.name.lit, i, i))
+		}
+		var tmp1Out string
+		if len(tmp1) > 0 {
+			tmp1Out = ", " + strings.Join(tmp1, ", ")
+		}
+		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{tag: %s_%s%s}\n}\n",
+			s.lit, field.name.lit, strings.Join(tmp, ", "), s.lit, s.lit, s.lit, field.name.lit, tmp1Out)
 	}
 	return
 }
@@ -645,7 +661,11 @@ func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([
 	case TupleType:
 		content2 = fmt.Sprintf("Arg%s", content2)
 	case *EnumType:
-		return before, fmt.Sprintf("Make_%s_%s()", content1, content2)
+		out := fmt.Sprintf("Make_%s_%s", content1, content2)
+		if _, ok := expr.GetType().(*EnumType); ok { // TODO
+			out += "()"
+		}
+		return before, out
 	}
 	return before, fmt.Sprintf("%s.%s", content1, content2)
 }
