@@ -512,23 +512,10 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 func genValueSpec(env *Env, stmt *ValueSpec, prefix string, retTyp Typ) (before []IBefore, out string) {
 	before1, content1 := genExpr(env, stmt.names[0], prefix, retTyp)
 	before = append(before, before1...)
-	var before2, before3 []IBefore
-	var content2, content3 string
-	if TryCast[*BubbleOptionExpr](stmt.typ) {
-		// TODO genType()
-		before2, content2 = genExpr(env, stmt.typ.(*BubbleOptionExpr).x, prefix, retTyp)
-		before = append(before, before2...)
-		content2 = fmt.Sprintf("Option[%s]", content2)
-	} else if TryCast[*BubbleResultExpr](stmt.typ) {
-		before2, content2 = genExpr(env, stmt.typ.(*BubbleResultExpr).x, prefix, retTyp)
-		before = append(before, before2...)
-		content2 = fmt.Sprintf("Result[%s]", content2)
-	} else {
-		content2 = stmt.typ.GetType().GoStr()
-	}
+	content2 := stmt.typ.GetType().GoStr()
 	out += prefix + fmt.Sprintf("var %s %s", content1, content2)
 	if len(stmt.values) > 0 {
-		before3, content3 = genExpr(env, stmt.values[0], prefix, retTyp)
+		before3, content3 := genExpr(env, stmt.values[0], prefix, retTyp)
 		before = append(before, before3...)
 		out += fmt.Sprintf(" = %s", content3)
 	}
