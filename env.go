@@ -31,7 +31,7 @@ func NewEnv() *Env {
 	env.Define("bool", BoolType{})
 	env.Define("any", AnyType{})
 	env.Define("byte", ByteType{})
-	env.Define("cmpOrdered", AnyType{})
+	env.Define("cmp.Ordered", AnyType{})
 	env.Define("strconv.Atoi", parseFuncTypeFromString("fn(string) int!", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromString("fn(int) string", env))
 	env.Define("strconv.ParseInt", parseFuncTypeFromString("fn(s string, base int, bitSize int) i64!", env))
@@ -40,8 +40,8 @@ func NewEnv() *Env {
 	env.Define("os.ReadFile", parseFuncTypeFromString("fn(name string) Result[[]byte]", env))
 	env.Define("agl.Vec.filter", parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", env))
 	env.Define("agl.Vec.map", parseFuncTypeFromString("fn map[T, R any](a []T, f fn(T) R) []R", env))
-	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmpOrdered](a []T, r R, f fn(a R, e T) R) R", env))
-	env.Define("agl.Vec.sum", parseFuncTypeFromString("fn sum[T cmpOrdered](a []T) T", env))
+	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmp.Ordered](a []T, r R, f fn(a R, e T) R) R", env))
+	env.Define("agl.Vec.sum", parseFuncTypeFromString("fn sum[T cmp.Ordered](a []T) T", env))
 	env.Define("agl.Option.is_some", parseFuncTypeFromString("fn is_some() bool", env))
 	env.Define("agl.Option.is_none", parseFuncTypeFromString("fn is_none() bool", env))
 	env.Define("agl.Result.is_ok", parseFuncTypeFromString("fn is_ok() bool", env))
@@ -85,6 +85,8 @@ func (e *Env) GetType(x Expr) Typ {
 		return ResultType{wrappedType: e.GetType(v.x)}
 	case *ArrayTypeExpr:
 		return ArrayTypeTyp{elt: e.GetType(v.elt)}
+	case *SelectorExpr:
+		return nil
 	case *TrueExpr:
 		return BoolType{}
 	case *StringExpr:

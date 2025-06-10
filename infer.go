@@ -488,7 +488,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		expr.SetTypeForce(ArrayTypeTyp{elt: fs.typ.(*FuncType).params[0]})
 
 	} else if TryCast[ArrayTypeTyp](idT) && exprT.sel.lit == "reduce" {
-		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmpOrdered](acc R, el T) R")) // TODO cmp.Ordered
+		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmp.Ordered](acc R, el T) R")) // TODO cmp.Ordered
 		fs.typ = getFuncType(fs, NewEnv())
 		inferExpr(expr.args[0], nil, env)
 		elTyp := idT.(ArrayTypeTyp).elt
