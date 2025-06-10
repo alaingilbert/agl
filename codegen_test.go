@@ -1444,7 +1444,7 @@ type Person struct {
 	name string
 	age int
 }
-fn (p Person) __EQL(other Person) bool {
+fn (p Person) == (other Person) bool {
 	return p.age == other.age
 }
 fn main() {

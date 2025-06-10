@@ -62,7 +62,8 @@ func parseFnSignature(ts *TokenStream) *funcType {
 
 			out.params = fields1
 
-			if ts.Peek().typ == IDENT { // fn/methods
+			if ts.Peek().typ == IDENT || // fn/methods
+				ts.Peek().typ == EQL { // Op overloading
 				tok := ts.Next()
 				if ts.Peek().typ == LBRACKET || ts.Peek().typ == LPAREN { // method
 
@@ -73,6 +74,9 @@ func parseFnSignature(ts *TokenStream) *funcType {
 						out.name = tok.lit
 						tok = ts.Next()
 					} else if tok.typ != LPAREN && tok.typ != LBRACKET { // Allow use of reserved words as function names (map)
+						out.name = tok.lit
+						tok = ts.Next()
+					} else if tok.typ == EQL { // Op overloading
 						out.name = tok.lit
 						tok = ts.Next()
 					}
