@@ -458,13 +458,19 @@ func parseInlineComment(ts *TokenStream) *InlineCommentStmt {
 	return stmt
 }
 
-func parseIfStmt(ts *TokenStream) *IfStmt {
+func parseIfStmt(ts *TokenStream) Stmt {
 	assert(ts.Next().typ == IF)
 	expr := parseExpr(ts, 1)
+	var isLet bool
+	var expr2 Expr
 	if ts.Peek().typ == IN {
 		tok := ts.Next()
 		expr2 := parsePrimaryExpr(ts, 1)
 		expr = &BinOpExpr{lhs: expr, rhs: expr2, op: tok}
+	} else if ts.Peek().typ == WALRUS {
+		assert(ts.Next().typ == WALRUS)
+		expr2 = parseExpr(ts, 1)
+		isLet = true
 	}
 	assert(ts.Next().typ == LBRACE)
 	stmts := parseStmts(ts)
@@ -477,6 +483,9 @@ func parseIfStmt(ts *TokenStream) *IfStmt {
 		} else if ts.Peek().typ == LBRACE {
 			elseStmt = parseBlockStmt(ts)
 		}
+	}
+	if isLet {
+		return &IfLetStmt{lhs: expr, rhs: expr2, body: stmts, Else: elseStmt}
 	}
 	return &IfStmt{cond: expr, body: stmts, Else: elseStmt}
 }
@@ -1273,15 +1282,21 @@ type OkExpr struct {
 	expr Expr
 }
 
+func (o OkExpr) String() string { return fmt.Sprintf("OkExpr(%v)", o.expr) }
+
 type ErrExpr struct {
 	BaseExpr
 	expr Expr
 }
 
+func (e ErrExpr) String() string { return fmt.Sprintf("ErrExpr(%v)", e.expr) }
+
 type SomeExpr struct {
 	BaseExpr
 	expr Expr
 }
+
+func (s SomeExpr) String() string { return fmt.Sprintf("SomeExpr(%v)", s.expr) }
 
 type VoidExpr struct {
 	BaseExpr
@@ -1371,6 +1386,16 @@ type FuncExpr struct {
 func (f *FuncExpr) String() string {
 	return fmt.Sprintf("FuncExpr(...)")
 }
+
+type IfLetStmt struct {
+	BaseStmt
+	lhs  Expr
+	rhs  Expr
+	body []Stmt
+	Else Stmt
+}
+
+func (i IfLetStmt) String() string { return "IfLetStmt(...)" }
 
 type IfStmt struct {
 	BaseStmt

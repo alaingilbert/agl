@@ -1823,3 +1823,37 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen62(t *testing.T) {
+	src := `
+fn maybeInt() int? { return Some(42) }
+fn getInt() int! { return Ok(42) }
+fn main() {
+	if Some(a) := maybeInt() {
+	}
+	if Ok(a) := getInt() {
+	}
+	if Err(e) := getInt() {
+	}
+}
+`
+	expected := `func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	if res := maybeInt(); res.IsSome() {
+		a := res.Unwrap()
+	}
+	if res := getInt(); res.IsOk() {
+		a := res.Unwrap()
+	}
+	if res := getInt(); res.IsErr() {
+		e := res.Err()
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
