@@ -97,7 +97,21 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 	case *IfLetStmt:
 		inferExpr(stmt.lhs, returnTyp, env)
 		inferExpr(stmt.rhs, returnTyp, env)
-		inferStmts(stmt.body, returnTyp, env)
+		// TODO fix type of variable: p(stmt.lhs, stmt.lhs.GetType())
+		nenv := env.Clone()
+		var id string
+		switch v := stmt.lhs.(type) {
+		case *SomeExpr:
+			id = v.expr.(*IdentExpr).lit
+		case *OkExpr:
+			id = v.expr.(*IdentExpr).lit
+		case *ErrExpr:
+			id = v.expr.(*IdentExpr).lit
+		default:
+			panic("")
+		}
+		nenv.Define(id, stmt.rhs.GetType())
+		inferStmts(stmt.body, returnTyp, nenv)
 		if stmt.Else != nil {
 			inferStmt(stmt.Else, returnTyp, env)
 		}
