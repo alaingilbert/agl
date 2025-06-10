@@ -1601,3 +1601,50 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen_TypeAssertion(t *testing.T) {
+	src := `
+package main
+
+import "fmt"
+
+type Writer interface {}
+
+type WriterA struct {}
+
+type WriterB struct {}
+
+fn test(w Writer) {
+    if w.(WriterA).is_some() {
+        fmt.Println("A")
+    }
+}
+
+fn main() {
+    w := WriterA{}
+    test(w)
+    fmt.Println("done")
+}
+
+`
+	expected := `package main
+import "fmt"
+type Writer interface {
+}
+type WriterA struct {
+}
+type WriterB struct {
+}
+func test(w Writer) {
+	if AglTypeAssert[WriterA](w).IsSome() {
+		fmt.Println("A")
+	}
+}
+func main() {
+	w := WriterA{}
+	test(w)
+	fmt.Println("done")
+}
+`
+	testCodeGen(t, src, expected)
+}
