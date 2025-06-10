@@ -50,6 +50,9 @@ func infer(s *ast) (*ast, *Env) {
 	for _, e := range s.enums {
 		inferEnumType(e, env)
 	}
+	for _, s := range s.interfaces {
+		inferInterfaceType(s, env)
+	}
 	for _, s := range s.structs {
 		inferStructType(s, env)
 	}
@@ -491,6 +494,14 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		}
 		expr.args[1].SetTypeForce(fs.typ)
 	}
+}
+
+func inferInterfaceType(e *InterfaceStmt, env *Env) {
+	//var fields []string
+	//for _, f := range e.fields {
+	//	fields = append(fields, f.lit)
+	//}
+	env.Define(e.lit, &InterfaceType{name: e.lit})
 }
 
 func inferEnumType(e *EnumStmt, env *Env) {

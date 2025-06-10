@@ -26,6 +26,8 @@ func parser(ts *TokenStream) *ast {
 				s.enums = append(s.enums, sss)
 			case *structStmt:
 				s.structs = append(s.structs, sss)
+			case *InterfaceStmt:
+				s.interfaces = append(s.interfaces, sss)
 			}
 		} else if ts.Peek().typ == FN {
 			s.funcs = append(s.funcs, parseFnStmt(ts, false))
@@ -280,8 +282,26 @@ func parseTypeDecl(ts *TokenStream) (out Stmt) {
 		return parseStructTypeDecl(ts, lit)
 	} else if ts.Peek().typ == ENUM {
 		return parseEnumTypeDecl(ts, lit)
+	} else if ts.Peek().typ == INTERFACE {
+		return parseInterfaceTypeDecl(ts, lit)
 	}
 	panic("")
+}
+
+func parseInterfaceTypeDecl(ts *TokenStream, lit string) (out *InterfaceStmt) {
+	assert(ts.Next().typ == INTERFACE)
+	assert(ts.Next().typ == LBRACE)
+	//fields := make([]*IdentExpr, 0)
+	//for {
+	//	if ts.Peek().typ == RBRACE {
+	//		break
+	//	}
+	//	id := parseIdentExpr(ts)
+	//	assert(ts.Next().typ == COMMA)
+	//	fields = append(fields, id)
+	//}
+	assert(ts.Next().typ == RBRACE)
+	return &InterfaceStmt{lit: lit}
 }
 
 func parseEnumTypeDecl(ts *TokenStream, lit string) (out *EnumStmt) {
@@ -900,6 +920,13 @@ func (a ArrayTypeTyp) String() string {
 	return fmt.Sprintf("ArrayType(%s)", a.elt)
 }
 
+type InterfaceType struct {
+	BaseTyp
+	name string
+}
+
+func (e InterfaceType) String() string { return fmt.Sprintf("InterfaceType(%s)", e.name) }
+
 type EnumType struct {
 	BaseTyp
 	name   string
@@ -1261,6 +1288,13 @@ type TupleExpr1 struct {
 type packageStmt struct {
 	lit string
 }
+
+type InterfaceStmt struct {
+	BaseStmt
+	lit string
+}
+
+func (i InterfaceStmt) String() string { return fmt.Sprintf("InterfaceStmt(%s)", i.lit) }
 
 type EnumStmt struct {
 	BaseStmt

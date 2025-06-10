@@ -12,6 +12,7 @@ func codegen(a *ast, env *Env) (out string) {
 	out += genPackage(a)
 	out += genImports(a)
 	out += genEnums(env, a)
+	out += genInterface(env, a)
 	out += genStructs(env, a)
 	before1, content1 := genFunctions(a, env)
 	before = append(before, before1...)
@@ -32,6 +33,14 @@ func genPackage(a *ast) (out string) {
 func genImports(a *ast) (out string) {
 	for _, i := range a.imports {
 		out += fmt.Sprintf("import %s\n", i.lit)
+	}
+	return
+}
+
+func genInterface(env *Env, a *ast) (out string) {
+	for _, s := range a.interfaces {
+		_, content := genStmt(env, s, "", nil)
+		out += content
 	}
 	return
 }
@@ -160,6 +169,8 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genAssertStmt(env, s, prefix, retTyp)
 	case *BlockStmt:
 		return genBlockStmt(env, s, prefix, retTyp)
+	case *InterfaceStmt:
+		return genInterfaceStmt(env, s, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
@@ -414,6 +425,11 @@ func genIfStmt(env *Env, stmt *IfStmt, prefix string, retTyp Typ) (before []IBef
 	} else {
 		out += prefix + "}\n"
 	}
+	return
+}
+
+func genInterfaceStmt(env *Env, stmt *InterfaceStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	out += fmt.Sprintf("type %s interface {\n}\n", stmt.lit)
 	return
 }
 
@@ -750,7 +766,7 @@ if res.IsErr() {
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl5, content1, "int"), prefix))
 			out := `res.Unwrap()`
 			return append(before1, before), out
-			
+
 		} else {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			out := fmt.Sprintf("%s.Unwrap()", content1)
