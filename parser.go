@@ -575,6 +575,12 @@ func parseExpr2(ts *TokenStream, prec int) Expr {
 		switch ts.Peek().typ {
 		case DOT:
 			assert(ts.Next().typ == DOT)
+			if ts.Peek().typ == LPAREN { // Type casting
+				assert(ts.Next().typ == LPAREN)
+				t := parseType(ts)
+				assert(ts.Next().typ == RPAREN)
+				return &TypeAssertExpr{x: ident, typ: t}
+			}
 			ident2 := parseIdentExpr(ts)
 			sel := &SelectorExpr{x: ident, sel: ident2}
 			if ts.Peek().typ == LPAREN {
@@ -926,6 +932,8 @@ type InterfaceType struct {
 }
 
 func (e InterfaceType) String() string { return fmt.Sprintf("InterfaceType(%s)", e.name) }
+
+func (e InterfaceType) GoStr() string { return e.name }
 
 type EnumType struct {
 	BaseTyp
@@ -1434,6 +1442,12 @@ type CompositeLitExpr struct {
 
 func (c CompositeLitExpr) String() string {
 	return fmt.Sprintf("CompositeLitExpr(%v)", c.typ)
+}
+
+type TypeAssertExpr struct {
+	BaseExpr
+	x   Expr
+	typ Expr // asserted type
 }
 
 type SelectorExpr struct {

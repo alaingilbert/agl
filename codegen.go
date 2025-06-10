@@ -229,6 +229,8 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 		return genCompositeLit(env, expr, prefix, retTyp)
 	case *KeyValueExpr:
 		return genKeyValueExpr(env, expr, prefix, retTyp)
+	case *TypeAssertExpr:
+		return genTypeAssertExpr(env, expr, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
 	}
@@ -572,6 +574,15 @@ func genIdentExpr(env *Env, expr *IdentExpr, prefix string, retTyp Typ) ([]IBefo
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
+func genTypeAssertExpr(env *Env, expr *TypeAssertExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+	before2, content2 := genExpr(env, expr.typ, prefix, retTyp)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	out += fmt.Sprintf("AglTypeAssert[%s](%s)", content2, content1)
+	return
+}
+
 func genKeyValueExpr(env *Env, expr *KeyValueExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
 	before1, content1 := genExpr(env, expr.key, prefix, retTyp)
 	before2, content2 := genExpr(env, expr.value, prefix, retTyp)
@@ -686,7 +697,7 @@ if res.IsNone() {
 			return before1, out
 		}
 	} else {
-		panic("")
+		panic(fmt.Sprintf("BubbleOptionExpr: %v", e.x))
 	}
 }
 
@@ -811,6 +822,9 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 			if expr.sel.lit == "unwrap" {
 				_, content := genExpr(env, expr.x, prefix, retTyp)
 				return nil, fmt.Sprintf(`%s.Unwrap()`, content)
+			} else if expr.sel.lit == "is_some" {
+				_, content := genExpr(env, expr.x, prefix, retTyp)
+				return nil, fmt.Sprintf(`%s.IsSome()`, content)
 			}
 		}
 	case *IdentExpr:
@@ -951,6 +965,15 @@ func AglVecIn[T cmp.Ordered](a []T, v T) bool {
 		}
 	}
 	return false
+}
+
+func AglNoop[T any](_ ...T) {}
+
+func AglTypeAssert[T any](v any) Option[T] {
+	if v, ok := v.(T); ok {
+		return MakeOptionSome(v)
+	}
+	return MakeOptionNone[T]()
 }
 `
 }

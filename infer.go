@@ -198,6 +198,10 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		expr.SetType(BoolType{})
 	case *CompositeLitExpr:
 		expr.SetType(env.Get(expr.typ.(*IdentExpr).lit))
+	case *TypeAssertExpr:
+		inferExpr(expr.x, nil, env)
+		inferExpr(expr.typ, nil, env)
+		expr.SetType(OptionType{wrappedType: env.GetType(expr.typ)})
 	default:
 		panic(fmt.Sprintf("unexpected type %v", to(expr)))
 	}
@@ -349,6 +353,9 @@ func cmpTypesLoose(a, b Typ) bool {
 
 func cmpTypes(a, b Typ) bool {
 	if a == b {
+		return true
+	}
+	if TryCast[*InterfaceType](a) {
 		return true
 	}
 	if aa, ok := a.(*FuncType); ok {
