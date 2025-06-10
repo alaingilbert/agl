@@ -741,6 +741,37 @@ fn main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen_VecBuiltInFilter4(t *testing.T) {
+	src := `
+fn main() {
+	a1 := []i64{1}
+	a2 := []u8{1}
+	b := a1.filter({ $0 == 1 }).map({ $0 }).reduce(0, { $0 + $1 })
+	c := a2.filter({ $0 == 1 }).map({ $0 }).reduce(0, { $0 + $1 })
+}
+`
+	expected := `func main() {
+	a1 := []int64{1}
+	a2 := []uint8{1}
+	b := AglReduce(AglVecMap(AglVecFilter(a1, func(aglArg0 int64) bool {
+		return aglArg0 == 1
+	}), func(aglArg0 int64) int64 {
+		return aglArg0
+	}), 0, func(aglArg0 int64, aglArg1 int64) int64 {
+		return aglArg0 + aglArg1
+	})
+	c := AglReduce(AglVecMap(AglVecFilter(a2, func(aglArg0 uint8) bool {
+		return aglArg0 == 1
+	}), func(aglArg0 uint8) uint8 {
+		return aglArg0
+	}), 0, func(aglArg0 uint8, aglArg1 uint8) uint8 {
+		return aglArg0 + aglArg1
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_VecBuiltInMap1(t *testing.T) {
 	src := `
 fn main() {

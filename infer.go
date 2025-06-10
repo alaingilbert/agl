@@ -517,7 +517,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
-		expr.args[0].SetType(ft)
+		expr.args[0].SetTypeForce(ft)
 		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
