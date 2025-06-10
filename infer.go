@@ -234,14 +234,14 @@ func tryConvertType(e Expr, optType Typ) {
 func inferTupleExpr(expr *TupleExpr, env *Env, optType Typ) {
 	inferExprs(expr.exprs, env)
 	if optType != nil {
-		expected := optType.(TupleTypeTyp).elts
+		expected := optType.(TupleType).elts
 		for i, x := range expr.exprs {
 			if _, ok := x.GetType().(UntypedNumType); ok {
 				x.SetType(expected[i])
 			}
 		}
 	} else {
-		tupleTyp := TupleTypeTyp{elts: make([]Typ, len(expr.exprs)), name: fmt.Sprintf("%s%d", TupleStructPrefix, env.structCounter.Add(1))}
+		tupleTyp := TupleType{elts: make([]Typ, len(expr.exprs)), name: fmt.Sprintf("%s%d", TupleStructPrefix, env.structCounter.Add(1))}
 		for i, x := range expr.exprs {
 			if _, ok := x.GetType().(UntypedNumType); ok {
 				x.SetType(IntType{})
@@ -257,7 +257,7 @@ func inferTupleExpr(expr *TupleExpr, env *Env, optType Typ) {
 func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 	selType := env.Get(expr.x.(*IdentExpr).lit)
 	switch v := selType.(type) {
-	case TupleTypeTyp:
+	case TupleType:
 		argIdx, err := strconv.Atoi(expr.sel.lit)
 		if err != nil {
 			panic("tuple arg index must be int")

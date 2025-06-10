@@ -111,7 +111,7 @@ func (e *Env) GetType(x Expr) Typ {
 			elements = append(elements, e.GetType(el))
 		}
 		structName := fmt.Sprintf("%s%d", TupleStructPrefix, e.structCounter.Add(1))
-		return TupleTypeTyp{elts: elements, name: structName}
+		return TupleType{elts: elements, name: structName}
 	case *FuncExpr:
 		var params []Typ
 		for _, field := range v.args.list {

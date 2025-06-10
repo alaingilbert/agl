@@ -912,22 +912,22 @@ func (o OptionType) String() string {
 	return fmt.Sprintf("OptionType(%s)", o.wrappedType)
 }
 
-type TupleTypeTyp struct {
+type TupleType struct {
 	BaseTyp
 	name string
 	elts []Typ
 }
 
-func (t TupleTypeTyp) GoStr() string {
+func (t TupleType) GoStr() string {
 	return t.name
 }
 
-func (t TupleTypeTyp) String() string {
+func (t TupleType) String() string {
 	var strs []string
 	for _, e := range t.elts {
 		strs = append(strs, e.GoStr())
 	}
-	return fmt.Sprintf("TupleTypeTyp(%s)", strings.Join(strs, ", "))
+	return fmt.Sprintf("TupleType(%s)", strings.Join(strs, ", "))
 }
 
 type ArrayType struct {

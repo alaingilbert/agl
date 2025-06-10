@@ -636,7 +636,7 @@ func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([
 	before = append(before, before2...)
 	// Rename tuple .0 .1 .2 ... to .Arg0 .Arg1 .Arg2 ...
 	switch expr.x.GetType().(type) {
-	case TupleTypeTyp:
+	case TupleType:
 		content2 = fmt.Sprintf("Arg%s", content2)
 	case *EnumType:
 		return before, fmt.Sprintf("AglEnum_%s_%s", content1, content2)
@@ -663,7 +663,7 @@ func genVecExpr(env *Env, expr *VecExpr, prefix string, retTyp Typ) ([]IBefore, 
 
 func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	before, _ := genExprs(env, expr.exprs, prefix, retTyp)
-	structName := expr.GetType().(TupleTypeTyp).name
+	structName := expr.GetType().(TupleType).name
 	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	for i, x := range expr.exprs {
 		structStr += fmt.Sprintf("\tArg%d %s\n", i, x.GetType().GoStr())
