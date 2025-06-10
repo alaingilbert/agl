@@ -6,7 +6,8 @@ import (
 )
 
 func testCodeGen(t *testing.T, src, expected string) {
-	a, e := infer(parser(NewTokenStream(src)))
+	ts := NewTokenStream(src)
+	a, e := infer(parser(ts))
 	got := codegen(a, e)
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
