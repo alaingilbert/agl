@@ -301,17 +301,9 @@ func parseTypeDecl(ts *TokenStream) (out Stmt) {
 func parseInterfaceTypeDecl(ts *TokenStream, lit string) (out *InterfaceStmt) {
 	assert(ts.Next().typ == INTERFACE)
 	assert(ts.Next().typ == LBRACE)
-	//fields := make([]*IdentExpr, 0)
-	//for {
-	//	if ts.Peek().typ == RBRACE {
-	//		break
-	//	}
-	//	id := parseIdentExpr(ts)
-	//	assert(ts.Next().typ == COMMA)
-	//	fields = append(fields, id)
-	//}
+	elts := parseTypes(ts, RBRACE)
 	assert(ts.Next().typ == RBRACE)
-	return &InterfaceStmt{lit: lit}
+	return &InterfaceStmt{lit: lit, elts: elts}
 }
 
 func parseEnumTypeDecl(ts *TokenStream, lit string) (out *EnumStmt) {
@@ -999,6 +991,7 @@ type FieldType struct {
 
 type FuncType struct {
 	BaseTyp
+	name       string
 	typeParams []Typ
 	params     []Typ
 	ret        Typ
@@ -1026,6 +1019,14 @@ func (f *FuncType) ReplaceGenericParameter(name string, typ Typ) {
 }
 
 func (f *FuncType) GoStr() string {
+	return f.goStr(true)
+}
+
+func (f *FuncType) InterfaceStr() string {
+	return f.goStr(false)
+}
+
+func (f *FuncType) goStr(includeFunc bool) string {
 	var typeParamsStr string
 	var typeParams []string
 	for _, p := range f.typeParams {
@@ -1042,7 +1043,17 @@ func (f *FuncType) GoStr() string {
 	if f.ret != nil {
 		retStr = " " + f.ret.GoStr()
 	}
-	return fmt.Sprintf("func%s(%s)%s", typeParamsStr, strings.Join(paramsStr, ", "), retStr)
+	name := f.name
+	if name != "" && includeFunc {
+		name = " " + name
+	}
+
+	funcStr := "func"
+	if !includeFunc {
+		funcStr = ""
+	}
+
+	return fmt.Sprintf("%s%s%s(%s)%s", funcStr, typeParamsStr, name, strings.Join(paramsStr, ", "), retStr)
 }
 
 func (f *FuncType) String() string {
@@ -1346,7 +1357,8 @@ type packageStmt struct {
 
 type InterfaceStmt struct {
 	BaseStmt
-	lit string
+	lit  string
+	elts []Expr
 }
 
 func (i InterfaceStmt) String() string { return fmt.Sprintf("InterfaceStmt(%s)", i.lit) }

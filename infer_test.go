@@ -63,5 +63,5 @@ func TestParseFuncTypeFromString(t *testing.T) {
 
 func TestParseFuncTypeFromString1(t *testing.T) {
 	f := parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", NewEnv())
-	tassert.Equal(t, "func [T any]([]T, func(T) bool) []T", f.GoStr())
+	tassert.Equal(t, "func [T any] filter([]T, func(T) bool) []T", f.GoStr())
 }

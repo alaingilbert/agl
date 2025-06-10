@@ -11,38 +11,43 @@ const (
 	AglVariablePrefix = "aglVar"
 )
 
-func parseFuncTypeFromString(s string, env *Env) *FuncType {
-	nenv := env.Clone()
-	ft := parseFnSignature(NewTokenStream(s))
+func funcExprToFuncType(fe *FuncExpr, env *Env) *FuncType {
 	var typeParams []Typ
-	if ft.typeParams != nil {
-		for _, p := range ft.typeParams.list {
-			t := nenv.GetType(p.typeExpr)
+	if fe.typeParams != nil {
+		for _, p := range fe.typeParams.list {
+			t := env.GetType(p.typeExpr)
 			for _, n := range p.names {
 				gn := &GenericType{name: n.lit, constraints: []Typ{t}}
-				nenv.Define(n.lit, gn)
+				env.Define(n.lit, gn)
 				typeParams = append(typeParams, gn)
 			}
 		}
 	}
 	var params []Typ
-	for _, field := range ft.args.list {
-		t := nenv.GetType(field.typeExpr)
+	for _, field := range fe.args.list {
+		t := env.GetType(field.typeExpr)
 		n := max(len(field.names), 1)
 		for i := 0; i < n; i++ {
 			params = append(params, t)
 		}
 	}
-	ret := nenv.GetType(ft.out.expr)
+	ret := env.GetType(fe.out.expr)
 	if v, ok := ret.(*ResultType); ok {
 		v.native = true
 	}
 	return &FuncType{
+		name:       fe.name,
 		typeParams: typeParams,
 		params:     params,
 		ret:        ret,
 		isNative:   true,
 	}
+}
+
+func parseFuncTypeFromString(s string, env *Env) *FuncType {
+	nenv := env.Clone()
+	ft := parseFnSignature(NewTokenStream(s))
+	return funcExprToFuncType(ft, nenv)
 }
 
 func infer(s *ast) (*ast, *Env) {
@@ -549,10 +554,10 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 }
 
 func inferInterfaceType(e *InterfaceStmt, env *Env) {
-	//var fields []string
-	//for _, f := range e.fields {
-	//	fields = append(fields, f.lit)
-	//}
+	for _, elt := range e.elts {
+		ft := funcExprToFuncType(elt.(*FuncExpr), env)
+		elt.SetType(ft)
+	}
 	env.Define(e.lit, &InterfaceType{name: e.lit})
 }
 

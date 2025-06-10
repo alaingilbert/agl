@@ -1901,3 +1901,16 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen64(t *testing.T) {
+	src := `
+type Writer interface {
+	fn write(p []byte) int!
+}
+`
+	expected := `type Writer interface {
+	write([]byte) Result[int]
+}
+`
+	testCodeGen(t, src, expected)
+}
