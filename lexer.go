@@ -84,6 +84,7 @@ const (
 	ELLIPSIS // ...
 	EOF
 	INTERFACE
+	VAR
 
 	ADD_ASSIGN // +=
 	SUB_ASSIGN // -=
@@ -468,6 +469,7 @@ func scanIdentifier(p Pos, src string, pos int) Tok {
 		"true":      TRUE,
 		"false":     FALSE,
 		"interface": INTERFACE,
+		"var":       VAR,
 	}
 
 	v := IDENT
