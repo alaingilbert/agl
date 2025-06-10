@@ -893,5 +893,14 @@ func AglSum[T cmp.Ordered](a []T) (out T) {
 	}
 	return
 }
+
+func AglVecIn[T cmp.Ordered](a []T, v T) bool {
+	for _, el := range a {
+		if el == v {
+			return true
+		}
+	}
+	return false
+}
 `
 }
