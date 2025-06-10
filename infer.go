@@ -351,7 +351,6 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	default:
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
-	p("??", expr.lhs, expr.lhs.GetType())
 	assertf(cmpTypes(expr.lhs.GetType(), expr.rhs.GetType()), "%s mismatched types %s and %s", expr.Pos(), expr.lhs.GetType(), expr.rhs.GetType())
 }
 
@@ -516,39 +515,35 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 	if TryCast[ArrayType](idT) && exprT.sel.lit == "filter" {
 		clbFnStr := "fn [T any](e T) bool"
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
-		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(FuncType).params[0] = idT.(ArrayType).elt
-		p("???", expr.args[0].(*AnonFnExpr).typ.(FuncType).GoStr())
-		expr.args[0].SetType(fs.typ)
-		expr.SetTypeForce(ArrayType{elt: fs.typ.(FuncType).params[0]})
+		ft := getFuncType(fs, NewEnv())
+		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
+		expr.args[0].SetType(ft)
+		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
-		fs.typ = getFuncType(fs, NewEnv())
-		fs.typ.(FuncType).params[0] = idT.(ArrayType).elt
+		ft := getFuncType(fs, NewEnv())
+		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
 		switch arg0 := expr.args[0].(type) {
 		case *AnonFnExpr:
-			arg0.SetType(fs.typ)
-		case *SelectorExpr:
-			t := env.Get(fmt.Sprintf("%s.%s", arg0.x.(*IdentExpr).lit, arg0.sel.lit))
-			p("????", arg0.x.(*IdentExpr).lit, arg0.sel.lit, t.(FuncType).params[0], t.(FuncType).ret)
+			arg0.SetType(ft)
+		case *SelectorExpr: // TODO
 		default:
 			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
 		}
-		//inferExprs(expr.args, env)
-		expr.SetTypeForce(ArrayType{elt: fs.typ.(FuncType).params[0]})
+		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "reduce" {
-		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmp.Ordered](acc R, el T) R")) // TODO cmp.Ordered
-		fs.typ = getFuncType(fs, NewEnv())
-		inferExpr(expr.args[0], nil, env)
+		arg0 := expr.args[0].(*NumberExpr)
+		inferExpr(arg0, nil, env)
 		elTyp := idT.(ArrayType).elt
-		fs.typ.(FuncType).params[1] = elTyp
-		if _, ok := expr.args[0].(*NumberExpr).typ.(UntypedNumType); ok {
-			fs.typ.(FuncType).params[0] = elTyp
-			fs.SetTypeForce(fs.typ.(FuncType).ReplaceGenericParameter("R", fs.typ.(FuncType).params[0]))
+		fs := parseFnSignatureStmt(NewTokenStream("fn [T any, R cmp.Ordered](acc R, el T) R")) // TODO cmp.Ordered
+		ft := getFuncType(fs, NewEnv())
+		ft = ft.ReplaceGenericParameter("T", elTyp)
+		if _, ok := arg0.GetType().(UntypedNumType); ok {
+			ft = ft.ReplaceGenericParameter("R", elTyp)
 		}
-		expr.args[1].SetTypeForce(fs.typ)
+		expr.args[1].SetTypeForce(ft)
 	}
 }
 
