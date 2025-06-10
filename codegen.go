@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"reflect"
 	"strings"
@@ -60,13 +61,20 @@ func genFunctions(a *ast, env *Env) (before []IBefore, out string) {
 	return
 }
 
-//type Generator struct {
-//	buf bufio.Writer
-//}
-//
-//func NewGenerator() *Generator {
-//	return &Generator{}
-//}
+type Generator struct {
+	buf bufio.Writer
+	a   *ast
+	env *Env
+}
+
+func NewGenerator(a *ast, env *Env) *Generator {
+	return &Generator{a: a, env: env}
+}
+
+func (g *Generator) Generate() string {
+	return codegen(g.a, g.env)
+}
+
 //
 //func (g *Generator) GenStmts(stmts []Stmt) {
 //	for _, stmt := range stmts {
