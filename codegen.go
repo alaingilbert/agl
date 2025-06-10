@@ -674,7 +674,6 @@ func addPrefix(s, prefix string) string {
 
 func genBubbleResultExpr(env *Env, e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	// TODO: res should be an incrementing tmp numbered variable
-	fmt.Println("?", e.x, e.x.GetType())
 	// Native void unwrapping
 	tmpl1 := `res, err := %s
 if err != nil {
