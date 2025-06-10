@@ -2033,15 +2033,21 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen67(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []u8{1, 2, 3, 4, 5}
-//	var b u8 = a.find({ $0 == 2 })?
-//	fmt.Println(b)
-//}
-//`
-//	expected := `
-//`
-//	testCodeGen(t, src, expected)
-//}
+func TestCodeGen67(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	var b u8 = a.find({ $0 == 2 })?
+	fmt.Println(b)
+}
+`
+	expected := `func main() {
+	a := []uint8{1, 2, 3, 4, 5}
+	var b u8 = AglVecFind(a, func(aglArg0 uint8) bool {
+		return aglArg0 == 2
+	}).Unwrap()
+	fmt.Println(b)
+}
+`
+	testCodeGen(t, src, expected)
+}
