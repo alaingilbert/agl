@@ -318,6 +318,14 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 	case INC, DEC:
 		tok := ts.Next()
 		return &IncDecStmt{x: x[0], tok: tok}
+	default:
+		if len(x) == 1 {
+			return &ExprStmt{x: x[0]}
+		} else if len(x) > 1 {
+			panic(fmt.Sprintf("unknown stmt type %v", ts.Peek()))
+		}
+	}
+	switch ts.Peek().typ {
 	case IF:
 		return parseIfStmt(ts)
 	case RETURN:

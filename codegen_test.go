@@ -1468,3 +1468,24 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen_55(t *testing.T) {
+	src := `
+fn main() {
+	a := 2
+	fmt.Println("first")
+	if a == 2 {
+		fmt.Println("second")
+	}
+}
+`
+	expected := `func main() {
+	a := 2
+	fmt.Println("first")
+	if a == 2 {
+		fmt.Println("second")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
