@@ -1857,3 +1857,24 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen63(t *testing.T) {
+	src1 := `
+fn maybeInt() int? { return Some(42) }
+fn main() {
+	if Some(a) := maybeInt() {
+	}
+	fmt.Println(a)
+}
+`
+	tassert.PanicsWithError(t, "6:14: undefined identifier a", func() { NewGenerator(infer(parser(NewTokenStream(src1)))).Generate() })
+	src2 := `
+fn maybeInt() int? { return Some(42) }
+fn main() {
+	if Some(a) := maybeInt() {
+		fmt.Println(a)
+	}
+}
+`
+	tassert.NotPanics(t, func() { NewGenerator(infer(parser(NewTokenStream(src2)))).Generate() })
+}
