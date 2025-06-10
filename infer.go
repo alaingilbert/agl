@@ -481,7 +481,11 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 }
 
 func inferEnumType(e *EnumStmt, env *Env) {
-	env.Define(e.lit, &EnumType{name: e.lit})
+	var fields []string
+	for _, f := range e.fields {
+		fields = append(fields, f.lit)
+	}
+	env.Define(e.lit, &EnumType{name: e.lit, fields: fields})
 }
 
 func inferStructType(s *structStmt, env *Env) {
