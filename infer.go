@@ -171,7 +171,9 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 		if TryCast[*EnumType](stmt.rhs.GetType()) {
 			for i, e := range lhs.exprs {
 				lit := stmt.rhs.(*CallExpr).fun.(*SelectorExpr).sel.lit
-				f := Find(stmt.rhs.GetType().(*EnumType).fields, func(f EnumFieldType) bool { return f.name == lit })
+				fields := stmt.rhs.GetType().(*EnumType).fields
+				// AGL: fields.find({ $0.name == lit })
+				f := Find(fields, func(f EnumFieldType) bool { return f.name == lit })
 				assert(f != nil)
 				assignFn(e.(*IdentExpr).lit, env.Get(f.elts[i]))
 			}
