@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 )
 
 func noop[T any](_ ...T) {}
+
+func p(a ...any) {
+	_, _ = fmt.Fprintln(os.Stderr, a...)
+}
 
 func assert(pred bool, msg ...string) {
 	if !pred {
