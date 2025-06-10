@@ -276,6 +276,7 @@ func (e InterfaceType) GoStr() string { return e.name }
 type EnumType struct {
 	BaseTyp
 	name   string
+	subTyp string
 	fields []EnumFieldType
 }
 
