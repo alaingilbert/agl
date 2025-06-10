@@ -126,6 +126,10 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 	}
 
 	if lhs, ok := lhs.(*TupleExpr); ok {
+		if TryCast[*EnumType](stmt.rhs.GetType()) {
+			// TODO
+			return
+		}
 		MustCast[*TupleExpr](stmt.rhs)
 		for i, x := range stmt.rhs.(*TupleExpr).exprs {
 			MustCast[*IdentExpr](lhs.exprs[i])
@@ -267,7 +271,11 @@ func inferSelectorExpr(expr *SelectorExpr, env *Env) {
 	case *EnumType:
 		enumName := expr.x.(*IdentExpr).lit
 		fieldName := expr.sel.lit
-		assertf(InArray(fieldName, v.fields), "%s: enum %s has no field %s", expr.sel.Pos(), enumName, fieldName)
+		validFields := make([]string, 0, len(v.fields))
+		for _, f := range v.fields {
+			validFields = append(validFields, f.name)
+		}
+		assertf(InArray(fieldName, validFields), "%s: enum %s has no field %s", expr.sel.Pos(), enumName, fieldName)
 		expr.x.SetType(selType)
 		expr.SetType(selType)
 	}
@@ -445,6 +453,8 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 				if lT, ok := l.(*StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
 					expr.SetType(env.Get(name).(*FuncType).ret)
+				} else if _, ok := l.(*EnumType); ok {
+					expr.SetType(l)
 				} else if _, ok := l.(PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
 					if t := env.Get(name); t != nil {
@@ -523,9 +533,13 @@ func inferInterfaceType(e *InterfaceStmt, env *Env) {
 }
 
 func inferEnumType(e *EnumStmt, env *Env) {
-	var fields []string
+	var fields []EnumFieldType
 	for _, f := range e.fields {
-		fields = append(fields, f.name.lit)
+		var elts []string
+		for _, elt := range f.elts {
+			elts = append(elts, elt.(*IdentExpr).lit)
+		}
+		fields = append(fields, EnumFieldType{name: f.name.lit, elts: elts})
 		for _, e := range f.elts {
 			inferExpr(e, nil, env)
 		}
