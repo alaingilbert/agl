@@ -612,6 +612,15 @@ loop:
 			args := parseExprs(ts, RPAREN, prec)
 			assert(ts.Next().typ == RPAREN)
 			x = &CallExpr{fun: &SelectorExpr{x: x, sel: id}, args: args}
+		case LEFTARROW:
+			ts.Next()
+			if x != nil {
+				value := parseExpr(ts, prec)
+				x = &SendExpr{Chan: x, Value: value}
+			} else {
+				chanExpr := parseExpr(ts, prec)
+				x = &RecvExpr{Chan: chanExpr}
+			}
 		case EQL, LOR, LAND, REM, ADD, NEQ, MINUS, MUL, QUO, LTE, LT, GTE, GT:
 			assertf(x != nil, "%s: syntax error", ts.Peek().Pos)
 			x = parseBinOpExpr(ts, x, prec)

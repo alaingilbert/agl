@@ -74,3 +74,18 @@ func TestParseFnSignature6(t *testing.T) {
 	tassert.Equal(t, 0, len(stmt.args.list[0].names))
 	tassert.Equal(t, "string", stmt.args.list[0].typeExpr.(*IdentExpr).lit)
 }
+
+func TestParseChanSendRecv(t *testing.T) {
+	// Test send operation
+	sendExpr := parseExpr(NewTokenStream("ch <- 42"), 0)
+	tassert.IsType(t, &SendExpr{}, sendExpr)
+	send := sendExpr.(*SendExpr)
+	tassert.Equal(t, "ch", send.Chan.(*IdentExpr).lit)
+	tassert.Equal(t, "42", send.Value.(*NumberExpr).lit)
+
+	// Test receive operation
+	recvExpr := parseExpr(NewTokenStream("<-ch"), 0)
+	tassert.IsType(t, &RecvExpr{}, recvExpr)
+	recv := recvExpr.(*RecvExpr)
+	tassert.Equal(t, "ch", recv.Chan.(*IdentExpr).lit)
+}
