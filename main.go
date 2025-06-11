@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"log"
 	"os"
+	"runtime/debug"
 	"strings"
 )
 
@@ -27,7 +28,11 @@ func main() {
 		if r := recover(); r != nil {
 			var aglErr *AglError
 			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
-				_, _ = fmt.Fprintln(os.Stderr, aglErr.Error())
+				msg := aglErr.Error()
+				if msg == "" {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
 				os.Exit(1)
 			}
 			panic(r)
