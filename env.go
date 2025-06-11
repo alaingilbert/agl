@@ -34,12 +34,16 @@ func NewEnv() *Env {
 	env.Define("byte", ByteType{})
 	env.Define("cmp.Ordered", AnyType{})
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("fn(a ...any) int!", env))
-	env.Define("time.Now", parseFuncTypeFromStringNative("fn() time.Time", env))
+	env.Define("time.Duration", I64Type{})
+	env.Define("time.Time", parseStructTypeFromStringNative("type Time struct {}", env))
+	env.Define("time.Now", parseFuncTypeFromStringNative("fn Now() time.Time", env))
+	env.Define("time.Time.Add", parseFuncTypeFromStringNative("fn Add(d time.Duration) time.Time", env))
 	env.Define("strconv.Atoi", parseFuncTypeFromStringNative("fn(string) int!", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("fn(int) string", env))
 	env.Define("strconv.ParseInt", parseFuncTypeFromStringNative("fn(s string, base int, bitSize int) i64!", env))
 	env.Define("strconv.ParseUInt", parseFuncTypeFromStringNative("fn(s string, base int, bitSize int) u64!", env))
 	env.Define("strconv.ParseFloat", parseFuncTypeFromStringNative("fn(s string, bitSize int) f64!", env))
+	env.Define("os.FileMode", U32Type{})
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("fn(name string) Result[[]byte]", env))
 	env.Define("os.WriteFile", parseFuncTypeFromStringNative("fn(name string, data []byte, perm os.FileMode) !", env))
 	env.Define("agl.Vec.filter", parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", env))
@@ -106,7 +110,7 @@ func (e *Env) getType(x Expr, native bool) Typ {
 	case *ArrayTypeExpr:
 		return ArrayType{elt: e.getType(v.elt, native)}
 	case *SelectorExpr:
-		return nil
+		return e.getType(&IdentExpr{lit: fmt.Sprintf("%s.%s", v.x.(*IdentExpr).lit, v.sel.lit)}, native)
 	case *TrueExpr:
 		return BoolType{}
 	case *StringExpr:

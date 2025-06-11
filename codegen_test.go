@@ -2326,3 +2326,22 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "3:4: No new variables on the left side of ':='", testCodeGenFn(src))
 }
+
+func TestCodeGen_Tmp(t *testing.T) {
+	src := `
+package main
+
+import "fmt"
+import "time"
+
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	var b u8 = a.find({ $0 == 2 })?
+	fmt.Println(b)
+
+	now := time.Now()
+	fmt.Println(now)
+}
+`
+	tassert.NotPanics(t, testCodeGenFn(src))
+}

@@ -45,6 +45,14 @@ func funcExprToFuncType2(fe *FuncExpr, env *Env, native bool) FuncType {
 	}
 }
 
+func parseStructTypeFromStringNative(s string, env *Env) StructType {
+	ts := NewTokenStream(s)
+	assert(ts.Next().typ == TYPE)
+	lit := ts.Next().lit
+	_ = parseStructTypeDecl(ts, lit)
+	return StructType{}
+}
+
 func parseFuncTypeFromStringNative(s string, env *Env) FuncType {
 	return parseFuncTypeFromString2(s, env, true)
 }
