@@ -210,11 +210,11 @@ type ResultType struct {
 	native      bool
 }
 
-func (r *ResultType) GoStr() string {
+func (r ResultType) GoStr() string {
 	return fmt.Sprintf("Result[%s]", r.wrappedType.GoStr())
 }
 
-func (r *ResultType) String() string {
+func (r ResultType) String() string {
 	return fmt.Sprintf("ResultType(%s)", r.wrappedType)
 }
 

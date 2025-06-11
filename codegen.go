@@ -628,7 +628,7 @@ func genErrExpr(env *Env, expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, 
 		newExpr = &CallExpr{fun: &SelectorExpr{x: &IdentExpr{lit: "errors"}, sel: &IdentExpr{lit: "New"}}, args: []Expr{v}}
 	}
 	before, content := genExpr(env, newExpr, prefix, retTyp)
-	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(*ResultType).wrappedType.GoStr(), content)
+	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(ResultType).wrappedType.GoStr(), content)
 }
 
 func genMakeExpr(env *Env, expr *MakeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
@@ -782,7 +782,7 @@ func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefo
 
 func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
 	assert(TryCast[OptionType](e.x.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
-	if _, ok := retTyp.(*ResultType); ok {
+	if _, ok := retTyp.(ResultType); ok {
 		before1, content1 := genExpr(env, e.x, prefix, retTyp)
 		// TODO: res should be an incrementing tmp numbered variable
 		before := NewBeforeStmt(addPrefix(`res := `+content1+`
@@ -845,7 +845,7 @@ if res.IsErr() {
 	return MakeOptionNone[%s]()
 }
 `
-	if TryCast[*ResultType](e.x.GetType()) {
+	if TryCast[ResultType](e.x.GetType()) {
 		if TryCast[VoidType](retTyp) && TryCast[FuncType](e.GetType()) && e.GetType().(FuncType).isNative {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			if e.GetType().(FuncType).isNative {
@@ -858,9 +858,9 @@ if res.IsErr() {
 			return append(before1, before), out
 		}
 
-		if retTypType, ok := retTyp.(*ResultType); ok {
+		if retTypType, ok := retTyp.(ResultType); ok {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.GetType().(*ResultType).native {
+			if e.GetType().(ResultType).native {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
 				out := `res`
 				return append(before1, before), out
@@ -878,9 +878,9 @@ if res.IsErr() {
 
 		} else {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.x.GetType().(*ResultType).native {
+			if e.x.GetType().(ResultType).native {
 				tmpl := tmpl1
-				if _, ok := e.GetType().(*ResultType).wrappedType.(VoidType); ok {
+				if _, ok := e.GetType().(ResultType).wrappedType.(VoidType); ok {
 					tmpl = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 					before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
 					out := `AglNoop[struct{}]()`
@@ -935,7 +935,7 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 			return before, fmt.Sprintf("AglVecSum(%s)", content1)
 		}
 		if TryCast[OptionType](expr.x.GetType()) ||
-			TryCast[*ResultType](expr.x.GetType()) {
+			TryCast[ResultType](expr.x.GetType()) {
 			if expr.sel.lit == "unwrap" {
 				_, content := genExpr(env, expr.x, prefix, retTyp)
 				return nil, fmt.Sprintf(`%s.Unwrap()`, content)
