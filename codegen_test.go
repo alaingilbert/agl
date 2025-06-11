@@ -2331,7 +2331,7 @@ func TestCodeGen83(t *testing.T) {
 	src := `
 fn main() {
 	a := []u8{1, 2, 3, 4, 5}
-	a.find(fn(e u8) { e == 2 })?
+	a.find(fn(e u8) bool { e == 2 })?
 }
 `
 	expected := `func main() {
@@ -2348,7 +2348,7 @@ func TestCodeGen84(t *testing.T) {
 	src := `
 fn main() {
 	a := []u8{1, 2, 3, 4, 5}
-	a.find(fn(e i64) { e == 2 })?
+	a.find(fn(e i64) bool { e == 2 })?
 }
 `
 	tassert.PanicsWithError(t, "4:14: type i64 does not match inferred type u8", testCodeGenFn(src))
