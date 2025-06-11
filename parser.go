@@ -621,6 +621,8 @@ loop:
 func parseExpr2(ts *TokenStream, prec int) Expr {
 	token := ts.Peek()
 	switch token.typ {
+	case FN:
+		return parseFnExpr(ts, false)
 	case LBRACE:
 		return parseAnonFn(ts)
 	case LPAREN:

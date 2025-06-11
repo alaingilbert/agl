@@ -2327,22 +2327,22 @@ fn main() {
 	tassert.PanicsWithError(t, "3:4: No new variables on the left side of ':='", testCodeGenFn(src))
 }
 
-//func TestCodeGen83(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []uint8{1, 2, 3, 4, 5}
-//	a.find(fn(e u8) { e == 2 })?
-//}
-//`
-//	expected := `func main() {
-//	a := []uint8{1, 2, 3, 4, 5}
-//	AglVecFind(a, func(e uint8) bool {
-//		return e == 2
-//	})
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+func TestCodeGen83(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	a.find(fn(e u8) { e == 2 })?
+}
+`
+	expected := `func main() {
+	a := []uint8{1, 2, 3, 4, 5}
+	AglVecFind(a, func(e uint8) bool {
+		return e == 2
+	}).Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `

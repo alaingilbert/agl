@@ -273,6 +273,8 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		expr.SetType(StringType{})
 	case *AnonFnExpr:
 		inferAnonFnExpr(expr, env.Clone(), optType)
+	case *FuncExpr:
+		inferFuncExpr(expr, env.Clone(), optType)
 	case *TrueExpr:
 		expr.SetType(BoolType{})
 	case *FalseExpr:
@@ -451,6 +453,29 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	}
 	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
 	assertf(cmpTypes(expr.lhs.GetType(), expr.rhs.GetType()), "%s mismatched types %s and %s", expr.Pos(), expr.lhs.GetType(), expr.rhs.GetType())
+}
+
+func inferFuncExpr(expr *FuncExpr, env *Env, optType Typ) {
+	if optType != nil {
+		expr.SetType(optType)
+	}
+	if expr.GetType() != nil {
+		for i, p := range expr.GetType().(FuncType).params {
+			env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), p)
+		}
+	}
+	inferStmts(expr.stmts, nil, env)
+	if len(expr.stmts) == 1 && TryCast[*ExprStmt](expr.stmts[0]) { // implicit return
+		if expr.stmts[0].(*ExprStmt).x.GetType() != nil {
+			if expr.GetType() != nil {
+				ft := expr.GetType().(FuncType)
+				if t, ok := ft.ret.(*GenericType); ok {
+					ft = ft.ReplaceGenericParameter(t.name, expr.stmts[0].(*ExprStmt).x.GetType())
+					expr.SetTypeForce(ft)
+				}
+			}
+		}
+	}
 }
 
 func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
@@ -639,6 +664,8 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
 		switch arg0 := expr.args[0].(type) {
 		case *AnonFnExpr:
+			arg0.SetType(ft)
+		case *FuncExpr:
 			arg0.SetType(ft)
 		case *SelectorExpr: // TODO
 		default:
