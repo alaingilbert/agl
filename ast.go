@@ -692,6 +692,20 @@ type ReturnStmt struct {
 	expr Expr
 }
 
+type SelectStmt struct {
+	BaseStmt
+	cases []*SelectCase
+}
+
+func (s SelectStmt) String() string { return "SelectStmt(...)" }
+
+type SelectCase struct {
+	stmt Stmt
+	body []Stmt
+}
+
+func (s SelectCase) String() string { return "SelectCase(...)" }
+
 type MatchExpr struct {
 	BaseExpr
 	expr  Expr

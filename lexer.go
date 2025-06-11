@@ -18,6 +18,7 @@ const (
 	COMMA
 	CONTINUE
 	DEC
+	DEFAULT
 	DEFER
 	DOT
 	ELSE
@@ -442,6 +443,7 @@ func scanIdentifier(p Pos, src string, pos int) Tok {
 		"assert":    ASSERT,
 		"break":     BREAK,
 		"case":      CASE,
+		"default":   DEFAULT,
 		"chan":      CHAN,
 		"continue":  CONTINUE,
 		"defer":     DEFER,
