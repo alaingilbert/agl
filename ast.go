@@ -267,6 +267,25 @@ func (a ArrayType) String() string {
 	return fmt.Sprintf("ArrayTypeExpr(%s)", a.elt)
 }
 
+type SendExpr struct {
+	BaseExpr
+	Chan  Expr
+	Value Expr
+}
+
+func (s SendExpr) String() string {
+	return fmt.Sprintf("SendExpr(%s <- %s)", s.Chan, s.Value)
+}
+
+type RecvExpr struct {
+	BaseExpr
+	Chan Expr
+}
+
+func (r RecvExpr) String() string {
+	return fmt.Sprintf("RecvExpr(<- %s)", r.Chan)
+}
+
 type InterfaceType struct {
 	BaseTyp
 	name string

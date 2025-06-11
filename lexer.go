@@ -487,6 +487,9 @@ func scanIdentifier(p Pos, src string, pos int) Tok {
 func scanNumber(p Pos, src string, pos int) Tok {
 	i := pos
 	for {
+		if i > len(src)-1 {
+			break
+		}
 		c := src[i]
 		if isDecimal(rune(c)) {
 			i++
