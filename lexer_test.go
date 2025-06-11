@@ -61,3 +61,20 @@ func TestLexer_TokenStream(t *testing.T) {
 	tassert.Equal(t, EOF, ts.Next().typ)
 	tassert.Equal(t, EOF, ts.Next().typ)
 }
+
+func TestLexer3(t *testing.T) {
+	ts := NewTokenStream(`$0.name`)
+	tassert.Equal(t, "$0", ts.Peek().lit)
+	tassert.Equal(t, IDENT, ts.Next().typ)
+	tassert.Equal(t, ".", ts.Peek().lit)
+	tassert.Equal(t, DOT, ts.Next().typ)
+	tassert.Equal(t, "name", ts.Peek().lit)
+	tassert.Equal(t, IDENT, ts.Next().typ)
+}
+
+func TestLexer4(t *testing.T) {
+	ts := NewTokenStream(`$0 + name`)
+	tassert.Equal(t, IDENT, ts.Next().typ)
+	tassert.Equal(t, ADD, ts.Next().typ)
+	tassert.Equal(t, IDENT, ts.Next().typ)
+}
