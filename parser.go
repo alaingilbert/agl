@@ -223,10 +223,10 @@ func parseType(ts *TokenStream) Expr {
 			return &SelectorExpr{x: e, sel: NewIdentExpr(ts.Next())}
 		case QUESTION:
 			ts.Next()
-			return &BubbleOptionExpr{x: e}
+			return &OptionExpr{x: e}
 		case BANG:
 			ts.Next()
-			return &BubbleResultExpr{x: e}
+			return &ResultExpr{x: e}
 		default:
 			return e
 		}
@@ -373,6 +373,7 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 	}
 	switch ts.Peek().typ {
 	case VAR:
+		pos := ts.Peek().Pos
 		assert(ts.Next().typ == VAR)
 		id := parseIdentExpr(ts)
 		t := parseType(ts)
@@ -382,7 +383,7 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 			value := parseExpr(ts, 1)
 			values = []Expr{value}
 		}
-		return &ValueSpec{names: []*IdentExpr{id}, typ: t, values: values}
+		return &ValueSpec{names: []*IdentExpr{id}, typ: t, values: values, opPos: pos}
 	case IF:
 		return parseIfStmt(ts)
 	case RETURN:

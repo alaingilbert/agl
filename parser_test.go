@@ -44,7 +44,7 @@ func TestParseFnSignature3(t *testing.T) {
 	tassert.Equal(t, "e", stmt.args.list[1].names[0].lit)
 	tassert.Equal(t, "T", stmt.args.list[0].typeExpr.(*ArrayTypeExpr).elt.(*IdentExpr).lit)
 	tassert.Equal(t, "T", stmt.args.list[1].typeExpr.(*IdentExpr).lit)
-	tassert.Equal(t, "T", stmt.out.expr.(*BubbleOptionExpr).x.(*IdentExpr).lit)
+	tassert.Equal(t, "T", stmt.out.expr.(*OptionExpr).x.(*IdentExpr).lit)
 }
 
 func TestParseFnSignature4(t *testing.T) {
@@ -55,7 +55,7 @@ func TestParseFnSignature4(t *testing.T) {
 	tassert.Equal(t, 1, len(stmt.args.list[0].names))
 	tassert.Equal(t, "s", stmt.args.list[0].names[0].lit)
 	tassert.Equal(t, "string", stmt.args.list[0].typeExpr.(*IdentExpr).lit)
-	tassert.Equal(t, "int", stmt.out.expr.(*BubbleResultExpr).x.(*IdentExpr).lit)
+	tassert.Equal(t, "int", stmt.out.expr.(*ResultExpr).x.(*IdentExpr).lit)
 }
 
 func TestParseFnSignature5(t *testing.T) {

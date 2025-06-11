@@ -2051,3 +2051,13 @@ fn main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen68(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	var b u8 = a.find({ $0 == 2 })
+}
+`
+	tassert.PanicsWithError(t, "4:2: cannot use Option[u8] as u8 value in variable declaration", testCodeGenFn(src))
+}

@@ -82,9 +82,13 @@ func (e *Env) GetType(x Expr) Typ {
 	switch v := x.(type) {
 	case *IdentExpr:
 		return e.strToType(v.lit)
-	case *BubbleOptionExpr:
+	case *OptionExpr:
 		return OptionType{wrappedType: e.GetType(v.x)}
-	case *BubbleResultExpr:
+	case *ResultExpr:
+		return &ResultType{wrappedType: e.GetType(v.x)}
+	case *BubbleOptionExpr: // TODO
+		return OptionType{wrappedType: e.GetType(v.x)}
+	case *BubbleResultExpr: // TODO
 		return &ResultType{wrappedType: e.GetType(v.x)}
 	case *ArrayTypeExpr:
 		return ArrayType{elt: e.GetType(v.elt)}
