@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -386,6 +387,8 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 		return &ValueSpec{names: []*IdentExpr{id}, typ: t, values: values, opPos: pos}
 	case IF:
 		return parseIfStmt(ts)
+	case SELECT:
+		return parseSelectStmt(ts)
 	case RETURN:
 		return parseReturnStmt(ts)
 	case INLINECOMMENT:
@@ -444,6 +447,30 @@ func parseReturnStmt(ts *TokenStream) *ReturnStmt {
 	assert(ts.Next().typ == RETURN)
 	expr := parseExpr(ts, 1)
 	return &ReturnStmt{expr: expr}
+}
+
+func parseSelectStmt(ts *TokenStream) Stmt {
+	assert(ts.Next().typ == SELECT)
+	assert(ts.Next().typ == LBRACE)
+	var cases []*SelectCase
+	for ts.Peek().typ != RBRACE {
+		tok := ts.Next()
+		assert(tok.typ == CASE || tok.typ == DEFAULT)
+		s := parseStmt(ts)
+		assert(ts.Next().typ == COLON)
+		stmts := parseStmts(ts)
+		cases = append(cases, &SelectCase{stmt: s, body: stmts})
+		if ts.Peek().typ == RBRACE {
+			break
+		}
+	}
+	ctx := context.Background()
+	select {
+	case a := <-ctx.Done():
+		fmt.Println(a)
+	}
+	assert(ts.Next().typ == RBRACE)
+	return &SelectStmt{cases: cases}
 }
 
 func parseMatchExpr(ts *TokenStream) *MatchExpr {
