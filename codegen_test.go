@@ -2354,6 +2354,27 @@ fn main() {
 	tassert.PanicsWithError(t, "4:2: function type fn(i64) bool does not match inferred type fn(u8) bool", testCodeGenFn(src))
 }
 
+func TestCodeGen84_1(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	a.find(fn(e u8) { e == 2 })?
+}
+`
+	tassert.PanicsWithError(t, "4:2: function type fn(u8) does not match inferred type fn(u8) bool", testCodeGenFn(src))
+}
+
+func TestCodeGen84_2(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	f := fn(e u8) { e == 2 }
+	a.find(f)?
+}
+`
+	tassert.PanicsWithError(t, "5:2: function type fn(u8) does not match inferred type fn(u8) bool", testCodeGenFn(src))
+}
+
 func TestCodeGen85(t *testing.T) {
 	src := `
 fn main() {
