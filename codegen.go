@@ -179,7 +179,6 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
-	return
 }
 
 func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
@@ -243,10 +242,9 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 	default:
 		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
 	}
-	return nil, ""
 }
 
-func genEnumStmt(env *Env, s *EnumStmt) (before []IBefore, out string) {
+func genEnumStmt(_ *Env, s *EnumStmt) (before []IBefore, out string) {
 	out += fmt.Sprintf("type %sTag int\n", s.lit)
 	out += "const (\n"
 	for i, field := range s.fields {
@@ -371,7 +369,7 @@ func genFuncStmt(env *Env, f *FuncExpr) (before []IBefore, out string) {
 	return
 }
 
-func genInlineCommentStmt(env *Env, stmt *InlineCommentStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genInlineCommentStmt(_ *Env, stmt *InlineCommentStmt, prefix string, _ Typ) (before []IBefore, out string) {
 	out += prefix + fmt.Sprintf("%s", stmt.lit) + "\n"
 	return
 }
@@ -659,7 +657,7 @@ func genValueSpec(env *Env, stmt *ValueSpec, prefix string, retTyp Typ) (before 
 	return
 }
 
-func genInterfaceStmt(env *Env, stmt *InterfaceStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genInterfaceStmt(_ *Env, stmt *InterfaceStmt, _ string, _ Typ) (before []IBefore, out string) {
 	out += fmt.Sprintf("type %s interface {\n", stmt.lit)
 	for _, e := range stmt.elts {
 		out += "\t" + e.(*FuncExpr).GetType().(FuncType).InterfaceStr() + "\n"
@@ -706,15 +704,15 @@ func genExprs(env *Env, e []Expr, prefix string, retTyp Typ) (before []IBefore, 
 	return before, strings.Join(tmp, ", ")
 }
 
-func genVoidExpr(env *Env, expr *VoidExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genVoidExpr(_ *Env, _ *VoidExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, ""
 }
 
-func genTrueExpr(env *Env, expr *TrueExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genTrueExpr(_ *Env, _ *TrueExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, "true"
 }
 
-func genFalseExpr(env *Env, expr *FalseExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genFalseExpr(_ *Env, _ *FalseExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, "false"
 }
 
@@ -727,11 +725,11 @@ func genField(env *Env, expr *Field, prefix string, retTyp Typ) ([]IBefore, stri
 	return before1, fmt.Sprintf("%s %s", content1, expr.typeExpr.GetType().GoStr())
 }
 
-func genNumberExpr(env *Env, expr *NumberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genNumberExpr(_ *Env, expr *NumberExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
-func genMemberExpr(env *Env, expr *MemberExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genMemberExpr(_ *Env, expr *MemberExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, "." + expr.name
 }
 
@@ -740,7 +738,7 @@ func genParenExpr(env *Env, expr *ParenExpr, prefix string, retTyp Typ) ([]IBefo
 	return before, fmt.Sprintf("(%s)", content)
 }
 
-func genStringExpr(env *Env, expr *StringExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genStringExpr(_ *Env, expr *StringExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("%s", expr.lit)
 }
 
@@ -749,7 +747,7 @@ func genSomeExpr(env *Env, expr *SomeExpr, prefix string, retTyp Typ) ([]IBefore
 	return before, fmt.Sprintf("MakeOptionSome(%s)", content)
 }
 
-func genNoneExpr(env *Env, expr *NoneExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genNoneExpr(_ *Env, expr *NoneExpr, _ string, _ Typ) ([]IBefore, string) {
 	return nil, fmt.Sprintf("MakeOptionNone[%s]()", expr.typ.(OptionType).wrappedType.GoStr())
 }
 
@@ -800,7 +798,7 @@ func genBinOpExpr(env *Env, expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefo
 	return before, fmt.Sprintf("%s %s %s", content1, op, content2)
 }
 
-func genIdentExpr(env *Env, expr *IdentExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+func genIdentExpr(_ *Env, expr *IdentExpr, _ string, _ Typ) ([]IBefore, string) {
 	if strings.HasPrefix(expr.lit, "$") {
 		expr.lit = strings.Replace(expr.lit, "$", "aglArg", 1)
 	}

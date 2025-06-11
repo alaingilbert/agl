@@ -270,7 +270,7 @@ func parseType(ts *TokenStream) Expr {
 	panic(fmt.Sprintf("unknown type %v", ts.Peek()))
 }
 
-func parseFnExpr(ts *TokenStream, isPub bool) *FuncExpr {
+func parseFnExpr(ts *TokenStream, _ bool) *FuncExpr {
 	ft := parseFnSignature(ts)
 	assert(ts.Next().typ == LBRACE)
 	fs := &FuncExpr{
@@ -578,7 +578,7 @@ func parseExprs2(ts *TokenStream, prec int) (out []Expr) {
 	return
 }
 
-func parsePrimaryExpr(ts *TokenStream, prec int) Expr {
+func parsePrimaryExpr(ts *TokenStream, _ int) Expr {
 	switch ts.Peek().typ {
 	case IDENT:
 		ident := parseIdentExpr(ts)
