@@ -2074,3 +2074,13 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen70(t *testing.T) {
+	src := `
+fn test() []u8 { []u8{1, 2, 3} }
+fn main() {
+	test().filter({ %0 == 2 })
+}
+`
+	tassert.PanicsWithError(t, "4:18: syntax error", testCodeGenFn(src))
+}
