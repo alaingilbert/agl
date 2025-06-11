@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 )
 
@@ -35,7 +34,10 @@ func funcExprToFuncType2(fe *FuncExpr, env *Env, native bool) FuncType {
 			params = append(params, t)
 		}
 	}
-	ret := env.GetTypeNative(fe.out.expr)
+	var ret Typ
+	if fe.out.expr != nil {
+		ret = env.GetTypeNative(fe.out.expr)
+	}
 	return FuncType{
 		name:       fe.name,
 		typeParams: typeParams,
@@ -183,7 +185,11 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.tok.Pos)
 		env.Define(name, typ)
 	}
-	assignFn := Ternary(stmt.tok.typ == WALRUS, myDefine, env.Assign)
+	assignFn := func(name string, typ Typ) {
+		op := stmt.tok.typ
+		f := Ternary(op == WALRUS, myDefine, env.Assign)
+		f(name, typ)
+	}
 	inferExpr(stmt.rhs, nil, env)
 	lhs := stmt.lhs
 	if v, ok := stmt.lhs.(*MutExpr); ok {
@@ -455,18 +461,15 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 }
 
 func inferFuncExpr(expr *FuncExpr, env *Env, optType Typ) {
-	if expr.GetType() != nil {
-		for i, param := range expr.GetType().(FuncType).params {
-			want := env.GetType(expr.args.list[i].typeExpr)
-			assertf(cmpTypes(want, param), "%s: type %s does not match inferred type %s", expr.args.list[i].typeExpr.Pos(), want, param)
-			env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
-		}
+	ft := funcExprToFuncType(expr, env)
+	expr.SetType(ft)
+	for i, param := range ft.params {
+		env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
 	}
 	inferStmts(expr.stmts, nil, env)
 	if len(expr.stmts) == 1 && TryCast[*ExprStmt](expr.stmts[0]) { // implicit return
 		if expr.stmts[0].(*ExprStmt).x.GetType() != nil {
 			if expr.GetType() != nil {
-				ft := expr.GetType().(FuncType)
 				if t, ok := ft.ret.(*GenericType); ok {
 					ft = ft.ReplaceGenericParameter(t.name, expr.stmts[0].(*ExprStmt).x.GetType())
 					expr.SetTypeForce(ft)
@@ -531,6 +534,9 @@ func cmpTypes(a, b Typ) bool {
 		return false
 	}
 	if TryCast[*InterfaceType](a) {
+		return true
+	}
+	if TryCast[*GenericType](a) || TryCast[*GenericType](b) {
 		return true
 	}
 	if a == b {
@@ -639,13 +645,51 @@ func inferCallExpr(callExpr *CallExpr, env *Env) {
 	}
 }
 
+func compareFunctionSignatures(sig1, sig2 FuncType) bool {
+	// Compare return types
+	if !cmpTypes(sig1.ret, sig2.ret) {
+		return false
+	}
+	// Compare number of parameters
+	if len(sig1.params) != len(sig2.params) {
+		return false
+	}
+	// Compare variadic status
+	if sig1.variadic != sig2.variadic {
+		return false
+	}
+	// Compare each parameter type
+	for i := range sig1.params {
+		if !cmpTypes(sig1.params[i], sig2.params[i]) {
+			return false
+		}
+	}
+	// Compare type parameters if they exist
+	if len(sig1.typeParams) != len(sig2.typeParams) {
+		return false
+	}
+	for i := range sig1.typeParams {
+		if !cmpTypes(sig1.typeParams[i], sig2.typeParams[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) {
 	if TryCast[ArrayType](idT) && exprT.sel.lit == "filter" {
 		clbFnStr := "fn [T any](e T) bool"
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
-		expr.args[0].SetTypeForce(ft)
+		if _, ok := expr.args[0].(*AnonFnExpr); ok {
+			expr.args[0].SetTypeForce(ft)
+		} else if _, ok := expr.args[0].(*FuncExpr); ok {
+			ftReal := funcExprToFuncType(expr.args[0].(*FuncExpr), env)
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		} else if ftReal, ok := env.GetType(expr.args[0]).(FuncType); ok {
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		}
 		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "find" {
@@ -653,21 +697,27 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs := parseFnSignatureStmt(NewTokenStream(clbFnStr))
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
-		expr.args[0].SetTypeForce(ft)
+		if _, ok := expr.args[0].(*AnonFnExpr); ok {
+			expr.args[0].SetTypeForce(ft)
+		} else if _, ok := expr.args[0].(*FuncExpr); ok {
+			ftReal := funcExprToFuncType(expr.args[0].(*FuncExpr), env)
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		} else if ftReal, ok := env.GetType(expr.args[0]).(FuncType); ok {
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		}
 		expr.SetTypeForce(OptionType{wrappedType: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
-		switch arg0 := expr.args[0].(type) {
-		case *AnonFnExpr:
-			arg0.SetType(ft)
-		case *FuncExpr:
-			arg0.SetType(ft)
-		case *SelectorExpr: // TODO
-		default:
-			panic(fmt.Sprintf("unexpected type %v", reflect.TypeOf(arg0)))
+		if _, ok := expr.args[0].(*AnonFnExpr); ok {
+			expr.args[0].SetTypeForce(ft)
+		} else if _, ok := expr.args[0].(*FuncExpr); ok {
+			ftReal := funcExprToFuncType(expr.args[0].(*FuncExpr), env)
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		} else if ftReal, ok := env.GetType(expr.args[0]).(FuncType); ok {
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
 		}
 		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
@@ -681,7 +731,14 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		if _, ok := arg0.GetType().(UntypedNumType); ok {
 			ft = ft.ReplaceGenericParameter("R", elTyp)
 		}
-		expr.args[1].SetTypeForce(ft)
+		if _, ok := expr.args[1].(*AnonFnExpr); ok {
+			expr.args[1].SetTypeForce(ft)
+		} else if _, ok := expr.args[0].(*FuncExpr); ok {
+			ftReal := funcExprToFuncType(expr.args[0].(*FuncExpr), env)
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		} else if ftReal, ok := env.GetType(expr.args[0]).(FuncType); ok {
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
+		}
 	}
 }
 
@@ -787,7 +844,7 @@ func (t *GenericType) GoStr() string {
 }
 
 func (t *GenericType) String() string {
-	return fmt.Sprintf("GenType(%s %s)", t.name, t.constraints[0].GoStr())
+	return fmt.Sprintf("%s", t.name)
 }
 
 func getFuncArgsType(f *FuncExpr, env *Env) (out []Typ, variadic bool) {

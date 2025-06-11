@@ -2351,7 +2351,26 @@ fn main() {
 	a.find(fn(e i64) bool { e == 2 })?
 }
 `
-	tassert.PanicsWithError(t, "4:14: type i64 does not match inferred type u8", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "4:2: function type fn(i64) bool does not match inferred type fn(u8) bool", testCodeGenFn(src))
+}
+
+func TestCodeGen85(t *testing.T) {
+	src := `
+fn main() {
+	a := []u8{1, 2, 3, 4, 5}
+	f := fn(e u8) bool { return e == 2 }
+	a.find(f)?
+}
+`
+	expected := `func main() {
+	a := []uint8{1, 2, 3, 4, 5}
+	f := func(e uint8) bool {
+		return e == 2
+	}
+	AglVecFind(a, f).Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
 }
 
 func TestCodeGen_Tmp(t *testing.T) {
