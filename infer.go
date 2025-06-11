@@ -774,12 +774,17 @@ func inferStructType(s *structStmt, env *Env) {
 }
 
 func inferStructTypeFieldsType(s *structStmt, env *Env) {
-	env.Define(s.lit, &StructType{name: s.lit})
+	var fields []FieldType
 	if s.fields != nil {
 		for _, field := range s.fields {
-			field.typeExpr.SetType(env.GetType(field.typeExpr))
+			t := env.GetType(field.typeExpr)
+			field.typeExpr.SetType(t)
+			for _, n := range field.names {
+				fields = append(fields, FieldType{name: n.lit, typ: t})
+			}
 		}
 	}
+	env.Define(s.lit, &StructType{name: s.lit, fields: fields})
 }
 
 func getFuncType(f *FuncExpr, env *Env) FuncType {
