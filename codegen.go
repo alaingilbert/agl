@@ -1277,5 +1277,9 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 	}
 	return MakeOptionNone[T]()
 }
+
+func AglJoined(a []string, s string) string {
+	return strings.Join(a, s)
+}
 `
 }
