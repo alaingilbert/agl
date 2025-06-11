@@ -2304,3 +2304,25 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
+
+func TestCodeGen81(t *testing.T) {
+	src := `
+fn main() {
+	_ = 42
+}
+`
+	expected := `func main() {
+	_ = 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen82(t *testing.T) {
+	src := `
+fn main() {
+	_ := 42
+}
+`
+	tassert.PanicsWithError(t, "3:4: No new variables on the left side of ':='", testCodeGenFn(src))
+}
