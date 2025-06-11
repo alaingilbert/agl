@@ -291,6 +291,8 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		expr.SetType(BoolType{})
 	case *CompositeLitExpr:
 		expr.SetType(env.Get(expr.typ.(*IdentExpr).lit))
+	case *ArrayTypeExpr:
+		expr.SetType(env.GetType(expr))
 	case *TypeAssertExpr:
 		inferExpr(expr.x, nil, env)
 		inferExpr(expr.typ, nil, env)

@@ -2489,6 +2489,19 @@ func TestCodeGen90(t *testing.T) {
 	tassert.PanicsWithError(t, "11:10: type mismatch, wants: []string, got: []int", testCodeGenFn(src))
 }
 
+func TestCodeGen91(t *testing.T) {
+	src := `
+	fn main() {
+		var arr []int 
+	}
+`
+	expected := `func main() {
+	var arr []int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {
