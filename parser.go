@@ -588,6 +588,9 @@ func parseExprs(ts *TokenStream, exitTok, prec int) (out []Expr) {
 		}
 		expr := parseExpr(ts, prec)
 		out = append(out, expr)
+		if ts.Peek().typ != COMMA {
+			return
+		}
 	}
 }
 
