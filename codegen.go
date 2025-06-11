@@ -860,7 +860,7 @@ if res.IsErr() {
 
 		if retTypType, ok := retTyp.(ResultType); ok {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.GetType().(ResultType).native {
+			if e.x.GetType().(ResultType).native {
 				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
 				out := `res`
 				return append(before1, before), out
@@ -880,7 +880,7 @@ if res.IsErr() {
 			before1, content1 := genExpr(env, e.x, prefix, retTyp)
 			if e.x.GetType().(ResultType).native {
 				tmpl := tmpl1
-				if _, ok := e.GetType().(ResultType).wrappedType.(VoidType); ok {
+				if _, ok := e.x.GetType().(ResultType).wrappedType.(VoidType); ok {
 					tmpl = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 					before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
 					out := `AglNoop[struct{}]()`

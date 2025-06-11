@@ -237,7 +237,8 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		expr.SetType(expr.x.GetType().(OptionType).wrappedType)
 	case *BubbleResultExpr:
 		inferExpr(expr.x, nil, env)
-		expr.SetType(expr.x.GetType())
+		assertf(TryCast[ResultType](expr.x.GetType()), "should be Result type, got: %s", expr.x.GetType())
+		expr.SetType(expr.x.GetType().(ResultType).wrappedType)
 	case *NumberExpr:
 		expr.SetType(UntypedNumType{})
 	case *NoneExpr:
@@ -539,7 +540,10 @@ func inferCallExpr(expr *CallExpr, env *Env) {
 		default:
 			inferExpr(id, nil, env)
 			idT := id.GetType()
-			expr.SetType(idT)
+			if lT, ok := idT.(*StructType); ok {
+				name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
+				expr.SetType(env.Get(name).(FuncType).ret)
+			}
 			inferVecExtensions(env, idT, exprT, expr)
 		}
 		inferExprs(expr.args, env)
