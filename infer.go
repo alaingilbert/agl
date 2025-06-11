@@ -494,11 +494,12 @@ func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
 	}
 	inferStmts(expr.stmts, nil, env)
 	if len(expr.stmts) == 1 && TryCast[*ExprStmt](expr.stmts[0]) { // implicit return
-		if expr.stmts[0].(*ExprStmt).x.GetType() != nil {
+		returnStmt := expr.stmts[0].(*ExprStmt)
+		if returnStmt.x.GetType() != nil {
 			if expr.typ != nil {
 				ft := expr.typ.(FuncType)
 				if t, ok := ft.ret.(*GenericType); ok {
-					ft = ft.ReplaceGenericParameter(t.name, expr.stmts[0].(*ExprStmt).x.GetType())
+					ft = ft.ReplaceGenericParameter(t.name, returnStmt.x.GetType())
 					expr.SetTypeForce(ft)
 				}
 			}
