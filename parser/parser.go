@@ -1134,9 +1134,9 @@ func (p *parser) parseFuncType() *ast.FuncType {
 		}
 	}
 	params := p.parseParameters(false)
-	results := p.parseParameters(true)
+	result := p.tryIdentOrType()
 
-	return &ast.FuncType{Func: pos, Params: params, Results: results}
+	return &ast.FuncType{Func: pos, Params: params, Result: result}
 }
 
 func (p *parser) parseMethodSpec() *ast.Field {
@@ -1168,12 +1168,12 @@ func (p *parser) parseMethodSpec() *ast.Field {
 
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
-				results := p.parseParameters(true)
+				result := p.tryIdentOrType()
 				idents = []*ast.Ident{ident}
 				typ = &ast.FuncType{
-					Func:    token.NoPos,
-					Params:  params,
-					Results: results,
+					Func:   token.NoPos,
+					Params: params,
+					Result: result,
 				}
 			} else {
 				// embedded instantiated type
@@ -1198,9 +1198,9 @@ func (p *parser) parseMethodSpec() *ast.Field {
 			// ordinary method
 			// TODO(rfindley) refactor to share code with parseFuncType.
 			params := p.parseParameters(false)
-			results := p.parseParameters(true)
+			result := p.tryIdentOrType()
 			idents = []*ast.Ident{ident}
-			typ = &ast.FuncType{Func: token.NoPos, Params: params, Results: results}
+			typ = &ast.FuncType{Func: token.NoPos, Params: params, Result: result}
 		default:
 			// embedded type
 			typ = x
@@ -2815,7 +2815,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 	params := p.parseParameters(false)
-	results := p.parseParameters(true)
+	result := p.tryIdentOrType()
 
 	var body *ast.BlockStmt
 	switch p.tok {
@@ -2842,7 +2842,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 			Func:       pos,
 			TypeParams: tparams,
 			Params:     params,
-			Results:    results,
+			Result:     result,
 		},
 		Body: body,
 	}
