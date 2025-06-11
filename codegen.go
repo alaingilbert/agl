@@ -542,7 +542,6 @@ func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before 
 				return false
 			}
 			return false // Keep original order for equal types
-
 		})
 		for i, e := range stmt.cases {
 			var condition string
@@ -606,7 +605,6 @@ func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before 
 				return false
 			}
 			return false // Keep original order for equal types
-
 		})
 		for i, e := range stmt.cases {
 			var condition string
