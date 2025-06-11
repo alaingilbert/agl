@@ -2438,6 +2438,39 @@ type Pos struct {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen89(t *testing.T) {
+	src := `
+package main
+import "fmt"
+type Person struct {
+	name string
+}
+fn main() {
+	p1 := Person{name: "John"}
+	p2 := Person{name: "Jane"}
+	arr := []Person{p1, p2}
+	res := arr.map({ $0.name }).joined(", ")
+	fmt.Println(res)
+}
+`
+	expected := `package main
+import "fmt"
+type Person struct {
+	name string
+}
+func main() {
+	p1 := Person{name: "John"}
+	p2 := Person{name: "Jane"}
+	arr := []Person{p1, p2}
+	res := AglJoined(AglVecMap(arr, func(aglArg0 Person) string {
+		return aglArg0.name
+	}), ", ")
+	fmt.Println(res)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {
