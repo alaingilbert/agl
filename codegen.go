@@ -415,14 +415,25 @@ func genForRangeStmt(env *Env, stmt *ForRangeStmt, prefix string, retTyp Typ) (b
 }
 
 func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	for i := range stmt.lhs {
+		stmtLhs := stmt.lhs[i]
+		stmtRhs := stmt.rhs[i]
+		before1, content1 := genAssignStmt1(env, stmtLhs, stmtRhs, stmt.tok, prefix, retTyp)
+		before = append(before, before1...)
+		out += content1
+	}
+	return
+}
+
+func genAssignStmt1(env *Env, stmtLhs, stmtRhs Expr, tok Tok, prefix string, retTyp Typ) (before []IBefore, out string) {
 	// LHS
 	var lhs string
 	var after string
-	if TryCast[*TupleExpr](stmt.lhs) {
-		if TryCast[*EnumType](stmt.rhs.GetType()) {
+	if TryCast[*TupleExpr](stmtLhs) {
+		if TryCast[*EnumType](stmtRhs.GetType()) {
 			lhs = AglVariablePrefix + "1"
 			var sel string
-			switch v := stmt.rhs.(type) {
+			switch v := stmtRhs.(type) {
 			case *CallExpr:
 				sel = v.fun.(*SelectorExpr).sel.lit
 			case *IdentExpr:
@@ -431,7 +442,7 @@ func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (befor
 
 			var names []string
 			var exprs []string
-			for i, x := range stmt.lhs.(*TupleExpr).exprs {
+			for i, x := range stmtLhs.(*TupleExpr).exprs {
 				names = append(names, x.(*IdentExpr).lit)
 				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
 			}
@@ -440,24 +451,24 @@ func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (befor
 			lhs = AglVariablePrefix + "1"
 			var names []string
 			var exprs []string
-			for i, x := range stmt.lhs.(*TupleExpr).exprs {
+			for i, x := range stmtLhs.(*TupleExpr).exprs {
 				names = append(names, x.(*IdentExpr).lit)
 				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
 			}
 			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
 	} else {
-		before1, content1 := genExpr(env, stmt.lhs, prefix, retTyp)
+		before1, content1 := genExpr(env, stmtLhs, prefix, retTyp)
 		before = append(before, before1...)
 		lhs = content1
 	}
 
 	// RHS
-	before2, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+	before2, content2 := genExpr(env, stmtRhs, prefix, retTyp)
 	before = append(before, before2...)
 
 	// Output
-	out += prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.tok.lit, content2)
+	out += prefix + fmt.Sprintf("%s %s %s\n", lhs, tok.lit, content2)
 	out += after
 	return
 }

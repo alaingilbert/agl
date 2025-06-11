@@ -194,49 +194,56 @@ func inferAssignStmt(stmt *AssignStmt, env *Env) {
 		f := Ternary(op == WALRUS, myDefine, env.Assign)
 		f(name, typ)
 	}
-	inferExpr(stmt.rhs, nil, env)
-	lhs := stmt.lhs
-	if v, ok := stmt.lhs.(*MutExpr); ok {
-		lhs = v.x
-	}
 
-	if lhs, ok := lhs.(*TupleExpr); ok {
-		if TryCast[*EnumType](stmt.rhs.GetType()) {
-			for i, e := range lhs.exprs {
-				lit := stmt.rhs.GetType().(*EnumType).subTyp
-				fields := stmt.rhs.GetType().(*EnumType).fields
-				// AGL: fields.find({ $0.name == lit })
-				f := Find(fields, func(f EnumFieldType) bool { return f.name == lit })
-				assert(f != nil)
-				assignFn(e.(*IdentExpr).lit, env.Get(f.elts[i]))
+	assertf(len(stmt.lhs) == len(stmt.rhs), "%s: assignment mismatch", stmt.tok.Pos)
+	for i := range stmt.lhs {
+		stmtLhs := stmt.lhs[i]
+		stmtRhs := stmt.rhs[i]
+
+		inferExpr(stmtRhs, nil, env)
+		lhs := stmtLhs
+		if v, ok := stmtLhs.(*MutExpr); ok {
+			lhs = v.x
+		}
+
+		if lhs, ok := lhs.(*TupleExpr); ok {
+			if TryCast[*EnumType](stmtRhs.GetType()) {
+				for i, e := range lhs.exprs {
+					lit := stmtRhs.GetType().(*EnumType).subTyp
+					fields := stmtRhs.GetType().(*EnumType).fields
+					// AGL: fields.find({ $0.name == lit })
+					f := Find(fields, func(f EnumFieldType) bool { return f.name == lit })
+					assert(f != nil)
+					assignFn(e.(*IdentExpr).lit, env.Get(f.elts[i]))
+				}
+				return
+			}
+			MustCast[*TupleExpr](stmtRhs)
+			for i, x := range stmtRhs.(*TupleExpr).exprs {
+				MustCast[*IdentExpr](lhs.exprs[i])
+				lhs.exprs[i].SetType(x.GetType())
+				assignFn(lhs.exprs[i].(*IdentExpr).lit, x.GetType())
 			}
 			return
 		}
-		MustCast[*TupleExpr](stmt.rhs)
-		for i, x := range stmt.rhs.(*TupleExpr).exprs {
-			MustCast[*IdentExpr](lhs.exprs[i])
-			lhs.exprs[i].SetType(x.GetType())
-			assignFn(lhs.exprs[i].(*IdentExpr).lit, x.GetType())
-		}
-		return
-	}
 
-	lhsID := MustCast[*IdentExpr](lhs)
-	switch rhs := stmt.rhs.(type) {
-	case *BubbleResultExpr:
-		callExpr := MustCast[*CallExpr](rhs.x)
-		switch s := callExpr.fun.(type) {
-		case *SelectorExpr:
-			if id, ok := s.x.(*IdentExpr); ok {
-				if rhs.GetType() == nil {
-					rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
-					callExpr.SetType(rhs.typ.(FuncType).ret)
+		lhsID := MustCast[*IdentExpr](lhs)
+		switch rhs := stmtRhs.(type) {
+		case *BubbleResultExpr:
+			callExpr := MustCast[*CallExpr](rhs.x)
+			switch s := callExpr.fun.(type) {
+			case *SelectorExpr:
+				if id, ok := s.x.(*IdentExpr); ok {
+					if rhs.GetType() == nil {
+						rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
+						callExpr.SetType(rhs.typ.(FuncType).ret)
+					}
 				}
 			}
 		}
+		lhsID.SetType(stmtRhs.GetType())
+		assignFn(lhsID.lit, lhsID.typ)
 	}
-	lhsID.SetType(stmt.rhs.GetType())
-	assignFn(lhsID.lit, lhsID.typ)
 }
 
 func inferExprs(e []Expr, env *Env) {

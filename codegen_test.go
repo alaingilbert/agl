@@ -2502,6 +2502,20 @@ func TestCodeGen91(t *testing.T) {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen92(t *testing.T) {
+	src := `
+	fn main() {
+		 row, col := 1, 0
+	}
+`
+	expected := `func main() {
+	row := 1
+	col := 0
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {
