@@ -176,8 +176,6 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genInterfaceStmt(env, s, prefix, retTyp)
 	case *ValueSpec:
 		return genValueSpec(env, s, prefix, retTyp)
-	case *MatchStmt:
-		return genMatchStmt(env, s, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
@@ -238,6 +236,8 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 		return genKeyValueExpr(env, expr, prefix, retTyp)
 	case *TypeAssertExpr:
 		return genTypeAssertExpr(env, expr, prefix, retTyp)
+	case *MatchExpr:
+		return genMatchExpr(env, expr, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
 	}
@@ -512,11 +512,11 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 	return
 }
 
-func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+func genMatchExpr(env *Env, stmt *MatchExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
 	if TryCast[OptionType](stmt.expr.GetType()) {
 		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
 		before = append(before, before1...)
-		out += prefix + fmt.Sprintf("res := %s\n", content1)
+		out += fmt.Sprintf("res := %s\n", content1)
 		cases := stmt.cases
 		sort.Slice(cases, func(i, j int) bool {
 			iSome := TryCast[*SomeExpr](cases[i].cond)
@@ -572,14 +572,11 @@ func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before 
 				out += content2
 			}
 			out += prefix + "}"
-			if i == len(stmt.cases)-1 {
-				out += "\n"
-			}
 		}
 	} else if TryCast[ResultType](stmt.expr.GetType()) {
 		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
 		before = append(before, before1...)
-		out += prefix + fmt.Sprintf("res := %s\n", content1)
+		out += fmt.Sprintf("res := %s\n", content1)
 		cases := stmt.cases
 		sort.Slice(cases, func(i, j int) bool {
 			iOk := TryCast[*OkExpr](cases[i].cond)
@@ -635,9 +632,6 @@ func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before 
 				out += content2
 			}
 			out += prefix + "}"
-			if i == len(stmt.cases)-1 {
-				out += "\n"
-			}
 		}
 	}
 	return

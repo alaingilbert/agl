@@ -388,8 +388,6 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 		return parseIfStmt(ts)
 	case RETURN:
 		return parseReturnStmt(ts)
-	case MATCH:
-		return parseMatchStmt(ts)
 	case INLINECOMMENT:
 		return parseInlineComment(ts)
 	case FOR:
@@ -448,7 +446,7 @@ func parseReturnStmt(ts *TokenStream) *ReturnStmt {
 	return &ReturnStmt{expr: expr}
 }
 
-func parseMatchStmt(ts *TokenStream) *MatchStmt {
+func parseMatchExpr(ts *TokenStream) *MatchExpr {
 	assert(ts.Next().typ == MATCH)
 	expr := parseExpr(ts, 1)
 	assert(ts.Next().typ == LBRACE)
@@ -471,7 +469,7 @@ func parseMatchStmt(ts *TokenStream) *MatchStmt {
 		assert(ts.Next().typ == COMMA)
 	}
 	assert(ts.Next().typ == RBRACE)
-	return &MatchStmt{expr: expr, cases: cases}
+	return &MatchExpr{expr: expr, cases: cases}
 }
 
 func parseInlineComment(ts *TokenStream) *InlineCommentStmt {
@@ -625,6 +623,8 @@ func parseExpr2(ts *TokenStream, prec int) Expr {
 	case MUT:
 		ts.Next()
 		return &MutExpr{x: parseExpr(ts, prec)}
+	case MATCH:
+		return parseMatchExpr(ts)
 	case IDENT:
 		ident := parseIdentExpr(ts)
 		switch ts.Peek().typ {

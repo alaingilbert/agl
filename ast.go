@@ -692,15 +692,15 @@ type ReturnStmt struct {
 	expr Expr
 }
 
-type MatchStmt struct {
-	BaseStmt
+type MatchExpr struct {
+	BaseExpr
 	expr  Expr
 	cases []*MatchCase
 }
 
-func (m MatchStmt) String() string { return "MatchStmt(...)" }
+func (m MatchExpr) String() string { return "MatchExpr(...)" }
 
-func (m MatchStmt) Pos() Pos { return m.expr.Pos() }
+func (m MatchExpr) Pos() Pos { return m.expr.Pos() }
 
 type MatchCase struct {
 	cond Expr
