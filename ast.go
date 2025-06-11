@@ -685,6 +685,7 @@ type IfLetStmt struct {
 	BaseStmt
 	lhs  Expr
 	rhs  Expr
+	cond Expr
 	body []Stmt
 	Else Stmt
 }

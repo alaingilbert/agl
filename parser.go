@@ -510,6 +510,7 @@ func parseIfStmt(ts *TokenStream) Stmt {
 	expr := parseExpr(ts, 1)
 	var isLet bool
 	var expr2 Expr
+	var letCond Expr
 	if ts.Peek().typ == IN {
 		tok := ts.Next()
 		expr2 := parsePrimaryExpr(ts, 1)
@@ -518,6 +519,10 @@ func parseIfStmt(ts *TokenStream) Stmt {
 		assert(ts.Next().typ == WALRUS)
 		expr2 = parseExpr(ts, 1)
 		isLet = true
+		if ts.Peek().typ == SEMICOLON {
+			assert(ts.Next().typ == SEMICOLON)
+			letCond = parseExpr(ts, 1)
+		}
 	}
 	assert(ts.Next().typ == LBRACE)
 	stmts := parseStmts(ts)
@@ -532,7 +537,7 @@ func parseIfStmt(ts *TokenStream) Stmt {
 		}
 	}
 	if isLet {
-		return &IfLetStmt{lhs: expr, rhs: expr2, body: stmts, Else: elseStmt}
+		return &IfLetStmt{lhs: expr, rhs: expr2, cond: letCond, body: stmts, Else: elseStmt}
 	}
 	return &IfStmt{cond: expr, body: stmts, Else: elseStmt}
 }
