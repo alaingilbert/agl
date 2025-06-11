@@ -1377,9 +1377,6 @@ type Person struct {
 fn (p Person) method1() Person! {
 	return Ok(p)
 }
-fn (p Person) method2() Person! {
-	return Ok(p)
-}
 fn main() {
 	p := Person{}
 	a := p.method1()!.method1()!
@@ -1388,9 +1385,6 @@ fn main() {
 	expected := `type Person struct {
 }
 func (p Person) method1() Result[Person] {
-	return MakeResultOk(p)
-}
-func (p Person) method2() Result[Person] {
 	return MakeResultOk(p)
 }
 func main() {
