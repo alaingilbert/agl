@@ -264,7 +264,7 @@ func (a ArrayType) GoStr() string {
 }
 
 func (a ArrayType) String() string {
-	return fmt.Sprintf("ArrayTypeExpr(%s)", a.elt)
+	return fmt.Sprintf("[]%s", a.elt)
 }
 
 type SendExpr struct {
