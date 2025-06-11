@@ -139,53 +139,6 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 		inferExpr(stmt.x, nil, env)
 	case *InlineCommentStmt:
 	case *ForRangeStmt:
-	case *MatchStmt:
-		inferExpr(stmt.expr, nil, env)
-		if _, ok := stmt.expr.GetType().(OptionType); ok {
-			var hasSome, hasNone bool
-			for _, c := range stmt.cases {
-				switch v := c.cond.(type) {
-				case *SomeExpr:
-					id := v.expr.(*IdentExpr).lit
-					nenv := env.Clone()
-					nenv.Define(id, stmt.expr.GetType().(OptionType).wrappedType)
-					inferStmts(c.body, returnTyp, nenv)
-					hasSome = true
-				case *NoneExpr:
-					hasNone = true
-				case *IdentExpr:
-					if v.lit == "_" {
-						hasSome, hasNone = true, true
-					}
-				default:
-					panic("")
-				}
-			}
-			assertf(hasSome && hasNone, "%s: match statement must be exhaustive", stmt.Pos())
-		} else if _, ok := stmt.expr.GetType().(ResultType); ok {
-			var hasOk, hasErr bool
-			for _, c := range stmt.cases {
-				switch v := c.cond.(type) {
-				case *OkExpr:
-					id := v.expr.(*IdentExpr).lit
-					nenv := env.Clone()
-					nenv.Define(id, stmt.expr.GetType().(ResultType).wrappedType)
-					inferStmts(c.body, returnTyp, nenv)
-					hasOk = true
-				case *ErrExpr:
-					hasErr = true
-				case *IdentExpr:
-					if v.lit == "_" {
-						hasOk, hasErr = true, true
-					}
-				default:
-					panic("")
-				}
-			}
-			assertf(hasOk && hasErr, "%s: match statement must be exhaustive", stmt.Pos())
-		} else {
-			panic(fmt.Sprintf("not implemented %v", stmt.expr.GetType()))
-		}
 	case *IncDecStmt:
 	case *BlockStmt:
 		inferStmts(stmt.stmts, returnTyp, env)
@@ -318,6 +271,53 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 		inferExpr(expr.x, nil, env)
 		inferExpr(expr.typ, nil, env)
 		expr.SetType(OptionType{wrappedType: env.GetType(expr.typ)})
+	case *MatchExpr:
+		inferExpr(expr.expr, nil, env)
+		if _, ok := expr.expr.GetType().(OptionType); ok {
+			var hasSome, hasNone bool
+			for _, c := range expr.cases {
+				switch v := c.cond.(type) {
+				case *SomeExpr:
+					id := v.expr.(*IdentExpr).lit
+					nenv := env.Clone()
+					nenv.Define(id, expr.expr.GetType().(OptionType).wrappedType)
+					inferStmts(c.body, nil, nenv)
+					hasSome = true
+				case *NoneExpr:
+					hasNone = true
+				case *IdentExpr:
+					if v.lit == "_" {
+						hasSome, hasNone = true, true
+					}
+				default:
+					panic("")
+				}
+			}
+			assertf(hasSome && hasNone, "%s: match statement must be exhaustive", expr.Pos())
+		} else if _, ok := expr.expr.GetType().(ResultType); ok {
+			var hasOk, hasErr bool
+			for _, c := range expr.cases {
+				switch v := c.cond.(type) {
+				case *OkExpr:
+					id := v.expr.(*IdentExpr).lit
+					nenv := env.Clone()
+					nenv.Define(id, expr.expr.GetType().(ResultType).wrappedType)
+					inferStmts(c.body, nil, nenv)
+					hasOk = true
+				case *ErrExpr:
+					hasErr = true
+				case *IdentExpr:
+					if v.lit == "_" {
+						hasOk, hasErr = true, true
+					}
+				default:
+					panic("")
+				}
+			}
+			assertf(hasOk && hasErr, "%s: match statement must be exhaustive", expr.Pos())
+		} else {
+			panic(fmt.Sprintf("not implemented %v", expr.expr.GetType()))
+		}
 	default:
 		panic(fmt.Sprintf("unexpected type %v", to(expr)))
 	}
