@@ -1,0 +1,42 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "agl",
+	"patterns": [
+		{"include": "#keywords"},
+		{"include": "#strings"},
+		{"include": "#types" },
+		{"include": "#functions"}
+	],
+	"repository": {
+		"types": {
+			"patterns": [{
+				"name": "storage.type.agl",
+				"match": "\\b(u8|u16|u32|u64|i8|i16|i32|i64|int|uint|f32|f64|bool|string)\\b"
+			}]
+		},
+		"functions": {
+			"patterns": [{
+				"name": "entity.name.function.agl",
+				"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\s*(?=\\()"
+			}]
+		},
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.agl",
+				"match": "\\b(if|import|for|return|package|fn)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.agl",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.agl",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.agl"
+}

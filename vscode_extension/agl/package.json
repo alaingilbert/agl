@@ -1,0 +1,25 @@
+{
+  "name": "agl",
+  "displayName": "agl",
+  "description": "agl",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "agl",
+      "aliases": ["agl", "agl"],
+      "extensions": [".agl"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "agl",
+      "scopeName": "source.agl",
+      "path": "./syntaxes/agl.tmLanguage.json"
+    }]
+  }
+}
