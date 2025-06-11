@@ -87,6 +87,8 @@ const (
 	INTERFACE
 	VAR
 	SEMICOLON
+	IOTA
+	CONST
 
 	ADD_ASSIGN // +=
 	SUB_ASSIGN // -=
@@ -475,6 +477,8 @@ func scanIdentifier(p Pos, src string, pos int) Tok {
 		"false":     FALSE,
 		"interface": INTERFACE,
 		"var":       VAR,
+		"iota":      IOTA,
+		"const":     CONST,
 	}
 
 	v := IDENT

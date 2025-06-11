@@ -29,6 +29,9 @@ func parser(ts *TokenStream) *ast {
 			} else {
 				s.imports = append(s.imports, &importStmt{elts: []string{ts.Next().lit}})
 			}
+		} else if ts.Peek().typ == CONST {
+			assert(ts.Next().typ == CONST)
+			panic("not implemented")
 		} else if ts.Peek().typ == TYPE {
 			ss := parseTypeDecl(ts)
 			switch sss := ss.(type) {
