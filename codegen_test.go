@@ -2181,3 +2181,77 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "4:8: match statement must be exhaustive", testCodeGenFn(src))
 }
+
+func TestCodeGen76(t *testing.T) {
+	src := `
+fn getInt() int! { Ok(42) }
+fn main() {
+	match getInt() {
+		_ => { fmt.Println("Ok or Err") },
+	}
+}
+`
+	expected := `func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	res := getInt()
+	if res.IsOk() || res.IsErr() {
+		fmt.Println("Ok or Err")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen77(t *testing.T) {
+	src := `
+fn getInt() int! { Ok(42) }
+fn main() {
+	match getInt() {
+		Ok(n) => { fmt.Println("Ok ", n) },
+		_ => { fmt.Println("Ok or Err") },
+	}
+}
+`
+	expected := `func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	res := getInt()
+	if res.IsOk() {
+		n := res.Unwrap()
+		fmt.Println("Ok ", n)
+	} else if res.IsOk() || res.IsErr() {
+		fmt.Println("Ok or Err")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen78(t *testing.T) {
+	src := `
+fn getInt() int! { Ok(42) }
+fn main() {
+	match getInt() {
+		Ok(n) => { fmt.Println("Ok ", n) },
+		Err(e) => { fmt.Println("Err ", e) },
+	}
+}
+`
+	expected := `func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	res := getInt()
+	if res.IsOk() {
+		n := res.Unwrap()
+		fmt.Println("Ok ", n)
+	} else if res.IsErr() {
+		fmt.Println("Err ", e)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
