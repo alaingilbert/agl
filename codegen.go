@@ -729,8 +729,11 @@ func genMutExpr(env *Env, expr *MutExpr, prefix string, retTyp Typ) ([]IBefore, 
 }
 
 func genField(env *Env, expr *Field, prefix string, retTyp Typ) ([]IBefore, string) {
-	before1, content1 := genExpr(env, expr.names[0], prefix, retTyp)
-	return before1, fmt.Sprintf("%s %s", content1, expr.typeExpr.GetType().GoStr())
+	var tmp []string
+	for _, n := range expr.names {
+		tmp = append(tmp, n.lit)
+	}
+	return nil, fmt.Sprintf("%s %s", strings.Join(tmp, ", "), expr.typeExpr.GetType().GoStr())
 }
 
 func genNumberExpr(_ *Env, expr *NumberExpr, _ string, _ Typ) ([]IBefore, string) {
