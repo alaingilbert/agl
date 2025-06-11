@@ -464,95 +464,94 @@ func cmpTypes(a, b Typ) bool {
 	return false
 }
 
-func inferCallExpr(expr *CallExpr, env *Env) {
-	switch exprT := expr.fun.(type) {
+func inferCallExpr(callExpr *CallExpr, env *Env) {
+	switch callExprFun := callExpr.fun.(type) {
 	case *VecExpr:
-		expr.fun.SetType(ArrayType{elt: env.Get(exprT.typStr)})
+		callExprFun.SetType(ArrayType{elt: env.Get(callExprFun.typStr)})
 	case *IdentExpr:
-		if exprTT := env.Get(exprT.lit); exprTT != nil {
-			ft := exprTT.(FuncType)
-			oParams := ft.params
-			variadic := ft.variadic
-			if variadic {
-				assertf(len(expr.args) >= len(oParams)-1, "%s not enough arguments in call to %s", expr.Pos(), exprT.lit)
-			} else {
-				assertf(len(oParams) == len(expr.args), "%s wrong number of arguments in call to %s, wants: %d, got: %d", expr.Pos(), exprT.lit, len(oParams), len(expr.args))
-			}
-			for i := range expr.args {
-				arg := expr.args[i]
-				var oArg Typ
-				if i >= len(oParams) {
-					oArg = oParams[len(oParams)-1]
-				} else {
-					oArg = oParams[i]
-				}
-				inferExpr(arg, oArg, env)
-				want := oArg
-				got := env.GetType(arg)
-				assertf(cmpTypes(want, got), "%s wrong type of argument %d in call to %s, wants: %s, got: %s", arg.Pos(), i, exprT.lit, want, got)
-			}
-			exprT.SetType(exprTT)
+		callExprFunT := env.Get(callExprFun.lit)
+		assert(callExprFunT != nil)
+		ft := callExprFunT.(FuncType)
+		oParams := ft.params
+		variadic := ft.variadic
+		if variadic {
+			assertf(len(callExpr.args) >= len(oParams)-1, "%s not enough arguments in call to %s", callExpr.Pos(), callExprFun.lit)
+		} else {
+			assertf(len(oParams) == len(callExpr.args), "%s wrong number of arguments in call to %s, wants: %d, got: %d", callExpr.Pos(), callExprFun.lit, len(oParams), len(callExpr.args))
 		}
+		for i := range callExpr.args {
+			arg := callExpr.args[i]
+			var oArg Typ
+			if i >= len(oParams) {
+				oArg = oParams[len(oParams)-1]
+			} else {
+				oArg = oParams[i]
+			}
+			inferExpr(arg, oArg, env)
+			want, got := oArg, env.GetType(arg)
+			assertf(cmpTypes(want, got), "%s wrong type of argument %d in call to %s, wants: %s, got: %s", arg.Pos(), i, callExprFun.lit, want, got)
+		}
+		callExprFun.SetType(callExprFunT)
 	case *SelectorExpr:
-		switch id := exprT.x.(type) {
+		switch id := callExprFun.x.(type) {
 		case *IdentExpr:
 			if arr, ok := env.GetType(id).(ArrayType); ok {
-				if exprT.sel.lit == "filter" {
+				if callExprFun.sel.lit == "filter" {
 					filterFnType := env.Get("agl.Vec.filter").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
-					expr.args[0].SetType(filterFnType.params[1])
-					expr.SetType(filterFnType.ret)
-				} else if exprT.sel.lit == "map" {
+					callExpr.args[0].SetType(filterFnType.params[1])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "map" {
 					filterFnType := env.Get("agl.Vec.map").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
-					expr.args[0].SetType(filterFnType.params[1])
-					expr.SetType(filterFnType.ret)
-				} else if exprT.sel.lit == "reduce" {
+					callExpr.args[0].SetType(filterFnType.params[1])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "reduce" {
 					filterFnType := env.Get("agl.Vec.reduce").(FuncType)
-					filterFnType = filterFnType.ReplaceGenericParameter("R", env.GetType(expr.args[0]))
+					filterFnType = filterFnType.ReplaceGenericParameter("R", env.GetType(callExpr.args[0]))
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
-					expr.args[1].SetType(filterFnType.params[2])
-					expr.SetType(filterFnType.ret)
-				} else if exprT.sel.lit == "sum" {
+					callExpr.args[1].SetType(filterFnType.params[2])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "sum" {
 					filterFnType := env.Get("agl.Vec.sum").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
-					expr.SetType(filterFnType.ret)
-				} else if exprT.sel.lit == "find" {
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "find" {
 					filterFnType := env.Get("agl.Vec.find").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
-					expr.SetType(filterFnType.ret)
+					callExpr.SetType(filterFnType.ret)
 				}
 			}
 			if l := env.Get(id.lit); l != nil {
 				id.SetType(l)
 				if lT, ok := l.(*StructType); ok {
-					name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
-					expr.SetType(env.Get(name).(FuncType).ret)
+					name := fmt.Sprintf("%s.%s", lT.name, callExprFun.sel.lit)
+					callExpr.SetType(env.Get(name).(FuncType).ret)
 				} else if _, ok := l.(PackageType); ok {
-					name := fmt.Sprintf("%s.%s", id.lit, exprT.sel.lit)
-					expr.SetType(env.Get(name).(FuncType).ret)
+					name := fmt.Sprintf("%s.%s", id.lit, callExprFun.sel.lit)
+					callExpr.SetType(env.Get(name).(FuncType).ret)
 				} else if o, ok := l.(*EnumType); ok {
-					expr.SetType(&EnumType{name: o.name, subTyp: exprT.sel.lit, fields: o.fields})
+					callExpr.SetType(&EnumType{name: o.name, subTyp: callExprFun.sel.lit, fields: o.fields})
 				}
 			}
 			idT := id.GetType()
-			inferVecExtensions(env, idT, exprT, expr)
+			inferVecExtensions(env, idT, callExprFun, callExpr)
 		default:
 			inferExpr(id, nil, env)
 			idT := id.GetType()
 			if lT, ok := idT.(*StructType); ok {
-				name := fmt.Sprintf("%s.%s", lT.name, exprT.sel.lit)
-				expr.SetType(env.Get(name).(FuncType).ret)
+				name := fmt.Sprintf("%s.%s", lT.name, callExprFun.sel.lit)
+				callExpr.SetType(env.Get(name).(FuncType).ret)
 			}
-			inferVecExtensions(env, idT, exprT, expr)
+			inferVecExtensions(env, idT, callExprFun, callExpr)
 		}
-		inferExprs(expr.args, env)
+		inferExprs(callExpr.args, env)
 	default:
-		panic(fmt.Sprintf("unexpected type %v %v", expr.fun, expr.fun.GetType()))
+		panic(fmt.Sprintf("unexpected type %v %v", callExpr.fun, callExpr.fun.GetType()))
 	}
-	if expr.fun.GetType() != nil {
-		if v, ok := expr.fun.GetType().(FuncType); ok {
-			expr.SetType(v.ret)
+	if callExpr.fun.GetType() != nil {
+		if v, ok := callExpr.fun.GetType().(FuncType); ok {
+			callExpr.SetType(v.ret)
 		} else { // Type casting
 			// TODO
 		}
