@@ -32,14 +32,14 @@ func NewEnv() *Env {
 	env.Define("any", AnyType{})
 	env.Define("byte", ByteType{})
 	env.Define("cmp.Ordered", AnyType{})
-	env.Define("fmt.Println", parseFuncTypeFromString("fn(a ...any) int!", env))
-	env.Define("strconv.Atoi", parseFuncTypeFromString("fn(string) int!", env))
-	env.Define("strconv.Itoa", parseFuncTypeFromString("fn(int) string", env))
-	env.Define("strconv.ParseInt", parseFuncTypeFromString("fn(s string, base int, bitSize int) i64!", env))
-	env.Define("strconv.ParseUInt", parseFuncTypeFromString("fn(s string, base int, bitSize int) u64!", env))
-	env.Define("strconv.ParseFloat", parseFuncTypeFromString("fn(s string, bitSize int) f64!", env))
-	env.Define("os.ReadFile", parseFuncTypeFromString("fn(name string) Result[[]byte]", env))
-	env.Define("os.WriteFile", parseFuncTypeFromString("fn(name string, data []byte, perm os.FileMode) !", env))
+	env.Define("fmt.Println", parseFuncTypeFromStringNative("fn(a ...any) int!", env))
+	env.Define("strconv.Atoi", parseFuncTypeFromStringNative("fn(string) int!", env))
+	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("fn(int) string", env))
+	env.Define("strconv.ParseInt", parseFuncTypeFromStringNative("fn(s string, base int, bitSize int) i64!", env))
+	env.Define("strconv.ParseUInt", parseFuncTypeFromStringNative("fn(s string, base int, bitSize int) u64!", env))
+	env.Define("strconv.ParseFloat", parseFuncTypeFromStringNative("fn(s string, bitSize int) f64!", env))
+	env.Define("os.ReadFile", parseFuncTypeFromStringNative("fn(name string) Result[[]byte]", env))
+	env.Define("os.WriteFile", parseFuncTypeFromStringNative("fn(name string, data []byte, perm os.FileMode) !", env))
 	env.Define("agl.Vec.filter", parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", env))
 	env.Define("agl.Vec.map", parseFuncTypeFromString("fn map[T, R any](a []T, f fn(T) R) []R", env))
 	env.Define("agl.Vec.reduce", parseFuncTypeFromString("fn reduce[T any, R cmp.Ordered](a []T, r R, f fn(a R, e T) R) R", env))
@@ -74,7 +74,15 @@ func (e *Env) Assign(name string, typ Typ) {
 	e.lookupTable[name] = typ
 }
 
+func (e *Env) GetTypeNative(x Expr) Typ {
+	return e.getType(x, true)
+}
+
 func (e *Env) GetType(x Expr) Typ {
+	return e.getType(x, false)
+}
+
+func (e *Env) getType(x Expr, native bool) Typ {
 	oType := x.GetType()
 	if oType != nil {
 		return oType
@@ -83,15 +91,15 @@ func (e *Env) GetType(x Expr) Typ {
 	case *IdentExpr:
 		return e.strToType(v.lit)
 	case *OptionExpr:
-		return OptionType{wrappedType: e.GetType(v.x)}
+		return OptionType{wrappedType: e.getType(v.x, native)}
 	case *ResultExpr:
-		return &ResultType{wrappedType: e.GetType(v.x)}
+		return ResultType{wrappedType: e.getType(v.x, native), native: native}
 	case *BubbleOptionExpr: // TODO
-		return OptionType{wrappedType: e.GetType(v.x)}
+		return OptionType{wrappedType: e.getType(v.x, native)}
 	case *BubbleResultExpr: // TODO
-		return &ResultType{wrappedType: e.GetType(v.x)}
+		return ResultType{wrappedType: e.getType(v.x, native), native: native}
 	case *ArrayTypeExpr:
-		return ArrayType{elt: e.GetType(v.elt)}
+		return ArrayType{elt: e.getType(v.elt, native)}
 	case *SelectorExpr:
 		return nil
 	case *TrueExpr:
@@ -101,7 +109,7 @@ func (e *Env) GetType(x Expr) Typ {
 	case *NumberExpr:
 		return UntypedNumType{}
 	case *EllipsisExpr:
-		return e.GetType(v.x)
+		return e.getType(v.x, native)
 	case *AnonFnExpr:
 		return nil
 	case *VecExpr:
@@ -113,14 +121,14 @@ func (e *Env) GetType(x Expr) Typ {
 	case *TupleTypeExpr:
 		var elements []Typ
 		for _, el := range v.exprs {
-			elements = append(elements, e.GetType(el))
+			elements = append(elements, e.getType(el, native))
 		}
 		structName := fmt.Sprintf("%s%d", TupleStructPrefix, e.structCounter.Add(1))
 		return TupleType{elts: elements, name: structName}
 	case *FuncExpr:
 		var params []Typ
 		for _, field := range v.args.list {
-			fieldT := e.GetType(field.typeExpr)
+			fieldT := e.getType(field.typeExpr, native)
 			n := max(len(field.names), 1)
 			for i := 0; i < n; i++ {
 				params = append(params, fieldT)
@@ -128,7 +136,7 @@ func (e *Env) GetType(x Expr) Typ {
 		}
 		return FuncType{
 			params: params,
-			ret:    e.GetType(v.out.expr),
+			ret:    e.getType(v.out.expr, native),
 		}
 	default:
 		panic(fmt.Sprintf("unexpected type %v, %v", reflect.TypeOf(v), v))

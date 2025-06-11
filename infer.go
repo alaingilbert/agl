@@ -12,6 +12,10 @@ const (
 )
 
 func funcExprToFuncType(fe *FuncExpr, env *Env) FuncType {
+	return funcExprToFuncType2(fe, env, false)
+}
+
+func funcExprToFuncType2(fe *FuncExpr, env *Env, native bool) FuncType {
 	var typeParams []Typ
 	if fe.typeParams != nil {
 		for _, p := range fe.typeParams.list {
@@ -31,23 +35,28 @@ func funcExprToFuncType(fe *FuncExpr, env *Env) FuncType {
 			params = append(params, t)
 		}
 	}
-	ret := env.GetType(fe.out.expr)
-	if v, ok := ret.(*ResultType); ok {
-		v.native = true
-	}
+	ret := env.GetTypeNative(fe.out.expr)
 	return FuncType{
 		name:       fe.name,
 		typeParams: typeParams,
 		params:     params,
 		ret:        ret,
-		isNative:   true,
+		isNative:   native,
 	}
 }
 
+func parseFuncTypeFromStringNative(s string, env *Env) FuncType {
+	return parseFuncTypeFromString2(s, env, true)
+}
+
 func parseFuncTypeFromString(s string, env *Env) FuncType {
+	return parseFuncTypeFromString2(s, env, false)
+}
+
+func parseFuncTypeFromString2(s string, env *Env, native bool) FuncType {
 	nenv := env.Clone()
 	ft := parseFnSignature(NewTokenStream(s))
-	return funcExprToFuncType(ft, nenv)
+	return funcExprToFuncType2(ft, nenv, native)
 }
 
 func infer(s *ast) (*ast, *Env) {
@@ -448,8 +457,8 @@ func cmpTypes(a, b Typ) bool {
 	if TryCast[OptionType](a) && TryCast[OptionType](b) {
 		return cmpTypes(a.(OptionType).wrappedType, b.(OptionType).wrappedType)
 	}
-	if TryCast[*ResultType](a) && TryCast[*ResultType](b) {
-		return cmpTypes(a.(*ResultType).wrappedType, b.(*ResultType).wrappedType)
+	if TryCast[ResultType](a) && TryCast[ResultType](b) {
+		return cmpTypes(a.(ResultType).wrappedType, b.(ResultType).wrappedType)
 	}
 	return false
 }
