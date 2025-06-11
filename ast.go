@@ -831,8 +831,8 @@ func (v ValueSpec) String() string { return fmt.Sprintf("ValueSpec(%v)", v.names
 
 type AssignStmt struct {
 	BaseStmt
-	lhs Expr
-	rhs Expr
+	lhs []Expr
+	rhs []Expr
 	tok Tok
 }
 

@@ -388,8 +388,8 @@ func parseStmt(ts *TokenStream) (out Stmt) {
 	switch ts.Peek().typ {
 	case WALRUS, ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, QUO_ASSIGN, REM_ASSIGN, AND_ASSIGN, OR_ASSIGN, XOR_ASSIGN, SHL_ASSIGN, SHR_ASSIGN, AND_NOT_ASSIGN, ASSIGN:
 		tok := ts.Next()
-		expr := parseExpr(ts, 1)
-		return &AssignStmt{lhs: x[0], rhs: expr, tok: tok}
+		exprs := parseExprs(ts, EOF, 1)
+		return &AssignStmt{lhs: x, rhs: exprs, tok: tok}
 	case INC, DEC:
 		tok := ts.Next()
 		return &IncDecStmt{x: x[0], tok: tok}
