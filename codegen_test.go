@@ -2084,3 +2084,100 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "4:18: syntax error", testCodeGenFn(src))
 }
+
+func TestCodeGen71(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	match maybeInt() {
+		Some(a) => { fmt.Println("some ", a) },
+		None    => { fmt.Println("none") },
+	}
+}
+`
+	expected := `func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	res := maybeInt()
+	if res.IsSome() {
+		a := res.Unwrap()
+		fmt.Println("some ", a)
+	} else if res.IsNone() {
+		fmt.Println("none")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen72(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	match maybeInt() {
+		_ => { fmt.Println("Some or None") },
+	}
+}
+`
+	expected := `func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	res := maybeInt()
+	if res.IsSome() || res.IsNone() {
+		fmt.Println("Some or None")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen75(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	match maybeInt() {
+		_ => { fmt.Println("Some or None") },
+		None => { fmt.Println("none") },
+	}
+}
+`
+	expected := `func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	res := maybeInt()
+	if res.IsNone() {
+		fmt.Println("none")
+	} else if res.IsSome() || res.IsNone() {
+		fmt.Println("Some or None")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen73(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	match maybeInt() {
+		Some(a) => { fmt.Println("some ", a) },
+	}
+}
+`
+	tassert.PanicsWithError(t, "4:8: match statement must be exhaustive", testCodeGenFn(src))
+}
+
+func TestCodeGen74(t *testing.T) {
+	src := `
+fn maybeInt() int? { Some(42) }
+fn main() {
+	match maybeInt() {
+		None => { fmt.Println("none") },
+	}
+}
+`
+	tassert.PanicsWithError(t, "4:8: match statement must be exhaustive", testCodeGenFn(src))
+}

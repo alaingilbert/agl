@@ -452,7 +452,21 @@ func parseMatchStmt(ts *TokenStream) *MatchStmt {
 	assert(ts.Next().typ == MATCH)
 	expr := parseExpr(ts, 1)
 	assert(ts.Next().typ == LBRACE)
-	return &MatchStmt{expr: expr}
+	var cases []*MatchCase
+	for ts.Peek().typ != RBRACE {
+		x1 := parseExpr(ts, 1)
+		assert(ts.Next().typ == FATARROWRIGHT)
+		assert(ts.Next().typ == LBRACE)
+		stmts := parseStmts(ts)
+		assert(ts.Next().typ == RBRACE)
+		cases = append(cases, &MatchCase{cond: x1, body: stmts})
+		if ts.Peek().typ == RBRACE {
+			break
+		}
+		assert(ts.Next().typ == COMMA)
+	}
+	assert(ts.Next().typ == RBRACE)
+	return &MatchStmt{expr: expr, cases: cases}
 }
 
 func parseInlineComment(ts *TokenStream) *InlineCommentStmt {

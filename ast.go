@@ -694,8 +694,22 @@ type ReturnStmt struct {
 
 type MatchStmt struct {
 	BaseStmt
-	expr Expr
+	expr  Expr
+	cases []*MatchCase
 }
+
+func (m MatchStmt) String() string { return "MatchStmt(...)" }
+
+func (m MatchStmt) Pos() Pos { return m.expr.Pos() }
+
+type MatchCase struct {
+	cond Expr
+	body []Stmt
+}
+
+func (m MatchCase) String() string { return "MatchCase(...)" }
+
+func (m MatchCase) Pos() Pos { return m.cond.Pos() }
 
 type InlineCommentStmt struct {
 	BaseStmt
