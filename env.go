@@ -34,6 +34,7 @@ func NewEnv() *Env {
 	env.Define("byte", ByteType{})
 	env.Define("cmp.Ordered", AnyType{})
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("fn(a ...any) int!", env))
+	env.Define("fmt.Sprintf", parseFuncTypeFromStringNative("fn(format string, a ...any) string", env))
 	env.Define("time.Duration", I64Type{})
 	env.Define("time.Time", parseStructTypeFromStringNative("type Time struct {}", env))
 	env.Define("time.Now", parseFuncTypeFromStringNative("fn Now() time.Time", env))
