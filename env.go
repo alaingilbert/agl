@@ -13,6 +13,7 @@ type Env struct {
 
 func NewEnv() *Env {
 	env := &Env{lookupTable: make(map[string]Typ)}
+	env.Define("time", PackageType{})
 	env.Define("fmt", PackageType{})
 	env.Define("os", PackageType{})
 	env.Define("f64", F64Type{})
@@ -33,6 +34,7 @@ func NewEnv() *Env {
 	env.Define("byte", ByteType{})
 	env.Define("cmp.Ordered", AnyType{})
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("fn(a ...any) int!", env))
+	env.Define("time.Now", parseFuncTypeFromStringNative("fn() time.Time", env))
 	env.Define("strconv.Atoi", parseFuncTypeFromStringNative("fn(string) int!", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("fn(int) string", env))
 	env.Define("strconv.ParseInt", parseFuncTypeFromStringNative("fn(s string, base int, bitSize int) i64!", env))
