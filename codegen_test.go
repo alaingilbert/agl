@@ -2055,3 +2055,22 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "4:2: cannot use Option[u8] as u8 value in variable declaration", testCodeGenFn(src))
 }
+
+func TestCodeGen69(t *testing.T) {
+	src := `
+fn test() []u8 { []u8{1, 2, 3} }
+fn main() {
+	test().filter({ $0 == 2 })
+}
+`
+	expected := `func test() []uint8 {
+	return []uint8{1, 2, 3}
+}
+func main() {
+	AglVecFilter(test(), func(aglArg0 uint8) bool {
+		return aglArg0 == 2
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
