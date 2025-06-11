@@ -456,12 +456,12 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 }
 
 func inferFuncExpr(expr *FuncExpr, env *Env, optType Typ) {
-	if optType != nil {
-		expr.SetType(optType)
-	}
 	if expr.GetType() != nil {
-		for i, p := range expr.GetType().(FuncType).params {
-			env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), p)
+		for i, param := range expr.GetType().(FuncType).params {
+			want := env.GetType(expr.args.list[i].typeExpr)
+			assertf(cmpTypes(want, param), "%s: type %s does not match inferred type %s", expr.args.list[i].typeExpr.Pos(), want, param)
+			p("define", fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
+			env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
 		}
 	}
 	inferStmts(expr.stmts, nil, env)
