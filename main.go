@@ -78,7 +78,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	out := NewGenerator(infer(parser(NewTokenStream(string(by))))).Generate()
-	fmt.Println(out)
+	f := parser2(string(by))
+	fmt.Println("??", f)
 	return nil
 }
