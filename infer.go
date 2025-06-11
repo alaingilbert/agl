@@ -621,6 +621,9 @@ func inferCallExpr(callExpr *CallExpr, env *Env) {
 					filterFnType := env.Get("agl.Vec.find").(FuncType)
 					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
 					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "joined" {
+					filterFnType := env.Get("agl.Vec.joined").(FuncType)
+					callExpr.SetType(filterFnType.ret)
 				}
 			}
 			if l := env.Get(id.lit); l != nil {
