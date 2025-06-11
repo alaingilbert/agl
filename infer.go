@@ -139,6 +139,32 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 		inferExpr(stmt.x, nil, env)
 	case *InlineCommentStmt:
 	case *ForRangeStmt:
+	case *MatchStmt:
+		inferExpr(stmt.expr, nil, env)
+		if _, ok := stmt.expr.GetType().(OptionType); ok {
+			var hasSome, hasNone bool
+			for _, c := range stmt.cases {
+				switch v := c.cond.(type) {
+				case *SomeExpr:
+					id := v.expr.(*IdentExpr).lit
+					nenv := env.Clone()
+					nenv.Define(id, stmt.expr.GetType().(OptionType).wrappedType)
+					inferStmts(c.body, returnTyp, nenv)
+					hasSome = true
+				case *NoneExpr:
+					hasNone = true
+				case *IdentExpr:
+					if v.lit == "_" {
+						hasSome, hasNone = true, true
+					}
+				default:
+					panic("")
+				}
+			}
+			assertf(hasSome && hasNone, "%s: match statement must be exhaustive", stmt.Pos())
+		} else {
+			panic("not implemented")
+		}
 	case *IncDecStmt:
 	case *BlockStmt:
 		inferStmts(stmt.stmts, returnTyp, env)

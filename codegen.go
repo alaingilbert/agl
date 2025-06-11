@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -175,6 +176,8 @@ func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, 
 		return genInterfaceStmt(env, s, prefix, retTyp)
 	case *ValueSpec:
 		return genValueSpec(env, s, prefix, retTyp)
+	case *MatchStmt:
+		return genMatchStmt(env, s, prefix, retTyp)
 	default:
 		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
 	}
@@ -505,6 +508,74 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 		out += prefix + "} else " + strings.TrimSpace(content4) + "\n"
 	} else {
 		out += prefix + "}\n"
+	}
+	return
+}
+
+func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+	assert(TryCast[OptionType](stmt.expr.GetType()))
+	before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
+	before = append(before, before1...)
+	out += prefix + fmt.Sprintf("res := %s\n", content1)
+	cases := stmt.cases
+	sort.Slice(cases, func(i, j int) bool {
+		iSome := TryCast[*SomeExpr](cases[i].cond)
+		iNone := TryCast[*NoneExpr](cases[i].cond)
+		iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
+		jSome := TryCast[*SomeExpr](cases[j].cond)
+		jNone := TryCast[*NoneExpr](cases[j].cond)
+		jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
+		// If i is Some and j is not Some, i should come first
+		if iSome && !jSome {
+			return true
+		}
+		// If j is Some and i is not Some, j should come first
+		if jSome && !iSome {
+			return false
+		}
+		// If i is None and j is All, i should come first
+		if iNone && jAll {
+			return true
+		}
+		// If j is None and i is All, j should come first
+		if jNone && iAll {
+			return false
+		}
+		return false // Keep original order for equal types
+
+	})
+	for i, e := range stmt.cases {
+		var condition string
+		var setup string
+		switch cond := e.cond.(type) {
+		case *NoneExpr:
+			condition = "res.IsNone()"
+		case *SomeExpr:
+			id := cond.expr.(*IdentExpr).lit
+			condition = "res.IsSome()"
+			setup = fmt.Sprintf("%s := res.Unwrap()\n", id)
+		case *IdentExpr:
+			if cond.lit == "_" {
+				condition = "res.IsSome() || res.IsNone()"
+			}
+		}
+		if i == 0 {
+			out += prefix + fmt.Sprintf("if %s {\n", condition)
+		} else {
+			out += fmt.Sprintf(" else if %s {\n", condition)
+		}
+		if setup != "" {
+			out += prefix + "\t" + setup
+		}
+		for _, s := range e.body {
+			before2, content2 := genStmt(env, s, prefix+"\t", retTyp)
+			before = append(before, before2...)
+			out += content2
+		}
+		out += prefix + "}"
+		if i == len(stmt.cases)-1 {
+			out += "\n"
+		}
 	}
 	return
 }
