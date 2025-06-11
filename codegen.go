@@ -33,7 +33,15 @@ func genPackage(a *ast) (out string) {
 
 func genImports(a *ast) (out string) {
 	for _, i := range a.imports {
-		out += fmt.Sprintf("import %s\n", i.lit)
+		if len(i.elts) > 1 {
+			out += "import (\n"
+			for _, e := range i.elts {
+				out += fmt.Sprintf("\t%s\n", e)
+			}
+			out += ")\n"
+		} else {
+			out += fmt.Sprintf("import %s\n", i.elts[0])
+		}
 	}
 	return
 }

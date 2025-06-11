@@ -2410,6 +2410,21 @@ fn main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen87(t *testing.T) {
+	src := `
+import (
+	"fmt"
+	"errors"
+)
+`
+	expected := `import (
+	"fmt"
+	"errors"
+)
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {
