@@ -2255,3 +2255,29 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+func TestCodeGen79(t *testing.T) {
+	src := `
+fn getInt() int! { Ok(42) }
+fn main() {
+	match getInt() {
+		Ok(n) => fmt.Println("Ok ", n),
+		Err(e) => fmt.Println("Err ", e),
+	}
+}
+`
+	expected := `func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	res := getInt()
+	if res.IsOk() {
+		n := res.Unwrap()
+		fmt.Println("Ok ", n)
+	} else if res.IsErr() {
+		fmt.Println("Err ", e)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}

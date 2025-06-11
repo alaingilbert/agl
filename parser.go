@@ -456,10 +456,15 @@ func parseMatchStmt(ts *TokenStream) *MatchStmt {
 	for ts.Peek().typ != RBRACE {
 		x1 := parseExpr(ts, 1)
 		assert(ts.Next().typ == FATARROWRIGHT)
-		assert(ts.Next().typ == LBRACE)
-		stmts := parseStmts(ts)
-		assert(ts.Next().typ == RBRACE)
-		cases = append(cases, &MatchCase{cond: x1, body: stmts})
+		if ts.Peek().typ == LBRACE {
+			assert(ts.Next().typ == LBRACE)
+			stmts := parseStmts(ts)
+			assert(ts.Next().typ == RBRACE)
+			cases = append(cases, &MatchCase{cond: x1, body: stmts})
+		} else {
+			x := parseExpr(ts, 1)
+			cases = append(cases, &MatchCase{cond: x1, body: []Stmt{&ExprStmt{x: x}}})
+		}
 		if ts.Peek().typ == RBRACE {
 			break
 		}
