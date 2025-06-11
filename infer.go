@@ -561,7 +561,7 @@ func inferCallExpr(callExpr *CallExpr, env *Env) {
 		callExprFun.SetType(ArrayType{elt: env.Get(callExprFun.typStr)})
 	case *IdentExpr:
 		callExprFunT := env.Get(callExprFun.lit)
-		assert(callExprFunT != nil)
+		assertf(callExprFunT != nil, "%s: undefined identifier %s", callExprFun.Pos(), callExprFun.lit)
 		ft := callExprFunT.(FuncType)
 		oParams := ft.params
 		variadic := ft.variadic
