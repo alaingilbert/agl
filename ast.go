@@ -651,7 +651,6 @@ type FuncExpr struct {
 	args       *FieldList
 	out        FuncOut
 	stmts      []Stmt
-	typ        Typ
 }
 
 func (f *FuncExpr) String() string {

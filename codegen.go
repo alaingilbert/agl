@@ -230,6 +230,8 @@ func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
 		return genField(env, expr, prefix, retTyp)
 	case *AnonFnExpr:
 		return genAnonFnExpr(env, expr, prefix, retTyp)
+	case *FuncExpr:
+		return genFuncExpr(env, expr, prefix, retTyp)
 	case *CompositeLitExpr:
 		return genCompositeLit(env, expr, prefix, retTyp)
 	case *KeyValueExpr:
@@ -826,6 +828,31 @@ func genCompositeLit(env *Env, expr *CompositeLitExpr, prefix string, retTyp Typ
 		tmp = append(tmp, content1)
 	}
 	return before, fmt.Sprintf("%v{%s}", expr.typ.(*IdentExpr).lit, strings.Join(tmp, ", "))
+}
+
+func genFuncExpr(env *Env, expr *FuncExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+	t := expr.typ.(FuncType)
+	var argsT string
+	if len(t.params) > 0 {
+		var tmp []string
+		for i, arg := range t.params {
+			tmp = append(tmp, fmt.Sprintf("%s %s", expr.args.list[i].names[0].lit, arg.GoStr()))
+		}
+		argsT = strings.Join(tmp, ", ")
+	}
+	var retT string
+	if t.ret != nil {
+		retT = " " + t.ret.GoStr()
+	}
+
+	// If the function body only has 1 stmt, auto add "return" of the only expression value
+	if len(expr.stmts) == 1 && t.ret != nil && t.ret.GoStr() != "" {
+		if e, ok := expr.stmts[0].(*ExprStmt); ok {
+			expr.stmts[0] = &ReturnStmt{expr: e.x}
+		}
+	}
+	before1, content1 := genStmts(env, expr.stmts, prefix+"\t", retTyp)
+	return before1, fmt.Sprintf("func(%s)%s {\n%s%s}", argsT, retT, content1, prefix) // TODO
 }
 
 func genAnonFnExpr(env *Env, expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
