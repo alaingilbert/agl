@@ -564,6 +564,7 @@ loop:
 			assert(ts.Next().typ == RPAREN)
 			x = &CallExpr{fun: &SelectorExpr{x: x, sel: id}, args: args}
 		case EQL, LOR, LAND, REM, ADD, NEQ, MINUS, MUL, QUO, LTE, LT, GTE, GT:
+			assertf(x != nil, "%s: syntax error", ts.Peek().Pos)
 			x = parseBinOpExpr(ts, x, prec)
 			break loop
 		default:
