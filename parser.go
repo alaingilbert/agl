@@ -16,7 +16,19 @@ func parser(ts *TokenStream) *ast {
 			s.packageStmt = &packageStmt{lit: ts.Next().lit}
 		} else if ts.Peek().typ == IMPORT {
 			ts.Next()
-			s.imports = append(s.imports, &importStmt{lit: ts.Next().lit})
+			if ts.Peek().typ == LPAREN {
+				var elts []string
+				assert(ts.Next().typ == LPAREN)
+				for ts.Peek().typ != RPAREN {
+					id := ts.Next()
+					assert(id.typ == STRING)
+					elts = append(elts, id.lit)
+				}
+				assert(ts.Next().typ == RPAREN)
+				s.imports = append(s.imports, &importStmt{elts: elts})
+			} else {
+				s.imports = append(s.imports, &importStmt{elts: []string{ts.Next().lit}})
+			}
 		} else if ts.Peek().typ == TYPE {
 			ss := parseTypeDecl(ts)
 			switch sss := ss.(type) {

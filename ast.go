@@ -683,7 +683,7 @@ type structStmt struct {
 }
 
 type importStmt struct {
-	lit string
+	elts []string
 }
 
 type FuncExpr struct {
