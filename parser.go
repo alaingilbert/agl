@@ -343,6 +343,19 @@ func parseEnumTypeDecl(ts *TokenStream, lit string) (out *EnumStmt) {
 	return &EnumStmt{lit: lit, fields: fields}
 }
 
+func parseIdentList(ts *TokenStream) []*IdentExpr {
+	out := make([]*IdentExpr, 0)
+	for {
+		id := parseIdentExpr(ts)
+		out = append(out, id)
+		if ts.Peek().typ != COMMA {
+			break
+		}
+		assert(ts.Next().typ == COMMA)
+	}
+	return out
+}
+
 func parseStructTypeDecl(ts *TokenStream, lit string) (out *structStmt) {
 	assert(ts.Next().typ == STRUCT)
 	assert(ts.Next().typ == LBRACE)
@@ -351,9 +364,9 @@ func parseStructTypeDecl(ts *TokenStream, lit string) (out *structStmt) {
 		if ts.Peek().typ == RBRACE {
 			break
 		}
-		id := parseIdentExpr(ts)
+		ids := parseIdentList(ts)
 		typ := parseType(ts)
-		fields = append(fields, &Field{names: []*IdentExpr{id}, typeExpr: typ})
+		fields = append(fields, &Field{names: ids, typeExpr: typ})
 	}
 	assert(ts.Next().typ == RBRACE)
 	return &structStmt{lit: lit, pub: true, fields: fields}

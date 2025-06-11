@@ -2425,6 +2425,19 @@ import (
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen88(t *testing.T) {
+	src := `
+type Pos struct {
+    Row, Col int
+}
+`
+	expected := `type Pos struct {
+	Row, Col int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {
