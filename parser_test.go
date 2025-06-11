@@ -89,3 +89,8 @@ func TestParseChanSendRecv(t *testing.T) {
 	recv := recvExpr.(*RecvExpr)
 	tassert.Equal(t, "ch", recv.Chan.(*IdentExpr).lit)
 }
+
+func TestParser1(t *testing.T) {
+	x := parseStmt(NewTokenStream("a, b := 0, 1"))
+	tassert.Equal(t, 2, len(x.(*AssignStmt).rhs))
+}
