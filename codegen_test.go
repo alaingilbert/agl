@@ -2281,3 +2281,26 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+//func TestCodeGen80(t *testing.T) {
+//	src := `
+//fn main() {
+//	select {
+//	case <-time.After(100):
+//		fmt.Println("timeout")
+//	default:
+//		fmt.Println("default")
+//	}
+//}
+//`
+//	expected := `func main() {
+//	select {
+//		case <-time.After(100):
+//			fmt.Println("timeout")
+//		default:
+//			fmt.Println("default")
+//	}
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
