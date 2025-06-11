@@ -1,9 +1,21 @@
 package main
 
 import (
+	goast "agl/ast"
+	parser1 "agl/parser"
+	"agl/token"
 	"context"
 	"fmt"
 )
+
+func parser2(src string) *goast.File {
+	var fset = token.NewFileSet()
+	f, err := parser1.ParseFile(fset, "", src, 0)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
 
 func parser(ts *TokenStream) *ast {
 	s := &ast{}
