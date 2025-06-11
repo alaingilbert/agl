@@ -1099,6 +1099,12 @@ func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, s
 			before = append(before, before2...)
 			before = append(before, before3...)
 			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "joined" {
+			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+			before = append(before, before1...)
+			before = append(before, before2...)
+			return before, fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
 		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "sum" {
 			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
 			before = append(before, before1...)
