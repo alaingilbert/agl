@@ -1,8 +1,9 @@
 package main
 
 import (
-	tassert "github.com/stretchr/testify/assert"
 	"testing"
+
+	tassert "github.com/stretchr/testify/assert"
 )
 
 func testCodeGen(t *testing.T, src, expected string) {

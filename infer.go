@@ -47,7 +47,7 @@ func funcExprToFuncType2(fe *FuncExpr, env *Env, native bool) FuncType {
 	}
 }
 
-func parseStructTypeFromStringNative(s string, env *Env) StructType {
+func parseStructTypeFromStringNative(s string, _ *Env) StructType {
 	ts := NewTokenStream(s)
 	assert(ts.Next().typ == TYPE)
 	lit := ts.Next().lit
@@ -464,7 +464,7 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 	assertf(cmpTypes(expr.lhs.GetType(), expr.rhs.GetType()), "%s mismatched types %s and %s", expr.Pos(), expr.lhs.GetType(), expr.rhs.GetType())
 }
 
-func inferFuncExpr(expr *FuncExpr, env *Env, optType Typ) {
+func inferFuncExpr(expr *FuncExpr, env *Env, _ Typ) {
 	ft := funcExprToFuncType(expr, env)
 	expr.SetType(ft)
 	for i, param := range ft.params {
