@@ -161,7 +161,6 @@ func inferValueSpecStmt(stmt *ValueSpec, env *Env) {
 	if len(stmt.values) > 0 {
 		inferExpr(stmt.values[0], stmt.typ.GetType(), env)
 		rhsT = stmt.values[0].GetType()
-		p("?", stmt.values[0], stmt.values[0].GetType())
 	} else {
 		rhsT = stmt.typ.GetType()
 	}
