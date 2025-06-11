@@ -451,7 +451,6 @@ func inferBinOpExpr(expr *BinOpExpr, env *Env) {
 		return
 	default:
 	}
-	//fmt.Println("ASSERT", expr.lhs, "|||||", expr.rhs)
 	assertf(cmpTypes(expr.lhs.GetType(), expr.rhs.GetType()), "%s mismatched types %s and %s", expr.Pos(), expr.lhs.GetType(), expr.rhs.GetType())
 }
 
@@ -460,7 +459,6 @@ func inferFuncExpr(expr *FuncExpr, env *Env, optType Typ) {
 		for i, param := range expr.GetType().(FuncType).params {
 			want := env.GetType(expr.args.list[i].typeExpr)
 			assertf(cmpTypes(want, param), "%s: type %s does not match inferred type %s", expr.args.list[i].typeExpr.Pos(), want, param)
-			p("define", fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
 			env.Define(fmt.Sprintf("%s", expr.args.list[i].names[0].lit), param)
 		}
 	}
