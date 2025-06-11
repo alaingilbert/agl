@@ -162,8 +162,29 @@ func inferStmt(s Stmt, returnTyp Typ, env *Env) {
 				}
 			}
 			assertf(hasSome && hasNone, "%s: match statement must be exhaustive", stmt.Pos())
+		} else if _, ok := stmt.expr.GetType().(ResultType); ok {
+			var hasOk, hasErr bool
+			for _, c := range stmt.cases {
+				switch v := c.cond.(type) {
+				case *OkExpr:
+					id := v.expr.(*IdentExpr).lit
+					nenv := env.Clone()
+					nenv.Define(id, stmt.expr.GetType().(ResultType).wrappedType)
+					inferStmts(c.body, returnTyp, nenv)
+					hasOk = true
+				case *ErrExpr:
+					hasErr = true
+				case *IdentExpr:
+					if v.lit == "_" {
+						hasOk, hasErr = true, true
+					}
+				default:
+					panic("")
+				}
+			}
+			assertf(hasOk && hasErr, "%s: match statement must be exhaustive", stmt.Pos())
 		} else {
-			panic("not implemented")
+			panic(fmt.Sprintf("not implemented %v", stmt.expr.GetType()))
 		}
 	case *IncDecStmt:
 	case *BlockStmt:
