@@ -165,7 +165,7 @@ func filterType(typ Expr, f Filter, export bool) bool {
 		return len(t.Fields.List) > 0
 	case *FuncType:
 		b1 := filterParamList(t.Params, f, export)
-		b2 := filterParamList(t.Results, f, export)
+		b2 := filterType(t.Result, f, export)
 		return b1 || b2
 	case *InterfaceType:
 		if filterFieldList(t.Methods, f, export) {

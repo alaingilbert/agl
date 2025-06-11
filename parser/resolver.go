@@ -495,10 +495,10 @@ func (r *resolver) Visit(node ast.Node) ast.Visitor {
 		// Resolve and declare parameters in a specific order to get duplicate
 		// declaration errors in the correct location.
 		r.resolveList(n.Type.Params)
-		r.resolveList(n.Type.Results)
+		//r.resolveList(n.Type.Result)
 		r.declareList(n.Recv, ast.Var)
 		r.declareList(n.Type.Params, ast.Var)
-		r.declareList(n.Type.Results, ast.Var)
+		//r.declareList(n.Type.Result, ast.Var)
 
 		r.walkBody(n.Body)
 		if n.Recv == nil && n.Name.Name != "init" {
@@ -515,9 +515,9 @@ func (r *resolver) Visit(node ast.Node) ast.Visitor {
 func (r *resolver) walkFuncType(typ *ast.FuncType) {
 	// typ.TypeParams must be walked separately for FuncDecls.
 	r.resolveList(typ.Params)
-	r.resolveList(typ.Results)
+	//r.resolveList(typ.Result)
 	r.declareList(typ.Params, ast.Var)
-	r.declareList(typ.Results, ast.Var)
+	//r.declareList(typ.Result, ast.Var)
 }
 
 func (r *resolver) resolveList(list *ast.FieldList) {
