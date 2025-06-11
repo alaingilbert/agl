@@ -376,14 +376,14 @@ func lexer(src string) (out []Tok) {
 				p := i
 				i++
 				for {
-					c := src[i]
+					c := src[i+1]
 					if isDecimal(rune(c)) {
 						i++
 						continue
 					}
 					break
 				}
-				lit := src[p:i]
+				lit := src[p : i+1]
 				tok := Tok{pos, IDENT, lit}
 				col += len(tok.lit) - 1
 				out = append(out, tok)
