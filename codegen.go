@@ -497,6 +497,13 @@ func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before 
 		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
 		tmp += "if res := " + content2 + "; res.IsErr() {\n"
 		tmp += addPrefix("\t"+id+" := res.Err()\n", prefix)
+	} else if TryCast[*IdentExpr](stmt.lhs) {
+		id := stmt.lhs.(*IdentExpr).lit
+		before2, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+		before3, content3 := genExpr(env, stmt.cond, prefix, retTyp)
+		before = append(before, before2...)
+		before = append(before, before3...)
+		tmp += "if " + id + " := " + content2 + "; " + content3 + " {\n"
 	}
 
 	before3, content3 := genStmts(env, stmt.body, prefix+"\t", retTyp)

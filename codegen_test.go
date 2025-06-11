@@ -2394,20 +2394,26 @@ fn main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen86(t *testing.T) {
+	src := `
+fn main() {
+	if a := 123; a == 2 || a == 3 {
+	}
+}
+`
+	expected := `func main() {
+	if a := 123; a == 2 || a == 3 {
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
-package main
-
-import "fmt"
-import "time"
-
 fn main() {
-	a := []u8{1, 2, 3, 4, 5}
-	var b u8 = a.find({ $0 == 2 })?
-	fmt.Println(b)
-
-	now := time.Now()
-	fmt.Println(now)
+	if a := 123; a == 2 || a == 3 {
+	}
 }
 `
 	tassert.NotPanics(t, testCodeGenFn(src))
