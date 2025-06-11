@@ -2055,3 +2055,11 @@ fn main() {
 `
 	tassert.PanicsWithError(t, "4:2: cannot use Option[u8] as u8 value in variable declaration", testCodeGenFn(src))
 }
+
+//func TestCodeGen_TernaryOperator(t *testing.T) {
+//	src := `
+//fn main() {
+//	a := true ? 1 : 2
+//}
+//`
+//}
