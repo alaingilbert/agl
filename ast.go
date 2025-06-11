@@ -326,6 +326,8 @@ type FieldType struct {
 	typ  Typ
 }
 
+func (f FieldType) String() string { return fmt.Sprintf("FieldType(%s %v)", f.name, f.typ) }
+
 type FuncType struct {
 	BaseTyp
 	name       string
