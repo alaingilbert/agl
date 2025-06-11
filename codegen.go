@@ -481,7 +481,6 @@ func genIfStmt(env *Env, stmt *IfStmt, prefix string, retTyp Typ) (before []IBef
 }
 
 func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	p(stmt.lhs)
 	var tmp string
 	if TryCast[*SomeExpr](stmt.lhs) {
 		id := stmt.lhs.(*SomeExpr).expr.(*IdentExpr).lit

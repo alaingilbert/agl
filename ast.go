@@ -87,11 +87,14 @@ type BaseStmt struct {
 
 type Typ interface {
 	GoStr() string
+	String() string
 }
 
 type BaseTyp struct{}
 
 func (BaseTyp) GoStr() string { panic("not implemented") }
+
+func (BaseTyp) String() string { panic("not implemented") }
 
 type Field struct {
 	BaseExpr
@@ -373,7 +376,28 @@ func (f FuncType) goStr(includeFunc bool) string {
 }
 
 func (f FuncType) String() string {
-	return fmt.Sprintf("FuncType(...)")
+	var typeParamsStr string
+	var typeParams []string
+	for _, p := range f.typeParams {
+		typeParams = append(typeParams, p.(*GenericType).TypeParamGoStr())
+	}
+	if len(typeParams) > 0 {
+		typeParamsStr = fmt.Sprintf(" [%s]", strings.Join(typeParams, ", "))
+	}
+	var paramsStr []string
+	for _, p := range f.params {
+		paramsStr = append(paramsStr, p.String())
+	}
+	var retStr string
+	if f.ret != nil {
+		retStr = " " + f.ret.String()
+	}
+	name := f.name
+	if name != "" {
+		name = " " + name
+	}
+	funcStr := "fn"
+	return fmt.Sprintf("%s%s%s(%s)%s", funcStr, typeParamsStr, name, strings.Join(paramsStr, ", "), retStr)
 }
 
 func printCallers(n int) {
