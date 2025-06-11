@@ -488,8 +488,8 @@ func inferAnonFnExpr(expr *AnonFnExpr, env *Env, optType Typ) {
 		expr.SetType(optType)
 	}
 	if expr.GetType() != nil {
-		for i, p := range expr.typ.(FuncType).params {
-			env.Define(fmt.Sprintf("$%d", i), p)
+		for i, param := range expr.typ.(FuncType).params {
+			env.Define(fmt.Sprintf("$%d", i), param)
 		}
 	}
 	inferStmts(expr.stmts, nil, env)
