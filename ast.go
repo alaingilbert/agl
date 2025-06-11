@@ -230,7 +230,7 @@ func (o OptionType) GoStr() string {
 }
 
 func (o OptionType) String() string {
-	return fmt.Sprintf("OptionType(%s)", o.wrappedType)
+	return fmt.Sprintf("Option[%s]", o.wrappedType)
 }
 
 type TupleType struct {
@@ -748,7 +748,10 @@ type ValueSpec struct {
 	names  []*IdentExpr
 	typ    Expr
 	values []Expr
+	opPos  Pos
 }
+
+func (v ValueSpec) Pos() Pos { return v.opPos }
 
 func (v ValueSpec) String() string { return fmt.Sprintf("ValueSpec(%v)", v.names) }
 
@@ -802,13 +805,31 @@ type BubbleOptionExpr struct {
 	x Expr
 }
 
+func (o BubbleOptionExpr) Pos() Pos { return o.x.Pos() }
+
 func (o BubbleOptionExpr) String() string { return fmt.Sprintf("BubbleOptionExpr(%v)", o.x) }
+
+func (o BubbleOptionExpr) AglStr() string { return fmt.Sprintf("OptionOperator[%s]", o.x.AglStr()) }
 
 type ChainExpr struct {
 	BaseExpr
 	x  Expr
 	x2 Expr
 }
+
+type OptionExpr struct {
+	BaseExpr
+	x Expr
+}
+
+func (o OptionExpr) String() string { return fmt.Sprintf("OptionExpr(%v)", o.x) }
+
+type ResultExpr struct {
+	BaseExpr
+	x Expr
+}
+
+func (r ResultExpr) String() string { return fmt.Sprintf("ResultExpr(%v)", r.x) }
 
 type BubbleResultExpr struct {
 	BaseExpr

@@ -781,7 +781,7 @@ func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefo
 }
 
 func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	assert(TryCast[OptionType](e.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
+	assert(TryCast[OptionType](e.x.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
 	if _, ok := retTyp.(*ResultType); ok {
 		before1, content1 := genExpr(env, e.x, prefix, retTyp)
 		// TODO: res should be an incrementing tmp numbered variable

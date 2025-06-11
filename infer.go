@@ -148,13 +148,16 @@ func inferAssertStmt(stmt *AssertStmt, env *Env) {
 func inferValueSpecStmt(stmt *ValueSpec, env *Env) {
 	inferExpr(stmt.typ, nil, env)
 	var rhsT Typ
+	typT := stmt.typ.GetType()
 	if len(stmt.values) > 0 {
 		inferExpr(stmt.values[0], stmt.typ.GetType(), env)
 		rhsT = stmt.values[0].GetType()
+		p("?", stmt.values[0], stmt.values[0].GetType())
 	} else {
 		rhsT = stmt.typ.GetType()
 	}
 	lhs := stmt.names[0]
+	assertf(typT == rhsT, "%s: cannot use %s as %s value in variable declaration", stmt.Pos(), rhsT, typT)
 	env.Define(lhs.lit, rhsT)
 	lhs.SetType(rhsT)
 }
@@ -216,9 +219,13 @@ func inferExpr(e Expr, optType Typ, env *Env) {
 	switch expr := e.(type) {
 	case *CallExpr:
 		inferCallExpr(expr, env)
-	case *BubbleOptionExpr:
+	case *OptionExpr:
 		inferExpr(expr.x, nil, env)
 		expr.SetType(OptionType{wrappedType: expr.x.GetType()})
+	case *BubbleOptionExpr:
+		inferExpr(expr.x, nil, env)
+		assertf(TryCast[OptionType](expr.x.GetType()), "should be Option type, got: %s", expr.x.GetType())
+		expr.SetType(expr.x.GetType().(OptionType).wrappedType)
 	case *BubbleResultExpr:
 		inferExpr(expr.x, nil, env)
 		expr.SetType(expr.x.GetType())
@@ -554,7 +561,7 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
 		expr.args[0].SetTypeForce(ft)
-		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
+		expr.SetTypeForce(OptionType{wrappedType: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "map" {
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
