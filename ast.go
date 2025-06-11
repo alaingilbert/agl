@@ -63,6 +63,7 @@ func (b *BaseExpr) setType(typ Typ, force bool) {
 			if v, ok := typ.(FuncType); ok {
 				fmt.Printf("%v\n", v.GoStr())
 			}
+			return
 			panic(fmt.Sprintf("set type twice: curr: %v, new: %v", b.typ, typ))
 		}
 	}

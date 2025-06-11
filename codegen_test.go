@@ -2471,6 +2471,24 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen90(t *testing.T) {
+	src := `
+	package main
+	import "fmt"
+	type Person struct {
+		age int
+	}
+	fn main() {
+		p1 := Person{age: 1}
+		p2 := Person{age: 2}
+		arr := []Person{p1, p2}
+		res := arr.map({ $0.age }).joined(", ")
+		fmt.Println(res)
+	}
+`
+	tassert.PanicsWithError(t, "11:10: type mismatch, wants: []string, got: []int", testCodeGenFn(src))
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 fn main() {

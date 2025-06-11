@@ -670,6 +670,7 @@ func inferCallExpr(callExpr *CallExpr, env *Env) {
 					callExpr.SetType(filterFnType.ret)
 				} else if callExprFun.sel.lit == "joined" {
 					filterFnType := env.Get("agl.Vec.joined").(FuncType)
+					assertf(cmpTypes(idT, filterFnType.params[0]), "%s: type mismatch, wants: %s, got: %s", id.Pos(), filterFnType.params[0], idT)
 					callExpr.SetType(filterFnType.ret)
 				}
 			}
@@ -758,15 +759,16 @@ func inferVecExtensions(env *Env, idT Typ, exprT *SelectorExpr, expr *CallExpr) 
 		fs := parseFnSignatureStmt(NewTokenStream("fn[T, R any](e T) R"))
 		ft := getFuncType(fs, NewEnv())
 		ft = ft.ReplaceGenericParameter("T", idT.(ArrayType).elt)
-		if _, ok := expr.args[0].(*AnonFnExpr); ok {
-			expr.args[0].SetTypeForce(ft)
-		} else if _, ok := expr.args[0].(*FuncExpr); ok {
-			ftReal := funcExprToFuncType(expr.args[0].(*FuncExpr), env)
+		if arg0, ok := expr.args[0].(*AnonFnExpr); ok {
+			arg0.SetTypeForce(ft)
+			inferExpr(arg0, nil, env)
+			expr.SetTypeForce(ArrayType{elt: arg0.GetType().(FuncType).ret})
+		} else if arg0, ok := expr.args[0].(*FuncExpr); ok {
+			ftReal := funcExprToFuncType(arg0, env)
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
 		} else if ftReal, ok := env.GetType(expr.args[0]).(FuncType); ok {
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", expr.Pos(), ftReal, ft)
 		}
-		expr.SetTypeForce(ArrayType{elt: ft.params[0]})
 
 	} else if TryCast[ArrayType](idT) && exprT.sel.lit == "reduce" {
 		arg0 := expr.args[0].(*NumberExpr)
