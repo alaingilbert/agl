@@ -2209,8 +2209,8 @@ func TestCodeGen77(t *testing.T) {
 fn getInt() int! { Ok(42) }
 fn main() {
 	match getInt() {
-		Ok(n) => { fmt.Println("Ok ", n) },
 		_ => { fmt.Println("Ok or Err") },
+		Ok(n) => { fmt.Println("Ok ", n) },
 	}
 }
 `

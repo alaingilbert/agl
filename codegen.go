@@ -583,11 +583,11 @@ func genMatchStmt(env *Env, stmt *MatchStmt, prefix string, retTyp Typ) (before 
 		out += prefix + fmt.Sprintf("res := %s\n", content1)
 		cases := stmt.cases
 		sort.Slice(cases, func(i, j int) bool {
-			iOk := TryCast[*ResultExpr](cases[i].cond)
-			iErr := TryCast[*NoneExpr](cases[i].cond)
+			iOk := TryCast[*OkExpr](cases[i].cond)
+			iErr := TryCast[*ErrExpr](cases[i].cond)
 			iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
-			jOk := TryCast[*ResultExpr](cases[j].cond)
-			jErr := TryCast[*NoneExpr](cases[j].cond)
+			jOk := TryCast[*OkExpr](cases[j].cond)
+			jErr := TryCast[*ErrExpr](cases[j].cond)
 			jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
 			// If i is Some and j is not Some, i should come first
 			if iOk && !jOk {
