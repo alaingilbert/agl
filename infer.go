@@ -630,6 +630,36 @@ func inferCallExpr(callExpr *CallExpr, env *Env) {
 		default:
 			inferExpr(id, nil, env)
 			idT := id.GetType()
+			if arr, ok := idT.(ArrayType); ok {
+				if callExprFun.sel.lit == "filter" {
+					filterFnType := env.Get("agl.Vec.filter").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					callExpr.args[0].SetType(filterFnType.params[1])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "map" {
+					filterFnType := env.Get("agl.Vec.map").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					callExpr.args[0].SetType(filterFnType.params[1])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "reduce" {
+					filterFnType := env.Get("agl.Vec.reduce").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("R", env.GetType(callExpr.args[0]))
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					callExpr.args[1].SetType(filterFnType.params[2])
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "sum" {
+					filterFnType := env.Get("agl.Vec.sum").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "find" {
+					filterFnType := env.Get("agl.Vec.find").(FuncType)
+					filterFnType = filterFnType.ReplaceGenericParameter("T", arr.elt)
+					callExpr.SetType(filterFnType.ret)
+				} else if callExprFun.sel.lit == "joined" {
+					filterFnType := env.Get("agl.Vec.joined").(FuncType)
+					callExpr.SetType(filterFnType.ret)
+				}
+			}
 			if lT, ok := idT.(*StructType); ok {
 				name := fmt.Sprintf("%s.%s", lT.name, callExprFun.sel.lit)
 				callExpr.SetType(env.Get(name).(FuncType).ret)
