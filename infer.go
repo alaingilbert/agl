@@ -171,7 +171,11 @@ func inferValueSpecStmt(stmt *ValueSpec, env *Env) {
 }
 
 func inferAssignStmt(stmt *AssignStmt, env *Env) {
-	assignFn := Ternary(stmt.tok.typ == WALRUS, env.Define, env.Assign)
+	myDefine := func(name string, typ Typ) {
+		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.tok.Pos)
+		env.Define(name, typ)
+	}
+	assignFn := Ternary(stmt.tok.typ == WALRUS, myDefine, env.Assign)
 	inferExpr(stmt.rhs, nil, env)
 	lhs := stmt.lhs
 	if v, ok := stmt.lhs.(*MutExpr); ok {

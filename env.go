@@ -70,6 +70,9 @@ func (e *Env) Define(name string, typ Typ) {
 }
 
 func (e *Env) Assign(name string, typ Typ) {
+	if name == "_" {
+		return
+	}
 	assertf(e.Get(name) != nil, "undeclared %s", name)
 	e.lookupTable[name] = typ
 }
