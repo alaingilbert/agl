@@ -28,7 +28,7 @@ func parser(ts *TokenStream) *ast {
 				s.interfaces = append(s.interfaces, sss)
 			}
 		} else if ts.Peek().typ == FN {
-			s.funcs = append(s.funcs, parseFnStmt(ts, false))
+			s.funcs = append(s.funcs, parseFnExpr(ts, false))
 		} else if ts.Peek().typ == INLINECOMMENT {
 			ts.Next()
 		} else {
@@ -270,7 +270,7 @@ func parseType(ts *TokenStream) Expr {
 	panic(fmt.Sprintf("unknown type %v", ts.Peek()))
 }
 
-func parseFnStmt(ts *TokenStream, isPub bool) *FuncExpr {
+func parseFnExpr(ts *TokenStream, isPub bool) *FuncExpr {
 	ft := parseFnSignature(ts)
 	assert(ts.Next().typ == LBRACE)
 	fs := &FuncExpr{
