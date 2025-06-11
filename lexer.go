@@ -86,6 +86,7 @@ const (
 	EOF
 	INTERFACE
 	VAR
+	SEMICOLON
 
 	ADD_ASSIGN // +=
 	SUB_ASSIGN // -=
@@ -227,6 +228,8 @@ func lexer(src string) (out []Tok) {
 			out = append(out, Tok{pos, RBRACE, "}"})
 		case '?':
 			out = append(out, Tok{pos, QUESTION, "?"})
+		case ';':
+			out = append(out, Tok{pos, SEMICOLON, ";"})
 		case ',':
 			out = append(out, Tok{pos, COMMA, ","})
 		case '/':
