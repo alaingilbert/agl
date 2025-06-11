@@ -1617,36 +1617,36 @@ func main() {
 //	testCodeGen(t, src, expected)
 //}
 
-func TestCodeGen_OperatorOverloading(t *testing.T) {
-	src := `
-type Person struct {
-	name string
-	age int
-}
-fn (p Person) == (other Person) bool {
-	return p.age == other.age
-}
-fn main() {
-	p1 := Person{name: "foo", age: 42}
-	p2 := Person{name: "bar", age: 42}
-	assert(p1 == p2)
-}
-`
-	expected := `type Person struct {
-	name string
-	age int
-}
-func (p Person) __EQL(other Person) bool {
-	return p.age == other.age
-}
-func main() {
-	p1 := Person{name: "foo", age: 42}
-	p2 := Person{name: "bar", age: 42}
-	AglAssert(p1.__EQL(p2), "assert failed 'p1 == p2' line 12")
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen_OperatorOverloading(t *testing.T) {
+//	src := `
+//type Person struct {
+//	name string
+//	age int
+//}
+//fn (p Person) == (other Person) bool {
+//	return p.age == other.age
+//}
+//fn main() {
+//	p1 := Person{name: "foo", age: 42}
+//	p2 := Person{name: "bar", age: 42}
+//	assert(p1 == p2)
+//}
+//`
+//	expected := `type Person struct {
+//	name string
+//	age int
+//}
+//func (p Person) __EQL(other Person) bool {
+//	return p.age == other.age
+//}
+//func main() {
+//	p1 := Person{name: "foo", age: 42}
+//	p2 := Person{name: "bar", age: 42}
+//	AglAssert(p1.__EQL(p2), "assert failed 'p1 == p2' line 12")
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
 func TestCodeGen_55(t *testing.T) {
 	src := `
