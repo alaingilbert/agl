@@ -321,6 +321,10 @@ type (
 		Value    string      // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 'a', '\x7f', "foo" or `\m\n\o`
 	}
 
+	ShortFuncLit struct {
+		Body *BlockStmt // function body
+	}
+
 	// A FuncLit node represents a function literal.
 	FuncLit struct {
 		Type *FuncType  // function type
@@ -448,6 +452,16 @@ type (
 		Value Expr
 	}
 )
+
+func (s ShortFuncLit) Pos() token.Pos {
+	return s.Body.Pos()
+}
+
+func (s ShortFuncLit) End() token.Pos {
+	return s.Body.End()
+}
+
+func (s ShortFuncLit) exprNode() {}
 
 func (b BubbleResultExpr) Pos() token.Pos {
 	return b.X.Pos()

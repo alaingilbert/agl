@@ -1414,6 +1414,8 @@ func (p *parser) tryIdentOrType1() ast.Expr {
 		return p.parseStructType()
 	case token.MUL:
 		return p.parsePointerType()
+	case token.LBRACE:
+		return p.parseShortFuncLit()
 	case token.FUNC:
 		return p.parseFuncType()
 	case token.INTERFACE:
@@ -1475,6 +1477,13 @@ func (p *parser) parseBlockStmt() *ast.BlockStmt {
 
 // ----------------------------------------------------------------------------
 // Expressions
+
+func (p *parser) parseShortFuncLit() ast.Expr {
+	p.exprLev++
+	body := p.parseBody()
+	p.exprLev--
+	return &ast.ShortFuncLit{Body: body}
+}
 
 func (p *parser) parseFuncTypeOrLit() ast.Expr {
 	if p.trace {
