@@ -316,12 +316,61 @@ func trailingDigits(text []byte) (int, int, bool) {
 	return i + 1, int(n), err == nil
 }
 
+func isDollar(ch rune) bool {
+	return ch == '$'
+}
+
 func isLetter(ch rune) bool {
 	return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' || ch >= utf8.RuneSelf && unicode.IsLetter(ch)
 }
 
 func isDigit(ch rune) bool {
 	return isDecimal(ch) || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
+}
+
+func (s *Scanner) scanIdentifier1() string {
+	offs := s.offset
+
+	// Optimize for the common case of an ASCII identifier.
+	//
+	// Ranging over s.src[s.rdOffset:] lets us avoid some bounds checks, and
+	// avoids conversions to runes.
+	//
+	// In case we encounter a non-ASCII character, fall back on the slower path
+	// of calling into s.next().
+	for rdOffset, b := range s.src[s.rdOffset:] {
+		if '0' <= b && b <= '9' {
+			// Avoid assigning a rune for the common case of an ascii character.
+			continue
+		}
+		s.rdOffset += rdOffset
+		if 0 < b && b < utf8.RuneSelf {
+			// Optimization: we've encountered an ASCII character that's not a letter
+			// or number. Avoid the call into s.next() and corresponding set up.
+			//
+			// Note that s.next() does some line accounting if s.ch is '\n', so this
+			// shortcut is only possible because we know that the preceding character
+			// is not '\n'.
+			s.ch = rune(b)
+			s.offset = s.rdOffset
+			s.rdOffset++
+			goto exit
+		}
+		// We know that the preceding character is valid for an identifier because
+		// scanIdentifier is only called when s.ch is a letter, so calling s.next()
+		// at s.rdOffset resets the scanner state.
+		s.next()
+		for isDigit(s.ch) {
+			s.next()
+		}
+		goto exit
+	}
+	s.offset = len(s.src)
+	s.rdOffset = len(s.src)
+	s.ch = eof
+
+exit:
+	return string(s.src[offs:s.offset])
 }
 
 // scanIdentifier reads the string of valid identifier characters at s.offset.
@@ -815,6 +864,10 @@ scanAgain:
 	// determine token value
 	insertSemi := false
 	switch ch := s.ch; {
+	case isDollar(ch) && isDecimal(rune(s.peek())):
+		lit = s.scanIdentifier1()
+		insertSemi = true
+		tok = token.IDENT
 	case isLetter(ch):
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
