@@ -360,6 +360,12 @@ func Walk(v Visitor, node Node) {
 	case *EnumValue:
 		Walk(v, n.Params)
 
+	case *ShortFuncLit:
+		Walk(v, n.Body)
+
+	case *TupleExpr:
+		walkList(v, n.Values)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}
