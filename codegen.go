@@ -10,10 +10,10 @@ import (
 )
 
 func codegen2(a *goast.File, env *Env) (out string) {
-	out += genPackage2(a)
-	out += genImports2(a)
-	out += genDecls(env, a, "")
-	return out
+	_, out1 := genPackage2(a)
+	_, out2 := genImports2(a)
+	out3 := genDecls(env, a, "")
+	return out1 + out2 + out3
 }
 
 func codegen(a *ast, env *Env) (out string) {
@@ -32,7 +32,7 @@ func codegen(a *ast, env *Env) (out string) {
 	return
 }
 
-func genPackage2(a *goast.File) (out string) {
+func genPackage2(a *goast.File) (before []IBefore, out string) {
 	out += fmt.Sprintf("package %s\n", a.Name.Name)
 	return
 }
@@ -44,7 +44,7 @@ func genPackage(a *ast) (out string) {
 	return
 }
 
-func genImports2(a *goast.File) (out string) {
+func genImports2(a *goast.File) (before []IBefore, out string) {
 	for _, spec := range a.Imports {
 		out += "import "
 		if spec.Name != nil {
@@ -94,21 +94,21 @@ func genStructs(env *Env, a *ast) (out string) {
 	return
 }
 
-func genExpr2(env *Env, e goast.Expr, prefix string) string {
+func genExpr2(env *Env, e goast.Expr, prefix string) (before []IBefore, out string) {
 	switch expr := e.(type) {
 	case *goast.Ident:
-		return expr.Name
+		return nil, expr.Name
 	case *goast.ShortFuncLit:
 		return genShortFuncLit(env, expr, prefix)
 	case *goast.OptionExpr:
-		content := genExpr2(env, expr.X, prefix)
-		return fmt.Sprintf("Option[%s]", content)
+		_, content := genExpr2(env, expr.X, prefix)
+		return nil, fmt.Sprintf("Option[%s]", content)
 	case *goast.BinaryExpr:
-		content1 := genExpr2(env, expr.X, prefix)
-		content2 := genExpr2(env, expr.Y, prefix)
-		return fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
+		_, content1 := genExpr2(env, expr.X, prefix)
+		_, content2 := genExpr2(env, expr.Y, prefix)
+		return nil, fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
 	case *goast.BasicLit:
-		return expr.Value
+		return nil, expr.Value
 	case *goast.CompositeLit:
 		return genCompositeLit2(env, expr, prefix)
 	case *goast.TupleExpr:
@@ -130,78 +130,78 @@ func genExpr2(env *Env, e goast.Expr, prefix string) string {
 	}
 }
 
-func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (out string) {
-	content1 := genStmt2(env, expr.Body, prefix+"\t")
+func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before []IBefore, out string) {
+	_, content1 := genStmt2(env, expr.Body, prefix+"\t")
 	out += "func() {\n"
 	out += content1
 	out += prefix + "}"
 	return
 }
 
-func genSelectorExpr2(env *Env, expr *goast.SelectorExpr, prefix string) (out string) {
-	content1 := genExpr2(env, expr.X, prefix)
-	return fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
+func genSelectorExpr2(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.X, prefix)
+	return nil, fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
 }
 
-func genBubbleOptionExpr2(env *Env, expr *goast.BubbleOptionExpr, prefix string) (out string) {
-	content1 := genExpr2(env, expr.X, prefix)
-	return content1 + "?"
+func genBubbleOptionExpr2(env *Env, expr *goast.BubbleOptionExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.X, prefix)
+	return nil, content1 + "?"
 }
 
-func genBubbleResultExpr2(env *Env, expr *goast.BubbleResultExpr, prefix string) (out string) {
-	content1 := genExpr2(env, expr.X, prefix)
-	return content1 + "!"
+func genBubbleResultExpr2(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.X, prefix)
+	return nil, content1 + "!"
 }
 
-func genCallExpr2(env *Env, expr *goast.CallExpr, prefix string) (out string) {
-	content1 := genExpr2(env, expr.Fun, prefix)
-	content2 := genExprs2(env, expr.Args, prefix)
-	return fmt.Sprintf("%s(%s)", content1, content2)
+func genCallExpr2(env *Env, expr *goast.CallExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.Fun, prefix)
+	_, content2 := genExprs2(env, expr.Args, prefix)
+	return nil, fmt.Sprintf("%s(%s)", content1, content2)
 }
 
-func genArrayType2(env *Env, expr *goast.ArrayType, prefix string) (out string) {
-	content := genExpr2(env, expr.Elt, prefix)
-	return fmt.Sprintf("[]%s", content)
+func genArrayType2(env *Env, expr *goast.ArrayType, prefix string) (before []IBefore, out string) {
+	_, content := genExpr2(env, expr.Elt, prefix)
+	return nil, fmt.Sprintf("[]%s", content)
 }
 
-func genKeyValueExpr2(env *Env, expr *goast.KeyValueExpr, prefix string) (out string) {
-	content1 := genExpr2(env, expr.Key, prefix)
-	content2 := genExpr2(env, expr.Value, prefix)
-	return fmt.Sprintf("%s: %s", content1, content2)
+func genKeyValueExpr2(env *Env, expr *goast.KeyValueExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.Key, prefix)
+	_, content2 := genExpr2(env, expr.Value, prefix)
+	return nil, fmt.Sprintf("%s: %s", content1, content2)
 }
 
-func genCompositeLit2(env *Env, expr *goast.CompositeLit, prefix string) (out string) {
-	content1 := genExpr2(env, expr.Type, prefix)
-	content2 := genExprs2(env, expr.Elts, prefix)
+func genCompositeLit2(env *Env, expr *goast.CompositeLit, prefix string) (before []IBefore, out string) {
+	_, content1 := genExpr2(env, expr.Type, prefix)
+	_, content2 := genExprs2(env, expr.Elts, prefix)
 	out += fmt.Sprintf("%s{%s}\n", content1, content2)
 	return
 }
 
-func genTupleExpr2(env *Env, expr *goast.TupleExpr, prefix string) (out string) {
-	content1 := genExprs2(env, expr.Values, prefix)
+func genTupleExpr2(env *Env, expr *goast.TupleExpr, prefix string) (before []IBefore, out string) {
+	_, content1 := genExprs2(env, expr.Values, prefix)
 	out += fmt.Sprintf("(%s)\n", content1)
 	return
 }
 
-func genExprs2(env *Env, e []goast.Expr, prefix string) (out string) {
+func genExprs2(env *Env, e []goast.Expr, prefix string) (before []IBefore, out string) {
 	var tmp []string
 	for _, expr := range e {
-		content1 := genExpr2(env, expr, prefix)
+		_, content1 := genExpr2(env, expr, prefix)
 		tmp = append(tmp, content1)
 	}
-	return strings.Join(tmp, ", ")
+	return nil, strings.Join(tmp, ", ")
 }
 
-func genStmts2(env *Env, s []goast.Stmt, prefix string) (out string) {
+func genStmts2(env *Env, s []goast.Stmt, prefix string) (before []IBefore, out string) {
 	var tmp []string
 	for _, stmt := range s {
-		content1 := genStmt2(env, stmt, prefix)
+		_, content1 := genStmt2(env, stmt, prefix)
 		tmp = append(tmp, content1)
 	}
-	return strings.Join(tmp, "")
+	return nil, strings.Join(tmp, "")
 }
 
-func genStmt2(env *Env, s goast.Stmt, prefix string) string {
+func genStmt2(env *Env, s goast.Stmt, prefix string) (before []IBefore, out string) {
 	switch stmt := s.(type) {
 	case *goast.BlockStmt:
 		return genStmts2(env, stmt.List, prefix)
@@ -218,26 +218,26 @@ func genStmt2(env *Env, s goast.Stmt, prefix string) string {
 	}
 }
 
-func genReturnStmt2(env *Env, stmt *goast.ReturnStmt, prefix string) (out string) {
-	content1 := genExprs2(env, stmt.Results, prefix)
-	return prefix + fmt.Sprintf("return %s\n", content1)
+func genReturnStmt2(env *Env, stmt *goast.ReturnStmt, prefix string) (before []IBefore, out string) {
+	_, content1 := genExprs2(env, stmt.Results, prefix)
+	return nil, prefix + fmt.Sprintf("return %s\n", content1)
 }
 
-func genExprStmt2(env *Env, stmt *goast.ExprStmt, prefix string) (out string) {
-	content := genExpr2(env, stmt.X, prefix)
+func genExprStmt2(env *Env, stmt *goast.ExprStmt, prefix string) (before []IBefore, out string) {
+	_, content := genExpr2(env, stmt.X, prefix)
 	out += prefix + content + "\n"
 	return
 }
 
-func genAssignStmt2(env *Env, stmt *goast.AssignStmt, prefix string) (out string) {
-	content1 := genExprs2(env, stmt.Lhs, prefix)
-	content2 := genExprs2(env, stmt.Rhs, prefix)
-	return prefix + fmt.Sprintf("%s %s %s", content1, stmt.Tok.String(), content2)
+func genAssignStmt2(env *Env, stmt *goast.AssignStmt, prefix string) (before []IBefore, out string) {
+	_, content1 := genExprs2(env, stmt.Lhs, prefix)
+	_, content2 := genExprs2(env, stmt.Rhs, prefix)
+	return nil, prefix + fmt.Sprintf("%s %s %s", content1, stmt.Tok.String(), content2)
 }
 
-func genIfStmt2(env *Env, stmt *goast.IfStmt, prefix string) (out string) {
-	cond := genExpr2(env, stmt.Cond, prefix)
-	body := genStmt2(env, stmt.Body, prefix+"\t")
+func genIfStmt2(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
+	_, cond := genExpr2(env, stmt.Cond, prefix)
+	_, body := genStmt2(env, stmt.Body, prefix+"\t")
 	out += prefix + "if " + cond + " {\n"
 	out += body
 	out += prefix + "}\n"
@@ -255,7 +255,7 @@ func joinList(env *Env, l *goast.FieldList, prefix string) string {
 			namesItems = append(namesItems, n.Name)
 		}
 		tmp2Str := strings.Join(namesItems, " ")
-		content := genExpr2(env, field.Type, prefix)
+		_, content := genExpr2(env, field.Type, prefix)
 		fieldsItems = append(fieldsItems, tmp2Str+" "+content)
 	}
 	return strings.Join(fieldsItems, " ")
@@ -265,13 +265,14 @@ func genDecls(env *Env, a *goast.File, prefix string) (out string) {
 	for _, d := range a.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
-			out += genFuncDecl(env, decl, prefix)
+			_, out1 := genFuncDecl(env, decl, prefix)
+			out += out1
 		}
 	}
 	return out
 }
 
-func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (out string) {
+func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefore, out string) {
 	var name, recv, typeParamsStr, paramsStr, resultStr, bodyStr string
 	if decl.Recv != nil {
 		recv = joinList(env, decl.Recv, prefix)
@@ -292,13 +293,13 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (out string) {
 		paramsStr = joinList(env, params, prefix)
 	}
 	if result := decl.Type.Result; result != nil {
-		content := genExpr2(env, result, prefix)
+		_, content := genExpr2(env, result, prefix)
 		if content != "" {
 			resultStr = " " + content
 		}
 	}
 	if decl.Body != nil {
-		content := genStmt2(env, decl.Body, prefix+"\t")
+		_, content := genStmt2(env, decl.Body, prefix+"\t")
 		bodyStr = content
 	}
 	out += fmt.Sprintf("func%s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, paramsStr, resultStr, bodyStr)
