@@ -10,10 +10,16 @@ import (
 )
 
 func codegen2(a *goast.File, env *Env) (out string) {
-	_, out1 := genPackage2(a)
-	_, out2 := genImports2(a)
+	before1, out1 := genPackage2(a)
+	before2, out2 := genImports2(a)
 	out3 := genDecls(env, a, "")
-	return out1 + out2 + out3
+	for _, b := range before1 {
+		out += b.Content()
+	}
+	for _, b := range before2 {
+		out += b.Content()
+	}
+	return out + out1 + out2 + out3
 }
 
 func codegen(a *ast, env *Env) (out string) {
@@ -101,12 +107,14 @@ func genExpr2(env *Env, e goast.Expr, prefix string) (before []IBefore, out stri
 	case *goast.ShortFuncLit:
 		return genShortFuncLit(env, expr, prefix)
 	case *goast.OptionExpr:
-		_, content := genExpr2(env, expr.X, prefix)
-		return nil, fmt.Sprintf("Option[%s]", content)
+		before1, content := genExpr2(env, expr.X, prefix)
+		return before1, fmt.Sprintf("Option[%s]", content)
 	case *goast.BinaryExpr:
-		_, content1 := genExpr2(env, expr.X, prefix)
-		_, content2 := genExpr2(env, expr.Y, prefix)
-		return nil, fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
+		before1, content1 := genExpr2(env, expr.X, prefix)
+		before2, content2 := genExpr2(env, expr.Y, prefix)
+		before = append(before, before1...)
+		before = append(before, before2...)
+		return before, fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
 	case *goast.BasicLit:
 		return nil, expr.Value
 	case *goast.CompositeLit:
@@ -131,74 +139,82 @@ func genExpr2(env *Env, e goast.Expr, prefix string) (before []IBefore, out stri
 }
 
 func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before []IBefore, out string) {
-	_, content1 := genStmt2(env, expr.Body, prefix+"\t")
+	before1, content1 := genStmt2(env, expr.Body, prefix+"\t")
 	out += "func() {\n"
 	out += content1
 	out += prefix + "}"
-	return
+	return before1, out
 }
 
 func genSelectorExpr2(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.X, prefix)
-	return nil, fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
+	before1, content1 := genExpr2(env, expr.X, prefix)
+	return before1, fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
 }
 
 func genBubbleOptionExpr2(env *Env, expr *goast.BubbleOptionExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.X, prefix)
-	return nil, content1 + "?"
+	before1, content1 := genExpr2(env, expr.X, prefix)
+	return before1, content1 + "?"
 }
 
 func genBubbleResultExpr2(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.X, prefix)
-	return nil, content1 + "!"
+	before1, content1 := genExpr2(env, expr.X, prefix)
+	return before1, content1 + "!"
 }
 
 func genCallExpr2(env *Env, expr *goast.CallExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.Fun, prefix)
-	_, content2 := genExprs2(env, expr.Args, prefix)
-	return nil, fmt.Sprintf("%s(%s)", content1, content2)
+	before1, content1 := genExpr2(env, expr.Fun, prefix)
+	before2, content2 := genExprs2(env, expr.Args, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	return before, fmt.Sprintf("%s(%s)", content1, content2)
 }
 
 func genArrayType2(env *Env, expr *goast.ArrayType, prefix string) (before []IBefore, out string) {
-	_, content := genExpr2(env, expr.Elt, prefix)
-	return nil, fmt.Sprintf("[]%s", content)
+	before1, content := genExpr2(env, expr.Elt, prefix)
+	return before1, fmt.Sprintf("[]%s", content)
 }
 
 func genKeyValueExpr2(env *Env, expr *goast.KeyValueExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.Key, prefix)
-	_, content2 := genExpr2(env, expr.Value, prefix)
-	return nil, fmt.Sprintf("%s: %s", content1, content2)
+	before1, content1 := genExpr2(env, expr.Key, prefix)
+	before2, content2 := genExpr2(env, expr.Value, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	return before, fmt.Sprintf("%s: %s", content1, content2)
 }
 
 func genCompositeLit2(env *Env, expr *goast.CompositeLit, prefix string) (before []IBefore, out string) {
-	_, content1 := genExpr2(env, expr.Type, prefix)
-	_, content2 := genExprs2(env, expr.Elts, prefix)
+	before1, content1 := genExpr2(env, expr.Type, prefix)
+	before2, content2 := genExprs2(env, expr.Elts, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
 	out += fmt.Sprintf("%s{%s}\n", content1, content2)
 	return
 }
 
 func genTupleExpr2(env *Env, expr *goast.TupleExpr, prefix string) (before []IBefore, out string) {
-	_, content1 := genExprs2(env, expr.Values, prefix)
+	before1, content1 := genExprs2(env, expr.Values, prefix)
 	out += fmt.Sprintf("(%s)\n", content1)
-	return
+	return before1, out
 }
 
 func genExprs2(env *Env, e []goast.Expr, prefix string) (before []IBefore, out string) {
 	var tmp []string
 	for _, expr := range e {
-		_, content1 := genExpr2(env, expr, prefix)
+		before1, content1 := genExpr2(env, expr, prefix)
+		before = append(before, before1...)
 		tmp = append(tmp, content1)
 	}
-	return nil, strings.Join(tmp, ", ")
+	return before, strings.Join(tmp, ", ")
 }
 
 func genStmts2(env *Env, s []goast.Stmt, prefix string) (before []IBefore, out string) {
 	var tmp []string
 	for _, stmt := range s {
-		_, content1 := genStmt2(env, stmt, prefix)
+		before1, content1 := genStmt2(env, stmt, prefix)
+		before = append(before, before1...)
 		tmp = append(tmp, content1)
 	}
-	return nil, strings.Join(tmp, "")
+	return before, strings.Join(tmp, "")
 }
 
 func genStmt2(env *Env, s goast.Stmt, prefix string) (before []IBefore, out string) {
@@ -219,53 +235,43 @@ func genStmt2(env *Env, s goast.Stmt, prefix string) (before []IBefore, out stri
 }
 
 func genReturnStmt2(env *Env, stmt *goast.ReturnStmt, prefix string) (before []IBefore, out string) {
-	_, content1 := genExprs2(env, stmt.Results, prefix)
-	return nil, prefix + fmt.Sprintf("return %s\n", content1)
+	before1, content1 := genExprs2(env, stmt.Results, prefix)
+	return before1, prefix + fmt.Sprintf("return %s\n", content1)
 }
 
 func genExprStmt2(env *Env, stmt *goast.ExprStmt, prefix string) (before []IBefore, out string) {
-	_, content := genExpr2(env, stmt.X, prefix)
+	before1, content := genExpr2(env, stmt.X, prefix)
 	out += prefix + content + "\n"
-	return
+	return before1, out
 }
 
 func genAssignStmt2(env *Env, stmt *goast.AssignStmt, prefix string) (before []IBefore, out string) {
-	_, content1 := genExprs2(env, stmt.Lhs, prefix)
-	_, content2 := genExprs2(env, stmt.Rhs, prefix)
-	return nil, prefix + fmt.Sprintf("%s %s %s", content1, stmt.Tok.String(), content2)
+	before1, content1 := genExprs2(env, stmt.Lhs, prefix)
+	before2, content2 := genExprs2(env, stmt.Rhs, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	return before, prefix + fmt.Sprintf("%s %s %s", content1, stmt.Tok.String(), content2)
 }
 
 func genIfStmt2(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
-	_, cond := genExpr2(env, stmt.Cond, prefix)
-	_, body := genStmt2(env, stmt.Body, prefix+"\t")
+	before1, cond := genExpr2(env, stmt.Cond, prefix)
+	before2, body := genStmt2(env, stmt.Body, prefix+"\t")
+	before = append(before, before1...)
+	before = append(before, before2...)
 	out += prefix + "if " + cond + " {\n"
 	out += body
 	out += prefix + "}\n"
-	return
-}
-
-func joinList(env *Env, l *goast.FieldList, prefix string) string {
-	if l == nil {
-		return ""
-	}
-	var fieldsItems []string
-	for _, field := range l.List {
-		var namesItems []string
-		for _, n := range field.Names {
-			namesItems = append(namesItems, n.Name)
-		}
-		tmp2Str := strings.Join(namesItems, " ")
-		_, content := genExpr2(env, field.Type, prefix)
-		fieldsItems = append(fieldsItems, tmp2Str+" "+content)
-	}
-	return strings.Join(fieldsItems, " ")
+	return before, out
 }
 
 func genDecls(env *Env, a *goast.File, prefix string) (out string) {
 	for _, d := range a.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
-			_, out1 := genFuncDecl(env, decl, prefix)
+			before1, out1 := genFuncDecl(env, decl, prefix)
+			for _, b := range before1 {
+				out += b.Content()
+			}
 			out += out1
 		}
 	}
@@ -293,17 +299,36 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 		paramsStr = joinList(env, params, prefix)
 	}
 	if result := decl.Type.Result; result != nil {
-		_, content := genExpr2(env, result, prefix)
+		before1, content := genExpr2(env, result, prefix)
+		before = append(before, before1...)
 		if content != "" {
 			resultStr = " " + content
 		}
 	}
 	if decl.Body != nil {
-		_, content := genStmt2(env, decl.Body, prefix+"\t")
+		before1, content := genStmt2(env, decl.Body, prefix+"\t")
+		before = append(before, before1...)
 		bodyStr = content
 	}
 	out += fmt.Sprintf("func%s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, paramsStr, resultStr, bodyStr)
 	return
+}
+
+func joinList(env *Env, l *goast.FieldList, prefix string) string {
+	if l == nil {
+		return ""
+	}
+	var fieldsItems []string
+	for _, field := range l.List {
+		var namesItems []string
+		for _, n := range field.Names {
+			namesItems = append(namesItems, n.Name)
+		}
+		tmp2Str := strings.Join(namesItems, " ")
+		_, content := genExpr2(env, field.Type, prefix)
+		fieldsItems = append(fieldsItems, tmp2Str+" "+content)
+	}
+	return strings.Join(fieldsItems, " ")
 }
 
 func genFunctions(a *ast, env *Env) (before []IBefore, out string) {
@@ -622,7 +647,7 @@ func genExprStmt(env *Env, stmt *ExprStmt, prefix string, retTyp Typ) (before []
 	before1, content := genExpr(env, stmt.x, prefix, retTyp)
 	before = append(before, before1...)
 	out += prefix + content + "\n"
-	return
+	return before1, out
 }
 
 func genIncDecStmt(env *Env, stmt *IncDecStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
