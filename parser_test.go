@@ -20,7 +20,13 @@ type test1 enum {
 type test struct {
 }
 
+func test() (int, int)? {
+}
+
 func main() {
+	//a, b, c := !(1, "foo", true)
+	a, b, c := (1, 2, 3)
+
     test({ $0 + 1 })
 }
 `

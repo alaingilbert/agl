@@ -1470,11 +1470,10 @@ func (p *parser) tryIdentOrType1() ast.Expr {
 	case token.CHAN, token.ARROW:
 		return p.parseChanType()
 	case token.LPAREN:
-		lparen := p.pos
-		p.next()
-		typ := p.parseType()
+		lparen := p.expect(token.LPAREN)
+		values := p.parseExprList()
 		rparen := p.expect(token.RPAREN)
-		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}
+		return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
 	}
 
 	// no type found
@@ -1564,15 +1563,6 @@ func (p *parser) parseOperand() ast.Expr {
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		p.next()
 		return x
-
-	case token.LPAREN:
-		lparen := p.pos
-		p.next()
-		p.exprLev++
-		x := p.parseRhs() // types may be parenthesized: (some type)
-		p.exprLev--
-		rparen := p.expect(token.RPAREN)
-		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
 
 	case token.FUNC:
 		return p.parseFuncTypeOrLit()
