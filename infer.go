@@ -79,30 +79,29 @@ func NewInferrer() *Inferrer {
 }
 
 func (infer *Inferrer) InferFile(f *goast.File) {
-	fileInferrer := &FileInferrer{env: infer.env, f: f, types: make(map[any]Typ)}
+	fileInferrer := &FileInferrer{env: infer.env, f: f}
 	fileInferrer.Infer()
 }
 
 type FileInferrer struct {
 	env         *Env
 	f           *goast.File
-	types       map[any]Typ
 	PackageName string
 }
 
 func (infer *FileInferrer) GetType(p any) Typ {
-	t, ok := infer.types[p]
-	if !ok {
+	t := infer.env.GetType2(p)
+	if t != nil {
 		panic(fmt.Sprintf("type not found for %v", to(p)))
 	}
 	return t
 }
 
 func (infer *FileInferrer) SetType(p any, t Typ) {
-	if _, ok := infer.types[p]; ok {
+	if t := infer.env.GetType2(p); t != nil {
 		panic(fmt.Sprintf("type already declared for %v", to(p)))
 	}
-	infer.types[p] = t
+	infer.env.SetType2(p, t)
 }
 
 func (infer *FileInferrer) Infer() {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	goast "agl/ast"
 	"fmt"
 	"reflect"
 	"sync/atomic"
@@ -9,6 +10,7 @@ import (
 type Env struct {
 	structCounter atomic.Int64
 	lookupTable   map[string]Typ // Store constants/variables/functions
+	lookupTable2  map[any]Typ    // Store constants/variables/functions
 }
 
 func NewEnv() *Env {
@@ -87,6 +89,25 @@ func (e *Env) Assign(name string, typ Typ) {
 
 func (e *Env) GetTypeNative(x Expr) Typ {
 	return e.getType(x, true)
+}
+
+func (e *Env) SetType2(x any, t Typ) {
+	e.lookupTable2[x] = t
+}
+
+func (e *Env) GetType2(x any) Typ {
+	switch xx := x.(type) {
+	case goast.Expr:
+		return e.getType2(xx, false)
+	case string:
+		return e.lookupTable[xx]
+	default:
+		panic("")
+	}
+}
+
+func (e *Env) getType2(x goast.Expr, native bool) Typ {
+	panic("TODO")
 }
 
 func (e *Env) GetType(x Expr) Typ {

@@ -157,6 +157,7 @@ func genBubbleOptionExpr2(env *Env, expr *goast.BubbleOptionExpr, prefix string)
 }
 
 func genBubbleResultExpr2(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
+	p("???", env.GetType2(expr.X))
 	before1, content1 := genExpr2(env, expr.X, prefix)
 	return before1, content1 + "!"
 }
