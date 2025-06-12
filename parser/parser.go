@@ -1178,7 +1178,7 @@ func (p *parser) parseFuncType() *ast.FuncType {
 		}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrType()
+	result := p.tryIdentOrType3()
 
 	return &ast.FuncType{Func: pos, Params: params, Result: result}
 }
@@ -1227,7 +1227,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
-				result := p.tryIdentOrType()
+				result := p.tryIdentOrType3()
 				idents = []*ast.Ident{ident}
 				typ = &ast.FuncType{
 					Func:   token.NoPos,
@@ -1257,7 +1257,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 			// ordinary method
 			// TODO(rfindley) refactor to share code with parseFuncType.
 			params := p.parseParameters(false)
-			result := p.tryIdentOrType()
+			result := p.tryIdentOrType3()
 			idents = []*ast.Ident{ident}
 			typ = &ast.FuncType{Func: token.NoPos, Params: params, Result: result}
 		default:
@@ -1443,8 +1443,16 @@ func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
 	return packIndexExpr(typ, opening, list, closing)
 }
 
+func (p *parser) tryIdentOrType3() ast.Expr {
+	return p.tryIdentOrType4(false)
+}
+
 func (p *parser) tryIdentOrType() ast.Expr {
-	x := p.tryIdentOrType1()
+	return p.tryIdentOrType4(true)
+}
+
+func (p *parser) tryIdentOrType4(canBeShortFn bool) ast.Expr {
+	x := p.tryIdentOrType1(canBeShortFn)
 	if p.tok == token.QUESTION {
 		question := p.expect(token.QUESTION)
 		return &ast.OptionExpr{X: x, Question: question}
@@ -1455,9 +1463,11 @@ func (p *parser) tryIdentOrType() ast.Expr {
 	return x
 }
 
-func (p *parser) tryIdentOrType1() ast.Expr {
+func (p *parser) tryIdentOrType1(canBeShortFn bool) ast.Expr {
 	defer decNestLev(incNestLev(p))
-
+	if canBeShortFn && p.tok == token.LBRACE {
+		return p.parseShortFuncLit()
+	}
 	switch p.tok {
 	case token.IDENT:
 		typ := p.parseTypeName(nil)
@@ -1474,8 +1484,6 @@ func (p *parser) tryIdentOrType1() ast.Expr {
 		return p.parseEnumType()
 	case token.MUL:
 		return p.parsePointerType()
-	case token.LBRACE:
-		return p.parseShortFuncLit()
 	case token.FUNC:
 		return p.parseFuncType()
 	case token.INTERFACE:
@@ -2893,7 +2901,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrType()
+	result := p.tryIdentOrType3()
 
 	var body *ast.BlockStmt
 	switch p.tok {
