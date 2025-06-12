@@ -1,6 +1,7 @@
 package main
 
 import (
+	goast "agl/ast"
 	"fmt"
 	"strconv"
 )
@@ -67,6 +68,16 @@ func parseFuncTypeFromString2(s string, env *Env, native bool) FuncType {
 	nenv := env.Clone()
 	ft := parseFnSignature(NewTokenStream(s))
 	return funcExprToFuncType2(ft, nenv, native)
+}
+
+func infer2(f *goast.File) (*goast.File, *Env) {
+	for _, d := range f.Decls {
+		switch decl := d.(type) {
+		case *goast.FuncDecl:
+			fmt.Println("FN", decl)
+		}
+	}
+	return f, nil
 }
 
 func infer(s *ast) (*ast, *Env) {
