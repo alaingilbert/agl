@@ -79,6 +79,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	f := parser2(string(by))
+	infer2(f)
 	fmt.Println("??", f)
 	return nil
 }
