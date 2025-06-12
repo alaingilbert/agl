@@ -6,6 +6,27 @@ import (
 	tassert "github.com/stretchr/testify/assert"
 )
 
+func TestParser(t *testing.T) {
+	src := `
+package main
+
+type test1 enum {
+	A
+	B
+	C
+	E(a,b,c u8, s u8)
+}
+
+type test struct {
+}
+
+func main() {
+    test({ $0 + 1 })
+}
+`
+	parser2(src)
+}
+
 func TestParseFnSignature1(t *testing.T) {
 	stmt := parseFnSignature(NewTokenStream("fn add(a, b i64) i64"))
 	tassert.Equal(t, 1, len(stmt.args.list))
