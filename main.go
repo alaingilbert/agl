@@ -1,6 +1,9 @@
 package main
 
 import (
+	goast "agl/ast"
+	parser1 "agl/parser"
+	"agl/token"
 	"context"
 	"errors"
 	"fmt"
@@ -79,9 +82,18 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	f := parser2(string(by))
-	i := NewInferrer()
+	fset, f := parser2(string(by))
+	i := NewInferrer(fset)
 	i.InferFile(f)
-	fmt.Println(codegen2(f, i.env))
+	fmt.Println(codegen(fset, i.env, f))
 	return nil
+}
+
+func parser2(src string) (*token.FileSet, *goast.File) {
+	var fset = token.NewFileSet()
+	f, err := parser1.ParseFile(fset, "", src, 0)
+	if err != nil {
+		panic(err)
+	}
+	return fset, f
 }

@@ -2,16 +2,18 @@ package main
 
 import (
 	goast "agl/ast"
-	"bufio"
+	"agl/token"
+	"agl/types"
 	"fmt"
-	"reflect"
-	"sort"
 	"strings"
 )
 
-func codegen2(a *goast.File, env *Env) (out string) {
-	before1, out1 := genPackage2(a)
-	before2, out2 := genImports2(a)
+var fset *token.FileSet
+
+func codegen(fset1 *token.FileSet, env *Env, a *goast.File) (out string) {
+	fset = fset1
+	before1, out1 := genPackage(a)
+	before2, out2 := genImports(a)
 	out3 := genDecls(env, a, "")
 	for _, b := range before1 {
 		out += b.Content()
@@ -22,35 +24,12 @@ func codegen2(a *goast.File, env *Env) (out string) {
 	return out + out1 + out2 + out3
 }
 
-func codegen(a *ast, env *Env) (out string) {
-	var before []IBefore
-	out += genPackage(a)
-	out += genImports(a)
-	out += genEnums(env, a)
-	out += genInterface(env, a)
-	out += genStructs(env, a)
-	before1, content1 := genFunctions(a, env)
-	before = append(before, before1...)
-	for _, b := range before {
-		out += b.Content()
-	}
-	out += content1
-	return
-}
-
-func genPackage2(a *goast.File) (before []IBefore, out string) {
+func genPackage(a *goast.File) (before []IBefore, out string) {
 	out += fmt.Sprintf("package %s\n", a.Name.Name)
 	return
 }
 
-func genPackage(a *ast) (out string) {
-	if a.packageStmt != nil {
-		out += fmt.Sprintf("package %s\n", a.packageStmt.lit)
-	}
-	return
-}
-
-func genImports2(a *goast.File) (before []IBefore, out string) {
+func genImports(a *goast.File) (before []IBefore, out string) {
 	for _, spec := range a.Imports {
 		out += "import "
 		if spec.Name != nil {
@@ -61,202 +40,341 @@ func genImports2(a *goast.File) (before []IBefore, out string) {
 	return
 }
 
-func genImports(a *ast) (out string) {
-	for _, i := range a.imports {
-		if len(i.elts) > 1 {
-			out += "import (\n"
-			for _, e := range i.elts {
-				out += fmt.Sprintf("\t%s\n", e)
-			}
-			out += ")\n"
-		} else {
-			out += fmt.Sprintf("import %s\n", i.elts[0])
-		}
-	}
-	return
-}
-
-func genInterface(env *Env, a *ast) (out string) {
-	for _, s := range a.interfaces {
-		_, content := genStmt(env, s, "", nil)
-		out += content
-	}
-	return
-}
-
-func genEnums(env *Env, a *ast) (out string) {
-	for _, s := range a.enums {
-		_, content := genStmt(env, s, "", nil)
-		out += content
-	}
-	return
-}
-
-func genStructs(env *Env, a *ast) (out string) {
-	for _, s := range a.structs {
-		_, content := genStmt(env, s, "", nil)
-		out += content
-	}
-	return
-}
-
-func genExpr2(env *Env, e goast.Expr, prefix string) (before []IBefore, out string) {
+func genExpr(env *Env, e goast.Expr, prefix string) (before []IBefore, out string) {
+	//p("genExpr", to(e))
 	switch expr := e.(type) {
 	case *goast.Ident:
-		return nil, expr.Name
+		return genIdent(env, expr, prefix)
 	case *goast.ShortFuncLit:
 		return genShortFuncLit(env, expr, prefix)
 	case *goast.OptionExpr:
-		before1, content := genExpr2(env, expr.X, prefix)
+		before1, content := genExpr(env, expr.X, prefix)
 		return before1, fmt.Sprintf("Option[%s]", content)
+	case *goast.ResultExpr:
+		before1, content := genExpr(env, expr.X, prefix)
+		return before1, fmt.Sprintf("Result[%s]", content)
 	case *goast.BinaryExpr:
-		before1, content1 := genExpr2(env, expr.X, prefix)
-		before2, content2 := genExpr2(env, expr.Y, prefix)
+		before1, content1 := genExpr(env, expr.X, prefix)
+		before2, content2 := genExpr(env, expr.Y, prefix)
 		before = append(before, before1...)
 		before = append(before, before2...)
 		return before, fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
 	case *goast.BasicLit:
 		return nil, expr.Value
 	case *goast.CompositeLit:
-		return genCompositeLit2(env, expr, prefix)
+		return genCompositeLit(env, expr, prefix)
 	case *goast.TupleExpr:
-		return genTupleExpr2(env, expr, prefix)
+		return genTupleExpr(env, expr, prefix)
 	case *goast.KeyValueExpr:
-		return genKeyValueExpr2(env, expr, prefix)
+		return genKeyValueExpr(env, expr, prefix)
 	case *goast.ArrayType:
-		return genArrayType2(env, expr, prefix)
+		return genArrayType(env, expr, prefix)
 	case *goast.CallExpr:
-		return genCallExpr2(env, expr, prefix)
+		return genCallExpr(env, expr, prefix)
 	case *goast.BubbleResultExpr:
-		return genBubbleResultExpr2(env, expr, prefix)
+		return genBubbleResultExpr(env, expr, prefix)
 	case *goast.BubbleOptionExpr:
-		return genBubbleOptionExpr2(env, expr, prefix)
+		return genBubbleOptionExpr(env, expr, prefix)
 	case *goast.SelectorExpr:
-		return genSelectorExpr2(env, expr, prefix)
+		return genSelectorExpr(env, expr, prefix)
+	case *goast.IndexExpr:
+		return genIndexExpr(env, expr, prefix)
+	case *goast.FuncType:
+		return genFuncType(env, expr, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
 }
 
+func genIdent(env *Env, expr *goast.Ident, prefix string) (before []IBefore, out string) {
+	if strings.HasPrefix(expr.Name, "$") {
+		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
+	}
+	t := env.GetType(expr)
+	switch typ := t.(type) {
+	case types.OkType:
+		return nil, "MakeResultOk"
+	case types.ErrType:
+		return nil, fmt.Sprintf("MakeResultErr[%s]", typ.W.GoStr())
+	case types.SomeType:
+		return nil, "MakeOptionSome"
+	case types.NoneType:
+		return nil, fmt.Sprintf("MakeOptionNone[%s]()", typ.W.GoStr())
+	case types.GenericType:
+		return nil, fmt.Sprintf("%s", typ.GoStr())
+	}
+	if v := env.Get(expr.Name); v != nil {
+		return nil, v.GoStr()
+	}
+	return nil, expr.Name
+}
+
 func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before []IBefore, out string) {
-	before1, content1 := genStmt2(env, expr.Body, prefix+"\t")
-	out += "func() {\n"
+	t := env.GetType(expr).(types.FuncType)
+	before1, content1 := genStmt(env, expr.Body, prefix+"\t")
+	var returnStr, argsStr string
+	if len(t.Params) > 0 {
+		var tmp []string
+		for i, arg := range t.Params {
+			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, arg.GoStr()))
+		}
+		argsStr = strings.Join(tmp, ", ")
+	}
+	ret := t.Return
+	if ret != nil {
+		returnStr = " " + ret.GoStr()
+	}
+	out += fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr)
 	out += content1
 	out += prefix + "}"
 	return before1, out
 }
 
-func genSelectorExpr2(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExpr2(env, expr.X, prefix)
+func genFuncType(env *Env, expr *goast.FuncType, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.Result, prefix+"\t")
+	before = append(before, before1...)
+	var paramsStr, typeParamsStr string
+	if typeParams := expr.TypeParams; typeParams != nil {
+		typeParamsStr = joinList(env, expr.TypeParams, prefix)
+		if typeParamsStr != "" {
+			typeParamsStr = "[" + typeParamsStr + "]"
+		}
+	}
+	if params := expr.Params; params != nil {
+		paramsStr = joinList(env, params, prefix)
+	}
+	if content1 != "" {
+		content1 = " " + content1
+	}
+	out += fmt.Sprintf("func%s(%s)%s", typeParamsStr, paramsStr, content1)
+	return before1, out
+}
+
+func genIndexExpr(env *Env, expr *goast.IndexExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.X, prefix)
+	before2, content2 := genExpr(env, expr.Index, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	out += fmt.Sprintf("%s[%s]", content1, content2)
+	return
+}
+
+func genSelectorExpr(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.X, prefix)
 	return before1, fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
 }
 
-func genBubbleOptionExpr2(env *Env, expr *goast.BubbleOptionExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExpr2(env, expr.X, prefix)
-	return before1, content1 + "?"
+func genBubbleOptionExpr(env *Env, expr *goast.BubbleOptionExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.X, prefix)
+	out += fmt.Sprintf("%s.Unwrap()", content1)
+	return before1, out
 }
 
-func genBubbleResultExpr2(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
-	p("???", env.GetType2(expr.X))
-	before1, content1 := genExpr2(env, expr.X, prefix)
-	return before1, content1 + "!"
+func genBubbleResultExpr(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
+	t := env.GetType(expr).(types.BubbleResultType)
+	if t.Bubble {
+		before1, content1 := genExpr(env, expr.X, prefix)
+		before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
+if res.IsErr() {
+	return res
+}
+`, prefix))
+		before = append(before, before1...)
+		before = append(before, before2)
+		out += "res.Unwrap()"
+	} else {
+		before1, content1 := genExpr(env, expr.X, prefix)
+		before1 = append(before, before1...)
+		out += fmt.Sprintf("%s.Unwrap()", content1)
+	}
+	return before, out
 }
 
-func genCallExpr2(env *Env, expr *goast.CallExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExpr2(env, expr.Fun, prefix)
-	before2, content2 := genExprs2(env, expr.Args, prefix)
+func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefore, out string) {
+	switch e := expr.Fun.(type) {
+	case *goast.SelectorExpr:
+		if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "filter" {
+			before1, content1 := genExpr(env, e.X, prefix)
+			before2, content2 := genExpr(env, expr.Args[0], prefix)
+			before = append(before, before1...)
+			before = append(before, before2...)
+			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
+		} else if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "Map" {
+			before1, content1 := genExpr(env, e.X, prefix)
+			before2, content2 := genExpr(env, expr.Args[0], prefix)
+			before = append(before, before1...)
+			before = append(before, before2...)
+			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
+		} else if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "Reduce" {
+			before1, content1 := genExpr(env, e.X, prefix)
+			before2, content2 := genExpr(env, expr.Args[0], prefix)
+			before3, content3 := genExpr(env, expr.Args[1], prefix)
+			before = append(before, before1...)
+			before = append(before, before2...)
+			before = append(before, before3...)
+			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+		}
+	}
+	before1, content1 := genExpr(env, expr.Fun, prefix)
+	before2, content2 := genExprs(env, expr.Args, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	return before, fmt.Sprintf("%s(%s)", content1, content2)
 }
 
-func genArrayType2(env *Env, expr *goast.ArrayType, prefix string) (before []IBefore, out string) {
-	before1, content := genExpr2(env, expr.Elt, prefix)
+func genArrayType(env *Env, expr *goast.ArrayType, prefix string) (before []IBefore, out string) {
+	before1, content := genExpr(env, expr.Elt, prefix)
 	return before1, fmt.Sprintf("[]%s", content)
 }
 
-func genKeyValueExpr2(env *Env, expr *goast.KeyValueExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExpr2(env, expr.Key, prefix)
-	before2, content2 := genExpr2(env, expr.Value, prefix)
+func genKeyValueExpr(env *Env, expr *goast.KeyValueExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.Key, prefix)
+	before2, content2 := genExpr(env, expr.Value, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
 	return before, fmt.Sprintf("%s: %s", content1, content2)
 }
 
-func genCompositeLit2(env *Env, expr *goast.CompositeLit, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExpr2(env, expr.Type, prefix)
-	before2, content2 := genExprs2(env, expr.Elts, prefix)
+func genCompositeLit(env *Env, expr *goast.CompositeLit, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.Type, prefix)
+	before2, content2 := genExprs(env, expr.Elts, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
-	out += fmt.Sprintf("%s{%s}\n", content1, content2)
+	out += fmt.Sprintf("%s{%s}", content1, content2)
 	return
 }
 
-func genTupleExpr2(env *Env, expr *goast.TupleExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExprs2(env, expr.Values, prefix)
+func genTupleExpr(env *Env, expr *goast.TupleExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExprs(env, expr.Values, prefix)
 	out += fmt.Sprintf("(%s)\n", content1)
 	return before1, out
 }
 
-func genExprs2(env *Env, e []goast.Expr, prefix string) (before []IBefore, out string) {
+func genExprs(env *Env, e []goast.Expr, prefix string) (before []IBefore, out string) {
 	var tmp []string
 	for _, expr := range e {
-		before1, content1 := genExpr2(env, expr, prefix)
+		before1, content1 := genExpr(env, expr, prefix)
 		before = append(before, before1...)
 		tmp = append(tmp, content1)
 	}
 	return before, strings.Join(tmp, ", ")
 }
 
-func genStmts2(env *Env, s []goast.Stmt, prefix string) (before []IBefore, out string) {
-	var tmp []string
+func genStmts(env *Env, s []goast.Stmt, prefix string) (before []IBefore, out string) {
 	for _, stmt := range s {
-		before1, content1 := genStmt2(env, stmt, prefix)
+		before1, content1 := genStmt(env, stmt, prefix)
 		before = append(before, before1...)
-		tmp = append(tmp, content1)
+		for _, b := range before {
+			if v, ok := b.(*BeforeStmt); ok {
+				out += v.Content()
+			}
+		}
+		newBefore := make([]IBefore, 0)
+		for _, b := range before {
+			if v, ok := b.(*BeforeFn); ok {
+				newBefore = append(newBefore, v)
+			}
+		}
+		before = newBefore
+		out += content1
 	}
-	return before, strings.Join(tmp, "")
+	return before, out
 }
 
-func genStmt2(env *Env, s goast.Stmt, prefix string) (before []IBefore, out string) {
+func genStmt(env *Env, s goast.Stmt, prefix string) (before []IBefore, out string) {
+	//p("genStmt", to(s))
 	switch stmt := s.(type) {
 	case *goast.BlockStmt:
-		return genStmts2(env, stmt.List, prefix)
+		return genBlockStmt(env, stmt, prefix)
 	case *goast.IfStmt:
-		return genIfStmt2(env, stmt, prefix)
+		return genIfStmt(env, stmt, prefix)
 	case *goast.AssignStmt:
-		return genAssignStmt2(env, stmt, prefix)
+		return genAssignStmt(env, stmt, prefix)
 	case *goast.ExprStmt:
-		return genExprStmt2(env, stmt, prefix)
+		return genExprStmt(env, stmt, prefix)
 	case *goast.ReturnStmt:
-		return genReturnStmt2(env, stmt, prefix)
+		return genReturnStmt(env, stmt, prefix)
+	case *goast.RangeStmt:
+		return genRangeStmt(env, stmt, prefix)
+	case *goast.IncDecStmt:
+		return getIncDecStmt(env, stmt, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(s)))
 	}
 }
 
-func genReturnStmt2(env *Env, stmt *goast.ReturnStmt, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExprs2(env, stmt.Results, prefix)
+func genBlockStmt(env *Env, stmt *goast.BlockStmt, prefix string) (before []IBefore, out string) {
+	before1, content1 := genStmts(env, stmt.List, prefix)
+	before = append(before, before1...)
+	out += content1
+	return
+}
+
+func getIncDecStmt(env *Env, stmt *goast.IncDecStmt, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.X, prefix)
+	before = append(before, before1...)
+	var op string
+	switch stmt.Tok {
+	case token.INC:
+		op = "++"
+	case token.DEC:
+		op = "--"
+	}
+	out += prefix + content1 + op + "\n"
+	return
+}
+
+func genRangeStmt(env *Env, stmt *goast.RangeStmt, prefix string) (before []IBefore, out string) {
+	var content1, content2 string
+	if stmt.Key != nil {
+		var before1 []IBefore
+		before1, content1 = genExpr(env, stmt.Key, prefix)
+		before = append(before, before1...)
+	}
+	if stmt.Value != nil {
+		var before2 []IBefore
+		before2, content2 = genExpr(env, stmt.Value, prefix)
+		before = append(before, before2...)
+	}
+	before3, content3 := genExpr(env, stmt.X, prefix)
+	before = append(before, before3...)
+	before4, content4 := genStmt(env, stmt.Body, prefix+"\t")
+	before = append(before, before4...)
+	op := stmt.Tok
+	if content1 == "" && content2 == "" {
+		out += prefix + fmt.Sprintf("for range %s {\n", content3)
+	} else if content2 == "" {
+		out += prefix + fmt.Sprintf("for %s %s range %s {\n", content1, op, content3)
+	} else {
+		out += prefix + fmt.Sprintf("for %s, %s %s range %s {\n", content1, content2, op, content3)
+	}
+	out += fmt.Sprintf("%s", content4)
+	out += prefix + "}\n"
+	return
+}
+
+func genReturnStmt(env *Env, stmt *goast.ReturnStmt, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, stmt.Result, prefix)
 	return before1, prefix + fmt.Sprintf("return %s\n", content1)
 }
 
-func genExprStmt2(env *Env, stmt *goast.ExprStmt, prefix string) (before []IBefore, out string) {
-	before1, content := genExpr2(env, stmt.X, prefix)
+func genExprStmt(env *Env, stmt *goast.ExprStmt, prefix string) (before []IBefore, out string) {
+	before1, content := genExpr(env, stmt.X, prefix)
 	out += prefix + content + "\n"
 	return before1, out
 }
 
-func genAssignStmt2(env *Env, stmt *goast.AssignStmt, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExprs2(env, stmt.Lhs, prefix)
-	before2, content2 := genExprs2(env, stmt.Rhs, prefix)
+func genAssignStmt(env *Env, stmt *goast.AssignStmt, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExprs(env, stmt.Lhs, prefix)
+	before2, content2 := genExprs(env, stmt.Rhs, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
-	return before, prefix + fmt.Sprintf("%s %s %s", content1, stmt.Tok.String(), content2)
+	return before, prefix + fmt.Sprintf("%s %s %s\n", content1, stmt.Tok.String(), content2)
 }
 
-func genIfStmt2(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
-	before1, cond := genExpr2(env, stmt.Cond, prefix)
-	before2, body := genStmt2(env, stmt.Body, prefix+"\t")
+func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
+	before1, cond := genExpr(env, stmt.Cond, prefix)
+	before2, body := genStmt(env, stmt.Body, prefix+"\t")
 	before = append(before, before1...)
 	before = append(before, before2...)
 	out += prefix + "if " + cond + " {\n"
@@ -300,14 +418,14 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 		paramsStr = joinList(env, params, prefix)
 	}
 	if result := decl.Type.Result; result != nil {
-		before1, content := genExpr2(env, result, prefix)
+		before1, content := genExpr(env, result, prefix)
 		before = append(before, before1...)
 		if content != "" {
 			resultStr = " " + content
 		}
 	}
 	if decl.Body != nil {
-		before1, content := genStmt2(env, decl.Body, prefix+"\t")
+		before1, content := genStmt(env, decl.Body, prefix+"\t")
 		before = append(before, before1...)
 		bodyStr = content
 	}
@@ -325,45 +443,15 @@ func joinList(env *Env, l *goast.FieldList, prefix string) string {
 		for _, n := range field.Names {
 			namesItems = append(namesItems, n.Name)
 		}
-		tmp2Str := strings.Join(namesItems, " ")
-		_, content := genExpr2(env, field.Type, prefix)
-		fieldsItems = append(fieldsItems, tmp2Str+" "+content)
+		tmp2Str := strings.Join(namesItems, ", ")
+		_, content := genExpr(env, field.Type, prefix)
+		if tmp2Str != "" {
+			tmp2Str = tmp2Str + " "
+		}
+		fieldsItems = append(fieldsItems, tmp2Str+content)
 	}
-	return strings.Join(fieldsItems, " ")
+	return strings.Join(fieldsItems, ", ")
 }
-
-func genFunctions(a *ast, env *Env) (before []IBefore, out string) {
-	for _, f := range a.funcs {
-		before1, content1 := genStmt(env, f, "", nil)
-		before = append(before, before1...)
-		out += content1
-	}
-	return
-}
-
-type Generator struct {
-	buf bufio.Writer
-	a   *ast
-	env *Env
-}
-
-func NewGenerator(a *ast, env *Env) *Generator {
-	return &Generator{a: a, env: env}
-}
-
-func (g *Generator) Generate() string {
-	return codegen(g.a, g.env)
-}
-
-//
-//func (g *Generator) GenStmts(stmts []Stmt) {
-//	for _, stmt := range stmts {
-//		before, content := genStmt(stmt, prefix, retTyp)
-//		_, _ = g.buf.WriteString(strings.Join(before, ""))
-//		_, _ = g.buf.WriteString(content)
-//	}
-//	return
-//}
 
 type IBefore interface {
 	Content() string
@@ -393,854 +481,429 @@ func NewBeforeFn(content string) *BeforeFn {
 	return &BeforeFn{BaseBefore{w: content}}
 }
 
-func genStmts(env *Env, stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	for _, stmt := range stmts {
-		before1, content1 := genStmt(env, stmt, prefix, retTyp)
-		before = append(before, before1...)
-		for _, b := range before {
-			if v, ok := b.(*BeforeStmt); ok {
-				out += v.Content()
-			}
-		}
-		newBefore := make([]IBefore, 0)
-		for _, b := range before {
-			if v, ok := b.(*BeforeFn); ok {
-				newBefore = append(newBefore, v)
-			}
-		}
-		before = newBefore
-		out += content1
-	}
-	return
-}
+//
+//func genStmts(env *Env, stmts []Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+//	for _, stmt := range stmts {
+//		before1, content1 := genStmt(env, stmt, prefix, retTyp)
+//		before = append(before, before1...)
+//		for _, b := range before {
+//			if v, ok := b.(*BeforeStmt); ok {
+//				out += v.Content()
+//			}
+//		}
+//		newBefore := make([]IBefore, 0)
+//		for _, b := range before {
+//			if v, ok := b.(*BeforeFn); ok {
+//				newBefore = append(newBefore, v)
+//			}
+//		}
+//		before = newBefore
+//		out += content1
+//	}
+//	return
+//}
 
-func genStmt(env *Env, stmt Stmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	switch s := stmt.(type) {
-	case *EnumStmt:
-		return genEnumStmt(env, s)
-	case *structStmt:
-		return genStructStmt(env, s)
-	case *FuncExpr:
-		return genFuncStmt(env, s)
-	case *IfStmt:
-		return genIfStmt(env, s, prefix, retTyp)
-	case *IfLetStmt:
-		return genIfLetStmt(env, s, prefix, retTyp)
-	case *ReturnStmt:
-		return genReturnStmt(env, s, prefix, retTyp)
-	case *AssignStmt:
-		return genAssignStmt(env, s, prefix, retTyp)
-	case *InlineCommentStmt:
-		return genInlineCommentStmt(env, s, prefix, retTyp)
-	case *ExprStmt:
-		return genExprStmt(env, s, prefix, retTyp)
-	case *ForRangeStmt:
-		return genForRangeStmt(env, s, prefix, retTyp)
-	case *IncDecStmt:
-		return genIncDecStmt(env, s, prefix, retTyp)
-	case *AssertStmt:
-		return genAssertStmt(env, s, prefix, retTyp)
-	case *BlockStmt:
-		return genBlockStmt(env, s, prefix, retTyp)
-	case *InterfaceStmt:
-		return genInterfaceStmt(env, s, prefix, retTyp)
-	case *ValueSpec:
-		return genValueSpec(env, s, prefix, retTyp)
-	default:
-		panic(fmt.Sprintf("unknown statement: %s, %v", reflect.TypeOf(s), s))
-	}
-}
+//func genEnumStmt(_ *Env, s *EnumStmt) (before []IBefore, out string) {
+//	out += fmt.Sprintf("type %sTag int\n", s.lit)
+//	out += "const (\n"
+//	for i, field := range s.fields {
+//		if i == 0 {
+//			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", s.lit, field.name.lit, s.lit)
+//		} else {
+//			out += fmt.Sprintf("\t%s_%s\n", s.lit, field.name.lit)
+//		}
+//	}
+//	out += ")\n"
+//	out += fmt.Sprintf("type %s struct {\n", s.lit)
+//	out += fmt.Sprintf("\ttag %sTag\n", s.lit)
+//	for _, field := range s.fields {
+//		for i, el := range field.elts {
+//			out += fmt.Sprintf("\t%s%d %s\n", field.name.lit, i, el.GetType().GoStr())
+//		}
+//	}
+//	out += "}\n"
+//	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", s.lit)
+//	for _, field := range s.fields {
+//		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", s.lit, field.name.lit, field.name.lit)
+//	}
+//	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
+//	for _, field := range s.fields {
+//		var tmp []string
+//		var tmp1 []string
+//		for i, el := range field.elts {
+//			tmp = append(tmp, fmt.Sprintf("arg%d %s", i, el.GetType().GoStr()))
+//			tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.name.lit, i, i))
+//		}
+//		var tmp1Out string
+//		if len(tmp1) > 0 {
+//			tmp1Out = ", " + strings.Join(tmp1, ", ")
+//		}
+//		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{tag: %s_%s%s}\n}\n",
+//			s.lit, field.name.lit, strings.Join(tmp, ", "), s.lit, s.lit, s.lit, field.name.lit, tmp1Out)
+//	}
+//	return
+//}
 
-func genExpr(env *Env, e Expr, prefix string, retTyp Typ) ([]IBefore, string) {
-	switch expr := e.(type) {
-	case *BinOpExpr:
-		return genBinOpExpr(env, expr, prefix, retTyp)
-	case *NumberExpr:
-		return genNumberExpr(env, expr, prefix, retTyp)
-	case *IdentExpr:
-		return genIdentExpr(env, expr, prefix, retTyp)
-	case *VoidExpr:
-		return genVoidExpr(env, expr, prefix, retTyp)
-	case *TrueExpr:
-		return genTrueExpr(env, expr, prefix, retTyp)
-	case *FalseExpr:
-		return genFalseExpr(env, expr, prefix, retTyp)
-	case *NoneExpr:
-		return genNoneExpr(env, expr, prefix, retTyp)
-	case *MemberExpr:
-		return genMemberExpr(env, expr, prefix, retTyp)
-	case *ParenExpr:
-		return genParenExpr(env, expr, prefix, retTyp)
-	case *StringExpr:
-		return genStringExpr(env, expr, prefix, retTyp)
-	case *SomeExpr:
-		return genSomeExpr(env, expr, prefix, retTyp)
-	case *OkExpr:
-		return genOkExpr(env, expr, prefix, retTyp)
-	case *ErrExpr:
-		return genErrExpr(env, expr, prefix, retTyp)
-	case *TupleExpr:
-		return genTupleExpr(env, expr, prefix, retTyp)
-	case *CallExpr:
-		return genCallExpr(env, expr, prefix, retTyp)
-	case *BubbleOptionExpr:
-		return genBubbleOptionExpr(env, expr, prefix, retTyp)
-	case *BubbleResultExpr:
-		return genBubbleResultExpr(env, expr, prefix, retTyp)
-	case *SelectorExpr:
-		return genSelectorExpr(env, expr, prefix, retTyp)
-	case *VecExpr:
-		return genVecExpr(env, expr, prefix, retTyp)
-	case *MakeExpr:
-		return genMakeExpr(env, expr, prefix, retTyp)
-	case *MutExpr:
-		return genMutExpr(env, expr, prefix, retTyp)
-	case *Field:
-		return genField(env, expr, prefix, retTyp)
-	case *AnonFnExpr:
-		return genAnonFnExpr(env, expr, prefix, retTyp)
-	case *FuncExpr:
-		return genFuncExpr(env, expr, prefix, retTyp)
-	case *CompositeLitExpr:
-		return genCompositeLit(env, expr, prefix, retTyp)
-	case *KeyValueExpr:
-		return genKeyValueExpr(env, expr, prefix, retTyp)
-	case *TypeAssertExpr:
-		return genTypeAssertExpr(env, expr, prefix, retTyp)
-	case *MatchExpr:
-		return genMatchExpr(env, expr, prefix, retTyp)
-	default:
-		panic(fmt.Sprintf("unknown expression type: %s %v", reflect.TypeOf(e), expr))
-	}
-}
+//func genStructStmt(env *Env, s *structStmt) (before []IBefore, out string) {
+//	var namePrefix string
+//	if !s.pub {
+//		namePrefix = "aglPriv"
+//	}
+//	var fields string
+//	for _, f := range s.fields {
+//		_, ft := genExpr(env, f, "\t", nil)
+//		fields += fmt.Sprintf("\t%s\n", ft)
+//	}
+//	out += fmt.Sprintf("type %s%s struct {\n%s}\n", namePrefix, s.lit, fields)
+//	return
+//}
+//
+//func genAssignStmt1(env *Env, stmtLhs, stmtRhs Expr, tok Tok, prefix string, retTyp Typ) (before []IBefore, out string) {
+//	// LHS
+//	var lhs string
+//	var after string
+//	if TryCast[*TupleExpr](stmtLhs) {
+//		if TryCast[*EnumType](stmtRhs.GetType()) {
+//			lhs = AglVariablePrefix + "1"
+//			var sel string
+//			switch v := stmtRhs.(type) {
+//			case *CallExpr:
+//				sel = v.fun.(*SelectorExpr).sel.lit
+//			case *IdentExpr:
+//				sel = v.lit
+//			}
+//
+//			var names []string
+//			var exprs []string
+//			for i, x := range stmtLhs.(*TupleExpr).exprs {
+//				names = append(names, x.(*IdentExpr).lit)
+//				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
+//			}
+//			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+//		} else {
+//			lhs = AglVariablePrefix + "1"
+//			var names []string
+//			var exprs []string
+//			for i, x := range stmtLhs.(*TupleExpr).exprs {
+//				names = append(names, x.(*IdentExpr).lit)
+//				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+//			}
+//			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+//		}
+//	} else {
+//		before1, content1 := genExpr(env, stmtLhs, prefix, retTyp)
+//		before = append(before, before1...)
+//		lhs = content1
+//	}
+//
+//	// RHS
+//	before2, content2 := genExpr(env, stmtRhs, prefix, retTyp)
+//	before = append(before, before2...)
+//
+//	// Output
+//	out += prefix + fmt.Sprintf("%s %s %s\n", lhs, tok.lit, content2)
+//	out += after
+//	return
+//}
+//
+//
+//func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
+//	var tmp string
+//	if TryCast[*SomeExpr](stmt.lhs) {
+//		id := stmt.lhs.(*SomeExpr).expr.(*IdentExpr).lit
+//		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+//		tmp += "if res := " + content2 + "; res.IsSome() {\n"
+//		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
+//	} else if TryCast[*OkExpr](stmt.lhs) {
+//		id := stmt.lhs.(*OkExpr).expr.(*IdentExpr).lit
+//		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+//		tmp += "if res := " + content2 + "; res.IsOk() {\n"
+//		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
+//	} else if TryCast[*ErrExpr](stmt.lhs) {
+//		id := stmt.lhs.(*ErrExpr).expr.(*IdentExpr).lit
+//		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+//		tmp += "if res := " + content2 + "; res.IsErr() {\n"
+//		tmp += addPrefix("\t"+id+" := res.Err()\n", prefix)
+//	} else if TryCast[*IdentExpr](stmt.lhs) {
+//		id := stmt.lhs.(*IdentExpr).lit
+//		before2, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
+//		before3, content3 := genExpr(env, stmt.cond, prefix, retTyp)
+//		before = append(before, before2...)
+//		before = append(before, before3...)
+//		tmp += "if " + id + " := " + content2 + "; " + content3 + " {\n"
+//	}
+//
+//	before3, content3 := genStmts(env, stmt.body, prefix+"\t", retTyp)
+//	before = append(before, before3...)
+//	out += prefix + tmp
+//	out += content3
+//	if stmt.Else != nil {
+//		before4, content4 := genStmt(env, stmt.Else, prefix, retTyp)
+//		before = append(before, before4...)
+//		out += prefix + "} else " + strings.TrimSpace(content4) + "\n"
+//	} else {
+//		out += prefix + "}\n"
+//	}
+//	return
+//}
+//
+//func genMatchExpr(env *Env, stmt *MatchExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
+//	if TryCast[OptionType](stmt.expr.GetType()) {
+//		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
+//		before = append(before, before1...)
+//		out += fmt.Sprintf("res := %s\n", content1)
+//		cases := stmt.cases
+//		sort.Slice(cases, func(i, j int) bool {
+//			iSome := TryCast[*SomeExpr](cases[i].cond)
+//			iNone := TryCast[*NoneExpr](cases[i].cond)
+//			iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
+//			jSome := TryCast[*SomeExpr](cases[j].cond)
+//			jNone := TryCast[*NoneExpr](cases[j].cond)
+//			jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
+//			// If i is Some and j is not Some, i should come first
+//			if iSome && !jSome {
+//				return true
+//			}
+//			// If j is Some and i is not Some, j should come first
+//			if jSome && !iSome {
+//				return false
+//			}
+//			// If i is None and j is All, i should come first
+//			if iNone && jAll {
+//				return true
+//			}
+//			// If j is None and i is All, j should come first
+//			if jNone && iAll {
+//				return false
+//			}
+//			return false // Keep original order for equal types
+//		})
+//		for i, e := range stmt.cases {
+//			var condition string
+//			var setup string
+//			switch cond := e.cond.(type) {
+//			case *NoneExpr:
+//				condition = "res.IsNone()"
+//			case *SomeExpr:
+//				id := cond.expr.(*IdentExpr).lit
+//				condition = "res.IsSome()"
+//				setup = fmt.Sprintf("%s := res.Unwrap()\n", id)
+//			case *IdentExpr:
+//				if cond.lit == "_" {
+//					condition = "res.IsSome() || res.IsNone()"
+//				}
+//			}
+//			if i == 0 {
+//				out += prefix + fmt.Sprintf("if %s {\n", condition)
+//			} else {
+//				out += fmt.Sprintf(" else if %s {\n", condition)
+//			}
+//			if setup != "" {
+//				out += prefix + "\t" + setup
+//			}
+//			for _, s := range e.body {
+//				before2, content2 := genStmt(env, s, prefix+"\t", retTyp)
+//				before = append(before, before2...)
+//				out += content2
+//			}
+//			out += prefix + "}"
+//		}
+//	} else if TryCast[ResultType](stmt.expr.GetType()) {
+//		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
+//		before = append(before, before1...)
+//		out += fmt.Sprintf("res := %s\n", content1)
+//		cases := stmt.cases
+//		sort.Slice(cases, func(i, j int) bool {
+//			iOk := TryCast[*OkExpr](cases[i].cond)
+//			iErr := TryCast[*ErrExpr](cases[i].cond)
+//			iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
+//			jOk := TryCast[*OkExpr](cases[j].cond)
+//			jErr := TryCast[*ErrExpr](cases[j].cond)
+//			jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
+//			// If i is Some and j is not Some, i should come first
+//			if iOk && !jOk {
+//				return true
+//			}
+//			// If j is Some and i is not Some, j should come first
+//			if jOk && !iOk {
+//				return false
+//			}
+//			// If i is None and j is All, i should come first
+//			if iErr && jAll {
+//				return true
+//			}
+//			// If j is None and i is All, j should come first
+//			if jErr && iAll {
+//				return false
+//			}
+//			return false // Keep original order for equal types
+//		})
+//		for i, e := range stmt.cases {
+//			var condition string
+//			var setup string
+//			switch cond := e.cond.(type) {
+//			case *ErrExpr:
+//				condition = "res.IsErr()"
+//			case *OkExpr:
+//				id := cond.expr.(*IdentExpr).lit
+//				condition = "res.IsOk()"
+//				setup = fmt.Sprintf("%s := res.Unwrap()\n", id)
+//			case *IdentExpr:
+//				if cond.lit == "_" {
+//					condition = "res.IsOk() || res.IsErr()"
+//				}
+//			}
+//			if i == 0 {
+//				out += prefix + fmt.Sprintf("if %s {\n", condition)
+//			} else {
+//				out += fmt.Sprintf(" else if %s {\n", condition)
+//			}
+//			if setup != "" {
+//				out += prefix + "\t" + setup
+//			}
+//			for _, s := range e.body {
+//				before2, content2 := genStmt(env, s, prefix+"\t", retTyp)
+//				before = append(before, before2...)
+//				out += content2
+//			}
+//			out += prefix + "}"
+//		}
+//	}
+//	return
+//}
 
-func genEnumStmt(_ *Env, s *EnumStmt) (before []IBefore, out string) {
-	out += fmt.Sprintf("type %sTag int\n", s.lit)
-	out += "const (\n"
-	for i, field := range s.fields {
-		if i == 0 {
-			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", s.lit, field.name.lit, s.lit)
-		} else {
-			out += fmt.Sprintf("\t%s_%s\n", s.lit, field.name.lit)
-		}
-	}
-	out += ")\n"
-	out += fmt.Sprintf("type %s struct {\n", s.lit)
-	out += fmt.Sprintf("\ttag %sTag\n", s.lit)
-	for _, field := range s.fields {
-		for i, el := range field.elts {
-			out += fmt.Sprintf("\t%s%d %s\n", field.name.lit, i, el.GetType().GoStr())
-		}
-	}
-	out += "}\n"
-	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", s.lit)
-	for _, field := range s.fields {
-		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", s.lit, field.name.lit, field.name.lit)
-	}
-	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
-	for _, field := range s.fields {
-		var tmp []string
-		var tmp1 []string
-		for i, el := range field.elts {
-			tmp = append(tmp, fmt.Sprintf("arg%d %s", i, el.GetType().GoStr()))
-			tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.name.lit, i, i))
-		}
-		var tmp1Out string
-		if len(tmp1) > 0 {
-			tmp1Out = ", " + strings.Join(tmp1, ", ")
-		}
-		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{tag: %s_%s%s}\n}\n",
-			s.lit, field.name.lit, strings.Join(tmp, ", "), s.lit, s.lit, s.lit, field.name.lit, tmp1Out)
-	}
-	return
-}
-
-func genStructStmt(env *Env, s *structStmt) (before []IBefore, out string) {
-	var namePrefix string
-	if !s.pub {
-		namePrefix = "aglPriv"
-	}
-	var fields string
-	for _, f := range s.fields {
-		_, ft := genExpr(env, f, "\t", nil)
-		fields += fmt.Sprintf("\t%s\n", ft)
-	}
-	out += fmt.Sprintf("type %s%s struct {\n%s}\n", namePrefix, s.lit, fields)
-	return
-}
-
-func genFuncStmt(env *Env, f *FuncExpr) (before []IBefore, out string) {
-	var recv string
-	if f.recv != nil {
-		var args1 []string
-		for _, e := range f.recv.list {
-			var tmp []string
-			for _, name := range e.names {
-				tmp = append(tmp, name.lit)
-			}
-			args1 = append(args1, strings.Join(tmp, ", ")+" "+e.typeExpr.GetType().GoStr())
-		}
-		recv = strings.Join(args1, ", ")
-		if recv != "" {
-			recv = "(" + recv + ") "
-		}
-	}
-
-	var typeParamsStr string
-	if f.typeParams != nil {
-		var args1 []string
-		for _, e := range f.typeParams.list {
-			var tmp []string
-			for _, name := range e.names {
-				tmp = append(tmp, name.lit)
-			}
-			args1 = append(args1, strings.Join(tmp, ", ")+" "+e.typeExpr.GetType().(*GenericType).constraints[0].GoStr())
-		}
-		typeParamsStr = strings.Join(args1, ", ")
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
-	}
-
-	var args []string
-	for _, arg := range f.args.list {
-		var tmp []string
-		for _, name := range arg.names {
-			tmp = append(tmp, name.lit)
-		}
-		argT := arg.typeExpr.GetType().GoStr()
-		if TryCast[*EllipsisExpr](arg.typeExpr) {
-			argT = "..." + argT
-		}
-		args = append(args, strings.Join(tmp, ", ")+" "+argT)
-	}
-	var o string
-	if f.out.expr != nil {
-		if _, ok := f.out.expr.GetType().(VoidType); !ok {
-			o += f.out.expr.GetType().GoStr()
-			o = Ternary(o != "", " "+o, "")
-		}
-	}
-
-	// If the function body only has 1 stmt, auto add "return" of the only expression value
-	if len(f.stmts) == 1 && !TryCast[*VoidExpr](f.out.expr) && f.out.expr.GetType().GoStr() != "" {
-		if e, ok := f.stmts[0].(*ExprStmt); ok {
-			f.stmts[0] = &ReturnStmt{expr: e.x}
-		}
-	}
-	before1, stmtsStr := genStmts(env, f.stmts, "\t", f.out.expr.GetType())
-	before = append(before, before1...)
-	name := f.name
-	if newName, ok := overloadMapping[name]; ok {
-		name = newName
-	}
-
-	out += fmt.Sprintf("func %s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, strings.Join(args, ", "), o, stmtsStr)
-	return
-}
-
-func genInlineCommentStmt(_ *Env, stmt *InlineCommentStmt, prefix string, _ Typ) (before []IBefore, out string) {
-	out += prefix + fmt.Sprintf("%s", stmt.lit) + "\n"
-	return
-}
-
-func genExprStmt(env *Env, stmt *ExprStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(env, stmt.x, prefix, retTyp)
-	before = append(before, before1...)
-	out += prefix + content + "\n"
-	return before1, out
-}
-
-func genIncDecStmt(env *Env, stmt *IncDecStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(env, stmt.x, prefix, retTyp)
-	before = append(before, before1...)
-	out += prefix + content + stmt.tok.lit + "\n"
-	return
-}
-
-func genForRangeStmt(env *Env, stmt *ForRangeStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, stmt.id1, prefix, retTyp)
-	before2, content2 := genExpr(env, stmt.id2, prefix, retTyp)
-	before3, content3 := genExpr(env, stmt.expr, prefix, retTyp)
-	before4, content4 := genStmts(env, stmt.stmts, prefix+"\t", retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	before = append(before, before3...)
-	before = append(before, before4...)
-	out += prefix + fmt.Sprintf("for %s, %s := range %s {\n%s%s}\n",
-		content1,
-		content2,
-		content3,
-		content4,
-		prefix)
-	return
-}
-
-func genAssignStmt(env *Env, stmt *AssignStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	for i := range stmt.lhs {
-		stmtLhs := stmt.lhs[i]
-		stmtRhs := stmt.rhs[i]
-		before1, content1 := genAssignStmt1(env, stmtLhs, stmtRhs, stmt.tok, prefix, retTyp)
-		before = append(before, before1...)
-		out += content1
-	}
-	return
-}
-
-func genAssignStmt1(env *Env, stmtLhs, stmtRhs Expr, tok Tok, prefix string, retTyp Typ) (before []IBefore, out string) {
-	// LHS
-	var lhs string
-	var after string
-	if TryCast[*TupleExpr](stmtLhs) {
-		if TryCast[*EnumType](stmtRhs.GetType()) {
-			lhs = AglVariablePrefix + "1"
-			var sel string
-			switch v := stmtRhs.(type) {
-			case *CallExpr:
-				sel = v.fun.(*SelectorExpr).sel.lit
-			case *IdentExpr:
-				sel = v.lit
-			}
-
-			var names []string
-			var exprs []string
-			for i, x := range stmtLhs.(*TupleExpr).exprs {
-				names = append(names, x.(*IdentExpr).lit)
-				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
-			}
-			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
-		} else {
-			lhs = AglVariablePrefix + "1"
-			var names []string
-			var exprs []string
-			for i, x := range stmtLhs.(*TupleExpr).exprs {
-				names = append(names, x.(*IdentExpr).lit)
-				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
-			}
-			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
-		}
-	} else {
-		before1, content1 := genExpr(env, stmtLhs, prefix, retTyp)
-		before = append(before, before1...)
-		lhs = content1
-	}
-
-	// RHS
-	before2, content2 := genExpr(env, stmtRhs, prefix, retTyp)
-	before = append(before, before2...)
-
-	// Output
-	out += prefix + fmt.Sprintf("%s %s %s\n", lhs, tok.lit, content2)
-	out += after
-	return
-}
-
-func genReturnStmt(env *Env, stmt *ReturnStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content := genExpr(env, stmt.expr, prefix, retTyp)
-	before = append(before, before1...)
-	out += prefix + "return " + content + "\n"
-	return
-}
-
-func genIfStmt(env *Env, stmt *IfStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, stmt.cond, prefix, retTyp)
-	before2, content2 := genStmts(env, stmt.body, prefix+"\t", retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	out += prefix + "if " + content1 + " {\n"
-	out += content2
-	if stmt.Else != nil {
-		before3, content3 := genStmt(env, stmt.Else, prefix, retTyp)
-		before = append(before, before3...)
-		out += prefix + "} else " + strings.TrimSpace(content3) + "\n"
-	} else {
-		out += prefix + "}\n"
-	}
-	return
-}
-
-func genIfLetStmt(env *Env, stmt *IfLetStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	var tmp string
-	if TryCast[*SomeExpr](stmt.lhs) {
-		id := stmt.lhs.(*SomeExpr).expr.(*IdentExpr).lit
-		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
-		tmp += "if res := " + content2 + "; res.IsSome() {\n"
-		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
-	} else if TryCast[*OkExpr](stmt.lhs) {
-		id := stmt.lhs.(*OkExpr).expr.(*IdentExpr).lit
-		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
-		tmp += "if res := " + content2 + "; res.IsOk() {\n"
-		tmp += addPrefix("\t"+id+" := res.Unwrap()\n", prefix)
-	} else if TryCast[*ErrExpr](stmt.lhs) {
-		id := stmt.lhs.(*ErrExpr).expr.(*IdentExpr).lit
-		_, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
-		tmp += "if res := " + content2 + "; res.IsErr() {\n"
-		tmp += addPrefix("\t"+id+" := res.Err()\n", prefix)
-	} else if TryCast[*IdentExpr](stmt.lhs) {
-		id := stmt.lhs.(*IdentExpr).lit
-		before2, content2 := genExpr(env, stmt.rhs, prefix, retTyp)
-		before3, content3 := genExpr(env, stmt.cond, prefix, retTyp)
-		before = append(before, before2...)
-		before = append(before, before3...)
-		tmp += "if " + id + " := " + content2 + "; " + content3 + " {\n"
-	}
-
-	before3, content3 := genStmts(env, stmt.body, prefix+"\t", retTyp)
-	before = append(before, before3...)
-	out += prefix + tmp
-	out += content3
-	if stmt.Else != nil {
-		before4, content4 := genStmt(env, stmt.Else, prefix, retTyp)
-		before = append(before, before4...)
-		out += prefix + "} else " + strings.TrimSpace(content4) + "\n"
-	} else {
-		out += prefix + "}\n"
-	}
-	return
-}
-
-func genMatchExpr(env *Env, stmt *MatchExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
-	if TryCast[OptionType](stmt.expr.GetType()) {
-		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
-		before = append(before, before1...)
-		out += fmt.Sprintf("res := %s\n", content1)
-		cases := stmt.cases
-		sort.Slice(cases, func(i, j int) bool {
-			iSome := TryCast[*SomeExpr](cases[i].cond)
-			iNone := TryCast[*NoneExpr](cases[i].cond)
-			iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
-			jSome := TryCast[*SomeExpr](cases[j].cond)
-			jNone := TryCast[*NoneExpr](cases[j].cond)
-			jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
-			// If i is Some and j is not Some, i should come first
-			if iSome && !jSome {
-				return true
-			}
-			// If j is Some and i is not Some, j should come first
-			if jSome && !iSome {
-				return false
-			}
-			// If i is None and j is All, i should come first
-			if iNone && jAll {
-				return true
-			}
-			// If j is None and i is All, j should come first
-			if jNone && iAll {
-				return false
-			}
-			return false // Keep original order for equal types
-		})
-		for i, e := range stmt.cases {
-			var condition string
-			var setup string
-			switch cond := e.cond.(type) {
-			case *NoneExpr:
-				condition = "res.IsNone()"
-			case *SomeExpr:
-				id := cond.expr.(*IdentExpr).lit
-				condition = "res.IsSome()"
-				setup = fmt.Sprintf("%s := res.Unwrap()\n", id)
-			case *IdentExpr:
-				if cond.lit == "_" {
-					condition = "res.IsSome() || res.IsNone()"
-				}
-			}
-			if i == 0 {
-				out += prefix + fmt.Sprintf("if %s {\n", condition)
-			} else {
-				out += fmt.Sprintf(" else if %s {\n", condition)
-			}
-			if setup != "" {
-				out += prefix + "\t" + setup
-			}
-			for _, s := range e.body {
-				before2, content2 := genStmt(env, s, prefix+"\t", retTyp)
-				before = append(before, before2...)
-				out += content2
-			}
-			out += prefix + "}"
-		}
-	} else if TryCast[ResultType](stmt.expr.GetType()) {
-		before1, content1 := genExpr(env, stmt.expr, prefix, retTyp)
-		before = append(before, before1...)
-		out += fmt.Sprintf("res := %s\n", content1)
-		cases := stmt.cases
-		sort.Slice(cases, func(i, j int) bool {
-			iOk := TryCast[*OkExpr](cases[i].cond)
-			iErr := TryCast[*ErrExpr](cases[i].cond)
-			iAll := TryCast[*IdentExpr](cases[i].cond) && cases[i].cond.(*IdentExpr).lit == "_"
-			jOk := TryCast[*OkExpr](cases[j].cond)
-			jErr := TryCast[*ErrExpr](cases[j].cond)
-			jAll := TryCast[*IdentExpr](cases[j].cond) && cases[j].cond.(*IdentExpr).lit == "_"
-			// If i is Some and j is not Some, i should come first
-			if iOk && !jOk {
-				return true
-			}
-			// If j is Some and i is not Some, j should come first
-			if jOk && !iOk {
-				return false
-			}
-			// If i is None and j is All, i should come first
-			if iErr && jAll {
-				return true
-			}
-			// If j is None and i is All, j should come first
-			if jErr && iAll {
-				return false
-			}
-			return false // Keep original order for equal types
-		})
-		for i, e := range stmt.cases {
-			var condition string
-			var setup string
-			switch cond := e.cond.(type) {
-			case *ErrExpr:
-				condition = "res.IsErr()"
-			case *OkExpr:
-				id := cond.expr.(*IdentExpr).lit
-				condition = "res.IsOk()"
-				setup = fmt.Sprintf("%s := res.Unwrap()\n", id)
-			case *IdentExpr:
-				if cond.lit == "_" {
-					condition = "res.IsOk() || res.IsErr()"
-				}
-			}
-			if i == 0 {
-				out += prefix + fmt.Sprintf("if %s {\n", condition)
-			} else {
-				out += fmt.Sprintf(" else if %s {\n", condition)
-			}
-			if setup != "" {
-				out += prefix + "\t" + setup
-			}
-			for _, s := range e.body {
-				before2, content2 := genStmt(env, s, prefix+"\t", retTyp)
-				before = append(before, before2...)
-				out += content2
-			}
-			out += prefix + "}"
-		}
-	}
-	return
-}
-
-func genValueSpec(env *Env, stmt *ValueSpec, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, stmt.names[0], prefix, retTyp)
-	before = append(before, before1...)
-	content2 := stmt.typ.GetType().GoStr()
-	out += prefix + fmt.Sprintf("var %s %s", content1, content2)
-	if len(stmt.values) > 0 {
-		before3, content3 := genExpr(env, stmt.values[0], prefix, retTyp)
-		before = append(before, before3...)
-		out += fmt.Sprintf(" = %s", content3)
-	}
-	out += "\n"
-	return
-}
-
-func genInterfaceStmt(_ *Env, stmt *InterfaceStmt, _ string, _ Typ) (before []IBefore, out string) {
-	out += fmt.Sprintf("type %s interface {\n", stmt.lit)
-	for _, e := range stmt.elts {
-		out += "\t" + e.(*FuncExpr).GetType().(FuncType).InterfaceStr() + "\n"
-	}
-	out += "}\n"
-	return
-}
-
-func genBlockStmt(env *Env, stmt *BlockStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genStmts(env, stmt.stmts, prefix, retTyp)
-	before = append(before, before1...)
-	out += "{\n"
-	if content1 != "" {
-		out += prefix + content1
-	}
-	out += prefix + "}\n"
-	return
-}
-
-func genAssertStmt(env *Env, stmt *AssertStmt, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, stmt.x, prefix, retTyp)
-	before = append(before, before1...)
-	var content2 string
-	if stmt.msg != nil {
-		var before2 []IBefore
-		before2, content2 = genExpr(env, stmt.msg, prefix, retTyp)
-		before = append(before, before2...)
-	}
-	aug := fmt.Sprintf(`"assert failed '%s' line %v"`, stmt.x.AglStr(), stmt.Pos().Row)
-	if content2 != "" {
-		aug += ` + " " + ` + content2
-	}
-	out += prefix + fmt.Sprintf("AglAssert(%s, %s)", content1, aug) + "\n"
-	return
-}
-
-func genExprs(env *Env, e []Expr, prefix string, retTyp Typ) (before []IBefore, out string) {
-	var tmp []string
-	for _, expr := range e {
-		before1, content1 := genExpr(env, expr, prefix, retTyp)
-		before = append(before, before1...)
-		tmp = append(tmp, content1)
-	}
-	return before, strings.Join(tmp, ", ")
-}
-
-func genVoidExpr(_ *Env, _ *VoidExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, ""
-}
-
-func genTrueExpr(_ *Env, _ *TrueExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, "true"
-}
-
-func genFalseExpr(_ *Env, _ *FalseExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, "false"
-}
-
-func genMutExpr(env *Env, expr *MutExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	return genExpr(env, expr.x, prefix, retTyp)
-}
-
-func genField(env *Env, expr *Field, prefix string, retTyp Typ) ([]IBefore, string) {
-	var tmp []string
-	for _, n := range expr.names {
-		tmp = append(tmp, n.lit)
-	}
-	return nil, fmt.Sprintf("%s %s", strings.Join(tmp, ", "), expr.typeExpr.GetType().GoStr())
-}
-
-func genNumberExpr(_ *Env, expr *NumberExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, fmt.Sprintf("%s", expr.lit)
-}
-
-func genMemberExpr(_ *Env, expr *MemberExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, "." + expr.name
-}
-
-func genParenExpr(env *Env, expr *ParenExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(env, expr.subExpr, prefix, retTyp)
-	return before, fmt.Sprintf("(%s)", content)
-}
-
-func genStringExpr(_ *Env, expr *StringExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, fmt.Sprintf("%s", expr.lit)
-}
-
-func genSomeExpr(env *Env, expr *SomeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(env, expr.expr, prefix, retTyp)
-	return before, fmt.Sprintf("MakeOptionSome(%s)", content)
-}
-
-func genNoneExpr(_ *Env, expr *NoneExpr, _ string, _ Typ) ([]IBefore, string) {
-	return nil, fmt.Sprintf("MakeOptionNone[%s]()", expr.typ.(OptionType).wrappedType.GoStr())
-}
-
-func genOkExpr(env *Env, expr *OkExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, content := genExpr(env, expr.expr, prefix, retTyp)
-	return before, fmt.Sprintf("MakeResultOk(%s)", content)
-}
-
-func genErrExpr(env *Env, expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	newExpr := expr.expr
-	if v, ok := expr.expr.(*StringExpr); ok {
-		newExpr = &CallExpr{fun: &SelectorExpr{x: &IdentExpr{lit: "errors"}, sel: &IdentExpr{lit: "New"}}, args: []Expr{v}}
-	}
-	before, content := genExpr(env, newExpr, prefix, retTyp)
-	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(ResultType).wrappedType.GoStr(), content)
-}
-
-func genMakeExpr(env *Env, expr *MakeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before1, content1 := genExprs(env, expr.exprs, prefix, retTyp)
-	return before1, fmt.Sprintf("make(%s)", content1)
-}
-
-func genBinOpExpr(env *Env, expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	var before []IBefore
-	op := expr.op.lit
-	before1, content1 := genExpr(env, expr.lhs, prefix, retTyp)
-	before2, content2 := genExpr(env, expr.rhs, prefix, retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	if op == "in" {
-		return before, fmt.Sprintf("AglVecIn(%s, %s)", content2, content1)
-	}
-	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
-		if TryCast[*StructType](expr.lhs.GetType()) && TryCast[*StructType](expr.rhs.GetType()) {
-			lhsName := expr.lhs.GetType().(*StructType).name
-			rhsName := expr.rhs.GetType().(*StructType).name
-			if lhsName == rhsName {
-				if (op == "==" || op == "!=") && env.Get(lhsName+".__EQL") != nil {
-					if op == "==" {
-						return before, fmt.Sprintf("%s.__EQL(%s)", content1, content2)
-					} else {
-						return before, fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
-					}
-				}
-			}
-		}
-	}
-	return before, fmt.Sprintf("%s %s %s", content1, op, content2)
-}
-
-func genIdentExpr(_ *Env, expr *IdentExpr, _ string, _ Typ) ([]IBefore, string) {
-	if strings.HasPrefix(expr.lit, "$") {
-		expr.lit = strings.Replace(expr.lit, "$", "aglArg", 1)
-	}
-	return nil, fmt.Sprintf("%s", expr.lit)
-}
-
-func genTypeAssertExpr(env *Env, expr *TypeAssertExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-	before2, content2 := genExpr(env, expr.typ, prefix, retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	out += fmt.Sprintf("AglTypeAssert[%s](%s)", content2, content1)
-	return
-}
-
-func genKeyValueExpr(env *Env, expr *KeyValueExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
-	before1, content1 := genExpr(env, expr.key, prefix, retTyp)
-	before2, content2 := genExpr(env, expr.value, prefix, retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	out += fmt.Sprintf("%s: %s", content1, content2)
-	return
-}
-
-func genCompositeLit(env *Env, expr *CompositeLitExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	var tmp []string
-	var before []IBefore
-	for _, elt := range expr.elts {
-		before1, content1 := genExpr(env, elt, prefix, retTyp)
-		before = append(before, before1...)
-		tmp = append(tmp, content1)
-	}
-	return before, fmt.Sprintf("%v{%s}", expr.typ.(*IdentExpr).lit, strings.Join(tmp, ", "))
-}
-
-func genFuncExpr(env *Env, expr *FuncExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	t := expr.typ.(FuncType)
-	var argsT string
-	if len(t.params) > 0 {
-		var tmp []string
-		for i, arg := range t.params {
-			tmp = append(tmp, fmt.Sprintf("%s %s", expr.args.list[i].names[0].lit, arg.GoStr()))
-		}
-		argsT = strings.Join(tmp, ", ")
-	}
-	var retT string
-	if t.ret != nil {
-		retT = " " + t.ret.GoStr()
-	}
-
-	// If the function body only has 1 stmt, auto add "return" of the only expression value
-	if len(expr.stmts) == 1 && t.ret != nil && t.ret.GoStr() != "" {
-		if e, ok := expr.stmts[0].(*ExprStmt); ok {
-			expr.stmts[0] = &ReturnStmt{expr: e.x}
-		}
-	}
-	before1, content1 := genStmts(env, expr.stmts, prefix+"\t", retTyp)
-	return before1, fmt.Sprintf("func(%s)%s {\n%s%s}", argsT, retT, content1, prefix) // TODO
-}
-
-func genAnonFnExpr(env *Env, expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	t := expr.typ.(FuncType)
-	var argsT string
-	if len(t.params) > 0 {
-		var tmp []string
-		for i, arg := range t.params {
-			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, arg.GoStr()))
-		}
-		argsT = strings.Join(tmp, ", ")
-	}
-	var retT string
-	if t.ret != nil {
-		retT = " " + t.ret.GoStr()
-	}
-
-	// If the function body only has 1 stmt, auto add "return" of the only expression value
-	if len(expr.stmts) == 1 && t.ret != nil && t.ret.GoStr() != "" {
-		if e, ok := expr.stmts[0].(*ExprStmt); ok {
-			expr.stmts[0] = &ReturnStmt{expr: e.x}
-		}
-	}
-	before1, content1 := genStmts(env, expr.stmts, prefix+"\t", retTyp)
-	return before1, fmt.Sprintf("func(%s)%s {\n%s%s}", argsT, retT, content1, prefix) // TODO
-}
-
-func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	var before []IBefore
-	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-	before2, content2 := genExpr(env, expr.sel, prefix, retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	// Rename tuple .0 .1 .2 ... to .Arg0 .Arg1 .Arg2 ...
-	switch expr.x.GetType().(type) {
-	case TupleType:
-		content2 = fmt.Sprintf("Arg%s", content2)
-	case *EnumType:
-		out := fmt.Sprintf("Make_%s_%s", content1, content2)
-		if _, ok := expr.GetType().(*EnumType); ok { // TODO
-			out += "()"
-		}
-		return before, out
-	}
-	return before, fmt.Sprintf("%s.%s", content1, content2)
-}
-
-func genVecExpr(env *Env, expr *VecExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	var before []IBefore
-	out := fmt.Sprintf("%s", expr.GetType().GoStr())
-	if expr.exprs != nil {
-		out += "{"
-		var tmp []string
-		for _, e := range expr.exprs {
-			before1, content1 := genExpr(env, e, prefix, retTyp)
-			before = append(before, before1...)
-			tmp = append(tmp, content1)
-		}
-		out += strings.Join(tmp, ", ")
-		out += "}"
-	}
-	return before, out
-}
-
-func genTupleExpr(env *Env, expr *TupleExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	before, _ := genExprs(env, expr.exprs, prefix, retTyp)
-	structName := expr.GetType().(TupleType).name
-	structStr := fmt.Sprintf("type %s struct {\n", structName)
-	for i, x := range expr.exprs {
-		structStr += fmt.Sprintf("\tArg%d %s\n", i, x.GetType().GoStr())
-	}
-	structStr += fmt.Sprintf("}\n")
-	before = append(before, NewBeforeFn(structStr)) // TODO Add in public scope (when function output)
-	var fields []string
-	for i, x := range expr.exprs {
-		before1, content1 := genExpr(env, x, prefix, retTyp)
-		before = append(before, before1...)
-		fields = append(fields, fmt.Sprintf("Arg%d: %s", i, content1))
-	}
-	return before, fmt.Sprintf("%s{%s}", structName, strings.Join(fields, ", "))
-}
-
-func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	assert(TryCast[OptionType](e.x.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
-	if _, ok := retTyp.(ResultType); ok {
-		before1, content1 := genExpr(env, e.x, prefix, retTyp)
-		// TODO: res should be an incrementing tmp numbered variable
-		before := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsNone() {
-	return res
-}
-`, prefix))
-		out := `res.Unwrap()`
-		return append(before1, before), out
-	} else {
-		before1, content1 := genExpr(env, e.x, prefix, retTyp)
-		out := fmt.Sprintf("%s.Unwrap()", content1)
-		return before1, out
-	}
-}
+//func genSomeExpr(env *Env, expr *SomeExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	before, content := genExpr(env, expr.expr, prefix, retTyp)
+//	return before, fmt.Sprintf("MakeOptionSome(%s)", content)
+//}
+//
+//func genNoneExpr(_ *Env, expr *NoneExpr, _ string, _ Typ) ([]IBefore, string) {
+//	return nil, fmt.Sprintf("MakeOptionNone[%s]()", expr.typ.(OptionType).wrappedType.GoStr())
+//}
+//
+//func genOkExpr(env *Env, expr *OkExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	before, content := genExpr(env, expr.expr, prefix, retTyp)
+//	return before, fmt.Sprintf("MakeResultOk(%s)", content)
+//}
+//
+//func genErrExpr(env *Env, expr *ErrExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	newExpr := expr.expr
+//	if v, ok := expr.expr.(*StringExpr); ok {
+//		newExpr = &CallExpr{fun: &SelectorExpr{x: &IdentExpr{lit: "errors"}, sel: &IdentExpr{lit: "New"}}, args: []Expr{v}}
+//	}
+//	before, content := genExpr(env, newExpr, prefix, retTyp)
+//	return before, fmt.Sprintf("MakeResultErr[%s](%s)", expr.typ.(ResultType).wrappedType.GoStr(), content)
+//}
+//
+//
+//func genBinOpExpr(env *Env, expr *BinOpExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	var before []IBefore
+//	op := expr.op.lit
+//	before1, content1 := genExpr(env, expr.lhs, prefix, retTyp)
+//	before2, content2 := genExpr(env, expr.rhs, prefix, retTyp)
+//	before = append(before, before1...)
+//	before = append(before, before2...)
+//	if op == "in" {
+//		return before, fmt.Sprintf("AglVecIn(%s, %s)", content2, content1)
+//	}
+//	if expr.lhs.GetType() != nil && expr.rhs.GetType() != nil {
+//		if TryCast[*StructType](expr.lhs.GetType()) && TryCast[*StructType](expr.rhs.GetType()) {
+//			lhsName := expr.lhs.GetType().(*StructType).name
+//			rhsName := expr.rhs.GetType().(*StructType).name
+//			if lhsName == rhsName {
+//				if (op == "==" || op == "!=") && env.Get(lhsName+".__EQL") != nil {
+//					if op == "==" {
+//						return before, fmt.Sprintf("%s.__EQL(%s)", content1, content2)
+//					} else {
+//						return before, fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
+//					}
+//				}
+//			}
+//		}
+//	}
+//	return before, fmt.Sprintf("%s %s %s", content1, op, content2)
+//}
+//
+//func genIdentExpr(_ *Env, expr *IdentExpr, _ string, _ Typ) ([]IBefore, string) {
+//	if strings.HasPrefix(expr.lit, "$") {
+//		expr.lit = strings.Replace(expr.lit, "$", "aglArg", 1)
+//	}
+//	return nil, fmt.Sprintf("%s", expr.lit)
+//}
+//
+//func genTypeAssertExpr(env *Env, expr *TypeAssertExpr, prefix string, retTyp Typ) (before []IBefore, out string) {
+//	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//	before2, content2 := genExpr(env, expr.typ, prefix, retTyp)
+//	before = append(before, before1...)
+//	before = append(before, before2...)
+//	out += fmt.Sprintf("AglTypeAssert[%s](%s)", content2, content1)
+//	return
+//}
+//
+//
+//func genAnonFnExpr(env *Env, expr *AnonFnExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	t := expr.typ.(FuncType)
+//	var argsT string
+//	if len(t.params) > 0 {
+//		var tmp []string
+//		for i, arg := range t.params {
+//			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, arg.GoStr()))
+//		}
+//		argsT = strings.Join(tmp, ", ")
+//	}
+//	var retT string
+//	if t.ret != nil {
+//		retT = " " + t.ret.GoStr()
+//	}
+//
+//	// If the function body only has 1 stmt, auto add "return" of the only expression value
+//	if len(expr.stmts) == 1 && t.ret != nil && t.ret.GoStr() != "" {
+//		if e, ok := expr.stmts[0].(*ExprStmt); ok {
+//			expr.stmts[0] = &ReturnStmt{expr: e.x}
+//		}
+//	}
+//	before1, content1 := genStmts(env, expr.stmts, prefix+"\t", retTyp)
+//	return before1, fmt.Sprintf("func(%s)%s {\n%s%s}", argsT, retT, content1, prefix) // TODO
+//}
+//
+//func genSelectorExpr(env *Env, expr *SelectorExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	var before []IBefore
+//	before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//	before2, content2 := genExpr(env, expr.sel, prefix, retTyp)
+//	before = append(before, before1...)
+//	before = append(before, before2...)
+//	// Rename tuple .0 .1 .2 ... to .Arg0 .Arg1 .Arg2 ...
+//	switch expr.x.GetType().(type) {
+//	case TupleType:
+//		content2 = fmt.Sprintf("Arg%s", content2)
+//	case *EnumType:
+//		out := fmt.Sprintf("Make_%s_%s", content1, content2)
+//		if _, ok := expr.GetType().(*EnumType); ok { // TODO
+//			out += "()"
+//		}
+//		return before, out
+//	}
+//	return before, fmt.Sprintf("%s.%s", content1, content2)
+//}
+//
+//func genBubbleOptionExpr(env *Env, e *BubbleOptionExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	assert(TryCast[OptionType](e.x.GetType()), fmt.Sprintf("BubbleOptionExpr: %v", e.x))
+//	if _, ok := retTyp.(ResultType); ok {
+//		before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//		// TODO: res should be an incrementing tmp numbered variable
+//		before := NewBeforeStmt(addPrefix(`res := `+content1+`
+//if res.IsNone() {
+//	return res
+//}
+//`, prefix))
+//		out := `res.Unwrap()`
+//		return append(before1, before), out
+//	} else {
+//		before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//		out := fmt.Sprintf("%s.Unwrap()", content1)
+//		return before1, out
+//	}
+//}
 
 func addPrefix(s, prefix string) string {
 	var newArr []string
@@ -1255,154 +918,155 @@ func addPrefix(s, prefix string) string {
 	return strings.Join(newArr, "\n")
 }
 
-func genBubbleResultExpr(env *Env, e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	// TODO: res should be an incrementing tmp numbered variable
-	// Native void unwrapping
-	tmpl1 := `res, err := %s
-if err != nil {
-	panic(err)
-}
-`
-	// Non-native void unwrapping
-	tmpl2 := `res := %s
-if res.IsErr() {
-	return res
-}
-`
-	// Native error propagation
-	tmpl3 := `res, err := %s
-if err != nil {
-	return MakeResultErr[%s](err)
-}
-`
-	// Non-native error propagation
-	tmpl4 := `res := %s
-if res.IsErr() {
-	return res
-}
-`
+//
+//func genBubbleResultExpr(env *Env, e *BubbleResultExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	// TODO: res should be an incrementing tmp numbered variable
+//	// Native void unwrapping
+//	tmpl1 := `res, err := %s
+//if err != nil {
+//	panic(err)
+//}
+//`
+//	// Non-native void unwrapping
+//	tmpl2 := `res := %s
+//if res.IsErr() {
+//	return res
+//}
+//`
+//	// Native error propagation
+//	tmpl3 := `res, err := %s
+//if err != nil {
+//	return MakeResultErr[%s](err)
+//}
+//`
+//	// Non-native error propagation
+//	tmpl4 := `res := %s
+//if res.IsErr() {
+//	return res
+//}
+//`
+//
+//	// Non-native error propagation in function that returns Option
+//	tmpl5 := `res := %s
+//if res.IsErr() {
+//	return MakeOptionNone[%s]()
+//}
+//`
+//	if TryCast[ResultType](e.x.GetType()) {
+//		if TryCast[VoidType](retTyp) && TryCast[FuncType](e.GetType()) && e.GetType().(FuncType).isNative {
+//			before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//			if e.GetType().(FuncType).isNative {
+//				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
+//				out := `res`
+//				return append(before1, before), out
+//			}
+//			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl2, content1), prefix))
+//			out := `res.Unwrap()`
+//			return append(before1, before), out
+//		}
+//
+//		if retTypType, ok := retTyp.(ResultType); ok {
+//			before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//			if e.x.GetType().(ResultType).native {
+//				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
+//				out := `res`
+//				return append(before1, before), out
+//			}
+//
+//			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl4, content1), prefix))
+//			out := `res.Unwrap()`
+//			return append(before1, before), out
+//
+//		} else if _, ok := retTyp.(OptionType); ok {
+//			before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl5, content1, "int"), prefix))
+//			out := `res.Unwrap()`
+//			return append(before1, before), out
+//
+//		} else {
+//			before1, content1 := genExpr(env, e.x, prefix, retTyp)
+//			if e.x.GetType().(ResultType).native {
+//				tmpl := tmpl1
+//				if _, ok := e.x.GetType().(ResultType).wrappedType.(VoidType); ok {
+//					tmpl = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+//					before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
+//					out := `AglNoop[struct{}]()`
+//					return append(before1, before), out
+//				}
+//				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
+//				out := `AglIdentity(res)`
+//				return append(before1, before), out
+//			}
+//
+//			out := fmt.Sprintf("%s.Unwrap()", content1)
+//			return before1, out
+//		}
+//	} else {
+//		panic("")
+//	}
+//}
 
-	// Non-native error propagation in function that returns Option
-	tmpl5 := `res := %s
-if res.IsErr() {
-	return MakeOptionNone[%s]()
-}
-`
-	if TryCast[ResultType](e.x.GetType()) {
-		if TryCast[VoidType](retTyp) && TryCast[FuncType](e.GetType()) && e.GetType().(FuncType).isNative {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.GetType().(FuncType).isNative {
-				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
-				out := `res`
-				return append(before1, before), out
-			}
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl2, content1), prefix))
-			out := `res.Unwrap()`
-			return append(before1, before), out
-		}
-
-		if retTypType, ok := retTyp.(ResultType); ok {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.x.GetType().(ResultType).native {
-				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl3, content1, retTypType.wrappedType.GoStr()), prefix))
-				out := `res`
-				return append(before1, before), out
-			}
-
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl4, content1), prefix))
-			out := `res.Unwrap()`
-			return append(before1, before), out
-
-		} else if _, ok := retTyp.(OptionType); ok {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl5, content1, "int"), prefix))
-			out := `res.Unwrap()`
-			return append(before1, before), out
-
-		} else {
-			before1, content1 := genExpr(env, e.x, prefix, retTyp)
-			if e.x.GetType().(ResultType).native {
-				tmpl := tmpl1
-				if _, ok := e.x.GetType().(ResultType).wrappedType.(VoidType); ok {
-					tmpl = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
-					before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
-					out := `AglNoop[struct{}]()`
-					return append(before1, before), out
-				}
-				before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), prefix))
-				out := `AglIdentity(res)`
-				return append(before1, before), out
-			}
-
-			out := fmt.Sprintf("%s.Unwrap()", content1)
-			return before1, out
-		}
-	} else {
-		panic("")
-	}
-}
-
-func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, string) {
-	var before []IBefore
-	switch expr := e.fun.(type) {
-	case *SelectorExpr:
-		if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "filter" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before2, content2 := genExpr(env, e.args[0], prefix, retTyp) // TODO resolve generic parameter to concrete type
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
-		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "find" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
-		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "map" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
-		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "reduce" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
-			before3, content3 := genExpr(env, e.args[1], prefix, retTyp)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			before = append(before, before3...)
-			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
-		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "joined" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
-		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "sum" {
-			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
-			before = append(before, before1...)
-			return before, fmt.Sprintf("AglVecSum(%s)", content1)
-		}
-		if TryCast[OptionType](expr.x.GetType()) ||
-			TryCast[ResultType](expr.x.GetType()) {
-			if expr.sel.lit == "unwrap" {
-				_, content := genExpr(env, expr.x, prefix, retTyp)
-				return nil, fmt.Sprintf(`%s.Unwrap()`, content)
-			} else if expr.sel.lit == "is_some" {
-				_, content := genExpr(env, expr.x, prefix, retTyp)
-				return nil, fmt.Sprintf(`%s.IsSome()`, content)
-			}
-		}
-	case *IdentExpr:
-		//default:
-		//panic(fmt.Sprintf("unknown function type: %s %v", reflect.TypeOf(expr.fun), expr.fun))
-	}
-	before1, content := genExpr(env, e.fun, prefix, retTyp)
-	before2, content2 := genExprs(env, e.args, prefix, retTyp)
-	before = append(before, before1...)
-	before = append(before, before2...)
-	return before, fmt.Sprintf("%s(%s)", content, content2)
-}
+//func genCallExpr(env *Env, e *CallExpr, prefix string, retTyp Typ) ([]IBefore, string) {
+//	var before []IBefore
+//	switch expr := e.fun.(type) {
+//	case *SelectorExpr:
+//		if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "filter" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before2, content2 := genExpr(env, e.args[0], prefix, retTyp) // TODO resolve generic parameter to concrete type
+//			before = append(before, before1...)
+//			before = append(before, before2...)
+//			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
+//		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "find" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+//			before = append(before, before1...)
+//			before = append(before, before2...)
+//			return before, fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
+//		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "map" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+//			before = append(before, before1...)
+//			before = append(before, before2...)
+//			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
+//		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "reduce" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+//			before3, content3 := genExpr(env, e.args[1], prefix, retTyp)
+//			before = append(before, before1...)
+//			before = append(before, before2...)
+//			before = append(before, before3...)
+//			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+//		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "joined" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before2, content2 := genExpr(env, e.args[0], prefix, retTyp)
+//			before = append(before, before1...)
+//			before = append(before, before2...)
+//			return before, fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
+//		} else if TryCast[ArrayType](expr.x.GetType()) && expr.sel.lit == "sum" {
+//			before1, content1 := genExpr(env, expr.x, prefix, retTyp)
+//			before = append(before, before1...)
+//			return before, fmt.Sprintf("AglVecSum(%s)", content1)
+//		}
+//		if TryCast[OptionType](expr.x.GetType()) ||
+//			TryCast[ResultType](expr.x.GetType()) {
+//			if expr.sel.lit == "unwrap" {
+//				_, content := genExpr(env, expr.x, prefix, retTyp)
+//				return nil, fmt.Sprintf(`%s.Unwrap()`, content)
+//			} else if expr.sel.lit == "is_some" {
+//				_, content := genExpr(env, expr.x, prefix, retTyp)
+//				return nil, fmt.Sprintf(`%s.IsSome()`, content)
+//			}
+//		}
+//	case *IdentExpr:
+//		//default:
+//		//panic(fmt.Sprintf("unknown function type: %s %v", reflect.TypeOf(expr.fun), expr.fun))
+//	}
+//	before1, content := genExpr(env, e.fun, prefix, retTyp)
+//	before2, content2 := genExprs(env, e.args, prefix, retTyp)
+//	before = append(before, before1...)
+//	before = append(before, before2...)
+//	return before, fmt.Sprintf("%s(%s)", content, content2)
+//}
 
 func genCore() string {
 	return `
