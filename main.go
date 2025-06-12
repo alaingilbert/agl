@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/urfave/cli/v3"
 	"log"
 	"os"
 	"runtime/debug"
 	"strings"
+
+	"github.com/urfave/cli/v3"
 )
 
 type AglError struct {
@@ -79,7 +80,8 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	f := parser2(string(by))
-	infer2(f)
-	fmt.Println("??", f)
+	i := NewInferrer()
+	i.InferFile(f)
+	fmt.Println(codegen2(f, i.env))
 	return nil
 }

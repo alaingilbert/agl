@@ -70,14 +70,67 @@ func parseFuncTypeFromString2(s string, env *Env, native bool) FuncType {
 	return funcExprToFuncType2(ft, nenv, native)
 }
 
-func infer2(f *goast.File) (*goast.File, *Env) {
-	for _, d := range f.Decls {
+type Inferrer struct {
+	env *Env
+}
+
+func NewInferrer() *Inferrer {
+	return &Inferrer{env: NewEnv()}
+}
+
+func (infer *Inferrer) InferFile(f *goast.File) {
+	fileInferrer := &FileInferrer{env: infer.env, f: f, types: make(map[any]Typ)}
+	fileInferrer.Infer()
+}
+
+type FileInferrer struct {
+	env         *Env
+	f           *goast.File
+	types       map[any]Typ
+	PackageName string
+}
+
+func (infer *FileInferrer) GetType(p any) Typ {
+	t, ok := infer.types[p]
+	if !ok {
+		panic(fmt.Sprintf("type not found for %v", to(p)))
+	}
+	return t
+}
+
+func (infer *FileInferrer) SetType(p any, t Typ) {
+	if _, ok := infer.types[p]; ok {
+		panic(fmt.Sprintf("type already declared for %v", to(p)))
+	}
+	infer.types[p] = t
+}
+
+func (infer *FileInferrer) Infer() {
+	infer.PackageName = infer.f.Name.Name
+	for _, d := range infer.f.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
-			fmt.Println("FN", decl)
+			infer.funcDecl(decl)
 		}
 	}
-	return f, nil
+}
+
+func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
+	t := infer.getFuncDeclType(decl)
+	infer.SetType(decl, t)
+	infer.env.Define(decl.Name.Name, t)
+}
+
+func (infer *FileInferrer) getFuncDeclType(decl *goast.FuncDecl) FuncDeclType {
+	return FuncDeclType{
+		Name: decl.Name.Name,
+	}
+}
+
+func inferFuncDecl(env *Env, decl *goast.FuncDecl) {
+	//nenv := env.Clone()
+	t := getFuncDeclType(env, decl)
+	env.Define(decl.Name.Name, t)
 }
 
 func infer(s *ast) (*ast, *Env) {
@@ -826,6 +879,12 @@ func inferStructTypeFieldsType(s *structStmt, env *Env) {
 		}
 	}
 	env.Define(s.lit, &StructType{name: s.lit, fields: fields})
+}
+
+func getFuncDeclType(env *Env, f *goast.FuncDecl) FuncDeclType {
+	return FuncDeclType{
+		Name: f.Name.Name,
+	}
 }
 
 func getFuncType(f *FuncExpr, env *Env) FuncType {

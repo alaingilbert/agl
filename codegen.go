@@ -1,12 +1,20 @@
 package main
 
 import (
+	goast "agl/ast"
 	"bufio"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 )
+
+func codegen2(a *goast.File, env *Env) (out string) {
+	out += genPackage2(a)
+	out += genImports2(a)
+	out += genDecls(env, a)
+	return out
+}
 
 func codegen(a *ast, env *Env) (out string) {
 	var before []IBefore
@@ -24,9 +32,25 @@ func codegen(a *ast, env *Env) (out string) {
 	return
 }
 
+func genPackage2(a *goast.File) (out string) {
+	out += fmt.Sprintf("package %s\n", a.Name.Name)
+	return
+}
+
 func genPackage(a *ast) (out string) {
 	if a.packageStmt != nil {
 		out += fmt.Sprintf("package %s\n", a.packageStmt.lit)
+	}
+	return
+}
+
+func genImports2(a *goast.File) (out string) {
+	for _, spec := range a.Imports {
+		out += "import "
+		if spec.Name != nil {
+			out += spec.Name.Name
+		}
+		out += spec.Path.Value + "\n"
 	}
 	return
 }
@@ -68,6 +92,45 @@ func genStructs(env *Env, a *ast) (out string) {
 		out += content
 	}
 	return
+}
+
+func genExpr2(env *Env, e goast.Expr) string {
+	switch expr := e.(type) {
+	case *goast.Ident:
+		return expr.Name
+	default:
+		panic("")
+	}
+}
+
+func genDecls(env *Env, a *goast.File) (out string) {
+	for _, decl := range a.Decls {
+		switch d := decl.(type) {
+		case *goast.FuncDecl:
+			var name, recv string
+			if d.Recv != nil {
+				var tmp []string
+				for _, r := range d.Recv.List {
+					var tmp2 []string
+					for _, n := range r.Names {
+						tmp2 = append(tmp2, n.Name)
+					}
+					tmp2Str := strings.Join(tmp2, " ")
+					content := genExpr2(env, r.Type)
+					tmp = append(tmp, tmp2Str+" "+content)
+				}
+				recv = strings.Join(tmp, " ")
+				if recv != "" {
+					recv = " [" + recv + "]"
+				}
+			}
+			if d.Name != nil {
+				name = " " + d.Name.Name
+			}
+			out += fmt.Sprintf("func%s%s()\n", recv, name)
+		}
+	}
+	return out
 }
 
 func genFunctions(a *ast, env *Env) (before []IBefore, out string) {
