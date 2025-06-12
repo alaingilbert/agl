@@ -350,6 +350,12 @@ type (
 		Not token.Pos
 	}
 
+	TupleExpr struct {
+		Lparen token.Pos // position of "("
+		Values []Expr    // values
+		Rparen token.Pos // position of ")"
+	}
+
 	// A ParenExpr node represents a parenthesized expression.
 	ParenExpr struct {
 		Lparen token.Pos // position of "("
@@ -452,6 +458,12 @@ type (
 		Value Expr
 	}
 )
+
+func (t TupleExpr) Pos() token.Pos { return t.Lparen }
+
+func (t TupleExpr) End() token.Pos { return t.Rparen }
+
+func (t TupleExpr) exprNode() {}
 
 func (s ShortFuncLit) Pos() token.Pos {
 	return s.Body.Pos()
