@@ -329,6 +329,11 @@ type FieldType struct {
 
 func (f FieldType) String() string { return fmt.Sprintf("FieldType(%s %v)", f.name, f.typ) }
 
+type FuncDeclType struct {
+	BaseTyp
+	Name string
+}
+
 type FuncType struct {
 	BaseTyp
 	name       string
