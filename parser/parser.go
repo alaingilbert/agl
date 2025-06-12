@@ -309,6 +309,7 @@ func (p *parser) errorExpected(pos token.Pos, msg string) {
 			msg += ", found '" + p.tok.String() + "'"
 		}
 	}
+	panic(fmt.Sprintf("%s: %s", pos, msg))
 	p.error(pos, msg)
 }
 
@@ -1385,6 +1386,18 @@ func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
 }
 
 func (p *parser) tryIdentOrType() ast.Expr {
+	x := p.tryIdentOrType1()
+	if p.tok == token.QUESTION {
+		question := p.expect(token.QUESTION)
+		return &ast.OptionExpr{X: x, Question: question}
+	} else if p.tok == token.NOT {
+		not := p.expect(token.NOT)
+		return &ast.ResultExpr{X: x, Not: not}
+	}
+	return x
+}
+
+func (p *parser) tryIdentOrType1() ast.Expr {
 	defer decNestLev(incNestLev(p))
 
 	switch p.tok {
@@ -1742,6 +1755,12 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 	for n = 1; ; n++ {
 		incNestLev(p)
 		switch p.tok {
+		case token.QUESTION:
+			p.next()
+			x = &ast.BubbleOptionExpr{X: x}
+		case token.NOT:
+			p.next()
+			x = &ast.BubbleResultExpr{X: x}
 		case token.PERIOD:
 			p.next()
 			switch p.tok {
