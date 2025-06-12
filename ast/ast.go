@@ -336,11 +336,29 @@ type (
 		Incomplete bool      // true if (source) expressions are missing in the Elts list
 	}
 
+	OptionExpr struct {
+		X        Expr
+		Question token.Pos
+	}
+
+	ResultExpr struct {
+		X   Expr
+		Not token.Pos
+	}
+
 	// A ParenExpr node represents a parenthesized expression.
 	ParenExpr struct {
 		Lparen token.Pos // position of "("
 		X      Expr      // parenthesized expression
 		Rparen token.Pos // position of ")"
+	}
+
+	BubbleOptionExpr struct {
+		X Expr
+	}
+
+	BubbleResultExpr struct {
+		X Expr
 	}
 
 	// A SelectorExpr node represents an expression followed by a selector.
@@ -430,6 +448,46 @@ type (
 		Value Expr
 	}
 )
+
+func (b BubbleResultExpr) Pos() token.Pos {
+	return b.X.Pos()
+}
+
+func (b BubbleResultExpr) End() token.Pos {
+	return b.X.End()
+}
+
+func (b BubbleResultExpr) exprNode() {}
+
+func (b BubbleOptionExpr) Pos() token.Pos {
+	return b.X.Pos()
+}
+
+func (b BubbleOptionExpr) End() token.Pos {
+	return b.X.End()
+}
+
+func (b BubbleOptionExpr) exprNode() {}
+
+func (r ResultExpr) Pos() token.Pos {
+	return r.Not
+}
+
+func (r ResultExpr) End() token.Pos {
+	return r.Not + 1
+}
+
+func (r ResultExpr) exprNode() {}
+
+func (o OptionExpr) Pos() token.Pos {
+	return o.Question
+}
+
+func (o OptionExpr) End() token.Pos {
+	return o.Question + 1
+}
+
+func (o OptionExpr) exprNode() {}
 
 // The direction of a channel type is indicated by a bit
 // mask including one or both of the following constants.

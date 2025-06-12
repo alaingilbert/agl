@@ -348,6 +348,12 @@ func Walk(v Visitor, node Node) {
 			Walk(v, f)
 		}
 
+	case *BubbleOptionExpr:
+		Walk(v, n.X)
+
+	case *BubbleResultExpr:
+		Walk(v, n.X)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}

@@ -34,6 +34,9 @@ const (
 	literal_end
 
 	operator_beg
+
+	QUESTION
+
 	// Operators and delimiters
 	ADD // +
 	SUB // -
@@ -143,6 +146,8 @@ var tokens = [...]string{
 	IMAG:   "IMAG",
 	CHAR:   "CHAR",
 	STRING: "STRING",
+
+	QUESTION: "?",
 
 	ADD: "+",
 	SUB: "-",
