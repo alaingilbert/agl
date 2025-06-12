@@ -309,7 +309,7 @@ func (p *parser) errorExpected(pos token.Pos, msg string) {
 			msg += ", found '" + p.tok.String() + "'"
 		}
 	}
-	panic(fmt.Sprintf("%s: %s", pos, msg))
+	panic(fmt.Sprintf("%s: %s", p.file.Position(pos), msg))
 	p.error(pos, msg)
 }
 
@@ -751,6 +751,34 @@ func (p *parser) parseFieldDecl() *ast.Field {
 	return field
 }
 
+func (p *parser) parseEnumType() *ast.EnumType {
+	if p.trace {
+		defer un(trace(p, "EnumType"))
+	}
+	pos := p.expect(token.ENUM)
+	lbrace := p.expect(token.LBRACE)
+
+	var list []*ast.Field
+
+parseElements:
+	for {
+		switch {
+		case p.tok == token.IDENT:
+			f := p.parseEnumValueSpec()
+			f.Comment = p.expectSemi()
+			list = append(list, f)
+		default:
+			break parseElements
+		}
+	}
+
+	rbrace := p.expect(token.RBRACE)
+	return &ast.EnumType{
+		Enum:   pos,
+		Values: &ast.FieldList{Opening: lbrace, List: list, Closing: rbrace},
+	}
+}
+
 func (p *parser) parseStructType() *ast.StructType {
 	if p.trace {
 		defer un(trace(p, "StructType"))
@@ -1140,6 +1168,21 @@ func (p *parser) parseFuncType() *ast.FuncType {
 	return &ast.FuncType{Func: pos, Params: params, Result: result}
 }
 
+func (p *parser) parseEnumValueSpec() *ast.Field {
+	doc := p.leadComment
+	var idents []*ast.Ident
+	var typ ast.Expr
+	ident := p.parseIdent()
+	switch {
+	case p.tok == token.LPAREN:
+		params := p.parseParameters(false)
+		idents = []*ast.Ident{ident}
+		typ = &ast.EnumValue{Params: params}
+	default:
+	}
+	return &ast.Field{Doc: doc, Names: idents, Type: typ}
+}
+
 func (p *parser) parseMethodSpec() *ast.Field {
 	if p.trace {
 		defer un(trace(p, "MethodSpec"))
@@ -1412,6 +1455,8 @@ func (p *parser) tryIdentOrType1() ast.Expr {
 		return p.parseArrayType(lbrack, nil)
 	case token.STRUCT:
 		return p.parseStructType()
+	case token.ENUM:
+		return p.parseEnumType()
 	case token.MUL:
 		return p.parsePointerType()
 	case token.LBRACE:

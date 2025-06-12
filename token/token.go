@@ -123,6 +123,7 @@ const (
 
 	SELECT
 	STRUCT
+	ENUM
 	SWITCH
 	TYPE
 	VAR
@@ -231,6 +232,7 @@ var tokens = [...]string{
 
 	SELECT: "select",
 	STRUCT: "struct",
+	ENUM:   "enum",
 	SWITCH: "switch",
 	TYPE:   "type",
 	VAR:    "var",

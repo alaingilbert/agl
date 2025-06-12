@@ -155,6 +155,9 @@ func Walk(v Visitor, node Node) {
 			Walk(v, n.Result)
 		}
 
+	case *EnumType:
+		Walk(v, n.Values)
+
 	case *InterfaceType:
 		Walk(v, n.Methods)
 
@@ -353,6 +356,9 @@ func Walk(v Visitor, node Node) {
 
 	case *BubbleResultExpr:
 		Walk(v, n.X)
+
+	case *EnumValue:
+		Walk(v, n.Params)
 
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
