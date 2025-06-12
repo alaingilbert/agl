@@ -478,6 +478,21 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 // ----------------------------------------------------------------------------
 // Identifiers
 
+func (p *parser) parseIdentOrOp() *ast.Ident {
+	switch p.tok {
+	case token.EQL, token.LSS, token.GTR, token.LEQ, token.GEQ,
+		token.ADD, token.SUB, token.MUL, token.QUO, token.REM,
+		token.LAND, token.LOR,
+		token.AND, token.OR, token.XOR, token.SHL, token.SHR, token.AND_NOT:
+		pos := p.pos
+		name := p.lit
+		p.next()
+		return &ast.Ident{NamePos: pos, Name: name}
+	default:
+		return p.parseIdent()
+	}
+}
+
 func (p *parser) parseIdent() *ast.Ident {
 	pos := p.pos
 	name := "_"
@@ -2865,7 +2880,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		recv = p.parseParameters(false)
 	}
 
-	ident := p.parseIdent()
+	ident := p.parseIdentOrOp()
 
 	var tparams *ast.FieldList
 	if p.tok == token.LBRACK {
