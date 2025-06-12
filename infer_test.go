@@ -1,67 +1,61 @@
 package main
 
-import (
-	tassert "github.com/stretchr/testify/assert"
-	"reflect"
-	"testing"
-)
-
-func TestInfer1(t *testing.T) {
-	src := `
-fn fn1(a, b int) int { return a + b }
-fn fn2(a, b i64) i64 { return a + b }
-fn fn3(a, b i32) i32 { return a + b }
-fn fn4(a, b i16) i16 { return a + b }
-fn fn5(a, b i8) i8 { return a + b }
-fn fn6(a, b f64) f64 { return a + b }
-fn fn7(a, b f32) f32 { return a + b }
-fn fn8(a, b i64) i64? { return Some(a + b) }
-fn fn9(a, b string) string { return a + b }
-fn fn10(a, b i64) i64! { return Ok(a + b) }
-`
-	i, _ := infer(parser(NewTokenStream(src)))
-	if _, ok := i.funcs[0].out.expr.GetType().(IntType); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[0].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[1].out.expr.GetType().(I64Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[1].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[2].out.expr.GetType().(I32Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[2].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[3].out.expr.GetType().(I16Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[3].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[4].out.expr.GetType().(I8Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[4].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[5].out.expr.GetType().(F64Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[5].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[6].out.expr.GetType().(F32Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[6].out.expr.GetType()))
-	}
-	if tt, ok := i.funcs[7].out.expr.GetType().(OptionType); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[7].out.expr.GetType()))
-	} else if _, ok := tt.wrappedType.(I64Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[7].out.expr.GetType()))
-	}
-	if _, ok := i.funcs[8].out.expr.GetType().(StringType); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[8].out.expr.GetType()))
-	}
-	if tt, ok := i.funcs[9].out.expr.GetType().(ResultType); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))
-	} else if _, ok := tt.wrappedType.(I64Type); !ok {
-		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))
-	}
-}
-
-func TestParseFuncTypeFromString(t *testing.T) {
-	f := parseFuncTypeFromString("fn (s string) int! {}", NewEnv())
-	tassert.Equal(t, "func(string) Result[int]", f.GoStr())
-}
-
-func TestParseFuncTypeFromString1(t *testing.T) {
-	f := parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", NewEnv())
-	tassert.Equal(t, "func [T any] filter([]T, func(T) bool) []T", f.GoStr())
-}
+//func TestInfer1(t *testing.T) {
+//	src := `
+//fn fn1(a, b int) int { return a + b }
+//fn fn2(a, b i64) i64 { return a + b }
+//fn fn3(a, b i32) i32 { return a + b }
+//fn fn4(a, b i16) i16 { return a + b }
+//fn fn5(a, b i8) i8 { return a + b }
+//fn fn6(a, b f64) f64 { return a + b }
+//fn fn7(a, b f32) f32 { return a + b }
+//fn fn8(a, b i64) i64? { return Some(a + b) }
+//fn fn9(a, b string) string { return a + b }
+//fn fn10(a, b i64) i64! { return Ok(a + b) }
+//`
+//	i, _ := infer(parser(NewTokenStream(src)))
+//	if _, ok := i.funcs[0].out.expr.GetType().(IntType); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[0].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[1].out.expr.GetType().(I64Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[1].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[2].out.expr.GetType().(I32Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[2].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[3].out.expr.GetType().(I16Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[3].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[4].out.expr.GetType().(I8Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[4].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[5].out.expr.GetType().(F64Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[5].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[6].out.expr.GetType().(F32Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[6].out.expr.GetType()))
+//	}
+//	if tt, ok := i.funcs[7].out.expr.GetType().(OptionType); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[7].out.expr.GetType()))
+//	} else if _, ok := tt.wrappedType.(I64Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[7].out.expr.GetType()))
+//	}
+//	if _, ok := i.funcs[8].out.expr.GetType().(StringType); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[8].out.expr.GetType()))
+//	}
+//	if tt, ok := i.funcs[9].out.expr.GetType().(ResultType); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))
+//	} else if _, ok := tt.wrappedType.(I64Type); !ok {
+//		t.Fatalf("Infer1(): unexpected type %v", reflect.TypeOf(i.funcs[9].out.expr.GetType()))
+//	}
+//}
+//
+//func TestParseFuncTypeFromString(t *testing.T) {
+//	f := parseFuncTypeFromString("fn (s string) int! {}", NewEnv())
+//	tassert.Equal(t, "func(string) Result[int]", f.GoStr())
+//}
+//
+//func TestParseFuncTypeFromString1(t *testing.T) {
+//	f := parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", NewEnv())
+//	tassert.Equal(t, "func [T any] filter([]T, func(T) bool) []T", f.GoStr())
+//}

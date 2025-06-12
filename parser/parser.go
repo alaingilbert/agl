@@ -1171,16 +1171,17 @@ func (p *parser) parseFuncType() *ast.FuncType {
 
 	pos := p.expect(token.FUNC)
 	// accept type parameters for more tolerant parsing but complain
+	var tparams *ast.FieldList
 	if p.tok == token.LBRACK {
-		tparams := p.parseTypeParameters()
-		if tparams != nil {
-			p.error(tparams.Opening, "function type must have no type parameters")
-		}
+		tparams = p.parseTypeParameters()
+		//if tparams != nil {
+		//	p.error(tparams.Opening, "function type must have no type parameters")
+		//}
 	}
 	params := p.parseParameters(false)
 	result := p.tryIdentOrType3()
 
-	return &ast.FuncType{Func: pos, Params: params, Result: result}
+	return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Result: result}
 }
 
 func (p *parser) parseEnumValueSpec() *ast.Field {
@@ -2150,13 +2151,13 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 
 	pos := p.pos
 	p.expect(token.RETURN)
-	var x []ast.Expr
+	var x ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
-		x = p.parseList(true)
+		x = p.parseExpr()
 	}
 	p.expectSemi()
 
-	return &ast.ReturnStmt{Return: pos, Results: x}
+	return &ast.ReturnStmt{Return: pos, Result: x}
 }
 
 func (p *parser) parseBranchStmt(tok token.Token) *ast.BranchStmt {

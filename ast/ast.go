@@ -801,8 +801,8 @@ type (
 
 	// A ReturnStmt node represents a return statement.
 	ReturnStmt struct {
-		Return  token.Pos // position of "return" keyword
-		Results []Expr    // result expressions; or nil
+		Return token.Pos // position of "return" keyword
+		Result Expr      // result expressions; or nil
 	}
 
 	// A BranchStmt node represents a break, continue, goto,
@@ -931,8 +931,8 @@ func (s *AssignStmt) End() token.Pos { return s.Rhs[len(s.Rhs)-1].End() }
 func (s *GoStmt) End() token.Pos     { return s.Call.End() }
 func (s *DeferStmt) End() token.Pos  { return s.Call.End() }
 func (s *ReturnStmt) End() token.Pos {
-	if n := len(s.Results); n > 0 {
-		return s.Results[n-1].End()
+	if s.Result != nil {
+		return s.Result.End()
 	}
 	return s.Return + 6 // len("return")
 }
