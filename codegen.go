@@ -520,11 +520,28 @@ func genExprStmt(env *Env, stmt *goast.ExprStmt, prefix string) (before []IBefor
 }
 
 func genAssignStmt(env *Env, stmt *goast.AssignStmt, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExprs(env, stmt.Lhs, prefix)
+	var lhs, after string
+	if len(stmt.Rhs) == 1 && TryCast[types.TupleType](env.GetType(stmt.Rhs[0])) {
+		rhs := stmt.Rhs[0]
+		lhs = "aglVar1"
+		var names []string
+		var exprs []string
+		for i := range rhs.(*goast.TupleExpr).Values {
+			name := stmt.Lhs[i].(*goast.Ident).Name
+			names = append(names, name)
+			exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+		}
+		after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+	} else {
+		before1, content1 := genExprs(env, stmt.Lhs, prefix)
+		before = append(before, before1...)
+		lhs = content1
+	}
 	before2, content2 := genExprs(env, stmt.Rhs, prefix)
-	before = append(before, before1...)
 	before = append(before, before2...)
-	return before, prefix + fmt.Sprintf("%s %s %s\n", content1, stmt.Tok.String(), content2)
+	out = prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
+	out += after
+	return before, out
 }
 
 func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {

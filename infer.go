@@ -721,29 +721,34 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		f := Ternary(op == token.DEFINE, myDefine, infer.env.Assign)
 		f(name, typ)
 	}
-	for i := range stmt.Lhs {
-		stmtLhs := stmt.Lhs[i]
-		stmtRhs := stmt.Rhs[i]
-
-		infer.expr(stmtRhs)
-		lhs := stmtLhs
-
-		//if lhs, ok := lhs.(*goast.TupleExpr); ok {
-		//	MustCast[*goast.TupleExpr](stmtRhs)
-		//	for i, x := range stmtRhs.(*goast.TupleExpr).Values {
-		//		MustCast[*goast.Ident](lhs.Values[i])
-		//		infer.SetType(lhs.Values[i], infer.GetType(x))
-		//		assignFn(lhs.Values[i].(*goast.Ident).Name, infer.GetType(x))
-		//	}
-		//	return
-		//}
-
-		lhsID := MustCast[*goast.Ident](lhs)
-		infer.SetType(lhsID, infer.GetType(stmtRhs))
-		assignFn(lhsID.Name, infer.GetType(lhsID))
+	if len(stmt.Rhs) == 1 {
+		rhs := stmt.Rhs[0]
+		infer.expr(rhs)
+		if len(stmt.Lhs) == 1 {
+			lhs := stmt.Lhs[0]
+			lhsID := MustCast[*goast.Ident](lhs)
+			infer.SetType(lhs, infer.GetType(rhs))
+			assignFn(lhsID.Name, infer.GetType(lhsID))
+		} else {
+			if rhs, ok := rhs.(*goast.TupleExpr); ok {
+				for i, x := range rhs.Values {
+					lhs := stmt.Lhs[i]
+					lhsID := MustCast[*goast.Ident](lhs)
+					infer.SetType(lhs, infer.GetType(x))
+					assignFn(lhsID.Name, infer.GetType(lhsID))
+				}
+			}
+		}
+	} else {
+		for i := range stmt.Lhs {
+			lhs := stmt.Lhs[i]
+			rhs := stmt.Rhs[i]
+			infer.expr(rhs)
+			lhsID := MustCast[*goast.Ident](lhs)
+			infer.SetType(lhsID, infer.GetType(rhs))
+			assignFn(lhsID.Name, infer.GetType(lhsID))
+		}
 	}
-	//infer.exprs(stmt.Lhs)
-	//infer.exprs(stmt.Rhs)
 }
 
 func (infer *FileInferrer) exprStmt(stmt *goast.ExprStmt) {

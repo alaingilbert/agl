@@ -1024,31 +1024,32 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen_TupleDestructuring1(t *testing.T) {
-//	src := `
-//fn main() {
-//	(a, b, c) := (1, "hello", true)
-//	assert(a == 1)
-//	assert(b == "hello")
-//	assert(c == true)
-//}
-//`
-//	expected := `type AglTupleStruct1 struct {
-//	Arg0 int
-//	Arg1 string
-//	Arg2 bool
-//}
-//func main() {
-//	aglVar1 := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
-//	a, b, c := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
-//	AglAssert(a == 1, "assert failed 'a == 1' line 4")
-//	AglAssert(b == "hello", "assert failed 'b == "hello"' line 5")
-//	AglAssert(c == true, "assert failed 'c == true' line 6")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen_TupleDestructuring1(t *testing.T) {
+	src := `package main
+func main() {
+	a, b, c := (1, "hello", true)
+	assert(a == 1)
+	assert(b == "hello")
+	assert(c == true)
+}
+`
+	expected := `package main
+type AglTupleStruct1 struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
+func main() {
+	aglVar1 := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	a, b, c := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
+	AglAssert(a == 1, "assert failed line 4")
+	AglAssert(b == "hello", "assert failed line 5")
+	AglAssert(c == true, "assert failed line 6")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Tuple2(t *testing.T) {
 //	src := `
 //fn testTuple() (u8, string, bool) {
