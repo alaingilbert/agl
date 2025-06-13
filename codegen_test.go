@@ -1131,26 +1131,26 @@ type Person struct {
 	testCodeGen(t, src, expected)
 }
 
-////func TestCodeGen39(t *testing.T) {
-////	src := `
-////type Person struct {
-////	name string
-////}
-////
-////fn (p Person) getName() string {
-////	return p.name
-////}
-////`
-////	expected := `type Person struct {
-////	name string
-////}
-////func (p Person) getName() string {
-////	return p.name
-////}
-////`
-////	testCodeGen(t, src, expected)
-////}
+//func TestCodeGen39(t *testing.T) {
+//	src := `
+//type Person struct {
+//	name string
+//}
 //
+//fn (p Person) getName() string {
+//	return p.name
+//}
+//`
+//	expected := `type Person struct {
+//	name string
+//}
+//func (p Person) getName() string {
+//	return p.name
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen40(t *testing.T) {
 //	src := `
 //fn addOne(i int) int { return i + 1 }
@@ -1171,26 +1171,27 @@ type Person struct {
 //`
 //	tassert.PanicsWithError(t, "4:9 wrong type of argument 0 in call to addOne, wants: int, got: bool", testCodeGenFn(src))
 //}
-//
-//func TestCodeGen_Variadic1(t *testing.T) {
-//	src := `
-//fn variadic(a, b u8, c ...string) int {
-//	return 1
-//}
-//fn main() {
-//	variadic(1, 2, "a", "b", "c")
-//}
-//`
-//	expected := `func variadic(a, b uint8, c ...string) int {
-//	return 1
-//}
-//func main() {
-//	variadic(1, 2, "a", "b", "c")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen_Variadic1(t *testing.T) {
+	src := `package main
+func variadic(a, b u8, c ...string) int {
+	return 1
+}
+func main() {
+	variadic(1, 2, "a", "b", "c")
+}
+`
+	expected := `package main
+func variadic(a, b uint8, c ...string) int {
+	return 1
+}
+func main() {
+	variadic(1, 2, "a", "b", "c")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Variadic2(t *testing.T) {
 //	src := `
 //fn variadic(a, b u8, c ...string) int {

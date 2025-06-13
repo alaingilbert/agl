@@ -238,6 +238,8 @@ func (infer *FileInferrer) expr(e goast.Expr) {
 		infer.funcLit(expr)
 	case *goast.TupleExpr:
 		infer.tupleExpr(expr)
+	case *goast.Ellipsis:
+		infer.ellipsis(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -372,7 +374,12 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			oParams := ft.Params
 			for i := range expr.Args {
 				arg := expr.Args[i]
-				oArg := oParams[i]
+				var oArg types.Type
+				if i >= len(oParams) {
+					oArg = oParams[len(oParams)-1]
+				} else {
+					oArg = oParams[i]
+				}
 				infer.optType = oArg
 				infer.expr(arg)
 				infer.optType = nil
@@ -516,6 +523,11 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 		Return: infer.env.GetType(expr.Result),
 	}
 	infer.SetType(expr, ft)
+}
+
+func (infer *FileInferrer) ellipsis(expr *goast.Ellipsis) {
+	infer.expr(expr.Elt)
+	infer.SetType(expr, types.EllipsisType{Elt: infer.GetType(expr.Elt)})
 }
 
 func (infer *FileInferrer) tupleExpr(expr *goast.TupleExpr) {
