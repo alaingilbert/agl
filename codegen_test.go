@@ -1050,36 +1050,37 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen_Tuple2(t *testing.T) {
-//	src := `
-//fn testTuple() (u8, string, bool) {
-//	return (1, "hello", true)
-//}
-//fn main() {
-//	res := testTuple()
-//	assert(res.0 == 1)
-//	assert(res.1 == "hello")
-//	assert(res.2 == true)
-//}
-//`
-//	expected := `type AglTupleStruct1 struct {
-//	Arg0 uint8
-//	Arg1 string
-//	Arg2 bool
-//}
-//func testTuple() AglTupleStruct1 {
-//	return AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
-//}
-//func main() {
-//	res := testTuple()
-//	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 7")
-//	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 8")
-//	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 9")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen_Tuple2(t *testing.T) {
+	src := `package main
+func testTuple() (u8, string, bool) {
+	return (1, "hello", true)
+}
+func main() {
+	res := testTuple()
+	assert(res.0 == 1)
+	assert(res.1 == "hello")
+	assert(res.2 == true)
+}
+`
+	expected := `package main
+type AglTupleStruct1 struct {
+	Arg0 uint8
+	Arg1 string
+	Arg2 bool
+}
+func testTuple() AglTupleStruct1 {
+	return AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+}
+func main() {
+	res := testTuple()
+	AglAssert(res.Arg0 == 1, "assert failed line 7")
+	AglAssert(res.Arg1 == "hello", "assert failed line 8")
+	AglAssert(res.Arg2 == true, "assert failed line 9")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 ////func TestCodeGen37(t *testing.T) {
 ////	src := `
 ////type Dog struct {

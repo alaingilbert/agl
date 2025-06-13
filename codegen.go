@@ -198,7 +198,6 @@ func genIndexExpr(env *Env, expr *goast.IndexExpr, prefix string) (before []IBef
 func genSelectorExpr(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
 	before1, content1 := genExpr(env, expr.X, prefix)
 	name := expr.Sel.Name
-	p(env.GetType(expr.X))
 	switch env.GetType(expr.X).(type) {
 	case types.TupleType:
 		name = fmt.Sprintf("Arg%s", name)
@@ -526,12 +525,18 @@ func genAssignStmt(env *Env, stmt *goast.AssignStmt, prefix string) (before []IB
 		lhs = "aglVar1"
 		var names []string
 		var exprs []string
-		for i := range rhs.(*goast.TupleExpr).Values {
-			name := stmt.Lhs[i].(*goast.Ident).Name
-			names = append(names, name)
-			exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+		if len(stmt.Lhs) == 1 {
+			before1, content1 := genExprs(env, stmt.Lhs, prefix)
+			before = append(before, before1...)
+			lhs = content1
+		} else {
+			for i := range env.GetType(rhs).(types.TupleType).Elts {
+				name := stmt.Lhs[i].(*goast.Ident).Name
+				names = append(names, name)
+				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+			}
+			after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
-		after = prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 	} else {
 		before1, content1 := genExprs(env, stmt.Lhs, prefix)
 		before = append(before, before1...)
@@ -596,10 +601,9 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 		paramsStr = joinList(env, params, prefix)
 	}
 	if result := decl.Type.Result; result != nil {
-		before1, content := genExpr(env, result, prefix)
-		before = append(before, before1...)
-		if content != "" {
-			resultStr = " " + content
+		resultStr = env.GetType(result).GoStr()
+		if resultStr != "" {
+			resultStr = " " + resultStr
 		}
 	}
 	if decl.Body != nil {

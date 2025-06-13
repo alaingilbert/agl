@@ -141,7 +141,9 @@ func (infer *FileInferrer) funcDecl2(decl *goast.FuncDecl) {
 		if decl.Type.Result == nil {
 			returnTyp = types.VoidType{}
 		} else {
+			infer.expr(decl.Type.Result)
 			returnTyp = infer.env.GetType2(decl.Type.Result)
+			infer.SetType(decl.Type.Result, returnTyp)
 		}
 		infer.returnType = returnTyp
 
@@ -398,7 +400,6 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			}
 		} else { // Type casting
 			// TODO
-			p()
 		}
 	}
 }
@@ -602,6 +603,18 @@ func cmpTypes(a, b types.Type) bool {
 				if !cmpTypes(aa.Params[i], bb.Params[i]) {
 					return false
 				}
+			}
+			return true
+		}
+		return false
+	}
+	if aa, ok := a.(types.TupleType); ok {
+		if bb, ok := b.(types.TupleType); ok {
+			if len(aa.Elts) != len(bb.Elts) {
+				return false
+			}
+			for i := range aa.Elts {
+				return cmpTypes(aa.Elts[i], bb.Elts[i])
 			}
 			return true
 		}
