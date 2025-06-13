@@ -220,16 +220,21 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 	case *goast.Ident:
 		if e.Name == "assert" {
 			var contents []string
-			var assertExprStr string
+			var exprStr string
 			for i, arg := range expr.Args {
 				before1, content1 := genExpr(env, arg, prefix)
 				if i == 0 {
-					assertExprStr = content1
-				} else if i == 1 {
-					content1 = fmt.Sprintf(`"assert failed '%s' line %d" + " " + `, assertExprStr, env.fset.Position(arg.Pos()).Line) + content1
+					exprStr = content1
 				}
 				before = append(before, before1...)
 				contents = append(contents, content1)
+			}
+			line := env.fset.Position(expr.Pos()).Line
+			msg := fmt.Sprintf(`"assert failed '%s' line %d"`, exprStr, line)
+			if len(contents) == 1 {
+				contents = append(contents, msg)
+			} else {
+				contents[1] = msg + ` + " " + ` + contents[1]
 			}
 			out := strings.Join(contents, ", ")
 			return before, fmt.Sprintf("AglAssert(%s)", out)

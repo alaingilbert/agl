@@ -874,21 +874,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen34_Assert(t *testing.T) {
-//	src := `
-//fn main() {
-//	assert(1 != 2)
-//	assert(1 != 2, "1 should not be 2")
-//}
-//`
-//	expected := `func main() {
-//	AglAssert(1 != 2, "assert failed '1 != 2' line 3")
-//	AglAssert(1 != 2, "assert failed '1 != 2' line 4" + " " + "1 should not be 2")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen34_Assert(t *testing.T) {
+	src := `package main
+func main() {
+	assert(1 != 2)
+	assert(1 != 2, "1 should not be 2")
+}
+`
+	expected := `package main
+func main() {
+	AglAssert(1 != 2, "assert failed '1 != 2' line 3")
+	AglAssert(1 != 2, "assert failed '1 != 2' line 4" + " " + "1 should not be 2")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 ////func TestCodeGen35(t *testing.T) {
 ////	src := "" +
 ////		"fn main() {\n" +
