@@ -233,6 +233,8 @@ func (infer *FileInferrer) expr(e goast.Expr) {
 		infer.selectorExpr(expr)
 	case *goast.FuncLit:
 		infer.funcLit(expr)
+	case *goast.TupleExpr:
+		infer.tupleExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -512,6 +514,11 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 		Return: infer.env.GetType(expr.Result),
 	}
 	infer.SetType(expr, ft)
+}
+
+func (infer *FileInferrer) tupleExpr(expr *goast.TupleExpr) {
+	infer.exprs(expr.Values)
+	infer.SetType(expr, types.TupleType{})
 }
 
 func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
