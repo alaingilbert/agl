@@ -214,6 +214,23 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 			before = append(before, before3...)
 			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
 		}
+	case *goast.Ident:
+		if e.Name == "assert" {
+			var contents []string
+			var assertExprStr string
+			for i, arg := range expr.Args {
+				before1, content1 := genExpr(env, arg, prefix)
+				if i == 0 {
+					assertExprStr = content1
+				} else if i == 1 {
+					content1 = fmt.Sprintf(`"assert failed '%s' line %d" + " " + `, assertExprStr, env.fset.Position(arg.Pos()).Line) + content1
+				}
+				before = append(before, before1...)
+				contents = append(contents, content1)
+			}
+			out := strings.Join(contents, ", ")
+			return before, fmt.Sprintf("AglAssert(%s)", out)
+		}
 	}
 	before1, content1 := genExpr(env, expr.Fun, prefix)
 	before2, content2 := genExprs(env, expr.Args, prefix)
