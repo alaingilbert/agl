@@ -227,7 +227,7 @@ func (infer *FileInferrer) basicLit(expr *goast.BasicLit) {
 }
 
 func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
-	tmpFn := func(id goast.Expr, idT types.Type, call *goast.SelectorExpr) {
+	tmpFn := func(idT types.Type, call *goast.SelectorExpr) {
 		if arr, ok := idT.(types.ArrayType); ok {
 			if call.Sel.Name == "filter" {
 				fnT := infer.env.Get("agl.Vec.filter").(types.FuncType)
@@ -241,11 +241,12 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.SetType(expr.Args[0], p1)
 				infer.SetType(call, fnT.Return)
 			} else if call.Sel.Name == "Reduce" {
-				filterFnType := infer.env.Get("agl.Vec.Reduce").(types.FuncType)
-				filterFnType = filterFnType.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
-				filterFnType = filterFnType.ReplaceGenericParameter("T", arr.Elt)
-				infer.SetType(expr.Args[1], filterFnType.Params[2])
-				infer.SetType(expr, filterFnType.Return)
+				fnT := infer.env.Get("agl.Vec.Reduce").(types.FuncType)
+				fnT = fnT.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
+				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				infer.SetType(expr.Args[1], fnT.Params[2])
+				p("?before", fnT.Return)
+				infer.SetType(expr, fnT.Return)
 			}
 		}
 	}
@@ -255,13 +256,14 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		switch id := call.X.(type) {
 		case *goast.Ident:
 			idT1 := infer.env.Get(id.Name)
-			tmpFn(id, idT1, call)
+			tmpFn(idT1, call)
+			p("?after", infer.GetType(expr.Fun))
 			idT := infer.env.Get(id.Name)
 			infer.inferVecExtensions(idT, call, expr)
 		default:
 			infer.expr(id)
 			idT := infer.GetType(id)
-			tmpFn(id, idT, call)
+			tmpFn(idT, call)
 			infer.inferVecExtensions(idT, call, expr)
 		}
 		infer.exprs(expr.Args)
@@ -269,10 +271,6 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		callT := infer.env.Get(call.Name).(types.FuncType)
 		oParams := callT.Params
 		infer.expr(call)
-		//callT := infer.env.Get(call.Name)
-		//for _, arg := range expr.Args {
-		//	infer.expr(arg)
-		//}
 		for i := range expr.Args {
 			arg := expr.Args[i]
 			if f, ok := arg.(*goast.ShortFuncLit); ok {
@@ -283,6 +281,13 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			}
 		}
 		infer.SetType(call, callT)
+	}
+	if infer.GetType(expr.Fun) != nil {
+		if v, ok := infer.GetType(expr.Fun).(types.FuncType); ok {
+			infer.SetType(expr, v.Return)
+		} else { // Type casting
+			// TODO
+		}
 	}
 }
 
@@ -334,6 +339,55 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		}
 	}
+}
+
+func (infer *FileInferrer) shortFuncLit(expr *goast.ShortFuncLit) {
+	infer.withEnv(func() {
+		if t := infer.env.GetType(expr); t != nil {
+			for i, param := range t.(types.FuncType).Params {
+				infer.env.Define(fmt.Sprintf("$%d", i), param)
+			}
+		}
+		infer.stmt(expr.Body)
+		// implicit return
+		if len(expr.Body.List) == 1 && TryCast[*goast.ExprStmt](expr.Body.List[0]) {
+			returnStmt := expr.Body.List[0].(*goast.ExprStmt)
+			if infer.env.GetType(returnStmt.X) != nil {
+				if infer.env.GetType(expr) != nil {
+					ft := infer.env.GetType(expr).(types.FuncType)
+					p("?!ANONRETURN", ft.Return)
+					if t, ok := ft.Return.(types.GenericType); ok {
+						ft = ft.ReplaceGenericParameter(t.Name, infer.env.GetType(returnStmt.X))
+						infer.SetTypeForce(expr, ft)
+					}
+				}
+			}
+			expr.Body.List = []goast.Stmt{&goast.ReturnStmt{Result: returnStmt.X}}
+		}
+		// expr type is set in CallExpr
+	})
+}
+
+func (infer *FileInferrer) funcType(expr *goast.FuncType) {
+	//infer.expr(expr.TypeParams)
+	//infer.expr(expr.Params)
+	infer.expr(expr.Result)
+	var paramsT []types.Type
+	if expr.Params != nil {
+		for _, param := range expr.Params.List {
+			infer.expr(param.Type)
+			t := infer.env.GetType(param.Type)
+			n := max(len(param.Names), 1)
+			for i := 0; i < n; i++ {
+				paramsT = append(paramsT, t)
+			}
+		}
+	}
+	ft := types.FuncType{
+		Params: paramsT,
+		Return: infer.env.GetType(expr.Result),
+	}
+	infer.SetType(expr, ft)
 }
 
 func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
@@ -430,54 +484,6 @@ func cmpTypes(a, b types.Type) bool {
 	return false
 }
 
-func (infer *FileInferrer) shortFuncLit(expr *goast.ShortFuncLit) {
-	infer.withEnv(func() {
-		if t := infer.env.GetType(expr); t != nil {
-			for i, param := range t.(types.FuncType).Params {
-				infer.env.Define(fmt.Sprintf("$%d", i), param)
-			}
-		}
-		infer.stmt(expr.Body)
-		// implicit return
-		if len(expr.Body.List) == 1 && TryCast[*goast.ExprStmt](expr.Body.List[0]) {
-			returnStmt := expr.Body.List[0].(*goast.ExprStmt)
-			if infer.env.GetType(returnStmt.X) != nil {
-				if infer.env.GetType(expr) != nil {
-					ft := infer.env.GetType(expr).(types.FuncType)
-					if t, ok := ft.Return.(types.GenericType); ok {
-						ft = ft.ReplaceGenericParameter(t.Name, infer.env.GetType(returnStmt.X))
-						infer.SetTypeForce(expr, ft)
-					}
-				}
-			}
-			expr.Body.List = []goast.Stmt{&goast.ReturnStmt{Result: returnStmt.X}}
-		}
-		// expr type is set in CallExpr
-	})
-}
-
-func (infer *FileInferrer) funcType(expr *goast.FuncType) {
-	//infer.expr(expr.TypeParams)
-	//infer.expr(expr.Params)
-	infer.expr(expr.Result)
-	var paramsT []types.Type
-	if expr.Params != nil {
-		for _, param := range expr.Params.List {
-			infer.expr(param.Type)
-			t := infer.env.GetType(param.Type)
-			n := max(len(param.Names), 1)
-			for i := 0; i < n; i++ {
-				paramsT = append(paramsT, t)
-			}
-		}
-	}
-	ft := types.FuncType{
-		Params: paramsT,
-		Return: infer.env.GetType(expr.Result),
-	}
-	infer.SetType(expr, ft)
-}
-
 func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
 }
 
@@ -556,6 +562,7 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 	assignFn := func(name string, typ types.Type) {
 		op := stmt.Tok
 		f := Ternary(op == token.DEFINE, myDefine, infer.env.Assign)
+		p("?1", name, typ)
 		f(name, typ)
 	}
 	for i := range stmt.Lhs {
@@ -600,6 +607,7 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		//		}
 		//	}
 		//}
+		p("?WTF", lhsID, to(stmtRhs), infer.GetType(stmtRhs))
 		infer.SetType(lhsID, infer.GetType(stmtRhs))
 		assignFn(lhsID.Name, infer.GetType(lhsID))
 	}

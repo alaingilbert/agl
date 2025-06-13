@@ -193,27 +193,30 @@ if res.IsErr() {
 func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefore, out string) {
 	switch e := expr.Fun.(type) {
 	case *goast.SelectorExpr:
-		if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "filter" {
-			before1, content1 := genExpr(env, e.X, prefix)
-			before2, content2 := genExpr(env, expr.Args[0], prefix)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
-		} else if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "Map" {
-			before1, content1 := genExpr(env, e.X, prefix)
-			before2, content2 := genExpr(env, expr.Args[0], prefix)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
-		} else if TryCast[types.ArrayType](env.GetType(e.X)) && e.Sel.Name == "Reduce" {
-			before1, content1 := genExpr(env, e.X, prefix)
-			before2, content2 := genExpr(env, expr.Args[0], prefix)
-			before3, content3 := genExpr(env, expr.Args[1], prefix)
-			before = append(before, before1...)
-			before = append(before, before2...)
-			before = append(before, before3...)
-			return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+		if _, ok := env.GetType(e.X).(types.ArrayType); ok {
+			if e.Sel.Name == "filter" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before2, content2 := genExpr(env, expr.Args[0], prefix)
+				before = append(before, before1...)
+				before = append(before, before2...)
+				return before, fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
+			} else if e.Sel.Name == "Map" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before2, content2 := genExpr(env, expr.Args[0], prefix)
+				before = append(before, before1...)
+				before = append(before, before2...)
+				return before, fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
+			} else if e.Sel.Name == "Reduce" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before2, content2 := genExpr(env, expr.Args[0], prefix)
+				before3, content3 := genExpr(env, expr.Args[1], prefix)
+				before = append(before, before1...)
+				before = append(before, before2...)
+				before = append(before, before3...)
+				return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+			}
 		}
+		p("???", e.Sel.Name, env.GetType(e.X))
 	case *goast.Ident:
 		if e.Name == "assert" {
 			var contents []string
