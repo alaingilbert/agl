@@ -586,13 +586,15 @@ func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, o
 	out += prefix + "if " + initStr + cond + " {\n"
 	out += body
 	if stmt.Else != nil {
-		before3, content3 := genStmt(env, stmt.Else, prefix)
-		before = append(before, before3...)
 		if _, ok := stmt.Else.(*goast.IfStmt); ok {
+			before3, content3 := genStmt(env, stmt.Else, prefix)
+			before = append(before, before3...)
 			out += prefix + "} else " + strings.TrimSpace(content3) + "\n"
 		} else {
+			before3, content3 := genStmt(env, stmt.Else, prefix+"\t")
+			before = append(before, before3...)
 			out += prefix + "} else {\n"
-			out += prefix + content3
+			out += content3
 			out += prefix + "}\n"
 		}
 	} else {
