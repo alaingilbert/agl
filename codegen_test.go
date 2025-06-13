@@ -35,6 +35,26 @@ func add(a, b int) int {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen1_1(t *testing.T) {
+	src := `
+package main
+func add1(a, b int) int {
+	return a + b
+}
+func add2(a, b int) int {
+	return a + b
+}`
+	expected := `package main
+func add1(a, b int) int {
+	return a + b
+}
+func add2(a, b int) int {
+	return a + b
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen2(t *testing.T) {
 	src := `package main
 func add(a, b i64) i64? {

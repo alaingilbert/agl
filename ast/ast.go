@@ -584,25 +584,12 @@ type (
 	}
 )
 
-func (e EnumValue) Pos() token.Pos {
-	return e.Params.Pos()
-}
-
-func (e EnumValue) End() token.Pos {
-	return e.Params.End()
-}
-
-func (e EnumValue) exprNode() {}
-
-func (e EnumType) Pos() token.Pos {
-	return e.Enum
-}
-
-func (e EnumType) End() token.Pos {
-	return e.Values.End()
-}
-
-func (e EnumType) exprNode() {}
+func (e EnumValue) Pos() token.Pos { return e.Params.Pos() }
+func (e EnumValue) End() token.Pos { return e.Params.End() }
+func (e EnumValue) exprNode()      {}
+func (e EnumType) Pos() token.Pos  { return e.Enum }
+func (e EnumType) End() token.Pos  { return e.Values.End() }
+func (e EnumType) exprNode()       {}
 
 // Pos and End implementations for expression/type nodes.
 

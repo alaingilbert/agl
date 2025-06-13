@@ -406,9 +406,7 @@ func genSpec(env *Env, s goast.Spec, prefix string) (before []IBefore, out strin
 func genDecl(env *Env, d goast.Decl, prefix string) (before []IBefore, out string) {
 	switch decl := d.(type) {
 	case *goast.GenDecl:
-		before1, content1 := genSpecs(env, decl.Specs, prefix)
-		before = append(before, before1...)
-		out += content1
+		return genGenDecl(env, decl, prefix)
 	case *goast.FuncDecl:
 		before1, out1 := genFuncDecl(env, decl, prefix)
 		for _, b := range before1 {
@@ -419,6 +417,13 @@ func genDecl(env *Env, d goast.Decl, prefix string) (before []IBefore, out strin
 		panic(fmt.Sprintf("%v", to(d)))
 	}
 	out += "\n"
+	return
+}
+
+func genGenDecl(env *Env, decl *goast.GenDecl, prefix string) (before []IBefore, out string) {
+	before1, content1 := genSpecs(env, decl.Specs, prefix)
+	before = append(before, before1...)
+	out += content1
 	return
 }
 
@@ -550,7 +555,7 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 		before = append(before, before1...)
 		bodyStr = content
 	}
-	out += fmt.Sprintf("func%s%s%s(%s)%s {\n%s}\n", recv, name, typeParamsStr, paramsStr, resultStr, bodyStr)
+	out += fmt.Sprintf("func%s%s%s(%s)%s {\n%s}", recv, name, typeParamsStr, paramsStr, resultStr, bodyStr)
 	return
 }
 
