@@ -366,6 +366,9 @@ func Walk(v Visitor, node Node) {
 	case *TupleExpr:
 		walkList(v, n.Values)
 
+	case *OptionExpr:
+		Walk(v, n.X)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}

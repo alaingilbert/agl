@@ -88,6 +88,8 @@ func genExpr(env *Env, e goast.Expr, prefix string) (before []IBefore, out strin
 		return genStructType(env, expr, prefix)
 	case *goast.FuncLit:
 		return genFuncLit(env, expr, prefix)
+	case *goast.ParenExpr:
+		return genParenExpr(env, expr, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -138,6 +140,13 @@ func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before 
 	out += content1
 	out += prefix + "}"
 	return before1, out
+}
+
+func genParenExpr(env *Env, expr *goast.ParenExpr, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.X, prefix+"\t")
+	before = append(before, before1...)
+	out += "(" + content1 + ")"
+	return
 }
 
 func genFuncLit(env *Env, expr *goast.FuncLit, prefix string) (before []IBefore, out string) {
