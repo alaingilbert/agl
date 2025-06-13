@@ -66,6 +66,8 @@ func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
 
 func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[token.Pos]types.Type), lookupTable: make(map[string]types.Type)}
+	env.Define("os", types.PackageType{Name: "os"})
+	env.Define("fmt", types.PackageType{Name: "fmt"})
 	env.Define("any", types.AnyType{})
 	env.Define("i64", types.I64Type{})
 	env.Define("u8", types.U8Type{})
@@ -79,6 +81,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("Err", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
 	env.Define("make", parseFuncTypeFromStringNative("make", "func[T, U any](t T, size ...U) T", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
+	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) Result[[]byte]", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("Itoa", "func(int) string", env))
 	env.Define("agl.Vec.filter", parseFuncTypeFromStringNative("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
 	env.Define("agl.Vec.Map", parseFuncTypeFromStringNative("Map", "func [T, R any](a []T, f func(T) R) []R", env))
@@ -142,7 +145,7 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 	case *goast.ArrayType:
 		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ResultExpr:
-		return types.ResultType{}
+		return types.ResultType{W: e.GetType2(xx.X)}
 	case *goast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
@@ -152,6 +155,8 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		}
 	case *goast.SelectorExpr:
 		return e.GetType2(&goast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*goast.Ident).Name, xx.Sel.Name)})
+	case *goast.IndexExpr:
+		return nil
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}

@@ -257,7 +257,20 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		case *goast.Ident:
 			idT1 := infer.env.Get(id.Name)
 			tmpFn(idT1, call)
-			p("?after", infer.GetType(expr.Fun))
+			if l := infer.env.Get(id.Name); l != nil {
+				infer.SetType(id, l)
+				//if lT, ok := l.(*StructType); ok {
+				//	name := fmt.Sprintf("%s.%s", lT.name, callExprFun.sel.lit)
+				//	callExpr.SetType(env.Get(name).(FuncType).ret)
+				if _, ok := l.(types.PackageType); ok {
+					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
+					p("??????????", infer.env.Get(name))
+					infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+				}
+				//} else if o, ok := l.(*EnumType); ok {
+				//	callExpr.SetType(&EnumType{name: o.name, subTyp: callExprFun.sel.lit, fields: o.fields})
+				//}
+			}
 			idT := infer.env.Get(id.Name)
 			infer.inferVecExtensions(idT, call, expr)
 		default:

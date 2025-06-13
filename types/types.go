@@ -21,8 +21,8 @@ func (v VoidType) String() string { return "" }
 
 type ResultType struct{ W Type }
 
-func (r ResultType) GoStr() string  { return r.W.String() }
-func (r ResultType) String() string { return "ResultType" }
+func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.String()) }
+func (r ResultType) String() string { return r.W.String() + "!" }
 
 type OptionType struct{ W Type }
 
@@ -70,6 +70,12 @@ type ErrType struct{ W Type }
 func (e ErrType) GoStr() string { return "" }
 
 func (e ErrType) String() string { return "" }
+
+type PackageType struct{ Name string }
+
+func (p PackageType) GoStr() string { return p.Name }
+
+func (p PackageType) String() string { return p.Name }
 
 type AnyType struct{}
 

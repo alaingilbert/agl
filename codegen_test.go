@@ -890,69 +890,71 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-////func TestCodeGen35(t *testing.T) {
-////	src := "" +
-////		"fn main() {\n" +
-////		"\ta := 42\n" +
-////		"\tfmt.Println(`${a}`)\n" +
-////		"}\n"
-////	expected := `func main() {
-////	a := 42
-////	fmt.Println(fmt.Sprintf("%d", a))
-////}
-////`
-////	got := codegen(infer(parser(NewTokenStream(src))))
-////	if got != expected {
-////		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-////	}
-////}
-//
-//func TestCodeGen_Reduce1(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []int{1, 2, 3, 4}
-//	b := a.filter({ $0 % 2 == 0 })
-//	c := b.map({ $0 + 1 })
-//	d := c.reduce(0, { $0 + $1 })
-//	assert(d == 8)
-//}
-//`
-//	expected := `func main() {
-//	a := []int{1, 2, 3, 4}
-//	b := AglVecFilter(a, func(aglArg0 int) bool {
-//		return aglArg0 % 2 == 0
-//	})
-//	c := AglVecMap(b, func(aglArg0 int) int {
-//		return aglArg0 + 1
-//	})
-//	d := AglReduce(c, 0, func(aglArg0 int, aglArg1 int) int {
-//		return aglArg0 + aglArg1
-//	})
-//	AglAssert(d == 8, "assert failed 'd == 8' line 7")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
 //func TestCodeGen35(t *testing.T) {
-//	src := `
-//fn main() {
-//	by := os.ReadFile("test.txt")!
-//	fmt.Println(by)
-//}
-//`
+//	src := "" +
+//		"fn main() {\n" +
+//		"\ta := 42\n" +
+//		"\tfmt.Println(`${a}`)\n" +
+//		"}\n"
 //	expected := `func main() {
-//	res, err := os.ReadFile("test.txt")
-//	if err != nil {
-//		panic(err)
-//	}
-//	by := AglIdentity(res)
-//	fmt.Println(by)
+//	a := 42
+//	fmt.Println(fmt.Sprintf("%d", a))
 //}
 //`
-//	testCodeGen(t, src, expected)
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
 //}
-//
+
+func TestCodeGen_Reduce1(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3, 4}
+	b := a.filter({ $0 % 2 == 0 })
+	c := b.Map({ $0 + 1 })
+	d := c.Reduce(0, { $0 + $1 })
+	assert(d == 8)
+}
+`
+	expected := `package main
+func main() {
+	a := []int{1, 2, 3, 4}
+	b := AglVecFilter(a, func(aglArg0 int) bool {
+		return aglArg0 % 2 == 0
+	})
+	c := AglVecMap(b, func(aglArg0 int) int {
+		return aglArg0 + 1
+	})
+	d := AglReduce(c, 0, func(aglArg0 int, aglArg1 int) int {
+		return aglArg0 + aglArg1
+	})
+	AglAssert(d == 8, "assert failed 'd == 8' line 7")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen35(t *testing.T) {
+	src := `package main
+func main() {
+	by := os.ReadFile("test.txt")!
+	fmt.Println(by)
+}
+`
+	expected := `package main
+func main() {
+	res, err := os.ReadFile("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	by := AglIdentity(res)
+	fmt.Println(by)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen36(t *testing.T) {
 //	src := `
 //fn testOption() int? {
