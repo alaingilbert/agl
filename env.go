@@ -83,6 +83,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("int", types.IntType{})
 	env.Define("string", types.StringType{})
 	env.Define("bool", types.BoolType{})
+	env.Define("byte", types.ByteType{})
 	env.Define("cmp.Ordered", types.AnyType{})
 	env.Define("assert", parseFuncTypeFromString("assert", "func (pred bool, msg ...string)", env))
 	//env.Define("Some", parseFuncTypeFromString("Some", "func[T, U any](T) U", env))
