@@ -31,6 +31,14 @@ type FileInferrer struct {
 	returnType  types.Type
 }
 
+func (infer *FileInferrer) sandboxed(clb func()) {
+	old := infer.env
+	nenv := old.CloneFull()
+	infer.env = nenv
+	clb()
+	infer.env = old
+}
+
 func (infer *FileInferrer) withEnv(clb func()) {
 	old := infer.env
 	nenv := old.Clone()
@@ -66,10 +74,10 @@ func printCallers(n int) {
 
 func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
 	fmt.Println("??SETTYPE", a.Pos(), a, t)
-	printCallers(100)
+	//printCallers(100)
 	if t := infer.env.GetType(a); t != nil {
 		//return // TODO
-		panic(fmt.Sprintf("type already declared for %s %s %v", infer.fset.Position(a.Pos()), a, to(a)))
+		panic(fmt.Sprintf("type already declared for %s %d %s %v %v", infer.fset.Position(a.Pos()), a.Pos(), a, to(a), infer.env.GetType(a)))
 	}
 	infer.env.SetType(a, t)
 }
@@ -92,7 +100,7 @@ func (infer *FileInferrer) Infer() {
 
 func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
 	var t types.FuncType
-	infer.withEnv(func() {
+	infer.sandboxed(func() {
 		t = infer.getFuncDeclType(decl)
 	})
 	infer.SetType(decl, t)
@@ -181,9 +189,14 @@ func (infer *FileInferrer) exprs(s []goast.Expr) {
 }
 
 func (infer *FileInferrer) expr(e goast.Expr) {
+	infer.expr2(e)
+}
+
+func (infer *FileInferrer) expr2(e goast.Expr) {
 	switch expr := e.(type) {
 	case *goast.Ident:
-		infer.identExpr(expr)
+		t := infer.identExpr(expr)
+		infer.SetType(expr, t)
 	case *goast.CallExpr:
 		infer.callExpr(expr)
 	case *goast.BinaryExpr:
@@ -692,47 +705,39 @@ func (infer *FileInferrer) binaryExpr(expr *goast.BinaryExpr) {
 	}
 }
 
-func (infer *FileInferrer) identExpr(expr *goast.Ident) {
+func (infer *FileInferrer) identExpr(expr *goast.Ident) types.Type {
 	if expr.Name == "None" {
 		t := infer.returnType
 		assert(t != nil)
-		infer.SetType(expr, types.NoneType{W: t.(types.OptionType).W})
-		return
+		return types.NoneType{W: t.(types.OptionType).W}
 	} else if expr.Name == "Some" {
 		t := infer.returnType
 		assert(t != nil)
-		infer.SetType(expr, types.SomeType{W: t.(types.OptionType).W})
-		return
+		return types.SomeType{W: t.(types.OptionType).W}
 	} else if expr.Name == "Ok" {
 		t := infer.returnType
 		assert(t != nil)
-		infer.SetType(expr, types.OkType{W: t.(types.ResultType).W})
-		return
+		return types.OkType{W: t.(types.ResultType).W}
 	} else if expr.Name == "Err" {
 		t := infer.returnType
 		assert(t != nil)
-		infer.SetType(expr, types.ErrType{W: t.(types.ResultType).W})
-		return
+		return types.ErrType{W: t.(types.ResultType).W}
 	} else if expr.Name == "Result" {
 		//t := infer.returnType
 		//assert(t != nil)
-		infer.SetType(expr, types.ResultType{W: types.I64Type{}}) // TODO
-		return
+		return types.ResultType{W: types.I64Type{}} // TODO
 	} else if expr.Name == "Option" {
 		//t := infer.returnType
 		//assert(t != nil)
-		infer.SetType(expr, types.OptionType{W: types.I64Type{}}) // TODO
-		return
+		return types.OptionType{W: types.I64Type{}} // TODO
 	} else if expr.Name == "make" {
-		infer.SetType(expr, types.MakeType{})
-		return
+		return types.MakeType{}
 	} else if expr.Name == "_" {
-		infer.SetType(expr, types.UnderscoreType{})
-		return
+		return types.UnderscoreType{}
 	}
 	v := infer.env.Get(expr.Name)
 	assertf(v != nil, "%s: undefined identifier %s", infer.fset.Position(expr.Pos()), expr.Name)
-	infer.SetType(expr, v)
+	return v
 }
 
 func (infer *FileInferrer) ifStmt(stmt *goast.IfStmt) {

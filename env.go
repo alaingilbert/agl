@@ -98,6 +98,15 @@ func (e *Env) Clone() *Env {
 	return env
 }
 
+func (e *Env) CloneFull() *Env {
+	env := &Env{
+		fset:         e.fset,
+		lookupTable:  maps.Clone(e.lookupTable),
+		lookupTable2: maps.Clone(e.lookupTable2),
+	}
+	return env
+}
+
 func (e *Env) Get(name string) types.Type {
 	return e.lookupTable[name]
 }
