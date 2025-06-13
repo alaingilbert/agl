@@ -999,30 +999,31 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen_Tuple1(t *testing.T) {
-//	src := `
-//fn main() {
-//	res := (1, "hello", true)
-//	assert(res.0 == 1)
-//	assert(res.1 == "hello")
-//	assert(res.2 == true)
-//}
-//`
-//	expected := `type AglTupleStruct1 struct {
-//	Arg0 int
-//	Arg1 string
-//	Arg2 bool
-//}
-//func main() {
-//	res := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
-//	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 4")
-//	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 5")
-//	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 6")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen_Tuple1(t *testing.T) {
+	src := `package main
+func main() {
+	res := (1, "hello", true)
+	assert(res.0 == 1)
+	assert(res.1 == "hello")
+	assert(res.2 == true)
+}
+`
+	expected := `package main
+type AglTupleStruct1 struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
+func main() {
+	res := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 4")
+	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 5")
+	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 6")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_TupleDestructuring1(t *testing.T) {
 //	src := `
 //fn main() {
