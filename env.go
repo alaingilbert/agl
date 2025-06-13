@@ -185,6 +185,8 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		return e.GetType2(&goast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*goast.Ident).Name, xx.Sel.Name)})
 	case *goast.IndexExpr:
 		return nil
+	case *goast.ParenExpr:
+		return e.GetType2(xx.X)
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
