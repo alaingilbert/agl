@@ -242,7 +242,7 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.SetType(call, fnT.Return)
 			} else if call.Sel.Name == "Reduce" {
 				filterFnType := infer.env.Get("agl.Vec.Reduce").(types.FuncType)
-				filterFnType = filterFnType.ReplaceGenericParameter("R", infer.env.GetType(expr.Args[0]))
+				filterFnType = filterFnType.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
 				filterFnType = filterFnType.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr.Args[1], filterFnType.Params[2])
 				infer.SetType(expr, filterFnType.Return)
