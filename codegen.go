@@ -219,9 +219,18 @@ if res.IsErr() {
 		before = append(before, before2)
 		out += "res.Unwrap()"
 	} else {
-		before1, content1 := genExpr(env, expr.X, prefix)
-		before1 = append(before, before1...)
-		out += fmt.Sprintf("%s.Unwrap()", content1)
+		if env.GetType(expr.X).(types.ResultType).Native {
+			before1, content1 := genExpr(env, expr.X, prefix)
+			before1 = append(before, before1...)
+			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), prefix))
+			out := `AglIdentity(res)`
+			return append(before1, before), out
+		} else {
+			before1, content1 := genExpr(env, expr.X, prefix)
+			before1 = append(before, before1...)
+			out += fmt.Sprintf("%s.Unwrap()", content1)
+		}
 	}
 	return before, out
 }
@@ -250,6 +259,12 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 				before = append(before, before2...)
 				before = append(before, before3...)
 				return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
+			} else if e.Sel.Name == "Find" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before2, content2 := genExpr(env, expr.Args[0], prefix)
+				before = append(before, before1...)
+				before = append(before, before2...)
+				return before, fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
 			}
 		}
 	case *goast.Ident:
