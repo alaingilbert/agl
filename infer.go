@@ -396,12 +396,12 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.SelectorExpr, expr *goast.CallExpr) {
 	if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Filter" {
 		clbFnStr := "func [T any](e T) bool"
-		ft := parseFuncTypeFromStringNative("", clbFnStr, infer.env)
+		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
 		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
 		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(expr.Args[0], ft)
 		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env)
+			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
@@ -410,14 +410,14 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 
 	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Map" {
 		clbFnStr := "func [T, R any](e T) R"
-		ft := parseFuncTypeFromStringNative("", clbFnStr, infer.env)
+		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
 		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
 		if arg0, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(arg0, ft)
 			infer.expr(arg0)
 			infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(arg0).(types.FuncType).Return})
 		} else if arg0, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", arg0, infer.env)
+			ftReal := funcTypeToFuncType("", arg0, infer.env, false)
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
@@ -427,7 +427,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 		infer.expr(arg0)
 		elTyp := idT.(types.ArrayType).Elt
 		clbFnStr := "func [T any, R cmp.Ordered](acc R, el T) R"
-		ft := parseFuncTypeFromStringNative("", clbFnStr, infer.env)
+		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
 		ft = ft.ReplaceGenericParameter("T", elTyp)
 		if _, ok := infer.GetType(arg0).(types.UntypedNumType); ok {
 			ft = ft.ReplaceGenericParameter("R", elTyp)
@@ -435,7 +435,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 		if _, ok := expr.Args[1].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(expr.Args[1], ft)
 		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env)
+			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
@@ -495,7 +495,7 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 }
 
 func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
-	ft := funcTypeToFuncType("", expr.Type, infer.env)
+	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
 	infer.SetType(expr, ft)
 }
 

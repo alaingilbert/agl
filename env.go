@@ -18,7 +18,7 @@ type Env struct {
 	lookupTable2  map[string]types.Type // Store type for Expr/Stmt
 }
 
-func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env) types.FuncType {
+func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env, native bool) types.FuncType {
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
 		for _, typeParam := range expr.TypeParams.List {
@@ -50,18 +50,27 @@ func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env) types.FuncT
 		TypeParams: paramsT,
 		Params:     params,
 		Return:     result,
+		IsNative:   native,
 	}
 	return ft
 }
 
+func parseFuncTypeFromString(name, s string, env *Env) types.FuncType {
+	return parseFuncTypeFromString1(name, s, env, false)
+}
+
 func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
+	return parseFuncTypeFromString1(name, s, env, true)
+}
+
+func parseFuncTypeFromString1(name, s string, env *Env, native bool) types.FuncType {
 	env = env.Clone()
 	e, err := parser.ParseExpr(s)
 	if err != nil {
 		panic(err)
 	}
 	expr := e.(*goast.FuncType)
-	return funcTypeToFuncType(name, expr, env)
+	return funcTypeToFuncType(name, expr, env, native)
 }
 
 func NewEnv(fset *token.FileSet) *Env {
@@ -75,17 +84,17 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("string", types.StringType{})
 	env.Define("bool", types.BoolType{})
 	env.Define("cmp.Ordered", types.AnyType{})
-	env.Define("assert", parseFuncTypeFromStringNative("assert", "func (pred bool, msg ...string)", env))
-	//env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T, U any](T) U", env))
-	//env.Define("Ok", parseFuncTypeFromStringNative("Ok", "func[T any](T)", env))
-	//env.Define("Err", parseFuncTypeFromStringNative("Err", "func[T any](T)", env))
-	env.Define("make", parseFuncTypeFromStringNative("make", "func[T, U any](t T, size ...U) T", env))
-	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
+	env.Define("assert", parseFuncTypeFromString("assert", "func (pred bool, msg ...string)", env))
+	//env.Define("Some", parseFuncTypeFromString("Some", "func[T, U any](T) U", env))
+	//env.Define("Ok", parseFuncTypeFromString("Ok", "func[T any](T)", env))
+	//env.Define("Err", parseFuncTypeFromString("Err", "func[T any](T)", env))
+	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
+	env.Define("fmt.Println", parseFuncTypeFromString("Println", "func(a ...any) int!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) Result[[]byte]", env))
-	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("Itoa", "func(int) string", env))
-	env.Define("agl.Vec.Filter", parseFuncTypeFromStringNative("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
-	env.Define("agl.Vec.Map", parseFuncTypeFromStringNative("Map", "func [T, R any](a []T, f func(T) R) []R", env))
-	env.Define("agl.Vec.Reduce", parseFuncTypeFromStringNative("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env)) // Fix R cmp.Ordered
+	env.Define("strconv.Itoa", parseFuncTypeFromString("Itoa", "func(int) string", env))
+	env.Define("agl.Vec.Filter", parseFuncTypeFromString("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
+	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))
+	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env)) // Fix R cmp.Ordered
 	return env
 }
 
@@ -153,7 +162,7 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		}
 		return nil
 	case *goast.FuncType:
-		return funcTypeToFuncType("", xx, e)
+		return funcTypeToFuncType("", xx, e, false)
 	case *goast.Ellipsis:
 		return types.EllipsisType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ArrayType:
