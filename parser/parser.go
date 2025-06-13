@@ -553,7 +553,7 @@ func (p *parser) parseType() ast.Expr {
 		defer un(trace(p, "Type"))
 	}
 
-	typ := p.tryIdentOrType()
+	typ := p.tryIdentOrTypeOrShortFn()
 
 	if typ == nil {
 		pos := p.pos
@@ -660,7 +660,7 @@ func (p *parser) parseArrayFieldOrTypeInstance(x *ast.Ident) (*ast.Ident, ast.Ex
 
 	// x [P]E or x[P]
 	if len(args) == 1 {
-		elt := p.tryIdentOrType()
+		elt := p.tryIdentOrTypeOrShortFn()
 		if elt != nil {
 			// x [P]E
 			if trailingComma.IsValid() {
@@ -1155,7 +1155,7 @@ func (p *parser) parseParameters(result bool) *ast.FieldList {
 		return &ast.FieldList{Opening: lparen, List: list, Closing: rparen}
 	}
 
-	if typ := p.tryIdentOrType(); typ != nil {
+	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil {
 		list := make([]*ast.Field, 1)
 		list[0] = &ast.Field{Type: typ}
 		return &ast.FieldList{List: list}
@@ -1179,7 +1179,7 @@ func (p *parser) parseFuncType() *ast.FuncType {
 		//}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrType3()
+	result := p.tryIdentOrTypeNoShortFn()
 
 	return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Result: result}
 }
@@ -1228,7 +1228,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
-				result := p.tryIdentOrType3()
+				result := p.tryIdentOrTypeNoShortFn()
 				idents = []*ast.Ident{ident}
 				typ = &ast.FuncType{
 					Func:   token.NoPos,
@@ -1258,7 +1258,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 			// ordinary method
 			// TODO(rfindley) refactor to share code with parseFuncType.
 			params := p.parseParameters(false)
-			result := p.tryIdentOrType3()
+			result := p.tryIdentOrTypeNoShortFn()
 			idents = []*ast.Ident{ident}
 			typ = &ast.FuncType{Func: token.NoPos, Params: params, Result: result}
 		default:
@@ -1313,7 +1313,7 @@ func (p *parser) embeddedTerm() ast.Expr {
 		return t
 	}
 
-	t := p.tryIdentOrType()
+	t := p.tryIdentOrTypeOrShortFn()
 	if t == nil {
 		pos := p.pos
 		p.errorExpected(pos, "~ term or type")
@@ -1349,7 +1349,7 @@ parseElements:
 			comment := p.expectSemi()
 			list = append(list, &ast.Field{Type: typ, Comment: comment})
 		default:
-			if t := p.tryIdentOrType(); t != nil {
+			if t := p.tryIdentOrTypeOrShortFn(); t != nil {
 				typ := p.embeddedElem(t)
 				comment := p.expectSemi()
 				list = append(list, &ast.Field{Type: typ, Comment: comment})
@@ -1444,16 +1444,16 @@ func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
 	return packIndexExpr(typ, opening, list, closing)
 }
 
-func (p *parser) tryIdentOrType3() ast.Expr {
-	return p.tryIdentOrType4(false)
+func (p *parser) tryIdentOrTypeNoShortFn() ast.Expr {
+	return p.tryIdentOrType2(false)
 }
 
-func (p *parser) tryIdentOrType() ast.Expr {
-	return p.tryIdentOrType4(true)
+func (p *parser) tryIdentOrTypeOrShortFn() ast.Expr {
+	return p.tryIdentOrType2(true)
 }
 
-func (p *parser) tryIdentOrType4(canBeShortFn bool) ast.Expr {
-	x := p.tryIdentOrType1(canBeShortFn)
+func (p *parser) tryIdentOrType2(canBeShortFn bool) ast.Expr {
+	x := p.tryIdentOrTypeOrShortFnHelper(canBeShortFn)
 	if p.tok == token.QUESTION {
 		question := p.expect(token.QUESTION)
 		return &ast.OptionExpr{X: x, Question: question}
@@ -1464,7 +1464,7 @@ func (p *parser) tryIdentOrType4(canBeShortFn bool) ast.Expr {
 	return x
 }
 
-func (p *parser) tryIdentOrType1(canBeShortFn bool) ast.Expr {
+func (p *parser) tryIdentOrTypeOrShortFnHelper(canBeShortFn bool) ast.Expr {
 	defer decNestLev(incNestLev(p))
 	if canBeShortFn && p.tok == token.LBRACE {
 		return p.parseShortFuncLit()
@@ -1596,7 +1596,7 @@ func (p *parser) parseOperand() ast.Expr {
 		return p.parseFuncTypeOrLit()
 	}
 
-	if typ := p.tryIdentOrType(); typ != nil { // do not consume trailing type parameters
+	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil { // do not consume trailing type parameters
 		// could be type for composite literal or conversion
 		_, isIdent := typ.(*ast.Ident)
 		assert(!isIdent, "type cannot be identifier")
@@ -2659,7 +2659,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	case token.CONST:
 		// always permit optional type and initialization for more tolerant parsing
 		if p.tok != token.EOF && p.tok != token.SEMICOLON && p.tok != token.RPAREN {
-			typ = p.tryIdentOrType()
+			typ = p.tryIdentOrTypeOrShortFn()
 			if p.tok == token.ASSIGN {
 				p.next()
 				values = p.parseList(true)
@@ -2906,7 +2906,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrType3()
+	result := p.tryIdentOrTypeNoShortFn()
 
 	var body *ast.BlockStmt
 	switch p.tok {
