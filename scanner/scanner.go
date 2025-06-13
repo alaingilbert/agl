@@ -882,8 +882,17 @@ scanAgain:
 			tok = token.IDENT
 		}
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
-		insertSemi = true
-		tok, lit = s.scanNumber()
+		// Check if we're after an identifier
+		if s.offset > 0 && isLetter(rune(s.src[s.offset-1])) {
+			// If we're after an identifier, treat the period as a separate token
+			tok = token.PERIOD
+			lit = "."
+			s.next()
+		} else {
+			// Otherwise treat it as a float literal
+			insertSemi = true
+			tok, lit = s.scanNumber()
+		}
 	default:
 		s.next() // always make progress
 		switch ch {
