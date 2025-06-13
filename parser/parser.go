@@ -493,6 +493,18 @@ func (p *parser) parseIdentOrOp() *ast.Ident {
 	}
 }
 
+func (p *parser) parseIdentOrNum() *ast.Ident {
+	pos := p.pos
+	name := "_"
+	if p.tok == token.IDENT || p.tok == token.INT {
+		name = p.lit
+		p.next()
+	} else {
+		p.expect(token.IDENT) // use expect() error handling
+	}
+	return &ast.Ident{NamePos: pos, Name: name}
+}
+
 func (p *parser) parseIdent() *ast.Ident {
 	pos := p.pos
 	name := "_"
@@ -1594,6 +1606,13 @@ func (p *parser) parseOperand() ast.Expr {
 
 	case token.FUNC:
 		return p.parseFuncTypeOrLit()
+
+	case token.LPAREN:
+		lparen := p.expect(token.LPAREN)
+		values := p.parseExprList()
+		rparen := p.expect(token.RPAREN)
+		x := &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
+		return x
 	}
 
 	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil { // do not consume trailing type parameters
@@ -1615,7 +1634,7 @@ func (p *parser) parseSelector(x ast.Expr) ast.Expr {
 		defer un(trace(p, "Selector"))
 	}
 
-	sel := p.parseIdent()
+	sel := p.parseIdentOrNum()
 
 	return &ast.SelectorExpr{X: x, Sel: sel}
 }
@@ -1836,7 +1855,7 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 		case token.PERIOD:
 			p.next()
 			switch p.tok {
-			case token.IDENT:
+			case token.IDENT, token.INT:
 				x = p.parseSelector(x)
 			case token.LPAREN:
 				x = p.parseTypeAssertion(x)
