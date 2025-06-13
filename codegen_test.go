@@ -1292,27 +1292,28 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen45(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := 1
-//	if a == 1 {
-//	} else if a == 2 {
-//	} else {
-//	}
-//}
-//`
-//	expected := `func main() {
-//	a := 1
-//	if a == 1 {
-//	} else if a == 2 {
-//	} else {
-//	}
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen45(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	if a == 1 {
+	} else if a == 2 {
+	} else {
+	}
+}
+`
+	expected := `package main
+func main() {
+	a := 1
+	if a == 1 {
+	} else if a == 2 {
+	} else {
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen46(t *testing.T) {
 //	src := `
 //fn main() {
