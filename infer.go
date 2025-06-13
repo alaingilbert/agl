@@ -29,6 +29,7 @@ type FileInferrer struct {
 	fset        *token.FileSet
 	PackageName string
 	returnType  types.Type
+	optType     types.Type
 }
 
 func (infer *FileInferrer) sandboxed(clb func()) {
@@ -73,11 +74,11 @@ func printCallers(n int) {
 }
 
 func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
-	fmt.Println("??SETTYPE", makeKey(a), a, t)
+	//fmt.Println("??SETTYPE", makeKey(a), a, t)
 	//printCallers(100)
 	if t := infer.env.GetType(a); t != nil {
 		//return // TODO
-		panic(fmt.Sprintf("type already declared for %s %d %s %v %v", infer.fset.Position(a.Pos()), a.Pos(), a, to(a), infer.env.GetType(a)))
+		panic(fmt.Sprintf("type already declared for %s %s %s %v %v", infer.fset.Position(a.Pos()), makeKey(a), a, to(a), infer.env.GetType(a)))
 	}
 	infer.env.SetType(a, t)
 }
@@ -131,7 +132,7 @@ func (infer *FileInferrer) funcDecl2(decl *goast.FuncDecl) {
 		if decl.Type.Result == nil {
 			infer.returnType = types.VoidType{}
 		} else {
-			infer.returnType = infer.env.GetType(decl.Type.Result)
+			infer.returnType = infer.env.GetType2(decl.Type.Result)
 		}
 		if decl.Body != nil {
 			// implicit return
@@ -228,7 +229,31 @@ func (infer *FileInferrer) expr2(e goast.Expr) {
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
+	p("OPTTYPE", infer.optType)
+	if infer.optType != nil {
+		infer.tryConvertType(e, infer.optType)
+	}
 }
+
+func (infer *FileInferrer) tryConvertType(e goast.Expr, optType types.Type) {
+	if infer.GetType(e) == nil {
+		infer.SetType(e, optType)
+	} else if _, ok := infer.GetType(e).(types.UntypedNumType); ok {
+		if TryCast[types.U8Type](optType) ||
+			//TryCast[types.U16Type](optType) ||
+			//TryCast[types.U32Type](optType) ||
+			//TryCast[types.U64Type](optType) ||
+			//TryCast[types.I8Type](optType) ||
+			//TryCast[types.I16Type](optType) ||
+			TryCast[types.I32Type](optType) ||
+			TryCast[types.I64Type](optType) ||
+			TryCast[types.IntType](optType) ||
+			TryCast[types.UintType](optType) {
+			infer.SetType(e, optType)
+		}
+	}
+}
+
 func (infer *FileInferrer) stmt(s goast.Stmt) {
 	switch stmt := s.(type) {
 	case *goast.BlockStmt:
@@ -282,7 +307,6 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				fnT = fnT.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr.Args[1], fnT.Params[2])
-				p("?before", fnT.Return)
 				infer.SetType(expr, fnT.Return)
 			}
 		}
@@ -304,7 +328,6 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			idT := infer.env.Get(id.Name)
 			infer.inferVecExtensions(idT, call, expr)
 		default:
-			p("?HERE1", &id, id, to(id))
 			infer.expr(id)
 			idT := infer.GetType(id)
 			tmpFn(idT, call)
@@ -312,19 +335,24 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		}
 		infer.exprs(expr.Args)
 	case *goast.Ident:
-		callT := infer.env.Get(call.Name).(types.FuncType)
-		oParams := callT.Params
-		infer.expr(call)
+		callT := infer.env.Get(call.Name)
+		ft := callT.(types.FuncType)
+		oParams := ft.Params
 		for i := range expr.Args {
 			arg := expr.Args[i]
-			if f, ok := arg.(*goast.ShortFuncLit); ok {
-				paramI := oParams[i].(types.FuncType)
-				ft := paramI
-				infer.SetType(f, ft)
-				infer.expr(arg)
+			oArg := oParams[i]
+			infer.optType = oArg
+			infer.expr(arg)
+			infer.optType = nil
+			got := infer.GetType(arg)
+			assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
+			if _, ok := arg.(*goast.ShortFuncLit); ok {
+				//paramI := oParams[i].(types.FuncType)
+				//ft := paramI
+				//infer.SetType(f, ft)
+				//infer.expr(arg)
 			}
 		}
-		p("?HERE", &call, call, to(call), callT)
 		infer.SetType(call, callT)
 	}
 	if infer.GetType(expr.Fun) != nil {

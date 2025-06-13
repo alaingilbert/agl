@@ -154,6 +154,12 @@ func (i IntType) GoStr() string { return "int" }
 
 func (i IntType) String() string { return "int" }
 
+type UintType struct{}
+
+func (u UintType) GoStr() string { return "uint" }
+
+func (u UintType) String() string { return "uint" }
+
 type FuncType struct {
 	Name       string
 	TypeParams []Type

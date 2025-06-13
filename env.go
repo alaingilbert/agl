@@ -76,9 +76,9 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("bool", types.BoolType{})
 	env.Define("cmp.Ordered", types.AnyType{})
 	env.Define("assert", parseFuncTypeFromStringNative("assert", "func (pred bool, msg ...string)", env))
-	env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
-	env.Define("Ok", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
-	env.Define("Err", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
+	env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T any](T)", env))
+	env.Define("Ok", parseFuncTypeFromStringNative("Ok", "func[T any](T)", env))
+	env.Define("Err", parseFuncTypeFromStringNative("Err", "func[T any](T)", env))
 	env.Define("make", parseFuncTypeFromStringNative("make", "func[T, U any](t T, size ...U) T", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) Result[[]byte]", env))
@@ -159,6 +159,8 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ResultExpr:
 		return types.ResultType{W: e.GetType2(xx.X)}
+	case *goast.OptionExpr:
+		return types.OptionType{W: e.GetType2(xx.X)}
 	case *goast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
