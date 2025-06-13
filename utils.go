@@ -1,6 +1,7 @@
 package main
 
 import (
+	goast "agl/ast"
 	"fmt"
 	"iter"
 	"os"
@@ -10,7 +11,22 @@ import (
 func noop[T any](_ ...T) {}
 
 func p(a ...any) {
-	_, _ = fmt.Fprintln(os.Stderr, a...)
+	var tmp []any
+	for _, e := range a {
+		var tmp2 any
+		switch v := e.(type) {
+		case *goast.Ident:
+			tmp2 = fmt.Sprintf("Ident(%v)", v.Name)
+		case *goast.FuncType:
+			tmp2 = fmt.Sprintf("FuncType(...)")
+		case *goast.CallExpr:
+			tmp2 = fmt.Sprintf("CallExpr(%v %v)", v.Fun, v.Args)
+		default:
+			tmp2 = e
+		}
+		tmp = append(tmp, tmp2)
+	}
+	_, _ = fmt.Fprintln(os.Stderr, tmp...)
 }
 
 func assert(pred bool, msg ...string) {

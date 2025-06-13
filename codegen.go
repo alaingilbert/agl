@@ -110,6 +110,9 @@ func genIdent(env *Env, expr *goast.Ident, prefix string) (before []IBefore, out
 	case types.GenericType:
 		return nil, fmt.Sprintf("%s", typ.GoStr())
 	}
+	if expr.Name == "None" {
+		return nil, fmt.Sprintf("MakeOptionNone[%s]()", t.(types.OptionType).W.GoStr())
+	}
 	if v := env.Get(expr.Name); v != nil {
 		return nil, v.GoStr()
 	}
@@ -227,7 +230,7 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 	switch e := expr.Fun.(type) {
 	case *goast.SelectorExpr:
 		if _, ok := env.GetType(e.X).(types.ArrayType); ok {
-			if e.Sel.Name == "filter" {
+			if e.Sel.Name == "Filter" {
 				before1, content1 := genExpr(env, e.X, prefix)
 				before2, content2 := genExpr(env, expr.Args[0], prefix)
 				before = append(before, before1...)
@@ -249,21 +252,16 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 				return before, fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
 			}
 		}
-		p("???", e.Sel.Name, env.GetType(e.X))
 	case *goast.Ident:
 		if e.Name == "assert" {
 			var contents []string
-			var exprStr string
-			for i, arg := range expr.Args {
+			for _, arg := range expr.Args {
 				before1, content1 := genExpr(env, arg, prefix)
-				if i == 0 {
-					exprStr = content1
-				}
 				before = append(before, before1...)
 				contents = append(contents, content1)
 			}
 			line := env.fset.Position(expr.Pos()).Line
-			msg := fmt.Sprintf(`"assert failed '%s' line %d"`, exprStr, line)
+			msg := fmt.Sprintf(`"assert failed line %d"`, line)
 			if len(contents) == 1 {
 				contents = append(contents, msg)
 			} else {
@@ -359,7 +357,7 @@ func genStmt(env *Env, s goast.Stmt, prefix string) (before []IBefore, out strin
 	case *goast.DeclStmt:
 		return genDeclStmt(env, stmt, prefix)
 	default:
-		panic(fmt.Sprintf("%v", to(s)))
+		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
 }
 
@@ -388,7 +386,7 @@ func genSpec(env *Env, s goast.Spec, prefix string) (before []IBefore, out strin
 		for _, name := range spec.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += prefix + "var " + strings.Join(namesArr, ", ") + " " + content1
+		out += prefix + "var " + strings.Join(namesArr, ", ") + " " + content1 + "\n"
 	case *goast.TypeSpec:
 		before1, content1 := genExpr(env, spec.Type, prefix)
 		before = append(before, before1...)
@@ -499,10 +497,14 @@ func genAssignStmt(env *Env, stmt *goast.AssignStmt, prefix string) (before []IB
 func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
 	before1, cond := genExpr(env, stmt.Cond, prefix)
 	before2, body := genStmt(env, stmt.Body, prefix+"\t")
-	before3, init := genStmt(env, stmt.Init, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
-	before = append(before, before3...)
+	var init string
+	if stmt.Init != nil {
+		var before3 []IBefore
+		before3, init = genStmt(env, stmt.Init, prefix)
+		before = append(before, before3...)
+	}
 	var initStr string
 	init = strings.TrimSpace(init)
 	if init != "" {

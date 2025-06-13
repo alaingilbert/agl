@@ -165,6 +165,7 @@ type FuncType struct {
 	TypeParams []Type
 	Params     []Type
 	Return     Type
+	Variadic   bool
 }
 
 func (f FuncType) GetParam(i int) Type {
