@@ -1497,7 +1497,11 @@ func (p *parser) tryIdentOrType1(canBeShortFn bool) ast.Expr {
 		lparen := p.expect(token.LPAREN)
 		values := p.parseExprList()
 		rparen := p.expect(token.RPAREN)
-		return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
+		if len(values) > 1 {
+			return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
+		} else {
+			return &ast.ParenExpr{Lparen: lparen, X: values[0], Rparen: rparen}
+		}
 	}
 
 	// no type found
