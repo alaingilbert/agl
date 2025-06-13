@@ -73,6 +73,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("string", types.StringType{})
 	env.Define("bool", types.BoolType{})
 	env.Define("cmp.Ordered", types.AnyType{})
+	env.Define("assert", parseFuncTypeFromStringNative("assert", "func (pred bool, msg ...string)", env))
 	env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
 	env.Define("Ok", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
 	env.Define("Err", parseFuncTypeFromStringNative("Some", "func[T any]()", env))
@@ -142,6 +143,13 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ResultExpr:
 		return types.ResultType{}
+	case *goast.BasicLit:
+		switch xx.Kind {
+		case token.INT:
+			return types.UntypedNumType{}
+		default:
+			panic("")
+		}
 	case *goast.SelectorExpr:
 		return e.GetType2(&goast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*goast.Ident).Name, xx.Sel.Name)})
 	default:

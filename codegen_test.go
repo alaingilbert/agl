@@ -854,25 +854,26 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen33_VecBuiltInReduce(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []i64{1, 2, 3, 4}
-//	b := a.reduce(0, { $0 + $1 })
-//	assert(b == 10, "b should be 10")
-//}
-//`
-//	expected := `func main() {
-//	a := []int64{1, 2, 3, 4}
-//	b := AglReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
-//		return aglArg0 + aglArg1
-//	})
-//	AglAssert(b == 10, "assert failed 'b == 10' line 5" + " " + "b should be 10")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen33_VecBuiltInReduce(t *testing.T) {
+	src := `package main
+func main() {
+	a := []i64{1, 2, 3, 4}
+	b := a.Reduce(0, { $0 + $1 })
+	assert(b == 10, "b should be 10")
+}
+`
+	expected := `package main
+func main() {
+	a := []int64{1, 2, 3, 4}
+	b := AglReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
+		return aglArg0 + aglArg1
+	})
+	AglAssert(b == 10, "assert failed 'b == 10' line 5" + " " + "b should be 10")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen34_Assert(t *testing.T) {
 //	src := `
 //fn main() {
