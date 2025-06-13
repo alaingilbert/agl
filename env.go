@@ -14,8 +14,8 @@ import (
 type Env struct {
 	fset          *token.FileSet
 	structCounter atomic.Int64
-	lookupTable   map[string]types.Type    // Store constants/variables/functions
-	lookupTable2  map[token.Pos]types.Type // Store type for Expr/Stmt
+	lookupTable   map[string]types.Type // Store constants/variables/functions
+	lookupTable2  map[string]types.Type // Store type for Expr/Stmt
 }
 
 func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env) types.FuncType {
@@ -65,7 +65,7 @@ func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
 }
 
 func NewEnv(fset *token.FileSet) *Env {
-	env := &Env{fset: fset, lookupTable2: make(map[token.Pos]types.Type), lookupTable: make(map[string]types.Type)}
+	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
 	env.Define("os", types.PackageType{Name: "os"})
 	env.Define("fmt", types.PackageType{Name: "fmt"})
 	env.Define("any", types.AnyType{})
@@ -127,18 +127,22 @@ func (e *Env) Assign(name string, typ types.Type) {
 
 func (e *Env) SetType(x goast.Node, t types.Type) {
 	assertf(t != nil, "%s: try to set type nil, %v %v", e.fset.Position(x.Pos()), x, to(x))
-	e.lookupTable2[x.Pos()] = t
+	e.lookupTable2[makeKey(x)] = t
+}
+
+func makeKey(n goast.Node) string {
+	return fmt.Sprintf("%d_%d", n.Pos(), n.End())
 }
 
 func (e *Env) GetType(x goast.Node) types.Type {
-	if v, ok := e.lookupTable2[x.Pos()]; ok {
+	if v, ok := e.lookupTable2[makeKey(x)]; ok {
 		return v
 	}
 	return nil
 }
 
 func (e *Env) GetType2(x goast.Node) types.Type {
-	if v, ok := e.lookupTable2[x.Pos()]; ok {
+	if v, ok := e.lookupTable2[makeKey(x)]; ok {
 		return v
 	}
 	switch xx := x.(type) {

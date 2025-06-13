@@ -73,7 +73,7 @@ func printCallers(n int) {
 }
 
 func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
-	fmt.Println("??SETTYPE", a.Pos(), a, t)
+	fmt.Println("??SETTYPE", makeKey(a), a, t)
 	//printCallers(100)
 	if t := infer.env.GetType(a); t != nil {
 		//return // TODO
