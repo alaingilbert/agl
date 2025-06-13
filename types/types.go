@@ -19,7 +19,10 @@ type VoidType struct{}
 func (v VoidType) GoStr() string  { return "" }
 func (v VoidType) String() string { return "" }
 
-type ResultType struct{ W Type }
+type ResultType struct {
+	W      Type
+	Native bool
+}
 
 func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.String()) }
 func (r ResultType) String() string { return r.W.String() + "!" }
@@ -123,6 +126,7 @@ func (b BubbleOptionType) String() string { return "BubbleOptionType" }
 type BubbleResultType struct {
 	Elt    Type
 	Bubble bool
+	Native bool
 }
 
 func (r BubbleResultType) GoStr() string { return "BubbleResultType" }

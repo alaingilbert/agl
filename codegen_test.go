@@ -2443,7 +2443,7 @@ func TestCodeGen85(t *testing.T) {
 func main() {
 	a := []u8{1, 2, 3, 4, 5}
 	f := func(e u8) bool { return e == 2 }
-	a.find(f)?
+	a.Find(f)?
 }
 `
 	expected := `package main

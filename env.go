@@ -44,6 +44,10 @@ func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env, native bool
 	var result types.Type
 	if expr.Result != nil {
 		result = env.GetType2(expr.Result)
+		if t, ok := result.(types.ResultType); ok {
+			t.Native = native
+			result = t
+		}
 	}
 	ft := types.FuncType{
 		Name:       name,
@@ -95,7 +99,8 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("strconv.Itoa", parseFuncTypeFromString("Itoa", "func(int) string", env))
 	env.Define("agl.Vec.Filter", parseFuncTypeFromString("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
 	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))
-	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env)) // Fix R cmp.Ordered
+	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env))
+	env.Define("agl.Vec.Find", parseFuncTypeFromString("Find", "func [T any](a []T, f func(e T) bool) T?", env))
 	return env
 }
 

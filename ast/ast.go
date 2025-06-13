@@ -364,11 +364,13 @@ type (
 	}
 
 	BubbleOptionExpr struct {
-		X Expr
+		X        Expr
+		Question token.Pos
 	}
 
 	BubbleResultExpr struct {
-		X Expr
+		X   Expr
+		Not token.Pos
 	}
 
 	// A SelectorExpr node represents an expression followed by a selector.
@@ -480,7 +482,7 @@ func (b BubbleResultExpr) Pos() token.Pos {
 }
 
 func (b BubbleResultExpr) End() token.Pos {
-	return b.X.End()
+	return b.Not + 1
 }
 
 func (b BubbleResultExpr) exprNode() {}
@@ -490,7 +492,7 @@ func (b BubbleOptionExpr) Pos() token.Pos {
 }
 
 func (b BubbleOptionExpr) End() token.Pos {
-	return b.X.End()
+	return b.Question + 1
 }
 
 func (b BubbleOptionExpr) exprNode() {}

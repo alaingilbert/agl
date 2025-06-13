@@ -1828,11 +1828,11 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 		incNestLev(p)
 		switch p.tok {
 		case token.QUESTION:
-			p.next()
-			x = &ast.BubbleOptionExpr{X: x}
+			question := p.expect(token.QUESTION)
+			x = &ast.BubbleOptionExpr{X: x, Question: question}
 		case token.NOT:
-			p.next()
-			x = &ast.BubbleResultExpr{X: x}
+			not := p.expect(token.NOT)
+			x = &ast.BubbleResultExpr{X: x, Not: not}
 		case token.PERIOD:
 			p.next()
 			switch p.tok {

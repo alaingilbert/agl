@@ -200,6 +200,7 @@ func (infer *FileInferrer) exprs(s []goast.Expr) {
 }
 
 func (infer *FileInferrer) expr(e goast.Expr) {
+	//p("infer.expr", to(e))
 	switch expr := e.(type) {
 	case *goast.Ident:
 		t := infer.identExpr(expr)
@@ -260,6 +261,7 @@ func (infer *FileInferrer) tryConvertType(e goast.Expr, optType types.Type) {
 }
 
 func (infer *FileInferrer) stmt(s goast.Stmt) {
+	//p("infer.stmt", to(s))
 	switch stmt := s.(type) {
 	case *goast.BlockStmt:
 		infer.blockStmt(stmt)
@@ -313,6 +315,10 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr.Args[1], fnT.Params[2])
 				infer.SetType(expr, fnT.Return)
+			} else if call.Sel.Name == "Find" {
+				fnT := infer.env.Get("agl.Vec.Find").(types.FuncType)
+				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				infer.SetType(expr, fnT.Return)
 			}
 		}
 	}
@@ -327,7 +333,8 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.SetType(id, l)
 				if _, ok := l.(types.PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
-					infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+					fnT := infer.env.Get(name).(types.FuncType)
+					infer.SetType(expr, fnT.Return)
 				}
 			}
 			idT := infer.env.Get(id.Name)
@@ -440,6 +447,19 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		}
+	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Find" {
+		clbFnStr := "func [T any](e T) bool"
+		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
+		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
+		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
+			infer.SetTypeForce(expr.Args[0], ft)
+		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
+			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
+		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
+			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
+		}
+		infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
 	}
 }
 
@@ -597,11 +617,14 @@ func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
 }
 
 func (infer *FileInferrer) bubbleResultExpr(expr *goast.BubbleResultExpr) {
+	infer.expr(expr.X)
 	bubble := TryCast[types.ResultType](infer.returnType)
-	infer.SetType(expr, types.BubbleResultType{Bubble: bubble})
+	native := infer.env.GetType(expr.X).(types.ResultType).Native
+	infer.SetType(expr, types.BubbleResultType{Bubble: bubble, Native: native})
 }
 
 func (infer *FileInferrer) bubbleOptionExpr(expr *goast.BubbleOptionExpr) {
+	infer.expr(expr.X)
 	bubble := TryCast[types.OptionType](infer.returnType)
 	infer.SetType(expr, types.BubbleOptionType{Bubble: bubble})
 }
@@ -680,7 +703,7 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		stmtLhs := stmt.Lhs[i]
 		stmtRhs := stmt.Rhs[i]
 
-		infer.exprs(stmt.Rhs)
+		infer.expr(stmtRhs)
 		lhs := stmtLhs
 
 		//if lhs, ok := lhs.(*TupleExpr); ok {
