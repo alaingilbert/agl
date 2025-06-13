@@ -5,6 +5,8 @@ import (
 	"agl/token"
 	"agl/types"
 	"fmt"
+	"path"
+	"runtime"
 )
 
 type Inferrer struct {
@@ -49,10 +51,25 @@ func (infer *FileInferrer) SetTypeForce(a goast.Node, t types.Type) {
 	infer.env.SetType(a, t)
 }
 
+func printCallers(n int) {
+	fmt.Println("--- callers ---")
+	for i := 0; i < n; i++ {
+		pc, _, _, ok := runtime.Caller(i + 2)
+		if !ok {
+			break
+		}
+		f := runtime.FuncForPC(pc)
+		file, line := f.FileLine(pc)
+		fmt.Printf("%s:%d %s\n", path.Base(file), line, f.Name())
+	}
+}
+
 func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
+	fmt.Println("??SETTYPE", a.Pos(), a, t)
+	printCallers(100)
 	if t := infer.env.GetType(a); t != nil {
-		return // TODO
-		//panic(fmt.Sprintf("type already declared for %s %s %v", infer.fset.Position(a.Pos()), a, to(a)))
+		//return // TODO
+		panic(fmt.Sprintf("type already declared for %s %s %v", infer.fset.Position(a.Pos()), a, to(a)))
 	}
 	infer.env.SetType(a, t)
 }
@@ -74,7 +91,10 @@ func (infer *FileInferrer) Infer() {
 }
 
 func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
-	t := infer.getFuncDeclType(decl)
+	var t types.FuncType
+	infer.withEnv(func() {
+		t = infer.getFuncDeclType(decl)
+	})
 	infer.SetType(decl, t)
 	infer.env.Define(decl.Name.Name, t)
 }
@@ -190,6 +210,8 @@ func (infer *FileInferrer) expr(e goast.Expr) {
 		infer.bubbleResultExpr(expr)
 	case *goast.SelectorExpr:
 		infer.selectorExpr(expr)
+	case *goast.FuncLit:
+		infer.funcLit(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -210,6 +232,8 @@ func (infer *FileInferrer) stmt(s goast.Stmt) {
 		infer.rangeStmt(stmt)
 	case *goast.IncDecStmt:
 		infer.incDecStmt(stmt)
+	case *goast.DeclStmt:
+		infer.declStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -259,21 +283,15 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			tmpFn(idT1, call)
 			if l := infer.env.Get(id.Name); l != nil {
 				infer.SetType(id, l)
-				//if lT, ok := l.(*StructType); ok {
-				//	name := fmt.Sprintf("%s.%s", lT.name, callExprFun.sel.lit)
-				//	callExpr.SetType(env.Get(name).(FuncType).ret)
 				if _, ok := l.(types.PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
-					p("??????????", infer.env.Get(name))
 					infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
 				}
-				//} else if o, ok := l.(*EnumType); ok {
-				//	callExpr.SetType(&EnumType{name: o.name, subTyp: callExprFun.sel.lit, fields: o.fields})
-				//}
 			}
 			idT := infer.env.Get(id.Name)
 			infer.inferVecExtensions(idT, call, expr)
 		default:
+			p("?HERE1", &id, id, to(id))
 			infer.expr(id)
 			idT := infer.GetType(id)
 			tmpFn(idT, call)
@@ -293,10 +311,12 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.expr(arg)
 			}
 		}
+		p("?HERE", &call, call, to(call), callT)
 		infer.SetType(call, callT)
 	}
 	if infer.GetType(expr.Fun) != nil {
 		if v, ok := infer.GetType(expr.Fun).(types.FuncType); ok {
+			p("?????", expr, to(expr), v.Return)
 			infer.SetType(expr, v.Return)
 		} else { // Type casting
 			// TODO
@@ -400,6 +420,11 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 		Params: paramsT,
 		Return: infer.env.GetType(expr.Result),
 	}
+	infer.SetType(expr, ft)
+}
+
+func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
+	ft := funcTypeToFuncType("", expr.Type, infer.env)
 	infer.SetType(expr, ft)
 }
 
@@ -539,6 +564,9 @@ func (infer *FileInferrer) resultExpr(expr *goast.ResultExpr) {
 func (infer *FileInferrer) optionExpr(expr *goast.OptionExpr) {
 	infer.expr(expr.X)
 	infer.SetType(expr, types.OptionType{W: infer.GetType(expr.X)})
+}
+
+func (infer *FileInferrer) declStmt(stmt *goast.DeclStmt) {
 }
 
 func (infer *FileInferrer) incDecStmt(stmt *goast.IncDecStmt) {

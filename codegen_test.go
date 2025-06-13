@@ -955,29 +955,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen36(t *testing.T) {
-//	src := `
-//fn testOption() int? {
-//	return None
-//}
-//fn main() {
-//	res := testOption()
-//	assert(res == None)
-//	assert(testOption() == None)
-//}
-//`
-//	expected := `func testOption() Option[int] {
-//	return MakeOptionNone[int]()
-//}
-//func main() {
-//	res := testOption()
-//	AglAssert(res == MakeOptionNone[int](), "assert failed 'res == None' line 7")
-//	AglAssert(testOption() == MakeOptionNone[int](), "assert failed 'testOption() == None' line 8")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen36(t *testing.T) {
+	src := `package main
+func testOption() int? {
+	return None
+}
+func main() {
+	res := testOption()
+	assert(res == None)
+	assert(testOption() == None)
+}
+`
+	expected := `package main
+func testOption() Option[int] {
+	return MakeOptionNone[int]()
+}
+func main() {
+	res := testOption()
+	AglAssert(res == MakeOptionNone[int](), "assert failed 'res == None' line 7")
+	AglAssert(testOption() == MakeOptionNone[int](), "assert failed 'testOption() == None' line 8")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Tuple1(t *testing.T) {
 //	src := `
 //fn main() {
@@ -2092,26 +2093,29 @@ func main() {
 //`
 //	tassert.PanicsWithError(t, "4:2: cannot use Option[u8] as u8 value in variable declaration", testCodeGenFn(src))
 //}
-//
-//func TestCodeGen69(t *testing.T) {
-//	src := `
-//fn test() []u8 { []u8{1, 2, 3} }
-//fn main() {
-//	test().filter({ $0 == 2 })
-//}
-//`
-//	expected := `func test() []uint8 {
-//	return []uint8{1, 2, 3}
-//}
-//func main() {
-//	AglVecFilter(test(), func(aglArg0 uint8) bool {
-//		return aglArg0 == 2
-//	})
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen69(t *testing.T) {
+	src := `package main
+func test() []u8 {
+	[]u8{1, 2, 3}
+}
+func main() {
+	test().filter({ $0 == 2 })
+}
+`
+	expected := `package main
+func test() []uint8 {
+	return []uint8{1, 2, 3}
+}
+func main() {
+	AglVecFilter(test(), func(aglArg0 uint8) bool {
+		return aglArg0 == 2
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen70(t *testing.T) {
 //	src := `
 //fn test() []u8 { []u8{1, 2, 3} }
@@ -2318,43 +2322,44 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
-////func TestCodeGen80(t *testing.T) {
-////	src := `
-////fn main() {
-////	select {
-////	case <-time.After(100):
-////		fmt.Println("timeout")
-////	default:
-////		fmt.Println("default")
-////	}
-////}
-////`
-////	expected := `func main() {
-////	select {
-////		case <-time.After(100):
-////			fmt.Println("timeout")
-////		default:
-////			fmt.Println("default")
-////	}
-////}
-////`
-////	testCodeGen(t, src, expected)
-////}
-//
-//func TestCodeGen81(t *testing.T) {
+
+//func TestCodeGen80(t *testing.T) {
 //	src := `
 //fn main() {
-//	_ = 42
+//	select {
+//	case <-time.After(100):
+//		fmt.Println("timeout")
+//	default:
+//		fmt.Println("default")
+//	}
 //}
 //`
 //	expected := `func main() {
-//	_ = 42
+//	select {
+//		case <-time.After(100):
+//			fmt.Println("timeout")
+//		default:
+//			fmt.Println("default")
+//	}
 //}
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
+
+func TestCodeGen81(t *testing.T) {
+	src := `package main
+func main() {
+	_ = 42
+}
+`
+	expected := `package main
+func main() {
+	_ = 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen82(t *testing.T) {
 //	src := `
 //fn main() {
@@ -2363,15 +2368,16 @@ func main() {
 //`
 //	tassert.PanicsWithError(t, "3:4: No new variables on the left side of ':='", testCodeGenFn(src))
 //}
-//
+
 //func TestCodeGen83(t *testing.T) {
-//	src := `
-//fn main() {
+//	src := `package main
+//func main() {
 //	a := []u8{1, 2, 3, 4, 5}
 //	a.find(fn(e u8) bool { e == 2 })?
 //}
 //`
-//	expected := `func main() {
+//	expected := `package main
+//func main() {
 //	a := []uint8{1, 2, 3, 4, 5}
 //	AglVecFind(a, func(e uint8) bool {
 //		return e == 2
@@ -2380,7 +2386,7 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
+
 //func TestCodeGen84(t *testing.T) {
 //	src := `
 //fn main() {
@@ -2411,69 +2417,72 @@ func main() {
 //`
 //	tassert.PanicsWithError(t, "5:2: function type fn(u8) does not match inferred type fn(u8) bool", testCodeGenFn(src))
 //}
-//
-//func TestCodeGen85(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []u8{1, 2, 3, 4, 5}
-//	f := fn(e u8) bool { return e == 2 }
-//	a.find(f)?
-//}
-//`
-//	expected := `func main() {
-//	a := []uint8{1, 2, 3, 4, 5}
-//	f := func(e uint8) bool {
-//		return e == 2
-//	}
-//	AglVecFind(a, f).Unwrap()
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-//func TestCodeGen86(t *testing.T) {
-//	src := `
-//fn main() {
-//	if a := 123; a == 2 || a == 3 {
-//	}
-//}
-//`
-//	expected := `func main() {
-//	if a := 123; a == 2 || a == 3 {
-//	}
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-//func TestCodeGen87(t *testing.T) {
-//	src := `
-//import (
-//	"fmt"
-//	"errors"
-//)
-//`
-//	expected := `import (
-//	"fmt"
-//	"errors"
-//)
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-//func TestCodeGen88(t *testing.T) {
-//	src := `
-//type Pos struct {
-//    Row, Col int
-//}
-//`
-//	expected := `type Pos struct {
-//	Row, Col int
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen85(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3, 4, 5}
+	f := func(e u8) bool { return e == 2 }
+	a.find(f)?
+}
+`
+	expected := `package main
+func main() {
+	a := []uint8{1, 2, 3, 4, 5}
+	f := func(e uint8) bool {
+		return e == 2
+	}
+	AglVecFind(a, f).Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen86(t *testing.T) {
+	src := `package main
+func main() {
+	if a := 123; a == 2 || a == 3 {
+	}
+}
+`
+	expected := `package main
+func main() {
+	if a := 123; a == 2 || a == 3 {
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen87(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"errors"
+)
+`
+	expected := `package main
+import "fmt"
+import "errors"
+
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen88(t *testing.T) {
+	src := `package main
+type Pos struct {
+	Row, Col int
+}
+`
+	expected := `package main
+type Pos struct {
+	Row, Col int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen89(t *testing.T) {
 //	src := `
 //package main
@@ -2481,11 +2490,11 @@ func main() {
 //type Person struct {
 //	name string
 //}
-//fn main() {
+//func main() {
 //	p1 := Person{name: "John"}
 //	p2 := Person{name: "Jane"}
 //	arr := []Person{p1, p2}
-//	res := arr.map({ $0.name }).joined(", ")
+//	res := arr.Map({ $0.name }).joined(", ")
 //	fmt.Println(res)
 //}
 //`
@@ -2506,7 +2515,7 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
+
 //func TestCodeGen90(t *testing.T) {
 //	src := `
 //	package main
@@ -2524,34 +2533,67 @@ func main() {
 //`
 //	tassert.PanicsWithError(t, "11:10: type mismatch, wants: []string, got: []int", testCodeGenFn(src))
 //}
-//
-//func TestCodeGen91(t *testing.T) {
-//	src := `
-//	fn main() {
-//		var arr []int
-//	}
-//`
-//	expected := `func main() {
-//	var arr []int
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-//func TestCodeGen92(t *testing.T) {
-//	src := `
-//	fn main() {
-//		 row, col := 1, 0
-//	}
-//`
-//	expected := `func main() {
-//	row := 1
-//	col := 0
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen91(t *testing.T) {
+	src := `package main
+	func main() {
+		var arr []int
+	}
+`
+	expected := `package main
+func main() {
+	var arr []int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen93(t *testing.T) {
+	src := `package main
+	func main() {
+		var arr1 []int
+		var arr2 []int
+	}
+`
+	expected := `package main
+func main() {
+	var arr1 []int
+	var arr2 []int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen94(t *testing.T) {
+	src := `package main
+	func main() {
+		var arr1, arr3 []int
+		var arr2 []int
+	}
+`
+	expected := `package main
+func main() {
+	var arr1, arr3 []int
+	var arr2 []int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen92(t *testing.T) {
+	src := `package main
+	func main() {
+		 row, col := 1, 0
+	}
+`
+	expected := `package main
+func main() {
+	row, col := 1, 0
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Tmp(t *testing.T) {
 //	src := `
 //fn main() {
