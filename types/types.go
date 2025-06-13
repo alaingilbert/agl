@@ -39,6 +39,11 @@ type BoolType struct{ W Type }
 func (b BoolType) GoStr() string  { return "bool" }
 func (b BoolType) String() string { return "bool" }
 
+type ByteType struct{ W Type }
+
+func (b ByteType) GoStr() string  { return "byte" }
+func (b ByteType) String() string { return "byte" }
+
 type MakeType struct{ W Type }
 
 func (o MakeType) GoStr() string  { return "make" }
