@@ -76,14 +76,14 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("bool", types.BoolType{})
 	env.Define("cmp.Ordered", types.AnyType{})
 	env.Define("assert", parseFuncTypeFromStringNative("assert", "func (pred bool, msg ...string)", env))
-	env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T any](T)", env))
-	env.Define("Ok", parseFuncTypeFromStringNative("Ok", "func[T any](T)", env))
-	env.Define("Err", parseFuncTypeFromStringNative("Err", "func[T any](T)", env))
+	//env.Define("Some", parseFuncTypeFromStringNative("Some", "func[T, U any](T) U", env))
+	//env.Define("Ok", parseFuncTypeFromStringNative("Ok", "func[T any](T)", env))
+	//env.Define("Err", parseFuncTypeFromStringNative("Err", "func[T any](T)", env))
 	env.Define("make", parseFuncTypeFromStringNative("make", "func[T, U any](t T, size ...U) T", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) Result[[]byte]", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("Itoa", "func(int) string", env))
-	env.Define("agl.Vec.filter", parseFuncTypeFromStringNative("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
+	env.Define("agl.Vec.Filter", parseFuncTypeFromStringNative("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
 	env.Define("agl.Vec.Map", parseFuncTypeFromStringNative("Map", "func [T, R any](a []T, f func(T) R) []R", env))
 	env.Define("agl.Vec.Reduce", parseFuncTypeFromStringNative("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env)) // Fix R cmp.Ordered
 	return env
@@ -113,6 +113,7 @@ func (e *Env) Get(name string) types.Type {
 
 func (e *Env) Define(name string, typ types.Type) {
 	//p("Define", name, typ)
+	//printCallers(3)
 	assertf(e.Get(name) == nil, "duplicate declaration of %s", name)
 	e.lookupTable[name] = typ
 }
@@ -154,13 +155,15 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 	case *goast.FuncType:
 		return funcTypeToFuncType("", xx, e)
 	case *goast.Ellipsis:
-		return types.EllipsisType{}
+		return types.EllipsisType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ArrayType:
 		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
 	case *goast.ResultExpr:
 		return types.ResultType{W: e.GetType2(xx.X)}
 	case *goast.OptionExpr:
 		return types.OptionType{W: e.GetType2(xx.X)}
+	case *goast.CallExpr:
+		return nil
 	case *goast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
@@ -176,78 +179,3 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
 }
-
-//func (e *Env) GetType(x Expr) Typ {
-//	return e.getType(x, false)
-//}
-//
-//func (e *Env) getType(x Expr, native bool) Typ {
-//	oType := x.GetType()
-//	if oType != nil {
-//		return oType
-//	}
-//	switch v := x.(type) {
-//	case *IdentExpr:
-//		return e.strToType(v.lit)
-//	case *OptionExpr:
-//		return OptionType{wrappedType: e.getType(v.x, native)}
-//	case *ResultExpr:
-//		return ResultType{wrappedType: e.getType(v.x, native), native: native}
-//	case *BubbleOptionExpr: // TODO
-//		return OptionType{wrappedType: e.getType(v.x, native)}
-//	case *BubbleResultExpr: // TODO
-//		return ResultType{wrappedType: e.getType(v.x, native), native: native}
-//	case *ArrayTypeExpr:
-//		return ArrayType{elt: e.getType(v.elt, native)}
-//	case *SelectorExpr:
-//		return e.getType(&IdentExpr{lit: fmt.Sprintf("%s.%s", v.x.(*IdentExpr).lit, v.sel.lit)}, native)
-//	case *TrueExpr:
-//		return BoolType{}
-//	case *StringExpr:
-//		return StringType{}
-//	case *NumberExpr:
-//		return UntypedNumType{}
-//	case *EllipsisExpr:
-//		return e.getType(v.x, native)
-//	case *AnonFnExpr:
-//		return nil
-//	case *VecExpr:
-//		return nil
-//	case *VoidExpr:
-//		return VoidType{}
-//	case *BinOpExpr:
-//		return nil
-//	case *TupleTypeExpr:
-//		var elements []Typ
-//		for _, el := range v.exprs {
-//			elements = append(elements, e.getType(el, native))
-//		}
-//		structName := fmt.Sprintf("%s%d", TupleStructPrefix, e.structCounter.Add(1))
-//		return TupleType{elts: elements, name: structName}
-//	case *FuncExpr:
-//		var params []Typ
-//		for _, field := range v.args.list {
-//			fieldT := e.getType(field.typeExpr, native)
-//			n := max(len(field.names), 1)
-//			for i := 0; i < n; i++ {
-//				params = append(params, fieldT)
-//			}
-//		}
-//		return FuncType{
-//			params: params,
-//			ret:    e.getType(v.out.expr, native),
-//		}
-//	default:
-//		panic(fmt.Sprintf("unexpected type %v, %v", reflect.TypeOf(v), v))
-//	}
-//}
-//
-//func (e *Env) strToType(s string) (out Typ) {
-//	if t := e.Get(s); t != nil {
-//		out = t
-//	}
-//	if out == nil {
-//		panic(fmt.Sprintf("not found %s", s))
-//	}
-//	return
-//}
