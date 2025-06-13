@@ -174,9 +174,11 @@ type TupleType struct {
 	Elts []Type
 }
 
-func (t TupleType) GoStr() string { return "tuple" }
+func (t TupleType) GoStr() string { return t.Name }
 
-func (t TupleType) String() string { return "tuple" }
+func (t TupleType) String() string {
+	return fmt.Sprintf("Tuple(%v)", t.Elts)
+}
 
 type FuncType struct {
 	Name       string

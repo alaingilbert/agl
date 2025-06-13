@@ -194,6 +194,13 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		return nil
 	case *goast.ParenExpr:
 		return e.GetType2(xx.X)
+	case *goast.TupleExpr:
+		var elts []types.Type
+		for _, v := range xx.Values {
+			elt := e.GetType2(v)
+			elts = append(elts, elt)
+		}
+		return types.TupleType{Name: "", Elts: elts}
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
