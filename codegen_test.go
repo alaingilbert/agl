@@ -1081,56 +1081,56 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-////func TestCodeGen37(t *testing.T) {
-////	src := `
-////type Dog struct {
-////	name string?
-////}
-////type Person struct {
-////	dog Dog?
-////}
-////fn getPersonDogName(p Person) string? {
-////	return p.getDog()?.getName()?
-////}
-////fn main() {
-////	person1 := Person{dog: Dog{name: Some("foo")}}
-////	person2 := Person{dog: Some(Dog{name: None})}
-////	person3 := Person{dog: None}
-////	assert(person1.getDog()?.getName()? == "foo")
-////	assert(person2.getDog()?.getName()? == None)
-////	assert(person3.getDog()?.getName()? == None)
-////}
-////`
-////	expected := `...`
-////	got := codegen(infer(parser(NewTokenStream(src))))
-////	if got != expected {
-////		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-////	}
-////}
-//
-//func TestCodeGen38(t *testing.T) {
+//func TestCodeGen37(t *testing.T) {
 //	src := `
+//type Dog struct {
+//	name string?
+//}
 //type Person struct {
-//	name string
-//	age int
-//	ssn string?
-//	nicknames Option[[]string]
-//	testArray []string
-//	testArrayOfOpt []Option[string]
+//	dog Dog?
+//}
+//fn getPersonDogName(p Person) string? {
+//	return p.getDog()?.getName()?
+//}
+//fn main() {
+//	person1 := Person{dog: Dog{name: Some("foo")}}
+//	person2 := Person{dog: Some(Dog{name: None})}
+//	person3 := Person{dog: None}
+//	assert(person1.getDog()?.getName()? == "foo")
+//	assert(person2.getDog()?.getName()? == None)
+//	assert(person3.getDog()?.getName()? == None)
 //}
 //`
-//	expected := `type Person struct {
-//	name string
-//	age int
-//	ssn Option[string]
-//	nicknames Option[[]string]
-//	testArray []string
-//	testArrayOfOpt []Option[string]
+//	expected := `...`
+//	got := codegen(infer(parser(NewTokenStream(src))))
+//	if got != expected {
+//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
+//	}
 //}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen38(t *testing.T) {
+	src := `package main
+type Person struct {
+	name string
+	age int
+	ssn string?
+	nicknames ([]string)?
+	testArray []string
+	testArrayOfOpt []string?
+}
+`
+	expected := `package main
+type Person struct {
+	name string
+	age int
+	ssn Option[string]
+	nicknames Option[([]string)]
+	testArray []string
+	testArrayOfOpt []Option[string]
+}`
+	testCodeGen(t, src, expected)
+}
+
 ////func TestCodeGen39(t *testing.T) {
 ////	src := `
 ////type Person struct {
