@@ -1215,81 +1215,83 @@ func main() {
 //`
 //	tassert.PanicsWithError(t, "6:22 wrong type of argument 3 in call to variadic, wants: string, got: UntypedNumType", testCodeGenFn(src))
 //}
-//
-//func TestCodeGen42(t *testing.T) {
-//	src := `
-//fn someFn() {
-//}
-//fn main() {
-//}
-//`
-//	expected := `func someFn() {
-//}
-//func main() {
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-////func TestCodeGen43(t *testing.T) {
-////	src := `
-////fn main() {
-////	a := 1u8
-////	b := 2u16
-////	c := 3u32
-////	d := 4u64
-////	e := 5i8
-////	f := 6i16
-////	g := 7i32
-////	h := 8i64
-////	i := 9f32
-////	j := 10f64
-////}
-////`
-////	expected := `func main() {
-////	a := uint(42)
-////	a := uint8(42)
-////	a := uint16(42)
-////	a := uint32(42)
-////	a := uint64(42)
-////	a := int8(42)
-////	a := int16(42)
-////	a := int32(42)
-////	a := int64(42)
-////	a := float32(42)
-////	a := float64(42)
-////}
-////`
-////	testCodeGen(t, src, expected)
-////}
-//
-//func TestCodeGen44(t *testing.T) {
+
+func TestCodeGen42(t *testing.T) {
+	src := `package main
+func someFn() {
+}
+func main() {
+}
+`
+	expected := `package main
+func someFn() {
+}
+func main() {
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen43(t *testing.T) {
 //	src := `
 //fn main() {
-//	a := 1
-//	if a == 1 {
-//		fmt.Println("a == 1")
-//	} else if a == 2 {
-//		fmt.Println("a == 2")
-//	} else {
-//		fmt.Println("else")
-//	}
+//	a := 1u8
+//	b := 2u16
+//	c := 3u32
+//	d := 4u64
+//	e := 5i8
+//	f := 6i16
+//	g := 7i32
+//	h := 8i64
+//	i := 9f32
+//	j := 10f64
 //}
 //`
 //	expected := `func main() {
-//	a := 1
-//	if a == 1 {
-//		fmt.Println("a == 1")
-//	} else if a == 2 {
-//		fmt.Println("a == 2")
-//	} else {
-//		fmt.Println("else")
-//	}
+//	a := uint(42)
+//	a := uint8(42)
+//	a := uint16(42)
+//	a := uint32(42)
+//	a := uint64(42)
+//	a := int8(42)
+//	a := int16(42)
+//	a := int32(42)
+//	a := int64(42)
+//	a := float32(42)
+//	a := float64(42)
 //}
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
+
+func TestCodeGen44(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	if a == 1 {
+		fmt.Println("a == 1")
+	} else if a == 2 {
+		fmt.Println("a == 2")
+	} else {
+		fmt.Println("else")
+	}
+}
+`
+	expected := `package main
+func main() {
+	a := 1
+	if a == 1 {
+		fmt.Println("a == 1")
+	} else if a == 2 {
+		fmt.Println("a == 2")
+	} else {
+		fmt.Println("else")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen45(t *testing.T) {
 //	src := `
 //fn main() {
