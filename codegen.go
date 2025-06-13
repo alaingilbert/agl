@@ -90,6 +90,8 @@ func genExpr(env *Env, e goast.Expr, prefix string) (before []IBefore, out strin
 		return genFuncLit(env, expr, prefix)
 	case *goast.ParenExpr:
 		return genParenExpr(env, expr, prefix)
+	case *goast.Ellipsis:
+		return genEllipsis(env, expr, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -140,6 +142,13 @@ func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before 
 	out += content1
 	out += prefix + "}"
 	return before1, out
+}
+
+func genEllipsis(env *Env, expr *goast.Ellipsis, prefix string) (before []IBefore, out string) {
+	before1, content1 := genExpr(env, expr.Elt, prefix+"\t")
+	before = append(before, before1...)
+	out += "..." + content1
+	return
 }
 
 func genParenExpr(env *Env, expr *goast.ParenExpr, prefix string) (before []IBefore, out string) {
