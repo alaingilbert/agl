@@ -197,7 +197,13 @@ func genIndexExpr(env *Env, expr *goast.IndexExpr, prefix string) (before []IBef
 
 func genSelectorExpr(env *Env, expr *goast.SelectorExpr, prefix string) (before []IBefore, out string) {
 	before1, content1 := genExpr(env, expr.X, prefix)
-	return before1, fmt.Sprintf("%s.%s", content1, expr.Sel.Name)
+	name := expr.Sel.Name
+	p(env.GetType(expr.X))
+	switch env.GetType(expr.X).(type) {
+	case types.TupleType:
+		name = fmt.Sprintf("Arg%s", name)
+	}
+	return before1, fmt.Sprintf("%s.%s", content1, name)
 }
 
 func genBubbleOptionExpr(env *Env, expr *goast.BubbleOptionExpr, prefix string) (before []IBefore, out string) {
@@ -316,9 +322,21 @@ func genCompositeLit(env *Env, expr *goast.CompositeLit, prefix string) (before 
 }
 
 func genTupleExpr(env *Env, expr *goast.TupleExpr, prefix string) (before []IBefore, out string) {
-	before1, content1 := genExprs(env, expr.Values, prefix)
-	out += fmt.Sprintf("(%s)\n", content1)
-	return before1, out
+	before, _ = genExprs(env, expr.Values, prefix)
+	structName := env.GetType(expr).(types.TupleType).Name
+	structStr := fmt.Sprintf("type %s struct {\n", structName)
+	for i, x := range expr.Values {
+		structStr += fmt.Sprintf("\tArg%d %s\n", i, env.GetType(x).GoStr())
+	}
+	structStr += fmt.Sprintf("}\n")
+	before = append(before, NewBeforeFn(structStr)) // TODO Add in public scope (when function output)
+	var fields []string
+	for i, x := range expr.Values {
+		before1, content1 := genExpr(env, x, prefix)
+		before = append(before, before1...)
+		fields = append(fields, fmt.Sprintf("Arg%d: %s", i, content1))
+	}
+	return before, fmt.Sprintf("%s{%s}", structName, strings.Join(fields, ", "))
 }
 
 func genExprs(env *Env, e []goast.Expr, prefix string) (before []IBefore, out string) {

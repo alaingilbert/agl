@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"strconv"
 )
 
 type Inferrer struct {
@@ -518,7 +519,11 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 
 func (infer *FileInferrer) tupleExpr(expr *goast.TupleExpr) {
 	infer.exprs(expr.Values)
-	infer.SetType(expr, types.TupleType{})
+	var elts []types.Type
+	for _, v := range expr.Values {
+		elts = append(elts, infer.GetType(v))
+	}
+	infer.SetType(expr, types.TupleType{Name: "AglTupleStruct1", Elts: elts})
 }
 
 func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
@@ -621,6 +626,16 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
+	selType := infer.env.Get(expr.X.(*goast.Ident).Name)
+	switch v := selType.(type) {
+	case types.TupleType:
+		argIdx, err := strconv.Atoi(expr.Sel.Name)
+		if err != nil {
+			panic("tuple arg index must be int")
+		}
+		infer.SetType(expr.X, v)
+		infer.SetType(expr, v.Elts[argIdx])
+	}
 }
 
 func (infer *FileInferrer) bubbleResultExpr(expr *goast.BubbleResultExpr) {
@@ -713,41 +728,17 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		infer.expr(stmtRhs)
 		lhs := stmtLhs
 
-		//if lhs, ok := lhs.(*TupleExpr); ok {
-		//	if TryCast[*EnumType](stmtRhs.GetType()) {
-		//		for i, e := range lhs.exprs {
-		//			lit := stmtRhs.GetType().(*EnumType).subTyp
-		//			fields := stmtRhs.GetType().(*EnumType).fields
-		//			// AGL: fields.find({ $0.name == lit })
-		//			f := Find(fields, func(f EnumFieldType) bool { return f.name == lit })
-		//			assert(f != nil)
-		//			assignFn(e.(*IdentExpr).lit, env.Get(f.elts[i]))
-		//		}
-		//		return
-		//	}
-		//	MustCast[*TupleExpr](stmtRhs)
-		//	for i, x := range stmtRhs.(*TupleExpr).exprs {
-		//		MustCast[*IdentExpr](lhs.exprs[i])
-		//		lhs.exprs[i].SetType(x.GetType())
-		//		assignFn(lhs.exprs[i].(*IdentExpr).lit, x.GetType())
+		//if lhs, ok := lhs.(*goast.TupleExpr); ok {
+		//	MustCast[*goast.TupleExpr](stmtRhs)
+		//	for i, x := range stmtRhs.(*goast.TupleExpr).Values {
+		//		MustCast[*goast.Ident](lhs.Values[i])
+		//		infer.SetType(lhs.Values[i], infer.GetType(x))
+		//		assignFn(lhs.Values[i].(*goast.Ident).Name, infer.GetType(x))
 		//	}
 		//	return
 		//}
 
 		lhsID := MustCast[*goast.Ident](lhs)
-		//switch rhs := stmtRhs.(type) {
-		//case *BubbleResultExpr:
-		//	callExpr := MustCast[*CallExpr](rhs.x)
-		//	switch s := callExpr.fun.(type) {
-		//	case *SelectorExpr:
-		//		if id, ok := s.x.(*IdentExpr); ok {
-		//			if rhs.GetType() == nil {
-		//				rhs.SetType(env.Get(fmt.Sprintf("%s.%s", id.lit, s.sel.lit)))
-		//				callExpr.SetType(rhs.typ.(FuncType).ret)
-		//			}
-		//		}
-		//	}
-		//}
 		infer.SetType(lhsID, infer.GetType(stmtRhs))
 		assignFn(lhsID.Name, infer.GetType(lhsID))
 	}

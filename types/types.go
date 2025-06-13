@@ -169,7 +169,10 @@ func (u UintType) GoStr() string { return "uint" }
 
 func (u UintType) String() string { return "uint" }
 
-type TupleType struct{}
+type TupleType struct {
+	Name string // infer gives a name for the struct that will be generated
+	Elts []Type
+}
 
 func (t TupleType) GoStr() string { return "tuple" }
 
