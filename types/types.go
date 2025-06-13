@@ -169,6 +169,12 @@ func (u UintType) GoStr() string { return "uint" }
 
 func (u UintType) String() string { return "uint" }
 
+type TupleType struct{}
+
+func (t TupleType) GoStr() string { return "tuple" }
+
+func (t TupleType) String() string { return "tuple" }
+
 type FuncType struct {
 	Name       string
 	TypeParams []Type
