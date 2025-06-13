@@ -14,11 +14,14 @@ func codegen(fset1 *token.FileSet, env *Env, a *goast.File) (out string) {
 	fset = fset1
 	before1, out1 := genPackage(a)
 	before2, out2 := genImports(a)
-	out3 := genDecls(env, a, "")
+	before3, out3 := genDecls(env, a)
 	for _, b := range before1 {
 		out += b.Content()
 	}
 	for _, b := range before2 {
+		out += b.Content()
+	}
+	for _, b := range before3 {
 		out += b.Content()
 	}
 	return out + out1 + out2 + out3
@@ -81,6 +84,10 @@ func genExpr(env *Env, e goast.Expr, prefix string) (before []IBefore, out strin
 		return genIndexExpr(env, expr, prefix)
 	case *goast.FuncType:
 		return genFuncType(env, expr, prefix)
+	case *goast.StructType:
+		return genStructType(env, expr, prefix)
+	case *goast.FuncLit:
+		return genFuncLit(env, expr, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -128,6 +135,32 @@ func genShortFuncLit(env *Env, expr *goast.ShortFuncLit, prefix string) (before 
 	out += content1
 	out += prefix + "}"
 	return before1, out
+}
+
+func genFuncLit(env *Env, expr *goast.FuncLit, prefix string) (before []IBefore, out string) {
+	before1, content1 := genStmt(env, expr.Body, prefix+"\t")
+	before2, content2 := genFuncType(env, expr.Type, prefix)
+	before = append(before, before1...)
+	before = append(before, before2...)
+	out += content2 + " {\n"
+	out += content1
+	out += prefix + "}"
+	return
+}
+
+func genStructType(env *Env, expr *goast.StructType, prefix string) (before []IBefore, out string) {
+	out += prefix + "struct {\n"
+	for _, field := range expr.Fields.List {
+		before1, content1 := genExpr(env, field.Type, prefix)
+		before = append(before, before1...)
+		var namesArr []string
+		for _, name := range field.Names {
+			namesArr = append(namesArr, name.Name)
+		}
+		out += prefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + "\n"
+	}
+	out += prefix + "}"
+	return
 }
 
 func genFuncType(env *Env, expr *goast.FuncType, prefix string) (before []IBefore, out string) {
@@ -322,7 +355,9 @@ func genStmt(env *Env, s goast.Stmt, prefix string) (before []IBefore, out strin
 	case *goast.RangeStmt:
 		return genRangeStmt(env, stmt, prefix)
 	case *goast.IncDecStmt:
-		return getIncDecStmt(env, stmt, prefix)
+		return genIncDecStmt(env, stmt, prefix)
+	case *goast.DeclStmt:
+		return genDeclStmt(env, stmt, prefix)
 	default:
 		panic(fmt.Sprintf("%v", to(s)))
 	}
@@ -335,7 +370,66 @@ func genBlockStmt(env *Env, stmt *goast.BlockStmt, prefix string) (before []IBef
 	return
 }
 
-func getIncDecStmt(env *Env, stmt *goast.IncDecStmt, prefix string) (before []IBefore, out string) {
+func genSpecs(env *Env, specs []goast.Spec, prefix string) (before []IBefore, out string) {
+	for _, spec := range specs {
+		before1, content1 := genSpec(env, spec, prefix)
+		before = append(before, before1...)
+		out += content1
+	}
+	return
+}
+
+func genSpec(env *Env, s goast.Spec, prefix string) (before []IBefore, out string) {
+	switch spec := s.(type) {
+	case *goast.ValueSpec:
+		before1, content1 := genExpr(env, spec.Type, prefix)
+		before = append(before, before1...)
+		var namesArr []string
+		for _, name := range spec.Names {
+			namesArr = append(namesArr, name.Name)
+		}
+		out += prefix + "var " + strings.Join(namesArr, ", ") + " " + content1
+	case *goast.TypeSpec:
+		before1, content1 := genExpr(env, spec.Type, prefix)
+		before = append(before, before1...)
+		out += prefix + "type " + spec.Name.Name + " " + content1
+	case *goast.ImportSpec:
+		if spec.Name != nil {
+			out += "import " + spec.Name.Name + "\n"
+		}
+	default:
+		panic(fmt.Sprintf("%v", to(s)))
+	}
+	return
+}
+
+func genDecl(env *Env, d goast.Decl, prefix string) (before []IBefore, out string) {
+	switch decl := d.(type) {
+	case *goast.GenDecl:
+		before1, content1 := genSpecs(env, decl.Specs, prefix)
+		before = append(before, before1...)
+		out += content1
+	case *goast.FuncDecl:
+		before1, out1 := genFuncDecl(env, decl, prefix)
+		for _, b := range before1 {
+			out += b.Content()
+		}
+		out += out1
+	default:
+		panic(fmt.Sprintf("%v", to(d)))
+	}
+	out += "\n"
+	return
+}
+
+func genDeclStmt(env *Env, stmt *goast.DeclStmt, prefix string) (before []IBefore, out string) {
+	before1, content1 := genDecl(env, stmt.Decl, prefix)
+	before = append(before, before1...)
+	out += content1
+	return
+}
+
+func genIncDecStmt(env *Env, stmt *goast.IncDecStmt, prefix string) (before []IBefore, out string) {
 	before1, content1 := genExpr(env, stmt.X, prefix)
 	before = append(before, before1...)
 	var op string
@@ -400,26 +494,28 @@ func genAssignStmt(env *Env, stmt *goast.AssignStmt, prefix string) (before []IB
 func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, out string) {
 	before1, cond := genExpr(env, stmt.Cond, prefix)
 	before2, body := genStmt(env, stmt.Body, prefix+"\t")
+	before3, init := genStmt(env, stmt.Init, prefix)
 	before = append(before, before1...)
 	before = append(before, before2...)
-	out += prefix + "if " + cond + " {\n"
+	before = append(before, before3...)
+	var initStr string
+	init = strings.TrimSpace(init)
+	if init != "" {
+		initStr = init + "; "
+	}
+	out += prefix + "if " + initStr + cond + " {\n"
 	out += body
 	out += prefix + "}\n"
 	return before, out
 }
 
-func genDecls(env *Env, a *goast.File, prefix string) (out string) {
-	for _, d := range a.Decls {
-		switch decl := d.(type) {
-		case *goast.FuncDecl:
-			before1, out1 := genFuncDecl(env, decl, prefix)
-			for _, b := range before1 {
-				out += b.Content()
-			}
-			out += out1
-		}
+func genDecls(env *Env, a *goast.File) (before []IBefore, out string) {
+	for _, decl := range a.Decls {
+		before1, content1 := genDecl(env, decl, "")
+		before = append(before, before1...)
+		out += content1
 	}
-	return out
+	return
 }
 
 func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefore, out string) {
