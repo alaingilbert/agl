@@ -125,7 +125,8 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	i := agl.NewInferrer(fset)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
-	if err := os.WriteFile(strings.Replace(fileName, ".agl", ".go", 1), []byte(src), 0644); err != nil {
+	path := strings.Replace(fileName, ".agl", ".go", 1)
+	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
 	}
 	return nil
