@@ -873,8 +873,8 @@ func (infer *FileInferrer) specs(s []goast.Spec) {
 func (infer *FileInferrer) spec(s goast.Spec) {
 	switch spec := s.(type) {
 	case *goast.ValueSpec:
-		noop(spec.Names)
 		for _, name := range spec.Names {
+			infer.exprs(spec.Values)
 			t := infer.env.GetType2(spec.Type)
 			infer.SetType(name, t)
 			infer.env.Define(name.Name, t)

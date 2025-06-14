@@ -541,7 +541,11 @@ func (g *Generator) genSpec(s goast.Spec) (out string) {
 		for _, name := range spec.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += g.prefix + "var " + strings.Join(namesArr, ", ") + " " + content1 + "\n"
+		out += g.prefix + "var " + strings.Join(namesArr, ", ") + " " + content1
+		if spec.Values != nil {
+			out += " = " + g.genExprs(spec.Values)
+		}
+		out += "\n"
 	case *goast.TypeSpec:
 		if v, ok := spec.Type.(*goast.EnumType); ok {
 			content1 := g.genEnumType(spec.Name.Name, v)
@@ -563,10 +567,7 @@ func (g *Generator) genSpec(s goast.Spec) (out string) {
 func (g *Generator) genDecl(d goast.Decl) (out string) {
 	switch decl := d.(type) {
 	case *goast.GenDecl:
-		content1 := g.genGenDecl(decl)
-
-		out += content1
-		return
+		return g.genGenDecl(decl)
 	case *goast.FuncDecl:
 		out1 := g.genFuncDecl(decl)
 		for _, b := range g.before {
