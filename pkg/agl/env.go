@@ -205,6 +205,10 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 		return e.GetType2(xx.X)
 	case *ast.VoidExpr:
 		return types.VoidType{}
+	case *ast.StarExpr:
+		return types.StarType{}
+	case *ast.MapType:
+		return types.MapType{}
 	case *ast.TupleExpr:
 		var elts []types.Type
 		for _, v := range xx.Values { // TODO NO GOOD

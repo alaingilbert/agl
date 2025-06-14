@@ -19,6 +19,16 @@ type VoidType struct{}
 func (v VoidType) GoStr() string  { return "AglVoid" }
 func (v VoidType) String() string { return "VoidExpr" }
 
+type StarType struct{}
+
+func (s StarType) GoStr() string  { return "StarType" }
+func (s StarType) String() string { return "StarType" }
+
+type MapType struct{}
+
+func (m MapType) GoStr() string  { return "MapType" }
+func (m MapType) String() string { return "MapType" }
+
 type ResultType struct {
 	W             Type
 	Native        bool
