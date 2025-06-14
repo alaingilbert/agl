@@ -382,7 +382,7 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
 			} else {
-				assertf(false, "method '%s' of type Vec does not exists", fnName)
+				assertf(false, "%s: method '%s' of type Vec does not exists", infer.fset.Position(call.Sel.Pos()), fnName)
 			}
 		}
 	}
