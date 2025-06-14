@@ -395,6 +395,8 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
 					fnT := infer.env.Get(name).(types.FuncType)
 					infer.SetType(expr, fnT.Return)
+				} else if o, ok := l.(types.EnumType); ok {
+					infer.SetType(expr, types.EnumType{Name: o.Name, SubTyp: call.Sel.Name, Fields: o.Fields})
 				}
 			}
 			idT := infer.env.Get(id.Name)
