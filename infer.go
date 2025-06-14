@@ -487,7 +487,8 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 				tmp.Bubble = false
 				out = tmp
 			}
-		} else if _, ok := fnReturn.(types.OptionType); !ok {
+		}
+		if _, ok := fnReturn.(types.OptionType); !ok {
 			if tmp, ok := curr.(types.OptionType); ok {
 				tmp.Bubble = false
 				out = tmp
