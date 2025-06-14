@@ -1,7 +1,7 @@
 package main
 
 import (
-	goast "agl/ast"
+	"agl/ast"
 	parser1 "agl/parser"
 	"agl/token"
 	"context"
@@ -167,7 +167,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func parser2(src string) (*token.FileSet, *goast.File) {
+func parser2(src string) (*token.FileSet, *ast.File) {
 	var fset = token.NewFileSet()
 	f, err := parser1.ParseFile(fset, "", src, 0)
 	if err != nil {

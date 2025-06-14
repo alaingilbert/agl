@@ -1,7 +1,7 @@
 package main
 
 import (
-	goast "agl/ast"
+	"agl/ast"
 	"agl/parser"
 	"agl/token"
 	"agl/types"
@@ -18,7 +18,7 @@ type Env struct {
 	lookupTable2  map[string]types.Type // Store type for Expr/Stmt
 }
 
-func funcTypeToFuncType(name string, expr *goast.FuncType, env *Env, native bool) types.FuncType {
+func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) types.FuncType {
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
 		for _, typeParam := range expr.TypeParams.List {
@@ -73,7 +73,7 @@ func parseFuncTypeFromString1(name, s string, env *Env, native bool) types.FuncT
 	if err != nil {
 		panic(err)
 	}
-	expr := e.(*goast.FuncType)
+	expr := e.(*ast.FuncType)
 	return funcTypeToFuncType(name, expr, env, native)
 }
 
@@ -150,60 +150,60 @@ func (e *Env) Assign(name string, typ types.Type) {
 	e.lookupTable[name] = typ
 }
 
-func (e *Env) SetType(x goast.Node, t types.Type) {
+func (e *Env) SetType(x ast.Node, t types.Type) {
 	assertf(t != nil, "%s: try to set type nil, %v %v", e.fset.Position(x.Pos()), x, to(x))
 	e.lookupTable2[makeKey(x)] = t
 }
 
-func makeKey(n goast.Node) string {
+func makeKey(n ast.Node) string {
 	return fmt.Sprintf("%d_%d", n.Pos(), n.End())
 }
 
-func (e *Env) GetType(x goast.Node) types.Type {
+func (e *Env) GetType(x ast.Node) types.Type {
 	if v, ok := e.lookupTable2[makeKey(x)]; ok {
 		return v
 	}
 	return nil
 }
 
-func (e *Env) GetType2(x goast.Node) types.Type {
+func (e *Env) GetType2(x ast.Node) types.Type {
 	if v, ok := e.lookupTable2[makeKey(x)]; ok {
 		return v
 	}
 	switch xx := x.(type) {
-	case *goast.Ident:
+	case *ast.Ident:
 		if v2, ok := e.lookupTable[xx.Name]; ok {
 			return v2
 		}
 		return nil
-	case *goast.FuncType:
+	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, false)
-	case *goast.Ellipsis:
+	case *ast.Ellipsis:
 		return types.EllipsisType{Elt: e.GetType2(xx.Elt)}
-	case *goast.ArrayType:
+	case *ast.ArrayType:
 		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
-	case *goast.ResultExpr:
+	case *ast.ResultExpr:
 		return types.ResultType{W: e.GetType2(xx.X)}
-	case *goast.OptionExpr:
+	case *ast.OptionExpr:
 		return types.OptionType{W: e.GetType2(xx.X)}
-	case *goast.CallExpr:
+	case *ast.CallExpr:
 		return nil
-	case *goast.BasicLit:
+	case *ast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
 			return types.UntypedNumType{}
 		default:
 			panic("")
 		}
-	case *goast.SelectorExpr:
-		return e.GetType2(&goast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*goast.Ident).Name, xx.Sel.Name)})
-	case *goast.IndexExpr:
+	case *ast.SelectorExpr:
+		return e.GetType2(&ast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)})
+	case *ast.IndexExpr:
 		return nil
-	case *goast.ParenExpr:
+	case *ast.ParenExpr:
 		return e.GetType2(xx.X)
-	case *goast.VoidExpr:
+	case *ast.VoidExpr:
 		return types.VoidType{}
-	case *goast.TupleExpr:
+	case *ast.TupleExpr:
 		var elts []types.Type
 		for _, v := range xx.Values { // TODO NO GOOD
 			elt := e.GetType2(v)
