@@ -63,12 +63,11 @@ func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
 	//fmt.Println("??SETTYPE", makeKey(a), a, t)
 	//printCallers(100)
 	if tt := infer.env.GetType(a); tt != nil {
-		if cmpTypes(tt, t) {
-			return
-		}
-		if !TryCast[types.UntypedNumType](tt) {
-			//return // TODO
-			panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.fset.Position(a.Pos()), makeKey(a), a, to(a), infer.env.GetType(a), t))
+		if !cmpTypes(tt, t) {
+			if !TryCast[types.UntypedNumType](tt) {
+				//return // TODO
+				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.fset.Position(a.Pos()), makeKey(a), a, to(a), infer.env.GetType(a), t))
+			}
 		}
 	}
 	infer.env.SetType(a, t)
@@ -542,8 +541,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 			infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
 
 		} else if exprT.Sel.Name == "Map" {
-			ft := infer.env.Get("agl.Vec.Map").(types.FuncType).GetParam(1).(types.FuncType)
-			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			ft := infer.env.GetFn("agl.Vec.Map").GetParam(1).(types.FuncType).T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if arg0, ok := exprArg0.(*goast.ShortFuncLit); ok {
 				infer.SetTypeForce(arg0, ft)
@@ -553,6 +551,10 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				if tmp, ok := exprArg0.(*goast.FuncLit); ok {
+					infer.expr(tmp)
+					infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(exprArg0.(*goast.FuncLit)).(types.FuncType).Return})
+				}
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
 		} else if exprT.Sel.Name == "Reduce" {
@@ -587,6 +589,14 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 			infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
 		}
 	}
+}
+
+func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
+	if infer.optType != nil {
+		infer.SetType(expr, infer.optType)
+	}
+	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
+	infer.SetType(expr, ft)
 }
 
 func (infer *FileInferrer) shortFuncLit(expr *goast.ShortFuncLit) {
@@ -665,11 +675,6 @@ func (infer *FileInferrer) tupleExpr(expr *goast.TupleExpr) {
 		}
 		infer.SetType(expr, types.TupleType{Name: "AglTupleStruct1", Elts: elts})
 	}
-}
-
-func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
-	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
-	infer.SetType(expr, ft)
 }
 
 func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
