@@ -858,6 +858,28 @@ func (infer *FileInferrer) optionExpr(expr *goast.OptionExpr) {
 }
 
 func (infer *FileInferrer) declStmt(stmt *goast.DeclStmt) {
+	switch d := stmt.Decl.(type) {
+	case *goast.GenDecl:
+		infer.specs(d.Specs)
+	}
+}
+
+func (infer *FileInferrer) specs(s []goast.Spec) {
+	for _, spec := range s {
+		infer.spec(spec)
+	}
+}
+
+func (infer *FileInferrer) spec(s goast.Spec) {
+	switch spec := s.(type) {
+	case *goast.ValueSpec:
+		noop(spec.Names)
+		for _, name := range spec.Names {
+			t := infer.env.GetType2(spec.Type)
+			infer.SetType(name, t)
+			infer.env.Define(name.Name, t)
+		}
+	}
 }
 
 func (infer *FileInferrer) incDecStmt(stmt *goast.IncDecStmt) {
