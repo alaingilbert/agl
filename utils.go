@@ -1,7 +1,7 @@
 package main
 
 import (
-	goast "agl/ast"
+	"agl/ast"
 	"fmt"
 	"iter"
 	"os"
@@ -30,11 +30,11 @@ func p(a ...any) {
 	for _, e := range a {
 		var tmp2 any
 		switch v := e.(type) {
-		case *goast.Ident:
+		case *ast.Ident:
 			tmp2 = fmt.Sprintf("Ident(%v)", v.Name)
-		case *goast.FuncType:
+		case *ast.FuncType:
 			tmp2 = fmt.Sprintf("FuncType(...)")
-		case *goast.CallExpr:
+		case *ast.CallExpr:
 			tmp2 = fmt.Sprintf("CallExpr(%v %v)", v.Fun, v.Args)
 		default:
 			tmp2 = e
