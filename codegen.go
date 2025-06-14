@@ -838,7 +838,11 @@ func genCore() string {
 	return `
 package main
 
-import "cmp"
+import (
+	"cmp"
+	"fmt"
+	"strings"
+)
 
 type AglVoid struct{}
 
