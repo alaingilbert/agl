@@ -288,6 +288,10 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 				before = append(before, before1...)
 				before = append(before, before2...)
 				return before, fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
+			} else if e.Sel.Name == "Sum" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before = append(before, before1...)
+				return before, fmt.Sprintf("AglVecSum(%s)", content1)
 			}
 		}
 	case *goast.Ident:

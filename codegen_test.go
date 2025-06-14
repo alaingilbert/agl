@@ -1314,68 +1314,74 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen46(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := 1 == 1 || 2 == 2 && 3 == 3
-//}
-//`
-//	expected := `func main() {
-//	a := 1 == 1 || 2 == 2 && 3 == 3
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+func TestCodeGen46(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1 == 1 || 2 == 2 && 3 == 3
+}
+`
+	expected := `package main
+func main() {
+	a := 1 == 1 || 2 == 2 && 3 == 3
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen47(t *testing.T) {
+	src := `package main
+func test(v bool) {}
+func main() {
+	test(true)
+	test(1 == 1)
+	test(1 == 1 && 2 == 2)
+	test("a" == "b")
+}
+`
+	expected := `package main
+func test(v bool) {
+}
+func main() {
+	test(true)
+	test(1 == 1)
+	test(1 == 1 && 2 == 2)
+	test("a" == "b")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//	func TestCodeGen48(t *testing.T) {
+//		src := `
 //
-//func TestCodeGen47(t *testing.T) {
-//	src := `
-//fn test(v bool) {}
-//fn main() {
-//	test(true)
-//	test(1 == 1)
-//	test(1 == 1 && 2 == 2)
-//	test("a" == "b")
-//}
-//`
-//	expected := `func test(v bool) {
-//}
-//func main() {
-//	test(true)
-//	test(1 == 1)
-//	test(1 == 1 && 2 == 2)
-//	test("a" == "b")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+// fn test(v bool) {}
 //
-//func TestCodeGen48(t *testing.T) {
-//	src := `
-//fn test(v bool) {}
-//fn main() {
-//	test("a" == 42)
-//}
-//`
-//	tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", testCodeGenFn(src))
-//}
+//	fn main() {
+//		test("a" == 42)
+//	}
 //
-//func TestCodeGen49(t *testing.T) {
-//	src := `
-//fn main() {
-//	a := []u8{1, 2, 3}
-//	s := a.sum()
-//	assert(s == 6)
-//}
-//`
-//	expected := `func main() {
-//	a := []uint8{1, 2, 3}
-//	s := AglVecSum(a)
-//	AglAssert(s == 6, "assert failed 's == 6' line 5")
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+// `
 //
+//		tassert.PanicsWithError(t, "4:7 mismatched types string and UntypedNumType", testCodeGenFn(src))
+//	}
+func TestCodeGen49(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	s := a.Sum()
+	assert(s == 6)
+}
+`
+	expected := `package main
+func main() {
+	a := []uint8{1, 2, 3}
+	s := AglVecSum(a)
+	AglAssert(s == 6, "assert failed line 5")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 ////func TestCodeGen50(t *testing.T) {
 ////	src := `
 ////fn main() {
