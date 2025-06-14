@@ -303,6 +303,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.ellipsis(expr)
 	case *ast.VoidExpr:
 		infer.voidExpr(expr)
+	case *ast.StarExpr:
+		infer.starExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -659,6 +661,11 @@ func (infer *FileInferrer) funcType(expr *ast.FuncType) {
 
 func (infer *FileInferrer) voidExpr(expr *ast.VoidExpr) {
 	infer.SetType(expr, types.VoidType{})
+}
+
+func (infer *FileInferrer) starExpr(expr *ast.StarExpr) {
+	infer.expr(expr.X)
+	infer.SetType(expr, types.StarType{X: infer.env.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {

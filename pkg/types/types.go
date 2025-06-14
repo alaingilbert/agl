@@ -19,7 +19,9 @@ type VoidType struct{}
 func (v VoidType) GoStr() string  { return "AglVoid" }
 func (v VoidType) String() string { return "VoidExpr" }
 
-type StarType struct{}
+type StarType struct {
+	X Type
+}
 
 func (s StarType) GoStr() string  { return "StarType" }
 func (s StarType) String() string { return "StarType" }
