@@ -52,7 +52,7 @@ func (infer *FileInferrer) withEnv(clb func()) {
 func (infer *FileInferrer) GetType(p goast.Node) types.Type {
 	t := infer.env.GetType(p)
 	if t == nil {
-		panic(fmt.Sprintf("type not found for %v %v", p, to(p)))
+		panic(fmt.Sprintf("%s type not found for %v %v", infer.env.fset.Position(p.Pos()), p, to(p)))
 	}
 	return t
 }
@@ -351,40 +351,42 @@ func (infer *FileInferrer) basicLit(expr *goast.BasicLit) {
 func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 	tmpFn := func(idT types.Type, call *goast.SelectorExpr) {
 		if arr, ok := idT.(types.ArrayType); ok {
-			if call.Sel.Name == "Filter" {
+			fnName := call.Sel.Name
+			if fnName == "Filter" {
 				fnT := infer.env.Get("agl.Vec.Filter").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr.Args[0], fnT.Params[1])
 				infer.SetType(expr, fnT.Return)
-			} else if call.Sel.Name == "Map" {
+			} else if fnName == "Map" {
 				fnT := infer.env.Get("agl.Vec.Map").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				p1 := fnT.GetParam(1)
 				infer.SetType(expr.Args[0], p1)
 				infer.SetType(expr, fnT.Return)
-			} else if call.Sel.Name == "Reduce" {
+			} else if fnName == "Reduce" {
 				fnT := infer.env.Get("agl.Vec.Reduce").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr.Args[1], fnT.Params[2])
 				infer.SetType(expr, fnT.Return)
-			} else if call.Sel.Name == "Find" {
+			} else if fnName == "Find" {
 				fnT := infer.env.Get("agl.Vec.Find").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
-			} else if call.Sel.Name == "Sum" {
+			} else if fnName == "Sum" {
 				fnT := infer.env.Get("agl.Vec.Sum").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
-			} else if call.Sel.Name == "Joined" {
+			} else if fnName == "Joined" {
 				fnT := infer.env.Get("agl.Vec.Joined").(types.FuncType)
 				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
+			} else {
+				assertf(false, "method '%s' of type Vec does not exists", fnName)
 			}
 		}
 	}
 
-	p("DSLE1", expr.Fun)
 	switch call := expr.Fun.(type) {
 	case *goast.SelectorExpr:
 		switch id := call.X.(type) {
@@ -393,7 +395,6 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			tmpFn(idT1, call)
 			if l := infer.env.Get(id.Name); l != nil {
 				infer.SetType(id, l)
-				p("DSLE", id, l)
 				if lT, ok := l.(types.StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
 					toReturn := infer.env.Get(name).(types.FuncType).Return
@@ -572,11 +573,9 @@ func (infer *FileInferrer) shortFuncLit(expr *goast.ShortFuncLit) {
 			}
 		}
 		infer.stmt(expr.Body)
-		p("BOD", expr.Body, to(expr.Body))
 		// implicit return
 		if len(expr.Body.List) == 1 && TryCast[*goast.ExprStmt](expr.Body.List[0]) {
 			returnStmt := expr.Body.List[0].(*goast.ExprStmt)
-			p("????", returnStmt.X, to(returnStmt.X), infer.env.GetType(returnStmt.X), infer.env.GetType2(returnStmt.X))
 			if infer.env.GetType(returnStmt.X) != nil {
 				if infer.env.GetType(expr) != nil {
 					ft := infer.env.GetType(expr).(types.FuncType)
@@ -847,7 +846,6 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
 			lhsID := MustCast[*goast.Ident](lhs)
-			p("?", lhs, to(lhs))
 			infer.SetType(lhs, infer.GetType(rhs))
 			assignFn(lhsID.Name, infer.GetType(lhsID))
 		} else {
