@@ -292,6 +292,12 @@ func genCallExpr(env *Env, expr *goast.CallExpr, prefix string) (before []IBefor
 				before1, content1 := genExpr(env, e.X, prefix)
 				before = append(before, before1...)
 				return before, fmt.Sprintf("AglVecSum(%s)", content1)
+			} else if e.Sel.Name == "Joined" {
+				before1, content1 := genExpr(env, e.X, prefix)
+				before2, content2 := genExpr(env, expr.Args[0], prefix)
+				before = append(before, before1...)
+				before = append(before, before2...)
+				return before, fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
 			}
 		}
 	case *goast.Ident:
