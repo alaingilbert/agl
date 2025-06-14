@@ -444,7 +444,7 @@ func genSpec(env *Env, s goast.Spec, prefix string) (before []IBefore, out strin
 	case *goast.TypeSpec:
 		before1, content1 := genExpr(env, spec.Type, prefix)
 		before = append(before, before1...)
-		out += prefix + "type " + spec.Name.Name + " " + content1
+		out += prefix + "type " + spec.Name.Name + " " + content1 + "\n"
 	case *goast.ImportSpec:
 		if spec.Name != nil {
 			out += "import " + spec.Name.Name + "\n"
@@ -460,7 +460,7 @@ func genDecl(env *Env, d goast.Decl, prefix string) (before []IBefore, out strin
 	case *goast.GenDecl:
 		before1, content1 := genGenDecl(env, decl, prefix)
 		before = append(before, before1...)
-		out += content1 + "\n"
+		out += content1
 		return
 	case *goast.FuncDecl:
 		before1, out1 := genFuncDecl(env, decl, prefix)
