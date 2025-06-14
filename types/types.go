@@ -171,7 +171,7 @@ func (i I32Type) String() string { return "int32" }
 
 type UntypedNumType struct{}
 
-func (i UntypedNumType) GoStr() string { return "UntypedNumType" }
+func (i UntypedNumType) GoStr() string { return "int" }
 
 func (i UntypedNumType) String() string { return "UntypedNumType" }
 
