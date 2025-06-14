@@ -350,24 +350,25 @@ func (g *Generator) genBubbleResultExpr(expr *goast.BubbleResultExpr) (out strin
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
 		if exprXT.ConvertToNone {
-			before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsErr() {
-	return MakeOptionNone[`+exprXT.ToNoneType.GoStr()+`]()
-}
-`, g.prefix))
+			tmpl := "res := %s\nif res.IsErr() {\n\treturn MakeOptionNone[%s]()\n}\n"
+			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStr()), g.prefix))
 			g.before = append(g.before, before2)
 			out += "res.Unwrap()"
 		} else {
-			before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsErr() {
-	return res
-}
-`, g.prefix))
+			tmpl := "res := %s\nif res.IsErr() {\n\treturn res\n}\n"
+			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
 			g.before = append(g.before, before2)
 			out += "res.Unwrap()"
 		}
 	} else {
-		if exprXT.Native {
+		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
+			content1 := g.genExpr(expr.X)
+			tmpl := "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
+			g.before = append(g.before, before)
+			out := `AglNoop[struct{}]()`
+			return out
+		} else if exprXT.Native {
 			content1 := g.genExpr(expr.X)
 			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))

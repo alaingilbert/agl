@@ -98,6 +98,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))
+	env.Define("os.WriteFile", parseFuncTypeFromStringNative("WriteFile", "func(name string, data []byte, perm os.FileMode) !", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromString("Itoa", "func(int) string", env))
 	env.Define("agl.Vec.Filter", parseFuncTypeFromString("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
 	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))

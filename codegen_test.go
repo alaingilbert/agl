@@ -1936,31 +1936,31 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen61(t *testing.T) {
-//	src := `
-//package main
-//
-//import "os"
-//import "fmt"
-//
-//fn main() {
-//	os.WriteFile("test.txt", []byte("test"), 0755)!
-//}
-//`
-//	expected := `package main
-//import "os"
-//import "fmt"
-//func main() {
-//	err := os.WriteFile("test.txt", []byte("test"), 0755)
-//	if err != nil {
-//		panic(err)
-//	}
-//	AglNoop[struct{}]()
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen61(t *testing.T) {
+	src := `
+package main
+
+import "os"
+import "fmt"
+
+func main() {
+	os.WriteFile("test.txt", []byte("test"), 0755)!
+}
+`
+	expected := `package main
+import "os"
+import "fmt"
+func main() {
+	err := os.WriteFile("test.txt", []byte("test"), 0755)
+	if err != nil {
+		panic(err)
+	}
+	AglNoop[struct{}]()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen62(t *testing.T) {
 //	src := `
 //fn maybeInt() int? { return Some(42) }
