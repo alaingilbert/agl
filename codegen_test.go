@@ -2527,7 +2527,8 @@ type Pos struct {
 	expected := `package main
 type Pos struct {
 	Row, Col int
-}`
+}
+`
 	testCodeGen(t, src, expected)
 }
 
