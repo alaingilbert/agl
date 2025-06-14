@@ -1016,9 +1016,9 @@ type AglTupleStruct1 struct {
 }
 func main() {
 	res := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
-	AglAssert(res.Arg0 == 1, "assert failed 'res.0 == 1' line 4")
-	AglAssert(res.Arg1 == "hello", "assert failed 'res.1 == "hello"' line 5")
-	AglAssert(res.Arg2 == true, "assert failed 'res.2 == true' line 6")
+	AglAssert(res.Arg0 == 1, "assert failed line 4")
+	AglAssert(res.Arg1 == "hello", "assert failed line 5")
+	AglAssert(res.Arg2 == true, "assert failed line 6")
 }
 `
 	testCodeGen(t, src, expected)

@@ -103,6 +103,8 @@ func genIdent(env *Env, expr *goast.Ident, prefix string) (before []IBefore, out
 	}
 	t := env.GetType(expr)
 	switch typ := t.(type) {
+	case types.BoolType:
+		return nil, Ternary(typ.V, "true", "false")
 	case types.OkType:
 		return nil, "MakeResultOk"
 	case types.ErrType:
