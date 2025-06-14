@@ -11,7 +11,7 @@
 package ast
 
 import (
-	"agl/token"
+	"agl/pkg/token"
 	"fmt"
 	"strings"
 )

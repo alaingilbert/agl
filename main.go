@@ -1,9 +1,10 @@
 package main
 
 import (
-	"agl/ast"
-	parser1 "agl/parser"
-	"agl/token"
+	"agl/pkg/agl"
+	"agl/pkg/ast"
+	parser1 "agl/pkg/parser"
+	"agl/pkg/token"
 	"context"
 	"errors"
 	"fmt"
@@ -17,22 +18,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-type AglError struct {
-	msg string
-}
-
-func (e *AglError) Error() string {
-	return e.msg
-}
-
-func NewAglError(msg string) *AglError {
-	return &AglError{msg: msg}
-}
-
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			var aglErr *AglError
+			var aglErr *agl.AglError
 			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
 				msg := aglErr.Error()
 				if msg == "" {
@@ -84,7 +73,7 @@ func spawnGoRunFromBytes(source []byte) error {
 	}
 
 	coreFile := filepath.Join(tmpDir, "core.go")
-	err = os.WriteFile(coreFile, []byte(genCore()), 0644)
+	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
 	if err != nil {
 		return err
 	}
@@ -111,9 +100,9 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := NewInferrer(fset)
+	i := agl.NewInferrer(fset)
 	i.InferFile(f)
-	src := NewGenerator(i.env, f).Generate()
+	src := agl.NewGenerator(i.Env, f).Generate()
 	_ = spawnGoRunFromBytes([]byte(src))
 	return nil
 }
@@ -133,9 +122,9 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := NewInferrer(fset)
+	i := agl.NewInferrer(fset)
 	i.InferFile(f)
-	src := NewGenerator(i.env, f).Generate()
+	src := agl.NewGenerator(i.Env, f).Generate()
 	if err := os.WriteFile(strings.Replace(fileName, ".agl", ".go", 1), []byte(src), 0644); err != nil {
 		return err
 	}
@@ -160,9 +149,9 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := NewInferrer(fset)
+	i := agl.NewInferrer(fset)
 	i.InferFile(f)
-	g := NewGenerator(i.env, f)
+	g := agl.NewGenerator(i.Env, f)
 	fmt.Println(g.Generate())
 	return nil
 }

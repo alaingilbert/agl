@@ -5,8 +5,8 @@
 package parser
 
 import (
-	"agl/ast"
-	"agl/token"
+	"agl/pkg/ast"
+	"agl/pkg/token"
 	"fmt"
 	"strings"
 )

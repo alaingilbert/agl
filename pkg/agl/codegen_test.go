@@ -1,15 +1,27 @@
-package main
+package agl
 
 import (
+	"agl/pkg/ast"
+	parser1 "agl/pkg/parser"
+	"agl/pkg/token"
 	"testing"
 	//tassert "github.com/stretchr/testify/assert"
 )
+
+func parser2(src string) (*token.FileSet, *ast.File) {
+	var fset = token.NewFileSet()
+	f, err := parser1.ParseFile(fset, "", src, 0)
+	if err != nil {
+		panic(err)
+	}
+	return fset, f
+}
 
 func testCodeGen(t *testing.T, src, expected string) {
 	fset, f := parser2(src)
 	i := NewInferrer(fset)
 	i.InferFile(f)
-	got := NewGenerator(i.env, f).Generate()
+	got := NewGenerator(i.Env, f).Generate()
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
 	}
