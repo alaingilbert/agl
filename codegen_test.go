@@ -1962,10 +1962,10 @@ func main() {
 }
 
 //func TestCodeGen62(t *testing.T) {
-//	src := `
-//fn maybeInt() int? { return Some(42) }
-//fn getInt() int! { return Ok(42) }
-//fn main() {
+//	src := `package main
+//func maybeInt() int? { return Some(42) }
+//func getInt() int! { return Ok(42) }
+//func main() {
 //	if Some(a) := maybeInt() {
 //	}
 //	if Ok(a) := getInt() {
@@ -1974,7 +1974,8 @@ func main() {
 //	}
 //}
 //`
-//	expected := `func maybeInt() Option[int] {
+//	expected := `package main
+//func maybeInt() Option[int] {
 //	return MakeOptionSome(42)
 //}
 //func getInt() Result[int] {
@@ -1994,73 +1995,84 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
+
+//	func TestCodeGen63(t *testing.T) {
+//		src1 := `
 //
-//func TestCodeGen63(t *testing.T) {
-//	src1 := `
-//fn maybeInt() int? { return Some(42) }
-//fn main() {
-//	if Some(a) := maybeInt() {
-//	}
-//	fmt.Println(a)
-//}
-//`
-//	tassert.PanicsWithError(t, "6:14: undefined identifier a", testCodeGenFn(src1))
-//	src2 := `
-//fn maybeInt() int? { return Some(42) }
-//fn main() {
-//	if Some(a) := maybeInt() {
+// fn maybeInt() int? { return Some(42) }
+//
+//	fn main() {
+//		if Some(a) := maybeInt() {
+//		}
 //		fmt.Println(a)
 //	}
-//}
-//`
-//	tassert.NotPanics(t, testCodeGenFn(src2))
-//}
 //
-//func TestCodeGen_FunctionImplicitReturn(t *testing.T) {
-//	src := `
-//fn maybeInt() int? { Some(42) }
-//fn main() {
-//	maybeInt()
-//}
-//`
-//	expected := `func maybeInt() Option[int] {
-//	return MakeOptionSome(42)
-//}
-//func main() {
-//	maybeInt()
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+// `
 //
-//func TestCodeGen64(t *testing.T) {
-//	src := `
-//type Writer interface {
-//	fn write(p []byte) int!
-//}
-//`
-//	expected := `type Writer interface {
-//	write([]byte) Result[int]
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+//	tassert.PanicsWithError(t, "6:14: undefined identifier a", testCodeGenFn(src1))
+//	src2 := `
 //
-//func TestCodeGen65(t *testing.T) {
-//	src := `
-//type Writer interface {
-//	fn write(p []byte) int!
-//	fn another() bool
-//}
-//`
-//	expected := `type Writer interface {
-//	write([]byte) Result[int]
-//	another() bool
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+// fn maybeInt() int? { return Some(42) }
 //
+//	fn main() {
+//		if Some(a) := maybeInt() {
+//			fmt.Println(a)
+//		}
+//	}
+//
+// `
+//
+//		tassert.NotPanics(t, testCodeGenFn(src2))
+//	}
+
+func TestCodeGen_FunctionImplicitReturn(t *testing.T) {
+	src := `package main
+func maybeInt() int? { Some(42) }
+func main() {
+	maybeInt()
+}
+`
+	expected := `package main
+func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	maybeInt()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen64(t *testing.T) {
+	src := `package main
+type Writer interface {
+	write(p []byte) int!
+}
+`
+	expected := `package main
+type Writer interface {
+	write(p []byte) Result[int]
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen65(t *testing.T) {
+	src := `package main
+type Writer interface {
+	write(p []byte) int!
+	another() bool
+}
+`
+	expected := `package main
+type Writer interface {
+	write(p []byte) Result[int]
+	another() bool
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_ValueSpec1(t *testing.T) {
 //	src := `
 //fn main() {
