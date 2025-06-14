@@ -16,8 +16,8 @@ type BaseType struct {
 
 type VoidType struct{}
 
-func (v VoidType) GoStr() string  { return "" }
-func (v VoidType) String() string { return "" }
+func (v VoidType) GoStr() string  { return "AglVoid" }
+func (v VoidType) String() string { return "VoidExpr" }
 
 type ResultType struct {
 	W      Type

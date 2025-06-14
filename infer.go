@@ -283,6 +283,8 @@ func (infer *FileInferrer) expr(e goast.Expr) {
 		infer.tupleExpr(expr)
 	case *goast.Ellipsis:
 		infer.ellipsis(expr)
+	case *goast.VoidExpr:
+		infer.voidExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -609,6 +611,10 @@ func (infer *FileInferrer) funcType(expr *goast.FuncType) {
 		Return: infer.env.GetType(expr.Result),
 	}
 	infer.SetType(expr, ft)
+}
+
+func (infer *FileInferrer) voidExpr(expr *goast.VoidExpr) {
+	infer.SetType(expr, types.VoidType{})
 }
 
 func (infer *FileInferrer) ellipsis(expr *goast.Ellipsis) {
