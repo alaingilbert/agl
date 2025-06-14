@@ -1,7 +1,7 @@
-package main
+package agl
 
 import (
-	"agl/ast"
+	"agl/pkg/ast"
 	"fmt"
 	"iter"
 	"os"
@@ -62,6 +62,18 @@ func assertf(pred bool, format string, a ...any) {
 		}
 		panic(NewAglError(m))
 	}
+}
+
+type AglError struct {
+	msg string
+}
+
+func (e *AglError) Error() string {
+	return e.msg
+}
+
+func NewAglError(msg string) *AglError {
+	return &AglError{msg: msg}
 }
 
 func to(v any) reflect.Type {

@@ -1,9 +1,9 @@
-package main
+package agl
 
 import (
-	"agl/ast"
-	"agl/token"
-	"agl/types"
+	"agl/pkg/ast"
+	"agl/pkg/token"
+	"agl/pkg/types"
 	"fmt"
 	"strings"
 )
@@ -834,7 +834,7 @@ func addPrefix(s, prefix string) string {
 	return strings.Join(newArr, "\n")
 }
 
-func genCore() string {
+func GenCore() string {
 	return `
 package main
 

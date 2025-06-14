@@ -7,7 +7,7 @@
 package ast
 
 import (
-	"agl/token"
+	"agl/pkg/token"
 	"fmt"
 	"io"
 	"os"

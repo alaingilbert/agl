@@ -1,10 +1,10 @@
-package main
+package agl
 
 import (
-	"agl/ast"
-	"agl/parser"
-	"agl/token"
-	"agl/types"
+	"agl/pkg/ast"
+	"agl/pkg/parser"
+	"agl/pkg/token"
+	"agl/pkg/types"
 	"fmt"
 	"maps"
 	"reflect"
@@ -92,9 +92,9 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("byte", types.ByteType{})
 	env.Define("cmp.Ordered", types.AnyType{})
 	env.Define("assert", parseFuncTypeFromString("assert", "func (pred bool, msg ...string)", env))
-	//env.Define("Some", parseFuncTypeFromString("Some", "func[T, U any](T) U", env))
-	//env.Define("Ok", parseFuncTypeFromString("Ok", "func[T any](T)", env))
-	//env.Define("Err", parseFuncTypeFromString("Err", "func[T any](T)", env))
+	//Env.Define("Some", parseFuncTypeFromString("Some", "func[T, U any](T) U", Env))
+	//Env.Define("Ok", parseFuncTypeFromString("Ok", "func[T any](T)", Env))
+	//Env.Define("Err", parseFuncTypeFromString("Err", "func[T any](T)", Env))
 	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))

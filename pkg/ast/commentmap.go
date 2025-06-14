@@ -5,7 +5,7 @@
 package ast
 
 import (
-	"agl/token"
+	"agl/pkg/token"
 	"bytes"
 	"cmp"
 	"fmt"

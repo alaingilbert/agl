@@ -1,4 +1,4 @@
-package main
+package agl
 
 //func TestInfer1(t *testing.T) {
 //	src := `

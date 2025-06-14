@@ -25,10 +25,10 @@
 package parser
 
 import (
-	"agl/ast"
+	"agl/pkg/ast"
 	//"agl/build/constraint"
-	"agl/scanner"
-	"agl/token"
+	"agl/pkg/scanner"
+	"agl/pkg/token"
 	"fmt"
 	"strings"
 )

@@ -7,8 +7,8 @@
 package ast
 
 import (
-	"agl/scanner"
-	"agl/token"
+	"agl/pkg/scanner"
+	"agl/pkg/token"
 	"fmt"
 	"strconv"
 )

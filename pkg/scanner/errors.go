@@ -5,7 +5,7 @@
 package scanner
 
 import (
-	"agl/token"
+	"agl/pkg/token"
 	"fmt"
 	"io"
 	"sort"

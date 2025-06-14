@@ -1,24 +1,24 @@
-package main
+package agl
 
 import (
-	"agl/ast"
-	"agl/token"
-	"agl/types"
+	"agl/pkg/ast"
+	"agl/pkg/token"
+	"agl/pkg/types"
 	"fmt"
 	"strconv"
 )
 
 type Inferrer struct {
 	fset *token.FileSet
-	env  *Env
+	Env  *Env
 }
 
 func NewInferrer(fset *token.FileSet) *Inferrer {
-	return &Inferrer{fset: fset, env: NewEnv(fset)}
+	return &Inferrer{fset: fset, Env: NewEnv(fset)}
 }
 
 func (infer *Inferrer) InferFile(f *ast.File) {
-	fileInferrer := &FileInferrer{env: infer.env, f: f, fset: infer.fset}
+	fileInferrer := &FileInferrer{env: infer.Env, f: f, fset: infer.fset}
 	fileInferrer.Infer()
 }
 

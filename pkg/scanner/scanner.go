@@ -8,7 +8,7 @@
 package scanner
 
 import (
-	"agl/token"
+	"agl/pkg/token"
 	"bytes"
 	"fmt"
 	"path/filepath"
