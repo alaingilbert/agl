@@ -469,6 +469,7 @@ func (g *Generator) genDecl(d goast.Decl) (out string) {
 		for _, b := range g.before {
 			out += b.Content()
 		}
+		clear(g.before)
 		out += out1 + "\n"
 		return
 	default:
