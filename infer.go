@@ -616,11 +616,20 @@ func (infer *FileInferrer) ellipsis(expr *goast.Ellipsis) {
 
 func (infer *FileInferrer) tupleExpr(expr *goast.TupleExpr) {
 	infer.exprs(expr.Values)
-	var elts []types.Type
-	for _, v := range expr.Values {
-		elts = append(elts, infer.GetType(v))
+	if infer.optType != nil {
+		expected := infer.optType.(types.TupleType).Elts
+		for i, x := range expr.Values {
+			if _, ok := infer.GetType(x).(types.UntypedNumType); ok {
+				infer.SetType(x, expected[i])
+			}
+		}
+	} else {
+		var elts []types.Type
+		for _, v := range expr.Values {
+			elts = append(elts, infer.GetType(v))
+		}
+		infer.SetType(expr, types.TupleType{Name: "AglTupleStruct1", Elts: elts})
 	}
-	infer.SetType(expr, types.TupleType{Name: "AglTupleStruct1", Elts: elts})
 }
 
 func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
@@ -874,7 +883,10 @@ func (infer *FileInferrer) exprStmt(stmt *goast.ExprStmt) {
 }
 
 func (infer *FileInferrer) returnStmt(stmt *goast.ReturnStmt) {
+	infer.optType = infer.returnType
 	infer.expr(stmt.Result)
+	infer.optType = nil
+
 }
 
 func (infer *FileInferrer) blockStmt(stmt *goast.BlockStmt) {
