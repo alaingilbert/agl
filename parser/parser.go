@@ -785,14 +785,14 @@ func (p *parser) parseEnumType() *ast.EnumType {
 	pos := p.expect(token.ENUM)
 	lbrace := p.expect(token.LBRACE)
 
-	var list []*ast.Field
+	var list []*ast.EnumValue
 
 parseElements:
 	for {
 		switch {
 		case p.tok == token.IDENT:
 			f := p.parseEnumValueSpec()
-			f.Comment = p.expectSemi()
+			p.expectSemi()
 			list = append(list, f)
 		default:
 			break parseElements
@@ -802,7 +802,7 @@ parseElements:
 	rbrace := p.expect(token.RBRACE)
 	return &ast.EnumType{
 		Enum:   pos,
-		Values: &ast.FieldList{Opening: lbrace, List: list, Closing: rbrace},
+		Values: &ast.EnumValueList{Lbrace: lbrace, List: list, Rbrace: rbrace},
 	}
 }
 
@@ -1196,19 +1196,15 @@ func (p *parser) parseFuncType() *ast.FuncType {
 	return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Result: result}
 }
 
-func (p *parser) parseEnumValueSpec() *ast.Field {
-	doc := p.leadComment
-	var idents []*ast.Ident
-	var typ ast.Expr
+func (p *parser) parseEnumValueSpec() *ast.EnumValue {
 	ident := p.parseIdent()
+	var params *ast.FieldList
 	switch {
 	case p.tok == token.LPAREN:
-		params := p.parseParameters(false)
-		idents = []*ast.Ident{ident}
-		typ = &ast.EnumValue{Params: params}
+		params = p.parseParameters(false)
 	default:
 	}
-	return &ast.Field{Doc: doc, Names: idents, Type: typ}
+	return &ast.EnumValue{Name: ident, Params: params}
 }
 
 func (p *parser) parseMethodSpec() *ast.Field {
