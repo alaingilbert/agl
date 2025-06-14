@@ -1127,7 +1127,8 @@ type Person struct {
 	nicknames Option[([]string)]
 	testArray []string
 	testArrayOfOpt []Option[string]
-}`
+}
+`
 	testCodeGen(t, src, expected)
 }
 
