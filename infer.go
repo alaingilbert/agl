@@ -107,7 +107,20 @@ func (infer *FileInferrer) typeSpec(spec *goast.TypeSpec) {
 		infer.structType(spec.Name, t)
 	case *goast.EnumType:
 		infer.enumType(spec.Name, t)
+	case *goast.InterfaceType:
+		infer.interfaceType(spec.Name, t)
 	}
+}
+
+func (infer *FileInferrer) interfaceType(name *goast.Ident, e *goast.InterfaceType) {
+	if e.Methods.List != nil {
+		for _, f := range e.Methods.List {
+			for _, n := range f.Names {
+				noop(n)
+			}
+		}
+	}
+	infer.env.Define(name.Name, types.InterfaceType{Name: name.Name})
 }
 
 func (infer *FileInferrer) enumType(name *goast.Ident, e *goast.EnumType) {
