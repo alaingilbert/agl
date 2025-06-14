@@ -132,7 +132,6 @@ func (b BubbleOptionType) String() string { return "BubbleOptionType" }
 type BubbleResultType struct {
 	Elt    Type
 	Bubble bool
-	Native bool
 }
 
 func (r BubbleResultType) GoStr() string { return "BubbleResultType" }
@@ -188,6 +187,7 @@ func (t TupleType) String() string {
 
 type FuncType struct {
 	Name       string
+	Recv       Type
 	TypeParams []Type
 	Params     []Type
 	Return     Type

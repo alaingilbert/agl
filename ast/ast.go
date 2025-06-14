@@ -12,6 +12,7 @@ package ast
 
 import (
 	"agl/token"
+	"fmt"
 	"strings"
 )
 
@@ -486,6 +487,8 @@ func (b BubbleResultExpr) End() token.Pos {
 }
 
 func (b BubbleResultExpr) exprNode() {}
+
+func (b BubbleResultExpr) String() string { return fmt.Sprintf("BubbleResultExpr(%v)", b.X) }
 
 func (b BubbleOptionExpr) Pos() token.Pos {
 	return b.X.Pos()
