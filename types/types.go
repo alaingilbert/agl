@@ -42,7 +42,18 @@ type StringType struct{ W Type }
 func (s StringType) GoStr() string  { return "string" }
 func (s StringType) String() string { return "string" }
 
-type BoolType struct{ V bool }
+type BoolValue struct{ V bool }
+
+func (b BoolValue) GoStr() string {
+	if b.V {
+		return "true"
+	} else {
+		return "false"
+	}
+}
+func (b BoolValue) String() string { return "BoolValue" }
+
+type BoolType struct{}
 
 func (b BoolType) GoStr() string  { return "bool" }
 func (b BoolType) String() string { return "bool" }

@@ -944,6 +944,9 @@ func (infer *FileInferrer) identExpr(expr *goast.Ident) types.Type {
 	}
 	v := infer.env.Get(expr.Name)
 	assertf(v != nil, "%s: undefined identifier %s", infer.fset.Position(expr.Pos()), expr.Name)
+	if expr.Name == "true" || expr.Name == "false" {
+		return types.BoolType{}
+	}
 	return v
 }
 
