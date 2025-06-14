@@ -596,6 +596,11 @@ func (infer *FileInferrer) funcLit(expr *goast.FuncLit) {
 		infer.SetType(expr, infer.optType)
 	}
 	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
+	// implicit return
+	if len(expr.Body.List) == 1 && TryCast[*goast.ExprStmt](expr.Body.List[0]) {
+		returnStmt := expr.Body.List[0].(*goast.ExprStmt)
+		expr.Body.List = []goast.Stmt{&goast.ReturnStmt{Result: returnStmt.X}}
+	}
 	infer.SetType(expr, ft)
 }
 
