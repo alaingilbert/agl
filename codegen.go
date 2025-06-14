@@ -113,6 +113,8 @@ func (g *Generator) genExpr(e goast.Expr) (out string) {
 		return g.genEllipsis(expr)
 	case *goast.InterfaceType:
 		return g.genInterfaceType(expr)
+	case *goast.TypeAssertExpr:
+		return g.genTypeAssertExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -221,6 +223,12 @@ func (g *Generator) genEnumType(enumName string, expr *goast.EnumType) string {
 			enumName, field.Name.Name, strings.Join(tmp, ", "), enumName, enumName, enumName, field.Name.Name, tmp1Out)
 	}
 	return out
+}
+
+func (g *Generator) genTypeAssertExpr(expr *goast.TypeAssertExpr) string {
+	content1 := g.genExpr(expr.Type)
+	content2 := g.genExpr(expr.X)
+	return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
 }
 
 func (g *Generator) genInterfaceType(expr *goast.InterfaceType) string {

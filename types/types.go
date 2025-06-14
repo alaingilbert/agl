@@ -135,6 +135,14 @@ func (t StructType) GoStr() string { return t.Name }
 
 func (t StructType) String() string { return "StructType" }
 
+type InterfaceType struct {
+	Name string
+}
+
+func (i InterfaceType) GoStr() string { return i.Name }
+
+func (i InterfaceType) String() string { return "InterfaceType" }
+
 type EnumType struct {
 	Name   string
 	Fields []FieldType
