@@ -103,6 +103,12 @@ func (e EllipsisType) GoStr() string { return "..." }
 
 func (e EllipsisType) String() string { return "..." }
 
+type StructType struct{ Name string }
+
+func (t StructType) GoStr() string { return t.Name }
+
+func (t StructType) String() string { return "StructType" }
+
 type GenericType struct {
 	W    Type
 	Name string

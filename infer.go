@@ -95,6 +95,8 @@ func (infer *FileInferrer) Infer() {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
 			infer.funcDecl(decl)
+		case *goast.GenDecl:
+			infer.genDecl(decl)
 		}
 	}
 	for _, d := range infer.f.Decls {
@@ -103,6 +105,26 @@ func (infer *FileInferrer) Infer() {
 			infer.funcDecl2(decl)
 		}
 	}
+}
+
+func (infer *FileInferrer) genDecl(decl *goast.GenDecl) {
+	for _, s := range decl.Specs {
+		switch spec := s.(type) {
+		case *goast.TypeSpec:
+			infer.typeSpec(spec)
+		}
+	}
+}
+
+func (infer *FileInferrer) typeSpec(spec *goast.TypeSpec) {
+	switch t := spec.Type.(type) {
+	case *goast.StructType:
+		infer.structType(spec.Name, t)
+	}
+}
+
+func (infer *FileInferrer) structType(name *goast.Ident, s *goast.StructType) {
+	infer.env.Define(name.Name, types.StructType{Name: name.Name})
 }
 
 func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
@@ -685,6 +707,7 @@ func (infer *FileInferrer) compositeLit(expr *goast.CompositeLit) {
 		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(arr.Elt)})
 		return
 	}
+	p("?", expr.Type, to(expr.Type))
 	infer.SetType(expr, infer.env.Get(expr.Type.(*goast.Ident).Name))
 }
 
