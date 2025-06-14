@@ -231,9 +231,16 @@ func (g *Generator) genTypeAssertExpr(expr *goast.TypeAssertExpr) string {
 	return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
 }
 
-func (g *Generator) genInterfaceType(expr *goast.InterfaceType) string {
-	// methods := expr.Methods
-	return "interface {\n}"
+func (g *Generator) genInterfaceType(expr *goast.InterfaceType) (out string) {
+	out += "interface {\n"
+	if expr.Methods != nil {
+		for _, m := range expr.Methods.List {
+			content1 := g.genExpr(m.Type)
+			out += g.prefix + "\t" + m.Names[0].Name + strings.TrimPrefix(content1, "func") + "\n"
+		}
+	}
+	out += "}"
+	return
 }
 
 func (g *Generator) genEllipsis(expr *goast.Ellipsis) string {
