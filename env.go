@@ -130,6 +130,10 @@ func (e *Env) Get(name string) types.Type {
 	return e.lookupTable[name]
 }
 
+func (e *Env) GetFn(name string) types.FuncType {
+	return e.Get(name).(types.FuncType)
+}
+
 func (e *Env) Define(name string, typ types.Type) {
 	//p("Define", name, typ)
 	//printCallers(3)

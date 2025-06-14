@@ -243,6 +243,10 @@ func (f FuncType) GetParam(i int) Type {
 	return nil
 }
 
+func (f FuncType) T(name string, typ Type) FuncType {
+	return f.ReplaceGenericParameter(name, typ)
+}
+
 func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	ff := f
 	newParams := make([]Type, 0)
