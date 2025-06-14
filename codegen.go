@@ -381,20 +381,18 @@ func (g *Generator) genExprs(e []goast.Expr) (out string) {
 func (g *Generator) genStmts(s []goast.Stmt) (out string) {
 	for _, stmt := range s {
 		content1 := g.genStmt(stmt)
-
-		for _, b := range g.before {
-			if v, ok := b.(*BeforeStmt); ok {
-				out += v.Content()
-			}
-		}
+		var beforeStmtStr string
 		newBefore := make([]IBefore, 0)
 		for _, b := range g.before {
-			if v, ok := b.(*BeforeFn); ok {
+			switch v := b.(type) {
+			case *BeforeStmt:
+				beforeStmtStr += v.Content()
+			case *BeforeFn:
 				newBefore = append(newBefore, v)
 			}
 		}
 		g.before = newBefore
-		out += content1
+		out += beforeStmtStr + content1
 	}
 	return out
 }
