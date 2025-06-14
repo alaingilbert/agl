@@ -231,7 +231,7 @@ func genBubbleOptionExpr(env *Env, expr *goast.BubbleOptionExpr, prefix string) 
 
 func genBubbleResultExpr(env *Env, expr *goast.BubbleResultExpr, prefix string) (before []IBefore, out string) {
 	exprXT := MustCast[types.ResultType](env.GetType(expr.X))
-	if true {
+	if exprXT.Bubble {
 		before1, content1 := genExpr(env, expr.X, prefix)
 		before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
 if res.IsErr() {
