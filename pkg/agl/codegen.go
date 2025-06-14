@@ -117,6 +117,10 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genInterfaceType(expr)
 	case *ast.TypeAssertExpr:
 		return g.genTypeAssertExpr(expr)
+	case *ast.StarExpr:
+		return g.genStarExpr(expr)
+	case *ast.MapType:
+		return g.genMapType(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -231,6 +235,17 @@ func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) string {
 	content1 := g.genExpr(expr.Type)
 	content2 := g.genExpr(expr.X)
 	return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
+}
+
+func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
+	content1 := g.genExpr(expr.X)
+	return fmt.Sprintf("*%s", content1)
+}
+
+func (g *Generator) genMapType(expr *ast.MapType) string {
+	content1 := g.genExpr(expr.Key)
+	content2 := g.genExpr(expr.Value)
+	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
 
 func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
