@@ -169,7 +169,6 @@ func (infer *FileInferrer) funcDecl2(decl *goast.FuncDecl) {
 			infer.SetType(decl.Type.Result, returnTyp)
 		}
 		infer.returnType = returnTyp
-
 		if decl.Body != nil {
 			// implicit return
 			if len(decl.Body.List) == 1 && decl.Type.Result != nil && TryCast[*goast.ExprStmt](decl.Body.List[0]) {
@@ -177,6 +176,7 @@ func (infer *FileInferrer) funcDecl2(decl *goast.FuncDecl) {
 			}
 			infer.stmt(decl.Body)
 		}
+		infer.returnType = nil
 	})
 }
 
