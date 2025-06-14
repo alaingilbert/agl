@@ -353,32 +353,26 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		if arr, ok := idT.(types.ArrayType); ok {
 			fnName := call.Sel.Name
 			if fnName == "Filter" {
-				fnT := infer.env.Get("agl.Vec.Filter").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				fnT := infer.env.GetFn("agl.Vec.Filter").T("T", arr.Elt)
 				infer.SetType(expr.Args[0], fnT.Params[1])
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Map" {
-				fnT := infer.env.Get("agl.Vec.Map").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
-				p1 := fnT.GetParam(1)
-				infer.SetType(expr.Args[0], p1)
+				fnT := infer.env.GetFn("agl.Vec.Map").T("T", arr.Elt)
+				infer.SetType(expr.Args[0], fnT.GetParam(1))
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Reduce" {
-				fnT := infer.env.Get("agl.Vec.Reduce").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("R", infer.env.GetType2(expr.Args[0]))
-				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				r := infer.env.GetType2(expr.Args[0])
+				fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", arr.Elt).T("R", r)
 				infer.SetType(expr.Args[1], fnT.Params[2])
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Find" {
-				fnT := infer.env.Get("agl.Vec.Find").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				fnT := infer.env.GetFn("agl.Vec.Find").T("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Sum" {
-				fnT := infer.env.Get("agl.Vec.Sum").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				fnT := infer.env.GetFn("agl.Vec.Sum").T("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Joined" {
-				fnT := infer.env.Get("agl.Vec.Joined").(types.FuncType)
+				fnT := infer.env.GetFn("agl.Vec.Joined")
 				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
 			} else {
@@ -500,61 +494,67 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 }
 
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.SelectorExpr, expr *goast.CallExpr) {
-	if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Filter" {
-		ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
-		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
-		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
-			infer.SetTypeForce(expr.Args[0], ft)
-		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		}
-		infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
+	if idTArr, ok := idT.(types.ArrayType); ok {
+		exprPos := infer.fset.Position(expr.Pos())
+		if exprT.Sel.Name == "Filter" {
+			ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
+			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			exprArg0 := expr.Args[0]
+			if _, ok := exprArg0.(*goast.ShortFuncLit); ok {
+				infer.SetTypeForce(exprArg0, ft)
+			} else if _, ok := exprArg0.(*goast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", exprArg0.(*goast.FuncType), infer.env, false)
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			}
+			infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
 
-	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Map" {
-		ft := infer.env.Get("agl.Vec.Map").(types.FuncType).GetParam(1).(types.FuncType)
-		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
-		if arg0, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
-			infer.SetTypeForce(arg0, ft)
-			infer.expr(arg0)
-			infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(arg0).(types.FuncType).Return})
-		} else if arg0, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", arg0, infer.env, false)
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
+		} else if exprT.Sel.Name == "Map" {
+			ft := infer.env.Get("agl.Vec.Map").(types.FuncType).GetParam(1).(types.FuncType)
+			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			exprArg0 := expr.Args[0]
+			if arg0, ok := exprArg0.(*goast.ShortFuncLit); ok {
+				infer.SetTypeForce(arg0, ft)
+				infer.expr(arg0)
+				infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(arg0).(types.FuncType).Return})
+			} else if arg0, ok := exprArg0.(*goast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			}
+		} else if exprT.Sel.Name == "Reduce" {
+			exprArg0 := expr.Args[0]
+			infer.expr(exprArg0)
+			elTyp := idTArr.Elt
+			ft := infer.env.Get("agl.Vec.Reduce").(types.FuncType).GetParam(2).(types.FuncType)
+			ft = ft.ReplaceGenericParameter("T", elTyp)
+			if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
+				ft = ft.ReplaceGenericParameter("R", elTyp)
+			}
+			if _, ok := expr.Args[1].(*goast.ShortFuncLit); ok {
+				infer.SetTypeForce(expr.Args[1], ft)
+			} else if _, ok := exprArg0.(*goast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", exprArg0.(*goast.FuncType), infer.env, false)
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			}
+		} else if exprT.Sel.Name == "Find" {
+			ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType)
+			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			exprArg0 := expr.Args[0]
+			if _, ok := exprArg0.(*goast.ShortFuncLit); ok {
+				infer.SetTypeForce(exprArg0, ft)
+			} else if _, ok := exprArg0.(*goast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", exprArg0.(*goast.FuncType), infer.env, false)
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			}
+			infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
 		}
-	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Reduce" {
-		arg0 := expr.Args[0]
-		infer.expr(arg0)
-		elTyp := idT.(types.ArrayType).Elt
-		ft := infer.env.Get("agl.Vec.Reduce").(types.FuncType).GetParam(2).(types.FuncType)
-		ft = ft.ReplaceGenericParameter("T", elTyp)
-		if _, ok := infer.GetType(arg0).(types.UntypedNumType); ok {
-			ft = ft.ReplaceGenericParameter("R", elTyp)
-		}
-		if _, ok := expr.Args[1].(*goast.ShortFuncLit); ok {
-			infer.SetTypeForce(expr.Args[1], ft)
-		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		}
-	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Find" {
-		ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType)
-		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
-		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
-			infer.SetTypeForce(expr.Args[0], ft)
-		} else if _, ok := expr.Args[0].(*goast.FuncType); ok {
-			ftReal := funcTypeToFuncType("", expr.Args[0].(*goast.FuncType), infer.env, false)
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		} else if ftReal, ok := infer.env.GetType(expr.Args[0]).(types.FuncType); ok {
-			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
-		}
-		infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
 	}
 }
 
