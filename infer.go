@@ -367,6 +367,10 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				fnT := infer.env.Get("agl.Vec.Sum").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
+			} else if call.Sel.Name == "Joined" {
+				fnT := infer.env.Get("agl.Vec.Joined").(types.FuncType)
+				//assertf(cmpTypes(idT, filterFnType.params[0]), "%s: type mismatch, wants: %s, got: %s", id.Pos(), filterFnType.params[0], idT)
+				infer.SetType(expr, fnT.Return)
 			}
 		}
 	}
