@@ -645,7 +645,16 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 		}
 	}
 	if params := decl.Type.Params; params != nil {
-		paramsStr = joinList(env, params, prefix)
+		var args []string
+		for _, param := range params.List {
+			var tmp []string
+			for _, name := range param.Names {
+				tmp = append(tmp, name.Name)
+			}
+			argT := env.GetType(param.Type).GoStr()
+			args = append(args, strings.Join(tmp, ", ")+" "+argT)
+		}
+		paramsStr = strings.Join(args, ", ")
 	}
 	if result := decl.Type.Result; result != nil {
 		resultStr = env.GetType(result).GoStr()
