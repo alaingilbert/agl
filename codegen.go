@@ -458,17 +458,20 @@ func genSpec(env *Env, s goast.Spec, prefix string) (before []IBefore, out strin
 func genDecl(env *Env, d goast.Decl, prefix string) (before []IBefore, out string) {
 	switch decl := d.(type) {
 	case *goast.GenDecl:
-		return genGenDecl(env, decl, prefix)
+		before1, content1 := genGenDecl(env, decl, prefix)
+		before = append(before, before1...)
+		out += content1 + "\n"
+		return
 	case *goast.FuncDecl:
 		before1, out1 := genFuncDecl(env, decl, prefix)
 		for _, b := range before1 {
 			out += b.Content()
 		}
-		out += out1
+		out += out1 + "\n"
+		return
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
 	}
-	out += "\n"
 	return
 }
 
@@ -621,7 +624,7 @@ func genFuncDecl(env *Env, decl *goast.FuncDecl, prefix string) (before []IBefor
 	if decl.Recv != nil {
 		recv = joinList(env, decl.Recv, prefix)
 		if recv != "" {
-			recv = " [" + recv + "]"
+			recv = " (" + recv + ")"
 		}
 	}
 	if decl.Name != nil {
