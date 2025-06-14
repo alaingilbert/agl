@@ -1458,84 +1458,87 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen53(t *testing.T) {
-//	src := `
-//type Person struct {
-//}
-//fn (p Person) method1() Person! {
-//	return Ok(p)
-//}
-//fn main() {
-//	p := Person{}
-//	a := p.method1()!.method1()!
-//}
-//`
-//	expected := `type Person struct {
-//}
-//func (p Person) method1() Result[Person] {
-//	return MakeResultOk(p)
-//}
-//func main() {
-//	p := Person{}
-//	a := p.method1().Unwrap().method1().Unwrap()
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
-//func TestCodeGen54(t *testing.T) {
-//	src := `
-//type Color enum {
-//	red,
-//	green,
-//	blue,
-//}
-//fn takeColor(c Color) {}
-//fn main() {
-//	color := Color.red
-//	takeColor(color)
-//}
-//`
-//	expected := `type ColorTag int
-//const (
-//	Color_red ColorTag = iota + 1
-//	Color_green
-//	Color_blue
-//)
-//type Color struct {
-//	tag ColorTag
-//}
-//func (v Color) String() string {
-//	switch v.tag {
-//	case Color_red:
-//		return "red"
-//	case Color_green:
-//		return "green"
-//	case Color_blue:
-//		return "blue"
-//	default:
-//		panic("")
-//	}
-//}
-//func Make_Color_red() Color {
-//	return Color{tag: Color_red}
-//}
-//func Make_Color_green() Color {
-//	return Color{tag: Color_green}
-//}
-//func Make_Color_blue() Color {
-//	return Color{tag: Color_blue}
-//}
-//func takeColor(c Color) {
-//}
-//func main() {
-//	color := Make_Color_red()
-//	takeColor(color)
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen53(t *testing.T) {
+	src := `package main
+type Person struct {
+}
+func (p Person) method1() Person! {
+	return Ok(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1()!.method1()!
+}
+`
+	expected := `package main
+type Person struct {
+}
+func (p Person) method1() Result[Person] {
+	return MakeResultOk(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1().Unwrap().method1().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen54(t *testing.T) {
+	src := `package main
+type Color enum {
+	red
+	green
+	blue
+}
+func takeColor(c Color) {}
+func main() {
+	color := Color.red
+	takeColor(color)
+}
+`
+	expected := `package main
+type ColorTag int
+const (
+	Color_red ColorTag = iota + 1
+	Color_green
+	Color_blue
+)
+type Color struct {
+	tag ColorTag
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_red:
+		return "red"
+	case Color_green:
+		return "green"
+	case Color_blue:
+		return "blue"
+	default:
+		panic("")
+	}
+}
+func Make_Color_red() Color {
+	return Color{tag: Color_red}
+}
+func Make_Color_green() Color {
+	return Color{tag: Color_green}
+}
+func Make_Color_blue() Color {
+	return Color{tag: Color_blue}
+}
+
+func takeColor(c Color) {
+}
+func main() {
+	color := Make_Color_red()
+	takeColor(color)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Enum2(t *testing.T) {
 //	src := `
 //type Color enum {

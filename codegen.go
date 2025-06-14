@@ -176,6 +176,51 @@ func (g *Generator) genShortFuncLit(expr *goast.ShortFuncLit) (out string) {
 	return out
 }
 
+func (g *Generator) genEnumType(enumName string, expr *goast.EnumType) string {
+	out := fmt.Sprintf("type %sTag int\n", enumName)
+	out += fmt.Sprintf("const (\n")
+	for i, v := range expr.Values.List {
+		if i == 0 {
+			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", enumName, v.Name.Name, enumName)
+		} else {
+			out += fmt.Sprintf("\t%s_%s\n", enumName, v.Name.Name)
+		}
+	}
+	out += fmt.Sprintf(")\n")
+	out += fmt.Sprintf("type %s struct {\n", enumName)
+	out += fmt.Sprintf("\ttag %sTag\n", enumName)
+	for _, field := range expr.Values.List {
+		if field.Params != nil {
+			for i, el := range field.Params.List {
+				out += fmt.Sprintf("\t%s%d %s\n", field.Name.Name, i, g.env.GetType(el).GoStr())
+			}
+		}
+	}
+	out += "}\n"
+	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", enumName)
+	for _, field := range expr.Values.List {
+		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", enumName, field.Name.Name, field.Name.Name)
+	}
+	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
+	for _, field := range expr.Values.List {
+		var tmp []string
+		var tmp1 []string
+		if field.Params != nil {
+			for i, el := range field.Params.List {
+				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType(el).GoStr()))
+				tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.Name.Name, i, i))
+			}
+		}
+		var tmp1Out string
+		if len(tmp1) > 0 {
+			tmp1Out = ", " + strings.Join(tmp1, ", ")
+		}
+		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{tag: %s_%s%s}\n}\n",
+			enumName, field.Name.Name, strings.Join(tmp, ", "), enumName, enumName, enumName, field.Name.Name, tmp1Out)
+	}
+	return out
+}
+
 func (g *Generator) genEllipsis(expr *goast.Ellipsis) string {
 	content1 := g.incrPrefix(func() string {
 		return g.genExpr(expr.Elt)
@@ -247,6 +292,13 @@ func (g *Generator) genSelectorExpr(expr *goast.SelectorExpr) (out string) {
 	switch g.env.GetType(expr.X).(type) {
 	case types.TupleType:
 		name = fmt.Sprintf("Arg%s", name)
+	case types.EnumType:
+		content2 := g.genExpr(expr.Sel)
+		out := fmt.Sprintf("Make_%s_%s", content1, content2)
+		if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
+			out += "()"
+		}
+		return out
 	}
 	return fmt.Sprintf("%s.%s", content1, name)
 }
@@ -437,16 +489,19 @@ func (g *Generator) genSpec(s goast.Spec) (out string) {
 	switch spec := s.(type) {
 	case *goast.ValueSpec:
 		content1 := g.genExpr(spec.Type)
-
 		var namesArr []string
 		for _, name := range spec.Names {
 			namesArr = append(namesArr, name.Name)
 		}
 		out += g.prefix + "var " + strings.Join(namesArr, ", ") + " " + content1 + "\n"
 	case *goast.TypeSpec:
-		content1 := g.genExpr(spec.Type)
-
-		out += g.prefix + "type " + spec.Name.Name + " " + content1 + "\n"
+		if v, ok := spec.Type.(*goast.EnumType); ok {
+			content1 := g.genEnumType(spec.Name.Name, v)
+			out += g.prefix + content1 + "\n"
+		} else {
+			content1 := g.genExpr(spec.Type)
+			out += g.prefix + "type " + spec.Name.Name + " " + content1 + "\n"
+		}
 	case *goast.ImportSpec:
 		if spec.Name != nil {
 			out += "import " + spec.Name.Name + "\n"
