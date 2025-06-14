@@ -200,6 +200,8 @@ func (e *Env) GetType2(x goast.Node) types.Type {
 		return nil
 	case *goast.ParenExpr:
 		return e.GetType2(xx.X)
+	case *goast.VoidExpr:
+		return types.VoidType{}
 	case *goast.TupleExpr:
 		var elts []types.Type
 		for _, v := range xx.Values { // TODO NO GOOD

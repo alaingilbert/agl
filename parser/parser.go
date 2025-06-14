@@ -1467,6 +1467,9 @@ func (p *parser) tryIdentOrType2(canBeShortFn bool) ast.Expr {
 		return &ast.OptionExpr{X: x, Question: question}
 	} else if p.tok == token.NOT {
 		not := p.expect(token.NOT)
+		if x == nil {
+			x = &ast.VoidExpr{}
+		}
 		return &ast.ResultExpr{X: x, Not: not}
 	}
 	return x

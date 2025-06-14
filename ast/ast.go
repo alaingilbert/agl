@@ -346,6 +346,8 @@ type (
 		Question token.Pos
 	}
 
+	VoidExpr struct{}
+
 	ResultExpr struct {
 		X   Expr
 		Not token.Pos
@@ -461,6 +463,12 @@ type (
 		Value Expr
 	}
 )
+
+func (v VoidExpr) Pos() token.Pos { return token.NoPos }
+
+func (v VoidExpr) End() token.Pos { return token.NoPos }
+
+func (v VoidExpr) exprNode() {}
 
 func (t TupleExpr) Pos() token.Pos { return t.Lparen }
 
