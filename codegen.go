@@ -52,17 +52,13 @@ func (g *Generator) genExpr(e goast.Expr) (out string) {
 	case *goast.ShortFuncLit:
 		return g.genShortFuncLit(expr)
 	case *goast.OptionExpr:
-		content := g.genExpr(expr.X)
-		return fmt.Sprintf("Option[%s]", content)
+		return g.genOptionExpr(expr)
 	case *goast.ResultExpr:
-		content := g.genExpr(expr.X)
-		return fmt.Sprintf("Result[%s]", content)
+		return g.genResultExpr(expr)
 	case *goast.BinaryExpr:
-		content1 := g.genExpr(expr.X)
-		content2 := g.genExpr(expr.Y)
-		return fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
+		return g.genBinaryExpr(expr)
 	case *goast.BasicLit:
-		return expr.Value
+		return g.genBasicLit(expr)
 	case *goast.CompositeLit:
 		return g.genCompositeLit(expr)
 	case *goast.TupleExpr:
@@ -158,20 +154,18 @@ func (g *Generator) genShortFuncLit(expr *goast.ShortFuncLit) (out string) {
 	return out
 }
 
-func (g *Generator) genEllipsis(expr *goast.Ellipsis) (out string) {
+func (g *Generator) genEllipsis(expr *goast.Ellipsis) string {
 	content1 := g.incrPrefix(func() string {
 		return g.genExpr(expr.Elt)
 	})
-	out += "..." + content1
-	return
+	return "..." + content1
 }
 
-func (g *Generator) genParenExpr(expr *goast.ParenExpr) (out string) {
+func (g *Generator) genParenExpr(expr *goast.ParenExpr) string {
 	content1 := g.incrPrefix(func() string {
 		return g.genExpr(expr.X)
 	})
-	out += "(" + content1 + ")"
-	return
+	return "(" + content1 + ")"
 }
 
 func (g *Generator) genFuncLit(expr *goast.FuncLit) (out string) {
@@ -199,7 +193,7 @@ func (g *Generator) genStructType(expr *goast.StructType) (out string) {
 	return
 }
 
-func (g *Generator) genFuncType(expr *goast.FuncType) (out string) {
+func (g *Generator) genFuncType(expr *goast.FuncType) string {
 	content1 := g.incrPrefix(func() string {
 		return g.genExpr(expr.Result)
 	})
@@ -216,15 +210,13 @@ func (g *Generator) genFuncType(expr *goast.FuncType) (out string) {
 	if content1 != "" {
 		content1 = " " + content1
 	}
-	out += fmt.Sprintf("func%s(%s)%s", typeParamsStr, paramsStr, content1)
-	return out
+	return fmt.Sprintf("func%s(%s)%s", typeParamsStr, paramsStr, content1)
 }
 
-func (g *Generator) genIndexExpr(expr *goast.IndexExpr) (out string) {
+func (g *Generator) genIndexExpr(expr *goast.IndexExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Index)
-	out += fmt.Sprintf("%s[%s]", content1, content2)
-	return
+	return fmt.Sprintf("%s[%s]", content1, content2)
 }
 
 func (g *Generator) genSelectorExpr(expr *goast.SelectorExpr) (out string) {
@@ -237,10 +229,9 @@ func (g *Generator) genSelectorExpr(expr *goast.SelectorExpr) (out string) {
 	return fmt.Sprintf("%s.%s", content1, name)
 }
 
-func (g *Generator) genBubbleOptionExpr(expr *goast.BubbleOptionExpr) (out string) {
+func (g *Generator) genBubbleOptionExpr(expr *goast.BubbleOptionExpr) string {
 	content1 := g.genExpr(expr.X)
-	out += fmt.Sprintf("%s.Unwrap()", content1)
-	return out
+	return fmt.Sprintf("%s.Unwrap()", content1)
 }
 
 func (g *Generator) genBubbleResultExpr(expr *goast.BubbleResultExpr) (out string) {
@@ -334,6 +325,26 @@ func (g *Generator) genKeyValueExpr(expr *goast.KeyValueExpr) (out string) {
 	return fmt.Sprintf("%s: %s", content1, content2)
 }
 
+func (g *Generator) genResultExpr(expr *goast.ResultExpr) string {
+	content := g.genExpr(expr.X)
+	return fmt.Sprintf("Result[%s]", content)
+}
+
+func (g *Generator) genOptionExpr(expr *goast.OptionExpr) string {
+	content := g.genExpr(expr.X)
+	return fmt.Sprintf("Option[%s]", content)
+}
+
+func (g *Generator) genBasicLit(expr *goast.BasicLit) string {
+	return expr.Value
+}
+
+func (g *Generator) genBinaryExpr(expr *goast.BinaryExpr) string {
+	content1 := g.genExpr(expr.X)
+	content2 := g.genExpr(expr.Y)
+	return fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
+}
+
 func (g *Generator) genCompositeLit(expr *goast.CompositeLit) (out string) {
 	content1 := g.genExpr(expr.Type)
 	content2 := g.genExprs(expr.Elts)
@@ -414,7 +425,6 @@ func (g *Generator) genStmt(s goast.Stmt) (out string) {
 
 func (g *Generator) genBlockStmt(stmt *goast.BlockStmt) (out string) {
 	content1 := g.genStmts(stmt.List)
-
 	out += content1
 	return
 }
@@ -471,18 +481,12 @@ func (g *Generator) genDecl(d goast.Decl) (out string) {
 	return
 }
 
-func (g *Generator) genGenDecl(decl *goast.GenDecl) (out string) {
-	content1 := g.genSpecs(decl.Specs)
-
-	out += content1
-	return
+func (g *Generator) genGenDecl(decl *goast.GenDecl) string {
+	return g.genSpecs(decl.Specs)
 }
 
-func (g *Generator) genDeclStmt(stmt *goast.DeclStmt) (out string) {
-	content1 := g.genDecl(stmt.Decl)
-
-	out += content1
-	return
+func (g *Generator) genDeclStmt(stmt *goast.DeclStmt) string {
+	return g.genDecl(stmt.Decl)
 }
 
 func (g *Generator) genIncDecStmt(stmt *goast.IncDecStmt) (out string) {
@@ -494,6 +498,8 @@ func (g *Generator) genIncDecStmt(stmt *goast.IncDecStmt) (out string) {
 		op = "++"
 	case token.DEC:
 		op = "--"
+	default:
+		panic("")
 	}
 	out += g.prefix + content1 + op + "\n"
 	return
