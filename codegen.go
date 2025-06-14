@@ -329,11 +329,8 @@ func (g *Generator) genBubbleOptionExpr(expr *goast.BubbleOptionExpr) (out strin
 	exprXT := MustCast[types.OptionType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
-		before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
-if res.IsNone() {
-	return res
-}
-`, g.prefix))
+		tmpl := "res := %s\nif res.IsNone() {\n\treturn res\n}\n"
+		before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
 		g.before = append(g.before, before2)
 		out += "res.Unwrap()"
 	} else {
@@ -477,8 +474,7 @@ func (g *Generator) genBinaryExpr(expr *goast.BinaryExpr) string {
 func (g *Generator) genCompositeLit(expr *goast.CompositeLit) (out string) {
 	content1 := g.genExpr(expr.Type)
 	content2 := g.genExprs(expr.Elts)
-	out += fmt.Sprintf("%s{%s}", content1, content2)
-	return
+	return fmt.Sprintf("%s{%s}", content1, content2)
 }
 
 func (g *Generator) genTupleExpr(expr *goast.TupleExpr) (out string) {
@@ -527,15 +523,12 @@ func (g *Generator) genStmts(s []goast.Stmt) (out string) {
 }
 
 func (g *Generator) genBlockStmt(stmt *goast.BlockStmt) (out string) {
-	content1 := g.genStmts(stmt.List)
-	out += content1
-	return
+	return g.genStmts(stmt.List)
 }
 
 func (g *Generator) genSpecs(specs []goast.Spec) (out string) {
 	for _, spec := range specs {
-		content1 := g.genSpec(spec)
-		out += content1
+		out += g.genSpec(spec)
 	}
 	return
 }
