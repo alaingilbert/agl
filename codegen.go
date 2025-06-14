@@ -1451,5 +1451,13 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 func AglJoined(a []string, s string) string {
 	return strings.Join(a, s)
 }
+
+func AglVecSum[T cmp.Ordered](a []T) (out T) {
+	for _, el := range a {
+		out += el
+	}
+	return
+}
+
 `
 }
