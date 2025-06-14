@@ -501,8 +501,7 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.SelectorExpr, expr *goast.CallExpr) {
 	if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Filter" {
-		clbFnStr := "func [T any](e T) bool"
-		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
+		ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
 		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
 		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(expr.Args[0], ft)
@@ -515,8 +514,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 		infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
 
 	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Map" {
-		clbFnStr := "func [T, R any](e T) R"
-		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
+		ft := infer.env.Get("agl.Vec.Map").(types.FuncType).GetParam(1).(types.FuncType)
 		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
 		if arg0, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(arg0, ft)
@@ -532,8 +530,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 		arg0 := expr.Args[0]
 		infer.expr(arg0)
 		elTyp := idT.(types.ArrayType).Elt
-		clbFnStr := "func [T any, R cmp.Ordered](acc R, el T) R"
-		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
+		ft := infer.env.Get("agl.Vec.Reduce").(types.FuncType).GetParam(2).(types.FuncType)
 		ft = ft.ReplaceGenericParameter("T", elTyp)
 		if _, ok := infer.GetType(arg0).(types.UntypedNumType); ok {
 			ft = ft.ReplaceGenericParameter("R", elTyp)
@@ -547,8 +544,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.Selec
 			assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", infer.fset.Position(expr.Pos()), ftReal, ft)
 		}
 	} else if TryCast[types.ArrayType](idT) && exprT.Sel.Name == "Find" {
-		clbFnStr := "func [T any](e T) bool"
-		ft := parseFuncTypeFromString("", clbFnStr, infer.env)
+		ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType)
 		ft = ft.ReplaceGenericParameter("T", idT.(types.ArrayType).Elt)
 		if _, ok := expr.Args[0].(*goast.ShortFuncLit); ok {
 			infer.SetTypeForce(expr.Args[0], ft)
