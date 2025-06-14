@@ -108,7 +108,15 @@ func (e EllipsisType) GoStr() string { return "..." }
 
 func (e EllipsisType) String() string { return "..." }
 
-type StructType struct{ Name string }
+type FieldType struct {
+	Name string
+	Typ  Type
+}
+
+type StructType struct {
+	Name   string
+	Fields []FieldType
+}
 
 func (t StructType) GoStr() string { return t.Name }
 

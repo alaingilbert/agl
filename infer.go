@@ -124,7 +124,16 @@ func (infer *FileInferrer) typeSpec(spec *goast.TypeSpec) {
 }
 
 func (infer *FileInferrer) structType(name *goast.Ident, s *goast.StructType) {
-	infer.env.Define(name.Name, types.StructType{Name: name.Name})
+	var fields []types.FieldType
+	if s.Fields != nil {
+		for _, f := range s.Fields.List {
+			t := infer.env.GetType2(f.Type)
+			for _, n := range f.Names {
+				fields = append(fields, types.FieldType{Name: n.Name, Typ: t})
+			}
+		}
+	}
+	infer.env.Define(name.Name, types.StructType{Name: name.Name, Fields: fields})
 }
 
 func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
@@ -369,12 +378,13 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.SetType(expr, fnT.Return)
 			} else if call.Sel.Name == "Joined" {
 				fnT := infer.env.Get("agl.Vec.Joined").(types.FuncType)
-				//assertf(cmpTypes(idT, filterFnType.params[0]), "%s: type mismatch, wants: %s, got: %s", id.Pos(), filterFnType.params[0], idT)
+				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
 			}
 		}
 	}
 
+	p("DSLE1", expr.Fun)
 	switch call := expr.Fun.(type) {
 	case *goast.SelectorExpr:
 		switch id := call.X.(type) {
@@ -383,6 +393,7 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			tmpFn(idT1, call)
 			if l := infer.env.Get(id.Name); l != nil {
 				infer.SetType(id, l)
+				p("DSLE", id, l)
 				if lT, ok := l.(types.StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
 					toReturn := infer.env.Get(name).(types.FuncType).Return
@@ -561,9 +572,11 @@ func (infer *FileInferrer) shortFuncLit(expr *goast.ShortFuncLit) {
 			}
 		}
 		infer.stmt(expr.Body)
+		p("BOD", expr.Body, to(expr.Body))
 		// implicit return
 		if len(expr.Body.List) == 1 && TryCast[*goast.ExprStmt](expr.Body.List[0]) {
 			returnStmt := expr.Body.List[0].(*goast.ExprStmt)
+			p("????", returnStmt.X, to(returnStmt.X), infer.env.GetType(returnStmt.X), infer.env.GetType2(returnStmt.X))
 			if infer.env.GetType(returnStmt.X) != nil {
 				if infer.env.GetType(expr) != nil {
 					ft := infer.env.GetType(expr).(types.FuncType)
@@ -708,11 +721,11 @@ func cmpTypes(a, b types.Type) bool {
 		}
 		return false
 	}
-	//if TryCast[InterfaceType](a) {
-	//	return true
-	//}
 	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
 		return true
+	}
+	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
+		return true // TODO
 	}
 	if a == b {
 		return true
@@ -729,6 +742,15 @@ func cmpTypes(a, b types.Type) bool {
 func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
 	selType := infer.env.Get(expr.X.(*goast.Ident).Name)
 	switch v := selType.(type) {
+	case types.StructType:
+		fieldName := expr.Sel.Name
+		for _, f := range v.Fields {
+			if f.Name == fieldName {
+				infer.SetType(expr.X, selType)
+				infer.SetType(expr, f.Typ)
+				return
+			}
+		}
 	case types.TupleType:
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
@@ -825,6 +847,7 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
 			lhsID := MustCast[*goast.Ident](lhs)
+			p("?", lhs, to(lhs))
 			infer.SetType(lhs, infer.GetType(rhs))
 			assignFn(lhsID.Name, infer.GetType(lhsID))
 		} else {
