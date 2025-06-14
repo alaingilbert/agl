@@ -70,6 +70,11 @@ type MakeType struct{ W Type }
 func (o MakeType) GoStr() string  { return "make" }
 func (o MakeType) String() string { return "make" }
 
+type LenType struct{ W Type }
+
+func (l LenType) GoStr() string  { return "len" }
+func (l LenType) String() string { return "len" }
+
 type UnderscoreType struct{ W Type }
 
 func (u UnderscoreType) GoStr() string  { return "_" }

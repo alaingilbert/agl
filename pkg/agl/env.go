@@ -96,6 +96,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	//Env.Define("Ok", parseFuncTypeFromString("Ok", "func[T any](T)", Env))
 	//Env.Define("Err", parseFuncTypeFromString("Err", "func[T any](T)", Env))
 	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
+	env.Define("len", parseFuncTypeFromString("len", "func [T any](v T) int", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("fmt.Sprintf", parseFuncTypeFromStringNative("Sprintf", "func(format string, a ...any) string", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))

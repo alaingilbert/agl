@@ -5,7 +5,8 @@ import (
 	parser1 "agl/pkg/parser"
 	"agl/pkg/token"
 	"testing"
-	//tassert "github.com/stretchr/testify/assert"
+
+	tassert "github.com/stretchr/testify/assert"
 )
 
 func parser2(src string) (*token.FileSet, *ast.File) {
@@ -27,11 +28,14 @@ func testCodeGen(t *testing.T, src, expected string) {
 	}
 }
 
-//func testCodeGenFn(src string) func() {
-//	return func() {
-//		NewGenerator(infer(parser(NewTokenStream(src)))).Generate()
-//	}
-//}
+func testCodeGenFn(src string) func() {
+	return func() {
+		fset, f := parser2(src)
+		i := NewInferrer(fset)
+		i.InferFile(f)
+		NewGenerator(i.Env, f).Generate()
+	}
+}
 
 func TestCodeGen1(t *testing.T) {
 	src := `
@@ -2786,12 +2790,11 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen_Tmp(t *testing.T) {
-//	src := `
-//fn main() {
-//	if a := 123; a == 2 || a == 3 {
-//	}
-//}
-//`
-//	tassert.NotPanics(t, testCodeGenFn(src))
-//}
+func TestCodeGen_Tmp(t *testing.T) {
+	src := `
+package main
+func main() {
+}
+`
+	tassert.NotPanics(t, testCodeGenFn(src))
+}
