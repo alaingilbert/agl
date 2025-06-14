@@ -22,14 +22,19 @@ func (v VoidType) String() string { return "" }
 type ResultType struct {
 	W      Type
 	Native bool
+	Bubble bool
 }
 
-func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.String()) }
+func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
 func (r ResultType) String() string { return r.W.String() + "!" }
 
-type OptionType struct{ W Type }
+type OptionType struct {
+	W      Type
+	Native bool
+	Bubble bool
+}
 
-func (o OptionType) GoStr() string  { return fmt.Sprintf("Option[%s]", o.W.String()) }
+func (o OptionType) GoStr() string  { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
 func (o OptionType) String() string { return "OptionType" }
 
 type StringType struct{ W Type }
