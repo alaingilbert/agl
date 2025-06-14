@@ -597,14 +597,14 @@ func (g *Generator) genExprStmt(stmt *goast.ExprStmt) (out string) {
 func (g *Generator) genAssignStmt(stmt *goast.AssignStmt) (out string) {
 	var lhs, after string
 	if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
-		rhs := stmt.Rhs[0]
 		lhs = "aglVar1"
-		var names []string
-		var exprs []string
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
+			rhs := stmt.Rhs[0]
+			var names []string
+			var exprs []string
 			for i := range g.env.GetType(rhs).(types.TupleType).Elts {
 				name := stmt.Lhs[i].(*goast.Ident).Name
 				names = append(names, name)
@@ -614,7 +614,6 @@ func (g *Generator) genAssignStmt(stmt *goast.AssignStmt) (out string) {
 		}
 	} else {
 		content1 := g.genExprs(stmt.Lhs)
-
 		lhs = content1
 	}
 	content2 := g.genExprs(stmt.Rhs)
