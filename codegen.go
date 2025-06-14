@@ -596,7 +596,29 @@ func (g *Generator) genExprStmt(stmt *goast.ExprStmt) (out string) {
 
 func (g *Generator) genAssignStmt(stmt *goast.AssignStmt) (out string) {
 	var lhs, after string
-	if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
+	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](g.env.GetType(stmt.Rhs[0])) {
+		lhs = "aglVar1"
+		if len(stmt.Lhs) == 1 {
+			content1 := g.genExprs(stmt.Lhs)
+			lhs = content1
+		} else {
+			rhs := stmt.Rhs[0]
+			var sel string
+			switch v := rhs.(type) {
+			case *goast.CallExpr:
+				sel = v.Fun.(*goast.SelectorExpr).Sel.Name
+			case *goast.Ident:
+				sel = v.Name
+			}
+			var names []string
+			var exprs []string
+			for i, x := range stmt.Lhs {
+				names = append(names, x.(*goast.Ident).Name)
+				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
+			}
+			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+		}
+	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
 		lhs = "aglVar1"
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
