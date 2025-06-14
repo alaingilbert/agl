@@ -326,6 +326,10 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				fnT := infer.env.Get("agl.Vec.Find").(types.FuncType)
 				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
 				infer.SetType(expr, fnT.Return)
+			} else if call.Sel.Name == "Sum" {
+				fnT := infer.env.Get("agl.Vec.Sum").(types.FuncType)
+				fnT = fnT.ReplaceGenericParameter("T", arr.Elt)
+				infer.SetType(expr, fnT.Return)
 			}
 		}
 	}

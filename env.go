@@ -103,6 +103,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))
 	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env))
 	env.Define("agl.Vec.Find", parseFuncTypeFromString("Find", "func [T any](a []T, f func(e T) bool) T?", env))
+	env.Define("agl.Vec.Sum", parseFuncTypeFromString("Sum", "func [T cmp.Ordered](a []T) T", env))
 	return env
 }
 
