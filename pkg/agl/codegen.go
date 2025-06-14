@@ -59,6 +59,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genReturnStmt(stmt)
 	case *ast.RangeStmt:
 		return g.genRangeStmt(stmt)
+	case *ast.ForStmt:
+		return g.genForStmt(stmt)
 	case *ast.IncDecStmt:
 		return g.genIncDecStmt(stmt)
 	case *ast.DeclStmt:
@@ -606,11 +608,36 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
 	return
 }
 
+func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
+	var init, cond, post string
+	var els []string
+	if stmt.Init != nil {
+		init = strings.TrimSpace(g.genStmt(stmt.Init))
+		els = append(els, init)
+	}
+	if stmt.Cond != nil {
+		cond = g.genExpr(stmt.Cond)
+		els = append(els, cond)
+	}
+	if stmt.Post != nil {
+		post = strings.TrimSpace(g.genStmt(stmt.Post))
+		els = append(els, post)
+	}
+	tmp := strings.Join(els, "; ")
+	if tmp != "" {
+		tmp += " "
+	}
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	out += g.prefix + fmt.Sprintf("for %s{\n", tmp)
+	out += body
+	out += g.prefix + "}\n"
+	return
+}
+
 func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
 	var content1, content2 string
 	if stmt.Key != nil {
 		content1 = g.genExpr(stmt.Key)
-
 	}
 	if stmt.Value != nil {
 		content2 = g.genExpr(stmt.Value)

@@ -349,6 +349,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.incDecStmt(stmt)
 	case *ast.DeclStmt:
 		infer.declStmt(stmt)
+	case *ast.ForStmt:
+		infer.forStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -779,6 +781,9 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
 	}
+	if TryCast[types.ArrayType](a) || TryCast[types.ArrayType](b) {
+		return true // TODO
+	}
 	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
 		return true // TODO
 	}
@@ -788,6 +793,7 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
 		return cmpTypes(a.(types.ResultType).W, b.(types.ResultType).W)
 	}
+	p("???", a, b, to(a), to(b))
 	if a == b {
 		return true
 	}
@@ -893,6 +899,24 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 }
 
 func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
+	infer.expr(stmt.X)
+}
+
+func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
+	infer.withEnv(func() {
+		if stmt.Init != nil {
+			infer.stmt(stmt.Init)
+		}
+		if stmt.Cond != nil {
+			infer.expr(stmt.Cond)
+		}
+		if stmt.Post != nil {
+			infer.stmt(stmt.Post)
+		}
+		if stmt.Body != nil {
+			infer.stmt(stmt.Body)
+		}
+	})
 }
 
 func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {

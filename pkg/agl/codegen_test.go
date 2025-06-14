@@ -2750,6 +2750,42 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen97(t *testing.T) {
+	src := `package main
+func main() {
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
+	}
+}
+`
+	expected := `package main
+func main() {
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen98(t *testing.T) {
+	src := `package main
+func main() {
+	for {
+		fmt.Println("hello")
+	}
+}
+`
+	expected := `package main
+func main() {
+	for {
+		fmt.Println("hello")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen_Tmp(t *testing.T) {
 //	src := `
 //fn main() {
