@@ -133,6 +133,15 @@ func (t StructType) GoStr() string { return t.Name }
 
 func (t StructType) String() string { return "StructType" }
 
+type EnumType struct {
+	Name   string
+	Fields []FieldType
+}
+
+func (e EnumType) GoStr() string { return e.Name }
+
+func (e EnumType) String() string { return "EnumType" }
+
 type GenericType struct {
 	W    Type
 	Name string

@@ -105,7 +105,19 @@ func (infer *FileInferrer) typeSpec(spec *goast.TypeSpec) {
 	switch t := spec.Type.(type) {
 	case *goast.StructType:
 		infer.structType(spec.Name, t)
+	case *goast.EnumType:
+		infer.enumType(spec.Name, t)
 	}
+}
+
+func (infer *FileInferrer) enumType(name *goast.Ident, e *goast.EnumType) {
+	var fields []types.FieldType
+	if e.Values != nil {
+		for _, f := range e.Values.List {
+			fields = append(fields, types.FieldType{Name: f.Name.Name})
+		}
+	}
+	infer.env.Define(name.Name, types.EnumType{Name: name.Name, Fields: fields})
 }
 
 func (infer *FileInferrer) structType(name *goast.Ident, s *goast.StructType) {
@@ -719,6 +731,9 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
 	}
+	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
+		return true // TODO
+	}
 	if TryCast[types.OptionType](a) && TryCast[types.OptionType](b) {
 		return cmpTypes(a.(types.OptionType).W, b.(types.OptionType).W)
 	}
@@ -743,6 +758,16 @@ func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
 				return
 			}
 		}
+	case types.EnumType:
+		enumName := expr.X.(*goast.Ident).Name
+		fieldName := expr.Sel.Name
+		validFields := make([]string, 0, len(v.Fields))
+		for _, f := range v.Fields {
+			validFields = append(validFields, f.Name)
+		}
+		assertf(InArray(fieldName, validFields), "%d: enum %s has no field %s", expr.Sel.Pos(), enumName, fieldName)
+		infer.SetType(expr.X, selType)
+		infer.SetType(expr, selType)
 	case types.TupleType:
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
