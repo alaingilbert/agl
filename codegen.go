@@ -103,8 +103,8 @@ func genIdent(env *Env, expr *goast.Ident, prefix string) (before []IBefore, out
 	}
 	t := env.GetType(expr)
 	switch typ := t.(type) {
-	case types.BoolType:
-		return nil, Ternary(typ.V, "true", "false")
+	//case types.BoolType:
+	//return nil, Ternary(typ.V, "true", "false")
 	case types.OkType:
 		return nil, "MakeResultOk"
 	case types.ErrType:
@@ -115,6 +115,9 @@ func genIdent(env *Env, expr *goast.Ident, prefix string) (before []IBefore, out
 		return nil, fmt.Sprintf("MakeOptionNone[%s]()", typ.W.GoStr())
 	case types.GenericType:
 		return nil, fmt.Sprintf("%s", typ.GoStr())
+	}
+	if expr.Name == "make" {
+		return nil, "make"
 	}
 	if expr.Name == "None" {
 		return nil, fmt.Sprintf("MakeOptionNone[%s]()", t.(types.OptionType).W.GoStr())
