@@ -8,29 +8,33 @@ import (
 	"strings"
 )
 
-func codegen(env *Env, a *goast.File) (out string) {
-	before1, out1 := genPackage(a)
-	before2, out2 := genImports(a)
-	before3, out3 := genDecls(env, a)
-	for _, b := range before1 {
-		out += b.Content()
-	}
-	for _, b := range before2 {
-		out += b.Content()
-	}
-	for _, b := range before3 {
+type Generator struct {
+	env    *Env
+	a      *goast.File
+	prefix string
+	before []IBefore
+}
+
+func NewGenerator(env *Env, a *goast.File) *Generator {
+	return &Generator{env: env, a: a}
+}
+
+func (g *Generator) Generate() (out string) {
+	out1 := g.genPackage()
+	out2 := g.genImports()
+	out3 := g.genDecls()
+	for _, b := range g.before {
 		out += b.Content()
 	}
 	return out + out1 + out2 + out3
 }
 
-func genPackage(a *goast.File) (before []IBefore, out string) {
-	out += fmt.Sprintf("package %s\n", a.Name.Name)
-	return
+func (g *Generator) genPackage() string {
+	return fmt.Sprintf("package %s\n", g.a.Name.Name)
 }
 
-func genImports(a *goast.File) (before []IBefore, out string) {
-	for _, spec := range a.Imports {
+func (g *Generator) genImports() (out string) {
+	for _, spec := range g.a.Imports {
 		out += "import "
 		if spec.Name != nil {
 			out += spec.Name.Name
@@ -618,10 +622,10 @@ func genIfStmt(env *Env, stmt *goast.IfStmt, prefix string) (before []IBefore, o
 	return before, out
 }
 
-func genDecls(env *Env, a *goast.File) (before []IBefore, out string) {
-	for _, decl := range a.Decls {
-		before1, content1 := genDecl(env, decl, "")
-		before = append(before, before1...)
+func (g *Generator) genDecls() (out string) {
+	for _, decl := range g.a.Decls {
+		before1, content1 := genDecl(g.env, decl, "")
+		g.before = append(g.before, before1...)
 		out += content1
 	}
 	return

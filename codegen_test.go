@@ -9,7 +9,7 @@ func testCodeGen(t *testing.T, src, expected string) {
 	fset, f := parser2(src)
 	i := NewInferrer(fset)
 	i.InferFile(f)
-	got := codegen(i.env, f)
+	got := NewGenerator(i.env, f).Generate()
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
 	}
