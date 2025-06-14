@@ -205,6 +205,13 @@ func (infer *FileInferrer) getFuncDeclType(decl *goast.FuncDecl, outEnv *Env) ty
 	if decl.Type.Result != nil {
 		infer.expr(decl.Type.Result)
 		returnT = infer.env.GetType(decl.Type.Result)
+		if r, ok := returnT.(types.ResultType); ok {
+			r.Bubble = true
+			returnT = r
+		} else if r, ok := returnT.(types.OptionType); ok {
+			r.Bubble = true
+			returnT = r
+		}
 	}
 	ft := types.FuncType{
 		Name:   decl.Name.Name,
@@ -374,7 +381,9 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 				infer.SetType(id, l)
 				if lT, ok := l.(types.StructType); ok {
 					name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
-					infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+					toReturn := infer.env.Get(name).(types.FuncType).Return
+					toReturn = alterResultBubble(infer.returnType, toReturn)
+					infer.SetType(expr, toReturn)
 				} else if _, ok := l.(types.PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
 					fnT := infer.env.Get(name).(types.FuncType)
@@ -389,7 +398,9 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			tmpFn(idT, call)
 			if lT, ok := idT.(types.StructType); ok {
 				name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
-				infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+				toReturn := infer.env.Get(name).(types.FuncType).Return
+				toReturn = alterResultBubble(infer.returnType, toReturn)
+				infer.SetType(expr, toReturn)
 			}
 			infer.inferVecExtensions(idT, call, expr)
 		}
@@ -443,13 +454,33 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 		if v, ok := exprFunT.(types.FuncType); ok {
 			if infer.env.GetType2(expr) == nil {
 				if v.Return != nil {
-					infer.SetType(expr, v.Return)
+					toReturn := v.Return
+					toReturn = alterResultBubble(infer.returnType, toReturn)
+					infer.SetType(expr, toReturn)
 				}
 			}
 		} else { // Type casting
 			// TODO
 		}
 	}
+}
+
+func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
+	out = curr
+	if fnReturn != nil {
+		if _, ok := fnReturn.(types.ResultType); !ok {
+			if tmp, ok := curr.(types.ResultType); ok {
+				tmp.Bubble = false
+				out = tmp
+			}
+		} else if _, ok := fnReturn.(types.OptionType); !ok {
+			if tmp, ok := curr.(types.OptionType); ok {
+				tmp.Bubble = false
+				out = tmp
+			}
+		}
+	}
+	return
 }
 
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *goast.SelectorExpr, expr *goast.CallExpr) {
