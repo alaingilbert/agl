@@ -5,7 +5,9 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
+	"path"
 	"strconv"
+	"strings"
 )
 
 type Inferrer struct {
@@ -75,6 +77,18 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
 
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
+	for _, i := range infer.f.Imports {
+		var name string
+		if i.Name != nil {
+			name = i.Name.Name
+		} else {
+			name = path.Base(i.Path.Value)
+		}
+		name = strings.ReplaceAll(name, `"`, ``)
+		if infer.env.Get(name) == nil {
+			infer.env.Define(name, types.PackageType{Name: name})
+		}
+	}
 	for _, d := range infer.f.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
