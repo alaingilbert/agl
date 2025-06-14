@@ -122,8 +122,6 @@ func (g *Generator) genIdent(expr *goast.Ident) (out string) {
 	}
 	t := g.env.GetType(expr)
 	switch typ := t.(type) {
-	//case types.BoolType:
-	//return nil, Ternary(typ.V, "true", "false")
 	case types.OkType:
 		return "MakeResultOk"
 	case types.ErrType:
