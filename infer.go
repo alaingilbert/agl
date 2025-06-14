@@ -5,8 +5,6 @@ import (
 	"agl/token"
 	"agl/types"
 	"fmt"
-	"path"
-	"runtime"
 	"strconv"
 )
 
@@ -59,19 +57,6 @@ func (infer *FileInferrer) GetType(p goast.Node) types.Type {
 
 func (infer *FileInferrer) SetTypeForce(a goast.Node, t types.Type) {
 	infer.env.SetType(a, t)
-}
-
-func printCallers(n int) {
-	fmt.Println("--- callers ---")
-	for i := 0; i < n; i++ {
-		pc, _, _, ok := runtime.Caller(i + 2)
-		if !ok {
-			break
-		}
-		f := runtime.FuncForPC(pc)
-		file, line := f.FileLine(pc)
-		fmt.Printf("%s:%d %s\n", path.Base(file), line, f.Name())
-	}
 }
 
 func (infer *FileInferrer) SetType(a goast.Node, t types.Type) {
