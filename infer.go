@@ -129,8 +129,9 @@ func (infer *FileInferrer) structType(name *goast.Ident, s *goast.StructType) {
 
 func (infer *FileInferrer) funcDecl(decl *goast.FuncDecl) {
 	var t types.FuncType
+	outEnv := infer.env
 	infer.sandboxed(func() {
-		t = infer.getFuncDeclType(decl)
+		t = infer.getFuncDeclType(decl, outEnv)
 	})
 	infer.SetType(decl, t)
 	infer.env.Define(decl.Name.Name, t)
@@ -179,7 +180,7 @@ func (infer *FileInferrer) funcDecl2(decl *goast.FuncDecl) {
 	})
 }
 
-func (infer *FileInferrer) getFuncDeclType(decl *goast.FuncDecl) types.FuncType {
+func (infer *FileInferrer) getFuncDeclType(decl *goast.FuncDecl, outEnv *Env) types.FuncType {
 	var returnT types.Type
 	var paramsT []types.Type
 	if decl.Type.TypeParams != nil {
@@ -205,11 +206,18 @@ func (infer *FileInferrer) getFuncDeclType(decl *goast.FuncDecl) types.FuncType 
 		infer.expr(decl.Type.Result)
 		returnT = infer.env.GetType(decl.Type.Result)
 	}
-	return types.FuncType{
+	ft := types.FuncType{
 		Name:   decl.Name.Name,
 		Params: paramsT,
 		Return: returnT,
 	}
+	if decl.Recv != nil {
+		r := decl.Recv.List[0]
+		infer.expr(r.Type)
+		structName := infer.GetType(r.Type).(types.StructType).Name
+		outEnv.Define(fmt.Sprintf("%s.%s", structName, decl.Name), ft)
+	}
+	return ft
 }
 
 func (infer *FileInferrer) stmts(s []goast.Stmt) {
@@ -364,7 +372,10 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			tmpFn(idT1, call)
 			if l := infer.env.Get(id.Name); l != nil {
 				infer.SetType(id, l)
-				if _, ok := l.(types.PackageType); ok {
+				if lT, ok := l.(types.StructType); ok {
+					name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
+					infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+				} else if _, ok := l.(types.PackageType); ok {
 					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
 					fnT := infer.env.Get(name).(types.FuncType)
 					infer.SetType(expr, fnT.Return)
@@ -376,6 +387,10 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			infer.expr(id)
 			idT := infer.GetType(id)
 			tmpFn(idT, call)
+			if lT, ok := idT.(types.StructType); ok {
+				name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
+				infer.SetType(expr, infer.env.Get(name).(types.FuncType).Return)
+			}
 			infer.inferVecExtensions(idT, call, expr)
 		}
 		infer.exprs(expr.Args)
@@ -691,15 +706,12 @@ func (infer *FileInferrer) selectorExpr(expr *goast.SelectorExpr) {
 
 func (infer *FileInferrer) bubbleResultExpr(expr *goast.BubbleResultExpr) {
 	infer.expr(expr.X)
-	bubble := TryCast[types.ResultType](infer.returnType)
-	native := infer.env.GetType(expr.X).(types.ResultType).Native
-	infer.SetType(expr, types.BubbleResultType{Bubble: bubble, Native: native})
+	infer.SetType(expr, infer.GetType(expr.X).(types.ResultType).W)
 }
 
 func (infer *FileInferrer) bubbleOptionExpr(expr *goast.BubbleOptionExpr) {
 	infer.expr(expr.X)
-	bubble := TryCast[types.OptionType](infer.returnType)
-	infer.SetType(expr, types.BubbleOptionType{Bubble: bubble})
+	infer.SetType(expr, infer.GetType(expr.X).(types.OptionType).W)
 }
 
 func (infer *FileInferrer) compositeLit(expr *goast.CompositeLit) {
@@ -707,7 +719,6 @@ func (infer *FileInferrer) compositeLit(expr *goast.CompositeLit) {
 		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(arr.Elt)})
 		return
 	}
-	p("?", expr.Type, to(expr.Type))
 	infer.SetType(expr, infer.env.Get(expr.Type.(*goast.Ident).Name))
 }
 
