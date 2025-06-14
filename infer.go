@@ -729,14 +729,14 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
 	}
-	if a == b {
-		return true
-	}
 	if TryCast[types.OptionType](a) && TryCast[types.OptionType](b) {
 		return cmpTypes(a.(types.OptionType).W, b.(types.OptionType).W)
 	}
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
 		return cmpTypes(a.(types.ResultType).W, b.(types.ResultType).W)
+	}
+	if a == b {
+		return true
 	}
 	return false
 }
