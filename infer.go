@@ -720,7 +720,7 @@ func cmpTypes(a, b types.Type) bool {
 		}
 		return false
 	}
-	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
+	if TryCast[types.BoolType](a) || TryCast[types.BoolType](b) {
 		return true
 	}
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
