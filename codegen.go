@@ -303,22 +303,54 @@ func (g *Generator) genSelectorExpr(expr *goast.SelectorExpr) (out string) {
 	return fmt.Sprintf("%s.%s", content1, name)
 }
 
-func (g *Generator) genBubbleOptionExpr(expr *goast.BubbleOptionExpr) string {
-	content1 := g.genExpr(expr.X)
-	return fmt.Sprintf("%s.Unwrap()", content1)
+func (g *Generator) genBubbleOptionExpr(expr *goast.BubbleOptionExpr) (out string) {
+	exprXT := MustCast[types.OptionType](g.env.GetType(expr.X))
+	if exprXT.Bubble {
+		content1 := g.genExpr(expr.X)
+		before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
+if res.IsNone() {
+	return res
+}
+`, g.prefix))
+		g.before = append(g.before, before2)
+		out += "res.Unwrap()"
+	} else {
+		if exprXT.Native {
+			content1 := g.genExpr(expr.X)
+			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
+			out := `AglIdentity(res)`
+			g.before = append(g.before, before)
+			return out
+		} else {
+			content1 := g.genExpr(expr.X)
+			out += fmt.Sprintf("%s.Unwrap()", content1)
+		}
+	}
+	return
 }
 
 func (g *Generator) genBubbleResultExpr(expr *goast.BubbleResultExpr) (out string) {
 	exprXT := MustCast[types.ResultType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
-		before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
+		if exprXT.ConvertToNone {
+			before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
+if res.IsErr() {
+	return MakeOptionNone[`+exprXT.ToNoneType.GoStr()+`]()
+}
+`, g.prefix))
+			g.before = append(g.before, before2)
+			out += "res.Unwrap()"
+		} else {
+			before2 := NewBeforeStmt(addPrefix(`res := `+content1+`
 if res.IsErr() {
 	return res
 }
 `, g.prefix))
-		g.before = append(g.before, before2)
-		out += "res.Unwrap()"
+			g.before = append(g.before, before2)
+			out += "res.Unwrap()"
+		}
 	} else {
 		if exprXT.Native {
 			content1 := g.genExpr(expr.X)

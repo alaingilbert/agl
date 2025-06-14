@@ -484,8 +484,15 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 	if fnReturn != nil {
 		if _, ok := fnReturn.(types.ResultType); !ok {
 			if tmp, ok := curr.(types.ResultType); ok {
-				tmp.Bubble = false
-				out = tmp
+				if fnReturnOpt, ok := fnReturn.(types.OptionType); ok {
+					tmp.Bubble = true
+					tmp.ConvertToNone = true
+					tmp.ToNoneType = fnReturnOpt.W
+					out = tmp
+				} else {
+					tmp.Bubble = false
+					out = tmp
+				}
 			}
 		}
 		if _, ok := fnReturn.(types.OptionType); !ok {
