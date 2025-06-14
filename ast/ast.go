@@ -542,7 +542,13 @@ type (
 
 	EnumType struct {
 		Enum   token.Pos // position of "enum" keyword
-		Values *FieldList
+		Values *EnumValueList
+	}
+
+	EnumValueList struct {
+		Lbrace token.Pos
+		List   []*EnumValue
+		Rbrace token.Pos
 	}
 
 	// A StructType node represents a struct type.
@@ -555,6 +561,7 @@ type (
 	// Pointer types are represented via StarExpr nodes.
 
 	EnumValue struct {
+		Name   *Ident
 		Params *FieldList
 	}
 
@@ -588,6 +595,30 @@ type (
 		Value Expr      // value type
 	}
 )
+
+func (f *EnumValueList) Pos() token.Pos {
+	if f.Lbrace.IsValid() {
+		return f.Lbrace
+	}
+	// the list should not be empty in this case;
+	// be conservative and guard against bad ASTs
+	if len(f.List) > 0 {
+		return f.List[0].Pos()
+	}
+	return token.NoPos
+}
+
+func (f *EnumValueList) End() token.Pos {
+	if f.Rbrace.IsValid() {
+		return f.Rbrace + 1
+	}
+	// the list should not be empty in this case;
+	// be conservative and guard against bad ASTs
+	if n := len(f.List); n > 0 {
+		return f.List[n-1].End()
+	}
+	return token.NoPos
+}
 
 func (e EnumValue) Pos() token.Pos { return e.Params.Pos() }
 func (e EnumValue) End() token.Pos { return e.Params.End() }

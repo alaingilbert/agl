@@ -358,7 +358,9 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.X)
 
 	case *EnumValue:
-		Walk(v, n.Params)
+		if n.Params != nil {
+			Walk(v, n.Params)
+		}
 
 	case *ShortFuncLit:
 		Walk(v, n.Body)
@@ -368,6 +370,9 @@ func Walk(v Visitor, node Node) {
 
 	case *OptionExpr:
 		Walk(v, n.X)
+
+	case *EnumValueList:
+		walkList(v, n.List)
 
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
