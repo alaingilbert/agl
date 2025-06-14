@@ -793,7 +793,6 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
 		return cmpTypes(a.(types.ResultType).W, b.(types.ResultType).W)
 	}
-	p("???", a, b, to(a), to(b))
 	if a == b {
 		return true
 	}
@@ -1062,6 +1061,8 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 		return types.OptionType{W: types.I64Type{}} // TODO
 	} else if expr.Name == "make" {
 		return types.MakeType{}
+	} else if expr.Name == "len" {
+		return types.LenType{}
 	} else if expr.Name == "_" {
 		return types.UnderscoreType{}
 	}
