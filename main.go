@@ -85,7 +85,8 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := parser2(string(by))
 	i := NewInferrer(fset)
 	i.InferFile(f)
-	fmt.Println(codegen(i.env, f))
+	g := NewGenerator(i.env, f)
+	fmt.Println(g.Generate())
 	return nil
 }
 
