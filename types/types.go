@@ -136,6 +136,7 @@ func (t StructType) String() string { return "StructType" }
 type EnumType struct {
 	Name   string
 	Fields []FieldType
+	SubTyp string
 }
 
 func (e EnumType) GoStr() string { return e.Name }

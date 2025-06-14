@@ -192,7 +192,7 @@ func (g *Generator) genEnumType(enumName string, expr *goast.EnumType) string {
 	for _, field := range expr.Values.List {
 		if field.Params != nil {
 			for i, el := range field.Params.List {
-				out += fmt.Sprintf("\t%s%d %s\n", field.Name.Name, i, g.env.GetType(el).GoStr())
+				out += fmt.Sprintf("\t%s%d %s\n", field.Name.Name, i, g.env.GetType2(el.Type).GoStr())
 			}
 		}
 	}
@@ -207,7 +207,7 @@ func (g *Generator) genEnumType(enumName string, expr *goast.EnumType) string {
 		var tmp1 []string
 		if field.Params != nil {
 			for i, el := range field.Params.List {
-				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType(el).GoStr()))
+				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType2(el.Type).GoStr()))
 				tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.Name.Name, i, i))
 			}
 		}
