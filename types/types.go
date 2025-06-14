@@ -244,30 +244,43 @@ func (f FuncType) GetParam(i int) Type {
 }
 
 func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
-	if v, ok := f.Return.(GenericType); ok {
-		if v.Name == name {
-			f.Return = typ
-		}
-	} else if v, ok := f.Return.(FuncType); ok {
-		f.Return = v.ReplaceGenericParameter(name, typ)
+	ff := f
+	newParams := make([]Type, 0)
+	newTypeParams := make([]Type, 0)
+	for _, p := range ff.Params {
+		newParams = append(newParams, p)
 	}
-	for i, p := range f.Params {
+	for _, p := range ff.TypeParams {
+		newTypeParams = append(newTypeParams, p)
+	}
+
+	if v, ok := ff.Return.(GenericType); ok {
+		if v.Name == name {
+			ff.Return = typ
+		}
+	} else if v, ok := ff.Return.(FuncType); ok {
+		ff.Return = v.ReplaceGenericParameter(name, typ)
+	}
+	for i, p := range ff.Params {
 		if v, ok := p.(GenericType); ok {
 			if v.Name == name {
-				f.Params[i] = typ
+				newParams[i] = typ
 			}
 		} else if v, ok := p.(FuncType); ok {
-			f.Params[i] = v.ReplaceGenericParameter(name, typ)
+			newParams[i] = v.ReplaceGenericParameter(name, typ)
 		}
 	}
 	for i, p := range f.TypeParams {
 		if v, ok := p.(GenericType); ok {
 			if v.Name == name {
-				f.TypeParams = slices.Delete(f.TypeParams, i, i+1)
+				newTypeParams = slices.Delete(newTypeParams, i, i+1)
 			}
 		}
 	}
-	return f
+
+	ff.Params = newParams
+	ff.TypeParams = newTypeParams
+	return ff
 }
 
 func (f FuncType) GoStr() string { return f.Name }
