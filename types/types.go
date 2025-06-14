@@ -145,13 +145,22 @@ func (i InterfaceType) String() string { return "InterfaceType" }
 
 type EnumType struct {
 	Name   string
-	Fields []FieldType
+	Fields []EnumFieldType
 	SubTyp string
 }
 
 func (e EnumType) GoStr() string { return e.Name }
 
 func (e EnumType) String() string { return "EnumType" }
+
+type EnumFieldType struct {
+	Name string
+	Elts []Type
+}
+
+func (e EnumFieldType) GoStr() string { return "EnumFieldType" }
+
+func (e EnumFieldType) String() string { return "EnumFieldType" }
 
 type GenericType struct {
 	W    Type

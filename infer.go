@@ -124,10 +124,16 @@ func (infer *FileInferrer) interfaceType(name *goast.Ident, e *goast.InterfaceTy
 }
 
 func (infer *FileInferrer) enumType(name *goast.Ident, e *goast.EnumType) {
-	var fields []types.FieldType
+	var fields []types.EnumFieldType
 	if e.Values != nil {
 		for _, f := range e.Values.List {
-			fields = append(fields, types.FieldType{Name: f.Name.Name})
+			var elts []types.Type
+			if f.Params != nil {
+				for _, param := range f.Params.List {
+					elts = append(elts, infer.env.GetType2(param.Type))
+				}
+			}
+			fields = append(fields, types.EnumFieldType{Name: f.Name.Name, Elts: elts})
 		}
 	}
 	infer.env.Define(name.Name, types.EnumType{Name: name.Name, Fields: fields})
@@ -906,6 +912,17 @@ func (infer *FileInferrer) assignStmt(stmt *goast.AssignStmt) {
 					infer.SetType(lhs, infer.GetType(x))
 					assignFn(lhsID.Name, infer.GetType(lhsID))
 				}
+			}
+			if rhs, ok := infer.env.GetType(rhs).(types.EnumType); ok {
+				for i, e := range stmt.Lhs {
+					lit := rhs.SubTyp
+					fields := rhs.Fields
+					// AGL: fields.Find({ $0.name == lit })
+					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
+					assert(f != nil)
+					assignFn(e.(*goast.Ident).Name, f.Elts[i])
+				}
+				return
 			}
 		}
 	} else {

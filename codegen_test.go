@@ -2101,52 +2101,54 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen66(t *testing.T) {
-//	src := `
-//type Color enum {
-//	red,
-//	other(u8, string),
-//}
-//fn main() {
-//	(a, b) := Color.other(1, "yellow")
-//	fmt.Println(a, b)
-//}
-//`
-//	expected := `type ColorTag int
-//const (
-//	Color_red ColorTag = iota + 1
-//	Color_other
-//)
-//type Color struct {
-//	tag ColorTag
-//	other0 uint8
-//	other1 string
-//}
-//func (v Color) String() string {
-//	switch v.tag {
-//	case Color_red:
-//		return "red"
-//	case Color_other:
-//		return "other"
-//	default:
-//		panic("")
-//	}
-//}
-//func Make_Color_red() Color {
-//	return Color{tag: Color_red}
-//}
-//func Make_Color_other(arg0 uint8, arg1 string) Color {
-//	return Color{tag: Color_other, other0: arg0, other1: arg1}
-//}
-//func main() {
-//	aglVar1 := Make_Color_other(1, "yellow")
-//	a, b := aglVar1.other0, aglVar1.other1
-//	fmt.Println(a, b)
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+func TestCodeGen66(t *testing.T) {
+	src := `package main
+type Color enum {
+	red
+	other(u8, string)
+}
+func main() {
+	a, b := Color.other(1, "yellow")
+	fmt.Println(a, b)
+}
+`
+	expected := `package main
+type ColorTag int
+const (
+	Color_red ColorTag = iota + 1
+	Color_other
+)
+type Color struct {
+	tag ColorTag
+	other0 uint8
+	other1 string
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_red:
+		return "red"
+	case Color_other:
+		return "other"
+	default:
+		panic("")
+	}
+}
+func Make_Color_red() Color {
+	return Color{tag: Color_red}
+}
+func Make_Color_other(arg0 uint8, arg1 string) Color {
+	return Color{tag: Color_other, other0: arg0, other1: arg1}
+}
+
+func main() {
+	aglVar1 := Make_Color_other(1, "yellow")
+	a, b := aglVar1.other0, aglVar1.other1
+	fmt.Println(a, b)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen67(t *testing.T) {
 //	src := `
 //fn main() {

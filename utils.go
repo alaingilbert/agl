@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-func noop[T any](_ ...T) {}
+func noop(_ ...any) {}
 
 func printCallers(n int) {
 	fmt.Println("--- callers ---")
