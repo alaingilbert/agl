@@ -973,7 +973,7 @@ func AglVecIn[T cmp.Ordered](a []T, v T) bool {
 	return false
 }
 
-func AglNoop[T any](_ ...T) {}
+func AglNoop(_ ...any) {}
 
 func AglTypeAssert[T any](v any) Option[T] {
 	if v, ok := v.(T); ok {
