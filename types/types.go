@@ -42,7 +42,7 @@ type StringType struct{ W Type }
 func (s StringType) GoStr() string  { return "string" }
 func (s StringType) String() string { return "string" }
 
-type BoolType struct{ W Type }
+type BoolType struct{ V bool }
 
 func (b BoolType) GoStr() string  { return "bool" }
 func (b BoolType) String() string { return "bool" }
