@@ -20,9 +20,11 @@ func (v VoidType) GoStr() string  { return "AglVoid" }
 func (v VoidType) String() string { return "VoidExpr" }
 
 type ResultType struct {
-	W      Type
-	Native bool
-	Bubble bool
+	W             Type
+	Native        bool
+	Bubble        bool
+	ConvertToNone bool
+	ToNoneType    Type
 }
 
 func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
