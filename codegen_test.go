@@ -1382,34 +1382,35 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-////func TestCodeGen50(t *testing.T) {
-////	src := `
-////fn main() {
-////	a := []string{"a", "b", "c"}
-////}
-////`
-////	tassert.PanicsWithValue(t, "should fail for non numbers", func() { codegen(infer(parser(NewTokenStream(src)))) })
-////}
-//
-//func TestCodeGen51(t *testing.T) {
+//func TestCodeGen50(t *testing.T) {
 //	src := `
-//type Person struct {
-//}
-//fn (p Person) speak() string {
-//}
 //fn main() {
+//	a := []string{"a", "b", "c"}
 //}
 //`
-//	expected := `type Person struct {
+//	tassert.PanicsWithValue(t, "should fail for non numbers", func() { codegen(infer(parser(NewTokenStream(src)))) })
 //}
-//func (p Person) speak() string {
-//}
-//func main() {
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen51(t *testing.T) {
+	src := `package main
+type Person struct {
+}
+func (p Person) speak() string {
+}
+func main() {
+}
+`
+	expected := `package main
+type Person struct {
+}
+func (p Person) speak() string {
+}
+func main() {
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen52(t *testing.T) {
 //	src := `
 //type Person struct {
