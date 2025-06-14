@@ -2074,31 +2074,33 @@ type Writer interface {
 }
 
 //func TestCodeGen_ValueSpec1(t *testing.T) {
-//	src := `
-//fn main() {
+//	src := `package main
+//func main() {
 //	var a int? = None
 //}
 //`
-//	expected := `func main() {
+//	expected := `package main
+//func main() {
 //	var a Option[int] = MakeOptionNone[int]()
 //}
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
-//func TestCodeGen_ValueSpec2(t *testing.T) {
-//	src := `
-//fn main() {
-//	var a int?
-//}
-//`
-//	expected := `func main() {
-//	var a Option[int]
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen_ValueSpec2(t *testing.T) {
+	src := `package main
+func main() {
+	var a int?
+}
+`
+	expected := `package main
+func main() {
+	var a Option[int]
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen66(t *testing.T) {
 //	src := `
 //type Color enum {
