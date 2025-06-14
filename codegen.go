@@ -548,7 +548,6 @@ func (g *Generator) genAssignStmt(stmt *goast.AssignStmt) (out string) {
 		var exprs []string
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
-
 			lhs = content1
 		} else {
 			for i := range g.env.GetType(rhs).(types.TupleType).Elts {
