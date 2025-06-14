@@ -44,6 +44,30 @@ func (g *Generator) genImports() (out string) {
 	return
 }
 
+func (g *Generator) genStmt(s goast.Stmt) (out string) {
+	//p("genStmt", to(s))
+	switch stmt := s.(type) {
+	case *goast.BlockStmt:
+		return g.genBlockStmt(stmt)
+	case *goast.IfStmt:
+		return g.genIfStmt(stmt)
+	case *goast.AssignStmt:
+		return g.genAssignStmt(stmt)
+	case *goast.ExprStmt:
+		return g.genExprStmt(stmt)
+	case *goast.ReturnStmt:
+		return g.genReturnStmt(stmt)
+	case *goast.RangeStmt:
+		return g.genRangeStmt(stmt)
+	case *goast.IncDecStmt:
+		return g.genIncDecStmt(stmt)
+	case *goast.DeclStmt:
+		return g.genDeclStmt(stmt)
+	default:
+		panic(fmt.Sprintf("%v %v", s, to(s)))
+	}
+}
+
 func (g *Generator) genExpr(e goast.Expr) (out string) {
 	//p("genExpr", to(e))
 	switch expr := e.(type) {
@@ -395,30 +419,6 @@ func (g *Generator) genStmts(s []goast.Stmt) (out string) {
 		out += beforeStmtStr + content1
 	}
 	return out
-}
-
-func (g *Generator) genStmt(s goast.Stmt) (out string) {
-	//p("genStmt", to(s))
-	switch stmt := s.(type) {
-	case *goast.BlockStmt:
-		return g.genBlockStmt(stmt)
-	case *goast.IfStmt:
-		return g.genIfStmt(stmt)
-	case *goast.AssignStmt:
-		return g.genAssignStmt(stmt)
-	case *goast.ExprStmt:
-		return g.genExprStmt(stmt)
-	case *goast.ReturnStmt:
-		return g.genReturnStmt(stmt)
-	case *goast.RangeStmt:
-		return g.genRangeStmt(stmt)
-	case *goast.IncDecStmt:
-		return g.genIncDecStmt(stmt)
-	case *goast.DeclStmt:
-		return g.genDeclStmt(stmt)
-	default:
-		panic(fmt.Sprintf("%v %v", s, to(s)))
-	}
 }
 
 func (g *Generator) genBlockStmt(stmt *goast.BlockStmt) (out string) {
