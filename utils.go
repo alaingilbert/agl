@@ -5,10 +5,25 @@ import (
 	"fmt"
 	"iter"
 	"os"
+	"path"
 	"reflect"
+	"runtime"
 )
 
 func noop[T any](_ ...T) {}
+
+func printCallers(n int) {
+	fmt.Println("--- callers ---")
+	for i := 0; i < n; i++ {
+		pc, _, _, ok := runtime.Caller(i + 2)
+		if !ok {
+			break
+		}
+		f := runtime.FuncForPC(pc)
+		file, line := f.FileLine(pc)
+		fmt.Printf("%s:%d %s\n", path.Base(file), line, f.Name())
+	}
+}
 
 func p(a ...any) {
 	var tmp []any
