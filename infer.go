@@ -419,6 +419,9 @@ func (infer *FileInferrer) callExpr(expr *goast.CallExpr) {
 			infer.SetType(call, types.SomeType{W: infer.returnType.(types.OptionType).W})
 			return
 		} else if call.Name == "Err" {
+			if v, ok := expr.Args[0].(*goast.BasicLit); ok && v.Kind == token.STRING {
+				expr.Args[0] = &goast.CallExpr{Fun: &goast.SelectorExpr{X: &goast.Ident{Name: "errors"}, Sel: &goast.Ident{Name: "New"}}, Args: []goast.Expr{v}}
+			}
 			infer.SetType(call, types.ErrType{W: infer.returnType.(types.ResultType).W})
 			return
 		} else if call.Name == "Ok" {

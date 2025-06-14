@@ -1683,111 +1683,116 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-////func TestCodeGen_GenericMethod(t *testing.T) {
-////	src := `
-////type Person struct {
-////}
-////fn (p Person) speak[T any, U any](a T, b U) string {
-////	fmt.Println(a)
-////}
-////fn main() {
-////	p1 := Person{}
-////	p1.speak("hello", 123)
-////	p1.speak(123, "hello")
-////}
-////`
-////	expected := `type Person struct {
-////}
-////func (p Person) speak__string_int(a string) string {
-////	fmt.Println(a)
-////}
-////func (p Person) speak__int_string(a int) string {
-////	fmt.Println(a)
-////}
-////func main() {
-////	p1 := Person{}
-////	p1.speak__string_int("hello", 123)
-////	p1.speak__int_string(123, "hello")
-////}
-////`
-////	testCodeGen(t, src, expected)
-////}
-//
-////func TestCodeGen_OperatorOverloading(t *testing.T) {
-////	src := `
-////type Person struct {
-////	name string
-////	age int
-////}
-////fn (p Person) == (other Person) bool {
-////	return p.age == other.age
-////}
-////fn main() {
-////	p1 := Person{name: "foo", age: 42}
-////	p2 := Person{name: "bar", age: 42}
-////	assert(p1 == p2)
-////}
-////`
-////	expected := `type Person struct {
-////	name string
-////	age int
-////}
-////func (p Person) __EQL(other Person) bool {
-////	return p.age == other.age
-////}
-////func main() {
-////	p1 := Person{name: "foo", age: 42}
-////	p2 := Person{name: "bar", age: 42}
-////	AglAssert(p1.__EQL(p2), "assert failed 'p1 == p2' line 12")
-////}
-////`
-////	testCodeGen(t, src, expected)
-////}
-//
-//func TestCodeGen_55(t *testing.T) {
+//func TestCodeGen_GenericMethod(t *testing.T) {
 //	src := `
+//type Person struct {
+//}
+//fn (p Person) speak[T any, U any](a T, b U) string {
+//	fmt.Println(a)
+//}
 //fn main() {
-//	a := 2
-//	fmt.Println("first")
-//	if a == 2 {
-//		fmt.Println("second")
-//	}
+//	p1 := Person{}
+//	p1.speak("hello", 123)
+//	p1.speak(123, "hello")
 //}
 //`
-//	expected := `func main() {
-//	a := 2
-//	fmt.Println("first")
-//	if a == 2 {
-//		fmt.Println("second")
-//	}
+//	expected := `type Person struct {
+//}
+//func (p Person) speak__string_int(a string) string {
+//	fmt.Println(a)
+//}
+//func (p Person) speak__int_string(a int) string {
+//	fmt.Println(a)
+//}
+//func main() {
+//	p1 := Person{}
+//	p1.speak__string_int("hello", 123)
+//	p1.speak__int_string(123, "hello")
 //}
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
-//func TestCodeGen_56(t *testing.T) {
+
+//func TestCodeGen_OperatorOverloading(t *testing.T) {
 //	src := `
-//type Color enum {
-//	blue,
-//	red,
+//type Person struct {
+//	name string
+//	age int
+//}
+//fn (p Person) == (other Person) bool {
+//	return p.age == other.age
 //}
 //fn main() {
-//	color := Color.red1
+//	p1 := Person{name: "foo", age: 42}
+//	p2 := Person{name: "bar", age: 42}
+//	assert(p1 == p2)
 //}
 //`
-//	tassert.PanicsWithError(t, "7:17: enum Color has no field red1", testCodeGenFn(src))
+//	expected := `type Person struct {
+//	name string
+//	age int
 //}
+//func (p Person) __EQL(other Person) bool {
+//	return p.age == other.age
+//}
+//func main() {
+//	p1 := Person{name: "foo", age: 42}
+//	p2 := Person{name: "bar", age: 42}
+//	AglAssert(p1.__EQL(p2), "assert failed 'p1 == p2' line 12")
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
+func TestCodeGen_55(t *testing.T) {
+	src := `package main
+func main() {
+	a := 2
+	fmt.Println("first")
+	if a == 2 {
+		fmt.Println("second")
+	}
+}
+`
+	expected := `package main
+func main() {
+	a := 2
+	fmt.Println("first")
+	if a == 2 {
+		fmt.Println("second")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//	func TestCodeGen_56(t *testing.T) {
+//		src := `
 //
+//	type Color enum {
+//		blue,
+//		red,
+//	}
+//
+//	fn main() {
+//		color := Color.red1
+//	}
+//
+// `
+//
+//		tassert.PanicsWithError(t, "7:17: enum Color has no field red1", testCodeGenFn(src))
+//	}
 //func TestCodeGen57(t *testing.T) {
-//	src := `
-//fn main() {
+//	src := `package main
+//func main() {
 //	a := []int{1, 2, 3}
 //	if 2 in a {
 //		fmt.Println("found")
 //	}
 //}
 //`
-//	expected := `func main() {
+//	expected := `package main
+//func main() {
 //	a := []int{1, 2, 3}
 //	if AglVecIn(a, 2) {
 //		fmt.Println("found")
@@ -1796,26 +1801,27 @@ func main() {
 //`
 //	testCodeGen(t, src, expected)
 //}
-//
-//func TestCodeGen58(t *testing.T) {
-//	src := `
-//fn test() int! {
-//    return Err("test")
-//}
-//fn main() {
-//    test()!
-//}
-//`
-//	expected := `func test() Result[int] {
-//	return MakeResultErr[int](errors.New("test"))
-//}
-//func main() {
-//	test().Unwrap()
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-//
+
+func TestCodeGen58(t *testing.T) {
+	src := `package main
+func test() int! {
+   return Err("test")
+}
+func main() {
+   test()!
+}
+`
+	expected := `package main
+func test() Result[int] {
+	return MakeResultErr[int](errors.New("test"))
+}
+func main() {
+	test().Unwrap()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen59(t *testing.T) {
 //	src := `
 //fn test() ! {
