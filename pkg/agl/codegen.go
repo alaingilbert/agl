@@ -852,12 +852,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	var lhs, after string
 	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](g.env.GetType(stmt.Rhs[0])) {
 		rhsT := g.env.GetType(stmt.Rhs[0]).(types.EnumType)
-		id := g.varCounter.Add(1)
-		lhs = fmt.Sprintf("aglVar%d", id)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
+			lhs = fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			var names []string
 			var exprs []string
 			for i, x := range stmt.Lhs {
@@ -867,12 +866,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
-		id := g.varCounter.Add(1)
-		lhs = fmt.Sprintf("aglVar%d", id)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
+			lhs = fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			rhs := stmt.Rhs[0]
 			var names []string
 			var exprs []string
