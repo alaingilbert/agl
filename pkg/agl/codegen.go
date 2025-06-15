@@ -509,10 +509,17 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 	exprXT := MustCast[types.OptionType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
-		tmpl := "res := %s\nif res.IsNone() {\n\treturn res\n}\n"
-		before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
-		g.before = append(g.before, before2)
-		out += "res.Unwrap()"
+		if exprXT.Native {
+			tmpl := "tmp, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
+			g.before = append(g.before, before)
+			return `AglIdentity(tmp)`
+		} else {
+			tmpl := "res := %s\nif res.IsNone() {\n\treturn res\n}\n"
+			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
+			g.before = append(g.before, before2)
+			out += "res.Unwrap()"
+		}
 	} else {
 		if exprXT.Native {
 			content1 := g.genExpr(expr.X)

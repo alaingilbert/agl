@@ -3437,6 +3437,27 @@ func test() Result[AglVoid] {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen134(t *testing.T) {
+	src := `package main
+import "strconv"
+func test() string? {
+	res := os.LookupEnv("")?
+	return Some(res)
+}`
+	expected := `package main
+import "strconv"
+func test() Option[string] {
+	tmp, ok := os.LookupEnv("")
+	if !ok {
+		return MakeOptionNone[string]()
+	}
+	res := AglIdentity(tmp)
+	return MakeOptionSome(res)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
