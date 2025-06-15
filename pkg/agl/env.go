@@ -103,36 +103,36 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("false", types.BoolValue{V: false})
 	env.Define("byte", types.TypeType{W: types.ByteType{}})
 	env.Define("cmp.Ordered", types.AnyType{})
-	env.Define("assert", parseFuncTypeFromString("assert", "func (pred bool, msg ...string)", env))
-	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
-	env.Define("len", parseFuncTypeFromString("len", "func [T any](v T) int", env))
-	env.Define("cap", parseFuncTypeFromString("cap", "func [T any](v T) int", env))
-	env.Define("min", parseFuncTypeFromString("min", "func [T cmp.Ordered](x T, y ...T) T", env))
-	env.Define("max", parseFuncTypeFromString("max", "func [T cmp.Ordered](x T, y ...T) T", env))
-	env.Define("clear", parseFuncTypeFromString("clear", "func [T ~[]Type | ~map[Type]Type1](t T)", env))
-	env.Define("close", parseFuncTypeFromString("close", "func (c chan<- Type)", env))
-	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
-	env.Define("fmt.Sprintf", parseFuncTypeFromStringNative("Sprintf", "func(format string, a ...any) string", env))
-	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))
-	env.Define("os.WriteFile", parseFuncTypeFromStringNative("WriteFile", "func(name string, data []byte, perm os.FileMode) !", env))
-	env.Define("os.Chdir", parseFuncTypeFromStringNative("Chdir", "func(string) !", env))
-	env.Define("strconv.Itoa", parseFuncTypeFromStringNative("Itoa", "func(int) string", env))
-	env.Define("strconv.Atoi", parseFuncTypeFromStringNative("Atoi", "func(string) int!", env))
-	env.Define("errors.New", parseFuncTypeFromString("New", "func (text string) error", env))
-	env.Define("agl.Vec.Filter", parseFuncTypeFromString("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
-	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))
-	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env))
-	env.Define("agl.Vec.Find", parseFuncTypeFromString("Find", "func [T any](a []T, f func(e T) bool) T?", env))
-	env.Define("agl.Vec.Sum", parseFuncTypeFromString("Sum", "func [T cmp.Ordered](a []T) T", env))
-	env.Define("agl.Vec.Joined", parseFuncTypeFromString("Joined", "func (a []string) string", env))
-	env.Define("agl.Option.UnwrapOr", parseFuncTypeFromString("UnwrapOr", "func [T any](T) T", env))
-	env.Define("agl.Option.IsSome", parseFuncTypeFromString("IsSome", "func () bool", env))
-	env.Define("agl.Option.IsNone", parseFuncTypeFromString("IsNone", "func () bool", env))
-	env.Define("agl.Option.Unwrap", parseFuncTypeFromString("Unwrap", "func [T any]() T", env))
-	env.Define("agl.Result.UnwrapOr", parseFuncTypeFromString("UnwrapOr", "func [T any](T) T", env))
-	env.Define("agl.Result.IsOk", parseFuncTypeFromString("IsOk", "func () bool", env))
-	env.Define("agl.Result.IsErr", parseFuncTypeFromString("IsErr", "func () bool", env))
-	env.Define("agl.Result.Unwrap", parseFuncTypeFromString("Unwrap", "func [T any]() T", env))
+	env.DefineFn("assert", "func (pred bool, msg ...string)")
+	env.DefineFn("make", "func[T, U any](t T, size ...U) T")
+	env.DefineFn("len", "func [T any](v T) int")
+	env.DefineFn("cap", "func [T any](v T) int")
+	env.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
+	env.DefineFn("max", "func [T cmp.Ordered](x T, y ...T) T")
+	env.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
+	env.DefineFn("close", "func (c chan<- Type)")
+	env.DefineFnNative("fmt.Println", "func(a ...any) int!")
+	env.DefineFnNative("fmt.Sprintf", "func(format string, a ...any) string")
+	env.DefineFnNative("os.ReadFile", "func(name string) ([]byte)!")
+	env.DefineFnNative("os.WriteFile", "func(name string, data []byte, perm os.FileMode) !")
+	env.DefineFnNative("os.Chdir", "func(string) !")
+	env.DefineFnNative("strconv.Itoa", "func(int) string")
+	env.DefineFnNative("strconv.Atoi", "func(string) int!")
+	env.DefineFn("errors.New", "func (text string) error")
+	env.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
+	env.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
+	env.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
+	env.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
+	env.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
+	env.DefineFn("agl.Vec.Joined", "func (a []string) string")
+	env.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
+	env.DefineFn("agl.Option.IsSome", "func () bool")
+	env.DefineFn("agl.Option.IsNone", "func () bool")
+	env.DefineFn("agl.Option.Unwrap", "func [T any]() T")
+	env.DefineFn("agl.Result.UnwrapOr", "func [T any](T) T")
+	env.DefineFn("agl.Result.IsOk", "func () bool")
+	env.DefineFn("agl.Result.IsErr", "func () bool")
+	env.DefineFn("agl.Result.Unwrap", "func [T any]() T")
 	return env
 }
 
@@ -160,6 +160,16 @@ func (e *Env) Get(name string) types.Type {
 
 func (e *Env) GetFn(name string) types.FuncType {
 	return e.Get(name).(types.FuncType)
+}
+
+func (e *Env) DefineFn(name string, fnStr string) {
+	fnT := parseFuncTypeFromString(name, fnStr, e)
+	e.Define(name, fnT)
+}
+
+func (e *Env) DefineFnNative(name string, fnStr string) {
+	fnT := parseFuncTypeFromStringNative(name, fnStr, e)
+	e.Define(name, fnT)
 }
 
 func (e *Env) Define(name string, typ types.Type) {
