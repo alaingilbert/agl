@@ -4,9 +4,9 @@
 
 - Tuple
 - Enum
-- Error propagation operators (`?` for Option / `!` for Result)
-- Concise anonymous function with type inferred arguments (`other := someArr.filter({ $0 % 2 == 0 })`)
-- Array built-in map/reduce/filter methods
+- Error propagation operators (`?` for Option[T] / `!` for Result[T])
+- Concise anonymous function with type inferred arguments (`other := someArr.Filter({ $0 % 2 == 0 })`)
+- Array built-in Map/Reduce/Filter/Find/Sum methods
 - Operator overloading
 - Compile down to Go code
 
