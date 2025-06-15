@@ -98,6 +98,7 @@ const (
 	keyword_beg
 	// Keywords
 	OR_BREAK
+	OR_CONTINUE
 	BREAK
 	CASE
 	CHAN
@@ -212,12 +213,13 @@ var tokens = [...]string{
 	SEMICOLON: ";",
 	COLON:     ":",
 
-	OR_BREAK: "or_break",
-	BREAK:    "break",
-	CASE:     "case",
-	CHAN:     "chan",
-	CONST:    "const",
-	CONTINUE: "continue",
+	OR_BREAK:    "or_break",
+	OR_CONTINUE: "or_continue",
+	BREAK:       "break",
+	CASE:        "case",
+	CHAN:        "chan",
+	CONST:       "const",
+	CONTINUE:    "continue",
 
 	DEFAULT:     "default",
 	DEFER:       "defer",

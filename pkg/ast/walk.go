@@ -384,7 +384,11 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.X)
 
 	case *OrBreakExpr:
-		
+		Walk(v, n.X)
+
+	case *OrContinueExpr:
+		Walk(v, n.X)
+
 	case *NoneExpr:
 
 	case *IfLetStmt:

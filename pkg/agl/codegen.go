@@ -162,6 +162,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genUnaryExpr(expr)
 	case *ast.OrBreakExpr:
 		return g.genOrBreakExpr(expr)
+	case *ast.OrContinueExpr:
+		return g.genOrContinueExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -315,6 +317,24 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
 	before += g.prefix + "\tbreak\n"
+	before += g.prefix + "}\n"
+	g.before = append(g.before, NewBeforeStmt(before))
+	return fmt.Sprintf("AglIdentity(%s)", varName)
+}
+
+func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
+	content1 := g.genExpr(expr.X)
+	var check string
+	if TryCast[types.ResultType](g.env.GetType(expr.X)) {
+		check = "IsErr()"
+	} else if TryCast[types.OptionType](g.env.GetType(expr.X)) {
+		check = "IsNone()"
+	}
+	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	before := ""
+	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+	before += g.prefix + "\tcontinue\n"
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s)", varName)
