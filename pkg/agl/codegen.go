@@ -69,6 +69,10 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genIfLetStmt(stmt)
 	case *ast.SendStmt:
 		return g.genSendStmt(stmt)
+	case *ast.SelectStmt:
+		return g.genSelectStmt(stmt)
+	case *ast.CommClause:
+		return g.genCommClause(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -135,6 +139,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genNoneExpr(expr)
 	case *ast.ChanType:
 		return g.genChanType(expr)
+	case *ast.UnaryExpr:
+		return g.genUnaryExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -270,10 +276,37 @@ func (g *Generator) genChanType(expr *ast.ChanType) string {
 	return fmt.Sprintf("chan %s", g.genExpr(expr.Value))
 }
 
+func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {
+	return fmt.Sprintf("%s%s", expr.Op.String(), g.genExpr(expr.X))
+}
+
 func (g *Generator) genSendStmt(expr *ast.SendStmt) string {
 	content1 := g.genExpr(expr.Chan)
 	content2 := g.genExpr(expr.Value)
 	return g.prefix + fmt.Sprintf("%s <- %s\n", content1, content2)
+}
+
+func (g *Generator) genSelectStmt(expr *ast.SelectStmt) (out string) {
+	content1 := g.genStmt(expr.Body)
+	out += g.prefix + "select {\n"
+	out += content1
+	out += g.prefix + "}\n"
+	return
+}
+
+func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
+	var content1, content2 string
+	if expr.Comm != nil {
+		content1 = "case " + strings.TrimSpace(g.genStmt(expr.Comm)) + ":"
+	} else {
+		content1 = "default:"
+	}
+	if expr.Body != nil {
+		content2 = g.genStmts(expr.Body)
+	}
+	out += g.prefix + fmt.Sprintf("%s\n", content1)
+	out += content2
+	return
 }
 
 func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
