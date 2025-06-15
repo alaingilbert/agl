@@ -933,8 +933,10 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
 	}
-	if TryCast[types.ArrayType](a) || TryCast[types.ArrayType](b) {
-		return true // TODO
+	if TryCast[types.ArrayType](a) && TryCast[types.ArrayType](b) {
+		aa := MustCast[types.ArrayType](a)
+		bb := MustCast[types.ArrayType](b)
+		return cmpTypes(aa.Elt, bb.Elt)
 	}
 	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
 		return true // TODO
