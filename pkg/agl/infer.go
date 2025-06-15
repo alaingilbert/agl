@@ -1019,7 +1019,17 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
 			lhsID := MustCast[*ast.Ident](lhs)
-			infer.SetType(lhs, infer.GetType(rhs))
+			rhsT := infer.GetType(rhs)
+			switch infer.GetType(lhs).(type) {
+			case types.SomeType, types.NoneType:
+				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.fset.Position(lhs.Pos()))
+				infer.SetTypeForce(lhs, rhsT)
+			case types.ErrType, types.OkType:
+				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.fset.Position(lhs.Pos()))
+				infer.SetTypeForce(lhs, rhsT)
+			default:
+				infer.SetType(lhs, rhsT)
+			}
 			assignFn(lhsID.Name, infer.GetType(lhsID))
 		} else {
 			if rhs, ok := rhs.(*ast.TupleExpr); ok {
@@ -1138,6 +1148,19 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 
 func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
 	infer.withEnv(func() {
+		lhs := stmt.Ass.Lhs[0]
+		var lhsT types.Type
+		switch stmt.Op {
+		case token.NONE:
+			lhsT = types.NoneType{}
+		case token.OK:
+			lhsT = types.OkType{}
+		case token.ERR:
+			lhsT = types.ErrType{}
+		case token.SOME:
+			lhsT = types.SomeType{}
+		}
+		infer.SetType(lhs, lhsT)
 		infer.stmt(stmt.Ass)
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
