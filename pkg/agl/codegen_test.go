@@ -2975,6 +2975,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen108(t *testing.T) {
+	src := `package main
+func main() {
+	a := map[string]int{"a": 1}
+	a["a"] = 2
+}
+`
+	expected := `package main
+func main() {
+	a := map[string]int{"a": 1}
+	a["a"] = 2
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

@@ -932,11 +932,17 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 }
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
-	if arr, ok := expr.Type.(*ast.ArrayType); ok {
-		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(arr.Elt)})
+	switch v := expr.Type.(type) {
+	case *ast.ArrayType:
+		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(v.Elt)})
+		return
+	case *ast.Ident:
+		infer.SetType(expr, infer.env.Get(v.Name))
+		return
+	case *ast.MapType:
+		infer.SetType(expr, types.MapType{})
 		return
 	}
-	infer.SetType(expr, infer.env.Get(expr.Type.(*ast.Ident).Name))
 }
 
 func (infer *FileInferrer) arrayType(expr *ast.ArrayType) {
@@ -1046,7 +1052,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		infer.expr(rhs)
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
-			lhsID := MustCast[*ast.Ident](lhs)
+			var lhsID *ast.Ident
+			switch v := lhs.(type) {
+			case *ast.Ident:
+				lhsID = v
+			case *ast.IndexExpr:
+				lhsID = v.X.(*ast.Ident)
+				return // tODO
+			}
 			rhsT := infer.GetType(rhs)
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
