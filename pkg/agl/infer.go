@@ -1093,24 +1093,33 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 			assignFn(lhsID.Name, infer.GetType(lhsID))
 		} else {
-			if rhs, ok := rhs.(*ast.TupleExpr); ok {
-				for i, x := range rhs.Values {
+			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
+				for i, x := range rhs1.Values {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
 					infer.SetType(lhs, infer.GetType(x))
 					assignFn(lhsID.Name, infer.GetType(lhsID))
 				}
-			}
-			if rhs, ok := infer.env.GetType(rhs).(types.EnumType); ok {
+			} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
 				for i, e := range stmt.Lhs {
-					lit := rhs.SubTyp
-					fields := rhs.Fields
+					lit := rhs2.SubTyp
+					fields := rhs2.Fields
 					// AGL: fields.Find({ $0.name == lit })
 					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
 					assert(f != nil)
 					assignFn(e.(*ast.Ident).Name, f.Elts[i])
 				}
 				return
+			} else if rhsId, ok := rhs.(*ast.Ident); ok {
+				rhsIdT := infer.env.Get(rhsId.Name)
+				if rhs3, ok := rhsIdT.(types.TupleType); ok {
+					for i, x := range rhs3.Elts {
+						lhs := stmt.Lhs[i]
+						lhsID := MustCast[*ast.Ident](lhs)
+						infer.SetType(lhs, x)
+						assignFn(lhsID.Name, infer.GetType(lhsID))
+					}
+				}
 			}
 		}
 	} else {
