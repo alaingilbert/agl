@@ -36,6 +36,11 @@ type ChanType struct{ W Type }
 func (m ChanType) GoStr() string  { return "ChanType" }
 func (m ChanType) String() string { return "ChanType" }
 
+type LabelType struct{ W Type }
+
+func (l LabelType) GoStr() string  { return "LabelType" }
+func (l LabelType) String() string { return "LabelType" }
+
 type ResultType struct {
 	W             Type
 	Native        bool

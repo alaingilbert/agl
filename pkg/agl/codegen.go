@@ -75,8 +75,12 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genCommClause(stmt)
 	case *ast.SwitchStmt:
 		return g.genSwitchStmt(stmt)
+	case *ast.LabeledStmt:
+		return g.genLabeledStmt(stmt)
 	case *ast.CaseClause:
 		return g.genCaseClause(stmt)
+	case *ast.BranchStmt:
+		return g.genBranchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -295,6 +299,17 @@ func (g *Generator) genSelectStmt(expr *ast.SelectStmt) (out string) {
 	out += g.prefix + "select {\n"
 	out += content1
 	out += g.prefix + "}\n"
+	return
+}
+
+func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) (out string) {
+	out += g.prefix + fmt.Sprintf("%s:\n", expr.Label.Name)
+	out += g.genStmt(expr.Stmt)
+	return
+}
+
+func (g *Generator) genBranchStmt(expr *ast.BranchStmt) (out string) {
+	out += g.prefix + expr.Tok.String() + " " + g.genExpr(expr.Label) + "\n"
 	return
 }
 
