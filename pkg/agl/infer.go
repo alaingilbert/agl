@@ -441,6 +441,8 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 		infer.SetType(expr, types.StringType{})
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
+	case token.CHAR:
+		infer.SetType(expr, types.CharType{})
 	default:
 		panic(fmt.Sprintf("unknown basic literal %v %v", to(expr), expr.Kind))
 	}
