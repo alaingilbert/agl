@@ -82,23 +82,23 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("os", types.PackageType{Name: "os"})
 	env.Define("fmt", types.PackageType{Name: "fmt"})
 	env.Define("any", types.AnyType{})
-	env.Define("i8", types.I8Type{})
-	env.Define("i16", types.I16Type{})
-	env.Define("i32", types.I32Type{})
-	env.Define("i64", types.I64Type{})
-	env.Define("u8", types.U8Type{})
-	env.Define("u16", types.U16Type{})
-	env.Define("u32", types.U32Type{})
-	env.Define("u64", types.U64Type{})
-	env.Define("int", types.IntType{})
-	env.Define("uint", types.UintType{})
-	env.Define("f32", types.F32Type{})
-	env.Define("f64", types.F64Type{})
+	env.Define("i8", types.TypeType{W: types.I8Type{}})
+	env.Define("i16", types.TypeType{W: types.I16Type{}})
+	env.Define("i32", types.TypeType{W: types.I32Type{}})
+	env.Define("i64", types.TypeType{W: types.I64Type{}})
+	env.Define("u8", types.TypeType{W: types.U8Type{}})
+	env.Define("u16", types.TypeType{W: types.U16Type{}})
+	env.Define("u32", types.TypeType{W: types.U32Type{}})
+	env.Define("u64", types.TypeType{W: types.U64Type{}})
+	env.Define("int", types.TypeType{W: types.IntType{}})
+	env.Define("uint", types.TypeType{W: types.UintType{}})
+	env.Define("f32", types.TypeType{W: types.F32Type{}})
+	env.Define("f64", types.TypeType{W: types.F64Type{}})
 	env.Define("string", types.TypeType{W: types.StringType{}})
-	env.Define("bool", types.BoolType{})
+	env.Define("bool", types.TypeType{W: types.BoolType{}})
 	env.Define("true", types.BoolValue{V: true})
 	env.Define("false", types.BoolValue{V: false})
-	env.Define("byte", types.ByteType{})
+	env.Define("byte", types.TypeType{W: types.ByteType{}})
 	env.Define("cmp.Ordered", types.AnyType{})
 	env.Define("assert", parseFuncTypeFromString("assert", "func (pred bool, msg ...string)", env))
 	env.Define("make", parseFuncTypeFromString("make", "func[T, U any](t T, size ...U) T", env))
@@ -174,6 +174,9 @@ func makeKey(n ast.Node) string {
 
 func (e *Env) GetType(x ast.Node) types.Type {
 	if v, ok := e.lookupTable2[makeKey(x)]; ok {
+		if tt, ok := v.(types.TypeType); ok {
+			v = tt.W
+		}
 		return v
 	}
 	return nil

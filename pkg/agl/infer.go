@@ -304,6 +304,10 @@ func (infer *FileInferrer) exprs(s []ast.Expr) {
 	}
 }
 
+func (infer *FileInferrer) exprType(e ast.Expr) {
+
+}
+
 func (infer *FileInferrer) expr(e ast.Expr) {
 	//p("infer.expr", to(e))
 	switch expr := e.(type) {

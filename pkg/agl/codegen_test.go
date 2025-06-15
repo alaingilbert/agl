@@ -3135,6 +3135,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen114(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	fmt.Println(u8(a))
+}
+`
+	expected := `package main
+func main() {
+	a := 1
+	fmt.Println(uint8(a))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
