@@ -108,7 +108,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("cap", parseFuncTypeFromString("cap", "func [T any](v T) int", env))
 	env.Define("min", parseFuncTypeFromString("min", "func [T cmp.Ordered](x T, y ...T) T", env))
 	env.Define("max", parseFuncTypeFromString("max", "func [T cmp.Ordered](x T, y ...T) T", env))
-	//env.Define("clear", parseFuncTypeFromString("clear", "func [T ~[]Type | ~map[Type]Type1](t T)", env))
+	env.Define("clear", parseFuncTypeFromString("clear", "func [T ~[]Type | ~map[Type]Type1](t T)", env))
 	env.Define("close", parseFuncTypeFromString("close", "func (c chan<- Type)", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("fmt.Sprintf", parseFuncTypeFromStringNative("Sprintf", "func(format string, a ...any) string", env))
@@ -243,6 +243,10 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 			elts = append(elts, elt)
 		}
 		return types.TupleType{Name: "", Elts: elts}
+	case *ast.BinaryExpr:
+		return types.BinaryType{X: e.GetType2(xx.X), Y: e.GetType2(xx.Y)}
+	case *ast.UnaryExpr:
+		return types.UnaryType{X: e.GetType2(xx.X)}
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
