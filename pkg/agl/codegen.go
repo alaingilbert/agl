@@ -533,7 +533,13 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 	exprXT := MustCast[types.ResultType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
-		if exprXT.ConvertToNone {
+		if exprXT.Native {
+			tmpl := "res, err := %s\nif err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
+			g.before = append(g.before, before)
+			out := `res`
+			return out
+		} else if exprXT.ConvertToNone {
 			tmpl := "res := %s\nif res.IsErr() {\n\treturn MakeOptionNone[%s]()\n}\n"
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStr()), g.prefix))
 			g.before = append(g.before, before2)
