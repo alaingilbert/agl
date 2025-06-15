@@ -26,7 +26,9 @@ type StarType struct {
 func (s StarType) GoStr() string  { return "StarType" }
 func (s StarType) String() string { return "StarType" }
 
-type MapType struct{}
+type MapType struct {
+	K, V Type
+}
 
 func (m MapType) GoStr() string  { return "MapType" }
 func (m MapType) String() string { return "MapType" }
@@ -64,7 +66,7 @@ func (o OptionType) String() string { return "OptionType" }
 type TypeType struct{ W Type }
 
 func (t TypeType) GoStr() string  { return t.W.GoStr() }
-func (t TypeType) String() string { return "TypeType" }
+func (t TypeType) String() string { return fmt.Sprintf("TypeType(%v)", t.W) }
 
 type StringType struct{ W Type }
 
