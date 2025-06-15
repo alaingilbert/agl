@@ -1125,6 +1125,13 @@ func (o Option[T]) Unwrap() T {
 	return *o.t
 }
 
+func (o Option[T]) UnwrapOr(d T) T {
+	if o.IsNone() {
+		return d
+	}
+	return *o.t
+}
+
 func MakeOptionSome[T any](t T) Option[T] {
 	return Option[T]{t: &t}
 }
@@ -1156,6 +1163,13 @@ func (r Result[T]) IsOk() bool {
 func (r Result[T]) Unwrap() T {
 	if r.IsErr() {
 		panic(fmt.Sprintf("unwrap on an Err value: %s", r.e))
+	}
+	return *r.t
+}
+
+func (r Result[T]) UnwrapOr(d T) T {
+	if r.IsErr() {
+		return d
 	}
 	return *r.t
 }

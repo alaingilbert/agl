@@ -504,11 +504,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr, fnT.Return)
 			return
 		case types.OptionType:
-			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap"}) {
+			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
 				return
 			}
 		case types.ResultType:
-			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "Err"}) {
+			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}) {
 				return
 			}
 		}
