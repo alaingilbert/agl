@@ -72,7 +72,7 @@ func spawnGoRunFromBytes(source []byte) error {
 		return err
 	}
 
-	coreFile := filepath.Join(tmpDir, "core.go")
+	coreFile := filepath.Join(tmpDir, "aglCore.go")
 	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
 	if err != nil {
 		return err
@@ -129,6 +129,13 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
 	}
+
+	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
+	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
