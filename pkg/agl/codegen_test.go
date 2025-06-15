@@ -2925,6 +2925,32 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen106(t *testing.T) {
+	src := `package main
+func main() {
+	c1 := make(chan int)
+	c2 := make(chan int)
+	select {
+	case <-c1:
+	case <-c2:
+	default:
+	}
+}
+`
+	expected := `package main
+func main() {
+	c1 := make(chan int)
+	c2 := make(chan int)
+	select {
+	case <-c1:
+	case <-c2:
+	default:
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

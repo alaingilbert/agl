@@ -338,6 +338,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.noneExpr(expr)
 	case *ast.ChanType:
 		infer.chanType(expr)
+	case *ast.UnaryExpr:
+		infer.unaryExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -390,6 +392,10 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.ifLetStmt(stmt)
 	case *ast.SendStmt:
 		infer.sendStmt(stmt)
+	case *ast.SelectStmt:
+		infer.selectStmt(stmt)
+	case *ast.CommClause:
+		infer.commClause(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -726,6 +732,10 @@ func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
 
 func (infer *FileInferrer) chanType(expr *ast.ChanType) {
 	infer.expr(expr.Value)
+}
+
+func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
+	infer.expr(expr.X)
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
@@ -1164,6 +1174,19 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 func (infer *FileInferrer) sendStmt(stmt *ast.SendStmt) {
 	infer.expr(stmt.Chan)
 	infer.expr(stmt.Value)
+}
+
+func (infer *FileInferrer) selectStmt(stmt *ast.SelectStmt) {
+	infer.stmt(stmt.Body)
+}
+
+func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
+	if stmt.Comm != nil {
+		infer.stmt(stmt.Comm)
+	}
+	if stmt.Body != nil {
+		infer.stmts(stmt.Body)
+	}
 }
 
 func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
