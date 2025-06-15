@@ -68,7 +68,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
 		if !cmpTypes(tt, t) {
 			if !TryCast[types.UntypedNumType](tt) {
 				//return // TODO
-				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.fset.Position(a.Pos()), makeKey(a), a, to(a), infer.env.GetType(a), t))
+				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
 	}
@@ -480,7 +480,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
 			} else {
-				assertf(false, "%s: method '%s' of type Vec does not exists", infer.fset.Position(call.Sel.Pos()), fnName)
+				assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
 			}
 		}
 	}
@@ -618,7 +618,7 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.SelectorExpr, expr *ast.CallExpr) {
 	if idTArr, ok := idT.(types.ArrayType); ok {
-		exprPos := infer.fset.Position(expr.Pos())
+		exprPos := infer.Pos(expr)
 		if exprT.Sel.Name == "Filter" {
 			ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
 			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
@@ -1086,6 +1086,10 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 	})
 }
 
+func (infer *FileInferrer) Pos(n ast.Node) token.Position {
+	return infer.fset.Position(n.Pos())
+}
+
 func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	myDefine := func(name string, typ types.Type) {
 		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.Tok)
@@ -1113,10 +1117,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
-				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.fset.Position(lhs.Pos()))
+				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.Pos(lhs))
 				infer.SetTypeForce(lhs, rhsT)
 			case types.ErrType, types.OkType:
-				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.fset.Position(lhs.Pos()))
+				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
 				infer.SetTypeForce(lhs, rhsT)
 			default:
 				infer.SetType(lhs, rhsT)
@@ -1239,7 +1243,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 		return types.UnderscoreType{}
 	}
 	v := infer.env.Get(expr.Name)
-	assertf(v != nil, "%s: undefined identifier %s", infer.fset.Position(expr.Pos()), expr.Name)
+	assertf(v != nil, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
 	if expr.Name == "true" || expr.Name == "false" {
 		return types.BoolType{}
 	}
