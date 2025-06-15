@@ -160,6 +160,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genChanType(expr)
 	case *ast.UnaryExpr:
 		return g.genUnaryExpr(expr)
+	case *ast.OrBreakExpr:
+		return g.genOrBreakExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -298,6 +300,24 @@ func (g *Generator) genErrExpr(expr *ast.ErrExpr) string {
 
 func (g *Generator) genChanType(expr *ast.ChanType) string {
 	return fmt.Sprintf("chan %s", g.genExpr(expr.Value))
+}
+
+func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
+	content1 := g.genExpr(expr.X)
+	var check string
+	if TryCast[types.ResultType](g.env.GetType(expr.X)) {
+		check = "IsErr()"
+	} else if TryCast[types.OptionType](g.env.GetType(expr.X)) {
+		check = "IsNone()"
+	}
+	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	before := ""
+	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+	before += g.prefix + "\tbreak\n"
+	before += g.prefix + "}\n"
+	g.before = append(g.before, NewBeforeStmt(before))
+	return fmt.Sprintf("AglIdentity(%s)", varName)
 }
 
 func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {

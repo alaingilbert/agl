@@ -368,6 +368,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.typeAssertExpr(expr)
 	case *ast.MapType:
 		infer.mapType(expr)
+	case *ast.OrBreakExpr:
+		infer.orBreak(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -835,6 +837,11 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 	if expr.Type != nil {
 		infer.expr(expr.Type)
 	}
+}
+
+func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
+	infer.expr(expr.X)
+	infer.SetType(expr, infer.GetType(expr.X))
 }
 
 func (infer *FileInferrer) mapType(expr *ast.MapType) {

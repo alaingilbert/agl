@@ -1873,6 +1873,9 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 		case token.NOT:
 			not := p.expect(token.NOT)
 			x = &ast.BubbleResultExpr{X: x, Not: not}
+		case token.OR_BREAK:
+			orBreak := p.expect(token.OR_BREAK)
+			x = &ast.OrBreakExpr{X: x, OrBreak: orBreak}
 		case token.PERIOD:
 			p.next()
 			switch p.tok {
@@ -1928,6 +1931,7 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 			return x
 		}
 	}
+
 }
 
 func (p *parser) parseUnaryExpr() ast.Expr {
