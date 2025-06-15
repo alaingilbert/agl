@@ -3336,6 +3336,26 @@ func main() {
 //	testCodeGen(t, src, expected)
 //}
 
+func TestCodeGen125(t *testing.T) {
+	src := `package main
+func test() int? { Some(42) }
+func main() {
+	num := test().UnwrapOr(1)
+	fmt.Println(num)
+}
+`
+	expected := `package main
+func test() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	num := test().UnwrapOr(1)
+	fmt.Println(num)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

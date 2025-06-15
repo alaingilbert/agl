@@ -505,6 +505,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			return
 		case types.OptionType:
 			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
+				if fnName == "UnwrapOr" {
+					fnT := infer.env.GetFn("agl.Option.UnwrapOr").T("T", idTT.W)
+					infer.SetType(expr, fnT.Return)
+				}
 				return
 			}
 		case types.ResultType:
