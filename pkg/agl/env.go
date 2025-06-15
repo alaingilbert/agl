@@ -122,6 +122,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("agl.Vec.Find", parseFuncTypeFromString("Find", "func [T any](a []T, f func(e T) bool) T?", env))
 	env.Define("agl.Vec.Sum", parseFuncTypeFromString("Sum", "func [T cmp.Ordered](a []T) T", env))
 	env.Define("agl.Vec.Joined", parseFuncTypeFromString("Joined", "func (a []string) string", env))
+	env.Define("agl.Option.UnwrapOr", parseFuncTypeFromString("UnwrapOr", "func [T any](T) T", env))
 	return env
 }
 
