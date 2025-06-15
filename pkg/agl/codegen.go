@@ -511,15 +511,17 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
 		if exprXT.Native {
-			tmpl := "tmp, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n"
+			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+			tmpl := varName + ", ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
 			g.before = append(g.before, before)
-			return `AglIdentity(tmp)`
+			return fmt.Sprintf(`AglIdentity(%s)`, varName)
 		} else {
-			tmpl := "res := %s\nif res.IsNone() {\n\treturn res\n}\n"
+			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsNone() {\n\treturn %s\n}\n", varName, varName, varName)
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
 			g.before = append(g.before, before2)
-			out += "res.Unwrap()"
+			out += fmt.Sprintf("%s.Unwrap()", varName)
 		}
 	} else {
 		if exprXT.Native {
@@ -569,8 +571,10 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 				tmpl1 = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 				out = `AglNoop()`
 			} else {
-				tmpl1 = "tmp, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
-				out = `AglIdentity(tmp)`
+				id := g.varCounter.Add(1)
+				varName := fmt.Sprintf("aglTmp%d", id)
+				tmpl1 = varName + ", err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
 			}
 			content1 := g.genExpr(expr.X)
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
