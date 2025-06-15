@@ -53,6 +53,23 @@ func main() {
 }
 ```
 
+### Propagation chaining
+
+```go
+package main
+
+type Person struct { Name string }
+
+func (p Person) MaybeSelf() Person? {
+    return Some(p)
+}
+
+func main() {
+    bob := Person{Name: "bob"}
+    bob.MaybeSelf()?.MaybeSelf()?.MaybeSelf()?
+}
+```
+
 ### `If let` to use a Option[T]/Result[T] value safely
 
 ```go
