@@ -660,6 +660,16 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 					} else {
 						return fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
 					}
+				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
+					return fmt.Sprintf("%s.__ADD(%s)", content1, content2)
+				} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
+					return fmt.Sprintf("%s.__SUB(%s)", content1, content2)
+				} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
+					return fmt.Sprintf("%s.__MUL(%s)", content1, content2)
+				} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
+					return fmt.Sprintf("%s.__QUO(%s)", content1, content2)
+				} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
+					return fmt.Sprintf("%s.__REM(%s)", content1, content2)
 				}
 			}
 		}
