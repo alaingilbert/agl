@@ -142,22 +142,11 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	}
 	t := g.env.GetType(expr)
 	switch typ := t.(type) {
-	case types.OkType:
-		return "MakeResultOk"
-	case types.ErrType:
-		return fmt.Sprintf("MakeResultErr[%s]", typ.W.GoStr())
-	case types.SomeType:
-		return "MakeOptionSome"
-	case types.NoneType:
-		return fmt.Sprintf("MakeOptionNone[%s]()", typ.W.GoStr())
 	case types.GenericType:
 		return fmt.Sprintf("%s", typ.GoStr())
 	}
 	if expr.Name == "make" {
 		return "make"
-	}
-	if expr.Name == "None" {
-		return fmt.Sprintf("MakeOptionNone[%s]()", t.(types.OptionType).W.GoStr())
 	}
 	if v := g.env.Get(expr.Name); v != nil {
 		return v.GoStr()
