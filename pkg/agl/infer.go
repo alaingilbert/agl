@@ -618,31 +618,39 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 }
 
 func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
+	if fnReturn == nil {
+		return
+	}
+	fnReturnIsResult := TryCast[types.ResultType](fnReturn)
+	fnReturnIsOption := TryCast[types.OptionType](fnReturn)
+	currIsResult := TryCast[types.ResultType](curr)
+	//currIsOption := TryCast[types.OptionType](curr)
 	out = curr
-	if fnReturn != nil {
-		if _, ok := fnReturn.(types.ResultType); !ok {
-			if tmp, ok := curr.(types.ResultType); ok {
-				if fnReturnOpt, ok := fnReturn.(types.OptionType); ok {
-					tmp.Bubble = true
-					tmp.ConvertToNone = true
-					tmp.ToNoneType = fnReturnOpt.W
-					out = tmp
-				} else {
-					tmp.Bubble = false
-					out = tmp
-				}
-			}
-		} else {
-			if tmp, ok := curr.(types.ResultType); ok {
-				tmp.Bubble = true
-				out = tmp
-			}
+	if fnReturnIsResult {
+		if currIsResult {
+			tmp := MustCast[types.ResultType](curr)
+			tmp.Bubble = true
+			out = tmp
 		}
-		if _, ok := fnReturn.(types.OptionType); !ok {
-			if tmp, ok := curr.(types.OptionType); ok {
+	} else {
+		if currIsResult {
+			tmp := MustCast[types.ResultType](curr)
+			if fnReturnIsOption {
+				fnReturnOpt := MustCast[types.OptionType](fnReturn)
+				tmp.Bubble = true
+				tmp.ConvertToNone = true
+				tmp.ToNoneType = fnReturnOpt.W
+				out = tmp
+			} else {
 				tmp.Bubble = false
 				out = tmp
 			}
+		}
+	}
+	if !fnReturnIsOption {
+		if tmp, ok := curr.(types.OptionType); ok {
+			tmp.Bubble = false
+			out = tmp
 		}
 	}
 	return
