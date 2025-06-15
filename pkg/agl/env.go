@@ -81,6 +81,8 @@ func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
 	env.Define("os", types.PackageType{Name: "os"})
 	env.Define("fmt", types.PackageType{Name: "fmt"})
+	env.Define("errors", types.PackageType{Name: "errors"})
+	env.Define("error", types.TypeType{W: types.AnyType{}})
 	env.Define("any", types.TypeType{W: types.AnyType{}})
 	env.Define("i8", types.TypeType{W: types.I8Type{}})
 	env.Define("i16", types.TypeType{W: types.I16Type{}})
@@ -113,6 +115,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))
 	env.Define("os.WriteFile", parseFuncTypeFromStringNative("WriteFile", "func(name string, data []byte, perm os.FileMode) !", env))
 	env.Define("strconv.Itoa", parseFuncTypeFromString("Itoa", "func(int) string", env))
+	env.Define("errors.New", parseFuncTypeFromString("New", "func (text string) error", env))
 	env.Define("agl.Vec.Filter", parseFuncTypeFromString("Filter", "func [T any](a []T, f func(e T) bool) []T", env))
 	env.Define("agl.Vec.Map", parseFuncTypeFromString("Map", "func [T, R any](a []T, f func(T) R) []R", env))
 	env.Define("agl.Vec.Reduce", parseFuncTypeFromString("Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", env))
