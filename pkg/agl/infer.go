@@ -373,11 +373,11 @@ func (infer *FileInferrer) tryConvertType(e ast.Expr, optType types.Type) {
 		infer.SetType(e, optType)
 	} else if _, ok := infer.GetType(e).(types.UntypedNumType); ok {
 		if TryCast[types.U8Type](optType) ||
-			//TryCast[types.U16Type](optType) ||
-			//TryCast[types.U32Type](optType) ||
-			//TryCast[types.U64Type](optType) ||
-			//TryCast[types.I8Type](optType) ||
-			//TryCast[types.I16Type](optType) ||
+			TryCast[types.U16Type](optType) ||
+			TryCast[types.U32Type](optType) ||
+			TryCast[types.U64Type](optType) ||
+			TryCast[types.I8Type](optType) ||
+			TryCast[types.I16Type](optType) ||
 			TryCast[types.I32Type](optType) ||
 			TryCast[types.I64Type](optType) ||
 			TryCast[types.IntType](optType) ||
