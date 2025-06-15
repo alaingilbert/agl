@@ -494,15 +494,19 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.InterfaceType:
 			return
 		case types.EnumType:
+			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
 			return
 		case types.PackageType:
+			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
+			fnT := infer.env.Get(name).(types.FuncType)
+			infer.SetType(expr, fnT.Return)
 			return
 		case types.OptionType:
-			if fnName == "IsNone" || fnName == "IsSome" || fnName == "Unwrap" {
+			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap"}) {
 				return
 			}
 		case types.ResultType:
-			if fnName == "IsOk" || fnName == "IsErr" || fnName == "Unwrap" || fnName == "Err" {
+			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "Err"}) {
 				return
 			}
 		}
@@ -511,39 +515,19 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 
 	switch call := expr.Fun.(type) {
 	case *ast.SelectorExpr:
-		switch id := call.X.(type) {
+		var exprFunT types.Type
+		switch callXT := call.X.(type) {
 		case *ast.Ident:
-			idT1 := infer.env.Get(id.Name)
-			tmpFn(idT1, call)
-			if l := infer.env.Get(id.Name); l != nil {
-				infer.SetType(id, l)
-				if lT, ok := l.(types.StructType); ok {
-					name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
-					toReturn := infer.env.Get(name).(types.FuncType).Return
-					toReturn = alterResultBubble(infer.returnType, toReturn)
-					infer.SetType(expr, toReturn)
-				} else if _, ok := l.(types.PackageType); ok {
-					name := fmt.Sprintf("%s.%s", id.Name, call.Sel.Name)
-					fnT := infer.env.Get(name).(types.FuncType)
-					infer.SetType(expr, fnT.Return)
-				} else if o, ok := l.(types.EnumType); ok {
-					infer.SetType(expr, types.EnumType{Name: o.Name, SubTyp: call.Sel.Name, Fields: o.Fields})
-				}
-			}
-			idT := infer.env.Get(id.Name)
-			infer.inferVecExtensions(idT, call, expr)
+			exprFunT = infer.env.Get(callXT.Name)
+		case *ast.CallExpr, *ast.BubbleResultExpr:
+			infer.expr(callXT)
+			exprFunT = infer.GetType(callXT)
 		default:
-			infer.expr(id)
-			idT := infer.GetType(id)
-			tmpFn(idT, call)
-			if lT, ok := idT.(types.StructType); ok {
-				name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
-				toReturn := infer.env.Get(name).(types.FuncType).Return
-				toReturn = alterResultBubble(infer.returnType, toReturn)
-				infer.SetType(expr, toReturn)
-			}
-			infer.inferVecExtensions(idT, call, expr)
+			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
+		tmpFn(exprFunT, call)
+		infer.SetType(call.X, exprFunT)
+		infer.inferVecExtensions(exprFunT, call, expr)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		if call.Name == "make" {
@@ -628,8 +612,9 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.SelectorExpr, expr *ast.CallExpr) {
 	if idTArr, ok := idT.(types.ArrayType); ok {
+		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
-		if exprT.Sel.Name == "Filter" {
+		if fnName == "Filter" {
 			ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
 			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
@@ -643,7 +628,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			}
 			infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
 
-		} else if exprT.Sel.Name == "Map" {
+		} else if fnName == "Map" {
 			ft := infer.env.GetFn("agl.Vec.Map").GetParam(1).(types.FuncType).T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
@@ -660,7 +645,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				}
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-		} else if exprT.Sel.Name == "Reduce" {
+		} else if fnName == "Reduce" {
 			exprArg0 := expr.Args[0]
 			infer.expr(exprArg0)
 			elTyp := idTArr.Elt
@@ -677,7 +662,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-		} else if exprT.Sel.Name == "Find" {
+		} else if fnName == "Find" {
 			ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType)
 			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
