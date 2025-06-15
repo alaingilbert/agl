@@ -94,25 +94,28 @@ func (u UnderscoreType) String() string { return "_" }
 
 type NoneType struct{ W Type }
 
-func (n NoneType) GoStr() string  { return "" }
-func (n NoneType) String() string { return "" }
+func (n NoneType) GoStr() string  { return "NoneType" }
+func (n NoneType) String() string { return "NoneType" }
 
 type SomeType struct{ W Type }
 
-func (s SomeType) GoStr() string  { return "" }
-func (s SomeType) String() string { return "" }
+func (s SomeType) GoStr() string  { return "SomeType" }
+func (s SomeType) String() string { return "SomeType" }
 
 type OkType struct{ W Type }
 
-func (o OkType) GoStr() string { return "" }
+func (o OkType) GoStr() string { return "OkType" }
 
-func (o OkType) String() string { return "" }
+func (o OkType) String() string { return "OkType" }
 
-type ErrType struct{ W Type }
+type ErrType struct {
+	W Type
+	T Type
+}
 
-func (e ErrType) GoStr() string { return "" }
+func (e ErrType) GoStr() string { return "ErrType" }
 
-func (e ErrType) String() string { return "" }
+func (e ErrType) String() string { return "ErrType" }
 
 type PackageType struct{ Name string }
 

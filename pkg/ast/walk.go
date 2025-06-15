@@ -374,6 +374,26 @@ func Walk(v Visitor, node Node) {
 	case *EnumValueList:
 		walkList(v, n.List)
 
+	case *SomeExpr:
+		Walk(v, n.X)
+
+	case *OkExpr:
+		Walk(v, n.X)
+
+	case *ErrExpr:
+		Walk(v, n.X)
+
+	case *NoneExpr:
+
+	case *IfLetStmt:
+		Walk(v, n.Ass)
+		if n.Body != nil {
+			Walk(v, n.Body)
+		}
+		if n.Else != nil {
+			Walk(v, n.Else)
+		}
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}

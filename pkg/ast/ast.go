@@ -322,6 +322,31 @@ type (
 		Value    string      // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 'a', '\x7f', "foo" or `\m\n\o`
 	}
 
+	SomeExpr struct {
+		Some   token.Pos
+		X      Expr
+		Lparen token.Pos
+		Rparen token.Pos
+	}
+
+	OkExpr struct {
+		Ok     token.Pos
+		X      Expr
+		Lparen token.Pos
+		Rparen token.Pos
+	}
+
+	ErrExpr struct {
+		Err    token.Pos
+		X      Expr
+		Lparen token.Pos
+		Rparen token.Pos
+	}
+
+	NoneExpr struct {
+		None token.Pos
+	}
+
 	ShortFuncLit struct {
 		Body *BlockStmt // function body
 	}
@@ -463,6 +488,30 @@ type (
 		Value Expr
 	}
 )
+
+func (n NoneExpr) Pos() token.Pos { return n.None }
+
+func (n NoneExpr) End() token.Pos { return n.None + 1 }
+
+func (n NoneExpr) exprNode() {}
+
+func (e ErrExpr) Pos() token.Pos { return e.Err }
+
+func (e ErrExpr) End() token.Pos { return e.Rparen }
+
+func (e ErrExpr) exprNode() {}
+
+func (o OkExpr) Pos() token.Pos { return o.Ok }
+
+func (o OkExpr) End() token.Pos { return o.Rparen }
+
+func (o OkExpr) exprNode() {}
+
+func (s SomeExpr) Pos() token.Pos { return s.Some }
+
+func (s SomeExpr) End() token.Pos { return s.Rparen }
+
+func (s SomeExpr) exprNode() {}
 
 func (v VoidExpr) Pos() token.Pos { return token.NoPos }
 
@@ -852,6 +901,14 @@ type (
 		Rbrace token.Pos // position of "}", if any (may be absent due to syntax error)
 	}
 
+	IfLetStmt struct {
+		If   token.Pos // position of "if" keyword
+		Op   token.Token
+		Ass  *AssignStmt
+		Body *BlockStmt
+		Else Stmt // else branch; or nil
+	}
+
 	// An IfStmt node represents an if statement.
 	IfStmt struct {
 		If   token.Pos // position of "if" keyword
@@ -919,6 +976,19 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (s IfLetStmt) Pos() token.Pos {
+	return s.If
+}
+
+func (s IfLetStmt) End() token.Pos {
+	if s.Else != nil {
+		return s.Else.End()
+	}
+	return s.Body.End()
+}
+
+func (s IfLetStmt) stmtNode() {}
 
 // Pos and End implementations for statement nodes.
 

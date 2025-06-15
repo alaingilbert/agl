@@ -177,6 +177,15 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 
 func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 	infer.withEnv(func() {
+		if decl.Recv != nil {
+			for _, recv := range decl.Recv.List {
+				t := infer.env.GetType2(recv.Type)
+				for _, name := range recv.Names {
+					infer.env.SetType(name, t)
+					infer.env.Define(name.Name, t)
+				}
+			}
+		}
 		if decl.Type.TypeParams != nil {
 			for _, param := range decl.Type.TypeParams.List {
 				infer.expr(param.Type)
@@ -319,6 +328,14 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.voidExpr(expr)
 	case *ast.StarExpr:
 		infer.starExpr(expr)
+	case *ast.SomeExpr:
+		infer.someExpr(expr)
+	case *ast.OkExpr:
+		infer.okExpr(expr)
+	case *ast.ErrExpr:
+		infer.errExpr(expr)
+	case *ast.NoneExpr:
+		infer.noneExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -367,6 +384,7 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.declStmt(stmt)
 	case *ast.ForStmt:
 		infer.forStmt(stmt)
+	case *ast.IfLetStmt:
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -675,6 +693,28 @@ func (infer *FileInferrer) funcType(expr *ast.FuncType) {
 
 func (infer *FileInferrer) voidExpr(expr *ast.VoidExpr) {
 	infer.SetType(expr, types.VoidType{})
+}
+
+func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
+	infer.expr(expr.X)
+	infer.SetType(expr, types.SomeType{W: infer.env.GetType(expr.X)})
+}
+
+func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
+	infer.expr(expr.X)
+	infer.SetType(expr, types.OkType{W: infer.env.GetType(expr.X)})
+}
+
+func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
+	infer.expr(expr.X)
+	if v, ok := expr.X.(*ast.BasicLit); ok && v.Kind == token.STRING {
+		expr.X = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
+	}
+	infer.SetType(expr, types.ErrType{W: infer.env.GetType(expr.X), T: infer.returnType.(types.ResultType).W})
+}
+
+func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
+	infer.SetType(expr, types.NoneType{W: infer.returnType.(types.OptionType).W}) // TODO
 }
 
 func (infer *FileInferrer) starExpr(expr *ast.StarExpr) {
@@ -1071,7 +1111,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 	} else if expr.Name == "Err" {
 		t := infer.returnType
 		assert(t != nil)
-		return types.ErrType{W: t.(types.ResultType).W}
+		return types.ErrType{W: t.(types.ResultType).W, T: t.(types.ResultType).W}
 	} else if expr.Name == "Result" {
 		//t := infer.returnType
 		//assert(t != nil)
