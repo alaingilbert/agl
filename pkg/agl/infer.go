@@ -1278,6 +1278,8 @@ func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
 			lhsT = types.ErrType{}
 		case token.SOME:
 			lhsT = types.SomeType{}
+		default:
+			panic("unreachable")
 		}
 		infer.SetType(lhs, lhsT)
 		infer.stmt(stmt.Ass)
