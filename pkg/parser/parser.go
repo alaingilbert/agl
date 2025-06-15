@@ -1879,6 +1879,9 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 		case token.OR_CONTINUE:
 			orContinue := p.expect(token.OR_CONTINUE)
 			x = &ast.OrContinueExpr{X: x, OrContinue: orContinue}
+		case token.OR_RETURN:
+			orReturn := p.expect(token.OR_RETURN)
+			x = &ast.OrReturnExpr{X: x, OrReturn: orReturn}
 		case token.PERIOD:
 			p.next()
 			switch p.tok {

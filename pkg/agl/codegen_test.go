@@ -3764,6 +3764,73 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen143(t *testing.T) {
+	src := `package main
+func test() int? { Some(42) }
+func main() {
+    test() or_return
+}`
+	expected := `package main
+func test() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	aglTmp1 := test()
+	if aglTmp1.IsNone() {
+		return
+	}
+	AglIdentity(aglTmp1)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen144(t *testing.T) {
+	src := `package main
+func test() int? { Some(42) }
+func test2() int? {
+    num := test() or_return
+	return Some(num)
+}`
+	expected := `package main
+func test() Option[int] {
+	return MakeOptionSome(42)
+}
+func test2() Option[int] {
+	aglTmp1 := test()
+	if aglTmp1.IsNone() {
+		return MakeOptionNone[int]()
+	}
+	num := AglIdentity(aglTmp1)
+	return MakeOptionSome(num)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen145(t *testing.T) {
+	src := `package main
+func test() int! { Ok(42) }
+func test2() int! {
+    num := test() or_return
+	return Ok(num)
+}`
+	expected := `package main
+func test() Result[int] {
+	return MakeResultOk(42)
+}
+func test2() Result[int] {
+	aglTmp1 := test()
+	if aglTmp1.IsErr() {
+		return MakeResultErr[int](aglTmp1.Err())
+	}
+	num := AglIdentity(aglTmp1)
+	return MakeResultOk(num)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
