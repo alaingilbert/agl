@@ -81,7 +81,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
 	env.Define("os", types.PackageType{Name: "os"})
 	env.Define("fmt", types.PackageType{Name: "fmt"})
-	env.Define("any", types.AnyType{})
+	env.Define("any", types.TypeType{W: types.AnyType{}})
 	env.Define("i8", types.TypeType{W: types.I8Type{}})
 	env.Define("i16", types.TypeType{W: types.I16Type{}})
 	env.Define("i32", types.TypeType{W: types.I32Type{}})
@@ -122,7 +122,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	return env
 }
 
-func (e *Env) Clone() *Env {
+func (e *Env) Clone() *Env { // TODO avoid cloning, use recursive child/parent pattern instead
 	env := &Env{
 		fset:         e.fset,
 		lookupTable:  maps.Clone(e.lookupTable),
