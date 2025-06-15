@@ -340,6 +340,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.chanType(expr)
 	case *ast.UnaryExpr:
 		infer.unaryExpr(expr)
+	case *ast.TypeAssertExpr:
+		infer.typeAssertExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -408,6 +410,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.deferStmt(stmt)
 	case *ast.GoStmt:
 		infer.goStmt(stmt)
+	case *ast.TypeSwitchStmt:
+		infer.typeSwitchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -748,6 +752,13 @@ func (infer *FileInferrer) chanType(expr *ast.ChanType) {
 
 func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
 	infer.expr(expr.X)
+}
+
+func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
+	infer.expr(expr.X)
+	if expr.Type != nil {
+		infer.expr(expr.Type)
+	}
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
@@ -1240,6 +1251,14 @@ func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
 }
 
 func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
+}
+
+func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
+	if stmt.Init != nil {
+		infer.stmt(stmt.Init)
+	}
+	infer.stmt(stmt.Assign)
+	infer.stmt(stmt.Body)
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
