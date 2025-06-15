@@ -3064,7 +3064,9 @@ func main() {
 	
     // tuple can be destructured
     tuple := (1, "hello", true)
-    f, g, h := tuple
+    e, f, g := tuple
+	
+	fmt.Println(a, b, c, d, e, f, g)
 }
 `
 	expected := `package main
@@ -3109,7 +3111,8 @@ func main() {
 	a, b, c, d := aglVar1.v4_0, aglVar1.v4_1, aglVar1.v4_2, aglVar1.v4_3
 	tuple := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
 	aglVar2 := tuple
-	f, g, h := aglVar2.Arg0, aglVar2.Arg1, aglVar2.Arg2
+	e, f, g := aglVar2.Arg0, aglVar2.Arg1, aglVar2.Arg2
+	fmt.Println(a, b, c, d, e, f, g)
 }
 `
 	testCodeGen(t, src, expected)
