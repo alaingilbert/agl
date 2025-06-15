@@ -901,11 +901,11 @@ func main() {
 `
 	expected := `package main
 func main() {
-	tmp, err := os.ReadFile("test.txt")
+	aglTmp1, err := os.ReadFile("test.txt")
 	if err != nil {
 		panic(err)
 	}
-	by := AglIdentity(tmp)
+	by := AglIdentity(aglTmp1)
 	fmt.Println(by)
 }
 `
@@ -3447,11 +3447,11 @@ func test() string? {
 	expected := `package main
 import "strconv"
 func test() Option[string] {
-	tmp, ok := os.LookupEnv("")
+	aglTmp1, ok := os.LookupEnv("")
 	if !ok {
 		return MakeOptionNone[string]()
 	}
-	res := AglIdentity(tmp)
+	res := AglIdentity(aglTmp1)
 	return MakeOptionSome(res)
 }
 `
@@ -3495,12 +3495,43 @@ func main() {
 import "fmt"
 import "net/http"
 func main() {
-	tmp, err := http.Get("https://google.com")
+	aglTmp1, err := http.Get("https://google.com")
 	if err != nil {
 		panic(err)
 	}
-	res := AglIdentity(tmp)
+	res := AglIdentity(aglTmp1)
 	fmt.Println(res)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen137(t *testing.T) {
+	src := `package main
+func parseInt(s1 string) int? {
+	return Some(42)
+}
+func inter(s2 string) int? {
+	a := parseInt(s2)?
+	return Some(42)
+}
+func main() {
+	inter("hello")?
+}`
+	expected := `package main
+func parseInt(s1 string) Option[int] {
+	return MakeOptionSome(42)
+}
+func inter(s2 string) Option[int] {
+	aglTmp1 := parseInt(s2)
+	if aglTmp1.IsNone() {
+		return aglTmp1
+	}
+	a := aglTmp1.Unwrap()
+	return MakeOptionSome(42)
+}
+func main() {
+	inter("hello").Unwrap()
 }
 `
 	testCodeGen(t, src, expected)
