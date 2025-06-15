@@ -2310,10 +2310,10 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 		id := p.parseIdent()
 		p.expect(token.RPAREN)
 		p.expect(token.DEFINE)
-		pos, tok := p.pos, p.tok
+		pos := p.pos
 		//p.next()
 		y := p.parseExpr()
-		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: tok, Rhs: []ast.Expr{y}}
+		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
 	default:
 		p.error(pos, "unexpected token")
 	}

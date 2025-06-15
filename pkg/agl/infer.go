@@ -385,6 +385,7 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 	case *ast.ForStmt:
 		infer.forStmt(stmt)
 	case *ast.IfLetStmt:
+		infer.ifLetStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -1135,8 +1136,32 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 	return v
 }
 
+func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
+	infer.withEnv(func() {
+		infer.stmt(stmt.Ass)
+		if stmt.Body != nil {
+			infer.stmt(stmt.Body)
+		}
+	})
+	if stmt.Else != nil {
+		infer.withEnv(func() {
+			infer.stmt(stmt.Else)
+		})
+	}
+}
+
 func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 	infer.withEnv(func() {
-		infer.stmt(stmt.Body)
+		if stmt.Init != nil {
+			infer.stmt(stmt.Init)
+		}
+		if stmt.Body != nil {
+			infer.stmt(stmt.Body)
+		}
 	})
+	if stmt.Else != nil {
+		infer.withEnv(func() {
+			infer.stmt(stmt.Else)
+		})
+	}
 }
