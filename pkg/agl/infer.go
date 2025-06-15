@@ -543,10 +543,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				}
 			}
 			callT := infer.env.Get(call.Name)
-			if tt, ok := callT.(types.TypeType); ok {
-				infer.SetType(expr, tt.W)
-			} else if ft, ok := callT.(types.FuncType); ok {
-				oParams := ft.Params
+			switch callTT := callT.(type) {
+			case types.TypeType:
+				infer.SetType(expr, callTT.W)
+			case types.FuncType:
+				oParams := callTT.Params
 				for i := range expr.Args {
 					arg := expr.Args[i]
 					var oArg types.Type
@@ -564,6 +565,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					got := infer.GetType(arg)
 					assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 				}
+			default:
+				panic("")
 			}
 			infer.SetType(call, callT)
 		}
