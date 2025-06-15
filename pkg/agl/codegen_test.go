@@ -579,29 +579,26 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen28(t *testing.T) {
-//	src := `package main
-//import "strconv"
-//fn parseInt(s string) int! {
-//	num := strconv.Atoi(s)!
-//	return Ok(num)
-//}`
-//	expected := `package main
-//import "strconv"
-//func parseInt(s string) Result[int] {
-//	res, err := strconv.Atoi(s)
-//	if err != nil {
-//		return MakeResultErr[int](err)
-//	}
-//	num := res
-//	return MakeResultOk(num)
-//}
-//`
-//	got := codegen(infer(parser(NewTokenStream(src))))
-//	if got != expected {
-//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//	}
-//}
+func TestCodeGen28(t *testing.T) {
+	src := `package main
+import "strconv"
+func parseInt(s string) int! {
+	num := strconv.Atoi(s)!
+	return Ok(num)
+}`
+	expected := `package main
+import "strconv"
+func parseInt(s string) Result[int] {
+	res, err := strconv.Atoi(s)
+	if err != nil {
+		return MakeResultErr[int](err)
+	}
+	num := res
+	return MakeResultOk(num)
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 //func TestCodeGen29(t *testing.T) {
 //	src := `

@@ -501,7 +501,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			fnT := infer.env.Get(name).(types.FuncType)
-			infer.SetType(expr, fnT.Return)
+			toReturn := fnT.Return
+			if toReturn != nil {
+				toReturn = alterResultBubble(infer.returnType, toReturn)
+			}
+			infer.SetType(expr.Fun, fnT)
+			infer.SetType(expr, toReturn)
 			return
 		case types.OptionType:
 			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
@@ -626,6 +631,11 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 					tmp.Bubble = false
 					out = tmp
 				}
+			}
+		} else {
+			if tmp, ok := curr.(types.ResultType); ok {
+				tmp.Bubble = true
+				out = tmp
 			}
 		}
 		if _, ok := fnReturn.(types.OptionType); !ok {
