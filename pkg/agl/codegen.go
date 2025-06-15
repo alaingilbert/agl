@@ -90,6 +90,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genGoStmt(stmt)
 	case *ast.TypeSwitchStmt:
 		return g.genTypeSwitchStmt(stmt)
+	case *ast.EmptyStmt:
+		return g.genEmptyStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -334,6 +336,10 @@ func (g *Generator) genDeferStmt(expr *ast.DeferStmt) (out string) {
 
 func (g *Generator) genGoStmt(expr *ast.GoStmt) (out string) {
 	out += g.prefix + fmt.Sprintf("go %s\n", g.genExpr(expr.Call))
+	return
+}
+
+func (g *Generator) genEmptyStmt(expr *ast.EmptyStmt) (out string) {
 	return
 }
 
