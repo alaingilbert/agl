@@ -44,6 +44,19 @@ func main() {
 }
 ```
 
+### `If let` to use a Option[T]/Result[T] value safely
+
+```go
+func maybeInt() int? {
+    return Some(42)
+}
+func main() {
+    if let Some(num) := maybeInt() {
+        fmt.Println(num)
+    }
+}
+```
+
 ## Destructuring
 
 ```go
