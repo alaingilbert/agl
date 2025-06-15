@@ -522,58 +522,44 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		infer.exprs(expr.Args)
 	case *ast.Ident:
-		if call.Name == "Some" {
-			infer.SetType(call, types.SomeType{W: infer.returnType.(types.OptionType).W})
-			return
-		} else if call.Name == "Err" {
-			if v, ok := expr.Args[0].(*ast.BasicLit); ok && v.Kind == token.STRING {
-				expr.Args[0] = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
+		if call.Name == "make" {
+			fnT := infer.env.Get("make").(types.FuncType)
+			switch expr.Args[0].(type) {
+			case *ast.ArrayType:
+				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ArrayType)))
+				infer.SetType(expr, fnT.Return)
+			case *ast.ChanType:
+				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ChanType)))
+				infer.SetType(expr, fnT.Return)
 			}
-			infer.SetType(call, types.ErrType{W: infer.returnType.(types.ResultType).W})
-			return
-		} else if call.Name == "Ok" {
-			infer.SetType(call, types.OkType{W: infer.returnType.(types.ResultType).W})
-			return
-		} else {
-			if call.Name == "make" {
-				fnT := infer.env.Get("make").(types.FuncType)
-				switch expr.Args[0].(type) {
-				case *ast.ArrayType:
-					fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ArrayType)))
-					infer.SetType(expr, fnT.Return)
-				case *ast.ChanType:
-					fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ChanType)))
-					infer.SetType(expr, fnT.Return)
-				}
-			}
-			callT := infer.env.Get(call.Name)
-			switch callTT := callT.(type) {
-			case types.TypeType:
-				infer.SetType(expr, callTT.W)
-			case types.FuncType:
-				oParams := callTT.Params
-				for i := range expr.Args {
-					arg := expr.Args[i]
-					var oArg types.Type
-					if i >= len(oParams) {
-						oArg = oParams[len(oParams)-1]
-					} else {
-						oArg = oParams[i]
-					}
-					infer.optType = oArg
-					infer.expr(arg)
-					infer.optType = nil
-					if v, ok := oArg.(types.EllipsisType); ok {
-						oArg = v.Elt
-					}
-					got := infer.GetType(arg)
-					assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
-				}
-			default:
-				panic("")
-			}
-			infer.SetType(call, callT)
 		}
+		callT := infer.env.Get(call.Name)
+		switch callTT := callT.(type) {
+		case types.TypeType:
+			infer.SetType(expr, callTT.W)
+		case types.FuncType:
+			oParams := callTT.Params
+			for i := range expr.Args {
+				arg := expr.Args[i]
+				var oArg types.Type
+				if i >= len(oParams) {
+					oArg = oParams[len(oParams)-1]
+				} else {
+					oArg = oParams[i]
+				}
+				infer.optType = oArg
+				infer.expr(arg)
+				infer.optType = nil
+				if v, ok := oArg.(types.EllipsisType); ok {
+					oArg = v.Elt
+				}
+				got := infer.GetType(arg)
+				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
+			}
+		default:
+			panic("")
+		}
+		infer.SetType(call, callT)
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
