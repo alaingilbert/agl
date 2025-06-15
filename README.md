@@ -24,13 +24,19 @@ go build               // Build the "agl" executable
 ### Result propagation
 
 ```go
+package main
+
+import "fmt"
+
 func getInt() int! {
     return Ok(42)
 }
+
 func intermediate() int! {
     num := getInt()! // Propagate 'Err' value to the caller
     return Ok(num + 1)
 }
+
 func main() {
     num := intermediate()! // crash on 'Err' value
     fmt.Println(num)
@@ -40,13 +46,19 @@ func main() {
 ### Option propagation
 
 ```go
+package main
+
+import "fmt"
+
 func maybeInt() int? {
     return Some(42)
 }
+
 func intermediate() int? {
     num := maybeInt()? // Propagate 'None' value to the caller
     return Some(num + 1)
 }
+
 func main() {
     num := intermediate()? // crash on 'None' value
     fmt.Println(num)
