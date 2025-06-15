@@ -84,6 +84,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
 	env.Define("os", types.PackageType{Name: "os"})
 	env.Define("io", types.PackageType{Name: "io"})
+	env.Define("bufio", types.PackageType{Name: "bufio"})
 	env.Define("fmt", types.PackageType{Name: "fmt"})
 	env.Define("http", types.PackageType{Name: "http"})
 	env.Define("errors", types.PackageType{Name: "errors"})
@@ -139,6 +140,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("io.CopyN", "func (dst Writer, src Reader, n int64) int64!")
 	env.DefineFnNative("io.Copy", "func (dst Writer, src Reader) int64!")
 	env.DefineFnNative("io.Pipe", "func () (*PipeReader, *PipeWriter)")
+	env.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
 	env.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
 	env.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
 	env.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
