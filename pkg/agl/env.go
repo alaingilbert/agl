@@ -225,7 +225,7 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 	case *ast.StarExpr:
 		return types.StarType{}
 	case *ast.MapType:
-		return types.MapType{}
+		return types.MapType{K: e.GetType2(xx.Key), V: e.GetType2(xx.Value)}
 	case *ast.ChanType:
 		return types.ChanType{}
 	case *ast.TupleExpr:

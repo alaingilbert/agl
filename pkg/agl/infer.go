@@ -786,9 +786,11 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 func (infer *FileInferrer) mapType(expr *ast.MapType) {
 	infer.expr(expr.Key)
 	infer.expr(expr.Value)
-	infer.SetType(expr.Key, infer.GetType(expr.Key))
-	infer.SetType(expr.Value, infer.GetType(expr.Value))
-	infer.SetType(expr, types.MapType{})
+	kT := infer.GetType(expr.Key)
+	vT := infer.GetType(expr.Value)
+	infer.SetType(expr.Key, kT)
+	infer.SetType(expr.Value, vT)
+	infer.SetType(expr, types.MapType{K: kT, V: vT})
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
@@ -920,6 +922,11 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.BoolType](a) || TryCast[types.BoolType](b) {
 		return true
 	}
+	if TryCast[types.MapType](a) && TryCast[types.MapType](b) {
+		aa := MustCast[types.MapType](a)
+		bb := MustCast[types.MapType](b)
+		return cmpTypes(aa.K, bb.K) && cmpTypes(aa.V, bb.V)
+	}
 	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
 		return true
 	}
@@ -995,7 +1002,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, infer.env.Get(v.Name))
 		return
 	case *ast.MapType:
-		infer.SetType(expr, types.MapType{})
+		infer.SetType(expr, types.MapType{K: infer.env.GetType2(v.Key), V: infer.env.GetType2(v.Value)})
 		return
 	}
 }

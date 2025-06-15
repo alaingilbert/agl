@@ -3202,6 +3202,58 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen118(t *testing.T) {
+	src := `package main
+func test(m map[string]int) {
+}
+func main() {
+	m := make(map[string]int)
+	test(m)
+}
+`
+	expected := `package main
+func test(m map[string]int) {
+}
+func main() {
+	m := make(map[string]int)
+	test(m)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen119(t *testing.T) {
+	src := `package main
+func test(m map[int]int) {
+}
+func main() {
+	m := make(map[string]int)
+	test(m)
+}
+`
+	tassert.PanicsWithError(t, "types not equal, MapType MapType", testCodeGenFn(src))
+}
+
+func TestCodeGen120(t *testing.T) {
+	src := `package main
+func test(m map[string]int) {
+}
+func main() {
+	a := map[string]int{"a": 1}
+	test(a)
+}
+`
+	expected := `package main
+func test(m map[string]int) {
+}
+func main() {
+	a := map[string]int{"a": 1}
+	test(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
