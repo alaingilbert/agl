@@ -514,6 +514,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				} else if fnName == "IsNone" {
 					fnT := infer.env.GetFn("agl.Option.IsNone")
 					infer.SetType(expr, fnT.Return)
+				} else if fnName == "Unwrap" {
+					fnT := infer.env.GetFn("agl.Option.Unwrap").T("T", idTT.W)
+					infer.SetType(expr, fnT.Return)
 				}
 				return
 			}
@@ -527,6 +530,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					infer.SetType(expr, fnT.Return)
 				} else if fnName == "IsErr" {
 					fnT := infer.env.GetFn("agl.Result.IsErr")
+					infer.SetType(expr, fnT.Return)
+				} else if fnName == "Unwrap" {
+					fnT := infer.env.GetFn("agl.Result.Unwrap").T("T", idTT.W)
 					infer.SetType(expr, fnT.Return)
 				}
 				return
