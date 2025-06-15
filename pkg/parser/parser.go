@@ -485,7 +485,7 @@ func (p *parser) parseIdentOrOp() *ast.Ident {
 		token.LAND, token.LOR,
 		token.AND, token.OR, token.XOR, token.SHL, token.SHR, token.AND_NOT:
 		pos := p.pos
-		name := p.lit
+		name := p.tok.String()
 		p.next()
 		return &ast.Ident{NamePos: pos, Name: name}
 	default:
