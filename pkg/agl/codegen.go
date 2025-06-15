@@ -6,13 +6,15 @@ import (
 	"agl/pkg/types"
 	"fmt"
 	"strings"
+	"sync/atomic"
 )
 
 type Generator struct {
-	env    *Env
-	a      *ast.File
-	prefix string
-	before []IBefore
+	env        *Env
+	a          *ast.File
+	prefix     string
+	before     []IBefore
+	varCounter atomic.Int64
 }
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
@@ -849,29 +851,24 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) (out string) {
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	var lhs, after string
 	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](g.env.GetType(stmt.Rhs[0])) {
-		lhs = "aglVar1"
+		rhsT := g.env.GetType(stmt.Rhs[0]).(types.EnumType)
+		id := g.varCounter.Add(1)
+		lhs = fmt.Sprintf("aglVar%d", id)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
-			rhs := stmt.Rhs[0]
-			var sel string
-			switch v := rhs.(type) {
-			case *ast.CallExpr:
-				sel = v.Fun.(*ast.SelectorExpr).Sel.Name
-			case *ast.Ident:
-				sel = v.Name
-			}
 			var names []string
 			var exprs []string
 			for i, x := range stmt.Lhs {
 				names = append(names, x.(*ast.Ident).Name)
-				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, sel, i))
+				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, rhsT.SubTyp, i))
 			}
 			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
-		lhs = "aglVar1"
+		id := g.varCounter.Add(1)
+		lhs = fmt.Sprintf("aglVar%d", id)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
