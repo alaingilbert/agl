@@ -1598,6 +1598,28 @@ func (p *parser) parseOperand() ast.Expr {
 		x := p.parseIdent()
 		return x
 
+	case token.SOME, token.OK, token.ERR:
+		op := p.tok
+		opPos := p.pos
+		p.next()
+		lparen := p.expect(token.LPAREN)
+		x := p.parseExpr()
+		rparen := p.expect(token.RPAREN)
+		switch op {
+		case token.SOME:
+			return &ast.SomeExpr{X: x, Some: opPos, Lparen: lparen, Rparen: rparen}
+		case token.OK:
+			return &ast.OkExpr{X: x, Ok: opPos, Lparen: lparen, Rparen: rparen}
+		case token.ERR:
+			return &ast.ErrExpr{X: x, Err: opPos, Lparen: lparen, Rparen: rparen}
+		default:
+			panic("unreachable")
+		}
+	case token.NONE:
+		opPos := p.pos
+		p.expect(token.NONE)
+		return &ast.NoneExpr{None: opPos}
+
 	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		p.next()
@@ -2275,7 +2297,49 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 	return
 }
 
-func (p *parser) parseIfStmt() *ast.IfStmt {
+func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
+	p.expect(token.LET)
+
+	var op token.Token
+	var ass *ast.AssignStmt
+	switch p.tok {
+	case token.OK, token.ERR, token.SOME:
+		op = p.tok
+		p.next()
+		p.expect(token.LPAREN)
+		id := p.parseIdent()
+		p.expect(token.RPAREN)
+		p.expect(token.DEFINE)
+		pos, tok := p.pos, p.tok
+		//p.next()
+		y := p.parseExpr()
+		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: tok, Rhs: []ast.Expr{y}}
+	default:
+		p.error(pos, "unexpected token")
+	}
+	body := p.parseBlockStmt()
+
+	var else_ ast.Stmt
+	if p.tok == token.ELSE {
+		p.next()
+		switch p.tok {
+		case token.IF:
+			else_ = p.parseIfStmt()
+		case token.LBRACE:
+			else_ = p.parseBlockStmt()
+			p.expectSemi()
+		default:
+			p.errorExpected(p.pos, "if let statement or block")
+			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
+		}
+	} else {
+		p.expectSemi()
+	}
+
+	return &ast.IfLetStmt{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
+}
+
+func (p *parser) parseIfStmt() ast.Stmt {
 	defer decNestLev(incNestLev(p))
 
 	if p.trace {
@@ -2283,6 +2347,10 @@ func (p *parser) parseIfStmt() *ast.IfStmt {
 	}
 
 	pos := p.expect(token.IF)
+
+	if p.tok == token.LET {
+		return p.parseIfLetStmt(pos)
+	}
 
 	init, cond := p.parseIfHeader()
 	body := p.parseBlockStmt()
@@ -2567,6 +2635,8 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
+	case token.SOME, token.OK, token.ERR, token.NONE:
+		s = &ast.ExprStmt{X: p.parseExpr()}
 	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case

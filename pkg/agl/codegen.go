@@ -65,6 +65,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genIncDecStmt(stmt)
 	case *ast.DeclStmt:
 		return g.genDeclStmt(stmt)
+	case *ast.IfLetStmt:
+		return g.genIfLetStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -121,6 +123,14 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genStarExpr(expr)
 	case *ast.MapType:
 		return g.genMapType(expr)
+	case *ast.SomeExpr:
+		return g.genSomeExpr(expr)
+	case *ast.OkExpr:
+		return g.genOkExpr(expr)
+	case *ast.ErrExpr:
+		return g.genErrExpr(expr)
+	case *ast.NoneExpr:
+		return g.genNoneExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -246,6 +256,26 @@ func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
 	content2 := g.genExpr(expr.Value)
 	return fmt.Sprintf("map[%s]%s", content1, content2)
+}
+
+func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
+	content1 := g.genExpr(expr.X)
+	return fmt.Sprintf("MakeOptionSome(%s)", content1)
+}
+
+func (g *Generator) genOkExpr(expr *ast.OkExpr) string {
+	content1 := g.genExpr(expr.X)
+	return fmt.Sprintf("MakeResultOk(%s)", content1)
+}
+
+func (g *Generator) genErrExpr(expr *ast.ErrExpr) string {
+	content1 := g.genExpr(expr.X)
+	return fmt.Sprintf("MakeResultErr[%s](%s)", g.env.GetType(expr).(types.ErrType).T.GoStr(), content1)
+}
+
+func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
+	//content1 := g.genExpr(expr)
+	return fmt.Sprintf("MakeOptionNone[%s]()", g.env.GetType(expr).(types.NoneType).W.GoStr())
 }
 
 func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
@@ -732,6 +762,31 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	content2 := g.genExprs(stmt.Rhs)
 	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
 	out += after
+	return out
+}
+
+func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
+	ass := stmt.Ass
+	lhs := g.genExpr(ass.Lhs[0])
+	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	var cond string
+	unwrapFn := "Unwrap"
+	switch stmt.Op {
+	case token.SOME:
+		cond = "tmp.IsSome()"
+	case token.OK:
+		cond = "tmp.IsOk()"
+	case token.ERR:
+		cond = "tmp.IsErr()"
+		unwrapFn = "Err"
+	default:
+		panic("")
+	}
+	out += g.prefix + fmt.Sprintf("if tmp := %s; %s {\n", rhs, cond)
+	out += g.prefix + fmt.Sprintf("\t%s := tmp.%s()\n", lhs, unwrapFn)
+	out += body
+	out += g.prefix + "}\n"
 	return out
 }
 

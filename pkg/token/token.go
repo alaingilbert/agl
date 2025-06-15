@@ -114,6 +114,10 @@ const (
 	GOTO
 	IF
 	IMPORT
+	SOME
+	ERR
+	OK
+	NONE
 
 	INTERFACE
 	MAP
@@ -127,6 +131,7 @@ const (
 	SWITCH
 	TYPE
 	VAR
+	LET
 	keyword_end
 
 	additional_beg
@@ -223,6 +228,11 @@ var tokens = [...]string{
 	GOTO:   "goto",
 	IF:     "if",
 	IMPORT: "import",
+	SOME:   "Some",
+	ERR:    "Err",
+	OK:     "Ok",
+	NONE:   "None",
+	LET:    "let",
 
 	INTERFACE: "interface",
 	MAP:       "map",

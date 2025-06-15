@@ -998,8 +998,8 @@ func testOption() int? {
 }
 func main() {
 	res := testOption()
-	assert(res == None)
-	assert(testOption() == None)
+	assert(res.IsNone())
+	assert(testOption().IsNone())
 }
 `
 	expected := `package main
@@ -1008,8 +1008,8 @@ func testOption() Option[int] {
 }
 func main() {
 	res := testOption()
-	AglAssert(res == MakeOptionNone[int](), "assert failed line 7")
-	AglAssert(testOption() == MakeOptionNone[int](), "assert failed line 8")
+	AglAssert(res.IsNone(), "assert failed line 7")
+	AglAssert(testOption().IsNone(), "assert failed line 8")
 }
 `
 	testCodeGen(t, src, expected)
@@ -2784,6 +2784,81 @@ func main() {
 func main() {
 	for {
 		fmt.Println("hello")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen99(t *testing.T) {
+	src := `package main
+func testSome() int? {
+	return Some(42)
+}
+func main() {
+	if let Some(a) := testSome() {
+		fmt.Println(a)
+	}
+}
+`
+	expected := `package main
+func testSome() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	if tmp := testSome(); tmp.IsSome() {
+		a := tmp.Unwrap()
+		fmt.Println(a)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen100(t *testing.T) {
+	src := `package main
+func testOk() int! {
+	return Ok(42)
+}
+func main() {
+	if let Ok(a) := testOk() {
+		fmt.Println(a)
+	}
+}
+`
+	expected := `package main
+func testOk() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	if tmp := testOk(); tmp.IsOk() {
+		a := tmp.Unwrap()
+		fmt.Println(a)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen101(t *testing.T) {
+	src := `package main
+func testOk() int! {
+	return Err("error")
+}
+func main() {
+	if let Err(e) := testOk() {
+		fmt.Println(e)
+	}
+}
+`
+	expected := `package main
+func testOk() Result[int] {
+	return MakeResultErr[int](errors.New("error"))
+}
+func main() {
+	if tmp := testOk(); tmp.IsErr() {
+		e := tmp.Err()
+		fmt.Println(e)
 	}
 }
 `
