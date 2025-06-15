@@ -3831,6 +3831,16 @@ func test2() Result[int] {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen146(t *testing.T) {
+	src := `package main
+func test() int! { Ok(42) }
+func test2() int {
+    num := test() or_return
+	return num
+}`
+	tassert.PanicsWithError(t, "cannot use or_return in a function that does not return void/Option/Result", testCodeGenFn(src))
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
