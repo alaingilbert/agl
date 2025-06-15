@@ -31,6 +31,11 @@ type MapType struct{}
 func (m MapType) GoStr() string  { return "MapType" }
 func (m MapType) String() string { return "MapType" }
 
+type ChanType struct{ W Type }
+
+func (m ChanType) GoStr() string  { return "ChanType" }
+func (m ChanType) String() string { return "ChanType" }
+
 type ResultType struct {
 	W             Type
 	Native        bool

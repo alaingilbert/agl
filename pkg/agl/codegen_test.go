@@ -2893,6 +2893,38 @@ func main() {
 	tassert.PanicsWithError(t, "6:16: try to destructure a non-Option type into an OptionType", testCodeGenFn(src))
 }
 
+func TestCodeGen104(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	a++
+}
+`
+	expected := `package main
+func main() {
+	a := 1
+	a++
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen105(t *testing.T) {
+	src := `package main
+func main() {
+	c := make(chan int)
+	c <- 1
+}
+`
+	expected := `package main
+func main() {
+	c := make(chan int)
+	c <- 1
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

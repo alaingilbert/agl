@@ -67,6 +67,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genDeclStmt(stmt)
 	case *ast.IfLetStmt:
 		return g.genIfLetStmt(stmt)
+	case *ast.SendStmt:
+		return g.genSendStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -131,6 +133,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genErrExpr(expr)
 	case *ast.NoneExpr:
 		return g.genNoneExpr(expr)
+	case *ast.ChanType:
+		return g.genChanType(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -260,6 +264,16 @@ func (g *Generator) genOkExpr(expr *ast.OkExpr) string {
 func (g *Generator) genErrExpr(expr *ast.ErrExpr) string {
 	content1 := g.genExpr(expr.X)
 	return fmt.Sprintf("MakeResultErr[%s](%s)", g.env.GetType(expr).(types.ErrType).T.GoStr(), content1)
+}
+
+func (g *Generator) genChanType(expr *ast.ChanType) string {
+	return fmt.Sprintf("chan %s", g.genExpr(expr.Value))
+}
+
+func (g *Generator) genSendStmt(expr *ast.SendStmt) string {
+	content1 := g.genExpr(expr.Chan)
+	content2 := g.genExpr(expr.Value)
+	return g.prefix + fmt.Sprintf("%s <- %s\n", content1, content2)
 }
 
 func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
