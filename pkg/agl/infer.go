@@ -1197,37 +1197,6 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 }
 
 func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
-	if expr.Name == "None" {
-		t := infer.returnType
-		assert(t != nil)
-		return types.NoneType{W: t.(types.OptionType).W}
-	} else if expr.Name == "Some" {
-		t := infer.returnType
-		assert(t != nil)
-		return types.SomeType{W: t.(types.OptionType).W}
-	} else if expr.Name == "Ok" {
-		t := infer.returnType
-		assert(t != nil)
-		return types.OkType{W: t.(types.ResultType).W}
-	} else if expr.Name == "Err" {
-		t := infer.returnType
-		assert(t != nil)
-		return types.ErrType{W: t.(types.ResultType).W, T: t.(types.ResultType).W}
-	} else if expr.Name == "Result" {
-		//t := infer.returnType
-		//assert(t != nil)
-		return types.ResultType{W: types.I64Type{}} // TODO
-	} else if expr.Name == "Option" {
-		//t := infer.returnType
-		//assert(t != nil)
-		return types.OptionType{W: types.I64Type{}} // TODO
-	} else if expr.Name == "make" {
-		return types.MakeType{}
-	} else if expr.Name == "len" {
-		return types.LenType{}
-	} else if expr.Name == "_" {
-		return types.UnderscoreType{}
-	}
 	v := infer.env.Get(expr.Name)
 	assertf(v != nil, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
 	if expr.Name == "true" || expr.Name == "false" {
