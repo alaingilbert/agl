@@ -336,6 +336,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.errExpr(expr)
 	case *ast.NoneExpr:
 		infer.noneExpr(expr)
+	case *ast.ChanType:
+		infer.chanType(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -386,6 +388,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.forStmt(stmt)
 	case *ast.IfLetStmt:
 		infer.ifLetStmt(stmt)
+	case *ast.SendStmt:
+		infer.sendStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -487,8 +491,14 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		} else {
 			if call.Name == "make" {
 				fnT := infer.env.Get("make").(types.FuncType)
-				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ArrayType)))
-				infer.SetType(expr, fnT.Return)
+				switch expr.Args[0].(type) {
+				case *ast.ArrayType:
+					fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ArrayType)))
+					infer.SetType(expr, fnT.Return)
+				case *ast.ChanType:
+					fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ChanType)))
+					infer.SetType(expr, fnT.Return)
+				}
 			}
 			callT := infer.env.Get(call.Name)
 			ft := callT.(types.FuncType)
@@ -712,6 +722,10 @@ func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
 		expr.X = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
 	}
 	infer.SetType(expr, types.ErrType{W: infer.env.GetType(expr.X), T: infer.returnType.(types.ResultType).W})
+}
+
+func (infer *FileInferrer) chanType(expr *ast.ChanType) {
+	infer.expr(expr.Value)
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
@@ -1020,7 +1034,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhs := stmt.Lhs[0]
 			lhsID := MustCast[*ast.Ident](lhs)
 			rhsT := infer.GetType(rhs)
-			switch infer.GetType(lhs).(type) {
+			lhsT := infer.env.GetType(lhs)
+			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
 				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.fset.Position(lhs.Pos()))
 				infer.SetTypeForce(lhs, rhsT)
@@ -1144,6 +1159,11 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 		return types.BoolType{}
 	}
 	return v
+}
+
+func (infer *FileInferrer) sendStmt(stmt *ast.SendStmt) {
+	infer.expr(stmt.Chan)
+	infer.expr(stmt.Value)
 }
 
 func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
