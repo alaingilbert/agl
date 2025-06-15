@@ -396,6 +396,10 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.selectStmt(stmt)
 	case *ast.CommClause:
 		infer.commClause(stmt)
+	case *ast.SwitchStmt:
+		infer.switchStmt(stmt)
+	case *ast.CaseClause:
+		infer.caseClause(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -1183,6 +1187,25 @@ func (infer *FileInferrer) selectStmt(stmt *ast.SelectStmt) {
 func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
 	if stmt.Comm != nil {
 		infer.stmt(stmt.Comm)
+	}
+	if stmt.Body != nil {
+		infer.stmts(stmt.Body)
+	}
+}
+
+func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
+	if stmt.Init != nil {
+		infer.stmt(stmt.Init)
+	}
+	if stmt.Tag != nil {
+		infer.expr(stmt.Tag)
+	}
+	infer.stmt(stmt.Body)
+}
+
+func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
+	if stmt.List != nil {
+		infer.exprs(stmt.List)
 	}
 	if stmt.Body != nil {
 		infer.stmts(stmt.Body)
