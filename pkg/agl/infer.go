@@ -484,27 +484,29 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else {
 				assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
 			}
+			return
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			toReturn := infer.env.Get(name).(types.FuncType).Return
 			toReturn = alterResultBubble(infer.returnType, toReturn)
 			infer.SetType(expr, toReturn)
+			return
 		case types.InterfaceType:
+			return
 		case types.EnumType:
+			return
 		case types.PackageType:
+			return
 		case types.OptionType:
 			if fnName == "IsNone" || fnName == "IsSome" || fnName == "Unwrap" {
-			} else {
-				assertf(false, "Unresolved reference '%s'", fnName)
+				return
 			}
 		case types.ResultType:
 			if fnName == "IsOk" || fnName == "IsErr" || fnName == "Unwrap" || fnName == "Err" {
-			} else {
-				assertf(false, "Unresolved reference '%s'", fnName)
+				return
 			}
-		default:
-			assertf(false, "Unresolved reference '%s'", fnName)
 		}
+		assertf(false, "Unresolved reference '%s'", fnName)
 	}
 
 	switch call := expr.Fun.(type) {
