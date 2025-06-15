@@ -211,59 +211,6 @@ func mapFn[T any](a []T, f func(T) T) []T {
 	testCodeGen(t, src, expected)
 }
 
-//	func TestCodeGen7(t *testing.T) {
-//		src := `
-//
-//	fn addOne(a i64) i64 {
-//		return a + 1
-//	}
-//
-//	fn map[T any](a []T, f fn(T) T) []T {
-//		out := make([]T, len(a))
-//		for e := range a {
-//			out = append(out, f(e))
-//		}
-//		return out
-//	}
-//
-//	fn main() {
-//		someArr := []int{1, 2, 3}
-//		map(someArr, addOne)
-//		map(someArr, |el| { return el + 1 })
-//		map(someArr, |el| { el + 1 })
-//		map(someArr, { $0 + 1 })
-//	}
-//
-// `
-//
-//		expected := `func addOne(a i64) int64 {
-//		return a + 1
-//	}
-//
-//	func map[T any](a []T, f func(T) T) []T {
-//		out := make([]T, len(a))
-//		for e := range a {
-//			out = append(out, f(e))
-//		}
-//		return out
-//	}
-//
-//	fn main() {
-//		someArr := []int{1, 2, 3}
-//		map(someArr, addOne)
-//		map(someArr, func(el int) { return el + 1 })
-//		map(someArr, func(el int) { return el + 1 })
-//		map(someArr, func(el int) { return el + 1 })
-//	}
-//
-// `
-//
-//		got := codegen(infer(parser(lexer(src))))
-//		if got != expected {
-//			t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//		}
-//	}
-
 func TestCodeGen9_optionalReturnKeyword(t *testing.T) {
 	src := `package main
 func add(a, b int) int { a + b }
@@ -318,27 +265,6 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
-
-//func TestCodeGen12(t *testing.T) {
-//	src := `
-//fn f1(f fn(i64) i64) i64 { f(1) }
-//fn main() {
-//	f1(|a| { a + 1 })
-//}`
-//	expected := `func f1(f func(int64) int64) int64 {
-//	return f(1)
-//}
-//func main() {
-//	f1(func(a int64) int64 {
-//		return a + 1
-//	})
-//}
-//`
-//	got := codegen(infer(parser(NewTokenStream(src))))
-//	if got != expected {
-//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//	}
-//}
 
 func TestCodeGen13(t *testing.T) {
 	src := `package main
@@ -492,36 +418,34 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen21(t *testing.T) {
-//	src := `
-//fn findEvenNumber(arr []int) int? {
-//   for _, num := range arr {
-//       if num % 2 == 0 {
-//           return Some(num)
-//       }
-//   }
-//   return None
-//}
-//fn main() {
-//	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).unwrap())
-//}`
-//	expected := `func findEvenNumber(arr []int) Option[int] {
-//	for _, num := range arr {
-//		if num % 2 == 0 {
-//			return MakeOptionSome(num)
-//		}
-//	}
-//	return MakeOptionNone[int]()
-//}
-//func main() {
-//	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
-//}
-//`
-//	got := codegen(infer(parser(NewTokenStream(src))))
-//	if got != expected {
-//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//	}
-//}
+func TestCodeGen21(t *testing.T) {
+	src := `package main
+func findEvenNumber(arr []int) int? {
+  for _, num := range arr {
+      if num % 2 == 0 {
+          return Some(num)
+      }
+  }
+  return None
+}
+func main() {
+	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
+}`
+	expected := `package main
+func findEvenNumber(arr []int) Option[int] {
+	for _, num := range arr {
+		if num % 2 == 0 {
+			return MakeOptionSome(num)
+		}
+	}
+	return MakeOptionNone[int]()
+}
+func main() {
+	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 func TestCodeGen22(t *testing.T) {
 	src := `package main
