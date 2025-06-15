@@ -62,12 +62,23 @@ func main() {
 ```go
 package main
 
-import "fmt"
+type Person struct {
+	Name string
+	Age int
+}
 
 func main() {
-    arr := []int{1, 2, 3, 4, 5}
-    sum := arr.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sum()
-    assert(sum == 8)
+	arr := []int{1, 2, 3, 4, 5}
+	sum := arr.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sum()
+	assert(sum == 8)
+
+	p1 := Person{Name: "foo", Age: 18}
+	p2 := Person{Name: "bar", Age: 19}
+	people := []Person{p1, p2}
+	names := people.Map({ $0.Name }).Joined(", ")
+	sumAge := people.Map({ $0.Age }).Sum()
+	assert(names == "foo, bar")
+	assert(sumAge == 37)
 }
 ```
 
