@@ -3537,6 +3537,37 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen138(t *testing.T) {
+	src := `package main
+import "fmt"
+
+func test() int? {
+	Some(42)
+}
+
+func main() {
+    for {
+        test()
+        fmt.Println("test")
+        time.Sleep(1000000)
+    }
+}`
+	expected := `package main
+import "fmt"
+func test() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	for {
+		test()
+		fmt.Println("test")
+		time.Sleep(1000000)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

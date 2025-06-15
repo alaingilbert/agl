@@ -232,7 +232,9 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 		infer.returnType = returnTyp
 		if decl.Body != nil {
 			// implicit return
-			if len(decl.Body.List) == 1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
+			cond1 := len(decl.Body.List) == 1 ||
+				(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
+			if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
 				decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
 			}
 			infer.stmt(decl.Body)
@@ -436,6 +438,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.goStmt(stmt)
 	case *ast.TypeSwitchStmt:
 		infer.typeSwitchStmt(stmt)
+	case *ast.EmptyStmt:
+		infer.emptyStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -506,7 +510,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				toReturn = alterResultBubble(infer.returnType, toReturn)
 			}
 			infer.SetType(expr.Fun, fnT)
-			infer.SetType(expr, toReturn)
+			if toReturn != nil {
+				infer.SetType(expr, toReturn)
+			}
 			return
 		case types.OptionType:
 			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
@@ -1325,6 +1331,9 @@ func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
 }
 
 func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
+}
+
+func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 }
 
 func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
