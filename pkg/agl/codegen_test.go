@@ -3188,6 +3188,20 @@ func main() {
 	tassert.PanicsWithError(t, "Unresolved reference 'MaybeSelf'", testCodeGenFn(src))
 }
 
+func TestCodeGen117(t *testing.T) {
+	src := `package main
+func main() {
+	m := make(map[string]int)
+}
+`
+	expected := `package main
+func main() {
+	m := make(map[string]int)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
