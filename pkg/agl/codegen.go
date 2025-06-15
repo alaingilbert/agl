@@ -550,7 +550,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 			tmpl := "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
 			g.before = append(g.before, before)
-			out := `AglNoop[struct{}]()`
+			out := `AglNoop()`
 			return out
 		} else if exprXT.Native {
 			content1 := g.genExpr(expr.X)
