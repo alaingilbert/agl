@@ -15,14 +15,14 @@
 ### Result propagation
 
 ```go
-fn getInt() int! {
+func getInt() int! {
 	return Ok(42)
 }
-fn intermediate() int! {
+func intermediate() int! {
 	num := getInt()! // Propagate 'Err' value to the caller
 	return Ok(num + 1)
 }
-fn main() {
+func main() {
 	num := intermediate()! // crash on 'Err' value
 	fmt.Println(num)
 }
@@ -31,14 +31,14 @@ fn main() {
 ### Option propagation
 
 ```go
-fn maybeInt() int? {
+func maybeInt() int? {
 	return Some(42)
 }
-fn intermediate() int? {
+func intermediate() int? {
 	num := maybeInt()? // Propagate 'None' value to the caller
 	return Some(num + 1)
 }
-fn main() {
+func main() {
 	num := intermediate()? // crash on 'None' value
 	fmt.Println(num)
 }
@@ -51,14 +51,14 @@ type IpAddr enum {
     v4(u8, u8, u8, u8),
     v6(string),
 }
-fn main() {
+func main() {
     // enum values can be destructured
     addr1 := IpAddr.v4(127, 0, 0, 1)
-    (a, b, c, d) := addr1
+    a, b, c, d := addr1
 	
     // tuple can be destructured
     tuple := (1, "hello", true)
-    (f, g, h) := tuple
+    f, g, h := tuple
 }
 ```
 
@@ -69,10 +69,10 @@ type Person struct {
     name string
     age int
 }
-fn (p Person) == (other Person) bool {
+func (p Person) == (other Person) bool {
     return p.age == other.age
 }
-fn main() {
+func main() {
     p1 := Person{name: "foo", age: 42}
     p2 := Person{name: "bar", age: 42}
     assert(p1 == p2)
