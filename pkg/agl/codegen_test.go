@@ -2865,6 +2865,34 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen102(t *testing.T) {
+	src := `package main
+func testSome() int? {
+   return Some(42)
+}
+func main() {
+   if let Err(a) := testSome() {
+       fmt.Println("test", a)
+   }
+}
+`
+	tassert.PanicsWithError(t, "6:15: try to destructure a non-Result type into an ResultType", testCodeGenFn(src))
+}
+
+func TestCodeGen103(t *testing.T) {
+	src := `package main
+func testResult() int! {
+   return Ok(42)
+}
+func main() {
+   if let Some(a) := testResult() {
+       fmt.Println("test", a)
+   }
+}
+`
+	tassert.PanicsWithError(t, "6:16: try to destructure a non-Option type into an OptionType", testCodeGenFn(src))
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
