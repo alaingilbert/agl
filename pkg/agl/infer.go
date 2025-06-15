@@ -454,8 +454,8 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	tmpFn := func(idT types.Type, call *ast.SelectorExpr) {
+		fnName := call.Sel.Name
 		if arr, ok := idT.(types.ArrayType); ok {
-			fnName := call.Sel.Name
 			if fnName == "Filter" {
 				fnT := infer.env.GetFn("agl.Vec.Filter").T("T", arr.Elt)
 				infer.SetType(expr.Args[0], fnT.Params[1])
@@ -482,6 +482,27 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else {
 				assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
 			}
+		} else if lT, ok := idT.(types.StructType); ok {
+			name := fmt.Sprintf("%s.%s", lT.Name, call.Sel.Name)
+			toReturn := infer.env.Get(name).(types.FuncType).Return
+			toReturn = alterResultBubble(infer.returnType, toReturn)
+			infer.SetType(expr, toReturn)
+		} else if _, ok := idT.(types.InterfaceType); ok {
+		} else if _, ok := idT.(types.EnumType); ok {
+		} else if _, ok := idT.(types.PackageType); ok {
+		} else if _, ok := idT.(types.ArrayType); ok {
+		} else if _, ok := idT.(types.OptionType); ok {
+			if fnName == "IsNone" || fnName == "IsSome" || fnName == "Unwrap" {
+			} else {
+				assertf(false, "Unresolved reference '%s'", fnName)
+			}
+		} else if _, ok := idT.(types.ResultType); ok {
+			if fnName == "IsOk" || fnName == "IsErr" || fnName == "Unwrap" || fnName == "Err" {
+			} else {
+				assertf(false, "Unresolved reference '%s'", fnName)
+			}
+		} else {
+			assertf(false, "Unresolved reference '%s'", fnName)
 		}
 	}
 

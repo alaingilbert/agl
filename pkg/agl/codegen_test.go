@@ -3171,6 +3171,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen116(t *testing.T) {
+	src := `package main
+
+type Person struct { Name string }
+
+func (p Person) MaybeSelf() Person? {
+	return Some(p)
+}
+
+func main() {
+	bob := Person{Name: "bob"}
+	bob.MaybeSelf().MaybeSelf()?
+}
+`
+	tassert.PanicsWithError(t, "Unresolved reference 'MaybeSelf'", testCodeGenFn(src))
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
