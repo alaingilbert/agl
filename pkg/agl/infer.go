@@ -49,10 +49,10 @@ func (infer *FileInferrer) withEnv(clb func()) {
 	infer.env = old
 }
 
-func (infer *FileInferrer) GetType(p ast.Node) types.Type {
-	t := infer.env.GetType(p)
+func (infer *FileInferrer) GetType(n ast.Node) types.Type {
+	t := infer.env.GetType(n)
 	if t == nil {
-		panic(fmt.Sprintf("%s type not found for %v %v", infer.env.fset.Position(p.Pos()), p, to(p)))
+		panic(fmt.Sprintf("%s type not found for %v %v", infer.env.fset.Position(n.Pos()), n, to(n)))
 	}
 	return t
 }
@@ -762,6 +762,7 @@ func (infer *FileInferrer) chanType(expr *ast.ChanType) {
 
 func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
 	infer.expr(expr.X)
+	infer.SetType(expr, &types.StarType{X: infer.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
