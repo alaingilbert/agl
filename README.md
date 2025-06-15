@@ -150,6 +150,6 @@ import (
 func main() {
     os.WriteFile("test.txt", []byte("test"), 0755)!
     by := os.ReadFile("test.txt")!
-    fmt.Println(by)
+    fmt.Println(string(by))
 }
 ```
