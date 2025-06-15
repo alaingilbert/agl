@@ -563,18 +563,17 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 			out += "res.Unwrap()"
 		}
 	} else {
-		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
+		if exprXT.Native {
+			var tmpl1 string
+			if _, ok := exprXT.W.(types.VoidType); ok {
+				tmpl1 = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+				out = `AglNoop()`
+			} else {
+				tmpl1 = "tmp, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+				out = `AglIdentity(tmp)`
+			}
 			content1 := g.genExpr(expr.X)
-			tmpl := "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
-			g.before = append(g.before, before)
-			out := `AglNoop()`
-			return out
-		} else if exprXT.Native {
-			content1 := g.genExpr(expr.X)
-			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
-			out := `AglIdentity(res)`
 			g.before = append(g.before, before)
 			return out
 		} else {

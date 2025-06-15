@@ -901,11 +901,11 @@ func main() {
 `
 	expected := `package main
 func main() {
-	res, err := os.ReadFile("test.txt")
+	tmp, err := os.ReadFile("test.txt")
 	if err != nil {
 		panic(err)
 	}
-	by := AglIdentity(res)
+	by := AglIdentity(tmp)
 	fmt.Println(by)
 }
 `
@@ -3478,6 +3478,29 @@ func test() Result[string] {
 	res := AglIdentity(tmp)
 	fmt.Println(res)
 	return MakeResultOk("done")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen136(t *testing.T) {
+	src := `package main
+import "fmt"
+import "net/http"
+func main() {
+	res := http.Get("https://google.com")!
+	fmt.Println(res)
+}`
+	expected := `package main
+import "fmt"
+import "net/http"
+func main() {
+	tmp, err := http.Get("https://google.com")
+	if err != nil {
+		panic(err)
+	}
+	res := AglIdentity(tmp)
+	fmt.Println(res)
 }
 `
 	testCodeGen(t, src, expected)
