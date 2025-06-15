@@ -61,6 +61,11 @@ type OptionType struct {
 func (o OptionType) GoStr() string  { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
 func (o OptionType) String() string { return "OptionType" }
 
+type TypeType struct{ W Type }
+
+func (t TypeType) GoStr() string  { return t.W.GoStr() }
+func (t TypeType) String() string { return "TypeType" }
+
 type StringType struct{ W Type }
 
 func (s StringType) GoStr() string  { return "string" }

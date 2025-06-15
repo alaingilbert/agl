@@ -543,29 +543,26 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				}
 			}
 			callT := infer.env.Get(call.Name)
-			ft := callT.(types.FuncType)
-			oParams := ft.Params
-			for i := range expr.Args {
-				arg := expr.Args[i]
-				var oArg types.Type
-				if i >= len(oParams) {
-					oArg = oParams[len(oParams)-1]
-				} else {
-					oArg = oParams[i]
-				}
-				infer.optType = oArg
-				infer.expr(arg)
-				infer.optType = nil
-				if v, ok := oArg.(types.EllipsisType); ok {
-					oArg = v.Elt
-				}
-				got := infer.GetType(arg)
-				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
-				if _, ok := arg.(*ast.ShortFuncLit); ok {
-					//paramI := oParams[i].(types.FuncType)
-					//ft := paramI
-					//infer.SetType(f, ft)
-					//infer.expr(arg)
+			if tt, ok := callT.(types.TypeType); ok {
+				infer.SetType(expr, tt.W)
+			} else if ft, ok := callT.(types.FuncType); ok {
+				oParams := ft.Params
+				for i := range expr.Args {
+					arg := expr.Args[i]
+					var oArg types.Type
+					if i >= len(oParams) {
+						oArg = oParams[len(oParams)-1]
+					} else {
+						oArg = oParams[i]
+					}
+					infer.optType = oArg
+					infer.expr(arg)
+					infer.optType = nil
+					if v, ok := oArg.(types.EllipsisType); ok {
+						oArg = v.Elt
+					}
+					got := infer.GetType(arg)
+					assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 				}
 			}
 			infer.SetType(call, callT)
@@ -869,6 +866,12 @@ func cmpTypesLoose(a, b types.Type) bool {
 }
 
 func cmpTypes(a, b types.Type) bool {
+	if tt, ok := a.(types.TypeType); ok {
+		a = tt.W
+	}
+	if tt, ok := b.(types.TypeType); ok {
+		b = tt.W
+	}
 	if aa, ok := a.(types.FuncType); ok {
 		if bb, ok := b.(types.FuncType); ok {
 			if aa.GoStr() == bb.GoStr() {
@@ -1099,6 +1102,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
+			p("?", rhs)
 			rhsT := infer.GetType(rhs)
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
