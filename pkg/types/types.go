@@ -233,11 +233,41 @@ func (u U8Type) GoStr() string { return "uint8" }
 
 func (u U8Type) String() string { return "u8" }
 
+type U16Type struct{}
+
+func (u U16Type) GoStr() string { return "uint16" }
+
+func (u U16Type) String() string { return "u16" }
+
+type U32Type struct{}
+
+func (u U32Type) GoStr() string { return "uint32" }
+
+func (u U32Type) String() string { return "u32" }
+
+type U64Type struct{}
+
+func (u U64Type) GoStr() string { return "uint64" }
+
+func (u U64Type) String() string { return "u64" }
+
+type I8Type struct{}
+
+func (i I8Type) GoStr() string { return "i8" }
+
+func (i I8Type) String() string { return "int8" }
+
+type I16Type struct{}
+
+func (i I16Type) GoStr() string { return "int16" }
+
+func (i I16Type) String() string { return "i16" }
+
 type I32Type struct{}
 
 func (i I32Type) GoStr() string { return "int32" }
 
-func (i I32Type) String() string { return "int32" }
+func (i I32Type) String() string { return "i32" }
 
 type UntypedNumType struct{}
 
