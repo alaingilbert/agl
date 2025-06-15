@@ -364,6 +364,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.unaryExpr(expr)
 	case *ast.TypeAssertExpr:
 		infer.typeAssertExpr(expr)
+	case *ast.MapType:
+		infer.mapType(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -534,7 +536,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			fnT := infer.env.Get("make").(types.FuncType)
 			arg0 := expr.Args[0]
 			switch v := arg0.(type) {
-			case *ast.ArrayType, *ast.ChanType:
+			case *ast.ArrayType, *ast.ChanType, *ast.MapType:
 				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(v))
 				infer.SetType(expr, fnT.Return)
 			default:
@@ -779,6 +781,14 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 	if expr.Type != nil {
 		infer.expr(expr.Type)
 	}
+}
+
+func (infer *FileInferrer) mapType(expr *ast.MapType) {
+	infer.expr(expr.Key)
+	infer.expr(expr.Value)
+	infer.SetType(expr.Key, infer.GetType(expr.Key))
+	infer.SetType(expr.Value, infer.GetType(expr.Value))
+	infer.SetType(expr, types.MapType{})
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
