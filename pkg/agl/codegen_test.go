@@ -1692,8 +1692,8 @@ func Make_Color_other(arg0 uint8, arg1 string) Color {
 
 func main() {
 	other := Make_Color_other(1, "yellow")
-	aglVar2 := other
-	a, b := aglVar2.other_0, aglVar2.other_1
+	aglVar1 := other
+	a, b := aglVar1.other_0, aglVar1.other_1
 }
 `
 	testCodeGen(t, src, expected)
@@ -3105,11 +3105,11 @@ type AglTupleStruct1 struct {
 }
 func main() {
 	addr1 := Make_IpAddr_v4(127, 0, 0, 1)
-	aglVar2 := addr1
-	a, b, c, d := aglVar2.v4_0, aglVar2.v4_1, aglVar2.v4_2, aglVar2.v4_3
+	aglVar1 := addr1
+	a, b, c, d := aglVar1.v4_0, aglVar1.v4_1, aglVar1.v4_2, aglVar1.v4_3
 	tuple := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
-	aglVar4 := tuple
-	f, g, h := aglVar4.Arg0, aglVar4.Arg1, aglVar4.Arg2
+	aglVar2 := tuple
+	f, g, h := aglVar2.Arg0, aglVar2.Arg1, aglVar2.Arg2
 }
 `
 	testCodeGen(t, src, expected)
