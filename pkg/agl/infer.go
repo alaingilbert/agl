@@ -1109,7 +1109,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
-			p("?", rhs)
 			rhsT := infer.GetType(rhs)
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
