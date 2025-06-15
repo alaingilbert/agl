@@ -516,6 +516,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				if fnName == "UnwrapOr" {
 					fnT := infer.env.GetFn("agl.Result.UnwrapOr").T("T", idTT.W)
 					infer.SetType(expr, fnT.Return)
+				} else if fnName == "IsOk" {
+					fnT := infer.env.GetFn("agl.Result.IsOk")
+					infer.SetType(expr, fnT.Return)
+				} else if fnName == "IsErr" {
+					fnT := infer.env.GetFn("agl.Result.IsErr")
+					infer.SetType(expr, fnT.Return)
 				}
 				return
 			}

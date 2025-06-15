@@ -124,6 +124,8 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("agl.Vec.Joined", parseFuncTypeFromString("Joined", "func (a []string) string", env))
 	env.Define("agl.Option.UnwrapOr", parseFuncTypeFromString("UnwrapOr", "func [T any](T) T", env))
 	env.Define("agl.Result.UnwrapOr", parseFuncTypeFromString("UnwrapOr", "func [T any](T) T", env))
+	env.Define("agl.Result.IsOk", parseFuncTypeFromString("IsOk", "func () bool", env))
+	env.Define("agl.Result.IsErr", parseFuncTypeFromString("IsErr", "func () bool", env))
 	return env
 }
 
