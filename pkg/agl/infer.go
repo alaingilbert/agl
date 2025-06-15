@@ -624,7 +624,7 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 	fnReturnIsResult := TryCast[types.ResultType](fnReturn)
 	fnReturnIsOption := TryCast[types.OptionType](fnReturn)
 	currIsResult := TryCast[types.ResultType](curr)
-	//currIsOption := TryCast[types.OptionType](curr)
+	currIsOption := TryCast[types.OptionType](curr)
 	out = curr
 	if fnReturnIsResult {
 		if currIsResult {
@@ -632,6 +632,10 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 			tmp.Bubble = true
 			out = tmp
 		}
+	} else if fnReturnIsOption && currIsOption {
+		tmp := MustCast[types.OptionType](curr)
+		tmp.Bubble = true
+		out = tmp
 	} else {
 		if currIsResult {
 			tmp := MustCast[types.ResultType](curr)

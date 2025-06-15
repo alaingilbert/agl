@@ -47,6 +47,9 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 		if t, ok := result.(types.ResultType); ok {
 			t.Native = native
 			result = t
+		} else if t1, ok := result.(types.OptionType); ok {
+			t1.Native = native
+			result = t1
 		}
 	}
 	ft := types.FuncType{
