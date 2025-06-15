@@ -57,6 +57,20 @@ func main() {
 }
 ```
 
+## Short anonymous function (type inferred)
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    arr := []int{1, 2, 3, 4, 5}
+    sum := arr.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sum()
+    assert(sum == 8)
+}
+```
+
 ## Destructuring
 
 ```go
