@@ -106,6 +106,8 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("cap", parseFuncTypeFromString("cap", "func [T any](v T) int", env))
 	env.Define("min", parseFuncTypeFromString("min", "func [T cmp.Ordered](x T, y ...T) T", env))
 	env.Define("max", parseFuncTypeFromString("max", "func [T cmp.Ordered](x T, y ...T) T", env))
+	//env.Define("clear", parseFuncTypeFromString("clear", "func [T ~[]Type | ~map[Type]Type1](t T)", env))
+	env.Define("close", parseFuncTypeFromString("close", "func (c chan<- Type)", env))
 	env.Define("fmt.Println", parseFuncTypeFromStringNative("Println", "func(a ...any) int!", env))
 	env.Define("fmt.Sprintf", parseFuncTypeFromStringNative("Sprintf", "func(format string, a ...any) string", env))
 	env.Define("os.ReadFile", parseFuncTypeFromStringNative("ReadFile", "func(name string) ([]byte)!", env))
