@@ -63,14 +63,14 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 }
 
 func parseFuncTypeFromString(name, s string, env *Env) types.FuncType {
-	return parseFuncTypeFromString1(name, s, env, false)
+	return parseFuncTypeFromStringHelper(name, s, env, false)
 }
 
 func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
-	return parseFuncTypeFromString1(name, s, env, true)
+	return parseFuncTypeFromStringHelper(name, s, env, true)
 }
 
-func parseFuncTypeFromString1(name, s string, env *Env, native bool) types.FuncType {
+func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.FuncType {
 	env = env.Clone()
 	e, err := parser.ParseExpr(s)
 	if err != nil {
@@ -82,13 +82,13 @@ func parseFuncTypeFromString1(name, s string, env *Env, native bool) types.FuncT
 
 func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
-	env.Define("os", types.PackageType{Name: "os"})
-	env.Define("io", types.PackageType{Name: "io"})
-	env.Define("bufio", types.PackageType{Name: "bufio"})
-	env.Define("fmt", types.PackageType{Name: "fmt"})
-	env.Define("http", types.PackageType{Name: "http"})
-	env.Define("errors", types.PackageType{Name: "errors"})
-	env.Define("time", types.PackageType{Name: "time"})
+	env.DefinePkg("os")
+	env.DefinePkg("io")
+	env.DefinePkg("bufio")
+	env.DefinePkg("fmt")
+	env.DefinePkg("http")
+	env.DefinePkg("errors")
+	env.DefinePkg("time")
 	env.Define("error", types.TypeType{W: types.AnyType{}})
 	env.Define("void", types.TypeType{W: types.VoidType{}})
 	env.Define("any", types.TypeType{W: types.AnyType{}})
@@ -227,6 +227,10 @@ func (e *Env) DefineFnNative(name string, fnStr string) {
 	e.Define(name, fnT)
 }
 
+func (e *Env) DefinePkg(name string) {
+	e.Define(name, types.PackageType{Name: name})
+}
+
 func (e *Env) Define(name string, typ types.Type) {
 	//p("Define", name, typ)
 	//printCallers(3)
@@ -299,7 +303,7 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 	case *ast.VoidExpr:
 		return types.VoidType{}
 	case *ast.StarExpr:
-		return types.StarType{}
+		return types.StarType{X: e.GetType2(xx.X)}
 	case *ast.MapType:
 		return types.MapType{K: e.GetType2(xx.Key), V: e.GetType2(xx.Value)}
 	case *ast.ChanType:
