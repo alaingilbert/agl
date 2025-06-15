@@ -513,6 +513,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 		case types.ResultType:
 			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}) {
+				if fnName == "UnwrapOr" {
+					fnT := infer.env.GetFn("agl.Result.UnwrapOr").T("T", idTT.W)
+					infer.SetType(expr, fnT.Return)
+				}
 				return
 			}
 		}
