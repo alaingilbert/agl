@@ -589,11 +589,11 @@ func parseInt(s string) int! {
 	expected := `package main
 import "strconv"
 func parseInt(s string) Result[int] {
-	res, err := strconv.Atoi(s)
+	tmp, err := strconv.Atoi(s)
 	if err != nil {
 		return MakeResultErr[int](err)
 	}
-	num := res
+	num := AglIdentity(tmp)
 	return MakeResultOk(num)
 }
 `
@@ -3453,6 +3453,31 @@ func test() Option[string] {
 	}
 	res := AglIdentity(tmp)
 	return MakeOptionSome(res)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen135(t *testing.T) {
+	src := `package main
+import "fmt"
+import "net/http"
+func test() string! {
+	res := http.Get("https://google.com")!
+	fmt.Println(res)
+	return Ok("done")
+}`
+	expected := `package main
+import "fmt"
+import "net/http"
+func test() Result[string] {
+	tmp, err := http.Get("https://google.com")
+	if err != nil {
+		return MakeResultErr[string](err)
+	}
+	res := AglIdentity(tmp)
+	fmt.Println(res)
+	return MakeResultOk("done")
 }
 `
 	testCodeGen(t, src, expected)
