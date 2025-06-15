@@ -648,6 +648,22 @@ func (g *Generator) genBasicLit(expr *ast.BasicLit) string {
 func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Y)
+	op := expr.Op.String()
+	if g.env.GetType(expr.X) != nil && g.env.GetType(expr.Y) != nil {
+		if TryCast[types.StructType](g.env.GetType(expr.X)) && TryCast[types.StructType](g.env.GetType(expr.Y)) {
+			lhsName := g.env.GetType(expr.X).(types.StructType).Name
+			rhsName := g.env.GetType(expr.Y).(types.StructType).Name
+			if lhsName == rhsName {
+				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
+					if op == "==" {
+						return fmt.Sprintf("%s.__EQL(%s)", content1, content2)
+					} else {
+						return fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
+					}
+				}
+			}
+		}
+	}
 	return fmt.Sprintf("%s %s %s", content1, expr.Op.String(), content2)
 }
 
@@ -969,7 +985,11 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 		}
 	}
 	if decl.Name != nil {
-		name = " " + decl.Name.Name
+		fnName := decl.Name.Name
+		if newName, ok := overloadMapping[fnName]; ok {
+			fnName = newName
+		}
+		name = " " + fnName
 	}
 	if typeParams := decl.Type.TypeParams; typeParams != nil {
 		typeParamsStr = g.joinList(decl.Type.TypeParams)

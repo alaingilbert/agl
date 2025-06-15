@@ -172,7 +172,21 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 		t = infer.getFuncDeclType(decl, outEnv)
 	})
 	infer.SetType(decl, t)
-	infer.env.Define(decl.Name.Name, t)
+	fnName := decl.Name.Name
+	if newName, ok := overloadMapping[fnName]; ok {
+		fnName = newName
+	}
+	infer.env.Define(fnName, t)
+}
+
+var overloadMapping = map[string]string{
+	"==": "__EQL",
+	"!=": "__EQL",
+	"+":  "__ADD",
+	"-":  "__SUB",
+	"*":  "__MUL",
+	"/":  "__QUO",
+	"%":  "__REM",
 }
 
 func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
@@ -260,8 +274,12 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			returnT = r
 		}
 	}
+	fnName := decl.Name.Name
+	if newName, ok := overloadMapping[fnName]; ok {
+		fnName = newName
+	}
 	ft := types.FuncType{
-		Name:   decl.Name.Name,
+		Name:   fnName,
 		Params: paramsT,
 		Return: returnT,
 	}
@@ -269,7 +287,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 		r := decl.Recv.List[0]
 		infer.expr(r.Type)
 		structName := infer.GetType(r.Type).(types.StructType).Name
-		outEnv.Define(fmt.Sprintf("%s.%s", structName, decl.Name), ft)
+		outEnv.Define(fmt.Sprintf("%s.%s", structName, fnName), ft)
 	}
 	return ft
 }
