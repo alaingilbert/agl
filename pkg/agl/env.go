@@ -94,7 +94,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define("uint", types.UintType{})
 	env.Define("f32", types.F32Type{})
 	env.Define("f64", types.F64Type{})
-	env.Define("string", types.StringType{})
+	env.Define("string", types.TypeType{W: types.StringType{}})
 	env.Define("bool", types.BoolType{})
 	env.Define("true", types.BoolValue{V: true})
 	env.Define("false", types.BoolValue{V: false})
