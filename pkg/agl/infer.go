@@ -532,13 +532,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	case *ast.Ident:
 		if call.Name == "make" {
 			fnT := infer.env.Get("make").(types.FuncType)
-			switch expr.Args[0].(type) {
-			case *ast.ArrayType:
-				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ArrayType)))
+			arg0 := expr.Args[0]
+			switch v := arg0.(type) {
+			case *ast.ArrayType, *ast.ChanType:
+				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(v))
 				infer.SetType(expr, fnT.Return)
-			case *ast.ChanType:
-				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(expr.Args[0].(*ast.ChanType)))
-				infer.SetType(expr, fnT.Return)
+			default:
+				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
 			}
 		}
 		callT := infer.env.Get(call.Name)
