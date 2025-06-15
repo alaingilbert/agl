@@ -404,6 +404,10 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.labeledStmt(stmt)
 	case *ast.BranchStmt:
 		infer.branchStmt(stmt)
+	case *ast.DeferStmt:
+		infer.deferStmt(stmt)
+	case *ast.GoStmt:
+		infer.goStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -1230,6 +1234,12 @@ func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
 }
 
 func (infer *FileInferrer) branchStmt(stmt *ast.BranchStmt) {
+}
+
+func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
+}
+
+func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
