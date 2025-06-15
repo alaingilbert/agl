@@ -3254,6 +3254,38 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen121(t *testing.T) {
+	src := `package main
+func test(a []string) {
+}
+func main() {
+	a := []int{1, 2, 3}
+	test(a)
+}
+`
+	tassert.PanicsWithError(t, "types not equal, []string []TypeType(int)", testCodeGenFn(src))
+}
+
+func TestCodeGen122(t *testing.T) {
+	src := `package main
+func test(a []int) {
+}
+func main() {
+	a := []int{1, 2, 3}
+	test(a)
+}
+`
+	expected := `package main
+func test(a []int) {
+}
+func main() {
+	a := []int{1, 2, 3}
+	test(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
