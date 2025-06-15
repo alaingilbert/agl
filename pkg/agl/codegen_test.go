@@ -3568,6 +3568,104 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen139(t *testing.T) {
+	src := `package main
+import "fmt"
+import "time"
+
+func test(i int) int? {
+    if i >= 2 {
+        return None
+    }
+    return Some(i)
+}
+
+func main() {
+    var i int
+    for {
+        res := test(i) or_break
+        fmt.Println("test", res)
+        time.Sleep(1000000000)
+        i++
+    }
+    fmt.Println("done")
+}`
+	expected := `package main
+import "fmt"
+import "time"
+func test(i int) Option[int] {
+	if i >= 2 {
+		return MakeOptionNone[int]()
+	}
+	return MakeOptionSome(i)
+}
+func main() {
+	var i int
+	for {
+		aglTmp1 := test(i)
+		if aglTmp1.IsNone() {
+			break
+		}
+		res := AglIdentity(aglTmp1)
+		fmt.Println("test", res)
+		time.Sleep(1000000000)
+		i++
+	}
+	fmt.Println("done")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen140(t *testing.T) {
+	src := `package main
+import "fmt"
+import "time"
+
+func test(i int) int! {
+    if i >= 2 {
+        return Err("error")
+    }
+    return Ok(i)
+}
+
+func main() {
+    var i int
+    for {
+        res := test(i) or_break
+        fmt.Println("test", res)
+        time.Sleep(1000000000)
+        i++
+    }
+    fmt.Println("done")
+}`
+	expected := `package main
+import "fmt"
+import "time"
+func test(i int) Result[int] {
+	if i >= 2 {
+		return MakeResultErr[int](errors.New("error"))
+	}
+	return MakeResultOk(i)
+}
+func main() {
+	var i int
+	for {
+		aglTmp1 := test(i)
+		if aglTmp1.IsErr() {
+			break
+		}
+		res := AglIdentity(aglTmp1)
+		fmt.Println("test", res)
+		time.Sleep(1000000000)
+		i++
+	}
+	fmt.Println("done")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

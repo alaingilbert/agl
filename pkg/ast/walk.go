@@ -383,6 +383,8 @@ func Walk(v Visitor, node Node) {
 	case *ErrExpr:
 		Walk(v, n.X)
 
+	case *OrBreakExpr:
+		
 	case *NoneExpr:
 
 	case *IfLetStmt:
