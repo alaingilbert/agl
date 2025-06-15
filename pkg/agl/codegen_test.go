@@ -1972,7 +1972,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	AglNoop[struct{}]()
+	AglNoop()
 }
 `
 	testCodeGen(t, src, expected)
