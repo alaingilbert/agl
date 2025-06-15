@@ -136,3 +136,20 @@ func main() {
     assert(p1 == p2)
 }
 ```
+
+## Using Go libraries
+
+```go
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    os.WriteFile("test.txt", []byte("test"), 0755)!
+    by := os.ReadFile("test.txt")!
+    fmt.Println(by)
+}
+```
