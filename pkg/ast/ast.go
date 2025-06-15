@@ -406,6 +406,11 @@ type (
 		OrBreak token.Pos
 	}
 
+	OrContinueExpr struct {
+		X          Expr
+		OrContinue token.Pos
+	}
+
 	// A SelectorExpr node represents an expression followed by a selector.
 	SelectorExpr struct {
 		X   Expr   // expression
@@ -493,6 +498,12 @@ type (
 		Value Expr
 	}
 )
+
+func (o OrContinueExpr) Pos() token.Pos { return o.OrContinue }
+
+func (o OrContinueExpr) End() token.Pos { return o.OrContinue + 1 }
+
+func (o OrContinueExpr) exprNode() {}
 
 func (o OrBreakExpr) Pos() token.Pos { return o.OrBreak }
 
