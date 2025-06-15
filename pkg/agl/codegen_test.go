@@ -3376,6 +3376,46 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen127(t *testing.T) {
+	src := `package main
+func test() int! { Ok(42) }
+func main() {
+	isOk := test().IsOk()
+	fmt.Println(isOk)
+}
+`
+	expected := `package main
+func test() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	isOk := test().IsOk()
+	fmt.Println(isOk)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen128(t *testing.T) {
+	src := `package main
+func test() int! { Ok(42) }
+func main() {
+	isErr := test().IsErr()
+	fmt.Println(isErr)
+}
+`
+	expected := `package main
+func test() Result[int] {
+	return MakeResultOk(42)
+}
+func main() {
+	isErr := test().IsErr()
+	fmt.Println(isErr)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
