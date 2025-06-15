@@ -3286,6 +3286,56 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen123(t *testing.T) {
+//	src := `package main
+//func test() int? { Some(42) }
+//func main() {
+//	num := test() or_return
+//	fmt.Println(num)
+//}
+//`
+//	expected := `package main
+//func test() Option[int] {
+//	return MakeOptionSome(42)
+//}
+//func main() {
+//	num := test()
+//	if num.IsNone() {
+//		return
+//	}
+//	fmt.Println(num)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+//
+//func TestCodeGen124(t *testing.T) {
+//	src := `package main
+//func test() int? { Some(42) }
+//func main() {
+//	num := test() or {
+//		fmt.Println("result is None")
+//		return
+//	}
+//	fmt.Println(num)
+//}
+//`
+//	expected := `package main
+//func test() Option[int] {
+//	return MakeOptionSome(42)
+//}
+//func main() {
+//	num := test()
+//	if num.IsNone() {
+//		fmt.Println("result is None")
+//		return
+//	}
+//	fmt.Println(num)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
