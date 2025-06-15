@@ -66,6 +66,11 @@ type StringType struct{ W Type }
 func (s StringType) GoStr() string  { return "string" }
 func (s StringType) String() string { return "string" }
 
+type CharType struct{ W Type }
+
+func (s CharType) GoStr() string  { return "char" }
+func (s CharType) String() string { return "char" }
+
 type BoolValue struct{ V bool }
 
 func (b BoolValue) GoStr() string {
