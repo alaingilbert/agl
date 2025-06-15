@@ -16,15 +16,15 @@
 
 ```go
 func getInt() int! {
-	return Ok(42)
+    return Ok(42)
 }
 func intermediate() int! {
-	num := getInt()! // Propagate 'Err' value to the caller
-	return Ok(num + 1)
+    num := getInt()! // Propagate 'Err' value to the caller
+    return Ok(num + 1)
 }
 func main() {
-	num := intermediate()! // crash on 'Err' value
-	fmt.Println(num)
+    num := intermediate()! // crash on 'Err' value
+    fmt.Println(num)
 }
 ```
 
@@ -32,15 +32,15 @@ func main() {
 
 ```go
 func maybeInt() int? {
-	return Some(42)
+    return Some(42)
 }
 func intermediate() int? {
-	num := maybeInt()? // Propagate 'None' value to the caller
-	return Some(num + 1)
+    num := maybeInt()? // Propagate 'None' value to the caller
+    return Some(num + 1)
 }
 func main() {
-	num := intermediate()? // crash on 'None' value
-	fmt.Println(num)
+    num := intermediate()? // crash on 'None' value
+    fmt.Println(num)
 }
 ```
 
@@ -110,16 +110,20 @@ func main() {
 ## Operator overloading
 
 ```go
+package main
+
 type Person struct {
-    name string
-    age int
+    Name string
+    Age int
 }
+
 func (p Person) == (other Person) bool {
-    return p.age == other.age
+    return p.Age == other.Age
 }
+
 func main() {
-    p1 := Person{name: "foo", age: 42}
-    p2 := Person{name: "bar", age: 42}
+    p1 := Person{Name: "foo", Age: 42}
+    p2 := Person{Name: "bar", Age: 42}
     assert(p1 == p2)
 }
 ```
