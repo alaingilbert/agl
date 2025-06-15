@@ -38,6 +38,20 @@ type ChanType struct{ W Type }
 func (m ChanType) GoStr() string  { return "ChanType" }
 func (m ChanType) String() string { return "ChanType" }
 
+type BinaryType struct {
+	X, Y Type
+}
+
+func (b BinaryType) GoStr() string  { return "BinaryType" }
+func (b BinaryType) String() string { return "BinaryType" }
+
+type UnaryType struct {
+	X Type
+}
+
+func (u UnaryType) GoStr() string  { return "UnaryType" }
+func (u UnaryType) String() string { return "UnaryType" }
+
 type LabelType struct{ W Type }
 
 func (l LabelType) GoStr() string  { return "LabelType" }
