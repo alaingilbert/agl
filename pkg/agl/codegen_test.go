@@ -2951,6 +2951,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen107(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	switch a {
+	case 1:
+	case 2, 3:
+	default:
+	}
+}
+`
+	expected := `package main
+func main() {
+	a := 1
+	switch a {
+	case 1:
+	case 2, 3:
+	default:
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

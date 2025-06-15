@@ -73,6 +73,10 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genSelectStmt(stmt)
 	case *ast.CommClause:
 		return g.genCommClause(stmt)
+	case *ast.SwitchStmt:
+		return g.genSwitchStmt(stmt)
+	case *ast.CaseClause:
+		return g.genCaseClause(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -290,6 +294,48 @@ func (g *Generator) genSelectStmt(expr *ast.SelectStmt) (out string) {
 	content1 := g.genStmt(expr.Body)
 	out += g.prefix + "select {\n"
 	out += content1
+	out += g.prefix + "}\n"
+	return
+}
+
+func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
+	var listStr string
+	if expr.List != nil {
+		var els []string
+		for _, el := range expr.List {
+			els = append(els, g.genExpr(el))
+		}
+		listStr = "case " + strings.Join(els, ", ") + ":\n"
+	} else {
+		listStr = "default:\n"
+	}
+	var content1 string
+	if expr.Body != nil {
+		content1 = g.genStmts(expr.Body)
+	}
+	out += g.prefix + listStr
+	out += content1
+	return
+}
+
+func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
+	var content1 string
+	if expr.Init != nil {
+		content1 = strings.TrimSpace(g.genStmt(expr.Init))
+		if content1 != "" {
+			content1 = content1 + " "
+		}
+	}
+	var content2 string
+	if expr.Tag != nil {
+		content2 = g.genExpr(expr.Tag)
+		if content2 != "" {
+			content2 = content2 + " "
+		}
+	}
+	content3 := g.genStmt(expr.Body)
+	out += g.prefix + fmt.Sprintf("switch %s%s{\n", content1, content2)
+	out += content3
 	out += g.prefix + "}\n"
 	return
 }
