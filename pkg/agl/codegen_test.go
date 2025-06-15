@@ -3011,6 +3011,26 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen110(t *testing.T) {
+	src := `package main
+func test() {
+}
+func main() {
+	defer test()
+	go test()
+}
+`
+	expected := `package main
+func test() {
+}
+func main() {
+	defer test()
+	go test()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

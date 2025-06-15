@@ -81,6 +81,10 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genCaseClause(stmt)
 	case *ast.BranchStmt:
 		return g.genBranchStmt(stmt)
+	case *ast.DeferStmt:
+		return g.genDeferStmt(stmt)
+	case *ast.GoStmt:
+		return g.genGoStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -310,6 +314,16 @@ func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) (out string) {
 
 func (g *Generator) genBranchStmt(expr *ast.BranchStmt) (out string) {
 	out += g.prefix + expr.Tok.String() + " " + g.genExpr(expr.Label) + "\n"
+	return
+}
+
+func (g *Generator) genDeferStmt(expr *ast.DeferStmt) (out string) {
+	out += g.prefix + fmt.Sprintf("defer %s\n", g.genExpr(expr.Call))
+	return
+}
+
+func (g *Generator) genGoStmt(expr *ast.GoStmt) (out string) {
+	out += g.prefix + fmt.Sprintf("go %s\n", g.genExpr(expr.Call))
 	return
 }
 
