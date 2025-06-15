@@ -85,6 +85,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genDeferStmt(stmt)
 	case *ast.GoStmt:
 		return g.genGoStmt(stmt)
+	case *ast.TypeSwitchStmt:
+		return g.genTypeSwitchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -253,8 +255,13 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 }
 
 func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) string {
-	content1 := g.genExpr(expr.Type)
+	var content1 string
 	content2 := g.genExpr(expr.X)
+	if expr.Type != nil {
+		content1 = g.genExpr(expr.Type)
+	} else {
+		return content2 + ".(type)"
+	}
 	return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
 }
 
@@ -324,6 +331,19 @@ func (g *Generator) genDeferStmt(expr *ast.DeferStmt) (out string) {
 
 func (g *Generator) genGoStmt(expr *ast.GoStmt) (out string) {
 	out += g.prefix + fmt.Sprintf("go %s\n", g.genExpr(expr.Call))
+	return
+}
+
+func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
+	content1 := strings.TrimSpace(g.genStmt(expr.Assign))
+	var content2 string
+	if expr.Init != nil {
+		content2 = strings.TrimSpace(g.genStmt(expr.Init))
+	}
+	content3 := g.genStmt(expr.Body)
+	out += g.prefix + fmt.Sprintf("switch %s%s {\n", content2, content1)
+	out += content3
+	out += g.prefix + "}\n"
 	return
 }
 
