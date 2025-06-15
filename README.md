@@ -10,6 +10,15 @@
 - Operator overloading
 - Compile down to Go code
 
+## How to use
+
+```go
+go build               // Build the "agl" executable
+./agl main.agl         // Output Go code in stdout
+./agl run main.agl     // Run the code directly and output the result in stdout
+./agl build main.agl   // Create a main.go file
+```
+
 ## Error propagation
 
 ### Result propagation
