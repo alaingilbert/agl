@@ -372,6 +372,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.orBreak(expr)
 	case *ast.OrContinueExpr:
 		infer.orContinue(expr)
+	case *ast.OrReturnExpr:
+		infer.orReturn(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -847,6 +849,11 @@ func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
 }
 
 func (infer *FileInferrer) orContinue(expr *ast.OrContinueExpr) {
+	infer.expr(expr.X)
+	infer.SetType(expr, infer.GetType(expr.X))
+}
+
+func (infer *FileInferrer) orReturn(expr *ast.OrReturnExpr) {
 	infer.expr(expr.X)
 	infer.SetType(expr, infer.GetType(expr.X))
 }

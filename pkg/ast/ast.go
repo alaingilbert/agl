@@ -411,6 +411,11 @@ type (
 		OrContinue token.Pos
 	}
 
+	OrReturnExpr struct {
+		X        Expr
+		OrReturn token.Pos
+	}
+
 	// A SelectorExpr node represents an expression followed by a selector.
 	SelectorExpr struct {
 		X   Expr   // expression
@@ -498,6 +503,12 @@ type (
 		Value Expr
 	}
 )
+
+func (o OrReturnExpr) Pos() token.Pos { return o.OrReturn }
+
+func (o OrReturnExpr) End() token.Pos { return o.OrReturn + 1 }
+
+func (o OrReturnExpr) exprNode() {}
 
 func (o OrContinueExpr) Pos() token.Pos { return o.OrContinue }
 

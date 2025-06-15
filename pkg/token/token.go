@@ -99,6 +99,7 @@ const (
 	// Keywords
 	OR_BREAK
 	OR_CONTINUE
+	OR_RETURN
 	BREAK
 	CASE
 	CHAN
@@ -215,6 +216,7 @@ var tokens = [...]string{
 
 	OR_BREAK:    "or_break",
 	OR_CONTINUE: "or_continue",
+	OR_RETURN:   "or_return",
 	BREAK:       "break",
 	CASE:        "case",
 	CHAN:        "chan",
