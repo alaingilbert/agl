@@ -1239,7 +1239,6 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 	infer.optType = infer.returnType
 	infer.expr(stmt.Result)
 	infer.optType = nil
-
 }
 
 func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {

@@ -15,6 +15,7 @@ type Generator struct {
 	prefix     string
 	before     []IBefore
 	varCounter atomic.Int64
+	returnType types.Type
 }
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
@@ -546,11 +547,10 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 			g.before = append(g.before, before)
 			return `AglNoop()`
 		} else if exprXT.Native {
-			tmpl := "res, err := %s\nif err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
+			tmpl := "tmp, err := %s\nif err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W), g.prefix))
 			g.before = append(g.before, before)
-			out := `res`
-			return out
+			return `AglIdentity(tmp)`
 		} else if exprXT.ConvertToNone {
 			tmpl := "res := %s\nif res.IsErr() {\n\treturn MakeOptionNone[%s]()\n}\n"
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStr()), g.prefix))
@@ -1005,6 +1005,7 @@ func (g *Generator) genDecls() (out string) {
 }
 
 func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
+	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var name, recv, typeParamsStr, paramsStr, resultStr, bodyStr string
 	if decl.Recv != nil {
 		recv = g.joinList(decl.Recv)
