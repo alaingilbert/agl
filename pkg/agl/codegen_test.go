@@ -3417,6 +3417,26 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen133(t *testing.T) {
+	src := `package main
+import "strconv"
+func test() ! {
+	os.Chdir("")!
+	return Ok(void)
+}`
+	expected := `package main
+import "strconv"
+func test() Result[AglVoid] {
+	if err := os.Chdir(""); err != nil {
+		return MakeResultErr[AglVoid](err)
+	}
+	AglNoop()
+	return MakeResultOk(AglVoid)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
