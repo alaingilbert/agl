@@ -400,6 +400,10 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.switchStmt(stmt)
 	case *ast.CaseClause:
 		infer.caseClause(stmt)
+	case *ast.LabeledStmt:
+		infer.labeledStmt(stmt)
+	case *ast.BranchStmt:
+		infer.branchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -1223,6 +1227,14 @@ func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
 	if stmt.Body != nil {
 		infer.stmts(stmt.Body)
 	}
+}
+
+func (infer *FileInferrer) branchStmt(stmt *ast.BranchStmt) {
+}
+
+func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
+	infer.env.Define(stmt.Label.Name, types.LabelType{})
+	infer.stmt(stmt.Stmt)
 }
 
 func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {

@@ -2991,6 +2991,26 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen109(t *testing.T) {
+	src := `package main
+func main() {
+	Loop:
+	for {
+		break Loop
+	}
+}
+`
+	expected := `package main
+func main() {
+	Loop:
+	for {
+		break Loop
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
