@@ -287,6 +287,18 @@ func (u UintType) GoStr() string { return "uint" }
 
 func (u UintType) String() string { return "uint" }
 
+type F32Type struct{}
+
+func (f F32Type) GoStr() string { return "float32" }
+
+func (f F32Type) String() string { return "f32" }
+
+type F64Type struct{}
+
+func (f F64Type) GoStr() string { return "float64" }
+
+func (f F64Type) String() string { return "f64" }
+
 type TupleType struct {
 	Name string // infer gives a name for the struct that will be generated
 	Elts []Type
