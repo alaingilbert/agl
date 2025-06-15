@@ -48,8 +48,8 @@ func main() {
 
 ```go
 type IpAddr enum {
-    v4(u8, u8, u8, u8),
-    v6(string),
+    v4(u8, u8, u8, u8)
+    v6(string)
 }
 func main() {
     // enum values can be destructured

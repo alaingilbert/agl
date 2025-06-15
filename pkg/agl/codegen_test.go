@@ -1575,8 +1575,8 @@ const (
 )
 type Color struct {
 	tag ColorTag
-	other0 uint8
-	other1 string
+	other_0 uint8
+	other_1 string
 }
 func (v Color) String() string {
 	switch v.tag {
@@ -1592,7 +1592,7 @@ func Make_Color_red() Color {
 	return Color{tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other0: arg0, other1: arg1}
+	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func takeColor(c Color) {
@@ -1623,8 +1623,8 @@ const (
 )
 type Color struct {
 	tag ColorTag
-	other0 uint8
-	other1 string
+	other_0 uint8
+	other_1 string
 }
 func (v Color) String() string {
 	switch v.tag {
@@ -1640,12 +1640,12 @@ func Make_Color_red() Color {
 	return Color{tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other0: arg0, other1: arg1}
+	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
 	aglVar1 := Make_Color_other(1, "yellow")
-	a, b := aglVar1.other0, aglVar1.other1
+	a, b := aglVar1.other_0, aglVar1.other_1
 }
 `
 	testCodeGen(t, src, expected)
@@ -1670,8 +1670,8 @@ const (
 )
 type Color struct {
 	tag ColorTag
-	other0 uint8
-	other1 string
+	other_0 uint8
+	other_1 string
 }
 func (v Color) String() string {
 	switch v.tag {
@@ -1687,13 +1687,13 @@ func Make_Color_red() Color {
 	return Color{tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other0: arg0, other1: arg1}
+	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
 	other := Make_Color_other(1, "yellow")
 	aglVar1 := other
-	a, b := aglVar1.other0, aglVar1.other1
+	a, b := aglVar1.other_0, aglVar1.other_1
 }
 `
 	testCodeGen(t, src, expected)
@@ -2136,8 +2136,8 @@ const (
 )
 type Color struct {
 	tag ColorTag
-	other0 uint8
-	other1 string
+	other_0 uint8
+	other_1 string
 }
 func (v Color) String() string {
 	switch v.tag {
@@ -2153,12 +2153,12 @@ func Make_Color_red() Color {
 	return Color{tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other0: arg0, other1: arg1}
+	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
 	aglVar1 := Make_Color_other(1, "yellow")
-	a, b := aglVar1.other0, aglVar1.other1
+	a, b := aglVar1.other_0, aglVar1.other_1
 	fmt.Println(a, b)
 }
 `
@@ -3046,6 +3046,70 @@ func main() {
 	switch v.(type) {
 	default:
 	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen112(t *testing.T) {
+	src := `package main
+type IpAddr enum {
+    v4(u8, u8, u8, u8)
+    v6(string)
+}
+func main() {
+    // enum values can be destructured
+    addr1 := IpAddr.v4(127, 0, 0, 1)
+    a, b, c, d := addr1
+	
+    // tuple can be destructured
+    tuple := (1, "hello", true)
+    f, g, h := tuple
+}
+`
+	expected := `package main
+type IpAddrTag int
+const (
+	IpAddr_v4 IpAddrTag = iota + 1
+	IpAddr_v6
+)
+type IpAddr struct {
+	tag IpAddrTag
+	v4_0 uint8
+	v4_1 uint8
+	v4_2 uint8
+	v4_3 uint8
+	v6_0 string
+}
+func (v IpAddr) String() string {
+	switch v.tag {
+	case IpAddr_v4:
+		return "v4"
+	case IpAddr_v6:
+		return "v6"
+	default:
+		panic("")
+	}
+}
+func Make_IpAddr_v4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
+	return IpAddr{tag: IpAddr_v4, v4_0: arg0, v4_1: arg1, v4_2: arg2, v4_3: arg3}
+}
+func Make_IpAddr_v6(arg0 string) IpAddr {
+	return IpAddr{tag: IpAddr_v6, v6_0: arg0}
+}
+
+type AglTupleStruct1 struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
+func main() {
+	addr1 := Make_IpAddr_v4(127, 0, 0, 1)
+	aglVar1 := addr1
+	a, b, c, d := aglVar1.addr1_0, aglVar1.addr1_1, aglVar1.addr1_2, aglVar1.addr1_3
+	tuple := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	aglVar1 := tuple
+	f, g, h := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
 }
 `
 	testCodeGen(t, src, expected)
