@@ -225,7 +225,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	for _, field := range expr.Values.List {
 		if field.Params != nil {
 			for i, el := range field.Params.List {
-				out += fmt.Sprintf("\t%s%d %s\n", field.Name.Name, i, g.env.GetType2(el.Type).GoStr())
+				out += fmt.Sprintf("\t%s_%d %s\n", field.Name.Name, i, g.env.GetType2(el.Type).GoStr())
 			}
 		}
 	}
@@ -241,7 +241,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		if field.Params != nil {
 			for i, el := range field.Params.List {
 				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType2(el.Type).GoStr()))
-				tmp1 = append(tmp1, fmt.Sprintf("%s%d: arg%d", field.Name.Name, i, i))
+				tmp1 = append(tmp1, fmt.Sprintf("%s_%d: arg%d", field.Name.Name, i, i))
 			}
 		}
 		var tmp1Out string
@@ -866,7 +866,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			var exprs []string
 			for i, x := range stmt.Lhs {
 				names = append(names, x.(*ast.Ident).Name)
-				exprs = append(exprs, fmt.Sprintf("%s.%s%d", lhs, sel, i))
+				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, sel, i))
 			}
 			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
