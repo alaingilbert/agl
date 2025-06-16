@@ -846,6 +846,13 @@ func prefixIf(s, prefix string) string {
 	return s
 }
 
+func suffixIf(s, suffix string) string {
+	if s != "" {
+		return s + suffix
+	}
+	return s
+}
+
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	content := g.genExpr(expr.Elt)
 	return fmt.Sprintf("[]%s", content)
@@ -1006,9 +1013,7 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 			out += b.Content()
 		}
 		clear(g.before)
-		if out1 != "" {
-			out += out1 + "\n"
-		}
+		out += suffixIf(out1, "\n")
 		return
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
