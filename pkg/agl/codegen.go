@@ -50,16 +50,31 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			name = decl.Name.Name
 		}
 		recvName := decl.Recv.List[0].Names[0].Name
-		firstArg := &ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}}} // TODO
-		if decl.Type.Params == nil {
-			decl.Type.Params = &ast.FieldList{List: []*ast.Field{firstArg}}
-		} else {
-			decl.Type.Params.List = append([]*ast.Field{firstArg}, decl.Type.Params.List...)
+		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: m["T"].GoStr()}}} // TODO
+		var paramsClone []ast.Field
+		if decl.Type.Params != nil {
+			for _, param := range decl.Type.Params.List {
+				paramsClone = append(paramsClone, *param)
+			}
 		}
+		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
 		g.swapGen = true
 		g.genMap = m
-		if params := decl.Type.Params; params != nil {
-			paramsStr = g.joinList(params)
+		if params := paramsClone; params != nil {
+			var fieldsItems []string
+			for _, field := range params {
+				var namesItems []string
+				for _, n := range field.Names {
+					namesItems = append(namesItems, n.Name)
+				}
+				tmp2Str := strings.Join(namesItems, ", ")
+				content := g.genExpr(field.Type)
+				if tmp2Str != "" {
+					tmp2Str = tmp2Str + " "
+				}
+				fieldsItems = append(fieldsItems, tmp2Str+content)
+			}
+			paramsStr = strings.Join(fieldsItems, ", ")
 		}
 		if result := decl.Type.Result; result != nil {
 			resT := g.env.GetType(result)
