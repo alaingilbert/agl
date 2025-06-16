@@ -207,3 +207,23 @@ func main() {
     fmt.Println(string(by))
 }
 ```
+
+## Making http request
+
+```go
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "io"
+)
+
+func main() {
+    req := http.NewRequest(http.MethodGet, "https://google.com", nil)!
+    c := http.Client{}
+    resp := c.Do(req)!
+    by := io.ReadAll(resp.Body)!
+    fmt.Println(string(by))
+}
+```
