@@ -1061,9 +1061,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 		els = append(els, post)
 	}
 	tmp := strings.Join(els, "; ")
-	if tmp != "" {
-		tmp += " "
-	}
+	tmp = suffixIf(tmp, " ")
 	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	out += g.prefix + fmt.Sprintf("for %s{\n", tmp)
 	out += body
