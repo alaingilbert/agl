@@ -82,14 +82,14 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 
 func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
-	env.DefinePkg("os")
-	env.DefinePkg("io")
-	env.DefinePkg("bufio")
-	env.DefinePkg("fmt")
-	env.DefinePkg("net/http")
-	env.DefinePkg("errors")
-	env.DefinePkg("strings")
-	env.DefinePkg("time")
+	env.DefinePkg("os", "os")
+	env.DefinePkg("io", "io")
+	env.DefinePkg("bufio", "bufio")
+	env.DefinePkg("fmt", "fmt")
+	env.DefinePkg("http", "net/http")
+	env.DefinePkg("errors", "errors")
+	env.DefinePkg("strings", "strings")
+	env.DefinePkg("time", "time")
 	env.Define("error", types.TypeType{W: types.AnyType{}})
 	env.Define("nil", types.TypeType{W: types.NilType{}})
 	env.Define("void", types.TypeType{W: types.VoidType{}})
@@ -236,8 +236,8 @@ func (e *Env) DefineFnNative(name string, fnStr string) {
 	e.Define(name, fnT)
 }
 
-func (e *Env) DefinePkg(name string) {
-	e.Define(name, types.PackageType{Name: name})
+func (e *Env) DefinePkg(name, path string) {
+	e.Define(name, types.PackageType{Name: name, Path: path})
 }
 
 func (e *Env) Define(name string, typ types.Type) {

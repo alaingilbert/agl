@@ -154,7 +154,7 @@ func (e ErrType) GoStr() string { return "ErrType" }
 
 func (e ErrType) String() string { return "ErrType" }
 
-type PackageType struct{ Name string }
+type PackageType struct{ Name, Path string }
 
 func (p PackageType) GoStr() string { return p.Name }
 
