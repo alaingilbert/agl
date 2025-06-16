@@ -38,7 +38,7 @@ package main
 
 import "fmt"
 
-func getInt() int! {
+func getInt() int! { // `int!` means the function return a `Result[int]`
     return Ok(42)
 }
 
@@ -60,7 +60,7 @@ package main
 
 import "fmt"
 
-func maybeInt() int? {
+func maybeInt() int? { // `int?` means the the function return an `Option[int]`
     return Some(42)
 }
 
