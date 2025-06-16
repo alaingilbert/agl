@@ -532,12 +532,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
 				if fnT := infer.env.Get(fnFullName); fnT != nil {
 					fnT1 := fnT.(types.FuncType).T("T", arr.Elt)
+					retT := Or[types.Type](fnT1.Return, types.VoidType{})
 					infer.SetType(expr.Fun, fnT1)
-					if fnT1.Return != nil {
-						infer.SetType(expr, fnT1.Return)
-					} else {
-						// TODO expr = VoidType ?
-					}
+					infer.SetType(expr, retT)
 				} else {
 					assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
 				}
