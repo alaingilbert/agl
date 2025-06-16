@@ -403,10 +403,11 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	if decl.Type.Result != nil {
 		infer.expr(decl.Type.Result)
 		returnT = infer.env.GetType2(decl.Type.Result)
-		if r, ok := returnT.(types.ResultType); ok {
+		switch r := returnT.(type) {
+		case types.ResultType:
 			r.Bubble = true
 			returnT = r
-		} else if r, ok := returnT.(types.OptionType); ok {
+		case types.OptionType:
 			r.Bubble = true
 			returnT = r
 		}

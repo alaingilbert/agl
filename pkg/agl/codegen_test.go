@@ -90,25 +90,6 @@ func add(a, b int64) Option[int64] {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen4(t *testing.T) {
-//	src := `package main
-//func add(a, b i64) Option[i64] {
-//	if a == 0 {
-//		return None
-//	}
-//	return Some(a + b)
-//}`
-//	expected := `package main
-//func add(a, b int64) Option[int64] {
-//	if a == 0 {
-//		return MakeOptionNone[int64]()
-//	}
-//	return MakeOptionSome(a + b)
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
-
 func TestCodeGen6(t *testing.T) {
 	src := `package main
 func add(a, b i64) i64! {
@@ -127,25 +108,6 @@ func add(a, b int64) Result[int64] {
 `
 	testCodeGen(t, src, expected)
 }
-
-//func TestCodeGen5(t *testing.T) {
-//	src := `package main
-//func add(a, b i64) Result[i64] {
-//	if a == 0 {
-//		return Err(errors.New("a cannot be zero"))
-//	}
-//	return Ok(a + b)
-//}`
-//	expected := `package main
-//func add(a, b int64) Result[int64] {
-//	if a == 0 {
-//		return MakeResultErr[int64](errors.New("a cannot be zero"))
-//	}
-//	return MakeResultOk(a + b)
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
 
 //func TestCodeGen3(t *testing.T) {
 //	src := `
@@ -847,23 +809,6 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen35(t *testing.T) {
-//	src := "" +
-//		"fn main() {\n" +
-//		"\ta := 42\n" +
-//		"\tfmt.Println(`${a}`)\n" +
-//		"}\n"
-//	expected := `func main() {
-//	a := 42
-//	fmt.Println(fmt.Sprintf("%d", a))
-//}
-//`
-//	got := codegen(infer(parser(NewTokenStream(src))))
-//	if got != expected {
-//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//	}
-//}
-
 func TestCodeGen_Reduce1(t *testing.T) {
 	src := `package main
 func main() {
@@ -1019,30 +964,27 @@ func main() {
 }
 
 //func TestCodeGen37(t *testing.T) {
-//	src := `
+//	src := `package main
 //type Dog struct {
 //	name string?
 //}
 //type Person struct {
 //	dog Dog?
 //}
-//fn getPersonDogName(p Person) string? {
+//func getPersonDogName(p Person) string? {
 //	return p.getDog()?.getName()?
 //}
-//fn main() {
+//func main() {
 //	person1 := Person{dog: Dog{name: Some("foo")}}
 //	person2 := Person{dog: Some(Dog{name: None})}
 //	person3 := Person{dog: None}
 //	assert(person1.getDog()?.getName()? == "foo")
-//	assert(person2.getDog()?.getName()? == None)
-//	assert(person3.getDog()?.getName()? == None)
+//	assert(person2.getDog()?.getName()?.IsNone())
+//	assert(person3.getDog()?.getName()?.IsNone())
 //}
 //`
 //	expected := `...`
-//	got := codegen(infer(parser(NewTokenStream(src))))
-//	if got != expected {
-//		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
-//	}
+//	testCodeGen(t, src, expected)
 //}
 
 func TestCodeGen38(t *testing.T) {
