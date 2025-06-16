@@ -735,6 +735,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	case *ast.Ident:
 		if call.Name == "make" {
 			fnT := infer.env.Get("make").(types.FuncType)
+			assert(len(expr.Args) >= 1, "'make' must have at least 1 argument")
 			arg0 := expr.Args[0]
 			switch v := arg0.(type) {
 			case *ast.ArrayType, *ast.ChanType, *ast.MapType:
