@@ -1184,9 +1184,10 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 			if tmp1, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
 				if tmp2, ok := tmp1.X.(*ast.SelectorExpr); ok {
 					if tmp2.Sel.Name == "Vec" {
-						tmp := g.extensions["agl.Vec.Even"]
+						fnName := fmt.Sprintf("agl.Vec.%s", decl.Name.Name)
+						tmp := g.extensions[fnName]
 						tmp.decl = decl
-						g.extensions["agl.Vec.Even"] = tmp
+						g.extensions[fnName] = tmp
 						return
 					}
 				}
