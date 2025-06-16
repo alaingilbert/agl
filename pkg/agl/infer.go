@@ -784,6 +784,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			funT := infer.GetTypeFn(expr.Fun)
 			ft := infer.env.GetFn("agl.Vec." + fnName)
 			mm := make(map[string]types.Type)
+			want := types.ArrayType{Elt: ft.TypeParams[0].(types.GenericType).W}
+			got := idTArr
+			assertf(cmpTypes(want, got), "%s: cannot use %v as %v for %s", infer.Pos(exprT.Sel), got.GoStr(), want.GoStr(), fnName)
 			for i, arg := range expr.Args {
 				if argFn, ok := arg.(*ast.FuncLit); ok {
 					infer.expr(argFn)
