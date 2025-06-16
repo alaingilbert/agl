@@ -166,6 +166,30 @@ func main() {
 }
 ```
 
+## Extend built-in types
+
+```go
+package main
+
+import "fmt"
+
+func (v agl.Vec[T]) Even() []T {
+    out := make([]T, 0)
+    for _, el := range v {
+        if el % 2 == 0 {
+            out = append(out, el)
+        }
+    }
+    return out
+}
+
+func main() {
+    arr := []int{1, 2, 3, 4, 5, 6, 7, 8}
+    res := arr.Even().Filter({ $0 <= 6 }).Map({ $0 + 1 })
+    fmt.Println(res) // [3 5 7]
+}
+```
+
 ## Using Go libraries
 
 ```go
