@@ -254,10 +254,11 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 					p1 := sel.X.(*ast.Ident).Name
 					if p1 == "agl" && sel.Sel.Name == "Vec" {
 						vecExt = true
+						t := &ast.Field{Names: []*ast.Ident{{Name: "T"}}, Type: &ast.Ident{Name: "any"}}
 						if decl.Type.TypeParams == nil {
-							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{
-								{Names: []*ast.Ident{{Name: "T"}}, Type: &ast.Ident{Name: "any"}},
-							}}
+							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{t}}
+						} else {
+							decl.Type.TypeParams.List = append([]*ast.Field{t}, decl.Type.TypeParams.List...)
 						}
 					}
 				}
