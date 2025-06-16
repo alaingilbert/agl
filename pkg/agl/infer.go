@@ -783,7 +783,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 		} else {
 			funT := infer.GetTypeFn(expr.Fun)
 			ft := infer.env.GetFn("agl.Vec." + fnName)
-			assert(len(ft.TypeParams) == 1, "agl.Vec should have one generic parameter")
+			assert(len(ft.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
 			want := types.ArrayType{Elt: ft.TypeParams[0].(types.GenericType).W}
 			got := idTArr
 			assertf(cmpTypes(want, got), "%s: cannot use %v as %v for %s", infer.Pos(exprT.Sel), got.GoStr(), want.GoStr(), fnName)
@@ -796,6 +796,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
 					for k, v := range m {
+						if el, ok := genericMapping[k]; ok {
+							assertf(el == v, "generic type parameter type mismatch. want: %v, got: %v", el, v)
+						}
 						genericMapping[k] = v
 					}
 				}
