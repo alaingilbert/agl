@@ -425,7 +425,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	before += "\n"
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
-	return fmt.Sprintf("AglIdentity(%s)", varName)
+	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
 func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
@@ -447,7 +447,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	before += "\n"
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
-	return fmt.Sprintf("AglIdentity(%s)", varName)
+	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
 func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {

@@ -907,12 +907,30 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 
 func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, infer.GetType(expr.X))
+	var t types.Type
+	switch v := infer.GetType(expr.X).(type) {
+	case types.OptionType:
+		t = v.W
+	case types.ResultType:
+		t = v.W
+	default:
+		panic("")
+	}
+	infer.SetType(expr, t)
 }
 
 func (infer *FileInferrer) orContinue(expr *ast.OrContinueExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, infer.GetType(expr.X))
+	var t types.Type
+	switch v := infer.GetType(expr.X).(type) {
+	case types.OptionType:
+		t = v.W
+	case types.ResultType:
+		t = v.W
+	default:
+		panic("")
+	}
+	infer.SetType(expr, t)
 }
 
 func (infer *FileInferrer) orReturn(expr *ast.OrReturnExpr) {

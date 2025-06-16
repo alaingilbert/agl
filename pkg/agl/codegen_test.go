@@ -3606,7 +3606,7 @@ func main() {
 		if aglTmp1.IsNone() {
 			break
 		}
-		res := AglIdentity(aglTmp1)
+		res := AglIdentity(aglTmp1).Unwrap()
 		fmt.Println("test", res)
 		time.Sleep(1000000000)
 		i++
@@ -3655,7 +3655,7 @@ func main() {
 		if aglTmp1.IsErr() {
 			break
 		}
-		res := AglIdentity(aglTmp1)
+		res := AglIdentity(aglTmp1).Unwrap()
 		fmt.Println("test", res)
 		time.Sleep(1000000000)
 		i++
@@ -3704,7 +3704,7 @@ func main() {
 		if aglTmp1.IsErr() {
 			continue
 		}
-		res := AglIdentity(aglTmp1)
+		res := AglIdentity(aglTmp1).Unwrap()
 		fmt.Println("test", res)
 		time.Sleep(1000000000)
 		i++
@@ -3753,7 +3753,7 @@ func main() {
 		if aglTmp1.IsNone() {
 			continue
 		}
-		res := AglIdentity(aglTmp1)
+		res := AglIdentity(aglTmp1).Unwrap()
 		fmt.Println("test", res)
 		time.Sleep(1000000000)
 		i++
@@ -4013,7 +4013,7 @@ func main() {
 			if aglTmp1.IsNone() {
 				break Loop
 			}
-			AglIdentity(aglTmp1)
+			AglIdentity(aglTmp1).Unwrap()
 		}
 	}
 }
@@ -4044,7 +4044,7 @@ func main() {
 			if aglTmp1.IsNone() {
 				continue Loop
 			}
-			AglIdentity(aglTmp1)
+			AglIdentity(aglTmp1).Unwrap()
 		}
 	}
 }
