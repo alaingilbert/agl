@@ -40,10 +40,6 @@ func NewGenerator(env *Env, a *ast.File) *Generator {
 func (g *Generator) genExtension(e Extension) (out string) {
 	for _, ge := range e.gen {
 		m := types.FindGen(ge.raw, ge.concrete)
-		var elts []string
-		for _, k := range slices.Sorted(maps.Keys(m)) {
-			elts = append(elts, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
-		}
 		decl := e.decl
 		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
 		if decl.Name != nil {
@@ -56,7 +52,22 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			recvName = recv.Names[0].Name
 		}
 		recvT := recv.Type.(*ast.IndexExpr).Index.(*ast.Ident).Name
-		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: m[recvT].GoStr()}}}
+		var recvTName string
+		if el, ok := m[recvT]; ok {
+			recvTName = el.GoStr()
+		} else {
+			recvTName = recvT
+		}
+
+		var elts []string
+		for _, k := range slices.Sorted(maps.Keys(m)) {
+			elts = append(elts, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+		}
+		if _, ok := m["T"]; !ok {
+			elts = append(elts, fmt.Sprintf("%s_%s", "T", recvTName))
+		}
+
+		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
 			for _, param := range decl.Type.Params.List {
@@ -795,6 +806,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				var els []string
 				for _, k := range slices.Sorted(maps.Keys(m)) {
 					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+				}
+				if _, ok := m["T"]; !ok {
+					recvTName := rawFnT.(types.FuncType).TypeParams[0].(types.GenericType).W.GoStr()
+					els = append(els, fmt.Sprintf("%s_%s", "T", recvTName))
 				}
 				elsStr := strings.Join(els, "_")
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
