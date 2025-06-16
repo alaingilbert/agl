@@ -785,7 +785,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 				elsStr := strings.Join(els, "_")
 				content2 := g.genExprs(expr.Args)
-				return fmt.Sprintf("AglVec%s_%s(%s, %s)", e.Sel.Name, elsStr, content1, content2)
+				if content2 != "" {
+					content2 = ", " + content2
+				}
+				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
 		}
 	case *ast.Ident:
