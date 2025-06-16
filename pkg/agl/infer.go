@@ -722,7 +722,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		switch callXT := call.X.(type) {
 		case *ast.Ident:
 			exprFunT = infer.env.Get(callXT.Name)
-		case *ast.CallExpr, *ast.BubbleResultExpr:
+		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
 		default:
