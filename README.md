@@ -191,6 +191,26 @@ func main() {
 }
 ```
 
+Methods can have generic type parameters
+
+```go
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+    out := make([]R, 0)
+    for _, el := range v {
+        out = append(out, clb(el))
+    }
+    return out
+}
+```
+
+You can also extend for a specific type of vector
+
+```go
+func (v agl.Vec[string]) MyJoined(sep string) string {
+    return strings.Join(v, sep)
+}
+```
+
 ## Using Go libraries
 
 ```go
