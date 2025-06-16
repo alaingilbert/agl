@@ -3955,6 +3955,41 @@ func AglVecMyMap_R_uint64_T_uint8(v []uint8, clb func(uint8) uint64) []uint64 {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen150(t *testing.T) {
+	src := `package main
+func (v agl.Vec[string]) MyJoined(sep string) string {
+	return strings.Join(v, sep)
+}
+func (v agl.Vec[string]) MyJoined2() string {
+	return strings.Join(v, ", ")
+}
+func (v agl.Vec[string]) Test() {
+}
+func main() {
+	arr := []string{"a", "b", "c"}
+	arr.MyJoined(", ")
+	arr.MyJoined2()
+	arr.Test()
+}`
+	expected := `package main
+func main() {
+	arr := []string{"a", "b", "c"}
+	AglVecMyJoined_T_string(arr, ", ")
+	AglVecMyJoined2_T_string(arr)
+	AglVecTest_T_string(arr)
+}
+func AglVecMyJoined_T_string(v []string, sep string) string {
+	return strings.Join(v, sep)
+}
+func AglVecMyJoined2_T_string(v []string) string {
+	return strings.Join(v, ", ")
+}
+func AglVecTest_T_string(v []string) {
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
