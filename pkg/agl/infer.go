@@ -783,11 +783,6 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 					genFn := ft.GetParam(i)
 					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
-					//tmp := infer.GetTypeFn(argFn)
-					//for k, v := range m {
-					//	tmp = tmp.ReplaceGenericParameter(k, v)
-					//}
-					//genFn = types.ReplGenM(genFn, m)
 					for k, v := range m {
 						mm[k] = v
 					}
