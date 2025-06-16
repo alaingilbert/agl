@@ -3898,7 +3898,7 @@ func AglVecEven_T_int(v []int) []int {
 //
 //func main() {
 //	arr := []int{1, 2, 3}
-//	fmt.Println(AglVecMyMap_R_int_T_int(arr, func(aglArg0 int) int {
+//	fmt.Println(AglVecMyMap_R_int_T_int(arr, func(int) int {
 //		return 1
 //	}))
 //}
