@@ -4052,6 +4052,18 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen153(t *testing.T) {
+	src := `package main
+func (v agl.Vec[string]) MyJoined(sep string) string {
+    return strings.Join(v, sep)
+}
+func main() {
+    arr := []int{1, 2, 3}
+	arr.MyJoined(":")
+}`
+	tassert.PanicsWithError(t, "7:6: cannot use []int as []string for MyJoined", testCodeGenFn(src))
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
