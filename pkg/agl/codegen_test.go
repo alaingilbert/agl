@@ -3859,7 +3859,6 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-
 func main() {
 	arr := []int{1, 2, 3}
 	fmt.Println(AglVecEven_T_int(arr))
@@ -3895,7 +3894,6 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-
 func main() {
 	arr := []int{1, 2, 3}
 	fmt.Println(AglVecMyMap_R_int_T_int(arr, func(int) int {
@@ -3929,7 +3927,6 @@ func main() {
 	arr2.MyMap(func(u8) u64 { return 1 })
 }`
 	expected := `package main
-
 func main() {
 	arr1 := []int{1, 2, 3}
 	arr2 := []uint8{1, 2, 3}
