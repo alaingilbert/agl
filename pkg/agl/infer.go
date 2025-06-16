@@ -521,8 +521,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else {
 				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
 				if fnT := infer.env.Get(fnFullName); fnT != nil {
-					fnT1 := fnT.(types.FuncType)
-					fnT1 = fnT1.T("T", arr.Elt)
+					fnT1 := fnT.(types.FuncType).T("T", arr.Elt)
 					infer.SetType(expr.Fun, fnT1)
 					infer.SetType(expr, fnT1.Return)
 				} else {
