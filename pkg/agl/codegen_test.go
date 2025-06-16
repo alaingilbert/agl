@@ -3913,6 +3913,51 @@ func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen149(t *testing.T) {
+	src := `package main
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+	out := make([]R, len(v))
+	for _, el := range v {
+		out = append(out, clb(el))
+	}
+	return out
+}
+func main() {
+	arr1 := []int{1, 2, 3}
+	arr2 := []u8{1, 2, 3}
+	arr1.MyMap(func(int) int { return 1 })
+	arr2.MyMap(func(u8) u64 { return 1 })
+}`
+	expected := `package main
+
+func main() {
+	arr1 := []int{1, 2, 3}
+	arr2 := []uint8{1, 2, 3}
+	AglVecMyMap_R_int_T_int(arr1, func(int) int {
+		return 1
+	})
+	AglVecMyMap_R_uint64_T_uint8(arr2, func(uint8) uint64 {
+		return 1
+	})
+}
+func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
+	out := make([]int, len(v))
+	for _, el := range v {
+		out = append(out, clb(el))
+	}
+	return out
+}
+func AglVecMyMap_R_uint64_T_uint8(v []uint8, clb func(uint8) uint64) []uint64 {
+	out := make([]uint64, len(v))
+	for _, el := range v {
+		out = append(out, clb(el))
+	}
+	return out
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
