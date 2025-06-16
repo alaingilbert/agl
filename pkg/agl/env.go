@@ -150,7 +150,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*Request)!")
 	env.Define("http.MethodGet", types.StringType{})
 	env.Define("http.Client", types.StructType{Name: "Client"})
-	env.DefineFnNative("Client.Do", "func (req *Request) (*Response)!")
+	env.DefineFnNative("Client.Do", "func (req *Request) (*Response)!") // TODO
 	env.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
 	env.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
 	env.DefineFnNative("os.Chdir", "func (string) !")
