@@ -25,7 +25,7 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 			for _, typeParamName := range typeParam.Names {
 				typeParamType := typeParam.Type
 				t := env.GetType2(typeParamType)
-				t = types.GenericType{W: t, Name: typeParamName.Name}
+				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
 				env.Define(typeParamName.Name, t)
 				paramsT = append(paramsT, t)
 			}
@@ -117,6 +117,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
 	env.DefineFn("max", "func [T cmp.Ordered](x T, y ...T) T")
 	env.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
+	env.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	env.DefineFn("close", "func (c chan<- Type)")
 	env.DefineFnNative("time.Sleep", "func (time.Duration)")
 	env.Define("time.Duration", types.I64Type{})
@@ -174,6 +175,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("strconv.Itoa", "func(int) string")
 	env.DefineFnNative("strconv.Atoi", "func(string) int!")
 	env.DefineFn("errors.New", "func (text string) error")
+	env.Define("agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	env.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	env.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
 	env.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
@@ -297,7 +299,7 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 	case *ast.SelectorExpr:
 		return e.GetType2(&ast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)})
 	case *ast.IndexExpr:
-		return nil
+		return e.GetType2(xx.X)
 	case *ast.ParenExpr:
 		return e.GetType2(xx.X)
 	case *ast.VoidExpr:

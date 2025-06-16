@@ -3841,6 +3841,61 @@ func test2() int {
 	tassert.PanicsWithError(t, "cannot use or_return in a function that does not return void/Option/Result", testCodeGenFn(src))
 }
 
+func TestCodeGen147(t *testing.T) {
+	src := `package main
+import "fmt"
+func (v agl.Vec[T]) Even() []T {
+    out := make([]T, len(v))
+    for _, el := range v {
+        if el % 2 == 0 {
+            out = append(out, el)
+        }
+    }
+    return out
+}
+func main() {
+    arr := []int{1, 2, 3}
+    fmt.Println(arr.Even())
+}`
+	expected := `package main
+import "fmt"
+
+func main() {
+	arr := []int{1, 2, 3}
+	fmt.Println(AglVecEven_T_int(arr))
+}
+func AglVecEven_T_int(v []int) []int {
+	out := make([]int, len(v))
+	for _, el := range v {
+		if el % 2 == 0 {
+			out = append(out, el)
+		}
+	}
+	return out
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen148(t *testing.T) {
+//	src := `package main
+//import "fmt"
+//func (v Vec[T]) MyMap[R any](clb func(T) R) Vec[R] {
+//    out := make([]R, len(v))
+//    for _, el := range v {
+//		out = append(out, clb(el))
+//    }
+//    return out
+//}
+//func main() {
+//    arr := []int{1, 2, 3}
+//    fmt.Println(arr.MyMap({ $0 + 1 }))
+//}`
+//	expected := `...
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main

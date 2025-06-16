@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -219,8 +220,9 @@ func (e EnumFieldType) GoStr() string { return "EnumFieldType" }
 func (e EnumFieldType) String() string { return "EnumFieldType" }
 
 type GenericType struct {
-	W    Type
-	Name string
+	W      Type
+	Name   string
+	IsType bool
 }
 
 func (g GenericType) TypeParamGoStr() string { return fmt.Sprintf("%s %s", g.Name, g.W.String()) }
@@ -385,6 +387,7 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 		newTypeParams = append(newTypeParams, p)
 	}
 
+	ff.Return = ReplGen(ff.Return, name, typ)
 	if v, ok := ff.Return.(GenericType); ok {
 		if v.Name == name {
 			ff.Return = typ
@@ -412,6 +415,47 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	ff.Params = newParams
 	ff.TypeParams = newTypeParams
 	return ff
+}
+
+func ReplGen(t Type, name string, newTyp Type) (out Type) {
+	switch t1 := t.(type) {
+	case ArrayType:
+		t1.Elt = ReplGen(t1.Elt, name, newTyp)
+		return t1
+	case AnyType:
+		return t
+	case GenericType:
+		if t1.Name == name {
+			return newTyp
+		}
+		return t
+	case TypeType:
+		return t
+	case OptionType:
+		return OptionType{W: ReplGen(t1.W, name, newTyp)}
+	case ResultType:
+		return ResultType{W: ReplGen(t1.W, name, newTyp)}
+	default:
+		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
+	}
+}
+
+func FindGen(m map[string]Type, a, b Type) {
+	switch t1 := a.(type) {
+	case ArrayType:
+		FindGen(m, t1.Elt, b.(ArrayType).Elt)
+	case GenericType:
+		m[t1.Name] = b
+	case FuncType:
+		for i, rawParam := range t1.Params {
+			FindGen(m, rawParam, b.(FuncType).Params[i])
+		}
+		if t1.Return != nil {
+			FindGen(m, t1.Return, b.(FuncType).Return)
+		}
+	default:
+		panic(fmt.Sprintf("%v", reflect.TypeOf(a)))
+	}
 }
 
 func (f FuncType) GoStr() string { return f.Name }
