@@ -89,8 +89,8 @@ func (g *Generator) Generate() (out string) {
 	out2 := g.genImports()
 	out3 := g.genDecls()
 	var extStr string
-	for _, ext := range g.extensions {
-		extStr += g.genExtension(ext)
+	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
+		extStr += g.genExtension(g.extensions[extKey])
 	}
 	return out + out1 + out2 + out3 + extStr
 }
