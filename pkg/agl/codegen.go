@@ -418,7 +418,11 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	before := ""
 	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-	before += g.prefix + "\tbreak\n"
+	before += g.prefix + "\tbreak"
+	if expr.Label != nil {
+		before += " " + expr.Label.String()
+	}
+	before += "\n"
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s)", varName)
@@ -436,7 +440,11 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	before := ""
 	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-	before += g.prefix + "\tcontinue\n"
+	before += g.prefix + "\tcontinue"
+	if expr.Label != nil {
+		before += " " + expr.Label.String()
+	}
+	before += "\n"
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s)", varName)

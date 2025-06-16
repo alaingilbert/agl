@@ -3990,6 +3990,68 @@ func AglVecTest_T_string(v []string) {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen151(t *testing.T) {
+	src := `package main
+func test() int? { Some(1) }
+func main() {
+	Loop:
+    for {
+		for {
+			test() or_break Loop
+		}
+    }
+}`
+	expected := `package main
+func test() Option[int] {
+	return MakeOptionSome(1)
+}
+func main() {
+	Loop:
+	for {
+		for {
+			aglTmp1 := test()
+			if aglTmp1.IsNone() {
+				break Loop
+			}
+			AglIdentity(aglTmp1)
+		}
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen152(t *testing.T) {
+	src := `package main
+func test() int? { Some(1) }
+func main() {
+	Loop:
+    for {
+		for {
+			test() or_continue Loop
+		}
+    }
+}`
+	expected := `package main
+func test() Option[int] {
+	return MakeOptionSome(1)
+}
+func main() {
+	Loop:
+	for {
+		for {
+			aglTmp1 := test()
+			if aglTmp1.IsNone() {
+				continue Loop
+			}
+			AglIdentity(aglTmp1)
+		}
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen_Tmp(t *testing.T) {
 	src := `
 package main
