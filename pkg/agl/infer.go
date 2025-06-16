@@ -49,6 +49,10 @@ func (infer *FileInferrer) withEnv(clb func()) {
 	infer.env = old
 }
 
+func (infer *FileInferrer) GetTypeFn(n ast.Node) types.FuncType {
+	return infer.GetType(n).(types.FuncType)
+}
+
 func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 	t := infer.env.GetType(n)
 	if t == nil {
@@ -612,7 +616,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			arg0 := expr.Args[0]
 			switch v := arg0.(type) {
 			case *ast.ArrayType, *ast.ChanType, *ast.MapType:
-				fnT = fnT.ReplaceGenericParameter("T", infer.env.GetType2(v))
+				fnT = fnT.T("T", infer.env.GetType2(v))
 				infer.SetType(expr, fnT.Return)
 			default:
 				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
@@ -710,7 +714,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
 			ft := infer.env.Get("agl.Vec.Filter").(types.FuncType).GetParam(1).(types.FuncType)
-			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			ft = ft.T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.SetTypeForce(exprArg0, ft)
@@ -728,14 +732,14 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.SetTypeForce(arg0, ft)
 				infer.expr(arg0)
-				infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(arg0).(types.FuncType).Return})
+				infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetTypeFn(arg0).Return})
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				if tmp, ok := exprArg0.(*ast.FuncLit); ok {
 					infer.expr(tmp)
-					infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetType(exprArg0.(*ast.FuncLit)).(types.FuncType).Return})
+					infer.SetTypeForce(expr, types.ArrayType{Elt: ftReal.Return})
 				}
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
@@ -744,9 +748,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.expr(exprArg0)
 			elTyp := idTArr.Elt
 			ft := infer.env.Get("agl.Vec.Reduce").(types.FuncType).GetParam(2).(types.FuncType)
-			ft = ft.ReplaceGenericParameter("T", elTyp)
+			ft = ft.T("T", elTyp)
 			if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
-				ft = ft.ReplaceGenericParameter("R", elTyp)
+				ft = ft.T("R", elTyp)
 			}
 			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
 				infer.SetTypeForce(expr.Args[1], ft)
@@ -757,8 +761,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
 		} else if fnName == "Find" {
-			ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType)
-			ft = ft.ReplaceGenericParameter("T", idTArr.Elt)
+			ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType).T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.SetTypeForce(exprArg0, ft)
@@ -804,7 +807,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				if infer.env.GetType(expr) != nil {
 					ft := infer.env.GetType(expr).(types.FuncType)
 					if t, ok := ft.Return.(types.GenericType); ok {
-						ft = ft.ReplaceGenericParameter(t.Name, infer.env.GetType(returnStmt.X))
+						ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
 						infer.SetTypeForce(expr, ft)
 					}
 				}
