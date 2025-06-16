@@ -49,8 +49,13 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		if decl.Name != nil {
 			name = decl.Name.Name
 		}
-		recvName := decl.Recv.List[0].Names[0].Name
-		recvT := decl.Recv.List[0].Type.(*ast.IndexExpr).Index.(*ast.Ident).Name
+		assert(len(decl.Recv.List) == 1)
+		recv := decl.Recv.List[0]
+		var recvName string
+		if len(recv.Names) >= 1 {
+			recvName = recv.Names[0].Name
+		}
+		recvT := recv.Type.(*ast.IndexExpr).Index.(*ast.Ident).Name
 		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: m[recvT].GoStr()}}}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
@@ -82,10 +87,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			for k, v := range m {
 				resT = types.ReplGen(resT, k, v)
 			}
-			resultStr = resT.GoStr()
-			if resultStr != "" {
-				resultStr = " " + resultStr
-			}
+			resultStr = prefixIf(resT.GoStr(), " ")
 		}
 		if decl.Body != nil {
 			content := g.incrPrefix(func() string {
