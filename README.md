@@ -223,6 +223,7 @@ func main() {
     req := http.NewRequest(http.MethodGet, "https://google.com", nil)!
     c := http.Client{}
     resp := c.Do(req)!
+    defer resp.Body.Close()
     by := io.ReadAll(resp.Body)!
     fmt.Println(string(by))
 }
