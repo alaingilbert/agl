@@ -991,7 +991,9 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 			out += b.Content()
 		}
 		clear(g.before)
-		out += out1 + "\n"
+		if out1 != "" {
+			out += out1 + "\n"
+		}
 		return
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
