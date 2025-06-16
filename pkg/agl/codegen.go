@@ -88,9 +88,6 @@ func (g *Generator) Generate() (out string) {
 	out1 := g.genPackage()
 	out2 := g.genImports()
 	out3 := g.genDecls()
-	//for _, b := range g.before {
-	//	out += b.Content()
-	//}
 	var extStr string
 	for _, ext := range g.extensions {
 		extStr += g.genExtension(ext)
