@@ -140,61 +140,7 @@ func exprToString(expr goast.Expr) string {
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
 	for _, i := range infer.f.Imports {
-		var pkgName string
-		if i.Name != nil {
-			pkgName = i.Name.Name
-		} else {
-			pkgName = path.Base(i.Path.Value)
-		}
-		pkgPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
-		pkgName = strings.ReplaceAll(pkgName, `"`, ``)
-		pkgT := infer.env.Get(pkgName)
-		if pkgT == nil {
-			infer.env.Define(pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
-			pkgFullPath := trimPrefixPath(pkgPath)
-			entries, err := os.ReadDir(pkgFullPath)
-			if err != nil {
-				//goroot := runtime.GOROOT()
-				//pkgFullPath = filepath.Join(goroot, "src", pkgPath)
-				//entries, err = os.ReadDir(pkgFullPath)
-				//if err != nil {
-				log.Fatalf("failed to laod package %v\n", pkgPath)
-				//}
-			}
-			for _, e := range entries {
-				fName := e.Name()
-				if strings.HasSuffix(e.Name(), "_test.go") {
-					continue
-				}
-				fPath := filepath.Join(pkgFullPath, fName)
-				src, err := os.ReadFile(fPath)
-				if err != nil {
-					log.Printf("failed to load %s\n", fPath)
-					continue
-				}
-				fset := gotoken.NewFileSet()
-				node, err := parser.ParseFile(fset, fName, src, parser.AllErrors)
-				if err != nil {
-					log.Printf("failed to parse %s\n", fPath)
-					continue
-				}
-				conf := gotypes.Config{Importer: nil}
-				info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
-				_, _ = conf.Check("", fset, []*goast.File{node}, info)
-				for _, decl := range node.Decls {
-					if fn, ok := decl.(*goast.FuncDecl); ok {
-						if fn.Recv != nil {
-							continue
-						}
-						fnStr := "func " + formatFieldList(fn.Type.Params)
-						if fn.Type.Results != nil {
-							fnStr += " " + formatFieldList(fn.Type.Results)
-						}
-						infer.env.DefineFnNative(pkgName+"."+fn.Name.Name, fnStr)
-					}
-				}
-			}
-		}
+		infer.inferImport(i)
 	}
 	for _, d := range infer.f.Decls {
 		switch decl := d.(type) {
@@ -208,6 +154,64 @@ func (infer *FileInferrer) Infer() {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
 			infer.funcDecl2(decl)
+		}
+	}
+}
+
+func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
+	var pkgName string
+	if i.Name != nil {
+		pkgName = i.Name.Name
+	} else {
+		pkgName = path.Base(i.Path.Value)
+	}
+	pkgPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
+	pkgName = strings.ReplaceAll(pkgName, `"`, ``)
+	pkgT := infer.env.Get(pkgName)
+	if pkgT == nil {
+		infer.env.Define(pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
+		pkgFullPath := trimPrefixPath(pkgPath)
+		entries, err := os.ReadDir(pkgFullPath)
+		if err != nil {
+			//goroot := runtime.GOROOT()
+			//pkgFullPath = filepath.Join(goroot, "src", pkgPath)
+			//entries, err = os.ReadDir(pkgFullPath)
+			//if err != nil {
+			log.Fatalf("failed to laod package %v\n", pkgPath)
+			//}
+		}
+		for _, e := range entries {
+			fName := e.Name()
+			if strings.HasSuffix(e.Name(), "_test.go") {
+				continue
+			}
+			fPath := filepath.Join(pkgFullPath, fName)
+			src, err := os.ReadFile(fPath)
+			if err != nil {
+				log.Printf("failed to load %s\n", fPath)
+				continue
+			}
+			fset := gotoken.NewFileSet()
+			node, err := parser.ParseFile(fset, fName, src, parser.AllErrors)
+			if err != nil {
+				log.Printf("failed to parse %s\n", fPath)
+				continue
+			}
+			conf := gotypes.Config{Importer: nil}
+			info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
+			_, _ = conf.Check("", fset, []*goast.File{node}, info)
+			for _, decl := range node.Decls {
+				if fn, ok := decl.(*goast.FuncDecl); ok {
+					if fn.Recv != nil {
+						continue
+					}
+					fnStr := "func " + formatFieldList(fn.Type.Params)
+					if fn.Type.Results != nil {
+						fnStr += " " + formatFieldList(fn.Type.Results)
+					}
+					infer.env.DefineFnNative(pkgName+"."+fn.Name.Name, fnStr)
+				}
+			}
 		}
 	}
 }
@@ -286,6 +290,7 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 	infer.env.Define(fnName, t)
 }
 
+// mapping of "agl function name" to "go compiled function name"
 var overloadMapping = map[string]string{
 	"==": "__EQL",
 	"!=": "__EQL",
@@ -360,14 +365,11 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 				if sel, ok := tmp.X.(*ast.SelectorExpr); ok {
 					p1 := sel.X.(*ast.Ident).Name
 					if p1 == "agl" && sel.Sel.Name == "Vec" {
+						defaultName := "T" // Should not hardcode "T"
 						vecExt = true
-						var typeName string
-						if tmp.Index.(*ast.Ident).Name == "T" {
-							typeName = "any"
-						} else {
-							typeName = tmp.Index.(*ast.Ident).Name
-						}
-						t := &ast.Field{Names: []*ast.Ident{{Name: "T"}}, Type: &ast.Ident{Name: typeName}} // Should not hardcode "T"
+						id := tmp.Index.(*ast.Ident)
+						typeName := Ternary(id.Name == defaultName, "any", id.Name)
+						t := &ast.Field{Names: []*ast.Ident{{Name: defaultName}}, Type: &ast.Ident{Name: typeName}}
 						if decl.Type.TypeParams == nil {
 							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{t}}
 						} else {
