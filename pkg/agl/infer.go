@@ -724,29 +724,29 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			ft = ft.T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetTypeForce(exprArg0, ft)
+				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-			infer.SetTypeForce(expr, types.ArrayType{Elt: ft.Params[0]})
+			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 
 		} else if fnName == "Map" {
 			ft := infer.env.GetFn("agl.Vec.Map").GetParam(1).(types.FuncType).T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetTypeForce(arg0, ft)
+				infer.SetType(arg0, ft)
 				infer.expr(arg0)
-				infer.SetTypeForce(expr, types.ArrayType{Elt: infer.GetTypeFn(arg0).Return})
+				infer.SetType(expr, types.ArrayType{Elt: infer.GetTypeFn(arg0).Return})
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				if tmp, ok := exprArg0.(*ast.FuncLit); ok {
 					infer.expr(tmp)
-					infer.SetTypeForce(expr, types.ArrayType{Elt: ftReal.Return})
+					infer.SetType(expr, types.ArrayType{Elt: ftReal.Return})
 				}
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
@@ -760,7 +760,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				ft = ft.T("R", elTyp)
 			}
 			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
-				infer.SetTypeForce(expr.Args[1], ft)
+				infer.SetType(expr.Args[1], ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
@@ -771,14 +771,14 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			ft := infer.env.Get("agl.Vec.Find").(types.FuncType).GetParam(1).(types.FuncType).T("T", idTArr.Elt)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetTypeForce(exprArg0, ft)
+				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-			infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
+			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 		} else if fnName == "Sum" || fnName == "Joined" {
 		} else {
 			funT := infer.GetTypeFn(expr.Fun)
@@ -806,7 +806,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			for k, v := range genericMapping {
 				funT = funT.ReplaceGenericParameter(k, v)
 			}
-			infer.SetTypeForce(expr.Fun, funT)
+			infer.SetType(expr.Fun, funT)
 		}
 	}
 }
@@ -843,7 +843,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 					ft := infer.env.GetType(expr).(types.FuncType)
 					if t, ok := ft.Return.(types.GenericType); ok {
 						ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
-						infer.SetTypeForce(expr, ft)
+						infer.SetType(expr, ft)
 					}
 				}
 			}
