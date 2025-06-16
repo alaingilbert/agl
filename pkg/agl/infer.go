@@ -151,10 +151,14 @@ func (infer *FileInferrer) Infer() {
 		}
 		pkgPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
 		pkgName = strings.ReplaceAll(pkgName, `"`, ``)
-		if infer.env.Get(pkgName) == nil {
-			infer.env.Define(pkgName, types.PackageType{Name: pkgName})
+		pkgT := infer.env.Get(pkgName)
+		if pkgT == nil {
+			infer.env.Define(pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
 			t := trimPrefixPath(pkgPath)
-			entries, _ := os.ReadDir(t)
+			entries, err := os.ReadDir(t)
+			if err != nil {
+				log.Fatalf("failed to laod package %v\n", pkgPath)
+			}
 			for _, e := range entries {
 				fName := e.Name()
 				fPath := filepath.Join(t, fName)
