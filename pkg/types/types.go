@@ -423,6 +423,13 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	return ff
 }
 
+func ReplGenM(t Type, m map[string]Type) (out Type) {
+	for k, v := range m {
+		t = ReplGen(t, k, v)
+	}
+	return t
+}
+
 func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	switch t1 := t.(type) {
 	case ArrayType:
@@ -437,6 +444,20 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return t
 	case TypeType:
 		return t
+	case FuncType:
+		var params []Type
+		for _, p := range t1.Params {
+			p = ReplGen(p, name, newTyp)
+			params = append(params, p)
+		}
+		return FuncType{
+			Name:       t1.Name,
+			Recv:       t1.Recv,
+			TypeParams: t1.TypeParams,
+			Params:     params,
+			Return:     ReplGen(t1.Return, name, newTyp),
+			IsNative:   t1.IsNative,
+		}
 	case OptionType:
 		return OptionType{W: ReplGen(t1.W, name, newTyp)}
 	case ResultType:
