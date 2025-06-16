@@ -557,6 +557,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
 			return
 		case types.PackageType:
+			pkgT := infer.env.Get(idTT.Name)
+			assertf(pkgT != nil, "package not found '%s'", idTT.Name)
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			nameT := infer.env.Get(name)
 			assertf(nameT != nil, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
