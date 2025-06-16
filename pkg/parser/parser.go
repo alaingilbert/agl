@@ -1232,7 +1232,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 				// better error message and improved error recovery.
 				_ = p.parseParameterList(name0, nil, token.RBRACK, false)
 				_ = p.expect(token.RBRACK)
-				p.error(lbrack, "interface method must have no type parameters")
+				//p.error(lbrack, "interface method must have no type parameters")
 
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
@@ -2999,8 +2999,8 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		if recv != nil && tparams != nil {
 			// Method declarations do not have type parameters. We parse them for a
 			// better error message and improved error recovery.
-			p.error(tparams.Opening, "method must have no type parameters")
-			tparams = nil
+			//p.error(tparams.Opening, "method must have no type parameters")
+			//tparams = nil
 		}
 	}
 	params := p.parseParameters(false)
