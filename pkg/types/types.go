@@ -166,6 +166,12 @@ func (a AnyType) GoStr() string { return "any" }
 
 func (a AnyType) String() string { return "any" }
 
+type NilType struct{}
+
+func (n NilType) GoStr() string { return "nil" }
+
+func (n NilType) String() string { return "NilType" }
+
 type ArrayType struct{ Elt Type }
 
 func (a ArrayType) GoStr() string { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
