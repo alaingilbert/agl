@@ -5,7 +5,14 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
+	goast "go/ast"
+	"go/parser"
+	gotoken "go/token"
+	gotypes "go/types"
+	"log"
+	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -79,18 +86,102 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
 	infer.env.SetType(a, t)
 }
 
+func trimPrefixPath(s string) string {
+	sep := string(os.PathSeparator)
+	parts := strings.Split(s, sep)
+	if len(parts) <= 1 {
+		return s
+	}
+	return strings.Join(parts[1:], sep)
+}
+
+// formatFieldList formats a parameter or result list into Go-style signature string
+func formatFieldList(fl *goast.FieldList) string {
+	if fl == nil {
+		return "()"
+	}
+	out := "("
+	for i, field := range fl.List {
+		for j, name := range field.Names {
+			if j > 0 || i > 0 {
+				out += ", "
+			}
+			out += name.Name + " "
+		}
+		// If unnamed return or parameter
+		if len(field.Names) == 0 {
+			if i > 0 {
+				out += ", "
+			}
+		}
+		out += exprToString(field.Type)
+	}
+	out += ")"
+	return out
+}
+
+// exprToString returns a basic string representation of an expression (e.g., type)
+func exprToString(expr goast.Expr) string {
+	switch t := expr.(type) {
+	case *goast.Ident:
+		return t.Name
+	case *goast.StarExpr:
+		return "*" + exprToString(t.X)
+	case *goast.SelectorExpr:
+		return exprToString(t.X) + "." + t.Sel.Name
+	case *goast.ArrayType:
+		return "[]" + exprToString(t.Elt)
+	case *goast.Ellipsis:
+		return "..." + exprToString(t.Elt)
+	case *goast.FuncType:
+		return "func" + formatFieldList(t.Params)
+	default:
+		return fmt.Sprintf("%T", expr)
+	}
+}
+
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
 	for _, i := range infer.f.Imports {
-		var name string
+		var pkgName string
 		if i.Name != nil {
-			name = i.Name.Name
+			pkgName = i.Name.Name
 		} else {
-			name = path.Base(i.Path.Value)
+			pkgName = path.Base(i.Path.Value)
 		}
-		name = strings.ReplaceAll(name, `"`, ``)
-		if infer.env.Get(name) == nil {
-			infer.env.Define(name, types.PackageType{Name: name})
+		pkgPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
+		pkgName = strings.ReplaceAll(pkgName, `"`, ``)
+		if infer.env.Get(pkgName) == nil {
+			infer.env.Define(pkgName, types.PackageType{Name: pkgName})
+			t := trimPrefixPath(pkgPath)
+			entries, _ := os.ReadDir(t)
+			for _, e := range entries {
+				fName := e.Name()
+				fPath := filepath.Join(t, fName)
+				src, err := os.ReadFile(fPath)
+				if err != nil {
+					log.Printf("failed to load %s\n", fPath)
+					continue
+				}
+				fset := gotoken.NewFileSet()
+				node, err := parser.ParseFile(fset, fName, src, parser.AllErrors)
+				if err != nil {
+					log.Printf("failed to parse %s\n", fPath)
+					continue
+				}
+				conf := gotypes.Config{Importer: nil}
+				info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
+				_, _ = conf.Check("", fset, []*goast.File{node}, info)
+				for _, decl := range node.Decls {
+					if fn, ok := decl.(*goast.FuncDecl); ok {
+						fnStr := "func " + formatFieldList(fn.Type.Params)
+						if fn.Type.Results != nil {
+							fnStr += " " + formatFieldList(fn.Type.Results)
+						}
+						infer.env.DefineFnNative(pkgName+"."+fn.Name.Name, fnStr)
+					}
+				}
+			}
 		}
 	}
 	for _, d := range infer.f.Decls {
