@@ -124,8 +124,8 @@ func test(i int) int? {
 
 func main() {
     for i := 0; i < 10; i++ {
-        res := test(i) or_break
-        fmt.Println(res)
+        res := test(i) or_break // `res` has type `int`
+        fmt.Println(res)        // will print the value `0` and `1`
         time.Sleep(time.Second)
     }
 }
