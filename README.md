@@ -105,6 +105,32 @@ func main() {
 }
 ```
 
+### `or_break`/`or_continue`
+
+`or_break`/`or_continue` will `break`/`continue` on a `None`/`Err` value
+
+```go
+package main
+
+import "fmt"
+import "time"
+
+func test(i int) int? {
+    if i >= 2 {
+        return None
+    }
+    return Some(i)
+}
+
+func main() {
+    for i := 0; i < 10; i++ {
+        res := test(i) or_break
+        fmt.Println(res)
+        time.Sleep(time.Second)
+    }
+}
+```
+
 ## Short anonymous function (type inferred)
 
 ```go
