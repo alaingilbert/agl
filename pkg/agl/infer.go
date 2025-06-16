@@ -101,21 +101,18 @@ func formatFieldList(fl *goast.FieldList) string {
 		return "()"
 	}
 	out := "("
-	for i, field := range fl.List {
-		for j, name := range field.Names {
-			if j > 0 || i > 0 {
-				out += ", "
-			}
-			out += name.Name + " "
+	var tmp1 []string
+	for _, field := range fl.List {
+		var tmp []string
+		for range field.Names {
+			tmp = append(tmp, exprToString(field.Type))
 		}
-		// If unnamed return or parameter
 		if len(field.Names) == 0 {
-			if i > 0 {
-				out += ", "
-			}
+			tmp = append(tmp, exprToString(field.Type))
 		}
-		out += exprToString(field.Type)
+		tmp1 = append(tmp1, strings.Join(tmp, ", "))
 	}
+	out += strings.Join(tmp1, ", ")
 	out += ")"
 	return out
 }
@@ -154,14 +151,22 @@ func (infer *FileInferrer) Infer() {
 		pkgT := infer.env.Get(pkgName)
 		if pkgT == nil {
 			infer.env.Define(pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
-			t := trimPrefixPath(pkgPath)
-			entries, err := os.ReadDir(t)
+			pkgFullPath := trimPrefixPath(pkgPath)
+			entries, err := os.ReadDir(pkgFullPath)
 			if err != nil {
+				//goroot := runtime.GOROOT()
+				//pkgFullPath = filepath.Join(goroot, "src", pkgPath)
+				//entries, err = os.ReadDir(pkgFullPath)
+				//if err != nil {
 				log.Fatalf("failed to laod package %v\n", pkgPath)
+				//}
 			}
 			for _, e := range entries {
 				fName := e.Name()
-				fPath := filepath.Join(t, fName)
+				if strings.HasSuffix(e.Name(), "_test.go") {
+					continue
+				}
+				fPath := filepath.Join(pkgFullPath, fName)
 				src, err := os.ReadFile(fPath)
 				if err != nil {
 					log.Printf("failed to load %s\n", fPath)
@@ -178,6 +183,9 @@ func (infer *FileInferrer) Infer() {
 				_, _ = conf.Check("", fset, []*goast.File{node}, info)
 				for _, decl := range node.Decls {
 					if fn, ok := decl.(*goast.FuncDecl); ok {
+						if fn.Recv != nil {
+							continue
+						}
 						fnStr := "func " + formatFieldList(fn.Type.Params)
 						if fn.Type.Results != nil {
 							fnStr += " " + formatFieldList(fn.Type.Results)
