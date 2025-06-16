@@ -1875,10 +1875,18 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 			x = &ast.BubbleResultExpr{X: x, Not: not}
 		case token.OR_BREAK:
 			orBreak := p.expect(token.OR_BREAK)
-			x = &ast.OrBreakExpr{X: x, OrBreak: orBreak}
+			var label *ast.Ident
+			if p.tok == token.IDENT {
+				label = p.parseIdent()
+			}
+			x = &ast.OrBreakExpr{X: x, OrBreak: orBreak, Label: label}
 		case token.OR_CONTINUE:
 			orContinue := p.expect(token.OR_CONTINUE)
-			x = &ast.OrContinueExpr{X: x, OrContinue: orContinue}
+			var label *ast.Ident
+			if p.tok == token.IDENT {
+				label = p.parseIdent()
+			}
+			x = &ast.OrContinueExpr{X: x, OrContinue: orContinue, Label: label}
 		case token.OR_RETURN:
 			orReturn := p.expect(token.OR_RETURN)
 			x = &ast.OrReturnExpr{X: x, OrReturn: orReturn}
