@@ -1074,6 +1074,9 @@ func cmpTypes(a, b types.Type) bool {
 		}
 		return false
 	}
+	if TryCast[types.AnyType](a) || TryCast[types.AnyType](b) {
+		return true
+	}
 	if TryCast[types.BoolType](a) || TryCast[types.BoolType](b) {
 		return true
 	}
