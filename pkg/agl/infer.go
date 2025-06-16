@@ -542,6 +542,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			return
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
+			if idTT.Pkg != "" {
+				name = idTT.Pkg + "." + name
+			}
 			nameT := infer.env.Get(name)
 			assertf(nameT != nil, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
 			toReturn := infer.env.Get(name).(types.FuncType).Return

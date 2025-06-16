@@ -191,6 +191,7 @@ type FieldType struct {
 
 type StructType struct {
 	Name   string
+	Pkg    string
 	Fields []FieldType
 }
 
