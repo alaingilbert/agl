@@ -772,6 +772,31 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
 			infer.SetTypeForce(expr, types.OptionType{W: ft.Params[0]})
+		} else if fnName == "Sum" || fnName == "Joined" {
+		} else {
+			funT := infer.GetTypeFn(expr.Fun)
+			ft := infer.env.GetFn("agl.Vec." + fnName)
+			mm := make(map[string]types.Type)
+			for i, arg := range expr.Args {
+				if argFn, ok := arg.(*ast.FuncLit); ok {
+					infer.expr(argFn)
+					genFn := ft.GetParam(i)
+					concreteFn := infer.env.GetType(arg)
+					m := types.FindGen(genFn, concreteFn)
+					//tmp := infer.GetTypeFn(argFn)
+					//for k, v := range m {
+					//	tmp = tmp.ReplaceGenericParameter(k, v)
+					//}
+					//genFn = types.ReplGenM(genFn, m)
+					for k, v := range m {
+						mm[k] = v
+					}
+				}
+			}
+			for k, v := range mm {
+				funT = funT.ReplaceGenericParameter(k, v)
+			}
+			infer.SetTypeForce(expr.Fun, funT)
 		}
 	}
 }
