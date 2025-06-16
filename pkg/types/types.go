@@ -393,7 +393,9 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 		newTypeParams = append(newTypeParams, p)
 	}
 
-	ff.Return = ReplGen(ff.Return, name, typ)
+	if ff.Return != nil {
+		ff.Return = ReplGen(ff.Return, name, typ)
+	}
 	if v, ok := ff.Return.(GenericType); ok {
 		if v.Name == name {
 			ff.Return = typ
