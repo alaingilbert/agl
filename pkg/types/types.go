@@ -440,18 +440,24 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	}
 }
 
-func FindGen(m map[string]Type, a, b Type) {
+func FindGen(a, b Type) map[string]Type {
+	m := make(map[string]Type)
+	findGenHelper(m, a, b)
+	return m
+}
+
+func findGenHelper(m map[string]Type, a, b Type) {
 	switch t1 := a.(type) {
 	case ArrayType:
-		FindGen(m, t1.Elt, b.(ArrayType).Elt)
+		findGenHelper(m, t1.Elt, b.(ArrayType).Elt)
 	case GenericType:
 		m[t1.Name] = b
 	case FuncType:
 		for i, rawParam := range t1.Params {
-			FindGen(m, rawParam, b.(FuncType).Params[i])
+			findGenHelper(m, rawParam, b.(FuncType).Params[i])
 		}
 		if t1.Return != nil {
-			FindGen(m, t1.Return, b.(FuncType).Return)
+			findGenHelper(m, t1.Return, b.(FuncType).Return)
 		}
 	default:
 		panic(fmt.Sprintf("%v", reflect.TypeOf(a)))
