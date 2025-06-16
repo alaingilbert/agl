@@ -5,6 +5,8 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"sync/atomic"
 )
@@ -16,10 +18,71 @@ type Generator struct {
 	before     []IBefore
 	varCounter atomic.Int64
 	returnType types.Type
+	extensions map[string]Extension
+	swapGen    bool
+	genMap     map[string]types.Type
+}
+
+type Extension struct {
+	decl *ast.FuncDecl
+	gen  []ExtensionTest
+}
+
+type ExtensionTest struct {
+	raw      types.Type
+	concrete types.Type
 }
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
-	return &Generator{env: env, a: a}
+	return &Generator{env: env, a: a, extensions: make(map[string]Extension)}
+}
+
+func (g *Generator) genExtension(e Extension) (out string) {
+	for _, ge := range e.gen {
+		m := make(map[string]types.Type)
+		types.FindGen(m, ge.raw, ge.concrete)
+		var elts []string
+		for _, k := range slices.Sorted(maps.Keys(m)) {
+			elts = append(elts, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+		}
+		decl := e.decl
+		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
+		if decl.Name != nil {
+			name = decl.Name.Name
+		}
+		recvName := decl.Recv.List[0].Names[0].Name
+		firstArg := &ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}}} // TODO
+		if decl.Type.Params == nil {
+			decl.Type.Params = &ast.FieldList{List: []*ast.Field{firstArg}}
+		} else {
+			decl.Type.Params.List = append([]*ast.Field{firstArg}, decl.Type.Params.List...)
+		}
+		g.swapGen = true
+		g.genMap = m
+		if params := decl.Type.Params; params != nil {
+			paramsStr = g.joinList(params)
+		}
+		if result := decl.Type.Result; result != nil {
+			resT := g.env.GetType(result)
+			for k, v := range m {
+				resT = types.ReplGen(resT, k, v)
+			}
+			resultStr = resT.GoStr()
+			if resultStr != "" {
+				resultStr = " " + resultStr
+			}
+		}
+		if decl.Body != nil {
+			content := g.incrPrefix(func() string {
+				return g.genStmt(decl.Body)
+			})
+			bodyStr = content
+		}
+		g.swapGen = false
+		out += fmt.Sprintf("func AglVec%s_%s%s(%s)%s {\n%s}", name, strings.Join(elts, "_"), typeParamsStr, paramsStr, resultStr, bodyStr)
+		out += "\n"
+	}
+	return
 }
 
 func (g *Generator) Generate() (out string) {
@@ -29,7 +92,11 @@ func (g *Generator) Generate() (out string) {
 	//for _, b := range g.before {
 	//	out += b.Content()
 	//}
-	return out + out1 + out2 + out3
+	var extStr string
+	for _, ext := range g.extensions {
+		extStr += g.genExtension(ext)
+	}
+	return out + out1 + out2 + out3 + extStr
 }
 
 func (g *Generator) genPackage() string {
@@ -178,7 +245,15 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	t := g.env.GetType(expr)
 	switch typ := t.(type) {
 	case types.GenericType:
-		return fmt.Sprintf("%s", typ.GoStr())
+		if g.swapGen && typ.IsType {
+			for k, v := range g.genMap {
+				if typ.Name == k {
+					typ.Name = v.GoStr()
+					typ.W = v
+				}
+			}
+			return fmt.Sprintf("%s", typ.GoStr())
+		}
 	}
 	if expr.Name == "make" {
 		return "make"
@@ -693,6 +768,23 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
+			} else {
+				extName := "agl.Vec." + e.Sel.Name
+				t := g.env.Get(extName)
+				rawFnT := t
+				concreteT := g.env.GetType(expr.Fun)
+				m := make(map[string]types.Type)
+				types.FindGen(m, rawFnT, concreteT)
+				tmp := g.extensions[extName]
+				tmp.gen = append(tmp.gen, ExtensionTest{raw: rawFnT, concrete: concreteT})
+				g.extensions[extName] = tmp
+				content1 := g.genExpr(e.X)
+				var els []string
+				for _, k := range slices.Sorted(maps.Keys(m)) {
+					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+				}
+				elsStr := strings.Join(els, "_")
+				return fmt.Sprintf("AglVec%s_%s(%s)", e.Sel.Name, elsStr, content1)
 			}
 		}
 	case *ast.Ident:
@@ -1088,6 +1180,18 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var name, recv, typeParamsStr, paramsStr, resultStr, bodyStr string
 	if decl.Recv != nil {
+		if len(decl.Recv.List) >= 1 {
+			if tmp1, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
+				if tmp2, ok := tmp1.X.(*ast.SelectorExpr); ok {
+					if tmp2.Sel.Name == "Vec" {
+						tmp := g.extensions["agl.Vec.Even"]
+						tmp.decl = decl
+						g.extensions["agl.Vec.Even"] = tmp
+						return
+					}
+				}
+			}
+		}
 		recv = g.joinList(decl.Recv)
 		if recv != "" {
 			recv = " (" + recv + ")"

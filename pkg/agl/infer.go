@@ -206,7 +206,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				t := infer.env.GetType(param.Type)
 				for _, name := range param.Names {
 					infer.env.SetType(name, t)
-					infer.env.Define(name.Name, types.GenericType{Name: name.Name, W: t})
+					infer.env.Define(name.Name, types.GenericType{Name: name.Name, W: t, IsType: true})
 				}
 			}
 		}
@@ -245,14 +245,33 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 
 func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) types.FuncType {
 	var returnT types.Type
-	var paramsT []types.Type
+	var paramsT, typeParamsT []types.Type
+	var vecExt bool
+	if decl.Recv != nil {
+		if len(decl.Recv.List) == 1 {
+			if tmp, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
+				if sel, ok := tmp.X.(*ast.SelectorExpr); ok {
+					p1 := sel.X.(*ast.Ident).Name
+					if p1 == "agl" && sel.Sel.Name == "Vec" {
+						vecExt = true
+						if decl.Type.TypeParams == nil {
+							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{
+								{Names: []*ast.Ident{{Name: "T"}}, Type: &ast.Ident{Name: "any"}},
+							}}
+						}
+					}
+				}
+			}
+		}
+	}
 	if decl.Type.TypeParams != nil {
 		for _, typeParam := range decl.Type.TypeParams.List {
 			infer.expr(typeParam.Type)
 			t := infer.env.GetType(typeParam.Type)
 			for _, name := range typeParam.Names {
-				paramsT = append(paramsT, t)
-				infer.env.Define(name.Name, types.GenericType{Name: name.Name, W: t})
+				tt := types.GenericType{Name: name.Name, W: t, IsType: true}
+				typeParamsT = append(typeParamsT, tt)
+				infer.env.Define(name.Name, tt)
 			}
 		}
 	}
@@ -267,7 +286,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	}
 	if decl.Type.Result != nil {
 		infer.expr(decl.Type.Result)
-		returnT = infer.env.GetType(decl.Type.Result)
+		returnT = infer.env.GetType2(decl.Type.Result)
 		if r, ok := returnT.(types.ResultType); ok {
 			r.Bubble = true
 			returnT = r
@@ -281,15 +300,20 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 		fnName = newName
 	}
 	ft := types.FuncType{
-		Name:   fnName,
-		Params: paramsT,
-		Return: returnT,
+		Name:       fnName,
+		TypeParams: typeParamsT,
+		Params:     paramsT,
+		Return:     returnT,
 	}
 	if decl.Recv != nil {
-		r := decl.Recv.List[0]
-		infer.expr(r.Type)
-		structName := infer.GetType(r.Type).(types.StructType).Name
-		outEnv.Define(fmt.Sprintf("%s.%s", structName, fnName), ft)
+		if vecExt {
+			outEnv.Define(fmt.Sprintf("agl.Vec.%s", fnName), ft)
+		} else {
+			r := decl.Recv.List[0]
+			infer.expr(r.Type)
+			structName := infer.GetType(r.Type).(types.StructType).Name
+			outEnv.Define(fmt.Sprintf("%s.%s", structName, fnName), ft)
+		}
 	}
 	return ft
 }
@@ -494,7 +518,15 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
 				infer.SetType(expr, fnT.Return)
 			} else {
-				assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
+				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
+				if fnT := infer.env.Get(fnFullName); fnT != nil {
+					fnT1 := fnT.(types.FuncType)
+					fnT1 = fnT1.T("T", arr.Elt)
+					infer.SetType(expr.Fun, fnT1)
+					infer.SetType(expr, fnT1.Return)
+				} else {
+					assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
+				}
 			}
 			return
 		case types.StructType:
@@ -610,7 +642,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 			}
 		default:
-			panic("")
+			panic(fmt.Sprintf("%v %v", expr.Fun, to(expr.Fun)))
 		}
 		infer.SetType(call, callT)
 	}
