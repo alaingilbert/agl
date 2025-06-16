@@ -39,8 +39,7 @@ func NewGenerator(env *Env, a *ast.File) *Generator {
 
 func (g *Generator) genExtension(e Extension) (out string) {
 	for _, ge := range e.gen {
-		m := make(map[string]types.Type)
-		types.FindGen(m, ge.raw, ge.concrete)
+		m := types.FindGen(ge.raw, ge.concrete)
 		var elts []string
 		for _, k := range slices.Sorted(maps.Keys(m)) {
 			elts = append(elts, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
@@ -773,8 +772,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				t := g.env.Get(extName)
 				rawFnT := t
 				concreteT := g.env.GetType(expr.Fun)
-				m := make(map[string]types.Type)
-				types.FindGen(m, rawFnT, concreteT)
+				m := types.FindGen(rawFnT, concreteT)
 				tmp := g.extensions[extName]
 				tmp.gen = append(tmp.gen, ExtensionTest{raw: rawFnT, concrete: concreteT})
 				g.extensions[extName] = tmp
