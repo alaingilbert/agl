@@ -488,6 +488,9 @@ func findGenHelper(m map[string]Type, a, b Type) {
 		if t1.Return != nil {
 			findGenHelper(m, t1.Return, b.(FuncType).Return)
 		}
+	case StringType:
+	case TypeType:
+		findGenHelper(m, t1.W, b.(TypeType).W)
 	default:
 		panic(fmt.Sprintf("%v", reflect.TypeOf(a)))
 	}
