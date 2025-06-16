@@ -404,11 +404,13 @@ type (
 	OrBreakExpr struct {
 		X       Expr
 		OrBreak token.Pos
+		Label   *Ident
 	}
 
 	OrContinueExpr struct {
 		X          Expr
 		OrContinue token.Pos
+		Label      *Ident
 	}
 
 	OrReturnExpr struct {
