@@ -1337,6 +1337,32 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen52_1(t *testing.T) {
+	src := `package main
+type Person struct {
+}
+func (p Person) method1() Person? {
+	return Some(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1()?.method1()
+}
+`
+	expected := `package main
+type Person struct {
+}
+func (p Person) method1() Option[Person] {
+	return MakeOptionSome(p)
+}
+func main() {
+	p := Person{}
+	a := p.method1().Unwrap().method1()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen53(t *testing.T) {
 	src := `package main
 type Person struct {
