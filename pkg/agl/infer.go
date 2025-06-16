@@ -782,8 +782,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					infer.SetType(expr, toReturn)
 				}
 			}
-		} else { // Type casting
-			// TODO
 		}
 	}
 }
