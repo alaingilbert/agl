@@ -50,7 +50,8 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			name = decl.Name.Name
 		}
 		recvName := decl.Recv.List[0].Names[0].Name
-		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: m["T"].GoStr()}}} // TODO
+		recvT := decl.Recv.List[0].Type.(*ast.IndexExpr).Index.(*ast.Ident).Name
+		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: m[recvT].GoStr()}}}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
 			for _, param := range decl.Type.Params.List {
