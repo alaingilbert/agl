@@ -1,5 +1,15 @@
 # AGL (AnotherGoLang)
 
+## Description
+
+AGL is a language that compiles to Go.  
+It uses Go's syntax, in fact its lexer/parser is a fork of the original Go implementation, with a few modifications  
+The main differences are:  
+- Functions return only a single value. This makes it possible to use types like `Option[T]` and `Result[T]`, and to support automatic error propagation via an operator.  
+- To make returning multiple values easy, a Tuple type has been introduced. For example: `Result[(u8, string, bool)]`  
+
+Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64`  
+
 ## features
 
 - Tuple
