@@ -782,10 +782,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
 				}
 				elsStr := strings.Join(els, "_")
-				content2 := g.genExprs(expr.Args)
-				if content2 != "" {
-					content2 = ", " + content2
-				}
+				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
 		}
@@ -810,6 +807,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	content1 := g.genExpr(expr.Fun)
 	content2 := g.genExprs(expr.Args)
 	return fmt.Sprintf("%s(%s)", content1, content2)
+}
+
+func prefixIf(s, prefix string) string {
+	if s != "" {
+		return prefix + s
+	}
+	return s
 }
 
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
