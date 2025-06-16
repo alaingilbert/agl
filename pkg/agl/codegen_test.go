@@ -2614,6 +2614,38 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen95_2(t *testing.T) {
+	src := `package main
+type Person struct {
+	name string
+	age int
+}
+func clb(el Person) string { return el.name }
+func main() {
+	p1 := Person{name: "John", age: 10}
+	p2 := Person{name: "Jane", age: 20}
+	people := []Person{p1, p2}
+	names := people.Map(clb).Joined(", ")
+}
+`
+	expected := `package main
+type Person struct {
+	name string
+	age int
+}
+func clb(el Person) string {
+	return el.name
+}
+func main() {
+	p1 := Person{name: "John", age: 10}
+	p2 := Person{name: "Jane", age: 20}
+	people := []Person{p1, p2}
+	names := AglJoined(AglVecMap(people, clb), ", ")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen96(t *testing.T) {
 	src := `package main
 type Person struct {

@@ -860,7 +860,8 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				if tmp, ok := exprArg0.(*ast.FuncLit); ok {
 					infer.expr(tmp)
-					infer.SetType(expr, types.ArrayType{Elt: ftReal.Return})
+					retT := infer.GetTypeFn(tmp).Return
+					infer.SetType(expr, types.ArrayType{Elt: retT})
 				}
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
