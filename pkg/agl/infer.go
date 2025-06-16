@@ -558,7 +558,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			return
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
-			fnT := infer.env.Get(name).(types.FuncType)
+			nameT := infer.env.Get(name)
+			assertf(nameT != nil, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
+			fnT := nameT.(types.FuncType)
 			toReturn := fnT.Return
 			if toReturn != nil {
 				toReturn = alterResultBubble(infer.returnType, toReturn)
