@@ -869,6 +869,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			exprArg0 := expr.Args[0]
 			infer.expr(exprArg0)
 			reduceFnT := infer.env.GetFn("agl.Vec.Reduce").T("T", eltT)
+			infer.SetType(exprT.Sel, reduceFnT)
 			ft := reduceFnT.GetParam(2).(types.FuncType)
 			if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 				ft = ft.T("R", eltT)
@@ -927,6 +928,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				funT = funT.ReplaceGenericParameter(k, v)
 			}
 			infer.SetType(expr.Fun, funT)
+			infer.SetType(exprT.Sel, ft)
 		}
 	}
 }
