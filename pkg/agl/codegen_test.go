@@ -4128,6 +4128,16 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen158(t *testing.T) {
+	src := `package main
+func main() {
+	r := http.Get("")!
+	bod := r.Body
+	v := bod.Close()
+}`
+	tassert.PanicsWithError(t, "cannot assign void type to a variable", testCodeGenFn(src))
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"

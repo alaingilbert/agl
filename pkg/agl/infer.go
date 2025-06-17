@@ -1546,6 +1546,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				return // tODO
 			}
 			rhsT := infer.GetType(rhs)
+			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
