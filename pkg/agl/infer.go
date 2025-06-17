@@ -743,6 +743,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		callT := infer.env.Get(call.Name)
 		switch callTT := callT.(type) {
 		case types.TypeType:
+			infer.expr(expr.Args[0])
 			infer.SetType(expr, callTT.W)
 		case types.FuncType:
 			oParams := callTT.Params
