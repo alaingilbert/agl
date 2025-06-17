@@ -17,3 +17,9 @@ func Test2(t *testing.T) {
 	tt := env.Get("fmt.Println")
 	tassert.Equal(t, "func Println(...any) Result[int]", tt.String())
 }
+
+func Test3(t *testing.T) {
+	env := NewEnv(nil)
+	tt := env.Get("http.Get")
+	tassert.Equal(t, "func Get(string) Result[*Response]", tt.String())
+}
