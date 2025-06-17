@@ -677,6 +677,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if toReturn != nil {
 				toReturn = alterResultBubble(infer.returnType, toReturn)
 			}
+			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr.Fun, fnT)
 			if toReturn != nil {
 				infer.SetType(expr, toReturn)
