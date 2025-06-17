@@ -1423,7 +1423,12 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, types.MapType{K: infer.env.GetType2(v.Key), V: infer.env.GetType2(v.Value)})
 		return
 	case *ast.SelectorExpr:
-		infer.SetType(expr, infer.env.Get(fmt.Sprintf("%s.%s", v.X.(*ast.Ident).Name, v.Sel.Name)))
+		idName := v.X.(*ast.Ident).Name
+		xT := infer.env.Get(idName)
+		selT := infer.env.Get(fmt.Sprintf("%s.%s", idName, v.Sel.Name))
+		infer.SetType(v.X, xT)
+		infer.SetType(v.Sel, selT)
+		infer.SetType(expr, selT)
 		return
 	default:
 		panic(fmt.Sprintf("%v", to(expr.Type)))
