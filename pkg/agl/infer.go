@@ -667,12 +667,29 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 }
 
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
-	tmpFn := func(idT types.Type, call *ast.SelectorExpr) {
-		if starT, ok := idT.(types.StarType); ok {
-			idT = starT.X
+
+	switch call := expr.Fun.(type) {
+	case *ast.SelectorExpr:
+		var exprFunT types.Type
+		var callXParent *Info
+		switch callXT := call.X.(type) {
+		case *ast.Ident:
+			exprFunT = infer.env.Get(callXT.Name)
+			callXParent = infer.env.GetNameInfo(callXT.Name)
+		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
+			infer.expr(callXT)
+			exprFunT = infer.GetType(callXT)
+		case *ast.SelectorExpr:
+			infer.expr(callXT.X)
+			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
+		default:
+			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
+		}
+		if starT, ok := exprFunT.(types.StarType); ok {
+			exprFunT = starT.X
 		}
 		fnName := call.Sel.Name
-		switch idTT := idT.(type) {
+		switch idTT := exprFunT.(type) {
 		case types.ArrayType:
 			arr := idTT
 			if fnName == "Filter" {
@@ -701,7 +718,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Joined" {
 				fnT := infer.env.GetFn("agl.Vec.Joined")
-				assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
+				assertf(cmpTypes(exprFunT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], exprFunT)
 				infer.SetType(expr, fnT.Return)
 			} else {
 				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
@@ -714,7 +731,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
 				}
 			}
-			return
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			if idTT.Pkg != "" {
@@ -722,20 +738,19 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 			nameT := infer.env.Get(name)
 			assertf(nameT != nil, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
-			toReturn := infer.env.Get(name).(types.FuncType).Return
+			fnT := infer.env.GetFn(name)
+			toReturn := fnT.Return
 			toReturn = alterResultBubble(infer.returnType, toReturn)
+			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr, toReturn)
-			return
 		case types.InterfaceType:
 			t := infer.env.Get(fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName))
 			tr := t.(types.FuncType).Return
 			infer.SetType(call.Sel, t)
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
-			return
 		case types.EnumType:
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
-			return
 		case types.PackageType:
 			pkgT := infer.env.Get(idTT.Name)
 			assertf(pkgT != nil, "package not found '%s'", idTT.Name)
@@ -752,7 +767,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if toReturn != nil {
 				infer.SetType(expr, toReturn)
 			}
-			return
 		case types.OptionType:
 			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
 				fnT := infer.env.GetFn("agl.Option." + fnName)
@@ -762,10 +776,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					fnT = fnT.T("T", idTT.W)
 				}
 				infer.SetType(expr, fnT.Return)
-				return
+			} else {
+				assertf(false, "Unresolved reference '%s'", fnName)
 			}
-			assertf(false, "Unresolved reference '%s'", fnName)
-			return
 		case types.ResultType:
 			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}) {
 				fnT := infer.env.GetFn("agl.Result." + fnName)
@@ -777,35 +790,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					panic("user cannot call Err")
 				}
 				infer.SetType(expr, fnT.Return)
-				return
+			} else {
+				assertf(false, "Unresolved reference '%s'", fnName)
 			}
-			assertf(false, "Unresolved reference '%s'", fnName)
-			return
 		default:
 			assertf(false, "Unresolved reference '%s'", fnName)
 		}
-	}
-
-	switch call := expr.Fun.(type) {
-	case *ast.SelectorExpr:
-		var exprFunT types.Type
-		var callXParent *Info
-		switch callXT := call.X.(type) {
-		case *ast.Ident:
-			exprFunT = infer.env.Get(callXT.Name)
-			callXParent = infer.env.GetNameInfo(callXT.Name)
-		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
-			infer.expr(callXT)
-			exprFunT = infer.GetType(callXT)
-		case *ast.SelectorExpr:
-			infer.expr(callXT.X)
-			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
-		default:
-			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
-		}
-		tmpFn(exprFunT, call)
 		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
-		p("?", call.Sel)
 		infer.inferVecExtensions(exprFunT, call, expr)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
@@ -1352,7 +1343,6 @@ func cmpTypes(a, b types.Type) bool {
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	exprXName := expr.X.(*ast.Ident).Name
-	p("?selectorExpr", exprXName)
 	exprXIdTRaw := infer.env.Get(exprXName)
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
