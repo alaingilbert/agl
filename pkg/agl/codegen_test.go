@@ -4109,6 +4109,25 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen157(t *testing.T) {
+	src := `package main
+func main() {
+	r := http.Get("")!
+	r.Body.Close()
+}`
+	expected := `package main
+func main() {
+	aglTmp1, err := http.Get("")
+	if err != nil {
+		panic(err)
+	}
+	r := AglIdentity(aglTmp1)
+	r.Body.Close()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
