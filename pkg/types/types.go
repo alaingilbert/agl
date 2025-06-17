@@ -19,7 +19,7 @@ type BaseType struct {
 type VoidType struct{}
 
 func (v VoidType) GoStr() string      { return "AglVoid" }
-func (v VoidType) String() string     { return "VoidExpr" }
+func (v VoidType) String() string     { return "void" }
 func (v VoidType) StringFull() string { return v.String() }
 
 type StarType struct {
