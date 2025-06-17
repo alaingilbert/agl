@@ -393,13 +393,12 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	ff := f
 	newParams := make([]Type, 0)
 	newTypeParams := make([]Type, 0)
-	for _, p := range ff.Params {
-		newParams = append(newParams, p)
-	}
 	for _, p := range ff.TypeParams {
 		newTypeParams = append(newTypeParams, p)
 	}
-
+	for _, p := range ff.Params {
+		newParams = append(newParams, ReplGen(p, name, typ))
+	}
 	if ff.Return != nil {
 		ff.Return = ReplGen(ff.Return, name, typ)
 	}
@@ -471,7 +470,14 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return OptionType{W: ReplGen(t1.W, name, newTyp)}
 	case ResultType:
 		return ResultType{W: ReplGen(t1.W, name, newTyp)}
+	case EllipsisType:
+		return ReplGen(t1.Elt, name, newTyp)
+	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
+		return t
+	case StructType: // TODO
+		return t
 	default:
+		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
 	}
 }
