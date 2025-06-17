@@ -470,6 +470,8 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 			before += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W, varName)
 		case types.OptionType:
 			before += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W)
+		case types.VoidType:
+			before += g.prefix + fmt.Sprintf("\treturn\n")
 		default:
 			assert(false, "cannot use or_return in a function that does not return void/Option/Result")
 		}
