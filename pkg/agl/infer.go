@@ -94,22 +94,31 @@ func (infer *FileInferrer) SetTypeForce(a ast.Node, t types.Type) {
 	infer.env.SetType(nil, a, t)
 }
 
-func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
-	infer.SetType2(nil, a, t)
+type SetTypeConf struct {
+	definition *Info
 }
 
-func (infer *FileInferrer) SetType2(p *Info, a ast.Node, t types.Type) {
-	//fmt.Println("??SETTYPE", makeKey(a), a, t)
-	//printCallers(100)
+type SetTypeOption func(*SetTypeConf)
+
+func WithDefinition(i *Info) SetTypeOption {
+	return func(o *SetTypeConf) {
+		o.definition = i
+	}
+}
+
+func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOption) {
+	conf := &SetTypeConf{}
+	for _, opt := range opts {
+		opt(conf)
+	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypes(tt, t) {
 			if !TryCast[types.UntypedNumType](tt) {
-				//return // TODO
 				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
 	}
-	infer.env.SetType(p, a, t)
+	infer.env.SetType(conf.definition, a, t)
 }
 
 func trimPrefixPath(s string) string {
@@ -761,7 +770,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
 		tmpFn(exprFunT, call)
-		infer.SetType2(callXParent, call.X, exprFunT)
+		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
 		infer.inferVecExtensions(exprFunT, call, expr)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
@@ -805,7 +814,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			panic(fmt.Sprintf("%v %v", expr.Fun, to(expr.Fun)))
 		}
 		parentInfo := infer.env.GetNameInfo(call.Name)
-		infer.SetType2(parentInfo, call, callT)
+		infer.SetType(call, callT, WithDefinition(parentInfo))
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
