@@ -1019,8 +1019,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			for k, v := range genericMapping {
 				ft = ft.ReplaceGenericParameter(k, v)
 			}
-			infer.SetType(expr.Fun, ft)
 			infer.SetType(exprT.Sel, ft)
+			infer.SetType(expr.Fun, ft)
+			infer.SetType(expr, ft.Return)
 		}
 	}
 }
