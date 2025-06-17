@@ -309,7 +309,7 @@ func (p *parser) errorExpected(pos token.Pos, msg string) {
 			msg += ", found '" + p.tok.String() + "'"
 		}
 	}
-	panic(fmt.Sprintf("%s: %s", p.file.Position(pos), msg))
+	//panic(fmt.Sprintf("%s: %s", p.file.Position(pos), msg))
 	p.error(pos, msg)
 }
 
