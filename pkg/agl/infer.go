@@ -1499,7 +1499,9 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 		if stmt.Key != nil {
 			// TODO find correct type for map
 			name := stmt.Key.(*ast.Ident).Name
-			infer.env.Define(stmt.Key, name, types.IntType{})
+			t := types.IntType{}
+			infer.env.Define(stmt.Key, name, t)
+			infer.SetType(stmt.Key, t)
 		}
 		if stmt.Value != nil {
 			name := stmt.Value.(*ast.Ident).Name
@@ -1508,6 +1510,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 				infer.env.Define(stmt.Value, name, types.I32Type{})
 			case types.ArrayType:
 				infer.env.Define(stmt.Value, name, v.Elt)
+				infer.SetType(stmt.Value, v.Elt)
 			}
 		}
 		if stmt.Body != nil {
