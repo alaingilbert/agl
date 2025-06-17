@@ -11,6 +11,7 @@ import (
 	"agl/pkg/agl"
 	"agl/pkg/ast"
 	"agl/pkg/parser"
+	"agl/pkg/scanner"
 	"agl/pkg/token"
 
 	"github.com/sourcegraph/go-lsp"
@@ -20,6 +21,7 @@ import (
 type Server struct {
 	documents map[string]*Document
 	fset      *token.FileSet
+	conn      *jsonrpc2.Conn
 }
 
 type Document struct {
@@ -88,6 +90,33 @@ func (s *Server) updateDocument(uri string, content string) error {
 	// Parse the file
 	file, err := parser.ParseFile(s.fset, uri, content, 0)
 	if err != nil {
+		// Convert parser errors to LSP diagnostics
+		if parserErr, ok := err.(scanner.ErrorList); ok {
+			diagnostics := make([]lsp.Diagnostic, 0, len(parserErr))
+			for _, e := range parserErr {
+				diagnostics = append(diagnostics, lsp.Diagnostic{
+					Range: lsp.Range{
+						Start: lsp.Position{
+							Line:      e.Pos.Line - 1,
+							Character: e.Pos.Column - 1,
+						},
+						End: lsp.Position{
+							Line:      e.Pos.Line - 1,
+							Character: e.Pos.Column,
+						},
+					},
+					Severity: lsp.Error,
+					Message:  e.Msg,
+				})
+			}
+			// Send diagnostic notification
+			if s.conn != nil {
+				_ = s.conn.Notify(context.Background(), "textDocument/publishDiagnostics", lsp.PublishDiagnosticsParams{
+					URI:         lsp.DocumentURI(uri),
+					Diagnostics: diagnostics,
+				})
+			}
+		}
 		return fmt.Errorf("failed to parse file: %v", err)
 	}
 
@@ -101,6 +130,14 @@ func (s *Server) updateDocument(uri string, content string) error {
 		content: content,
 		ast:     file,
 		env:     env,
+	}
+
+	// Clear any existing diagnostics since the file is now valid
+	if s.conn != nil {
+		_ = s.conn.Notify(context.Background(), "textDocument/publishDiagnostics", lsp.PublishDiagnosticsParams{
+			URI:         lsp.DocumentURI(uri),
+			Diagnostics: []lsp.Diagnostic{}, // Empty diagnostics list to clear errors
+		})
 	}
 
 	return nil
@@ -336,6 +373,7 @@ func main() {
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
 		h,
 	)
+	server.conn = conn
 
 	// Wait for the connection to close
 	<-conn.DisconnectNotify()
