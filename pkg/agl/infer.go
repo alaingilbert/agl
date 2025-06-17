@@ -1020,7 +1020,7 @@ func (infer *FileInferrer) chanType(expr *ast.ChanType) {
 
 func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, &types.StarType{X: infer.GetType(expr.X)})
+	infer.SetType(expr, types.StarType{X: infer.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
@@ -1079,7 +1079,7 @@ func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
 
 func (infer *FileInferrer) starExpr(expr *ast.StarExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, types.StarType{X: infer.env.GetType(expr.X)})
+	infer.SetType(expr, types.StarType{X: infer.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {

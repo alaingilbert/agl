@@ -24,20 +24,25 @@ type StarType struct {
 	X Type
 }
 
-func (s StarType) GoStr() string  { return "StarType" }
-func (s StarType) String() string { return "StarType" }
+func (s StarType) GoStr() string { return "StarType" }
+func (s StarType) String() string {
+	if s.X == nil {
+		return "*UNKNOWN"
+	}
+	return fmt.Sprintf("*%s", s.X.String())
+}
 
 type MapType struct {
 	K, V Type
 }
 
 func (m MapType) GoStr() string  { return "MapType" }
-func (m MapType) String() string { return "MapType" }
+func (m MapType) String() string { return fmt.Sprintf("map[%s]%s", m.K, m.V) }
 
 type ChanType struct{ W Type }
 
 func (m ChanType) GoStr() string  { return "ChanType" }
-func (m ChanType) String() string { return "ChanType" }
+func (m ChanType) String() string { return fmt.Sprintf("chan %s", m.W) }
 
 type BinaryType struct {
 	X, Y Type
@@ -67,7 +72,7 @@ type ResultType struct {
 }
 
 func (r ResultType) GoStr() string  { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
-func (r ResultType) String() string { return r.W.String() + "!" }
+func (r ResultType) String() string { return fmt.Sprintf("Result[%s]", r.W.String()) }
 
 type OptionType struct {
 	W      Type
@@ -76,7 +81,7 @@ type OptionType struct {
 }
 
 func (o OptionType) GoStr() string  { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
-func (o OptionType) String() string { return "OptionType" }
+func (o OptionType) String() string { return fmt.Sprintf("Option[%s]", o.W.String()) }
 
 type TypeType struct{ W Type }
 
@@ -170,7 +175,7 @@ type NilType struct{}
 
 func (n NilType) GoStr() string { return "nil" }
 
-func (n NilType) String() string { return "NilType" }
+func (n NilType) String() string { return "nil" }
 
 type ArrayType struct{ Elt Type }
 
@@ -197,7 +202,7 @@ type StructType struct {
 
 func (t StructType) GoStr() string { return t.Name }
 
-func (t StructType) String() string { return "StructType" }
+func (t StructType) String() string { return fmt.Sprintf("type %s struct", t.Name) }
 
 type InterfaceType struct {
 	Name string
@@ -205,7 +210,7 @@ type InterfaceType struct {
 
 func (i InterfaceType) GoStr() string { return i.Name }
 
-func (i InterfaceType) String() string { return "InterfaceType" }
+func (i InterfaceType) String() string { return fmt.Sprintf("type %s interface", i.Name) }
 
 type EnumType struct {
 	Name   string
@@ -215,7 +220,7 @@ type EnumType struct {
 
 func (e EnumType) GoStr() string { return e.Name }
 
-func (e EnumType) String() string { return "EnumType" }
+func (e EnumType) String() string { return fmt.Sprintf("type %s Enum", e.Name) }
 
 type EnumFieldType struct {
 	Name string
