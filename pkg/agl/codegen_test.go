@@ -3186,7 +3186,7 @@ func main() {
 	test(a)
 }
 `
-	tassert.PanicsWithError(t, "types not equal, []string []TypeType(int)", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "types not equal, []string []int", testCodeGenFn(src))
 }
 
 func TestCodeGen122(t *testing.T) {
