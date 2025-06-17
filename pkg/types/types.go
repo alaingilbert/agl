@@ -235,8 +235,9 @@ func (s StructType) String() string { return s.Name }
 func (s StructType) StringFull() string { return fmt.Sprintf("%s.%s", s.Pkg, s.Name) }
 
 type InterfaceType struct {
-	Name string
-	Pkg  string
+	Name    string
+	Pkg     string
+	Methods []FieldType
 }
 
 func (i InterfaceType) GoStr() string { return i.Name }
