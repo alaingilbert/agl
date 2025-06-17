@@ -651,6 +651,21 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 	}
 }
 
+func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type {
+	eTRaw := infer.GetType(e)
+	if v, ok := eTRaw.(types.StarType); ok {
+		eTRaw = v.X
+	}
+	switch eT := eTRaw.(type) {
+	case types.StructType:
+		structPkg := eT.Pkg
+		structName := eT.Name
+		return infer.env.Get(structPkg + "." + structName + "." + id.Name)
+	default:
+		panic("")
+	}
+}
+
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	tmpFn := func(idT types.Type, call *ast.SelectorExpr) {
 		fnName := call.Sel.Name
@@ -787,26 +802,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
-		case *ast.SelectorExpr: // TODO fix this garbage
+		case *ast.SelectorExpr:
 			infer.expr(callXT.X)
-			callXTXT := infer.GetType(callXT.X)
-			switch callXTXTT := callXTXT.(type) {
-			case types.StarType:
-				switch callXTXTTXT := callXTXTT.X.(type) {
-				case types.StructType:
-					structPkg := callXTXTTXT.Pkg
-					structName := callXTXTTXT.Name
-					exprFunT = infer.env.Get(structPkg + "." + structName + "." + callXT.Sel.Name)
-				default:
-					panic("")
-				}
-			case types.StructType:
-				structPkg := callXTXTT.Pkg
-				structName := callXTXTT.Name
-				exprFunT = infer.env.Get(structPkg + "." + structName + "." + callXT.Sel.Name)
-			default:
-				panic("")
-			}
+			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
@@ -1575,7 +1573,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
-			p("??", rhs, to(rhs), infer.env.GetType(rhs))
 			rhsT := infer.GetType(rhs)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
