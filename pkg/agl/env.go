@@ -68,6 +68,9 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
+	if result == nil {
+		result = types.VoidType{}
+	}
 	ft := types.FuncType{
 		Name:       name,
 		TypeParams: paramsT,
