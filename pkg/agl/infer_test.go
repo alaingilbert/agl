@@ -1,22 +1,54 @@
 package agl
 
 import (
+	"agl/pkg/ast"
+	"agl/pkg/token"
+	"agl/pkg/types"
 	"testing"
+
+	tassert "github.com/stretchr/testify/assert"
 )
+
+func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position) ast.Node {
+	var result ast.Node
+	ast.Inspect(file, func(n ast.Node) bool {
+		if n == nil {
+			return false
+		}
+		nodePos := fset.Position(n.Pos())
+		nodeEnd := fset.Position(n.End())
+
+		// Check if the position is within this node's range
+		if nodePos.Offset <= pos.Offset && pos.Offset <= nodeEnd.Offset {
+			// If this is a more specific node (smaller range), use it
+			if result == nil ||
+				(fset.Position(result.Pos()).Offset <= nodePos.Offset &&
+					nodeEnd.Offset <= fset.Position(result.End()).Offset) {
+				result = n
+			}
+			return true // Continue searching for more specific nodes
+		}
+		return false
+	})
+	return result
+}
 
 func TestInfer1(t *testing.T) {
 	src := `package main
 func main() {
 	r := http.Get("")!
 	bod := r.Body
-	bod.Close()
+	voidT := bod.Close()
 }
 `
 	fset, f := parser2(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
-	//tassert.Equal(t, 1, env.Get("bod"))
+	file := fset.File(1)
+	offset := file.LineStart(5) + token.Pos(2-1)
+	n := findNodeAtPosition(f, fset, fset.Position(offset))
+	tassert.Equal(t, types.VoidType{}, env.GetType(n))
 }
 
 func TestInfer2(t *testing.T) {
