@@ -987,19 +987,22 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			joinedFnT := infer.env.GetFn("agl.Vec.Joined")
 			infer.SetType(exprT.Sel, joinedFnT)
 		} else {
-			funT := infer.GetTypeFn(expr.Fun)
-			ft := infer.GetType(exprT.Sel).(types.FuncType)
+			ft := infer.GetTypeFn(expr.Fun)
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
 			for i, arg := range expr.Args {
-				if argFn, ok := arg.(*ast.ShortFuncLit); ok { // TODO not working at all
-					infer.SetType(argFn, ft.GetParam(i))
+				if argFn, ok := arg.(*ast.ShortFuncLit); ok {
+					genFn := ft.GetParam(i)
+					infer.SetType(argFn, genFn)
 					infer.expr(argFn)
-					//ftt := infer.GetTypeFn(argFn)
-					//rT := ftt.Return
-					//infer.SetType(expr, types.ArrayType{Elt: rT})
-					//infer.SetType(exprT.Sel, funT.T("R", rT))
-					//infer.SetType(argFn, ftt)
+					concreteFn := infer.env.GetType(argFn)
+					m := types.FindGen(genFn, concreteFn)
+					for k, v := range m {
+						if el, ok := genericMapping[k]; ok {
+							assertf(el == v, "generic type parameter type mismatch. want: %v, got: %v", el, v)
+						}
+						genericMapping[k] = v
+					}
 				} else if argFn, ok := arg.(*ast.FuncLit); ok {
 					infer.expr(argFn)
 					genFn := ft.GetParam(i)
@@ -1014,9 +1017,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				}
 			}
 			for k, v := range genericMapping {
-				funT = funT.ReplaceGenericParameter(k, v)
+				ft = ft.ReplaceGenericParameter(k, v)
 			}
-			infer.SetType(expr.Fun, funT)
+			infer.SetType(expr.Fun, ft)
 			infer.SetType(exprT.Sel, ft)
 		}
 	}

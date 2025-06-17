@@ -547,6 +547,7 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case StringType:
 	case IntType:
 	case U8Type:
+	case I64Type:
 	case TypeType:
 		findGenHelper(m, t1.W, b.(TypeType).W)
 	default:
