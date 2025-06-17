@@ -709,6 +709,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr, toReturn)
 			return
 		case types.InterfaceType:
+			t := infer.env.Get(fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName))
+			tr := t.(types.FuncType).Return
+			infer.SetType(call.Sel, t)
+			infer.SetType(call, tr)
+			infer.SetType(expr, tr)
 			return
 		case types.StarType:
 			return
