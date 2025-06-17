@@ -112,13 +112,44 @@ func (s *Server) Definition(ctx context.Context, params lsp.TextDocumentPosition
 		return nil, fmt.Errorf("document not found: %s", uri)
 	}
 
-	// Find the node at the given position
-	pos := s.fset.Position(token.Pos(params.Position.Line + 1))
-	node := s.findNodeAtPosition(doc.ast, pos)
+	// Convert LSP position to Go token position
+	// LSP uses 0-based line numbers, Go uses 1-based
+	line := params.Position.Line + 1
+	column := params.Position.Character + 1
+
+	// Find the file in the file set
+	file := s.fset.File(doc.ast.Pos())
+	if file == nil {
+		log.Printf("File not found in file set")
+		return nil, nil
+	}
+
+	// Convert line/column to offset
+	offset := file.LineStart(line) + token.Pos(column-1)
+
+	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset))
 
 	// If it's an identifier, look up its definition
 	if ident, ok := node.(*ast.Ident); ok {
 		// Look up the symbol in the environment
+		if tmp := doc.env.GetInfo(ident); tmp != nil {
+			pos := s.fset.Position(tmp.Definition)
+			return []lsp.Location{
+				{
+					URI: lsp.DocumentURI(uri),
+					Range: lsp.Range{
+						Start: lsp.Position{
+							Line:      pos.Line - 1,
+							Character: pos.Column - 1,
+						},
+						End: lsp.Position{
+							Line:      pos.Line - 1,
+							Character: pos.Column - 1,
+						},
+					},
+				},
+			}, nil
+		}
 		if typ := doc.env.Get(ident.Name); typ != nil {
 			// For now, return the current position as the definition
 			// TODO: Implement proper definition lookup
@@ -176,9 +207,6 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 	line := params.Position.Line + 1
 	column := params.Position.Character + 1
 
-	log.Printf("Converting LSP position (%d, %d) to Go position (%d, %d)",
-		params.Position.Line, params.Position.Character, line, column)
-
 	// Find the file in the file set
 	file := s.fset.File(doc.ast.Pos())
 	if file == nil {
@@ -188,12 +216,9 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 
 	// Convert line/column to offset
 	offset := file.LineStart(line) + token.Pos(column-1)
-	log.Printf("Calculated offset: %d", offset)
 
 	// Find the node at the calculated position
 	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset))
-
-	log.Printf("Found node at position: %T", node)
 
 	// If it's an identifier, show its type information
 	if ident, ok := node.(*ast.Ident); ok {

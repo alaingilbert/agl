@@ -14,8 +14,14 @@ import (
 type Env struct {
 	fset          *token.FileSet
 	structCounter atomic.Int64
-	lookupTable   map[string]types.Type // Store constants/variables/functions
-	lookupTable2  map[string]types.Type // Store type for Expr/Stmt
+	lookupTable   map[string]*Info  // Store constants/variables/functions
+	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
+}
+
+type Info struct {
+	Message    string
+	Definition token.Pos
+	Type       types.Type
 }
 
 func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) types.FuncType {
@@ -26,7 +32,7 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 				typeParamType := typeParam.Type
 				t := env.GetType2(typeParamType)
 				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
-				env.Define(typeParamName.Name, t)
+				env.Define(typeParamName, typeParamName.Name, t)
 				paramsT = append(paramsT, t)
 			}
 		}
@@ -81,7 +87,7 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 }
 
 func NewEnv(fset *token.FileSet) *Env {
-	env := &Env{fset: fset, lookupTable2: make(map[string]types.Type), lookupTable: make(map[string]types.Type)}
+	env := &Env{fset: fset, lookupTable: make(map[string]*Info), lspTable: make(map[NodeKey]*Info)}
 	env.DefinePkg("os", "os")
 	env.DefinePkg("io", "io")
 	env.DefinePkg("bufio", "bufio")
@@ -91,28 +97,28 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefinePkg("strings", "strings")
 	env.DefinePkg("time", "time")
 	env.DefinePkg("strconv", "strconv")
-	env.Define("error", types.TypeType{W: types.AnyType{}})
-	env.Define("nil", types.TypeType{W: types.NilType{}})
-	env.Define("void", types.TypeType{W: types.VoidType{}})
-	env.Define("any", types.TypeType{W: types.AnyType{}})
-	env.Define("i8", types.TypeType{W: types.I8Type{}})
-	env.Define("i16", types.TypeType{W: types.I16Type{}})
-	env.Define("i32", types.TypeType{W: types.I32Type{}})
-	env.Define("i64", types.TypeType{W: types.I64Type{}})
-	env.Define("u8", types.TypeType{W: types.U8Type{}})
-	env.Define("u16", types.TypeType{W: types.U16Type{}})
-	env.Define("u32", types.TypeType{W: types.U32Type{}})
-	env.Define("u64", types.TypeType{W: types.U64Type{}})
-	env.Define("int", types.TypeType{W: types.IntType{}})
-	env.Define("uint", types.TypeType{W: types.UintType{}})
-	env.Define("f32", types.TypeType{W: types.F32Type{}})
-	env.Define("f64", types.TypeType{W: types.F64Type{}})
-	env.Define("string", types.TypeType{W: types.StringType{}})
-	env.Define("bool", types.TypeType{W: types.BoolType{}})
-	env.Define("true", types.BoolValue{V: true})
-	env.Define("false", types.BoolValue{V: false})
-	env.Define("byte", types.TypeType{W: types.ByteType{}})
-	env.Define("cmp.Ordered", types.AnyType{})
+	env.Define(nil, "error", types.TypeType{W: types.AnyType{}})
+	env.Define(nil, "nil", types.TypeType{W: types.NilType{}})
+	env.Define(nil, "void", types.TypeType{W: types.VoidType{}})
+	env.Define(nil, "any", types.TypeType{W: types.AnyType{}})
+	env.Define(nil, "i8", types.TypeType{W: types.I8Type{}})
+	env.Define(nil, "i16", types.TypeType{W: types.I16Type{}})
+	env.Define(nil, "i32", types.TypeType{W: types.I32Type{}})
+	env.Define(nil, "i64", types.TypeType{W: types.I64Type{}})
+	env.Define(nil, "u8", types.TypeType{W: types.U8Type{}})
+	env.Define(nil, "u16", types.TypeType{W: types.U16Type{}})
+	env.Define(nil, "u32", types.TypeType{W: types.U32Type{}})
+	env.Define(nil, "u64", types.TypeType{W: types.U64Type{}})
+	env.Define(nil, "int", types.TypeType{W: types.IntType{}})
+	env.Define(nil, "uint", types.TypeType{W: types.UintType{}})
+	env.Define(nil, "f32", types.TypeType{W: types.F32Type{}})
+	env.Define(nil, "f64", types.TypeType{W: types.F64Type{}})
+	env.Define(nil, "string", types.TypeType{W: types.StringType{}})
+	env.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
+	env.Define(nil, "true", types.BoolValue{V: true})
+	env.Define(nil, "false", types.BoolValue{V: false})
+	env.Define(nil, "byte", types.TypeType{W: types.ByteType{}})
+	env.Define(nil, "cmp.Ordered", types.AnyType{})
 	env.DefineFn("assert", "func (pred bool, msg ...string)")
 	env.DefineFn("make", "func[T, U any](t T, size ...U) T")
 	env.DefineFn("len", "func [T any](v T) int")
@@ -123,7 +129,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	env.DefineFn("close", "func (c chan<- Type)")
 	env.DefineFnNative("time.Sleep", "func (time.Duration)")
-	env.Define("time.Duration", types.I64Type{})
+	env.Define(nil, "time.Duration", types.I64Type{})
 	env.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	env.DefineFnNative("fmt.Println", "func (a ...any) int!")
 	env.DefineFnNative("fmt.Sprintf", "func (format string, a ...any) string")
@@ -151,8 +157,8 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
 	env.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
 	env.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*Request)!")
-	env.Define("http.MethodGet", types.StringType{})
-	env.Define("http.Client", types.StructType{Pkg: "http", Name: "Client"})
+	env.Define(nil, "http.MethodGet", types.StringType{})
+	env.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
 	env.DefineFnNative("http.Client.Do", "func (req *Request) (*Response)!")
 	env.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
 	env.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
@@ -183,7 +189,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("strconv.Itoa", "func(int) string")
 	env.DefineFnNative("strconv.Atoi", "func(string) int!")
 	env.DefineFn("errors.New", "func (text string) error")
-	env.Define("agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
+	env.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	env.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	env.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
 	env.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
@@ -203,23 +209,30 @@ func NewEnv(fset *token.FileSet) *Env {
 
 func (e *Env) Clone() *Env { // TODO avoid cloning, use recursive child/parent pattern instead
 	env := &Env{
-		fset:         e.fset,
-		lookupTable:  maps.Clone(e.lookupTable),
-		lookupTable2: e.lookupTable2,
+		fset:        e.fset,
+		lookupTable: maps.Clone(e.lookupTable),
+		lspTable:    e.lspTable,
 	}
 	return env
 }
 
 func (e *Env) CloneFull() *Env {
 	env := &Env{
-		fset:         e.fset,
-		lookupTable:  maps.Clone(e.lookupTable),
-		lookupTable2: maps.Clone(e.lookupTable2),
+		fset:        e.fset,
+		lookupTable: maps.Clone(e.lookupTable),
+		lspTable:    maps.Clone(e.lspTable),
 	}
 	return env
 }
 
 func (e *Env) Get(name string) types.Type {
+	if e.lookupTable[name] == nil {
+		return nil
+	}
+	return e.lookupTable[name].Type
+}
+
+func (e *Env) GetNameInfo(name string) *Info {
 	return e.lookupTable[name]
 }
 
@@ -229,60 +242,83 @@ func (e *Env) GetFn(name string) types.FuncType {
 
 func (e *Env) DefineFn(name string, fnStr string) {
 	fnT := parseFuncTypeFromString(name, fnStr, e)
-	e.Define(name, fnT)
+	e.Define(nil, name, fnT)
 }
 
 func (e *Env) DefineFnNative(name string, fnStr string) {
 	fnT := parseFuncTypeFromStringNative(name, fnStr, e)
-	e.Define(name, fnT)
+	e.Define(nil, name, fnT)
 }
 
 func (e *Env) DefinePkg(name, path string) {
-	e.Define(name, types.PackageType{Name: name, Path: path})
+	e.Define(nil, name, types.PackageType{Name: name, Path: path})
 }
 
-func (e *Env) Define(name string, typ types.Type) {
+func (e *Env) Define(n ast.Node, name string, typ types.Type) {
 	//p("Define", name, typ)
 	//printCallers(3)
 	assertf(e.Get(name) == nil, "duplicate declaration of %s", name)
-	e.lookupTable[name] = typ
+	if _, ok := e.lookupTable[name]; !ok {
+		e.lookupTable[name] = &Info{}
+	}
+	e.lookupTable[name].Type = typ
+	if n != nil {
+		e.lookupTable[name].Definition = n.Pos()
+		if _, ok := e.lspTable[makeKey(n)]; !ok {
+			e.lspTable[makeKey(n)] = &Info{}
+		}
+		e.lspTable[makeKey(n)].Definition = n.Pos()
+	}
 }
 
-func (e *Env) Assign(name string, typ types.Type) {
+func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, typ types.Type) {
 	if name == "_" {
 		return
 	}
 	assertf(e.Get(name) != nil, "undeclared %s", name)
-	e.lookupTable[name] = typ
+	e.lookupTable[name].Type = typ
+	e.lspTable[makeKey(n)].Definition = parentInfo.Definition
 }
 
-func (e *Env) SetType(x ast.Node, t types.Type) {
+func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 	assertf(t != nil, "%s: try to set type nil, %v %v", e.fset.Position(x.Pos()), x, to(x))
-	e.lookupTable2[makeKey(x)] = t
+	if _, ok := e.lspTable[makeKey(x)]; !ok {
+		e.lspTable[makeKey(x)] = &Info{}
+	}
+	e.lspTable[makeKey(x)].Type = t
+	if p != nil {
+		e.lspTable[makeKey(x)].Definition = p.Definition
+	}
 }
 
-func makeKey(n ast.Node) string {
-	return fmt.Sprintf("%d_%d", n.Pos(), n.End())
+type NodeKey string
+
+func makeKey(n ast.Node) NodeKey {
+	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
+}
+
+func (e *Env) GetInfo(x ast.Node) *Info {
+	return e.lspTable[makeKey(x)]
 }
 
 func (e *Env) GetType(x ast.Node) types.Type {
-	if v, ok := e.lookupTable2[makeKey(x)]; ok {
-		if tt, ok := v.(types.TypeType); ok {
-			v = tt.W
+	if v, ok := e.lspTable[makeKey(x)]; ok {
+		if tt, ok := v.Type.(types.TypeType); ok {
+			v.Type = tt.W
 		}
-		return v
+		return v.Type
 	}
 	return nil
 }
 
 func (e *Env) GetType2(x ast.Node) types.Type {
-	if v, ok := e.lookupTable2[makeKey(x)]; ok {
-		return v
+	if v, ok := e.lspTable[makeKey(x)]; ok {
+		return v.Type
 	}
 	switch xx := x.(type) {
 	case *ast.Ident:
 		if v2, ok := e.lookupTable[xx.Name]; ok {
-			return v2
+			return v2.Type
 		}
 		return nil
 	case *ast.FuncType:
