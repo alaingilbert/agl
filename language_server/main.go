@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 
 	"agl/pkg/agl"
 	"agl/pkg/ast"
@@ -80,7 +81,8 @@ func (s *Server) DidClose(ctx context.Context, params lsp.DidCloseTextDocumentPa
 func (s *Server) updateDocument(uri string, content string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("%v", r)
+			log.Printf("Error: %v", r)
+			debug.PrintStack()
 		}
 	}()
 	// Parse the file
