@@ -1344,13 +1344,17 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.StarType:
-		structT := exprXIdT.X.(types.StructType)
-		structPkg := structT.Pkg
-		structName := structT.Name
-		selT := infer.env.Get(fmt.Sprintf("%s.%s.%s", structPkg, structName, expr.Sel.Name))
-		infer.SetType(expr.X, exprXIdT)
-		infer.SetType(expr.Sel, selT)
-		infer.SetType(expr, selT)
+		switch structT := exprXIdT.X.(type) {
+		case types.StructType:
+			structPkg := structT.Pkg
+			structName := structT.Name
+			selT := infer.env.Get(fmt.Sprintf("%s.%s.%s", structPkg, structName, expr.Sel.Name))
+			infer.SetType(expr.X, exprXIdT)
+			infer.SetType(expr.Sel, selT)
+			infer.SetType(expr, selT)
+		default:
+			panic("")
+		}
 	case types.PackageType:
 	default:
 		//panic(fmt.Sprintf("%v", to(selType)))
