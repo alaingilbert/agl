@@ -716,6 +716,17 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr, tr)
 			return
 		case types.StarType:
+			switch v := idTT.X.(type) {
+			case types.StructType:
+				t := infer.env.Get(fmt.Sprintf("%s.%s.%s", v.Pkg, call.Sel.Name, fnName))
+				p("???", t, v.Pkg, call.Sel.Name, fnName)
+				tr := t.(types.FuncType).Return
+				infer.SetType(call.Sel, idTT.X)
+				infer.SetType(call, tr)
+				infer.SetType(expr, tr)
+			default:
+				panic(fmt.Sprintf("%v", to(idTT.X)))
+			}
 			return
 		case types.EnumType:
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
@@ -776,9 +787,26 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
-		case *ast.SelectorExpr:
+		case *ast.SelectorExpr: // TODO fix this garbage
 			infer.expr(callXT.X)
-			exprFunT = infer.GetType(callXT.X)
+			callXTXT := infer.GetType(callXT.X)
+			switch callXTXTT := callXTXT.(type) {
+			case types.StarType:
+				switch callXTXTTXT := callXTXTT.X.(type) {
+				case types.StructType:
+					structPkg := callXTXTTXT.Pkg
+					structName := callXTXTTXT.Name
+					exprFunT = infer.env.Get(structPkg + "." + structName + "." + callXT.Sel.Name)
+				default:
+					panic("")
+				}
+			case types.StructType:
+				structPkg := callXTXTT.Pkg
+				structName := callXTXTT.Name
+				exprFunT = infer.env.Get(structPkg + "." + structName + "." + callXT.Sel.Name)
+			default:
+				panic("")
+			}
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
@@ -1327,7 +1355,9 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
-	exprXIdTRaw := infer.env.Get(expr.X.(*ast.Ident).Name)
+	exprXName := expr.X.(*ast.Ident).Name
+	p("?selectorExpr", exprXName)
+	exprXIdTRaw := infer.env.Get(exprXName)
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
@@ -1545,6 +1575,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
+			p("??", rhs, to(rhs), infer.env.GetType(rhs))
 			rhsT := infer.GetType(rhs)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
