@@ -577,10 +577,8 @@ func (f FuncType) String() string {
 			var val string
 			if param == nil {
 				val = "nil"
-			} else if p1, ok := param.(InterfaceType); ok {
-				val = p1.StringFull()
 			} else {
-				val = param.String()
+				val = param.StringFull()
 			}
 			tmp1 = append(tmp1, val)
 		}

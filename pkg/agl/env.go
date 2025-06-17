@@ -203,7 +203,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*http.Request)!")
 	env.Define(nil, "http.MethodGet", types.StringType{})
 	env.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
-	env.DefineFnNative("http.Client.Do", "func (req *Request) (*http.Response)!")
+	env.DefineFnNative("http.Client.Do", "func (req *http.Request) (*http.Response)!")
 	env.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
 	env.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
 	env.DefineFnNative("os.Chdir", "func (string) !")
