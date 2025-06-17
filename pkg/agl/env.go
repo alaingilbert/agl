@@ -166,6 +166,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("io.Pipe", "func () (*PipeReader, *PipeWriter)")
 	env.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
 	readFn := parseFuncTypeFromStringNative("io.Read", "func (p []byte) int!", env)
+	closeFn := parseFuncTypeFromStringNative("io.Close", "func () !", env)
 	ioReader := types.InterfaceType{
 		Pkg:  "io",
 		Name: "Reader",
@@ -173,7 +174,6 @@ func NewEnv(fset *token.FileSet) *Env {
 			{Name: "Read", Typ: readFn},
 		},
 	}
-	closeFn := parseFuncTypeFromStringNative("io.Close", "func () !", env)
 	ioCloser := types.InterfaceType{
 		Pkg:  "io",
 		Name: "Closer",
@@ -190,6 +190,8 @@ func NewEnv(fset *token.FileSet) *Env {
 		},
 	}
 	env.Define(nil, "io.ReadCloser", ioReadCloser)
+	env.DefineFnNative("io.ReadCloser.Read", "func (p []byte) int!")
+	env.DefineFnNative("io.ReadCloser.Close", "func () !")
 	env.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http", Fields: []types.FieldType{{Name: "Body", Typ: types.InterfaceType{Pkg: "io", Name: "ReadCloser"}}}})
 	env.Define(nil, "http.Response.Body", ioReadCloser)
 	env.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
