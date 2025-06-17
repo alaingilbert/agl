@@ -24,6 +24,13 @@ type Info struct {
 	Type       types.Type
 }
 
+func (i *Info) GetType() types.Type {
+	if i != nil {
+		return i.Type
+	}
+	return nil
+}
+
 func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) types.FuncType {
 	var paramsT []types.Type
 	if expr.TypeParams != nil {

@@ -78,6 +78,11 @@ func (s *Server) DidClose(ctx context.Context, params lsp.DidCloseTextDocumentPa
 }
 
 func (s *Server) updateDocument(uri string, content string) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("%v", r)
+		}
+	}()
 	// Parse the file
 	file, err := parser.ParseFile(s.fset, uri, content, 0)
 	if err != nil {
@@ -87,13 +92,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 	// Create environment and infer types
 	env := agl.NewEnv(s.fset)
 	inferrer := agl.NewInferrer(s.fset, env)
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-			}
-		}()
-		inferrer.InferFile(file)
-	}()
+	inferrer.InferFile(file)
 
 	// Store the document
 	s.documents[uri] = &Document{
@@ -193,8 +192,6 @@ func (s *Server) findNodeAtPosition(file *ast.File, pos token.Position) ast.Node
 }
 
 func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParams) (*lsp.Hover, error) {
-	log.Printf("Hover request received for position: %+v", params.Position)
-
 	uri := string(params.TextDocument.URI)
 	doc, ok := s.documents[uri]
 	if !ok {
@@ -220,33 +217,24 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 	// Find the node at the calculated position
 	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset))
 
-	// If it's an identifier, show its type information
-	if ident, ok := node.(*ast.Ident); ok {
-		log.Printf("Found identifier: %s", ident.Name)
-		// Look up the symbol in the environment
-		if info := doc.env.GetInfo(ident); info != nil {
-			typ := info.Type
-			log.Printf("Found type for %s: %s", ident.Name, typ.String())
-			return &lsp.Hover{
-				Contents: []lsp.MarkedString{
-					{
-						Language: "agl",
-						Value:    fmt.Sprintf("Type: %s", typ.String()),
-					},
-				},
-				Range: &lsp.Range{
-					Start: params.Position,
-					End: lsp.Position{
-						Line:      params.Position.Line,
-						Character: params.Position.Character + len(ident.Name),
-					},
-				},
-			}, nil
+	// Look up the symbol in the environment
+	if info := doc.env.GetInfo(node); info != nil {
+		typ := info.Type
+		if typ == nil {
+			return nil, nil
 		}
-		log.Printf("No type found for identifier: %s", ident.Name)
+		l := int(node.End() - node.Pos())
+		return &lsp.Hover{
+			Contents: []lsp.MarkedString{{Language: "agl", Value: typ.String()}},
+			Range: &lsp.Range{
+				Start: params.Position,
+				End: lsp.Position{
+					Line:      params.Position.Line,
+					Character: params.Position.Character + l,
+				},
+			},
+		}, nil
 	}
-
-	log.Printf("No hover information available")
 	return nil, nil
 }
 
