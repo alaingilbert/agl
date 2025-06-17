@@ -185,9 +185,9 @@ func (a ArrayType) String() string { return fmt.Sprintf("[]%s", a.Elt.String()) 
 
 type EllipsisType struct{ Elt Type }
 
-func (e EllipsisType) GoStr() string { return "..." }
+func (e EllipsisType) GoStr() string { return fmt.Sprintf("...%s", e.Elt.GoStr()) }
 
-func (e EllipsisType) String() string { return "..." }
+func (e EllipsisType) String() string { return fmt.Sprintf("...%s", e.Elt.String()) }
 
 type FieldType struct {
 	Name string
