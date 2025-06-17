@@ -587,9 +587,11 @@ func (f FuncType) String() string {
 		paramsStr = strings.Join(tmp1, ", ")
 	}
 	if result := f.Return; result != nil {
-		val := result.StringFull()
-		if val != "" {
-			resultStr = " " + val
+		if _, ok := result.(VoidType); !ok {
+			val := result.StringFull()
+			if val != "" {
+				resultStr = " " + val
+			}
 		}
 	}
 	return fmt.Sprintf("func%s%s(%s)%s", nameStr, typeParamsStr, paramsStr, resultStr)
