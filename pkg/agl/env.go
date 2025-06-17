@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"strings"
 	"sync/atomic"
 )
 
@@ -65,6 +66,8 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 			result = t1
 		}
 	}
+	parts := strings.Split(name, ".")
+	name = parts[len(parts)-1]
 	ft := types.FuncType{
 		Name:       name,
 		TypeParams: paramsT,

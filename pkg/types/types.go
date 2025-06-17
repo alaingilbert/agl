@@ -211,7 +211,9 @@ type InterfaceType struct {
 
 func (i InterfaceType) GoStr() string { return i.Name }
 
-func (i InterfaceType) String() string { return fmt.Sprintf("%s.%s", i.Pkg, i.Name) }
+func (i InterfaceType) StringFull() string { return fmt.Sprintf("%s.%s", i.Pkg, i.Name) }
+
+func (i InterfaceType) String() string { return fmt.Sprintf("%s", i.Name) }
 
 type EnumType struct {
 	Name   string
@@ -529,11 +531,15 @@ func (f FuncType) String() string {
 	if f.Params != nil {
 		var tmp1 []string
 		for _, param := range f.Params {
+			var val string
 			if param == nil {
-				tmp1 = append(tmp1, "nil")
+				val = "nil"
+			} else if p1, ok := param.(InterfaceType); ok {
+				val = p1.StringFull()
 			} else {
-				tmp1 = append(tmp1, param.String())
+				val = param.String()
 			}
+			tmp1 = append(tmp1, val)
 		}
 		paramsStr = strings.Join(tmp1, ", ")
 	}
