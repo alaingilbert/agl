@@ -46,12 +46,22 @@ type OptTypeTmp struct {
 	Type types.Type
 }
 
+func (o *OptTypeTmp) IsDefinedFor(n ast.Node) bool {
+	return o != nil && o.Type != nil && o.Pos == n.Pos()
+}
+
 func (infer *FileInferrer) sandboxed(clb func()) {
 	old := infer.env
 	nenv := old.CloneFull()
 	infer.env = nenv
 	clb()
 	infer.env = old
+}
+
+func (infer *FileInferrer) withOptType(n ast.Node, t types.Type, clb func()) {
+	infer.optType = &OptTypeTmp{Type: t, Pos: n.Pos()}
+	clb()
+	infer.optType = nil
 }
 
 func (infer *FileInferrer) withForceReturn(t types.Type, clb func()) {
@@ -534,7 +544,7 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
-	if infer.optType != nil {
+	if infer.optType.IsDefinedFor(e) {
 		infer.tryConvertType(e, infer.optType.Type)
 	}
 }
@@ -617,7 +627,7 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 		infer.SetType(expr, types.StringType{})
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
-		if infer.optType != nil && infer.optType.Type != nil && infer.optType.Pos == expr.Pos() {
+		if infer.optType.IsDefinedFor(expr) {
 			infer.SetType(expr, infer.optType.Type)
 		} else {
 			infer.SetType(expr, types.UntypedNumType{})
@@ -780,9 +790,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				} else {
 					oArg = oParams[i]
 				}
-				infer.optType = &OptTypeTmp{Type: oArg, Pos: arg.Pos()}
-				infer.expr(arg)
-				infer.optType = nil
+				infer.withOptType(arg, oArg, func() {
+					infer.expr(arg)
+				})
 				if v, ok := oArg.(types.EllipsisType); ok {
 					oArg = v.Elt
 				}
@@ -893,9 +903,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			}
 		} else if fnName == "Reduce" {
 			exprArg0 := expr.Args[0]
-			infer.optType = &OptTypeTmp{Type: infer.forceReturnType, Pos: exprArg0.Pos()}
-			infer.expr(exprArg0)
-			infer.optType = nil
+			infer.withOptType(exprArg0, infer.forceReturnType, func() {
+				infer.expr(exprArg0)
+			})
 			arg0T := infer.GetType(exprArg0)
 			reduceFnT := infer.env.GetType(exprT.Sel).(types.FuncType)
 			ft := reduceFnT.GetParam(2).(types.FuncType)
@@ -973,7 +983,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 }
 
 func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
-	if infer.optType != nil && infer.optType.Pos == expr.Pos() {
+	if infer.optType.IsDefinedFor(expr) {
 		infer.SetType(expr, infer.optType.Type)
 	}
 	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
@@ -987,7 +997,7 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 
 func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 	infer.withEnv(func() {
-		if infer.optType != nil && infer.optType.Pos == expr.Pos() {
+		if infer.optType.IsDefinedFor(expr) {
 			infer.SetType(expr, infer.optType.Type)
 		}
 		if t := infer.env.GetType(expr); t != nil {
@@ -1133,7 +1143,7 @@ func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {
 
 func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 	infer.exprs(expr.Values)
-	if infer.optType != nil {
+	if infer.optType.IsDefinedFor(expr) {
 		expected := infer.optType.Type.(types.TupleType).Elts
 		for i, x := range expr.Values {
 			if _, ok := infer.GetType(x).(types.UntypedNumType); ok {
@@ -1555,9 +1565,9 @@ func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 }
 
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
-	infer.optType = &OptTypeTmp{Type: infer.returnType, Pos: stmt.Result.Pos()}
-	infer.expr(stmt.Result)
-	infer.optType = nil
+	infer.withOptType(stmt.Result, infer.returnType, func() {
+		infer.expr(stmt.Result)
+	})
 }
 
 func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {
