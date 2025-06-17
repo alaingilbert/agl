@@ -69,10 +69,14 @@ func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 }
 
 func (infer *FileInferrer) SetTypeForce(a ast.Node, t types.Type) {
-	infer.env.SetType(a, t)
+	infer.env.SetType(nil, a, t)
 }
 
 func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
+	infer.SetType2(nil, a, t)
+}
+
+func (infer *FileInferrer) SetType2(p *Info, a ast.Node, t types.Type) {
 	//fmt.Println("??SETTYPE", makeKey(a), a, t)
 	//printCallers(100)
 	if tt := infer.env.GetType(a); tt != nil {
@@ -83,7 +87,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type) {
 			}
 		}
 	}
-	infer.env.SetType(a, t)
+	infer.env.SetType(p, a, t)
 }
 
 func trimPrefixPath(s string) string {
@@ -169,7 +173,7 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	pkgName = strings.ReplaceAll(pkgName, `"`, ``)
 	pkgT := infer.env.Get(pkgName)
 	if pkgT == nil {
-		infer.env.Define(pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
+		infer.env.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
 		pkgFullPath := trimPrefixPath(pkgPath)
 		entries, err := os.ReadDir(pkgFullPath)
 		if err != nil {
@@ -244,7 +248,7 @@ func (infer *FileInferrer) interfaceType(name *ast.Ident, e *ast.InterfaceType) 
 			}
 		}
 	}
-	infer.env.Define(name.Name, types.InterfaceType{Name: name.Name})
+	infer.env.Define(name, name.Name, types.InterfaceType{Name: name.Name})
 }
 
 func (infer *FileInferrer) enumType(name *ast.Ident, e *ast.EnumType) {
@@ -260,7 +264,7 @@ func (infer *FileInferrer) enumType(name *ast.Ident, e *ast.EnumType) {
 			fields = append(fields, types.EnumFieldType{Name: f.Name.Name, Elts: elts})
 		}
 	}
-	infer.env.Define(name.Name, types.EnumType{Name: name.Name, Fields: fields})
+	infer.env.Define(name, name.Name, types.EnumType{Name: name.Name, Fields: fields})
 }
 
 func (infer *FileInferrer) structType(name *ast.Ident, s *ast.StructType) {
@@ -273,7 +277,7 @@ func (infer *FileInferrer) structType(name *ast.Ident, s *ast.StructType) {
 			}
 		}
 	}
-	infer.env.Define(name.Name, types.StructType{Name: name.Name, Fields: fields})
+	infer.env.Define(name, name.Name, types.StructType{Name: name.Name, Fields: fields})
 }
 
 func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
@@ -287,7 +291,7 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 	if newName, ok := overloadMapping[fnName]; ok {
 		fnName = newName
 	}
-	infer.env.Define(fnName, t)
+	infer.env.Define(decl.Name, fnName, t)
 }
 
 // mapping of "agl function name" to "go compiled function name"
@@ -307,8 +311,8 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 			for _, recv := range decl.Recv.List {
 				t := infer.env.GetType2(recv.Type)
 				for _, name := range recv.Names {
-					infer.env.SetType(name, t)
-					infer.env.Define(name.Name, t)
+					infer.env.SetType(nil, name, t)
+					infer.env.Define(name, name.Name, t)
 				}
 			}
 		}
@@ -317,8 +321,8 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				infer.expr(param.Type)
 				t := infer.env.GetType(param.Type)
 				for _, name := range param.Names {
-					infer.env.SetType(name, t)
-					infer.env.Define(name.Name, types.GenericType{Name: name.Name, W: t, IsType: true})
+					infer.env.SetType(nil, name, t)
+					infer.env.Define(name, name.Name, types.GenericType{Name: name.Name, W: t, IsType: true})
 				}
 			}
 		}
@@ -327,8 +331,8 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				infer.expr(param.Type)
 				t := infer.env.GetType(param.Type)
 				for _, name := range param.Names {
-					infer.env.Define(name.Name, t)
-					infer.env.SetType(name, t)
+					infer.env.Define(name, name.Name, t)
+					infer.env.SetType(nil, name, t)
 				}
 			}
 		}
@@ -387,7 +391,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			for _, name := range typeParam.Names {
 				tt := types.GenericType{Name: name.Name, W: t, IsType: true}
 				typeParamsT = append(typeParamsT, tt)
-				infer.env.Define(name.Name, tt)
+				infer.env.Define(name, name.Name, tt)
 			}
 		}
 	}
@@ -424,12 +428,12 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	}
 	if decl.Recv != nil {
 		if vecExt {
-			outEnv.Define(fmt.Sprintf("agl.Vec.%s", fnName), ft)
+			outEnv.Define(decl.Name, fmt.Sprintf("agl.Vec.%s", fnName), ft)
 		} else {
 			r := decl.Recv.List[0]
 			infer.expr(r.Type)
 			structName := infer.GetType(r.Type).(types.StructType).Name
-			outEnv.Define(fmt.Sprintf("%s.%s", structName, fnName), ft)
+			outEnv.Define(decl.Name, fmt.Sprintf("%s.%s", structName, fnName), ft)
 		}
 	}
 	return ft
@@ -771,7 +775,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		default:
 			panic(fmt.Sprintf("%v %v", expr.Fun, to(expr.Fun)))
 		}
-		infer.SetType(call, callT)
+		parentInfo := infer.env.GetNameInfo(call.Name)
+		infer.SetType2(parentInfo, call, callT)
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
@@ -943,7 +948,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		if t := infer.env.GetType(expr); t != nil {
 			for i, param := range t.(types.FuncType).Params {
-				infer.env.Define(fmt.Sprintf("$%d", i), param)
+				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
 			}
 		}
 		infer.stmt(expr.Body)
@@ -1335,7 +1340,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 			infer.exprs(spec.Values)
 			t := infer.env.GetType2(spec.Type)
 			infer.SetType(name, t)
-			infer.env.Define(name.Name, t)
+			infer.env.Define(name, name.Name, t)
 		}
 	}
 }
@@ -1368,14 +1373,14 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 		if stmt.Key != nil {
 			// TODO find correct type for map
 			name := stmt.Key.(*ast.Ident).Name
-			infer.env.Define(name, types.IntType{})
+			infer.env.Define(stmt.Key, name, types.IntType{})
 		}
 		if stmt.Value != nil {
 			name := stmt.Value.(*ast.Ident).Name
 			if _, ok := xT.(types.StringType); ok {
-				infer.env.Define(name, types.I32Type{})
+				infer.env.Define(stmt.Value, name, types.I32Type{})
 			} else if v, ok := xT.(types.ArrayType); ok {
-				infer.env.Define(name, v.Elt)
+				infer.env.Define(stmt.Value, name, v.Elt)
 			}
 		}
 		if stmt.Body != nil {
@@ -1389,14 +1394,18 @@ func (infer *FileInferrer) Pos(n ast.Node) token.Position {
 }
 
 func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
-	myDefine := func(name string, typ types.Type) {
+	myDefine := func(parentInfo *Info, n ast.Node, name string, typ types.Type) {
 		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.Tok)
-		infer.env.Define(name, typ)
+		infer.env.Define(n, name, typ)
 	}
-	assignFn := func(name string, typ types.Type) {
+	assignFn := func(n ast.Node, name string, typ types.Type) {
 		op := stmt.Tok
 		f := Ternary(op == token.DEFINE, myDefine, infer.env.Assign)
-		f(name, typ)
+		var parentInfo *Info
+		if op != token.DEFINE {
+			parentInfo = infer.env.GetNameInfo(name)
+		}
+		f(parentInfo, n, name, typ)
 	}
 	if len(stmt.Rhs) == 1 {
 		rhs := stmt.Rhs[0]
@@ -1423,14 +1432,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			default:
 				infer.SetType(lhs, rhsT)
 			}
-			assignFn(lhsID.Name, infer.GetType(lhsID))
+			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 		} else {
 			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
 				for i, x := range rhs1.Values {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
 					infer.SetType(lhs, infer.GetType(x))
-					assignFn(lhsID.Name, infer.GetType(lhsID))
+					assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 				}
 			} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
 				for i, e := range stmt.Lhs {
@@ -1439,7 +1448,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					// AGL: fields.Find({ $0.name == lit })
 					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
 					assert(f != nil)
-					assignFn(e.(*ast.Ident).Name, f.Elts[i])
+					assignFn(e, e.(*ast.Ident).Name, f.Elts[i])
 				}
 				return
 			} else if rhsId, ok := rhs.(*ast.Ident); ok {
@@ -1449,7 +1458,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						lhs := stmt.Lhs[i]
 						lhsID := MustCast[*ast.Ident](lhs)
 						infer.SetType(lhs, x)
-						assignFn(lhsID.Name, infer.GetType(lhsID))
+						assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 					}
 				}
 			}
@@ -1461,7 +1470,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			infer.expr(rhs)
 			lhsID := MustCast[*ast.Ident](lhs)
 			infer.SetType(lhsID, infer.GetType(rhs))
-			assignFn(lhsID.Name, infer.GetType(lhsID))
+			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 		}
 	}
 }
@@ -1574,7 +1583,7 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
-	infer.env.Define(stmt.Label.Name, types.LabelType{})
+	infer.env.Define(stmt.Label, stmt.Label.Name, types.LabelType{})
 	infer.stmt(stmt.Stmt)
 }
 
