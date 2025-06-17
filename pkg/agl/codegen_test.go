@@ -4217,6 +4217,27 @@ func main() {
 	tassert.PanicsWithError(t, "cannot assign void type to a variable", testCodeGenFn(src))
 }
 
+func TestCodeGen160(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	r := arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
+}`
+	expected := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	r := AglReduce(AglVecMap(AglVecFilter(arr, func(aglArg0 int) bool {
+		return aglArg0 == 1
+	}), func(aglArg0 int) int {
+		return aglArg0
+	}), uint8(0), func(aglArg0 uint8, aglArg1 int) uint8 {
+		return aglArg0 + uint8(aglArg1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
