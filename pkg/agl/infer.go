@@ -723,8 +723,14 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else {
 				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
 				if fnT := infer.env.Get(fnFullName); fnT != nil {
-					fnT1 := fnT.(types.FuncType).T("T", arr.Elt)
+					fnT0 := fnT.(types.FuncType)
+					assert(len(fnT0.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
+					gen0 := fnT0.TypeParams[0].(types.GenericType).W
+					want := types.ArrayType{Elt: gen0}
+					assertf(cmpTypes(gen0, arr.Elt), "%s: cannot use %s as %s for %s", infer.Pos(call.Sel), arr, want, fnName)
+					fnT1 := fnT0.T("T", arr.Elt)
 					retT := Or[types.Type](fnT1.Return, types.VoidType{})
+					infer.SetType(call.Sel, fnT1)
 					infer.SetType(expr.Fun, fnT1)
 					infer.SetType(expr, retT)
 				} else {
@@ -982,10 +988,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.SetType(exprT.Sel, joinedFnT)
 		} else {
 			funT := infer.GetTypeFn(expr.Fun)
-			ft := infer.env.GetFn("agl.Vec." + fnName)
-			assert(len(ft.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
-			want, got := types.ArrayType{Elt: ft.TypeParams[0].(types.GenericType).W}, idTArr
-			assertf(cmpTypes(want, got), "%s: cannot use %v as %v for %s", infer.Pos(exprT.Sel), got.GoStr(), want.GoStr(), fnName)
+			ft := infer.GetType(exprT.Sel).(types.FuncType)
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
 			for i, arg := range expr.Args {
