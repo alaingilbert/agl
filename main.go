@@ -100,7 +100,8 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := agl.NewInferrer(fset)
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
 	_ = spawnGoRunFromBytes([]byte(src))
@@ -122,7 +123,8 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := agl.NewInferrer(fset)
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
@@ -157,7 +159,8 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := parser2(string(by))
-	i := agl.NewInferrer(fset)
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	g := agl.NewGenerator(i.Env, f)
 	fmt.Println(g.Generate())

@@ -2,3 +2,5 @@
 cover.out
 vendor
 /agl_agl
+node_modules/
+language_server/agl-lsp
