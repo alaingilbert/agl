@@ -32,12 +32,18 @@ func (infer *Inferrer) InferFile(f *ast.File) {
 }
 
 type FileInferrer struct {
-	env         *Env
-	f           *ast.File
-	fset        *token.FileSet
-	PackageName string
-	returnType  types.Type
-	optType     types.Type
+	env             *Env
+	f               *ast.File
+	fset            *token.FileSet
+	PackageName     string
+	returnType      types.Type
+	optType         *OptTypeTmp
+	forceReturnType types.Type
+}
+
+type OptTypeTmp struct {
+	Pos  token.Pos
+	Type types.Type
 }
 
 func (infer *FileInferrer) sandboxed(clb func()) {
@@ -46,6 +52,12 @@ func (infer *FileInferrer) sandboxed(clb func()) {
 	infer.env = nenv
 	clb()
 	infer.env = old
+}
+
+func (infer *FileInferrer) withForceReturn(t types.Type, clb func()) {
+	infer.forceReturnType = t
+	clb()
+	infer.forceReturnType = nil
 }
 
 func (infer *FileInferrer) withEnv(clb func()) {
@@ -523,7 +535,7 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
 	if infer.optType != nil {
-		infer.tryConvertType(e, infer.optType)
+		infer.tryConvertType(e, infer.optType.Type)
 	}
 }
 
@@ -597,11 +609,19 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 }
 
 func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
+	if infer.env.GetType(expr) != nil {
+		return
+	}
 	switch expr.Kind {
 	case token.STRING:
 		infer.SetType(expr, types.StringType{})
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
+		if infer.optType != nil && infer.optType.Type != nil && infer.optType.Pos == expr.Pos() {
+			infer.SetType(expr, infer.optType.Type)
+		} else {
+			infer.SetType(expr, types.UntypedNumType{})
+		}
 	case token.CHAR:
 		infer.SetType(expr, types.CharType{})
 	default:
@@ -624,8 +644,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr.Args[0], fnT.GetParam(1))
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Reduce" {
-				r := infer.env.GetType2(expr.Args[0])
-				fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", arr.Elt).T("R", r)
+				fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", arr.Elt)
+				if infer.forceReturnType != nil {
+					fnT = fnT.T("R", infer.forceReturnType)
+				} else if r, ok := infer.env.GetType2(expr.Args[0]).(types.UntypedNumType); !ok {
+					fnT = fnT.T("R", r)
+				}
+				infer.SetType(call.Sel, fnT)
 				infer.SetType(expr.Args[1], fnT.Params[2])
 				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Find" {
@@ -755,7 +780,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				} else {
 					oArg = oParams[i]
 				}
-				infer.optType = oArg
+				infer.optType = &OptTypeTmp{Type: oArg, Pos: arg.Pos()}
 				infer.expr(arg)
 				infer.optType = nil
 				if v, ok := oArg.(types.EllipsisType); ok {
@@ -868,11 +893,16 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			}
 		} else if fnName == "Reduce" {
 			exprArg0 := expr.Args[0]
+			infer.optType = &OptTypeTmp{Type: infer.forceReturnType, Pos: exprArg0.Pos()}
 			infer.expr(exprArg0)
-			reduceFnT := infer.env.GetFn("agl.Vec.Reduce").T("T", eltT)
-			infer.SetType(exprT.Sel, reduceFnT)
+			infer.optType = nil
+			arg0T := infer.GetType(exprArg0)
+			reduceFnT := infer.env.GetType(exprT.Sel).(types.FuncType)
 			ft := reduceFnT.GetParam(2).(types.FuncType)
-			if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
+			if infer.forceReturnType != nil {
+				ft = ft.T("R", infer.forceReturnType)
+				assertf(cmpTypes(arg0T, infer.forceReturnType), "%s: type mismatch, want: %s, got %s", exprPos, infer.forceReturnType, arg0T)
+			} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 				ft = ft.T("R", eltT)
 			}
 			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
@@ -943,8 +973,8 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 }
 
 func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
-	if infer.optType != nil {
-		infer.SetType(expr, infer.optType)
+	if infer.optType != nil && infer.optType.Pos == expr.Pos() {
+		infer.SetType(expr, infer.optType.Type)
 	}
 	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
 	// implicit return
@@ -957,8 +987,8 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 
 func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 	infer.withEnv(func() {
-		if infer.optType != nil {
-			infer.SetType(expr, infer.optType)
+		if infer.optType != nil && infer.optType.Pos == expr.Pos() {
+			infer.SetType(expr, infer.optType.Type)
 		}
 		if t := infer.env.GetType(expr); t != nil {
 			for i, param := range t.(types.FuncType).Params {
@@ -1104,7 +1134,7 @@ func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {
 func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 	infer.exprs(expr.Values)
 	if infer.optType != nil {
-		expected := infer.optType.(types.TupleType).Elts
+		expected := infer.optType.Type.(types.TupleType).Elts
 		for i, x := range expr.Values {
 			if _, ok := infer.GetType(x).(types.UntypedNumType); ok {
 				infer.SetType(x, expected[i])
@@ -1153,18 +1183,26 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 func isNumericType(t types.Type) bool {
 	return TryCast[types.I64Type](t) ||
 		TryCast[types.I32Type](t) ||
-		//TryCast[types.I16Type](t) ||
-		//TryCast[types.I8Type](t) ||
+		TryCast[types.I16Type](t) ||
+		TryCast[types.I8Type](t) ||
 		TryCast[types.IntType](t) ||
-		//TryCast[types.U64Type](t) ||
-		//TryCast[types.U32Type](t) ||
-		//TryCast[types.U16Type](t) ||
-		TryCast[types.U8Type](t)
-	//TryCast[types.F64Type](t) ||
-	//TryCast[types.F32Type](t)
+		TryCast[types.U64Type](t) ||
+		TryCast[types.U32Type](t) ||
+		TryCast[types.U16Type](t) ||
+		TryCast[types.U8Type](t) ||
+		TryCast[types.F64Type](t) ||
+		TryCast[types.IntType](t) ||
+		TryCast[types.UintType](t) ||
+		TryCast[types.F32Type](t)
 }
 
 func cmpTypesLoose(a, b types.Type) bool {
+	if v, ok := a.(types.TypeType); ok {
+		a = v.W
+	}
+	if v, ok := b.(types.TypeType); ok {
+		b = v.W
+	}
 	if isNumericType(a) && TryCast[types.UntypedNumType](b) {
 		return true
 	}
@@ -1423,9 +1461,29 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	}
 	if len(stmt.Rhs) == 1 {
 		rhs := stmt.Rhs[0]
-		infer.expr(rhs)
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
+			var lhsWantedT types.Type
+			var lhsIdName string
+			switch v := lhs.(type) {
+			case *ast.Ident:
+				lhsIdName = v.Name
+				lhsWantedT = infer.env.Get(lhsIdName)
+			case *ast.IndexExpr:
+				lhsIdName = v.X.(*ast.Ident).Name
+				lhsWantedT = infer.env.Get(lhsIdName).(types.MapType).V
+			default:
+				panic("")
+			}
+			if lhsT := lhsWantedT; lhsT != nil {
+				infer.withForceReturn(lhsT, func() {
+					infer.expr(rhs)
+					rhsT := infer.GetType(rhs)
+					assertf(cmpTypesLoose(rhsT, lhsT), "return type %s does not match expected type %s", rhsT, lhsT)
+				})
+			} else {
+				infer.expr(rhs)
+			}
 			var lhsID *ast.Ident
 			switch v := lhs.(type) {
 			case *ast.Ident:
@@ -1448,6 +1506,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 		} else {
+			infer.expr(rhs)
 			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
 				for i, x := range rhs1.Values {
 					lhs := stmt.Lhs[i]
@@ -1496,7 +1555,7 @@ func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 }
 
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
-	infer.optType = infer.returnType
+	infer.optType = &OptTypeTmp{Type: infer.returnType, Pos: stmt.Result.Pos()}
 	infer.expr(stmt.Result)
 	infer.optType = nil
 }

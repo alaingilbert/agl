@@ -4066,6 +4066,35 @@ func main() {
 	tassert.PanicsWithError(t, "7:6: cannot use []int as []string for MyJoined", testCodeGenFn(src))
 }
 
+func TestCodeGen154(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	var a u8
+	a = arr.Reduce(0, { $0 + u8($1) })
+}`
+	expected := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	var a uint8
+	a = AglReduce(arr, 0, func(aglArg0 uint8, aglArg1 int) uint8 {
+		return aglArg0 + uint8(aglArg1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen155(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	var a u8
+	a = arr.Reduce(u16(0), { $0 + u8($1) })
+}`
+	tassert.PanicsWithError(t, "5:6: type mismatch, want: u8, got u16", testCodeGenFn(src))
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
