@@ -35,7 +35,27 @@
           "description": "Path to the AGL language server executable"
         }
       }
-    }
+    },
+    "colors": [
+      {
+        "id": "agl.comment.line",
+        "description": "Color for single-line comments",
+        "defaults": {
+          "dark": "#6A9955",
+          "light": "#008000",
+          "highContrast": "#008000"
+        }
+      },
+      {
+        "id": "agl.comment.block",
+        "description": "Color for block comments",
+        "defaults": {
+          "dark": "#6A9955",
+          "light": "#008000",
+          "highContrast": "#008000"
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
