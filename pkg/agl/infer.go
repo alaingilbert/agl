@@ -447,6 +447,9 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			returnT = r
 		}
 	}
+	if returnT == nil {
+		returnT = types.VoidType{}
+	}
 	fnName := decl.Name.Name
 	if newName, ok := overloadMapping[fnName]; ok {
 		fnName = newName
@@ -1055,9 +1058,13 @@ func (infer *FileInferrer) funcType(expr *ast.FuncType) {
 			}
 		}
 	}
+	returnT := infer.env.GetType(expr.Result)
+	if returnT == nil {
+		returnT = types.VoidType{}
+	}
 	ft := types.FuncType{
 		Params: paramsT,
-		Return: infer.env.GetType(expr.Result),
+		Return: returnT,
 	}
 	infer.SetType(expr, ft)
 }
