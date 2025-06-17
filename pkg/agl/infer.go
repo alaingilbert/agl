@@ -705,7 +705,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				if infer.forceReturnType != nil {
 					fnT = fnT.T("R", infer.forceReturnType)
 				} else if r, ok := infer.env.GetType2(expr.Args[0]).(types.UntypedNumType); !ok {
-					fnT = fnT.T("R", r)
+					noop(r) // TODO should add restriction on type R (cmp.Comparable?)
+					//fnT = fnT.T("R", r)
 				}
 				infer.SetType(call.Sel, fnT)
 				infer.SetType(expr.Args[1], fnT.Params[2])
@@ -954,9 +955,14 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			ft := reduceFnT.GetParam(2).(types.FuncType)
 			if infer.forceReturnType != nil {
 				ft = ft.T("R", infer.forceReturnType)
+				reduceFnT = reduceFnT.T("R", infer.forceReturnType)
 				assertf(cmpTypes(arg0T, infer.forceReturnType), "%s: type mismatch, want: %s, got %s", exprPos, infer.forceReturnType, arg0T)
 			} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 				ft = ft.T("R", eltT)
+				reduceFnT = reduceFnT.T("R", eltT)
+			} else {
+				ft = ft.T("R", arg0T)
+				reduceFnT = reduceFnT.T("R", arg0T)
 			}
 			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[1], ft)
@@ -966,6 +972,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
+			infer.SetTypeForce(exprT.Sel, reduceFnT)
+			infer.SetType(expr.Fun, reduceFnT)
+			infer.SetType(expr, reduceFnT.Return)
 		} else if fnName == "Find" {
 			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", eltT)
 			ft := findFnT.GetParam(1).(types.FuncType)
@@ -995,7 +1004,7 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 					genFn := ft.GetParam(i)
 					infer.SetType(argFn, genFn)
 					infer.expr(argFn)
-					concreteFn := infer.env.GetType(argFn)
+					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
 					for k, v := range m {
 						if el, ok := genericMapping[k]; ok {
