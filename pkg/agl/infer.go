@@ -668,6 +668,9 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	tmpFn := func(idT types.Type, call *ast.SelectorExpr) {
+		if starT, ok := idT.(types.StarType); ok {
+			idT = starT.X
+		}
 		fnName := call.Sel.Name
 		switch idTT := idT.(type) {
 		case types.ArrayType:
@@ -729,19 +732,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, t)
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
-			return
-		case types.StarType:
-			switch v := idTT.X.(type) {
-			case types.StructType:
-				t := infer.env.Get(fmt.Sprintf("%s.%s.%s", v.Pkg, call.Sel.Name, fnName))
-				p("???", t, v.Pkg, call.Sel.Name, fnName)
-				tr := t.(types.FuncType).Return
-				infer.SetType(call.Sel, idTT.X)
-				infer.SetType(call, tr)
-				infer.SetType(expr, tr)
-			default:
-				panic(fmt.Sprintf("%v", to(idTT.X)))
-			}
 			return
 		case types.EnumType:
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
