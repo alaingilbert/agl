@@ -911,7 +911,15 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
 			for i, arg := range expr.Args {
-				if argFn, ok := arg.(*ast.FuncLit); ok {
+				if argFn, ok := arg.(*ast.ShortFuncLit); ok { // TODO not working at all
+					infer.SetType(argFn, ft.GetParam(i))
+					infer.expr(argFn)
+					//ftt := infer.GetTypeFn(argFn)
+					//rT := ftt.Return
+					//infer.SetType(expr, types.ArrayType{Elt: rT})
+					//infer.SetType(exprT.Sel, funT.T("R", rT))
+					//infer.SetType(argFn, ftt)
+				} else if argFn, ok := arg.(*ast.FuncLit); ok {
 					infer.expr(argFn)
 					genFn := ft.GetParam(i)
 					concreteFn := infer.env.GetType(arg)
