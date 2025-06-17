@@ -165,7 +165,23 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("io.Copy", "func (dst Writer, src Reader) int64!")
 	env.DefineFnNative("io.Pipe", "func () (*PipeReader, *PipeWriter)")
 	env.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
-	env.Define(nil, "io.ReadCloser", types.InterfaceType{Name: "ReadCloser", Pkg: "io"})
+	readFn := parseFuncTypeFromStringNative("io.Read", "func (p []byte) int!", env)
+	ioReader := types.InterfaceType{
+		Pkg:  "io",
+		Name: "Reader",
+		Methods: []types.FieldType{
+			{Name: "Read", Typ: readFn},
+		},
+	}
+	closeFn := parseFuncTypeFromStringNative("io.Close", "func () !", env)
+	ioCloser := types.InterfaceType{
+		Pkg:  "io",
+		Name: "Closer",
+		Methods: []types.FieldType{
+			{Name: "Close", Typ: closeFn},
+		},
+	}
+	env.Define(nil, "io.ReadCloser", types.InterfaceType{Name: "ReadCloser", Pkg: "io", Methods: []types.FieldType{{Name: "Reader", Typ: ioReader}, {Name: "Closer", Typ: ioCloser}}})
 	env.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http", Fields: []types.FieldType{{Name: "Body", Typ: types.InterfaceType{Pkg: "io", Name: "ReadCloser"}}}})
 	env.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
 	env.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
