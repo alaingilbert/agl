@@ -4095,6 +4095,20 @@ func main() {
 	tassert.PanicsWithError(t, "5:6: type mismatch, want: u8, got u16", testCodeGenFn(src))
 }
 
+func TestCodeGen156(t *testing.T) {
+	src := `package main
+func main() {
+	defer func() {}()
+}`
+	expected := `package main
+func main() {
+	defer func() {
+	}()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"

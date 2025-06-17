@@ -650,7 +650,11 @@ func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 
 func (g *Generator) genFuncType(expr *ast.FuncType) string {
 	content1 := g.incrPrefix(func() string {
-		return g.genExpr(expr.Result)
+		if expr.Result != nil {
+			return g.genExpr(expr.Result)
+		} else {
+			return ""
+		}
 	})
 	var paramsStr, typeParamsStr string
 	if typeParams := expr.TypeParams; typeParams != nil {
