@@ -224,7 +224,8 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 	if ident, ok := node.(*ast.Ident); ok {
 		log.Printf("Found identifier: %s", ident.Name)
 		// Look up the symbol in the environment
-		if typ := doc.env.Get(ident.Name); typ != nil {
+		if info := doc.env.GetInfo(ident); info != nil {
+			typ := info.Type
 			log.Printf("Found type for %s: %s", ident.Name, typ.String())
 			return &lsp.Hover{
 				Contents: []lsp.MarkedString{
