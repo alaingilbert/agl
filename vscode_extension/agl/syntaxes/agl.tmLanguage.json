@@ -2,12 +2,32 @@
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
 	"name": "agl",
 	"patterns": [
+		{"include": "#comments"},
 		{"include": "#keywords"},
 		{"include": "#strings"},
 		{"include": "#types" },
 		{"include": "#functions"}
 	],
 	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.agl",
+					"match": "//.*$"
+				},
+				{
+					"name": "comment.block.agl",
+					"begin": "/\\*",
+					"end": "\\*/",
+					"patterns": [
+						{
+							"name": "comment.block.agl",
+							"match": "."
+						}
+					]
+				}
+			]
+		},
 		"types": {
 			"patterns": [{
 				"name": "storage.type.agl",
