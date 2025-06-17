@@ -749,9 +749,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	switch call := expr.Fun.(type) {
 	case *ast.SelectorExpr:
 		var exprFunT types.Type
+		var callXParent *Info
 		switch callXT := call.X.(type) {
 		case *ast.Ident:
 			exprFunT = infer.env.Get(callXT.Name)
+			callXParent = infer.env.GetNameInfo(callXT.Name)
 		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
@@ -759,7 +761,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
 		tmpFn(exprFunT, call)
-		infer.SetType(call.X, exprFunT)
+		infer.SetType2(callXParent, call.X, exprFunT)
 		infer.inferVecExtensions(exprFunT, call, expr)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
