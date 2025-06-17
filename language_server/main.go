@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"runtime/debug"
 
 	"agl/pkg/agl"
@@ -13,6 +14,7 @@ import (
 	"agl/pkg/parser"
 	"agl/pkg/scanner"
 	"agl/pkg/token"
+	"agl/pkg/types"
 
 	"github.com/sourcegraph/go-lsp"
 	"github.com/sourcegraph/jsonrpc2"
@@ -46,6 +48,9 @@ func (s *Server) Initialize(ctx context.Context, params lsp.InitializeParams) (l
 			},
 			DefinitionProvider: true,
 			HoverProvider:      true,
+			//CompletionProvider: &lsp.CompletionOptions{
+			//	TriggerCharacters: []string{"."},
+			//},
 		},
 	}, nil
 }
@@ -277,6 +282,62 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 	return nil, nil
 }
 
+func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPositionParams) (*lsp.CompletionList, error) {
+	uri := string(params.TextDocument.URI)
+	doc, ok := s.documents[uri]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %s", uri)
+	}
+
+	// Convert LSP position to Go token position
+	line := params.Position.Line + 1
+	column := params.Position.Character + 1
+
+	// Find the file in the file set
+	file := s.fset.File(doc.ast.Pos())
+	if file == nil {
+		return nil, nil
+	}
+
+	// Convert line/column to offset
+	offset := file.LineStart(line) + token.Pos(column-1)
+
+	// Find the node at the current position
+	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset))
+
+	// Get completions based on the current context
+	completions := s.getCompletions(doc, node, offset)
+
+	return &lsp.CompletionList{
+		IsIncomplete: false,
+		Items:        completions,
+	}, nil
+}
+
+func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) []lsp.CompletionItem {
+	var completions []lsp.CompletionItem
+	// If we're in a selector expression (e.g., "obj."), add method completions
+	log.Printf("??? %v %v", node, reflect.TypeOf(node))
+	if sel, ok := node.(*ast.SelectorExpr); ok {
+		if info := doc.env.GetInfo(sel.X); info != nil {
+			if typ := info.Type; typ != nil {
+				// Add method completions based on the type
+				// This is a simplified version - you'll want to add more type-specific completions
+				switch typ.(type) {
+				case types.ArrayType:
+					completions = append(completions,
+						lsp.CompletionItem{Label: "filter", Kind: lsp.CIKMethod, Detail: "Filter elements"},
+						lsp.CompletionItem{Label: "map", Kind: lsp.CIKMethod, Detail: "Transform elements"},
+						lsp.CompletionItem{Label: "reduce", Kind: lsp.CIKMethod, Detail: "Reduce elements"},
+					)
+				}
+			}
+		}
+	}
+
+	return completions
+}
+
 type handler struct {
 	server *Server
 	conn   *jsonrpc2.Conn
@@ -345,6 +406,14 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 			return
 		}
 		result, err = h.server.Hover(ctx, params)
+
+	//case "textDocument/completion":
+	//	var params lsp.TextDocumentPositionParams
+	//	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	//		conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+	//		return
+	//	}
+	//	result, err = h.server.Completion(ctx, params)
 
 	default:
 		conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)})
