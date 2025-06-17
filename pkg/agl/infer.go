@@ -754,7 +754,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				return
 			}
 		}
-		assertf(false, "Unresolved reference '%s', %v", fnName, to(idT))
+		assertf(false, "Unresolved reference '%s'", fnName)
 	}
 
 	switch call := expr.Fun.(type) {
