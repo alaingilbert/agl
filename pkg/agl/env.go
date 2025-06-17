@@ -181,7 +181,14 @@ func NewEnv(fset *token.FileSet) *Env {
 			{Name: "Close", Typ: closeFn},
 		},
 	}
-	ioReadCloser := types.InterfaceType{Name: "ReadCloser", Pkg: "io", Methods: []types.FieldType{{Name: "Reader", Typ: ioReader}, {Name: "Closer", Typ: ioCloser}}}
+	ioReadCloser := types.InterfaceType{
+		Pkg:  "io",
+		Name: "ReadCloser",
+		Methods: []types.FieldType{
+			{Name: "Reader", Typ: ioReader},
+			{Name: "Closer", Typ: ioCloser},
+		},
+	}
 	env.Define(nil, "io.ReadCloser", ioReadCloser)
 	env.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http", Fields: []types.FieldType{{Name: "Body", Typ: types.InterfaceType{Pkg: "io", Name: "ReadCloser"}}}})
 	env.Define(nil, "http.Response.Body", ioReadCloser)
