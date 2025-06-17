@@ -81,7 +81,7 @@ func (o OptionType) String() string { return "OptionType" }
 type TypeType struct{ W Type }
 
 func (t TypeType) GoStr() string  { return t.W.GoStr() }
-func (t TypeType) String() string { return fmt.Sprintf("TypeType(%v)", t.W) }
+func (t TypeType) String() string { return t.W.String() }
 
 type StringType struct{ W Type }
 
@@ -102,7 +102,7 @@ func (b BoolValue) GoStr() string {
 		return "false"
 	}
 }
-func (b BoolValue) String() string { return "BoolValue" }
+func (b BoolValue) String() string { return b.GoStr() }
 
 type BoolType struct{}
 
@@ -132,18 +132,18 @@ func (u UnderscoreType) String() string { return "_" }
 type NoneType struct{ W Type }
 
 func (n NoneType) GoStr() string  { return "NoneType" }
-func (n NoneType) String() string { return "NoneType" }
+func (n NoneType) String() string { return fmt.Sprintf("None[%s]", n.W.String()) }
 
 type SomeType struct{ W Type }
 
 func (s SomeType) GoStr() string  { return "SomeType" }
-func (s SomeType) String() string { return "SomeType" }
+func (s SomeType) String() string { return fmt.Sprintf("Some[%s]", s.W.String()) }
 
 type OkType struct{ W Type }
 
 func (o OkType) GoStr() string { return "OkType" }
 
-func (o OkType) String() string { return "OkType" }
+func (o OkType) String() string { return fmt.Sprintf("Ok[%s]", o.W.String()) }
 
 type ErrType struct {
 	W Type
@@ -152,13 +152,13 @@ type ErrType struct {
 
 func (e ErrType) GoStr() string { return "ErrType" }
 
-func (e ErrType) String() string { return "ErrType" }
+func (e ErrType) String() string { return fmt.Sprintf("Err[%s]", e.T.String()) }
 
 type PackageType struct{ Name, Path string }
 
 func (p PackageType) GoStr() string { return p.Name }
 
-func (p PackageType) String() string { return p.Name }
+func (p PackageType) String() string { return "package " + p.Name }
 
 type AnyType struct{}
 
