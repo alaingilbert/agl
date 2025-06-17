@@ -22,8 +22,8 @@ type Inferrer struct {
 	Env  *Env
 }
 
-func NewInferrer(fset *token.FileSet) *Inferrer {
-	return &Inferrer{fset: fset, Env: NewEnv(fset)}
+func NewInferrer(fset *token.FileSet, env *Env) *Inferrer {
+	return &Inferrer{fset: fset, Env: env}
 }
 
 func (infer *Inferrer) InferFile(f *ast.File) {

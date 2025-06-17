@@ -9,6 +9,10 @@
   "categories": [
     "Programming Languages"
   ],
+  "activationEvents": [
+    "onLanguage:agl"
+  ],
+  "main": "./out/extension.js",
   "contributes": {
     "languages": [{
       "id": "agl",
@@ -20,6 +24,36 @@
       "language": "agl",
       "scopeName": "source.agl",
       "path": "./syntaxes/agl.tmLanguage.json"
-    }]
+    }],
+    "configuration": {
+      "type": "object",
+      "title": "AGL Language Server",
+      "properties": {
+        "agl.languageServerPath": {
+          "type": "string",
+          "default": "agl-lsp",
+          "description": "Path to the AGL language server executable"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.100.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
   }
 }
