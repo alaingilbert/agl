@@ -223,15 +223,15 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 		if typ == nil {
 			return nil, nil
 		}
+		pos := s.fset.Position(node.Pos())
 		l := int(node.End() - node.Pos())
+		startPos := lsp.Position{Line: pos.Line - 1, Character: pos.Column - 1}
+		endPos := lsp.Position{Line: startPos.Line, Character: startPos.Character + l}
 		return &lsp.Hover{
 			Contents: []lsp.MarkedString{{Language: "agl", Value: typ.String()}},
 			Range: &lsp.Range{
-				Start: params.Position,
-				End: lsp.Position{
-					Line:      params.Position.Line,
-					Character: params.Position.Character + l,
-				},
+				Start: startPos,
+				End:   endPos,
 			},
 		}, nil
 	}
