@@ -202,15 +202,16 @@ type StructType struct {
 
 func (t StructType) GoStr() string { return t.Name }
 
-func (t StructType) String() string { return fmt.Sprintf("type %s struct", t.Name) }
+func (t StructType) String() string { return t.Name }
 
 type InterfaceType struct {
 	Name string
+	Pkg  string
 }
 
 func (i InterfaceType) GoStr() string { return i.Name }
 
-func (i InterfaceType) String() string { return fmt.Sprintf("type %s interface", i.Name) }
+func (i InterfaceType) String() string { return fmt.Sprintf("%s.%s", i.Pkg, i.Name) }
 
 type EnumType struct {
 	Name   string
@@ -220,7 +221,7 @@ type EnumType struct {
 
 func (e EnumType) GoStr() string { return e.Name }
 
-func (e EnumType) String() string { return fmt.Sprintf("type %s Enum", e.Name) }
+func (e EnumType) String() string { return e.Name }
 
 type EnumFieldType struct {
 	Name string
