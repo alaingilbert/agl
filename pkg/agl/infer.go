@@ -1128,7 +1128,9 @@ func (infer *FileInferrer) chanType(expr *ast.ChanType) {
 
 func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, types.StarType{X: infer.GetType(expr.X)})
+	if expr.Op == token.AND {
+		infer.SetType(expr, types.StarType{X: infer.GetType(expr.X)})
+	}
 }
 
 func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
