@@ -1369,7 +1369,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 	case types.PackageType:
 	default:
-		//panic(fmt.Sprintf("%v", to(selType)))
+		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
 	}
 }
 
