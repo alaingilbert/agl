@@ -707,6 +707,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			return
 		case types.InterfaceType:
 			return
+		case types.StarType:
+			return
 		case types.EnumType:
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
 			return
@@ -766,6 +768,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
+		case *ast.SelectorExpr:
+			infer.expr(callXT.X)
+			exprFunT = infer.GetType(callXT.X)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
@@ -1338,6 +1343,14 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 		infer.SetType(expr.X, v)
 		infer.SetType(expr, v.Elts[argIdx])
+	case types.StarType:
+		n := expr.X.(*ast.Ident).Name
+		exprXT := infer.env.Get(n)
+		infer.SetType(expr.X, exprXT)
+		infer.SetType(expr, exprXT)
+	case types.PackageType:
+	default:
+		//panic(fmt.Sprintf("%v", to(selType)))
 	}
 }
 
@@ -1662,6 +1675,7 @@ func (infer *FileInferrer) branchStmt(stmt *ast.BranchStmt) {
 }
 
 func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
+	infer.expr(stmt.Call)
 }
 
 func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
