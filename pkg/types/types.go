@@ -522,7 +522,11 @@ func (f FuncType) String() string {
 	if f.Params != nil {
 		var tmp1 []string
 		for _, param := range f.Params {
-			tmp1 = append(tmp1, param.String())
+			if param == nil {
+				tmp1 = append(tmp1, "nil")
+			} else {
+				tmp1 = append(tmp1, param.String())
+			}
 		}
 		paramsStr = strings.Join(tmp1, ", ")
 	}
