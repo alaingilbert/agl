@@ -1475,6 +1475,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
 					}
 				}
+			} else {
+				panic("")
 			}
 		}
 	} else {
