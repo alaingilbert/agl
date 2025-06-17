@@ -20,7 +20,8 @@ func parser2(src string) (*token.FileSet, *ast.File) {
 
 func testCodeGen(t *testing.T, src, expected string) {
 	fset, f := parser2(src)
-	i := NewInferrer(fset)
+	env := NewEnv(fset)
+	i := NewInferrer(fset, env)
 	i.InferFile(f)
 	got := NewGenerator(i.Env, f).Generate()
 	if got != expected {
@@ -31,7 +32,8 @@ func testCodeGen(t *testing.T, src, expected string) {
 func testCodeGenFn(src string) func() {
 	return func() {
 		fset, f := parser2(src)
-		i := NewInferrer(fset)
+		env := NewEnv(fset)
+		i := NewInferrer(fset, env)
 		i.InferFile(f)
 		NewGenerator(i.Env, f).Generate()
 	}
