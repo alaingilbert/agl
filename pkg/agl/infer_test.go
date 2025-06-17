@@ -1,5 +1,37 @@
 package agl
 
+import (
+	"testing"
+)
+
+func TestInfer1(t *testing.T) {
+	src := `package main
+func main() {
+	r := http.Get("")!
+	bod := r.Body
+	bod.Close()
+}
+`
+	fset, f := parser2(src)
+	env := NewEnv(fset)
+	i := NewInferrer(fset, env)
+	i.InferFile(f)
+	//tassert.Equal(t, 1, env.Get("bod"))
+}
+
+func TestInfer2(t *testing.T) {
+	src := `package main
+func main() {
+	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
+}
+`
+	fset, f := parser2(src)
+	env := NewEnv(fset)
+	i := NewInferrer(fset, env)
+	i.InferFile(f)
+	//tassert.Equal(t, 1, env.Get("bod"))
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
