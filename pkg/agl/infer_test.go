@@ -38,7 +38,7 @@ func TestInfer1(t *testing.T) {
 func main() {
 	r := http.Get("")!
 	bod := r.Body
-	voidT := bod.Close()
+	bod.Close()
 }
 `
 	fset, f := parser2(src)
@@ -46,9 +46,9 @@ func main() {
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
 	file := fset.File(1)
-	offset := file.LineStart(5) + token.Pos(2-1)
+	offset := file.LineStart(4) + token.Pos(2-1)
 	n := findNodeAtPosition(f, fset, fset.Position(offset))
-	tassert.Equal(t, types.VoidType{}, env.GetType(n))
+	tassert.Equal(t, "ReadCloser", env.GetType(n).(types.InterfaceType).Name)
 }
 
 func TestInfer2(t *testing.T) {
