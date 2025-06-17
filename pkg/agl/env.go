@@ -226,10 +226,10 @@ func (e *Env) CloneFull() *Env {
 }
 
 func (e *Env) Get(name string) types.Type {
-	if e.lookupTable[name] == nil {
-		return nil
+	if el, ok := e.lookupTable[name]; ok {
+		return el.Type
 	}
-	return e.lookupTable[name].Type
+	return nil
 }
 
 func (e *Env) GetNameInfo(name string) *Info {
@@ -255,8 +255,6 @@ func (e *Env) DefinePkg(name, path string) {
 }
 
 func (e *Env) Define(n ast.Node, name string, typ types.Type) {
-	//p("Define", name, typ)
-	//printCallers(3)
 	assertf(e.Get(name) == nil, "duplicate declaration of %s", name)
 	if _, ok := e.lookupTable[name]; !ok {
 		e.lookupTable[name] = &Info{}
