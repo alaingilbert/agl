@@ -764,6 +764,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr, fnT.Return)
 				return
 			}
+			assertf(false, "Unresolved reference '%s'", fnName)
+			return
 		case types.ResultType:
 			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}) {
 				fnT := infer.env.GetFn("agl.Result." + fnName)
@@ -777,8 +779,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr, fnT.Return)
 				return
 			}
+			assertf(false, "Unresolved reference '%s'", fnName)
+			return
+		default:
+			assertf(false, "Unresolved reference '%s'", fnName)
 		}
-		assertf(false, "Unresolved reference '%s'", fnName)
 	}
 
 	switch call := expr.Fun.(type) {
@@ -800,6 +805,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		tmpFn(exprFunT, call)
 		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
+		p("?", call.Sel)
 		infer.inferVecExtensions(exprFunT, call, expr)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
