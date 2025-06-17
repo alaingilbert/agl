@@ -1315,13 +1315,13 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
-	selType := infer.env.Get(expr.X.(*ast.Ident).Name)
-	switch v := selType.(type) {
+	exprXIdTRaw := infer.env.Get(expr.X.(*ast.Ident).Name)
+	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
-		for _, f := range v.Fields {
+		for _, f := range exprXIdT.Fields {
 			if f.Name == fieldName {
-				infer.SetType(expr.X, selType)
+				infer.SetType(expr.X, exprXIdT)
 				infer.SetType(expr, f.Typ)
 				return
 			}
@@ -1329,25 +1329,28 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	case types.EnumType:
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
-		validFields := make([]string, 0, len(v.Fields))
-		for _, f := range v.Fields {
+		validFields := make([]string, 0, len(exprXIdT.Fields))
+		for _, f := range exprXIdT.Fields {
 			validFields = append(validFields, f.Name)
 		}
 		assertf(InArray(fieldName, validFields), "%d: enum %s has no field %s", expr.Sel.Pos(), enumName, fieldName)
-		infer.SetType(expr.X, selType)
-		infer.SetType(expr, selType)
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr, exprXIdT)
 	case types.TupleType:
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
 			panic("tuple arg index must be int")
 		}
-		infer.SetType(expr.X, v)
-		infer.SetType(expr, v.Elts[argIdx])
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.StarType:
-		n := expr.X.(*ast.Ident).Name
-		exprXT := infer.env.Get(n)
-		infer.SetType(expr.X, exprXT)
-		infer.SetType(expr, exprXT)
+		structT := exprXIdT.X.(types.StructType)
+		structPkg := structT.Pkg
+		structName := structT.Name
+		selT := infer.env.Get(fmt.Sprintf("%s.%s.%s", structPkg, structName, expr.Sel.Name))
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.Sel, selT)
+		infer.SetType(expr, selT)
 	case types.PackageType:
 	default:
 		//panic(fmt.Sprintf("%v", to(selType)))
