@@ -1503,9 +1503,10 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 		}
 		if stmt.Value != nil {
 			name := stmt.Value.(*ast.Ident).Name
-			if _, ok := xT.(types.StringType); ok {
+			switch v := xT.(type) {
+			case types.StringType:
 				infer.env.Define(stmt.Value, name, types.I32Type{})
-			} else if v, ok := xT.(types.ArrayType); ok {
+			case types.ArrayType:
 				infer.env.Define(stmt.Value, name, v.Elt)
 			}
 		}
