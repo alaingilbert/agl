@@ -4606,6 +4606,76 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen176(t *testing.T) {
+	src := `package main
+
+import (
+	"fmt"
+	"math"
+)
+
+type Abser interface {
+	Abs() f64
+}
+
+func main() {
+	var a Abser
+	f := MyFloat(-math.Sqrt2)
+	v := Vertex{3, 4}
+
+	a = f  // a MyFloat implements Abser
+	a = &v // a *Vertex implements Abser
+
+	fmt.Println(a.Abs())
+}
+
+type MyFloat f64
+
+func (f MyFloat) Abs() f64 {
+	if f < 0 {
+		return f64(-f)
+	}
+	return f64(f)
+}
+
+type Vertex struct {
+	X, Y f64
+}
+
+func (v *Vertex) Abs() f64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}`
+	expected := `package main
+import "fmt"
+import "math"
+type Abser interface {
+	Abs() float64
+}
+func main() {
+	var a Abser
+	f := MyFloat(-math.Sqrt2)
+	v := Vertex{3, 4}
+	a = f
+	a = &v
+	fmt.Println(a.Abs())
+}
+type MyFloat float64
+func (f MyFloat) Abs() float64 {
+	if f < 0 {
+		return float64(-f)
+	}
+	return float64(f)
+}
+type Vertex struct {
+	X, Y float64
+}
+func (v *Vertex) Abs() float64 {
+	return math.Sqrt(v.X * v.X + v.Y * v.Y)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
