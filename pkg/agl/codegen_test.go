@@ -4930,6 +4930,33 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen183(t *testing.T) {
+	src := `package main
+import "fmt"
+type IPAddr [4]byte
+func main() {
+	hosts := map[string]IPAddr{
+		"loopback":  IPAddr{127, 0, 0, 1},
+		"googleDNS": IPAddr{8, 8, 8, 8},
+	}
+	for name, ip := range hosts {
+		fmt.Printf("%v: %v\n", name, ip)
+	}
+}
+`
+	expected := `package main
+import "fmt"
+type IPAddr []byte
+func main() {
+	hosts := map[string][]byte{"loopback": []byte{127, 0, 0, 1}, "googleDNS": []byte{8, 8, 8, 8}}
+	for name, ip := range hosts {
+		fmt.Printf("%v: %v\n", name, ip)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
