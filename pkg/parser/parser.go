@@ -2327,8 +2327,6 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 }
 
 func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
-	p.expect(token.LET)
-
 	var op token.Token
 	var ass *ast.AssignStmt
 	switch p.tok {
@@ -2377,7 +2375,7 @@ func (p *parser) parseIfStmt() ast.Stmt {
 
 	pos := p.expect(token.IF)
 
-	if p.tok == token.LET {
+	if p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME {
 		return p.parseIfLetStmt(pos)
 	}
 

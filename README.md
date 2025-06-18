@@ -92,14 +92,14 @@ func main() {
 }
 ```
 
-### `If let` to use a Option[T]/Result[T] value safely
+### `If Some(val) := ... {` to use a Option[T]/Result[T] value safely (works with `Ok`/`Err`/`Some`)
 
 ```go
 func maybeInt() int? {
     return Some(42)
 }
 func main() {
-    if let Some(num) := maybeInt() {
+    if Some(num) := maybeInt() {
         fmt.Println(num)
     }
 }
