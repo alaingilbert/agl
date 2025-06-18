@@ -4257,6 +4257,16 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen160_1(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	var r u16
+	r = arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
+}`
+	tassert.PanicsWithError(t, "5:6: type mismatch, want: u16, got u8", testCodeGenFn(src))
+}
+
 func TestCodeGen161(t *testing.T) {
 	src := `package main
 type TestStruct[T any] struct {
