@@ -432,11 +432,23 @@ func (f F64Type) String() string     { return "f64" }
 func (f F64Type) StringFull() string { return f.String() }
 
 type TupleType struct {
-	Name string // infer gives a name for the struct that will be generated
 	Elts []Type
 }
 
-func (t TupleType) GoStr() string { return t.Name }
+func (t TupleType) GoStr() string {
+	name := "AglTupleStruct_"
+	var tmp []string
+	for _, el := range t.Elts {
+		tmp = append(tmp, el.GoStr())
+	}
+	r := strings.NewReplacer(
+		"[", "_",
+		"]", "_",
+	)
+	tmpName := strings.Join(tmp, "_")
+	tmpName = r.Replace(tmpName)
+	return name + tmpName
+}
 func (t TupleType) String() string {
 	var tmp []string
 	for _, el := range t.Elts {
