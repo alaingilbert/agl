@@ -203,7 +203,9 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Call)
 
 	case *ReturnStmt:
-		Walk(v, n.Result)
+		if n.Result != nil {
+			Walk(v, n.Result)
+		}
 
 	case *BranchStmt:
 		if n.Label != nil {

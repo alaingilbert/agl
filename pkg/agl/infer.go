@@ -1796,9 +1796,11 @@ func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 }
 
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
-	infer.withOptType(stmt.Result, infer.returnType, func() {
-		infer.expr(stmt.Result)
-	})
+	if stmt.Result != nil {
+		infer.withOptType(stmt.Result, infer.returnType, func() {
+			infer.expr(stmt.Result)
+		})
+	}
 }
 
 func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {

@@ -1154,6 +1154,9 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
 }
 
 func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) (out string) {
+	if stmt.Result == nil {
+		return g.prefix + "return\n"
+	}
 	content1 := g.genExpr(stmt.Result)
 	return g.prefix + fmt.Sprintf("return %s\n", content1)
 }
