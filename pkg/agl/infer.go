@@ -85,7 +85,7 @@ func (infer *FileInferrer) GetTypeFn(n ast.Node) types.FuncType {
 func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 	t := infer.env.GetType(n)
 	if t == nil {
-		panic(fmt.Sprintf("%s type not found for %v %v", infer.env.fset.Position(n.Pos()), n, to(n)))
+		panic(fmt.Sprintf("%s type not found for %v %v", infer.Pos(n), n, to(n)))
 	}
 	return t
 }
