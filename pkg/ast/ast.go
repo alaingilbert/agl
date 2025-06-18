@@ -961,12 +961,25 @@ type (
 		Body  []Stmt    // statement list; or nil
 	}
 
+	MatchClause struct {
+		Case  token.Pos // position of "case" or "default" keyword
+		Expr  Expr      // expression; nil means default case
+		Colon token.Pos // position of ":"
+		Body  []Stmt    // statement list; or nil
+	}
+
 	// A SwitchStmt node represents an expression switch statement.
 	SwitchStmt struct {
 		Switch token.Pos  // position of "switch" keyword
 		Init   Stmt       // initialization statement; or nil
 		Tag    Expr       // tag expression; or nil
 		Body   *BlockStmt // CaseClauses only
+	}
+
+	MatchStmt struct {
+		Match token.Pos
+		Init  Stmt
+		Body  *BlockStmt
 	}
 
 	// A TypeSwitchStmt node represents a type switch statement.
@@ -1011,6 +1024,19 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (m MatchClause) Pos() token.Pos { return m.Case }
+func (m MatchClause) End() token.Pos {
+	if n := len(m.Body); n > 0 {
+		return m.Body[n-1].End()
+	}
+	return m.Colon + 1
+}
+func (m MatchClause) stmtNode() {}
+
+func (m MatchStmt) Pos() token.Pos { return m.Match }
+func (m MatchStmt) End() token.Pos { return m.Body.End() }
+func (m MatchStmt) stmtNode()      {}
 
 func (s IfLetStmt) Pos() token.Pos {
 	return s.If
