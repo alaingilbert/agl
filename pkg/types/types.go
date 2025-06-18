@@ -250,7 +250,13 @@ func (s StructType) GoStr() string { return s.Name }
 
 func (s StructType) String() string { return s.Name }
 
-func (s StructType) StringFull() string { return fmt.Sprintf("%s.%s", s.Pkg, s.Name) }
+func (s StructType) StringFull() string {
+	out := s.Name
+	if s.Pkg != "" {
+		out += "." + s.Pkg
+	}
+	return out
+}
 
 type InterfaceType struct {
 	Name    string
@@ -260,7 +266,13 @@ type InterfaceType struct {
 
 func (i InterfaceType) GoStr() string { return i.Name }
 
-func (i InterfaceType) StringFull() string { return fmt.Sprintf("%s.%s", i.Pkg, i.Name) }
+func (i InterfaceType) StringFull() string {
+	out := i.Name
+	if i.Pkg != "" {
+		out += "." + i.Pkg
+	}
+	return out
+}
 
 func (i InterfaceType) String() string { return fmt.Sprintf("%s", i.Name) }
 
