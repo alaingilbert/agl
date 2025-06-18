@@ -963,6 +963,7 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			for k, v := range genericMapping {
 				ft = ft.ReplaceGenericParameter(k, v)
 			}
+			ft.Recv = []types.Type{idTArr}
 			infer.SetType(exprT.Sel, ft)
 			infer.SetType(expr.Fun, ft)
 			infer.SetType(expr, ft.Return)
