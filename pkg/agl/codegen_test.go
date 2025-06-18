@@ -4427,6 +4427,35 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen167(t *testing.T) {
+	src := `package main
+func test(t (int, bool)) (int, bool) {
+    t.0 += 1
+    return t
+}
+func main() {
+    t1 := (1, true)
+    t2 := test(t1)
+    fmt.Println(t2)
+}`
+	expected := `package main
+func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+	t.Arg0 += 1
+	return t
+}
+type AglTupleStruct_int_bool struct {
+	Arg0 int
+	Arg1 bool
+}
+func main() {
+	t1 := AglTupleStruct_int_bool{Arg0: 1, Arg1: true}
+	t2 := test(t1)
+	fmt.Println(t2)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
