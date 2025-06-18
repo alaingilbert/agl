@@ -155,6 +155,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
 	env.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
 	env.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
+	env.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
 	env.DefineFnNative("math.Sqrt", "func (x float64) float64")
 	env.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	env.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
