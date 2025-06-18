@@ -269,7 +269,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.Ident:
 		name := spec.Name
 		typ := infer.env.GetType2(t)
-		infer.env.Define(name, name.Name, types.TypeType{W: types.CustomType{W: typ}})
+		infer.env.Define(name, name.Name, types.TypeType{W: types.CustomType{Name: name.Name, W: typ}})
 	case *ast.StructType:
 		var fields []types.FieldType
 		if t.Fields != nil {
