@@ -310,14 +310,14 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 }
 
 func (infer *FileInferrer) interfaceType(name *ast.Ident, e *ast.InterfaceType) {
+	infer.env.Define(name, name.Name, types.InterfaceType{Name: name.Name})
 	if e.Methods.List != nil {
 		for _, f := range e.Methods.List {
 			for _, n := range f.Names {
-				noop(n)
+				infer.env.Define(name, name.Name+"."+n.Name, funcTypeToFuncType("", f.Type.(*ast.FuncType), infer.env, false))
 			}
 		}
 	}
-	infer.env.Define(name, name.Name, types.InterfaceType{Name: name.Name})
 }
 
 func (infer *FileInferrer) enumType(name *ast.Ident, e *ast.EnumType) {
@@ -785,7 +785,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr, toReturn)
 		case types.InterfaceType:
-			t := infer.env.Get(fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName))
+			name := fmt.Sprintf("%s.%s", idTT.Name, fnName)
+			if idTT.Pkg != "" {
+				name = idTT.Pkg + "." + name
+			}
+			t := infer.env.Get(name)
 			tr := t.(types.FuncType).Return
 			infer.SetType(call.Sel, t)
 			infer.SetType(call, tr)
