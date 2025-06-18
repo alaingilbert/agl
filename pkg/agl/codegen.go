@@ -877,7 +877,13 @@ func suffixIf(s, suffix string) string {
 }
 
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
-	content := g.genExpr(expr.Elt)
+	var content string
+	switch v := expr.Elt.(type) {
+	case *ast.TupleExpr:
+		content = g.env.GetType(v).GoStr()
+	default:
+		content = g.genExpr(expr.Elt)
+	}
 	return fmt.Sprintf("[]%s", content)
 }
 
@@ -944,7 +950,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	structName := g.env.GetType(expr).(types.TupleType).GoStr()
 	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	for i, x := range expr.Values {
-		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType(x).GoStr())
+		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType2(x).GoStr())
 	}
 	structStr += fmt.Sprintf("}\n")
 	g.tupleStructs[structName] = structStr
