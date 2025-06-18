@@ -815,10 +815,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				}
 				got := infer.GetType(arg)
 				if oArgT, ok := oArg.(types.IndexType); ok {
-					p("BEFORE", oArg, oArgT.X, oArgT.Index)
 					oArg = oArgT.X
 				}
-				p("?", arg, oArg, to(oArg), got, to(got))
 				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 			}
 		default:
@@ -1635,7 +1633,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
-			p("?1", rhs, to(rhs))
 			rhsT := infer.GetType(rhs)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
