@@ -1689,7 +1689,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.withForceReturn(lhsT, func() {
 					infer.expr(rhs)
 					rhsT := infer.GetType(rhs)
-					assertf(cmpTypesLoose(rhsT, lhsT), "return type %s does not match expected type %s", rhsT, lhsT)
+					assertf(cmpTypesLoose(rhsT, lhsT), "%s: return type %s does not match expected type %s", infer.Pos(lhs), rhsT, lhsT)
 				})
 			} else {
 				infer.expr(rhs)
