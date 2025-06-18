@@ -507,7 +507,19 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 		} else {
 			r := decl.Recv.List[0]
 			infer.expr(r.Type)
-			structName := infer.GetType(r.Type).(types.StructType).Name
+			var structName string
+			rT := infer.GetType(r.Type)
+			if v, ok := rT.(types.StarType); ok {
+				rT = v.X
+			}
+			switch v := rT.(type) {
+			case types.StructType:
+				structName = v.Name
+			case types.CustomType:
+				structName = v.W.GoStr()
+			default:
+				panic(fmt.Sprintf("%v", to(rT)))
+			}
 			outEnv.Define(decl.Name, fmt.Sprintf("%s.%s", structName, fnName), ft)
 		}
 	}
