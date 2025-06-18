@@ -4676,6 +4676,41 @@ func (v *Vertex) Abs() float64 {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen177(t *testing.T) {
+	src := `package main
+import "fmt"
+type I interface {
+	M()
+}
+type T struct {
+	S string
+}
+func (t T) M() {
+	fmt.Println(t.S)
+}
+func main() {
+	var i I = T{"hello"}
+	i.M()
+}`
+	expected := `package main
+import "fmt"
+type I interface {
+	M()
+}
+type T struct {
+	S string
+}
+func (t T) M() {
+	fmt.Println(t.S)
+}
+func main() {
+	var i I = T{"hello"}
+	i.M()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
