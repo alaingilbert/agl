@@ -5154,7 +5154,7 @@ func main() {
 			err := tmpErr
 			fmt.Printf("err = %v", err)
 			if err == io.EOF {
-				break 
+				break
 			}
 		}
 	}
