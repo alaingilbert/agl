@@ -317,7 +317,6 @@ func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPosition
 func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) []lsp.CompletionItem {
 	var completions []lsp.CompletionItem
 	// If we're in a selector expression (e.g., "obj."), add method completions
-	log.Printf("??? %v %v", node, reflect.TypeOf(node))
 	if sel, ok := node.(*ast.SelectorExpr); ok {
 		if info := doc.env.GetInfo(sel.X); info != nil {
 			if typ := info.Type; typ != nil {

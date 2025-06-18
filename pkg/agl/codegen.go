@@ -258,6 +258,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genOrContinueExpr(expr)
 	case *ast.OrReturnExpr:
 		return g.genOrReturn(expr)
+	case *ast.IndexListExpr:
+		return g.genIndexListType(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -479,6 +481,12 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 	before += g.prefix + "}\n"
 	g.before = append(g.before, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s)", varName)
+}
+
+func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
+	content1 := g.genExpr(expr.X)
+	content2 := g.genExprs(expr.Indices)
+	return fmt.Sprintf("%s[%s]", content1, content2)
 }
 
 func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {
