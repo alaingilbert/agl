@@ -4518,6 +4518,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen172(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string](int, int){"a": (1, 2)}
+}`
+	expected := `package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func main() {
+	m := map[string]AglTupleStruct_int_int{"a": AglTupleStruct_int_int{Arg0: 1, Arg1: 2}}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
