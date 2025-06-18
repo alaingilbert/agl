@@ -2739,7 +2739,7 @@ func testSome() int? {
 	return Some(42)
 }
 func main() {
-	if let Some(a) := testSome() {
+	if Some(a) := testSome() {
 		fmt.Println(a)
 	}
 }
@@ -2764,7 +2764,7 @@ func testOk() int! {
 	return Ok(42)
 }
 func main() {
-	if let Ok(a) := testOk() {
+	if Ok(a) := testOk() {
 		fmt.Println(a)
 	}
 }
@@ -2789,7 +2789,7 @@ func testOk() int! {
 	return Err("error")
 }
 func main() {
-	if let Err(e) := testOk() {
+	if Err(e) := testOk() {
 		fmt.Println(e)
 	}
 }
@@ -2814,12 +2814,12 @@ func testSome() int? {
    return Some(42)
 }
 func main() {
-   if let Err(a) := testSome() {
+   if Err(a) := testSome() {
        fmt.Println("test", a)
    }
 }
 `
-	tassert.PanicsWithError(t, "6:15: try to destructure a non-Result type into an ResultType", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "6:11: try to destructure a non-Result type into an ResultType", testCodeGenFn(src))
 }
 
 func TestCodeGen103(t *testing.T) {
@@ -2828,12 +2828,12 @@ func testResult() int! {
    return Ok(42)
 }
 func main() {
-   if let Some(a) := testResult() {
+   if Some(a) := testResult() {
        fmt.Println("test", a)
    }
 }
 `
-	tassert.PanicsWithError(t, "6:16: try to destructure a non-Option type into an OptionType", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "6:12: try to destructure a non-Option type into an OptionType", testCodeGenFn(src))
 }
 
 func TestCodeGen104(t *testing.T) {
@@ -5001,7 +5001,7 @@ func run() ! {
 	return Err(&MyError{time.Now(), "it didn't work"})
 }
 func main() {
-    if let Err(err) := run() {
+    if Err(err) := run() {
 		fmt.Println(err)
 	}
 }`
@@ -5046,7 +5046,7 @@ func run() ! {
 }
 func main() {
 	res := run()
-    if let Err(err) := res {
+    if Err(err) := res {
 		fmt.Println(err)
 	}
 }`
