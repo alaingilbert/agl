@@ -1317,6 +1317,18 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 }
 
 func cmpTypesLoose(a, b types.Type) bool {
+	if v, ok := a.(types.StarType); ok {
+		a = v.X
+	}
+	if v, ok := b.(types.StarType); ok {
+		b = v.X
+	}
+	if v, ok := a.(types.CustomType); ok {
+		a = v.W
+	}
+	if v, ok := b.(types.CustomType); ok {
+		b = v.W
+	}
 	if v, ok := a.(types.TypeType); ok {
 		a = v.W
 	}
