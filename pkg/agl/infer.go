@@ -269,6 +269,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.Ident:
 		name := spec.Name
 		typ := infer.env.GetType2(t)
+		assertf(typ != nil, "%s: type not found '%s'", infer.Pos(name), t)
 		infer.env.Define(name, name.Name, types.TypeType{W: types.CustomType{Name: name.Name, W: typ}})
 	case *ast.StructType:
 		var fields []types.FieldType
@@ -361,7 +362,12 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 		fnName = newName
 	}
 	if decl.Recv != nil {
-		fnName = decl.Recv.List[0].Names[0].Name + "." + fnName
+		t1 := decl.Recv.List[0].Type
+		if v, ok := t1.(*ast.StarExpr); ok {
+			t1 = v.X
+		}
+		recvTStr := infer.env.GetType2(t1).GoStr()
+		fnName = recvTStr + "." + fnName
 	}
 	infer.env.Define(decl.Name, fnName, t)
 }
@@ -504,23 +510,6 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	if decl.Recv != nil {
 		if vecExt {
 			outEnv.Define(decl.Name, fmt.Sprintf("agl.Vec.%s", fnName), ft)
-		} else {
-			r := decl.Recv.List[0]
-			infer.expr(r.Type)
-			var structName string
-			rT := infer.GetType(r.Type)
-			if v, ok := rT.(types.StarType); ok {
-				rT = v.X
-			}
-			switch v := rT.(type) {
-			case types.StructType:
-				structName = v.Name
-			case types.CustomType:
-				structName = v.W.GoStr()
-			default:
-				panic(fmt.Sprintf("%v", to(rT)))
-			}
-			outEnv.Define(decl.Name, fmt.Sprintf("%s.%s", structName, fnName), ft)
 		}
 	}
 	return ft
@@ -772,6 +761,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		fnName := call.Sel.Name
 		switch idTT := exprFunT.(type) {
 		case types.ArrayType:
+		case types.CustomType:
+			name := fmt.Sprintf("%s.%s", idTT.Name, fnName)
+			t := infer.env.Get(name)
+			tr := t.(types.FuncType).Return
+			infer.SetType(call.Sel, t)
+			infer.SetType(call, tr)
+			infer.SetType(expr, tr)
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			if idTT.Pkg != "" {
