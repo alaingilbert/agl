@@ -1004,8 +1004,15 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 			content1 := g.genEnumType(spec.Name.Name, v)
 			out += g.prefix + content1 + "\n"
 		} else {
+			var typeParamsStr string
+			if typeParams := spec.TypeParams; typeParams != nil {
+				typeParamsStr = g.joinList(spec.TypeParams)
+				if typeParamsStr != "" {
+					typeParamsStr = "[" + typeParamsStr + "]"
+				}
+			}
 			content1 := g.genExpr(spec.Type)
-			out += g.prefix + "type " + spec.Name.Name + " " + content1 + "\n"
+			out += g.prefix + "type " + spec.Name.Name + typeParamsStr + " " + content1 + "\n"
 		}
 	case *ast.ImportSpec:
 		if spec.Name != nil {
