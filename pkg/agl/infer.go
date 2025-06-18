@@ -805,9 +805,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.OptionType:
 			if InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}) {
 				fnT := infer.env.GetFn("agl.Option." + fnName)
-				if fnName == "UnwrapOr" {
-					fnT = fnT.T("T", idTT.W)
-				} else if fnName == "Unwrap" {
+				if fnName == "Unwrap" || fnName == "UnwrapOr" {
 					fnT = fnT.T("T", idTT.W)
 				}
 				infer.SetType(expr, fnT.Return)
@@ -817,9 +815,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.ResultType:
 			if InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}) {
 				fnT := infer.env.GetFn("agl.Result." + fnName)
-				if fnName == "UnwrapOr" {
-					fnT = fnT.T("T", idTT.W)
-				} else if fnName == "Unwrap" {
+				if fnName == "Unwrap" || fnName == "UnwrapOr" {
 					fnT = fnT.T("T", idTT.W)
 				} else if fnName == "Err" {
 					panic("user cannot call Err")
