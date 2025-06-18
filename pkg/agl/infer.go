@@ -696,6 +696,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.typeSwitchStmt(stmt)
 	case *ast.EmptyStmt:
 		infer.emptyStmt(stmt)
+	case *ast.MatchStmt:
+		infer.matchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -1937,6 +1939,10 @@ func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
 }
 
 func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
+}
+
+func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
+	infer.stmt(stmt.Init)
 }
 
 func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
