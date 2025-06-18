@@ -483,12 +483,6 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 	return fmt.Sprintf("AglIdentity(%s)", varName)
 }
 
-func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
-	content1 := g.genExpr(expr.X)
-	content2 := g.genExprs(expr.Indices)
-	return fmt.Sprintf("%s[%s]", content1, content2)
-}
-
 func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {
 	return fmt.Sprintf("%s%s", expr.Op.String(), g.genExpr(expr.X))
 }
@@ -685,6 +679,12 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 func (g *Generator) genIndexExpr(expr *ast.IndexExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Index)
+	return fmt.Sprintf("%s[%s]", content1, content2)
+}
+
+func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
+	content1 := g.genExpr(expr.X)
+	content2 := g.genExprs(expr.Indices)
 	return fmt.Sprintf("%s[%s]", content1, content2)
 }
 
