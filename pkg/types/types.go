@@ -1,6 +1,7 @@
 package types
 
 import (
+	"agl/pkg/utils"
 	"fmt"
 	"reflect"
 	"slices"
@@ -657,9 +658,13 @@ func (f FuncType) String() string {
 	}
 	if result := f.Return; result != nil {
 		if _, ok := result.(VoidType); !ok {
-			val := result.StringFull()
-			if val != "" {
-				resultStr = " " + val
+			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
+				resultStr = " !"
+			} else {
+				val := result.StringFull()
+				if val != "" {
+					resultStr = " " + val
+				}
 			}
 		}
 	}
