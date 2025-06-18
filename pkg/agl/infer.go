@@ -1359,8 +1359,8 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.AnyType](a) || TryCast[types.AnyType](b) {
 		return true
 	}
-	if TryCast[types.BoolType](a) || TryCast[types.BoolType](b) {
-		return true
+	if TryCast[types.BoolType](a) && TryCast[types.BoolType](b) {
+		return a == b
 	}
 	if TryCast[types.MapType](a) && TryCast[types.MapType](b) {
 		aa := MustCast[types.MapType](a)
