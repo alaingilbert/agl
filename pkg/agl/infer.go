@@ -360,6 +360,9 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 	if newName, ok := overloadMapping[fnName]; ok {
 		fnName = newName
 	}
+	if decl.Recv != nil {
+		fnName = decl.Recv.List[0].Names[0].Name + "." + fnName
+	}
 	infer.env.Define(decl.Name, fnName, t)
 }
 
