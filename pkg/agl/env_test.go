@@ -29,3 +29,9 @@ func Test4(t *testing.T) {
 	tt := env.Get("io.ReadCloser.Close")
 	tassert.Equal(t, "func Close() !", tt.String())
 }
+
+//func Test5(t *testing.T) {
+//	env := NewEnv(nil)
+//	tt := parseFuncTypeFromString("Test", "func (a (int, bool)) (int, bool)", env)
+//	tassert.Equal(t, "func Test(a AglTupleStruct_int_bool) AglTupleStruct_int_bool", tt.GoStr())
+//}

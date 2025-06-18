@@ -940,7 +940,7 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
 
 func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	_ = g.genExprs(expr.Values)
-	structName := g.env.GetType(expr).(types.TupleType).Name
+	structName := g.env.GetType(expr).(types.TupleType).GoStr()
 	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	for i, x := range expr.Values {
 		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType(x).GoStr())

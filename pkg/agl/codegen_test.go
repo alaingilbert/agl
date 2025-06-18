@@ -912,13 +912,13 @@ func main() {
 }
 `
 	expected := `package main
-type AglTupleStruct1 struct {
+type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
 }
 func main() {
-	res := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	res := AglTupleStruct_int_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 	AglAssert(res.Arg0 == 1, "assert failed line 4")
 	AglAssert(res.Arg1 == "hello", "assert failed line 5")
 	AglAssert(res.Arg2 == true, "assert failed line 6")
@@ -937,13 +937,13 @@ func main() {
 }
 `
 	expected := `package main
-type AglTupleStruct1 struct {
+type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
 }
 func main() {
-	aglVar1 := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	aglVar1 := AglTupleStruct_int_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 	a, b, c := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
 	AglAssert(a == 1, "assert failed line 4")
 	AglAssert(b == "hello", "assert failed line 5")
@@ -966,13 +966,13 @@ func main() {
 }
 `
 	expected := `package main
-type AglTupleStruct1 struct {
+type AglTupleStruct_uint8_string_bool struct {
 	Arg0 uint8
 	Arg1 string
 	Arg2 bool
 }
-func testTuple() AglTupleStruct1 {
-	return AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+func testTuple() AglTupleStruct_uint8_string_bool {
+	return AglTupleStruct_uint8_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 }
 func main() {
 	res := testTuple()
@@ -3043,7 +3043,7 @@ func Make_IpAddr_v6(arg0 string) IpAddr {
 	return IpAddr{tag: IpAddr_v6, v6_0: arg0}
 }
 
-type AglTupleStruct1 struct {
+type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
@@ -3052,7 +3052,7 @@ func main() {
 	addr1 := Make_IpAddr_v4(127, 0, 0, 1)
 	aglVar1 := addr1
 	a, b, c, d := aglVar1.v4_0, aglVar1.v4_1, aglVar1.v4_2, aglVar1.v4_3
-	tuple := AglTupleStruct1{Arg0: 1, Arg1: "hello", Arg2: true}
+	tuple := AglTupleStruct_int_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 	aglVar2 := tuple
 	e, f, g := aglVar2.Arg0, aglVar2.Arg1, aglVar2.Arg2
 	fmt.Println(a, b, c, d, e, f, g)
@@ -4355,6 +4355,66 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+//func TestCodeGen164(t *testing.T) {
+//	src := `package main
+//func test(t (int, bool)) (int, bool) { return t }
+//func main() {
+//	t1 := (int(1), true)
+//	t2 := (int(2), false)
+//	test(t1)
+//	test(t2)
+//}`
+//	expected := `package main
+//type AglTupleStruct_int_bool struct {
+//	Arg0 int
+//	Arg1 bool
+//}
+//func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+//}
+//func main() {
+//	t1 := AglTupleStruct_int_bool{Arg0: int(1), Arg1: true}
+//	t2 := AglTupleStruct_int_bool{Arg0: int(2), Arg1: false}
+//	test(t1)
+//	test(t2)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+//
+//func TestCodeGen165(t *testing.T) {
+//	src := `package main
+//func test(t (int, bool)) (int, bool) { return t }
+//func main() {
+//	t1 := (int(1), true)
+//	t2 := (int(2), false)
+//	arr := [](int, bool){ (1, true), (2, false) }
+//	test(t1)
+//	test(t2)
+//	for _, t := range arr {
+//		test(t)
+//	}
+//}`
+//	expected := `package main
+//type AglTupleStruct1 struct {
+//	Arg0 int
+//	Arg1 bool
+//}
+//func test(t AglTupleStruct1) AglTupleStruct1 {
+//}
+//func main() {
+//	t1 := AglTupleStruct1{Arg0: int(1), Arg1: true}
+//	t2 := AglTupleStruct1{Arg0: int(2), Arg1: false}
+//	arr := []AglTupleStruct1{{Arg0: 1, Arg1: true}, {Arg0: 1, Arg1: false}}
+//	test(t1)
+//	test(t2)
+//	for _, t := range arr {
+//		test(t)
+//	}
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main

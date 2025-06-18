@@ -1266,7 +1266,7 @@ func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 		for _, v := range expr.Values {
 			elts = append(elts, infer.GetType(v))
 		}
-		infer.SetType(expr, types.TupleType{Name: "AglTupleStruct1", Elts: elts})
+		infer.SetType(expr, types.TupleType{Elts: elts})
 	}
 }
 
