@@ -1155,6 +1155,7 @@ func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
 
 func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
 	infer.expr(expr.X)
+	// turn `Err("error")` into `Err(errors.New("error"))`
 	if v, ok := expr.X.(*ast.BasicLit); ok && v.Kind == token.STRING {
 		expr.X = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
 	}
