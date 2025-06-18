@@ -856,12 +856,16 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
+			filterFnT.Recv = []types.Type{types.ArrayType{Elt: idTArr.Elt}}
+			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
 			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTArr.Elt)
 			clbFnT := mapFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
+			mapFnT.Recv = []types.Type{types.ArrayType{Elt: idTArr.Elt}}
+			mapFnT.Params = mapFnT.Params[1:]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
@@ -895,17 +899,23 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
+			findFnT.Recv = []types.Type{types.ArrayType{Elt: idTArr.Elt}}
+			findFnT.Params = findFnT.Params[1:]
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if fnName == "Sum" {
 			sumFnT := infer.env.GetFn("agl.Vec.Sum").T("T", idTArr.Elt)
+			sumFnT.Recv = []types.Type{types.ArrayType{Elt: idTArr.Elt}}
+			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Joined" {
-			fnT := infer.env.GetFn("agl.Vec.Joined")
-			assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
-			infer.SetType(expr, fnT.Return)
 			joinedFnT := infer.env.GetFn("agl.Vec.Joined")
+			param0 := joinedFnT.Params[0]
+			assertf(cmpTypes(idT, param0), "type mismatch, wants: %s, got: %s", param0, idT)
+			infer.SetType(expr, joinedFnT.Return)
+			joinedFnT.Recv = []types.Type{param0}
+			joinedFnT.Params = joinedFnT.Params[1:]
 			infer.SetType(exprT.Sel, joinedFnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
@@ -999,6 +1009,8 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 		assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 	}
+	reduceFnT.Recv = []types.Type{types.ArrayType{Elt: eltT}}
+	reduceFnT.Params = reduceFnT.Params[1:]
 	infer.SetTypeForce(exprFun.Sel, reduceFnT)
 	infer.SetType(expr.Fun, reduceFnT)
 	infer.SetType(expr, reduceFnT.Return)
