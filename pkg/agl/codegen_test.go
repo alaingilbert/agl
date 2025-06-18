@@ -4456,6 +4456,36 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen168(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	arr[1] = 42
+}`
+	expected := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	arr[1] = 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen169(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	m["a"] = 42
+}`
+	expected := `package main
+func main() {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	m["a"] = 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
