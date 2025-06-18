@@ -520,7 +520,11 @@ func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) (out string) {
 }
 
 func (g *Generator) genBranchStmt(expr *ast.BranchStmt) (out string) {
-	out += g.prefix + expr.Tok.String() + " " + g.genExpr(expr.Label) + "\n"
+	out += g.prefix + expr.Tok.String()
+	if expr.Label != nil {
+		out += " " + g.genExpr(expr.Label)
+	}
+	out += "\n"
 	return
 }
 
