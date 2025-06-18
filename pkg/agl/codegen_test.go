@@ -5112,6 +5112,57 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen188(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"io"
+	"strings"
+)
+func main() {
+	r := strings.NewReader("Hello, Reader!")
+	b := make([]byte, 8)
+	for {
+		match r.Read(b) {
+		case Ok(n):
+			fmt.Printf("n = %v b = %v\n", n, b)
+			fmt.Printf("b[:n] = %q\n", b[:n])
+		case Err(err):
+			fmt.Printf("err = %v", err)
+			if err == io.EOF {
+				break
+			}
+		}
+	}
+}
+`
+	expected := `package main
+import "fmt"
+import "io"
+import "strings"
+func main() {
+	r := strings.NewReader("Hello, Reader!")
+	b := make([]byte, 8)
+	for {
+		tmp, tmpErr := r.Read(b)
+		if tmpErr == nil {
+			n := tmp
+			fmt.Printf("n = %v b = %v\n", n, b)
+			fmt.Printf("b[:n] = %q\n", b[:n])
+		}
+		if tmpErr != nil {
+			err := tmpErr
+			fmt.Printf("err = %v", err)
+			if err == io.EOF {
+				break 
+			}
+		}
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
