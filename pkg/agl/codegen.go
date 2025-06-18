@@ -956,7 +956,10 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 }
 
 func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
-	content1 := g.genExpr(expr.Type)
+	var content1 string
+	if expr.Type != nil {
+		content1 = g.genExpr(expr.Type)
+	}
 	content2 := g.genExprs(expr.Elts)
 	return fmt.Sprintf("%s{%s}", content1, content2)
 }

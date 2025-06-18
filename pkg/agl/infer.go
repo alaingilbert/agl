@@ -39,6 +39,7 @@ type FileInferrer struct {
 	returnType      types.Type
 	optType         *OptTypeTmp
 	forceReturnType types.Type
+	mapKT, mapVT    types.Type
 }
 
 type OptTypeTmp struct {
@@ -56,6 +57,13 @@ func (infer *FileInferrer) sandboxed(clb func()) {
 	infer.env = nenv
 	clb()
 	infer.env = old
+}
+
+func (infer *FileInferrer) withMapKV(k, v types.Type, clb func()) {
+	oldMapK, oldMapV := infer.mapKT, infer.mapVT
+	infer.mapKT, infer.mapVT = k, v
+	clb()
+	infer.mapKT, infer.mapVT = oldMapK, oldMapV
 }
 
 func (infer *FileInferrer) withOptType(n ast.Node, t types.Type, clb func()) {
@@ -1524,9 +1532,11 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, infer.env.Get(v.Name))
 		return
 	case *ast.MapType:
-		infer.exprs(expr.Elts)
 		keyT := infer.env.GetType2(v.Key)
 		valT := infer.env.GetType2(v.Value)
+		infer.withMapKV(keyT, valT, func() {
+			infer.exprs(expr.Elts)
+		})
 		infer.SetType(expr, types.MapType{K: keyT, V: valT})
 		return
 	case *ast.SelectorExpr:
@@ -1568,7 +1578,14 @@ func (infer *FileInferrer) interfaceType(expr *ast.InterfaceType) {
 
 func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
 	infer.expr(expr.Key)
-	infer.expr(expr.Value)
+	switch v := expr.Value.(type) {
+	case *ast.CompositeLit:
+		if v.Type == nil && infer.mapVT == nil {
+			panic("")
+		}
+	default:
+		infer.expr(expr.Value)
+	}
 	//infer.SetType(expr,) // TODO
 }
 
