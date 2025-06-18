@@ -259,13 +259,17 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 		case *ast.TypeSpec:
 			infer.typeSpec(spec)
 		default:
-			panic(fmt.Sprintf("%v", spec))
+			//panic(fmt.Sprintf("%v", spec))
 		}
 	}
 }
 
 func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	switch t := spec.Type.(type) {
+	case *ast.Ident:
+		name := spec.Name
+		typ := infer.env.GetType2(t)
+		infer.env.Define(name, name.Name, types.TypeType{W: types.CustomType{W: typ}})
 	case *ast.StructType:
 		var fields []types.FieldType
 		if t.Fields != nil {
