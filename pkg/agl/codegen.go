@@ -12,15 +12,16 @@ import (
 )
 
 type Generator struct {
-	env        *Env
-	a          *ast.File
-	prefix     string
-	before     []IBefore
-	varCounter atomic.Int64
-	returnType types.Type
-	extensions map[string]Extension
-	swapGen    bool
-	genMap     map[string]types.Type
+	env          *Env
+	a            *ast.File
+	prefix       string
+	before       []IBefore
+	tupleStructs map[string]string
+	varCounter   atomic.Int64
+	returnType   types.Type
+	extensions   map[string]Extension
+	swapGen      bool
+	genMap       map[string]types.Type
 }
 
 type Extension struct {
@@ -34,7 +35,7 @@ type ExtensionTest struct {
 }
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
-	return &Generator{env: env, a: a, extensions: make(map[string]Extension)}
+	return &Generator{env: env, a: a, extensions: make(map[string]Extension), tupleStructs: make(map[string]string)}
 }
 
 func (g *Generator) genExtension(e Extension) (out string) {
@@ -946,7 +947,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType(x).GoStr())
 	}
 	structStr += fmt.Sprintf("}\n")
-	g.before = append(g.before, NewBeforeFn(structStr)) // TODO Add in public scope (when function output)
+	g.tupleStructs[structName] = structStr
 	var fields []string
 	for i, x := range expr.Values {
 		content1 := g.genExpr(x)
@@ -1042,6 +1043,10 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 			out += b.Content()
 		}
 		clear(g.before)
+		for _, v := range g.tupleStructs {
+			out += v
+		}
+		clear(g.tupleStructs)
 		out += suffixIf(out1, "\n")
 		return
 	default:
@@ -1282,7 +1287,26 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 		}
 	}
 	if params := decl.Type.Params; params != nil {
-		paramsStr = g.joinList(params)
+		var fieldsItems []string
+		for _, field := range params.List {
+			var namesItems []string
+			for _, n := range field.Names {
+				namesItems = append(namesItems, n.Name)
+			}
+			tmp2Str := strings.Join(namesItems, ", ")
+			var content string
+			switch field.Type.(type) {
+			case *ast.TupleExpr:
+				content = g.env.GetType(field.Type).GoStr()
+			default:
+				content = g.genExpr(field.Type)
+			}
+			if tmp2Str != "" {
+				tmp2Str = tmp2Str + " "
+			}
+			fieldsItems = append(fieldsItems, tmp2Str+content)
+		}
+		paramsStr = strings.Join(fieldsItems, ", ")
 	}
 	if result := decl.Type.Result; result != nil {
 		resultStr = g.env.GetType(result).GoStr()
