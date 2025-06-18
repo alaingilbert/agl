@@ -263,7 +263,33 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	switch t := spec.Type.(type) {
 	case *ast.StructType:
-		infer.structType(spec.Name, t)
+		var fields []types.FieldType
+		if t.Fields != nil {
+			for _, f := range t.Fields.List {
+				t := infer.env.GetType2(f.Type)
+				for _, n := range f.Names {
+					fields = append(fields, types.FieldType{Name: n.Name, Typ: t})
+				}
+			}
+		}
+		name := spec.Name
+		structT := types.StructType{Name: name.Name, Fields: fields}
+		if spec.TypeParams != nil {
+			var fields []types.FieldType
+			for _, typeParam := range spec.TypeParams.List {
+				for _, n := range typeParam.Names {
+					t := infer.env.GetType2(typeParam.Type)
+					fields = append(fields, types.FieldType{Name: n.Name, Typ: t})
+				}
+			}
+			if len(fields) > 1 {
+				infer.env.Define(name, name.Name, types.IndexListType{X: structT, Indices: fields})
+			} else {
+				infer.env.Define(name, name.Name, types.IndexType{X: structT, Index: fields})
+			}
+		} else {
+			infer.env.Define(name, name.Name, structT)
+		}
 	case *ast.EnumType:
 		infer.enumType(spec.Name, t)
 	case *ast.InterfaceType:
@@ -553,6 +579,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.orContinue(expr)
 	case *ast.OrReturnExpr:
 		infer.orReturn(expr)
+	case *ast.IndexListExpr:
+		infer.indexListExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -841,6 +869,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					oArg = v.Elt
 				}
 				got := infer.GetType(arg)
+				if oArgT, ok := oArg.(types.IndexType); ok {
+					p("BEFORE", oArg, oArgT.X, oArgT.Index)
+					oArg = oArgT.X
+				}
+				p("?", arg, oArg, to(oArg), got, to(got))
 				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 			}
 		default:
@@ -1345,11 +1378,20 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
 		return true // TODO
 	}
+	if TryCast[types.StarType](a) && TryCast[types.StarType](b) {
+		return cmpTypes(a.(types.StarType).X, b.(types.StarType).X)
+	}
 	if TryCast[types.OptionType](a) && TryCast[types.OptionType](b) {
 		return cmpTypes(a.(types.OptionType).W, b.(types.OptionType).W)
 	}
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
 		return cmpTypes(a.(types.ResultType).W, b.(types.ResultType).W)
+	}
+	if TryCast[types.IndexListType](a) && TryCast[types.IndexListType](b) {
+		return cmpTypes(a.(types.IndexListType).X, b.(types.IndexListType).X)
+	}
+	if TryCast[types.IndexType](a) && TryCast[types.IndexType](b) {
+		return cmpTypes(a.(types.IndexType).X, b.(types.IndexType).X)
 	}
 	if a == b {
 		return true
@@ -1417,6 +1459,12 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 	switch v := expr.Type.(type) {
+	case *ast.IndexExpr:
+		infer.SetType(expr, infer.env.Get(v.X.(*ast.Ident).Name))
+		return
+	case *ast.IndexListExpr:
+		infer.SetType(expr, infer.env.Get(v.X.(*ast.Ident).Name))
+		return
 	case *ast.ArrayType:
 		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(v.Elt)})
 		return
@@ -1447,9 +1495,24 @@ func (infer *FileInferrer) arrayType(expr *ast.ArrayType) {
 	infer.SetType(expr, types.ArrayType{Elt: infer.GetType(expr.Elt)})
 }
 
+func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
+	infer.expr(expr.X)
+	infer.exprs(expr.Indices)
+	var indices []types.FieldType
+	//for _, e := range expr.Indices {
+	//	indices = append(indices)
+	//}
+	//fmt.Println("???", e)
+	//Indices: infer.GetType(expr.Indices)
+	infer.SetType(expr, types.IndexListType{X: infer.GetType(expr.X), Indices: indices})
+}
+
 func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
+	index := infer.GetType(expr.Index)
+	p("index:", index, to(index))
+	infer.SetType(expr, types.IndexType{X: infer.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) resultExpr(expr *ast.ResultExpr) {
@@ -1586,6 +1649,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			}
+			p("?1", rhs, to(rhs))
 			rhsT := infer.GetType(rhs)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)

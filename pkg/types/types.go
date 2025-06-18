@@ -78,6 +78,24 @@ func (l LabelType) GoStr() string      { return "LabelType" }
 func (l LabelType) String() string     { return "LabelType" }
 func (l LabelType) StringFull() string { return "LabelType" }
 
+type IndexType struct {
+	X     Type
+	Index []FieldType
+}
+
+func (i IndexType) GoStr() string      { return i.X.GoStr() }
+func (i IndexType) String() string     { return i.X.String() }
+func (i IndexType) StringFull() string { return i.X.StringFull() }
+
+type IndexListType struct {
+	X       Type
+	Indices []FieldType
+}
+
+func (i IndexListType) GoStr() string      { return i.X.GoStr() }
+func (i IndexListType) String() string     { return i.X.String() }
+func (i IndexListType) StringFull() string { return i.X.StringFull() }
+
 type ResultType struct {
 	W             Type
 	Native        bool

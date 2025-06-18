@@ -92,6 +92,25 @@ func add(a, b int64) Option[int64] {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen2_1(t *testing.T) {
+//	src := `package main
+//func add(a, b i64) Option[i64] {
+//	if a == 0 {
+//		return None
+//	}
+//	return Some(a + b)
+//}`
+//	expected := `package main
+//func add(a, b int64) Option[int64] {
+//	if a == 0 {
+//		return MakeOptionNone[int64]()
+//	}
+//	return MakeOptionSome(a + b)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 func TestCodeGen6(t *testing.T) {
 	src := `package main
 func add(a, b i64) i64! {
@@ -4252,6 +4271,58 @@ type TestStruct[T any] struct {
 }
 func main() {
 	i := TestStruct[string]{a: "foo"}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen162(t *testing.T) {
+	src := `package main
+type TestStruct[T any] struct {
+	a T
+}
+func testFn[T any](t *TestStruct[T]) {
+}
+func main() {
+	i := &TestStruct[string]{a: "foo"}
+	testFn(i)
+}`
+	expected := `package main
+type TestStruct[T any] struct {
+	a T
+}
+func testFn[T any](t *TestStruct[T]) {
+}
+func main() {
+	i := &TestStruct[string]{a: "foo"}
+	testFn(i)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen163(t *testing.T) {
+	src := `package main
+type TestStruct[T, U any] struct {
+	a T
+	b U
+}
+func testFn[T, U any](t *TestStruct[T, U]) {
+}
+func main() {
+	i := &TestStruct[string, int]{a: "foo", b: 42}
+	testFn(i)
+}`
+	expected := `package main
+type TestStruct[T, U any] struct {
+	a T
+	b U
+}
+func testFn[T, U any](t *TestStruct[T, U]) {
+}
+func main() {
+	i := &TestStruct[string, int]{a: "foo", b: 42}
+	testFn(i)
 }
 `
 	testCodeGen(t, src, expected)
