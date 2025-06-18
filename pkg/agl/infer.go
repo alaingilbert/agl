@@ -1222,6 +1222,7 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 	if expr.Type != nil {
 		infer.expr(expr.Type)
 	}
+	//infer.SetType(expr, types.OptionType{W: infer.env.GetType2(expr.Type)})
 }
 
 func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
@@ -1740,7 +1741,11 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 			var rhsT types.Type
 			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
-				rhsT = infer.env.GetType(ta.Type)
+				if ta.Type == nil { // Type switch `X.(type)`
+					rhsT = infer.env.GetType2(ta.X)
+				} else {
+					rhsT = infer.env.GetType(ta.Type)
+				}
 			} else {
 				rhsT = infer.GetType(rhs)
 			}
