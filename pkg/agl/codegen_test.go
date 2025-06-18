@@ -4948,7 +4948,7 @@ func main() {
 import "fmt"
 type IPAddr []byte
 func main() {
-	hosts := map[string][]byte{"loopback": []byte{127, 0, 0, 1}, "googleDNS": []byte{8, 8, 8, 8}}
+	hosts := map[string]IPAddr{"loopback": IPAddr{127, 0, 0, 1}, "googleDNS": IPAddr{8, 8, 8, 8}}
 	for name, ip := range hosts {
 		fmt.Printf("%v: %v\n", name, ip)
 	}
@@ -4975,7 +4975,7 @@ func main() {
 import "fmt"
 type IPAddr []byte
 func main() {
-	hosts := map[string][]byte{"loopback": {127, 0, 0, 1}, "googleDNS": {8, 8, 8, 8}}
+	hosts := map[string]IPAddr{"loopback": {127, 0, 0, 1}, "googleDNS": {8, 8, 8, 8}}
 	for name, ip := range hosts {
 		fmt.Printf("%v: %v\n", name, ip)
 	}
