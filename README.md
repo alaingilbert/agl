@@ -198,7 +198,7 @@ func (p Person) == (other Person) bool {
 func main() {
     p1 := Person{Name: "foo", Age: 42}
     p2 := Person{Name: "bar", Age: 42}
-    assert(p1 == p2)
+    assert(p1 == p2) // People of the same age are obviously equal!
 }
 ```
 
