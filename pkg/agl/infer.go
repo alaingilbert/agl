@@ -1523,8 +1523,7 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
-	index := infer.GetType(expr.Index)
-	p("index:", index, to(index))
+	//index := infer.GetType(expr.Index)
 	infer.SetType(expr, types.IndexType{X: infer.GetType(expr.X)})
 }
 
