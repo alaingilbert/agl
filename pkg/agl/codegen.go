@@ -266,6 +266,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genOrReturn(expr)
 	case *ast.IndexListExpr:
 		return g.genIndexListType(expr)
+	case *ast.SliceExpr:
+		return g.genSliceExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -686,6 +688,25 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Index)
 	return fmt.Sprintf("%s[%s]", content1, content2)
+}
+
+func (g *Generator) genSliceExpr(expr *ast.SliceExpr) string {
+	content1 := g.genExpr(expr.X)
+	var content2, content3, content4 string
+	if expr.Low != nil {
+		content2 = g.genExpr(expr.Low)
+	}
+	if expr.High != nil {
+		content3 = g.genExpr(expr.High)
+	}
+	if expr.Max != nil {
+		content4 = g.genExpr(expr.Max)
+	}
+	out := fmt.Sprintf("%s[%s:%s]", content1, content2, content3)
+	if content4 != "" {
+		out += ":" + content4
+	}
+	return out
 }
 
 func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
