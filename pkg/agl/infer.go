@@ -304,13 +304,13 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.EnumType:
 		infer.enumType(spec.Name, t)
 	case *ast.InterfaceType:
-		infer.interfaceType(spec.Name, t)
+		infer.specInterfaceType(spec.Name, t)
 	default:
 		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
 }
 
-func (infer *FileInferrer) interfaceType(name *ast.Ident, e *ast.InterfaceType) {
+func (infer *FileInferrer) specInterfaceType(name *ast.Ident, e *ast.InterfaceType) {
 	infer.env.Define(name, name.Name, types.InterfaceType{Name: name.Name})
 	if e.Methods.List != nil {
 		for _, f := range e.Methods.List {
@@ -599,6 +599,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.indexListExpr(expr)
 	case *ast.KeyValueExpr:
 		infer.keyValueExpr(expr)
+	case *ast.InterfaceType:
+		infer.interfaceType(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1551,6 +1553,10 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 	//fmt.Println("???", e)
 	//Indices: infer.GetType(expr.Indices)
 	infer.SetType(expr, types.IndexListType{X: infer.GetType(expr.X), Indices: indices})
+}
+
+func (infer *FileInferrer) interfaceType(expr *ast.InterfaceType) {
+	// TODO
 }
 
 func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
