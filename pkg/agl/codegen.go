@@ -386,7 +386,7 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
 
 func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
-	content2 := g.genExpr(expr.Value)
+	content2 := g.env.GetType2(expr.Value).GoStr()
 	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
 
