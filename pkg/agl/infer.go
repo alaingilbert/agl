@@ -266,30 +266,32 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		var fields []types.FieldType
 		if t.Fields != nil {
 			for _, f := range t.Fields.List {
-				t := infer.env.GetType2(f.Type)
+				typ := infer.env.GetType2(f.Type)
 				for _, n := range f.Names {
-					fields = append(fields, types.FieldType{Name: n.Name, Typ: t})
+					fields = append(fields, types.FieldType{Name: n.Name, Typ: typ})
 				}
 			}
 		}
 		name := spec.Name
 		structT := types.StructType{Name: name.Name, Fields: fields}
+		var toDef types.Type
 		if spec.TypeParams != nil {
-			var fields []types.FieldType
+			var tpFields []types.FieldType
 			for _, typeParam := range spec.TypeParams.List {
 				for _, n := range typeParam.Names {
-					t := infer.env.GetType2(typeParam.Type)
-					fields = append(fields, types.FieldType{Name: n.Name, Typ: t})
+					typ := infer.env.GetType2(typeParam.Type)
+					tpFields = append(tpFields, types.FieldType{Name: n.Name, Typ: typ})
 				}
 			}
-			if len(fields) > 1 {
-				infer.env.Define(name, name.Name, types.IndexListType{X: structT, Indices: fields})
+			if len(tpFields) > 1 {
+				toDef = types.IndexListType{X: structT, Indices: tpFields}
 			} else {
-				infer.env.Define(name, name.Name, types.IndexType{X: structT, Index: fields})
+				toDef = types.IndexType{X: structT, Index: tpFields}
 			}
 		} else {
-			infer.env.Define(name, name.Name, structT)
+			toDef = structT
 		}
+		infer.env.Define(name, name.Name, toDef)
 	case *ast.EnumType:
 		infer.enumType(spec.Name, t)
 	case *ast.InterfaceType:
