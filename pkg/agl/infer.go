@@ -706,7 +706,6 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 }
 
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
-
 	switch call := expr.Fun.(type) {
 	case *ast.SelectorExpr:
 		var exprFunT types.Type
@@ -720,6 +719,20 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			exprFunT = infer.GetType(callXT)
 		case *ast.SelectorExpr:
 			infer.expr(callXT.X)
+			if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
+				if v, ok := callXTXT.(types.StarType); ok {
+					callXTXT = v.X
+				}
+				if v, ok := callXTXT.(types.StructType); ok {
+					n := fmt.Sprintf("%s.%s", v.Name, callXT.Sel)
+					if v.Pkg != "" {
+						n = v.Pkg + "." + n
+					}
+					t := infer.env.Get(n)
+					infer.SetType(callXT.Sel, t)
+				}
+			}
+			//infer.SetType(callXT.X, )
 			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
@@ -1356,6 +1369,9 @@ func cmpTypes(a, b types.Type) bool {
 		return true
 	}
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
+		return true // TODO
+	}
+	if TryCast[types.InterfaceType](a) || TryCast[types.InterfaceType](b) {
 		return true // TODO
 	}
 	if TryCast[types.ArrayType](a) && TryCast[types.ArrayType](b) {
