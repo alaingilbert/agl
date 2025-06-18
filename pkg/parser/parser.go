@@ -1852,6 +1852,14 @@ func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 }
 
 func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
+	return p.parsePrimaryExprHelper(x, true)
+}
+
+func (p *parser) parsePrimaryExpr2() ast.Expr {
+	return p.parsePrimaryExprHelper(nil, false)
+}
+
+func (p *parser) parsePrimaryExprHelper(x ast.Expr, braceAllowed bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "PrimaryExpr"))
 	}
@@ -1916,6 +1924,9 @@ func (p *parser) parsePrimaryExpr(x ast.Expr) ast.Expr {
 		case token.LPAREN:
 			x = p.parseCallOrConversion(x)
 		case token.LBRACE:
+			if !braceAllowed {
+				return x
+			}
 			// operand may have returned a parenthesized complit
 			// type; accept it but complain if we have a complit
 			t := ast.Unparen(x)
@@ -2330,7 +2341,7 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 		p.expect(token.DEFINE)
 		pos := p.pos
 		//p.next()
-		y := p.parseExpr()
+		y := p.parsePrimaryExpr2()
 		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
 	default:
 		p.error(pos, "unexpected token")
