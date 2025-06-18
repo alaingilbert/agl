@@ -305,9 +305,15 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		infer.enumType(spec.Name, t)
 	case *ast.InterfaceType:
 		infer.specInterfaceType(spec.Name, t)
+	case *ast.ArrayType:
+		infer.specArrayType(spec.Name, t)
 	default:
 		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
+}
+
+func (infer *FileInferrer) specArrayType(name *ast.Ident, e *ast.ArrayType) {
+	infer.env.Define(name, name.Name, types.ArrayType{Elt: infer.env.GetType2(e.Elt)})
 }
 
 func (infer *FileInferrer) specInterfaceType(name *ast.Ident, e *ast.InterfaceType) {
