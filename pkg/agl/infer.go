@@ -1435,6 +1435,9 @@ func cmpTypes(a, b types.Type) bool {
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	exprXName := expr.X.(*ast.Ident).Name
 	exprXIdTRaw := infer.env.Get(exprXName)
+	if v, ok := exprXIdTRaw.(types.StarType); ok {
+		exprXIdTRaw = v.X
+	}
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
@@ -1462,18 +1465,6 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
-	case types.StarType:
-		switch structT := exprXIdT.X.(type) {
-		case types.StructType:
-			structPkg := structT.Pkg
-			structName := structT.Name
-			selT := infer.env.Get(fmt.Sprintf("%s.%s.%s", structPkg, structName, expr.Sel.Name))
-			infer.SetType(expr.X, exprXIdT)
-			infer.SetType(expr.Sel, selT)
-			infer.SetType(expr, selT)
-		default:
-			panic("")
-		}
 	case types.PackageType:
 	default:
 		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
