@@ -1655,6 +1655,11 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			case types.ArrayType:
 				infer.env.Define(stmt.Value, name, v.Elt)
 				infer.SetType(stmt.Value, v.Elt)
+			case types.MapType:
+				infer.env.Define(stmt.Value, name, v.V)
+				infer.SetType(stmt.Value, v.V)
+			default:
+				panic("")
 			}
 		}
 		if stmt.Body != nil {
