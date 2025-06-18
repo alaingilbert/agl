@@ -1476,7 +1476,10 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, t)
 		return
 	case *ast.ArrayType:
-		infer.SetType(expr, types.ArrayType{Elt: infer.env.GetType2(v.Elt)})
+		t := infer.env.GetType2(v.Elt)
+		infer.exprs(expr.Elts)
+		infer.SetType(v.Elt, t)
+		infer.SetType(expr, types.ArrayType{Elt: t})
 		return
 	case *ast.Ident:
 		infer.SetType(expr, infer.env.Get(v.Name))

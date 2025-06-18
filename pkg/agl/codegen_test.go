@@ -4383,39 +4383,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-//func TestCodeGen165(t *testing.T) {
-//	src := `package main
-//func test(t (int, bool)) (int, bool) { return t }
-//func main() {
-//	t1 := (int(1), true)
-//	t2 := (int(2), false)
-//	arr := [](int, bool){ (1, true), (2, false) }
-//	test(t1)
-//	test(t2)
-//	for _, t := range arr {
-//		test(t)
-//	}
-//}`
-//	expected := `package main
-//type AglTupleStruct1 struct {
-//	Arg0 int
-//	Arg1 bool
-//}
-//func test(t AglTupleStruct1) AglTupleStruct1 {
-//}
-//func main() {
-//	t1 := AglTupleStruct1{Arg0: int(1), Arg1: true}
-//	t2 := AglTupleStruct1{Arg0: int(2), Arg1: false}
-//	arr := []AglTupleStruct1{{Arg0: 1, Arg1: true}, {Arg0: 1, Arg1: false}}
-//	test(t1)
-//	test(t2)
-//	for _, t := range arr {
-//		test(t)
-//	}
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+func TestCodeGen165(t *testing.T) {
+	src := `package main
+func main() {
+	arr := [](int, bool){ (1, true), (2, false) }
+}`
+	expected := `package main
+type AglTupleStruct_int_bool struct {
+	Arg0 int
+	Arg1 bool
+}
+func main() {
+	arr := []AglTupleStruct_int_bool{AglTupleStruct_int_bool{Arg0: 1, Arg1: true}, AglTupleStruct_int_bool{Arg0: 2, Arg1: false}}
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
