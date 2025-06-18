@@ -23,12 +23,6 @@ func (v VoidType) GoStr() string      { return "AglVoid" }
 func (v VoidType) String() string     { return "void" }
 func (v VoidType) StringFull() string { return v.String() }
 
-type BreakType struct{}
-
-func (b BreakType) GoStr() string      { return "break" }
-func (b BreakType) String() string     { return "break" }
-func (b BreakType) StringFull() string { return b.String() }
-
 type StarType struct {
 	X Type
 }
