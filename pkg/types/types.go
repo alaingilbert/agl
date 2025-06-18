@@ -453,7 +453,7 @@ func (t TupleType) StringFull() string {
 
 type FuncType struct {
 	Name       string
-	Recv       Type
+	Recv       []Type
 	TypeParams []Type
 	Params     []Type
 	Return     Type
@@ -618,9 +618,19 @@ func (f FuncType) GoStr() string { return f.Name }
 func (f FuncType) StringFull() string { return f.String() }
 
 func (f FuncType) String() string {
-	var nameStr, resultStr, paramsStr, typeParamsStr string
+	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
 	if f.Name != "" {
 		nameStr = " " + f.Name
+	}
+	if f.Recv != nil {
+		var tmp []string
+		for _, recv := range f.Recv {
+			tmp = append(tmp, recv.String())
+		}
+		recvStr = strings.Join(tmp, ", ")
+		if recvStr != "" {
+			recvStr = " (" + recvStr + ")"
+		}
 	}
 	if f.TypeParams != nil {
 		var tmp []string
@@ -653,7 +663,7 @@ func (f FuncType) String() string {
 			}
 		}
 	}
-	return fmt.Sprintf("func%s%s(%s)%s", nameStr, typeParamsStr, paramsStr, resultStr)
+	return fmt.Sprintf("func%s%s%s(%s)%s", recvStr, nameStr, typeParamsStr, paramsStr, resultStr)
 }
 
 type ShortFuncLitType struct {
