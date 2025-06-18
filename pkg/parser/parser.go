@@ -2402,6 +2402,26 @@ func (p *parser) parseIfStmt() ast.Stmt {
 	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
 }
 
+func (p *parser) parseMatchClause() *ast.MatchClause {
+	if p.trace {
+		defer un(trace(p, "MatchClause"))
+	}
+
+	pos := p.pos
+	var list ast.Expr
+	if p.tok == token.CASE {
+		p.next()
+		list = p.parseExpr()
+	} else {
+		p.expect(token.DEFAULT)
+	}
+
+	colon := p.expect(token.COLON)
+	body := p.parseStmtList()
+
+	return &ast.MatchClause{Case: pos, Expr: list, Colon: colon, Body: body}
+}
+
 func (p *parser) parseCaseClause() *ast.CaseClause {
 	if p.trace {
 		defer un(trace(p, "CaseClause"))
@@ -2446,6 +2466,23 @@ func (p *parser) isTypeSwitchGuard(s ast.Stmt) bool {
 		}
 	}
 	return false
+}
+
+func (p *parser) parseMatchStmt() ast.Stmt {
+	if p.trace {
+		defer un(trace(p, "MatchStmt"))
+	}
+	pos := p.expect(token.MATCH)
+	var s1 ast.Stmt
+	s1, _ = p.parseSimpleStmt(basic)
+	lbrace := p.expect(token.LBRACE)
+	var list []ast.Stmt
+	for p.tok == token.CASE || p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME || p.tok == token.NONE {
+		list = append(list, p.parseMatchClause())
+	}
+	rbrace := p.expect(token.RBRACE)
+	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
+	return &ast.MatchStmt{Match: pos, Init: s1, Body: body}
 }
 
 func (p *parser) parseSwitchStmt() ast.Stmt {
@@ -2693,6 +2730,8 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = p.parseIfStmt()
 	case token.SWITCH:
 		s = p.parseSwitchStmt()
+	case token.MATCH:
+		s = p.parseMatchStmt()
 	case token.SELECT:
 		s = p.parseSelectStmt()
 	case token.FOR:

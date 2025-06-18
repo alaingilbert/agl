@@ -132,6 +132,7 @@ const (
 	STRUCT
 	ENUM
 	SWITCH
+	MATCH
 	TYPE
 	VAR
 	LET
@@ -250,6 +251,7 @@ var tokens = [...]string{
 	STRUCT: "struct",
 	ENUM:   "enum",
 	SWITCH: "switch",
+	MATCH:  "match",
 	TYPE:   "type",
 	VAR:    "var",
 
