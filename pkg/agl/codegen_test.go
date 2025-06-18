@@ -4984,6 +4984,50 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen185(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"time"
+)
+type MyError struct {
+	When time.Time
+	What string
+}
+func (e *MyError) Error() string {
+	return fmt.Sprintf("at %v, %s", e.When, e.What)
+}
+func run() ! {
+	return Err(&MyError{time.Now(), "it didn't work"})
+}
+func main() {
+    if let Err(err) := run() {
+		fmt.Println(err)
+	}
+}`
+	expected := `package main
+import "fmt"
+import "time"
+type MyError struct {
+	When time.Time
+	What string
+}
+func (e *MyError) Error() string {
+	return fmt.Sprintf("at %v, %s", e.When, e.What)
+}
+func run() Result[AglVoid] {
+	return MakeResultErr[AglVoid](&MyError{time.Now(), "it didn't work"})
+}
+func main() {
+	if tmp := run(); tmp.IsErr() {
+		err := tmp.Err()
+		fmt.Println(err)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
