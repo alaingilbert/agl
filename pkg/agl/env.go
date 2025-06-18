@@ -156,6 +156,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("math.Sqrt", "func (x float64) float64")
 	env.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	env.DefineFnNative("fmt.Println", "func (a ...any) int!")
+	env.DefineFnNative("fmt.Printf", "func (format string, a ...any) int!")
 	env.DefineFnNative("fmt.Sprintf", "func (format string, a ...any) string")
 	env.DefineFnNative("fmt.Scan", "func (a ...any) int!")
 	env.DefineFnNative("fmt.Scanf", "func (format string, a ...any) int!")
