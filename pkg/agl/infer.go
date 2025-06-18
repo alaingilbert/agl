@@ -183,6 +183,8 @@ func (infer *FileInferrer) Infer() {
 			infer.funcDecl(decl)
 		case *ast.GenDecl:
 			infer.genDecl(decl)
+		default:
+			panic(fmt.Sprintf("%v", decl))
 		}
 	}
 	for _, d := range infer.f.Decls {
@@ -256,6 +258,8 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 		switch spec := s.(type) {
 		case *ast.TypeSpec:
 			infer.typeSpec(spec)
+		default:
+			panic(fmt.Sprintf("%v", spec))
 		}
 	}
 }
@@ -296,6 +300,8 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		infer.enumType(spec.Name, t)
 	case *ast.InterfaceType:
 		infer.interfaceType(spec.Name, t)
+	default:
+		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
 }
 

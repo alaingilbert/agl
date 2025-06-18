@@ -116,6 +116,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefinePkg("errors", "errors")
 	env.DefinePkg("strings", "strings")
 	env.DefinePkg("time", "time")
+	env.DefinePkg("math", "math")
 	env.DefinePkg("strconv", "strconv")
 	env.Define(nil, "Option", types.OptionType{})
 	env.Define(nil, "error", types.TypeType{W: types.AnyType{}})
