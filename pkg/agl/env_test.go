@@ -23,3 +23,9 @@ func Test3(t *testing.T) {
 	tt := env.Get("http.Get")
 	tassert.Equal(t, "func Get(string) (*http.Response)!", tt.String())
 }
+
+func Test4(t *testing.T) {
+	env := NewEnv(nil)
+	tt := env.Get("io.ReadCloser.Close")
+	tassert.Equal(t, "func Close() !", tt.String())
+}
