@@ -418,6 +418,8 @@ func (e *Env) GetType2(x ast.Node) types.Type {
 		return types.BinaryType{X: e.GetType2(xx.X), Y: e.GetType2(xx.Y)}
 	case *ast.UnaryExpr:
 		return types.UnaryType{X: e.GetType2(xx.X)}
+	case *ast.InterfaceType:
+		return types.AnyType{}
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
