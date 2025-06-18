@@ -122,7 +122,12 @@ func (g *Generator) Generate() (out string) {
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
 		extStr += g.genExtension(g.extensions[extKey])
 	}
-	return out + out1 + out2 + out3 + extStr
+	var tupleStr string
+	for _, v := range g.tupleStructs {
+		tupleStr += v
+	}
+	clear(g.tupleStructs)
+	return out + out1 + out2 + tupleStr + out3 + extStr
 }
 
 func (g *Generator) genPackage() string {
@@ -1056,10 +1061,6 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 			out += b.Content()
 		}
 		clear(g.before)
-		for _, v := range g.tupleStructs {
-			out += v
-		}
-		clear(g.tupleStructs)
 		out += suffixIf(out1, "\n")
 		return
 	default:
