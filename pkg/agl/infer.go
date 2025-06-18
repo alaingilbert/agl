@@ -1538,7 +1538,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, selT)
 		return
 	default:
-		panic(fmt.Sprintf("%v", to(expr.Type)))
+		panic(fmt.Sprintf("%s: %v", infer.Pos(expr), to(expr.Type)))
 	}
 }
 
