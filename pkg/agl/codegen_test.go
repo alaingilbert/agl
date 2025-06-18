@@ -4181,7 +4181,7 @@ func main() {
 	var a u8
 	a = arr.Reduce(u16(0), { $0 + u8($1) })
 }`
-	tassert.PanicsWithError(t, "5:6: type mismatch, want: u8, got u16", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "5:6: type mismatch, want: u8, got: u16", testCodeGenFn(src))
 }
 
 func TestCodeGen156(t *testing.T) {
@@ -4264,7 +4264,16 @@ func main() {
 	var r u16
 	r = arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
 }`
-	tassert.PanicsWithError(t, "5:6: type mismatch, want: u16, got u8", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "5:6: type mismatch, want: u16, got: u8", testCodeGenFn(src))
+}
+
+func TestCodeGen160_2(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	var r u16 = arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
+}`
+	tassert.PanicsWithError(t, "4:6: type mismatch, want: u16, got: u8", testCodeGenFn(src))
 }
 
 func TestCodeGen161(t *testing.T) {
