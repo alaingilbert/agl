@@ -831,7 +831,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 			infer.SetType(expr, fnT.Return)
 		default:
-			assertf(false, "Unresolved reference '%s'", fnName)
+			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
 		}
 		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
 		infer.inferVecExtensions(expr, exprFunT, call)
