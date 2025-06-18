@@ -84,9 +84,15 @@ type IndexType struct {
 	Index []FieldType
 }
 
-func (i IndexType) GoStr() string      { return i.X.GoStr() }
-func (i IndexType) String() string     { return i.X.String() }
-func (i IndexType) StringFull() string { return i.X.StringFull() }
+func (i IndexType) GoStr() string  { return i.X.GoStr() }
+func (i IndexType) String() string { return i.X.String() }
+func (i IndexType) StringFull() string {
+	var tmp []string
+	for _, e := range i.Index {
+		tmp = append(tmp, e.Name)
+	}
+	return fmt.Sprintf("%s[%s]", i.X.StringFull(), strings.Join(tmp, ","))
+}
 
 type IndexListType struct {
 	X       Type

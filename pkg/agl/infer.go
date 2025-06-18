@@ -1535,7 +1535,7 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
 	//index := infer.GetType(expr.Index)
-	infer.SetType(expr, types.IndexType{X: infer.GetType(expr.X)})
+	infer.SetType(expr, infer.GetType(expr.X))
 }
 
 func (infer *FileInferrer) resultExpr(expr *ast.ResultExpr) {
