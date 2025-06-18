@@ -4591,6 +4591,21 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen175(t *testing.T) {
+	src := `package main
+type MyFloat64 f64
+func main() {
+	a := MyFloat64(1)
+}`
+	expected := `package main
+type MyFloat64 float64
+func main() {
+	a := MyFloat64(1)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }

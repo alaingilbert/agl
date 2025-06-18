@@ -862,7 +862,18 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			return fmt.Sprintf("AglAssert(%s)", out)
 		}
 	}
-	content1 := g.genExpr(expr.Fun)
+	var content1 string
+	switch v := expr.Fun.(type) {
+	case *ast.Ident:
+		t1 := g.env.Get(v.Name)
+		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
+			content1 = expr.Fun.(*ast.Ident).Name
+		} else {
+			content1 = g.genExpr(expr.Fun)
+		}
+	default:
+		content1 = g.genExpr(expr.Fun)
+	}
 	content2 := g.genExprs(expr.Args)
 	return fmt.Sprintf("%s(%s)", content1, content2)
 }
