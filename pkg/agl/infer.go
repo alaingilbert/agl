@@ -1485,7 +1485,9 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, infer.env.Get(v.Name))
 		return
 	case *ast.MapType:
-		infer.SetType(expr, types.MapType{K: infer.env.GetType2(v.Key), V: infer.env.GetType2(v.Value)})
+		keyT := infer.env.GetType2(v.Key)
+		valT := infer.env.GetType2(v.Value)
+		infer.SetType(expr, types.MapType{K: keyT, V: valT})
 		return
 	case *ast.SelectorExpr:
 		idName := v.X.(*ast.Ident).Name
