@@ -4198,6 +4198,15 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen156_1(t *testing.T) {
+	src := `package main
+func test() ! { Err("error") }
+func main() {
+	defer test()!
+}`
+	tassert.PanicsWithError(t, "4:15: expression in defer must be function call", testCodeGenFn(src))
+}
+
 func TestCodeGen157(t *testing.T) {
 	src := `package main
 func main() {
