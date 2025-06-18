@@ -4834,6 +4834,7 @@ func describe(i I) {
 `
 	testCodeGen(t, src, expected)
 }
+
 func TestCodeGen180(t *testing.T) {
 	src := `package main
 import "fmt"
@@ -4861,6 +4862,30 @@ func main() {
 }
 func describe(i any) {
 	fmt.Printf("(%v, %T)\n", i, i)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen181(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	var i any = "hello"
+	s := i.(string)
+	fmt.Println(s)
+	f := i.(f64)
+	fmt.Println(f)
+}
+`
+	expected := `package main
+import "fmt"
+func main() {
+	var i any = "hello"
+	s := AglTypeAssert[string](i)
+	fmt.Println(s)
+	f := AglTypeAssert[float64](i)
+	fmt.Println(f)
 }
 `
 	testCodeGen(t, src, expected)
