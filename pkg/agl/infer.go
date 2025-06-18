@@ -589,20 +589,31 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 	}
 }
 
+func isIntType(t types.Type) bool {
+	return TryCast[types.I64Type](t) ||
+		TryCast[types.I32Type](t) ||
+		TryCast[types.I16Type](t) ||
+		TryCast[types.I8Type](t) ||
+		TryCast[types.IntType](t) ||
+		TryCast[types.U64Type](t) ||
+		TryCast[types.U32Type](t) ||
+		TryCast[types.U16Type](t) ||
+		TryCast[types.U8Type](t) ||
+		TryCast[types.IntType](t) ||
+		TryCast[types.UintType](t)
+}
+
+func isNumericType(t types.Type) bool {
+	return isIntType(t) ||
+		TryCast[types.F64Type](t) ||
+		TryCast[types.F32Type](t)
+}
+
 func (infer *FileInferrer) tryConvertType(e ast.Expr, optType types.Type) {
 	if infer.env.GetType(e) == nil {
 		infer.SetType(e, optType)
 	} else if _, ok := infer.GetType(e).(types.UntypedNumType); ok {
-		if TryCast[types.U8Type](optType) ||
-			TryCast[types.U16Type](optType) ||
-			TryCast[types.U32Type](optType) ||
-			TryCast[types.U64Type](optType) ||
-			TryCast[types.I8Type](optType) ||
-			TryCast[types.I16Type](optType) ||
-			TryCast[types.I32Type](optType) ||
-			TryCast[types.I64Type](optType) ||
-			TryCast[types.IntType](optType) ||
-			TryCast[types.UintType](optType) {
+		if isIntType(optType) {
 			infer.SetType(e, optType)
 		}
 	}
@@ -1272,22 +1283,6 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 		}
 	}
 	return true
-}
-
-func isNumericType(t types.Type) bool {
-	return TryCast[types.I64Type](t) ||
-		TryCast[types.I32Type](t) ||
-		TryCast[types.I16Type](t) ||
-		TryCast[types.I8Type](t) ||
-		TryCast[types.IntType](t) ||
-		TryCast[types.U64Type](t) ||
-		TryCast[types.U32Type](t) ||
-		TryCast[types.U16Type](t) ||
-		TryCast[types.U8Type](t) ||
-		TryCast[types.F64Type](t) ||
-		TryCast[types.IntType](t) ||
-		TryCast[types.UintType](t) ||
-		TryCast[types.F32Type](t)
 }
 
 func cmpTypesLoose(a, b types.Type) bool {
