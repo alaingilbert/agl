@@ -724,10 +724,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				fnT := infer.env.GetFn("agl.Vec.Filter").T("T", arr.Elt)
 				infer.SetType(expr.Args[0], fnT.Params[1])
 				infer.SetType(expr, fnT.Return)
-			} else if fnName == "Map" {
-				fnT := infer.env.GetFn("agl.Vec.Map").T("T", arr.Elt)
-				infer.SetType(expr.Args[0], fnT.GetParam(1))
-				infer.SetType(expr, fnT.Return)
 			} else if fnName == "Reduce" {
 				fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", arr.Elt)
 				if infer.forceReturnType != nil {
@@ -907,25 +903,26 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
-			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", eltT)
-			ft := mapFnT.GetParam(1).(types.FuncType)
+			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTArr.Elt)
+			clbFnT := mapFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(arg0, ft)
 				infer.expr(arg0)
 				rT := infer.GetTypeFn(arg0).Return
 				infer.SetType(expr, types.ArrayType{Elt: rT})
 				infer.SetType(exprT.Sel, mapFnT.T("R", rT))
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				if tmp, ok := exprArg0.(*ast.FuncLit); ok {
 					infer.expr(tmp)
 					retT := infer.GetTypeFn(tmp).Return
 					infer.SetType(expr, types.ArrayType{Elt: retT})
 				}
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			}
 		} else if fnName == "Reduce" {
 			exprArg0 := expr.Args[0]
