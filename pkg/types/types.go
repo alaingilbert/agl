@@ -253,7 +253,7 @@ func (s StructType) String() string { return s.Name }
 func (s StructType) StringFull() string {
 	out := s.Name
 	if s.Pkg != "" {
-		out += "." + s.Pkg
+		out = s.Pkg + "." + out
 	}
 	return out
 }
@@ -269,7 +269,7 @@ func (i InterfaceType) GoStr() string { return i.Name }
 func (i InterfaceType) StringFull() string {
 	out := i.Name
 	if i.Pkg != "" {
-		out += "." + i.Pkg
+		out = i.Pkg + "." + out
 	}
 	return out
 }
