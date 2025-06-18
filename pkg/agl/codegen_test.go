@@ -4535,6 +4535,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen173(t *testing.T) {
+	src := `package main
+func main() {
+	arr := [](int, int){(0, 0), (0, 1)}
+}`
+	expected := `package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func main() {
+	arr := []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
