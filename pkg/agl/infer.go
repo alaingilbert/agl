@@ -1644,7 +1644,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsWantedT = infer.env.Get(lhsIdName)
 			case *ast.IndexExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
-				lhsWantedT = infer.env.Get(lhsIdName).(types.MapType).V
+				switch vv := infer.env.Get(lhsIdName).(type) {
+				case types.MapType:
+					lhsWantedT = vv.V
+				case types.ArrayType:
+					lhsWantedT = vv.Elt
+				default:
+					panic(fmt.Sprintf("%v", to(v.X)))
+				}
 			case *ast.SelectorExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
 				xT := infer.env.Get(lhsIdName)
