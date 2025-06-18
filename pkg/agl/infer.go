@@ -719,49 +719,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		fnName := call.Sel.Name
 		switch idTT := exprFunT.(type) {
 		case types.ArrayType:
-			arr := idTT
-			if fnName == "Filter" {
-				fnT := infer.env.GetFn("agl.Vec.Filter").T("T", arr.Elt)
-				infer.SetType(expr.Args[0], fnT.Params[1])
-				infer.SetType(expr, fnT.Return)
-			} else if fnName == "Reduce" {
-				fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", arr.Elt)
-				if infer.forceReturnType != nil {
-					fnT = fnT.T("R", infer.forceReturnType)
-				} else if r, ok := infer.env.GetType2(expr.Args[0]).(types.UntypedNumType); !ok {
-					noop(r) // TODO should add restriction on type R (cmp.Comparable?)
-					//fnT = fnT.T("R", r)
-				}
-				infer.SetType(call.Sel, fnT)
-				infer.SetType(expr.Args[1], fnT.Params[2])
-				infer.SetType(expr, fnT.Return)
-			} else if fnName == "Find" {
-				fnT := infer.env.GetFn("agl.Vec.Find").T("T", arr.Elt)
-				infer.SetType(expr, fnT.Return)
-			} else if fnName == "Sum" {
-				fnT := infer.env.GetFn("agl.Vec.Sum").T("T", arr.Elt)
-				infer.SetType(expr, fnT.Return)
-			} else if fnName == "Joined" {
-				fnT := infer.env.GetFn("agl.Vec.Joined")
-				assertf(cmpTypes(exprFunT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], exprFunT)
-				infer.SetType(expr, fnT.Return)
-			} else {
-				fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
-				if fnT := infer.env.Get(fnFullName); fnT != nil {
-					fnT0 := fnT.(types.FuncType)
-					assert(len(fnT0.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
-					gen0 := fnT0.TypeParams[0].(types.GenericType).W
-					want := types.ArrayType{Elt: gen0}
-					assertf(cmpTypes(gen0, arr.Elt), "%s: cannot use %s as %s for %s", infer.Pos(call.Sel), arr, want, fnName)
-					fnT1 := fnT0.T("T", arr.Elt)
-					retT := Or[types.Type](fnT1.Return, types.VoidType{})
-					infer.SetType(call.Sel, fnT1)
-					infer.SetType(expr.Fun, fnT1)
-					infer.SetType(expr, retT)
-				} else {
-					assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(call.Sel), fnName)
-				}
-			}
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			if idTT.Pkg != "" {
@@ -889,6 +846,9 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
+			fnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTArr.Elt)
+			infer.SetType(expr.Args[0], fnT.Params[1])
+			infer.SetType(expr, fnT.Return)
 			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", eltT)
 			ft := filterFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
@@ -925,6 +885,16 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			}
 		} else if fnName == "Reduce" {
+			fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", idTArr.Elt)
+			if infer.forceReturnType != nil {
+				fnT = fnT.T("R", infer.forceReturnType)
+			} else if r, ok := infer.env.GetType2(expr.Args[0]).(types.UntypedNumType); !ok {
+				noop(r) // TODO should add restriction on type R (cmp.Comparable?)
+				//fnT = fnT.T("R", r)
+			}
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr.Args[1], fnT.Params[2])
+			infer.SetType(expr, fnT.Return)
 			exprArg0 := expr.Args[0]
 			infer.withOptType(exprArg0, infer.forceReturnType, func() {
 				infer.expr(exprArg0)
@@ -955,6 +925,8 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.SetType(expr.Fun, reduceFnT)
 			infer.SetType(expr, reduceFnT.Return)
 		} else if fnName == "Find" {
+			fnT := infer.env.GetFn("agl.Vec.Find").T("T", idTArr.Elt)
+			infer.SetType(expr, fnT.Return)
 			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", eltT)
 			ft := findFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
@@ -969,12 +941,32 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if fnName == "Sum" {
+			fnT := infer.env.GetFn("agl.Vec.Sum").T("T", idTArr.Elt)
+			infer.SetType(expr, fnT.Return)
 			sumFnT := infer.env.GetFn("agl.Vec.Sum").T("T", eltT)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Joined" {
+			fnT := infer.env.GetFn("agl.Vec.Joined")
+			assertf(cmpTypes(idT, fnT.Params[0]), "type mismatch, wants: %s, got: %s", fnT.Params[0], idT)
+			infer.SetType(expr, fnT.Return)
 			joinedFnT := infer.env.GetFn("agl.Vec.Joined")
 			infer.SetType(exprT.Sel, joinedFnT)
 		} else {
+			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
+			if fnT := infer.env.Get(fnFullName); fnT != nil {
+				fnT0 := fnT.(types.FuncType)
+				assert(len(fnT0.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
+				gen0 := fnT0.TypeParams[0].(types.GenericType).W
+				want := types.ArrayType{Elt: gen0}
+				assertf(cmpTypes(gen0, idTArr.Elt), "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTArr, want, fnName)
+				fnT1 := fnT0.T("T", idTArr.Elt)
+				retT := Or[types.Type](fnT1.Return, types.VoidType{})
+				infer.SetType(exprT.Sel, fnT1)
+				infer.SetType(expr.Fun, fnT1)
+				infer.SetType(expr, retT)
+			} else {
+				assertf(false, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
+			}
 			ft := infer.GetTypeFn(expr.Fun)
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
