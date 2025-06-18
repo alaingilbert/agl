@@ -314,14 +314,10 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.InterfaceType:
 		infer.specInterfaceType(spec.Name, t)
 	case *ast.ArrayType:
-		infer.specArrayType(spec.Name, t)
+		infer.env.Define(spec.Name, spec.Name.Name, types.CustomType{Name: spec.Name.Name, W: types.ArrayType{Elt: infer.env.GetType2(t.Elt)}})
 	default:
 		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
-}
-
-func (infer *FileInferrer) specArrayType(name *ast.Ident, e *ast.ArrayType) {
-	infer.env.Define(name, name.Name, types.ArrayType{Elt: infer.env.GetType2(e.Elt)})
 }
 
 func (infer *FileInferrer) specInterfaceType(name *ast.Ident, e *ast.InterfaceType) {
