@@ -583,6 +583,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.orReturn(expr)
 	case *ast.IndexListExpr:
 		infer.indexListExpr(expr)
+	case *ast.KeyValueExpr:
+		infer.keyValueExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1485,6 +1487,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, infer.env.Get(v.Name))
 		return
 	case *ast.MapType:
+		infer.exprs(expr.Elts)
 		keyT := infer.env.GetType2(v.Key)
 		valT := infer.env.GetType2(v.Value)
 		infer.SetType(expr, types.MapType{K: keyT, V: valT})
@@ -1520,6 +1523,12 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 	//fmt.Println("???", e)
 	//Indices: infer.GetType(expr.Indices)
 	infer.SetType(expr, types.IndexListType{X: infer.GetType(expr.X), Indices: indices})
+}
+
+func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
+	infer.expr(expr.Key)
+	infer.expr(expr.Value)
+	//infer.SetType(expr,) // TODO
 }
 
 func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
