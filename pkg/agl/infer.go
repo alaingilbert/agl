@@ -985,7 +985,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	if infer.forceReturnType != nil {
 		ft = ft.T("R", infer.forceReturnType)
 		reduceFnT = reduceFnT.T("R", infer.forceReturnType)
-		assertf(cmpTypes(arg0T, infer.forceReturnType), "%s: type mismatch, want: %s, got %s", exprPos, infer.forceReturnType, arg0T)
+		assertf(cmpTypes(arg0T, infer.forceReturnType), "%s: type mismatch, want: %s, got: %s", exprPos, infer.forceReturnType, arg0T)
 	} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 		ft = ft.T("R", eltT)
 		reduceFnT = reduceFnT.T("R", eltT)
@@ -1522,9 +1522,14 @@ func (infer *FileInferrer) specs(s []ast.Spec) {
 func (infer *FileInferrer) spec(s ast.Spec) {
 	switch spec := s.(type) {
 	case *ast.ValueSpec:
-		for _, name := range spec.Names {
-			infer.exprs(spec.Values)
-			t := infer.env.GetType2(spec.Type)
+		t := infer.env.GetType2(spec.Type)
+		for i, name := range spec.Names {
+			if len(spec.Values) > 0 {
+				infer.exprs(spec.Values)
+				value := spec.Values[i]
+				valueT := infer.env.GetType(value)
+				assertf(cmpTypes(t, valueT), "%s: type mismatch, want: %s, got: %s", infer.Pos(name), t, valueT)
+			}
 			infer.SetType(name, t)
 			infer.env.Define(name, name.Name, t)
 		}
