@@ -4486,6 +4486,19 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen170(t *testing.T) {
+	src := `package main
+func main() {
+	m := make(map[string](int, int))
+}`
+	expected := `package main
+func main() {
+	m := make(map[string]AglTupleStruct_int_int)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
