@@ -1638,16 +1638,22 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		if len(stmt.Lhs) == 1 {
 			lhs := stmt.Lhs[0]
 			var lhsWantedT types.Type
-			var lhsIdName string
 			switch v := lhs.(type) {
 			case *ast.Ident:
-				lhsIdName = v.Name
+				lhsIdName := v.Name
 				lhsWantedT = infer.env.Get(lhsIdName)
 			case *ast.IndexExpr:
-				lhsIdName = v.X.(*ast.Ident).Name
+				lhsIdName := v.X.(*ast.Ident).Name
 				lhsWantedT = infer.env.Get(lhsIdName).(types.MapType).V
+			case *ast.SelectorExpr:
+				lhsIdName := v.X.(*ast.Ident).Name
+				xT := infer.env.Get(lhsIdName)
+				if tup, ok := xT.(types.TupleType); ok {
+					argIdx, _ := strconv.Atoi(v.Sel.Name)
+					lhsWantedT = tup.Elts[argIdx]
+				}
 			default:
-				panic("")
+				panic(fmt.Sprintf("%v", to(lhs)))
 			}
 			if lhsT := lhsWantedT; lhsT != nil {
 				infer.withForceReturn(lhsT, func() {
@@ -1665,6 +1671,18 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			case *ast.IndexExpr:
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
+			case *ast.SelectorExpr:
+				lhsIdName := v.X.(*ast.Ident).Name
+				xT := infer.env.Get(lhsIdName)
+				if tup, ok := xT.(types.TupleType); ok {
+					argIdx, _ := strconv.Atoi(v.Sel.Name)
+					infer.SetType(v.X, xT)
+					want, got := tup.Elts[argIdx], infer.GetType(rhs)
+					assertf(cmpTypesLoose(want, got), "type mismatch, wants: %s, got: %s", want, got)
+					return
+				}
+			default:
+				panic(fmt.Sprintf("%v", to(lhs)))
 			}
 			rhsT := infer.GetType(rhs)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
