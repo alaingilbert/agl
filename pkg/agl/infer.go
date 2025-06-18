@@ -895,49 +895,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	}
 }
 
-func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
-	if fnReturn == nil {
-		return
-	}
-	fnReturnIsResult := TryCast[types.ResultType](fnReturn)
-	fnReturnIsOption := TryCast[types.OptionType](fnReturn)
-	currIsResult := TryCast[types.ResultType](curr)
-	currIsOption := TryCast[types.OptionType](curr)
-	out = curr
-	if fnReturnIsResult {
-		if currIsResult {
-			tmp := MustCast[types.ResultType](curr)
-			tmp.Bubble = true
-			out = tmp
-		}
-	} else if fnReturnIsOption && currIsOption {
-		tmp := MustCast[types.OptionType](curr)
-		tmp.Bubble = true
-		out = tmp
-	} else {
-		if currIsResult {
-			tmp := MustCast[types.ResultType](curr)
-			if fnReturnIsOption {
-				fnReturnOpt := MustCast[types.OptionType](fnReturn)
-				tmp.Bubble = true
-				tmp.ConvertToNone = true
-				tmp.ToNoneType = fnReturnOpt.W
-				out = tmp
-			} else {
-				tmp.Bubble = false
-				out = tmp
-			}
-		}
-	}
-	if !fnReturnIsOption {
-		if tmp, ok := curr.(types.OptionType); ok {
-			tmp.Bubble = false
-			out = tmp
-		}
-	}
-	return
-}
-
 func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.SelectorExpr, expr *ast.CallExpr) {
 	if idTArr, ok := idT.(types.ArrayType); ok {
 		eltT := idTArr.Elt
@@ -1066,6 +1023,49 @@ func (infer *FileInferrer) inferVecExtensions(idT types.Type, exprT *ast.Selecto
 			infer.SetType(expr, ft.Return)
 		}
 	}
+}
+
+func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
+	if fnReturn == nil {
+		return
+	}
+	fnReturnIsResult := TryCast[types.ResultType](fnReturn)
+	fnReturnIsOption := TryCast[types.OptionType](fnReturn)
+	currIsResult := TryCast[types.ResultType](curr)
+	currIsOption := TryCast[types.OptionType](curr)
+	out = curr
+	if fnReturnIsResult {
+		if currIsResult {
+			tmp := MustCast[types.ResultType](curr)
+			tmp.Bubble = true
+			out = tmp
+		}
+	} else if fnReturnIsOption && currIsOption {
+		tmp := MustCast[types.OptionType](curr)
+		tmp.Bubble = true
+		out = tmp
+	} else {
+		if currIsResult {
+			tmp := MustCast[types.ResultType](curr)
+			if fnReturnIsOption {
+				fnReturnOpt := MustCast[types.OptionType](fnReturn)
+				tmp.Bubble = true
+				tmp.ConvertToNone = true
+				tmp.ToNoneType = fnReturnOpt.W
+				out = tmp
+			} else {
+				tmp.Bubble = false
+				out = tmp
+			}
+		}
+	}
+	if !fnReturnIsOption {
+		if tmp, ok := curr.(types.OptionType); ok {
+			tmp.Bubble = false
+			out = tmp
+		}
+	}
+	return
 }
 
 func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
