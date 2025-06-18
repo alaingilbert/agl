@@ -4238,6 +4238,25 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen161(t *testing.T) {
+	src := `package main
+type TestStruct[T any] struct {
+	a T
+}
+func main() {
+	i := TestStruct[string]{a: "foo"}
+}`
+	expected := `package main
+type TestStruct[T any] struct {
+	a T
+}
+func main() {
+	i := TestStruct[string]{a: "foo"}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
