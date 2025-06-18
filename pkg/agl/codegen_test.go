@@ -4834,6 +4834,37 @@ func describe(i I) {
 `
 	testCodeGen(t, src, expected)
 }
+func TestCodeGen180(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	var i any
+	describe(i)
+	i = 42
+	describe(i)
+	i = "hello"
+	describe(i)
+}
+func describe(i any) {
+	fmt.Printf("(%v, %T)\n", i, i)
+}
+`
+	expected := `package main
+import "fmt"
+func main() {
+	var i any
+	describe(i)
+	i = 42
+	describe(i)
+	i = "hello"
+	describe(i)
+}
+func describe(i any) {
+	fmt.Printf("(%v, %T)\n", i, i)
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main

@@ -329,7 +329,6 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, typ types.Type) 
 		return
 	}
 	assertf(e.Get(name) != nil, "undeclared %s", name)
-	e.lookupTable[name].Type = typ
 	e.lspTable[makeKey(n)].Definition = parentInfo.Definition
 }
 
