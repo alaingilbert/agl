@@ -848,7 +848,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				assertf(cmpTypes(oArg, got), "types not equal, %v %v", oArg, got)
 			}
 		default:
-			panic(fmt.Sprintf("%v %v", expr.Fun, to(expr.Fun)))
+			panic(fmt.Sprintf("%v", to(callT)))
 		}
 		parentInfo := infer.env.GetNameInfo(call.Name)
 		infer.SetType(call, callT, WithDefinition(parentInfo))
@@ -1575,6 +1575,8 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 			infer.SetType(name, t)
 			infer.env.Define(name, name.Name, t)
 		}
+	default:
+		panic(fmt.Sprintf("%v", to(s)))
 	}
 }
 
