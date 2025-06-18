@@ -153,9 +153,14 @@ func (o OptionType) StringFull() string {
 	}
 }
 
-type CustomType struct{ W Type }
+type CustomType struct {
+	Name string
+	W    Type
+}
 
-func (c CustomType) GoStr() string      { return "CustomType" }
+func (c CustomType) GoStr() string {
+	return c.Name
+}
 func (c CustomType) String() string     { return "CustomType" }
 func (c CustomType) StringFull() string { return "CustomType" }
 
