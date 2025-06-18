@@ -5074,6 +5074,44 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen187(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"io"
+	"strings"
+)
+func main() {
+	r := strings.NewReader("Hello, Reader!")
+	b := make([]byte, 8)
+	for {
+		n := r.Read(b) or_break
+		fmt.Printf("n = %v b = %v\n", n, b)
+		fmt.Printf("b[:n] = %q\n", b[:n])
+	}
+}
+`
+	expected := `package main
+import "fmt"
+import "io"
+import "strings"
+func main() {
+	r := strings.NewReader("Hello, Reader!")
+	b := make([]byte, 8)
+	for {
+		aglTmp1 := r.Read(b)
+		if aglTmp1.IsErr() {
+			break
+		}
+		n := AglIdentity(aglTmp1).Unwrap()
+		fmt.Printf("n = %v b = %v\n", n, b)
+		fmt.Printf("b[:n] = %q\n", b[:n])
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }

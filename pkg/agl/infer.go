@@ -611,6 +611,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.keyValueExpr(expr)
 	case *ast.InterfaceType:
 		infer.interfaceType(expr)
+	case *ast.SliceExpr:
+		infer.sliceExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1566,6 +1568,10 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 	//fmt.Println("???", e)
 	//Indices: infer.GetType(expr.Indices)
 	infer.SetType(expr, types.IndexListType{X: infer.GetType(expr.X), Indices: indices})
+}
+
+func (infer *FileInferrer) sliceExpr(expr *ast.SliceExpr) {
+	// TODO
 }
 
 func (infer *FileInferrer) interfaceType(expr *ast.InterfaceType) {
