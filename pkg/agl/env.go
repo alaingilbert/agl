@@ -153,6 +153,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFnNative("time.Sleep", "func (time.Duration)")
 	env.Define(nil, "time.Duration", types.I64Type{})
 	env.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
+	env.DefineFnNative("math.Sqrt", "func (x float64) float64")
 	env.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	env.DefineFnNative("fmt.Println", "func (a ...any) int!")
 	env.DefineFnNative("fmt.Sprintf", "func (format string, a ...any) string")
