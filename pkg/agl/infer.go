@@ -1816,7 +1816,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					}
 				}
 			} else {
-				panic("")
+				panic(fmt.Sprintf("%v", to(rhs)))
 			}
 		}
 	} else {
