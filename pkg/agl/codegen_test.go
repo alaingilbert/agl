@@ -3013,6 +3013,11 @@ func main() {
 }
 `
 	expected := `package main
+type AglTupleStruct_int_string_bool struct {
+	Arg0 int
+	Arg1 string
+	Arg2 bool
+}
 type IpAddrTag int
 const (
 	IpAddr_v4 IpAddrTag = iota + 1
@@ -3043,11 +3048,6 @@ func Make_IpAddr_v6(arg0 string) IpAddr {
 	return IpAddr{tag: IpAddr_v6, v6_0: arg0}
 }
 
-type AglTupleStruct_int_string_bool struct {
-	Arg0 int
-	Arg1 string
-	Arg2 bool
-}
 func main() {
 	addr1 := Make_IpAddr_v4(127, 0, 0, 1)
 	aglVar1 := addr1
@@ -4366,12 +4366,12 @@ func main() {
 	test(t2)
 }`
 	expected := `package main
-func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
-	return t
-}
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+	return t
 }
 func main() {
 	t1 := AglTupleStruct_int_bool{Arg0: int(1), Arg1: true}
@@ -4410,12 +4410,12 @@ func main() {
 	test(t2)
 }`
 	expected := `package main
-func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
-	return t
-}
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+	return t
 }
 func main() {
 	t1 := AglTupleStruct_int_bool{Arg0: 1, Arg1: true}
@@ -4439,13 +4439,13 @@ func main() {
     fmt.Println(t2)
 }`
 	expected := `package main
-func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
-	t.Arg0 += 1
-	return t
-}
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+	t.Arg0 += 1
+	return t
 }
 func main() {
 	t1 := AglTupleStruct_int_bool{Arg0: 1, Arg1: true}
