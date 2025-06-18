@@ -11,7 +11,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const config = vscode.workspace.getConfiguration('agl');
     // Use absolute path to the language server
-    const serverPath = '/Users/n0tr1v/Documents/agl/language_server/agl-lsp';
+    const serverPath = 'agl-lsp';
     
     // Debug logging
     console.log('Server path:', serverPath);
