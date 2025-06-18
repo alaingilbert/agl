@@ -123,8 +123,8 @@ func (g *Generator) Generate() (out string) {
 		extStr += g.genExtension(g.extensions[extKey])
 	}
 	var tupleStr string
-	for _, v := range g.tupleStructs {
-		tupleStr += v
+	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
+		tupleStr += g.tupleStructs[k]
 	}
 	clear(g.tupleStructs)
 	return out + out1 + out2 + tupleStr + out3 + extStr
