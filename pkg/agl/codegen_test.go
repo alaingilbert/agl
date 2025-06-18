@@ -4400,6 +4400,60 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen166(t *testing.T) {
+	src := `package main
+func test(t (int, bool)) (int, bool) { return t }
+func main() {
+	t1 := (1, true)
+	t2 := (2, false)
+	test(t1)
+	test(t2)
+}`
+	expected := `package main
+func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
+	return t
+}
+type AglTupleStruct_int_bool struct {
+	Arg0 int
+	Arg1 bool
+}
+func main() {
+	t1 := AglTupleStruct_int_bool{Arg0: 1, Arg1: true}
+	t2 := AglTupleStruct_int_bool{Arg0: 2, Arg1: false}
+	test(t1)
+	test(t2)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+//func TestCodeGen167(t *testing.T) {
+//	src := `package main
+//func test(t (u8, bool)) (u8, bool) { return t }
+//func main() {
+//	t1 := (1, true)
+//	t2 := (2, false)
+//	test(t1)
+//	test(t2)
+//}`
+//	expected := `package main
+//func test(t AglTupleStruct_uint8_bool) AglTupleStruct_uint8_bool {
+//	return t
+//}
+//type AglTupleStruct_uint8_bool struct {
+//	Arg0 uint8
+//	Arg1 bool
+//}
+//func main() {
+//	t1 := AglTupleStruct_uint8_bool{Arg0: 1, Arg1: true}
+//	t2 := AglTupleStruct_uint8_bool{Arg0: 2, Arg1: false}
+//	test(t1)
+//	test(t2)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
