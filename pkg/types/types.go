@@ -104,9 +104,23 @@ type ResultType struct {
 	ToNoneType    Type
 }
 
-func (r ResultType) GoStr() string      { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
-func (r ResultType) String() string     { return fmt.Sprintf("Result[%s]", r.W.String()) }
-func (r ResultType) StringFull() string { return fmt.Sprintf("Result[%s]", r.W.StringFull()) }
+func (r ResultType) GoStr() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
+func (r ResultType) StringFull() string {
+	switch r.W.(type) {
+	case ArrayType, StarType:
+		return fmt.Sprintf("(%s)!", r.W.StringFull())
+	default:
+		return fmt.Sprintf("%s!", r.W.StringFull())
+	}
+}
+func (r ResultType) String() string {
+	switch r.W.(type) {
+	case ArrayType, StarType:
+		return fmt.Sprintf("(%s)!", r.W.String())
+	default:
+		return fmt.Sprintf("%s!", r.W.String())
+	}
+}
 
 type OptionType struct {
 	W      Type
@@ -114,9 +128,23 @@ type OptionType struct {
 	Bubble bool
 }
 
-func (o OptionType) GoStr() string      { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
-func (o OptionType) String() string     { return fmt.Sprintf("Option[%s]", o.W.String()) }
-func (o OptionType) StringFull() string { return fmt.Sprintf("Option[%s]", o.W.StringFull()) }
+func (o OptionType) GoStr() string { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
+func (o OptionType) String() string {
+	switch o.W.(type) {
+	case ArrayType, StarType:
+		return fmt.Sprintf("(%s)?", o.W.String())
+	default:
+		return fmt.Sprintf("%s?", o.W.String())
+	}
+}
+func (o OptionType) StringFull() string {
+	switch o.W.(type) {
+	case ArrayType, StarType:
+		return fmt.Sprintf("(%s)?", o.W.StringFull())
+	default:
+		return fmt.Sprintf("%s?", o.W.StringFull())
+	}
+}
 
 type TypeType struct{ W Type }
 
