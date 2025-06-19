@@ -452,10 +452,8 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 			}
 		}
 
-		var returnTyp types.Type
-		if decl.Type.Result == nil {
-			returnTyp = types.VoidType{}
-		} else {
+		var returnTyp types.Type = types.VoidType{}
+		if decl.Type.Result != nil {
 			infer.expr(decl.Type.Result)
 			returnTyp = infer.env.GetType2(decl.Type.Result)
 			infer.SetType(decl.Type.Result, returnTyp)
