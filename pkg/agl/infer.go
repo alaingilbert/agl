@@ -927,6 +927,16 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		parentInfo := infer.env.GetNameInfo(call.Name)
 		infer.SetType(call, callT, WithDefinition(parentInfo))
+	case *ast.FuncLit:
+		callT := funcTypeToFuncType("", call.Type, infer.env, false)
+		infer.SetType(call, callT)
+		infer.SetType(expr, callT.Return)
+	case *ast.ArrayType:
+		callT := infer.env.GetType2(call)
+		infer.SetType(call, callT)
+		infer.SetType(expr, callT)
+	default:
+		panic(fmt.Sprintf("%v", to(expr.Fun)))
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
