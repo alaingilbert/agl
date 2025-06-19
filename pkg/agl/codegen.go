@@ -700,6 +700,9 @@ func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
 }
 
 func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
+	if expr.Methods == nil || len(expr.Methods.List) == 0 {
+		return "interface{}"
+	}
 	out += "interface {\n"
 	if expr.Methods != nil {
 		for _, m := range expr.Methods.List {
