@@ -1712,5 +1712,11 @@ func AglVecSum[T cmp.Ordered](a []T) (out T) {
 	return
 }
 
+func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
+	if el, ok := m[index]; ok {
+		return MakeOptionSome(el)
+	}
+	return MakeOptionNone[V]()
+}
 `
 }
