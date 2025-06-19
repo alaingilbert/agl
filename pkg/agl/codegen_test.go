@@ -5661,6 +5661,37 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen200(t *testing.T) {
+//	src := `package main
+//import "fmt"
+//type fakeFetcher map[string]*fakeResult
+//type fakeResult struct {
+//	body string
+//}
+//func (f fakeFetcher) Fetch() string! {
+//	if res, ok := f["url"]; ok {
+//		return Ok(res.body)
+//	}
+//	return Err(fmt.Errorf("not found"))
+//}
+//var fetcher = fakeFetcher{}`
+//	expected := `package main
+//import "fmt"
+//type fakeFetcher map[string]*fakeResult
+//type fakeResult struct {
+//	body string
+//}
+//func (f fakeFetcher) Fetch() Result[string] {
+//	if res, ok := f["url"]; ok {
+//		return MakeResultOk(res.body)
+//	}
+//	return MakeResultErr[string](fmt.Errorf("not found"))
+//}
+//var fetcher = fakeFetcher{}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }

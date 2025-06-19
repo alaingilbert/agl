@@ -292,12 +292,12 @@ func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 }
 
 func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
+	var toDef types.Type
 	switch t := spec.Type.(type) {
 	case *ast.Ident:
-		name := spec.Name
 		typ := infer.env.GetType2(t)
-		assertf(typ != nil, "%s: type not found '%s'", infer.Pos(name), t)
-		infer.env.Define(name, name.Name, types.TypeType{W: types.CustomType{Name: name.Name, W: typ}})
+		assertf(typ != nil, "%s: type not found '%s'", infer.Pos(spec.Name), t)
+		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
 	case *ast.StructType:
 		var fields []types.FieldType
 		if t.Fields != nil {
@@ -308,9 +308,8 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 				}
 			}
 		}
-		name := spec.Name
-		structT := types.StructType{Name: name.Name, Fields: fields}
-		var toDef types.Type
+		structT := types.StructType{Name: spec.Name.Name, Fields: fields}
+		var toDef1 types.Type
 		if spec.TypeParams != nil {
 			var tpFields []types.FieldType
 			for _, typeParam := range spec.TypeParams.List {
@@ -320,57 +319,52 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 				}
 			}
 			if len(tpFields) > 1 {
-				toDef = types.IndexListType{X: structT, Indices: tpFields}
+				toDef1 = types.IndexListType{X: structT, Indices: tpFields}
 			} else {
-				toDef = types.IndexType{X: structT, Index: tpFields}
+				toDef1 = types.IndexType{X: structT, Index: tpFields}
 			}
 		} else {
-			toDef = structT
+			toDef1 = structT
 		}
-		infer.env.Define(name, name.Name, toDef)
+		toDef = toDef1
 	case *ast.EnumType:
-		infer.enumType(spec.Name, t)
+		var fields []types.EnumFieldType
+		if t.Values != nil {
+			for _, f := range t.Values.List {
+				var elts []types.Type
+				if f.Params != nil {
+					for _, param := range f.Params.List {
+						elts = append(elts, infer.env.GetType2(param.Type))
+					}
+				}
+				fields = append(fields, types.EnumFieldType{Name: f.Name.Name, Elts: elts})
+			}
+		}
+		toDef = types.EnumType{Name: spec.Name.Name, Fields: fields}
 	case *ast.InterfaceType:
-		infer.specInterfaceType(spec.Name, t)
+		if t.Methods.List != nil {
+			for _, f := range t.Methods.List {
+				if f.Type != nil {
+					infer.expr(f.Type)
+				}
+				for _, n := range f.Names {
+					fnT := funcTypeToFuncType("", f.Type.(*ast.FuncType), infer.env, false)
+					infer.env.Define(spec.Name, spec.Name.Name+"."+n.Name, fnT)
+				}
+			}
+		}
+		toDef = types.InterfaceType{Name: spec.Name.Name}
 	case *ast.ArrayType:
-		infer.env.Define(spec.Name, spec.Name.Name, types.CustomType{Name: spec.Name.Name, W: types.ArrayType{Elt: infer.env.GetType2(t.Elt)}})
+		toDef = types.CustomType{Name: spec.Name.Name, W: types.ArrayType{Elt: infer.env.GetType2(t.Elt)}}
 	case *ast.MapType:
-		mT := types.MapType{K: infer.env.GetType2(t.Key), V: infer.env.GetType2(t.Value)}
-		infer.env.Define(spec.Name, spec.Name.Name, types.CustomType{Name: spec.Name.Name, W: mT})
+		kT := infer.env.GetType2(t.Key)
+		vT := infer.env.GetType2(t.Value)
+		mT := types.MapType{K: kT, V: vT}
+		toDef = types.CustomType{Name: spec.Name.Name, W: mT}
 	default:
 		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
-}
-
-func (infer *FileInferrer) specInterfaceType(name *ast.Ident, e *ast.InterfaceType) {
-	infer.env.Define(name, name.Name, types.InterfaceType{Name: name.Name})
-	if e.Methods.List != nil {
-		for _, f := range e.Methods.List {
-			if f.Type != nil {
-				infer.expr(f.Type)
-			}
-			for _, n := range f.Names {
-				fnT := funcTypeToFuncType("", f.Type.(*ast.FuncType), infer.env, false)
-				infer.env.Define(name, name.Name+"."+n.Name, fnT)
-			}
-		}
-	}
-}
-
-func (infer *FileInferrer) enumType(name *ast.Ident, e *ast.EnumType) {
-	var fields []types.EnumFieldType
-	if e.Values != nil {
-		for _, f := range e.Values.List {
-			var elts []types.Type
-			if f.Params != nil {
-				for _, param := range f.Params.List {
-					elts = append(elts, infer.env.GetType2(param.Type))
-				}
-			}
-			fields = append(fields, types.EnumFieldType{Name: f.Name.Name, Elts: elts})
-		}
-	}
-	infer.env.Define(name, name.Name, types.EnumType{Name: name.Name, Fields: fields})
+	infer.env.Define(spec.Name, spec.Name.Name, toDef)
 }
 
 func (infer *FileInferrer) structType(name *ast.Ident, s *ast.StructType) {
@@ -1778,9 +1772,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.Tok)
 		infer.env.Define(n, name, typ)
 	}
+	myAssign := func(parentInfo *Info, n ast.Node, name string, _ types.Type) {
+		infer.env.Assign(parentInfo, n, name)
+	}
 	assignFn := func(n ast.Node, name string, typ types.Type) {
 		op := stmt.Tok
-		f := Ternary(op == token.DEFINE, myDefine, infer.env.Assign)
+		f := Ternary(op == token.DEFINE, myDefine, myAssign)
 		var parentInfo *Info
 		if op != token.DEFINE {
 			parentInfo = infer.env.GetNameInfo(name)

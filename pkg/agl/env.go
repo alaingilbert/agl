@@ -383,7 +383,7 @@ func (e *Env) lspSetNode(n ast.Node, info *Info) {
 	e.lspTable[makeKey(n)] = info
 }
 
-func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, typ types.Type) {
+func (e *Env) Assign(parentInfo *Info, n ast.Node, name string) {
 	if name == "_" {
 		return
 	}
