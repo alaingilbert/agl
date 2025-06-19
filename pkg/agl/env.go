@@ -122,6 +122,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.Define(nil, "error", types.TypeType{W: types.AnyType{}})
 	env.Define(nil, "nil", types.TypeType{W: types.NilType{}})
 	env.Define(nil, "void", types.TypeType{W: types.VoidType{}})
+	env.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 	env.Define(nil, "any", types.TypeType{W: types.AnyType{}})
 	env.Define(nil, "i8", types.TypeType{W: types.I8Type{}})
 	env.Define(nil, "i16", types.TypeType{W: types.I16Type{}})

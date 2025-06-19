@@ -407,7 +407,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 		if decl.Type.TypeParams != nil {
 			for _, param := range decl.Type.TypeParams.List {
 				infer.expr(param.Type)
-				t := infer.env.GetType(param.Type)
+				t := infer.env.GetType2(param.Type)
 				for _, name := range param.Names {
 					infer.env.SetType(nil, name, t)
 					infer.env.Define(name, name.Name, types.GenericType{Name: name.Name, W: t, IsType: true})
