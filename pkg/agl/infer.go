@@ -1617,7 +1617,7 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 		vT := infer.GetType(v)
 		switch vTT := vT.(type) {
 		case types.MapType:
-			infer.SetType(expr, types.OptionType{W: vTT.V})
+			infer.SetType(expr, vTT.V) // TODO should return an Option[T] ?
 		default:
 			infer.SetType(expr, infer.GetType(expr.X))
 		}

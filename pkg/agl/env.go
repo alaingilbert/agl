@@ -389,6 +389,10 @@ func makeKey(n ast.Node) NodeKey {
 	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
 }
 
+func (e *Env) GetInfo(x ast.Node) *Info {
+	return e.lspNode(x)
+}
+
 func (e *Env) GetType(x ast.Node) types.Type {
 	if v := e.lspNode(x); v != nil {
 		return v.Type
