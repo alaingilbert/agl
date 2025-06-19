@@ -315,6 +315,8 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		infer.specInterfaceType(spec.Name, t)
 	case *ast.ArrayType:
 		infer.env.Define(spec.Name, spec.Name.Name, types.CustomType{Name: spec.Name.Name, W: types.ArrayType{Elt: infer.env.GetType2(t.Elt)}})
+	case *ast.MapType:
+		infer.env.Define(spec.Name, spec.Name.Name, types.CustomType{Name: spec.Name.Name, W: types.MapType{K: infer.env.GetType2(t.Key), V: infer.env.GetType2(t.Value)}})
 	default:
 		panic(fmt.Sprintf("%v", to(spec.Type)))
 	}
