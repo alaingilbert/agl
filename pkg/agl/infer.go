@@ -80,6 +80,13 @@ func (infer *FileInferrer) withForceReturn(t types.Type, clb func()) {
 	infer.forceReturnType = prev
 }
 
+func (infer *FileInferrer) withReturnType(t types.Type, clb func()) {
+	prev := infer.returnType
+	infer.returnType = t
+	clb()
+	infer.returnType = prev
+}
+
 func (infer *FileInferrer) withEnv(clb func()) {
 	old := infer.env
 	nenv := old.SubEnv()
@@ -453,17 +460,17 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 			returnTyp = infer.env.GetType2(decl.Type.Result)
 			infer.SetType(decl.Type.Result, returnTyp)
 		}
-		infer.returnType = returnTyp
-		if decl.Body != nil {
-			// implicit return
-			cond1 := len(decl.Body.List) == 1 ||
-				(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
-			if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
-				decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
+		infer.withReturnType(returnTyp, func() {
+			if decl.Body != nil {
+				// implicit return
+				cond1 := len(decl.Body.List) == 1 ||
+					(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
+				if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
+					decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
+				}
+				infer.stmt(decl.Body)
 			}
-			infer.stmt(decl.Body)
-		}
-		infer.returnType = nil
+		})
 	})
 }
 
