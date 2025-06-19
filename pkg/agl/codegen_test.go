@@ -4606,40 +4606,31 @@ func main() {
 
 func TestCodeGen176(t *testing.T) {
 	src := `package main
-
 import (
 	"fmt"
 	"math"
 )
-
 type Abser interface {
 	Abs() f64
 }
-
 func main() {
 	var a Abser
 	f := MyFloat(-math.Sqrt2)
 	v := Vertex{3, 4}
-
 	a = f  // a MyFloat implements Abser
 	a = &v // a *Vertex implements Abser
-
 	fmt.Println(a.Abs())
 }
-
 type MyFloat f64
-
 func (f MyFloat) Abs() f64 {
 	if f < 0 {
 		return f64(-f)
 	}
 	return f64(f)
 }
-
 type Vertex struct {
 	X, Y f64
 }
-
 func (v *Vertex) Abs() f64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }`
