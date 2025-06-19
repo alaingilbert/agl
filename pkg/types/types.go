@@ -27,7 +27,9 @@ type StarType struct {
 	X Type
 }
 
-func (s StarType) GoStr() string { return "StarType" }
+func (s StarType) GoStr() string {
+	return fmt.Sprintf("*%s", s.X.GoStr())
+}
 func (s StarType) String() string {
 	if s.X == nil {
 		return "*UNKNOWN"
@@ -644,6 +646,59 @@ func findGenHelper(m map[string]Type, a, b Type) {
 }
 
 func (f FuncType) GoStr() string { return f.Name }
+
+func (f FuncType) GoStr1() string { // TODO
+	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
+	if f.Name != "" {
+		nameStr = " " + f.Name
+	}
+	if f.Recv != nil {
+		var tmp []string
+		for _, recv := range f.Recv {
+			tmp = append(tmp, recv.GoStr())
+		}
+		recvStr = strings.Join(tmp, ", ")
+		if recvStr != "" {
+			recvStr = " (" + recvStr + ")"
+		}
+	}
+	if f.TypeParams != nil {
+		var tmp []string
+		for _, typeParam := range f.TypeParams {
+			tmp = append(tmp, typeParam.(GenericType).TypeParamGoStr())
+		}
+		typeParamsStr = strings.Join(tmp, ", ")
+		if typeParamsStr != "" {
+			typeParamsStr = "[" + typeParamsStr + "]"
+		}
+	}
+	if f.Params != nil {
+		var tmp1 []string
+		for _, param := range f.Params {
+			var val string
+			if param == nil {
+				val = "nil"
+			} else {
+				val = param.GoStr()
+			}
+			tmp1 = append(tmp1, val)
+		}
+		paramsStr = strings.Join(tmp1, ", ")
+	}
+	if result := f.Return; result != nil {
+		if _, ok := result.(VoidType); !ok {
+			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
+				resultStr = " !"
+			} else {
+				val := result.GoStr()
+				if val != "" {
+					resultStr = " " + val
+				}
+			}
+		}
+	}
+	return fmt.Sprintf("func%s%s%s(%s)%s", recvStr, nameStr, typeParamsStr, paramsStr, resultStr)
+}
 
 func (f FuncType) StringFull() string { return f.String() }
 

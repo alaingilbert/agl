@@ -170,6 +170,7 @@ func (e *Env) loadBaseValues() {
 	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
 	e.DefineFnNative("fmt.Println", "func (a ...any) int!")
 	e.DefineFnNative("fmt.Printf", "func (format string, a ...any) int!")
+	e.DefineFnNative("fmt.Errorf", "func (format string, a ...any) error")
 	e.DefineFnNative("fmt.Sprintf", "func (format string, a ...any) string")
 	e.DefineFnNative("fmt.Scan", "func (a ...any) int!")
 	e.DefineFnNative("fmt.Scanf", "func (format string, a ...any) int!")
@@ -464,6 +465,9 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		return types.UnaryType{X: e.GetType2(xx.X)}
 	case *ast.InterfaceType:
 		return types.AnyType{}
+	case *ast.CompositeLit:
+		ct := e.GetType2(xx.Type).(types.CustomType)
+		return types.StructType{Name: ct.Name}
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
