@@ -1808,8 +1808,7 @@ func main() {
 }
 `
 	expected := `package main
-type Writer interface {
-}
+type Writer interface{}
 func main() {
 }
 `
@@ -1843,8 +1842,7 @@ func main() {
 `
 	expected := `package main
 import "fmt"
-type Writer interface {
-}
+type Writer interface{}
 type WriterA struct {
 }
 type WriterB struct {
@@ -5201,6 +5199,38 @@ func main() {
 	v := Vertex{3, 4}
 	v.Scale(10)
 	fmt.Println(v.Abs())
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen190(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	var i interface{}
+	describe(i)
+	i = 42
+	describe(i)
+	i = "hello"
+	describe(i)
+}
+func describe(i interface{}) {
+	fmt.Printf("(%v, %T)\n", i, i)
+}
+`
+	expected := `package main
+import "fmt"
+func main() {
+	var i interface{}
+	describe(i)
+	i = 42
+	describe(i)
+	i = "hello"
+	describe(i)
+}
+func describe(i interface{}) {
+	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
 	testCodeGen(t, src, expected)
