@@ -31,7 +31,11 @@ func p(a ...any) {
 		var tmp2 any
 		switch v := e.(type) {
 		case *ast.Ident:
-			tmp2 = fmt.Sprintf("Ident(%v)", v.Name)
+			name := "<nil>"
+			if v != nil {
+				name = v.Name
+			}
+			tmp2 = fmt.Sprintf("Ident(%v)", name)
 		case *ast.FuncType:
 			tmp2 = fmt.Sprintf("FuncType(...)")
 		case *ast.CallExpr:
