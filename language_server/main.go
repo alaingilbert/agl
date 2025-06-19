@@ -349,7 +349,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "initialize":
 		var params lsp.InitializeParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		result, err = h.server.Initialize(ctx, params)
@@ -365,7 +365,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "textDocument/didOpen":
 		var params lsp.DidOpenTextDocumentParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		err = h.server.DidOpen(ctx, params)
@@ -374,7 +374,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "textDocument/didChange":
 		var params lsp.DidChangeTextDocumentParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		err = h.server.DidChange(ctx, params)
@@ -383,7 +383,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "textDocument/didClose":
 		var params lsp.DidCloseTextDocumentParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		err = h.server.DidClose(ctx, params)
@@ -392,7 +392,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "textDocument/definition":
 		var params lsp.TextDocumentPositionParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		result, err = h.server.Definition(ctx, params)
@@ -400,7 +400,7 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	case "textDocument/hover":
 		var params lsp.TextDocumentPositionParams
 		if err := json.Unmarshal(*req.Params, &params); err != nil {
-			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
 			return
 		}
 		result, err = h.server.Hover(ctx, params)
@@ -414,12 +414,12 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 	//	result, err = h.server.Completion(ctx, params)
 
 	default:
-		conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)})
+		_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)})
 		return
 	}
 
 	if err != nil {
-		conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeInternalError, Message: err.Error()})
+		_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeInternalError, Message: err.Error()})
 		return
 	}
 
