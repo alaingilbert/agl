@@ -816,6 +816,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		fnName := call.Sel.Name
 		switch idTT := exprFunT.(type) {
 		case types.ArrayType:
+		case types.MapType:
 		case types.CustomType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, fnName)
 			t := infer.env.Get(name)
@@ -1075,6 +1076,15 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			infer.SetType(exprT.Sel, ft)
 			infer.SetType(expr.Fun, ft)
 			infer.SetType(expr, ft.Return)
+		}
+	} else if idTMap, ok := idT.(types.MapType); ok {
+		fnName := exprT.Sel.Name
+		if fnName == "Get" {
+			getFnT := infer.env.GetFn("agl.Map.Get").T("K", idTMap.K).T("V", idTMap.V)
+			getFnT.Recv = []types.Type{idTMap}
+			getFnT.Params = getFnT.Params[1:]
+			infer.SetType(expr, getFnT.Return)
+			infer.SetType(exprT.Sel, getFnT)
 		}
 	}
 }

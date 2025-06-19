@@ -965,6 +965,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
+		} else if _, ok := g.env.GetType(e.X).(types.MapType); ok {
+			if e.Sel.Name == "Get" {
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
+			}
 		}
 	case *ast.Ident:
 		if e.Name == "assert" {

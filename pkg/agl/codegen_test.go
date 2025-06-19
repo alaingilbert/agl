@@ -5646,6 +5646,21 @@ var fetcher = fakeFetcher{"https://golang.org/": &fakeResult{"The Go Programming
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen199(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 1}
+	mv := m.Get("a")
+}`
+	expected := `package main
+func main() {
+	m := map[string]int{"a": 1}
+	mv := AglIdentity(AglMapIndex(m, "a"))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }

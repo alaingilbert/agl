@@ -280,6 +280,7 @@ func (e *Env) loadBaseValues() {
 	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
 	e.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
 	e.DefineFn("agl.Vec.Joined", "func (a []string) string")
+	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
 	e.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
 	e.DefineFn("agl.Option.IsSome", "func () bool")
 	e.DefineFn("agl.Option.IsNone", "func () bool")
