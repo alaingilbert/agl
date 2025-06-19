@@ -4,6 +4,8 @@ import (
 	"agl/pkg/ast"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"fmt"
+	"reflect"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
@@ -61,6 +63,27 @@ func main() {
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
+	//tassert.Equal(t, 1, env.Get("bod"))
+}
+
+func TestInfer3(t *testing.T) {
+	src := `package main
+func main() {
+	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
+}
+`
+	fset, f := parser2(src)
+	env := NewEnv(fset)
+	i := NewInferrer(fset, env)
+	i.InferFile(f)
+
+	ast.Inspect(f, func(n ast.Node) bool {
+		if n == nil {
+			return true
+		}
+		fmt.Println(reflect.TypeOf(n), n, env.GetType(n))
+		return true
+	})
 	//tassert.Equal(t, 1, env.Get("bod"))
 }
 
