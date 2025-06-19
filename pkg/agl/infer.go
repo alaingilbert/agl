@@ -191,6 +191,7 @@ func exprToString(expr goast.Expr) string {
 
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
+	infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
 	for _, i := range infer.f.Imports {
 		infer.inferImport(i)
 	}
@@ -407,6 +408,8 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 		fnName = recvTStr + "." + fnName
 	}
 	infer.env.Define(decl.Name, fnName, t)
+	infer.SetType(decl.Name, t)
+	infer.SetType(decl, t)
 }
 
 // mapping of "agl function name" to "go compiled function name"
