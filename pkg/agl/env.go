@@ -124,6 +124,10 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "void", types.TypeType{W: types.VoidType{}})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 	e.Define(nil, "any", types.TypeType{W: types.AnyType{}})
+
+	// Number types
+	e.Define(nil, "int", types.TypeType{W: types.IntType{}})
+	e.Define(nil, "uint", types.TypeType{W: types.UintType{}})
 	e.Define(nil, "i8", types.TypeType{W: types.I8Type{}})
 	e.Define(nil, "i16", types.TypeType{W: types.I16Type{}})
 	e.Define(nil, "i32", types.TypeType{W: types.I32Type{}})
@@ -132,10 +136,21 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "u16", types.TypeType{W: types.U16Type{}})
 	e.Define(nil, "u32", types.TypeType{W: types.U32Type{}})
 	e.Define(nil, "u64", types.TypeType{W: types.U64Type{}})
-	e.Define(nil, "int", types.TypeType{W: types.IntType{}})
-	e.Define(nil, "uint", types.TypeType{W: types.UintType{}})
 	e.Define(nil, "f32", types.TypeType{W: types.F32Type{}})
 	e.Define(nil, "f64", types.TypeType{W: types.F64Type{}})
+
+	// Aliases should be avoided
+	e.Define(nil, "int8", types.TypeType{W: types.I8Type{}})
+	e.Define(nil, "int16", types.TypeType{W: types.I16Type{}})
+	e.Define(nil, "int32", types.TypeType{W: types.I32Type{}})
+	e.Define(nil, "int64", types.TypeType{W: types.I64Type{}})
+	e.Define(nil, "uint8", types.TypeType{W: types.U8Type{}})
+	e.Define(nil, "uint16", types.TypeType{W: types.U16Type{}})
+	e.Define(nil, "uint32", types.TypeType{W: types.U32Type{}})
+	e.Define(nil, "uint64", types.TypeType{W: types.U64Type{}})
+	e.Define(nil, "float32", types.TypeType{W: types.F32Type{}})
+	e.Define(nil, "float64", types.TypeType{W: types.F64Type{}})
+
 	e.Define(nil, "string", types.TypeType{W: types.StringType{}})
 	e.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
 	e.Define(nil, "true", types.BoolValue{V: true})
