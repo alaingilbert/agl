@@ -1852,15 +1852,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				panic(fmt.Sprintf("%v", to(lhs)))
 			}
 			var rhsT types.Type
+			var tmp ast.Expr
 			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
-				if ta.Type == nil { // Type switch `X.(type)`
-					rhsT = infer.env.GetType2(ta.X)
-				} else {
-					rhsT = infer.env.GetType(ta.Type)
-				}
+				tmp = Ternary(ta.Type == nil, ta.X, ta.Type)
 			} else {
-				rhsT = infer.GetType(rhs)
+				tmp = rhs
 			}
+			rhsT = infer.env.GetType2(tmp)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
