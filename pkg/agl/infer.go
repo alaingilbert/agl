@@ -53,7 +53,7 @@ func (o *OptTypeTmp) IsDefinedFor(n ast.Node) bool {
 
 func (infer *FileInferrer) sandboxed(clb func()) {
 	old := infer.env
-	nenv := old.CloneFull()
+	nenv := old.SubEnv()
 	infer.env = nenv
 	clb()
 	infer.env = old
@@ -80,7 +80,7 @@ func (infer *FileInferrer) withForceReturn(t types.Type, clb func()) {
 
 func (infer *FileInferrer) withEnv(clb func()) {
 	old := infer.env
-	nenv := old.Clone()
+	nenv := old.SubEnv()
 	infer.env = nenv
 	clb()
 	infer.env = old

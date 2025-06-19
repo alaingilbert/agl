@@ -6,7 +6,6 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
-	"maps"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -17,6 +16,7 @@ type Env struct {
 	structCounter atomic.Int64
 	lookupTable   map[string]*Info  // Store constants/variables/functions
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
+	parent        *Env
 }
 
 type Info struct {
@@ -97,7 +97,7 @@ func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
 }
 
 func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.FuncType {
-	env = env.Clone()
+	env = env.SubEnv()
 	e, err := parser.ParseExpr(s)
 	if err != nil {
 		panic(err)
@@ -269,33 +269,43 @@ func NewEnv(fset *token.FileSet) *Env {
 	return env
 }
 
-func (e *Env) Clone() *Env { // TODO avoid cloning, use recursive child/parent pattern instead
+func (e *Env) SubEnv() *Env {
 	env := &Env{
 		fset:        e.fset,
-		lookupTable: maps.Clone(e.lookupTable),
+		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
-	}
-	return env
-}
-
-func (e *Env) CloneFull() *Env {
-	env := &Env{
-		fset:        e.fset,
-		lookupTable: maps.Clone(e.lookupTable),
-		lspTable:    maps.Clone(e.lspTable),
+		parent:      e,
 	}
 	return env
 }
 
 func (e *Env) Get(name string) types.Type {
-	if el, ok := e.lookupTable[name]; ok {
+	res := e.getHelper(name)
+	if res == nil && e.parent != nil {
+		return e.parent.Get(name)
+	}
+	return res
+}
+
+func (e *Env) getHelper(name string) types.Type {
+	if el := e.GetNameInfo(name); el != nil {
 		return el.Type
 	}
 	return nil
 }
 
 func (e *Env) GetNameInfo(name string) *Info {
-	return e.lookupTable[name]
+	info := e.lookupTable[name]
+	if info == nil && e.parent != nil {
+		return e.parent.GetNameInfo(name)
+	}
+	return info
+}
+
+func (e *Env) GetOrCreateNameInfo(name string) *Info {
+	info := Or(e.GetNameInfo(name), &Info{})
+	e.lookupTable[name] = info
+	return info
 }
 
 func (e *Env) GetFn(name string) types.FuncType {
@@ -318,17 +328,27 @@ func (e *Env) DefinePkg(name, path string) {
 
 func (e *Env) Define(n ast.Node, name string, typ types.Type) {
 	assertf(e.Get(name) == nil, "duplicate declaration of %s", name)
-	if _, ok := e.lookupTable[name]; !ok {
-		e.lookupTable[name] = &Info{}
-	}
-	e.lookupTable[name].Type = typ
+	info := e.GetOrCreateNameInfo(name)
+	info.Type = typ
 	if n != nil {
-		e.lookupTable[name].Definition = n.Pos()
-		if _, ok := e.lspTable[makeKey(n)]; !ok {
-			e.lspTable[makeKey(n)] = &Info{}
-		}
-		e.lspTable[makeKey(n)].Definition = n.Pos()
+		info.Definition = n.Pos()
+		lookupInfo := e.lspNodeOrCreate(n)
+		lookupInfo.Definition = n.Pos()
 	}
+}
+
+func (e *Env) lspNode(n ast.Node) *Info {
+	return e.lspTable[makeKey(n)]
+}
+
+func (e *Env) lspNodeOrCreate(n ast.Node) *Info {
+	info := Or(e.lspNode(n), &Info{})
+	e.lspSetNode(n, info)
+	return info
+}
+
+func (e *Env) lspSetNode(n ast.Node, info *Info) {
+	e.lspTable[makeKey(n)] = info
 }
 
 func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, typ types.Type) {
@@ -336,17 +356,15 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, typ types.Type) 
 		return
 	}
 	assertf(e.Get(name) != nil, "undeclared %s", name)
-	e.lspTable[makeKey(n)].Definition = parentInfo.Definition
+	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
 }
 
 func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 	assertf(t != nil, "%s: try to set type nil, %v %v", e.fset.Position(x.Pos()), x, to(x))
-	if _, ok := e.lspTable[makeKey(x)]; !ok {
-		e.lspTable[makeKey(x)] = &Info{}
-	}
-	e.lspTable[makeKey(x)].Type = t
+	info := e.lspNodeOrCreate(x)
+	info.Type = t
 	if p != nil {
-		e.lspTable[makeKey(x)].Definition = p.Definition
+		info.Definition = p.Definition
 	}
 }
 
@@ -356,27 +374,28 @@ func makeKey(n ast.Node) NodeKey {
 	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
 }
 
-func (e *Env) GetInfo(x ast.Node) *Info {
-	return e.lspTable[makeKey(x)]
-}
-
 func (e *Env) GetType(x ast.Node) types.Type {
-	if v, ok := e.lspTable[makeKey(x)]; ok {
-		if tt, ok := v.Type.(types.TypeType); ok {
-			v.Type = tt.W
-		}
+	if v := e.lspNode(x); v != nil {
 		return v.Type
 	}
 	return nil
 }
 
 func (e *Env) GetType2(x ast.Node) types.Type {
-	if v, ok := e.lspTable[makeKey(x)]; ok {
+	res := e.getType2Helper(x)
+	if res == nil && e.parent != nil {
+		return e.parent.getType2Helper(x)
+	}
+	return res
+}
+
+func (e *Env) getType2Helper(x ast.Node) types.Type {
+	if v := e.lspNode(x); v != nil {
 		return v.Type
 	}
 	switch xx := x.(type) {
 	case *ast.Ident:
-		if v2, ok := e.lookupTable[xx.Name]; ok {
+		if v2 := e.GetNameInfo(xx.Name); v2 != nil {
 			return v2.Type
 		}
 		return nil
