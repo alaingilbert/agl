@@ -319,6 +319,14 @@ func (e *Env) SubEnv() *Env {
 	return env
 }
 
+func (e *Env) GetDirect(name string) types.Type {
+	info := e.lookupTable[name]
+	if info == nil {
+		return nil
+	}
+	return info.Type
+}
+
 func (e *Env) Get(name string) types.Type {
 	res := e.getHelper(name)
 	if res == nil && e.parent != nil {
@@ -367,7 +375,7 @@ func (e *Env) DefinePkg(name, path string) {
 }
 
 func (e *Env) Define(n ast.Node, name string, typ types.Type) {
-	assertf(e.Get(name) == nil, "duplicate declaration of %s", name)
+	assertf(e.GetDirect(name) == nil, "duplicate declaration of %s", name)
 	info := e.GetOrCreateNameInfo(name)
 	info.Type = typ
 	if n != nil {
