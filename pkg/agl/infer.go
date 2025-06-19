@@ -486,7 +486,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	if decl.Type.Params != nil {
 		for _, param := range decl.Type.Params.List {
 			infer.expr(param.Type)
-			t := infer.env.GetType(param.Type)
+			t := infer.env.GetType2(param.Type)
 			for range param.Names {
 				paramsT = append(paramsT, t)
 			}

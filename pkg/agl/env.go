@@ -439,7 +439,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 	case *ast.MapType:
 		return types.MapType{K: e.GetType2(xx.Key), V: e.GetType2(xx.Value)}
 	case *ast.ChanType:
-		return types.ChanType{}
+		return types.ChanType{W: e.GetType2(xx.Value)}
 	case *ast.TupleExpr:
 		var elts []types.Type
 		for _, v := range xx.Values { // TODO NO GOOD
