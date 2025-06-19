@@ -1228,6 +1228,8 @@ func (infer *FileInferrer) unaryExpr(expr *ast.UnaryExpr) {
 	infer.expr(expr.X)
 	if expr.Op == token.AND {
 		infer.SetType(expr, types.StarType{X: infer.GetType(expr.X)})
+	} else {
+		infer.SetType(expr, infer.GetType(expr.X))
 	}
 }
 
