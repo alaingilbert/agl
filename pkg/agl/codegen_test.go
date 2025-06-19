@@ -5274,6 +5274,40 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen192(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"time"
+)
+func say(s string) {
+	for i := 0; i < 5; i++ {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Println(s)
+	}
+}
+func main() {
+	go say("world")
+	say("hello")
+}
+`
+	expected := `package main
+import "fmt"
+import "time"
+func say(s string) {
+	for i := 0; i < 5; i++ {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Println(s)
+	}
+}
+func main() {
+	go say("world")
+	say("hello")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
