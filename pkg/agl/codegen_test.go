@@ -5676,6 +5676,21 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen201(t *testing.T) {
+	src := `package main
+var a = 42
+func main() {
+	a := 42
+}`
+	expected := `package main
+var a = 42
+func main() {
+	a := 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
