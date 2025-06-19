@@ -107,6 +107,34 @@ func main() {
 }
 ```
 
+### Match
+
+```go
+package main
+
+import "fmt"
+
+func getInt() int! { Ok(42) }
+
+func maybeInt() int? { Some(42) }
+
+func main() {
+    match getInt() {
+    case Ok(num):
+        fmt.Println("Num:", num)
+    case Err(err):
+        fmt.Println("Error:", err)
+    }
+
+    match maybeInt() {
+    case Some(num):
+        fmt.Println("Num:", num)
+    case None:
+        fmt.Println("No value")
+    }
+}
+```
+
 ### `or_break`/`or_continue`
 
 `or_break`/`or_continue` will `break`/`continue` on a `None`/`Err` value
