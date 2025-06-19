@@ -97,9 +97,8 @@ func main() {
 This pattern works with any of `Ok`|`Err`|`Some`  
 
 ```go
-func maybeInt() int? {
-    return Some(42)
-}
+func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
+
 func main() {
     if Some(num) := maybeInt() {
         fmt.Println(num)
