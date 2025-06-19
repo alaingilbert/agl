@@ -3171,7 +3171,7 @@ func main() {
 	test(m)
 }
 `
-	tassert.PanicsWithError(t, "types not equal, map[int]int map[string]int", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "6:7: types not equal, map[int]int map[string]int", testCodeGenFn(src))
 }
 
 func TestCodeGen120(t *testing.T) {
@@ -3203,7 +3203,7 @@ func main() {
 	test(a)
 }
 `
-	tassert.PanicsWithError(t, "types not equal, []string []int", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "6:7: types not equal, []string []int", testCodeGenFn(src))
 }
 
 func TestCodeGen122(t *testing.T) {
