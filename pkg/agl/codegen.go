@@ -298,7 +298,11 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 		return "make"
 	}
 	if v := g.env.Get(expr.Name); v != nil {
-		return v.GoStr()
+		if _, ok := v.(types.TypeType); ok {
+			return v.GoStr()
+		} else {
+			return expr.Name
+		}
 	}
 	return expr.Name
 }
@@ -706,7 +710,7 @@ func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
 	out += "interface {\n"
 	if expr.Methods != nil {
 		for _, m := range expr.Methods.List {
-			content1 := g.genExpr(m.Type)
+			content1 := g.env.GetType(m.Type).(types.FuncType).GoStr1()
 			out += g.prefix + "\t" + m.Names[0].Name + strings.TrimPrefix(content1, "func") + "\n"
 		}
 	}
@@ -1148,12 +1152,18 @@ func (g *Generator) genSpecs(specs []ast.Spec) (out string) {
 func (g *Generator) genSpec(s ast.Spec) (out string) {
 	switch spec := s.(type) {
 	case *ast.ValueSpec:
-		content1 := g.genExpr(spec.Type)
+		var content1 string
+		if spec.Type != nil {
+			content1 = g.genExpr(spec.Type)
+		}
 		var namesArr []string
 		for _, name := range spec.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += g.prefix + "var " + strings.Join(namesArr, ", ") + " " + content1
+		out += g.prefix + "var " + strings.Join(namesArr, ", ")
+		if content1 != "" {
+			out += " " + content1
+		}
 		if spec.Values != nil {
 			out += " = " + g.genExprs(spec.Values)
 		}
@@ -1290,8 +1300,12 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) (out string) {
 
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	var lhs, after string
-	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](g.env.GetType(stmt.Rhs[0])) {
-		rhsT := g.env.GetType(stmt.Rhs[0]).(types.EnumType)
+	t := g.env.GetType(stmt.Rhs[0])
+	if v, ok := t.(types.CustomType); ok {
+		t = v.W
+	}
+	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](t) {
+		rhsT := t.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
@@ -1305,7 +1319,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			}
 			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
-	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](g.env.GetType(stmt.Rhs[0])) {
+	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](t) {
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1

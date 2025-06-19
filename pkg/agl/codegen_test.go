@@ -1971,12 +1971,12 @@ func main() {
 func TestCodeGen64(t *testing.T) {
 	src := `package main
 type Writer interface {
-	write(p []byte) int!
+	write([]byte) int!
 }
 `
 	expected := `package main
 type Writer interface {
-	write(p []byte) Result[int]
+	write([]byte) Result[int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -1985,13 +1985,13 @@ type Writer interface {
 func TestCodeGen65(t *testing.T) {
 	src := `package main
 type Writer interface {
-	write(p []byte) int!
+	write([]byte) int!
 	another() bool
 }
 `
 	expected := `package main
 type Writer interface {
-	write(p []byte) Result[int]
+	write([]byte) Result[int]
 	another() bool
 }
 `
@@ -5522,6 +5522,126 @@ func main() {
 	v2 := m["a"]
 	m["a"]++
 }
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen198(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+)
+type Fetcher interface {
+	Fetch(url string) (string, []string)!
+}
+func Crawl(url string, depth int, fetcher1 Fetcher) {
+	if depth <= 0 {
+		return
+	}
+	match fetcher1.Fetch(url) {
+	    case Ok(res):
+            body, urls := res
+            fmt.Printf("found: %s %q\n", url, body)
+            for _, u := range urls {
+                Crawl(u, depth-1, fetcher1)
+            }
+            return
+	    case Err(err):
+            fmt.Println(err)
+            return
+	}
+}
+func main() {
+	Crawl("https://golang.org/", 4, fetcher)
+}
+type fakeResult struct {
+	body string
+	urls []string
+}
+type fakeFetcher map[string]*fakeResult
+func (f fakeFetcher) Fetch(url string) (string, []string)! {
+	if res, ok := f[url]; ok {
+		return Ok((res.body, res.urls))
+	}
+	return Err(fmt.Errorf("not found: %s", url))
+}
+var fetcher = fakeFetcher{
+	"https://golang.org/": &fakeResult{
+		"The Go Programming Language",
+		[]string{
+			"https://golang.org/pkg/",
+			"https://golang.org/cmd/",
+		},
+	},
+	"https://golang.org/pkg/": &fakeResult{
+		"Packages",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/cmd/",
+			"https://golang.org/pkg/fmt/",
+			"https://golang.org/pkg/os/",
+		},
+	},
+	"https://golang.org/pkg/fmt/": &fakeResult{
+		"Package fmt",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
+	"https://golang.org/pkg/os/": &fakeResult{
+		"Package os",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
+}`
+	expected := `package main
+import "fmt"
+type AglTupleStruct_string___string struct {
+	Arg0 string
+	Arg1 []string
+}
+type Fetcher interface {
+	Fetch(string) Result[AglTupleStruct_string___string]
+}
+func Crawl(url string, depth int, fetcher1 Fetcher) {
+	if depth <= 0 {
+		return
+	}
+	tmp := fetcher1.Fetch(url)
+	if tmp.IsOk() {
+		res := tmp.Unwrap()
+		aglVar1 := res
+		body, urls := aglVar1.Arg0, aglVar1.Arg1
+		fmt.Printf("found: %s %q\n", url, body)
+		for _, u := range urls {
+			Crawl(u, depth - 1, fetcher1)
+		}
+		return
+	}
+	if tmp.IsErr() {
+		err := tmp.Err()
+		fmt.Println(err)
+		return
+	}
+}
+func main() {
+	Crawl("https://golang.org/", 4, fetcher)
+}
+type fakeResult struct {
+	body string
+	urls []string
+}
+type fakeFetcher map[string]*fakeResult
+func (f fakeFetcher) Fetch(url string) Result[AglTupleStruct_string___string] {
+	if res, ok := f[url]; ok {
+		return MakeResultOk(AglTupleStruct_string___string{Arg0: res.body, Arg1: res.urls})
+	}
+	return MakeResultErr[AglTupleStruct_string___string](fmt.Errorf("not found: %s", url))
+}
+var fetcher = fakeFetcher{"https://golang.org/": &fakeResult{"The Go Programming Language", []string{"https://golang.org/pkg/", "https://golang.org/cmd/"}}, "https://golang.org/pkg/": &fakeResult{"Packages", []string{"https://golang.org/", "https://golang.org/cmd/", "https://golang.org/pkg/fmt/", "https://golang.org/pkg/os/"}}, "https://golang.org/pkg/fmt/": &fakeResult{"Package fmt", []string{"https://golang.org/", "https://golang.org/pkg/"}}, "https://golang.org/pkg/os/": &fakeResult{"Package os", []string{"https://golang.org/", "https://golang.org/pkg/"}}}
 `
 	testCodeGen(t, src, expected)
 }
