@@ -5236,6 +5236,44 @@ func describe(i interface{}) {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen191(t *testing.T) {
+	src := `package main
+import "fmt"
+func Index[T comparable](s []T, x T) int {
+	for i, v := range s {
+		if v == x {
+			return i
+		}
+	}
+	return -1
+}
+func main() {
+	si := []int{10, 20, 15, -10}
+	fmt.Println(Index(si, 15))
+	ss := []string{"foo", "bar", "baz"}
+	fmt.Println(Index(ss, "hello"))
+}
+`
+	expected := `package main
+import "fmt"
+func Index[T comparable](s []T, x T) int {
+	for i, v := range s {
+		if v == x {
+			return i
+		}
+	}
+	return -1
+}
+func main() {
+	si := []int{10, 20, 15, -10}
+	fmt.Println(Index(si, 15))
+	ss := []string{"foo", "bar", "baz"}
+	fmt.Println(Index(ss, "hello"))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
