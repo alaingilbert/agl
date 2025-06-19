@@ -1270,6 +1270,10 @@ func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 	infer.SetType(expr, types.SomeType{W: infer.env.GetType(expr.X)})
 }
 
+func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
+	infer.SetType(expr, types.NoneType{W: infer.returnType.(types.OptionType).W}) // TODO
+}
+
 func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
 	infer.expr(expr.X)
 	infer.SetType(expr, types.OkType{W: infer.env.GetType(expr.X)})
@@ -1352,10 +1356,6 @@ func (infer *FileInferrer) mapType(expr *ast.MapType) {
 	infer.SetType(expr.Key, kT)
 	infer.SetType(expr.Value, vT)
 	infer.SetType(expr, types.MapType{K: kT, V: vT})
-}
-
-func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
-	infer.SetType(expr, types.NoneType{W: infer.returnType.(types.OptionType).W}) // TODO
 }
 
 func (infer *FileInferrer) starExpr(expr *ast.StarExpr) {

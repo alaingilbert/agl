@@ -307,9 +307,8 @@ func (s StructType) StringFull() string {
 }
 
 type InterfaceType struct {
-	Name    string
-	Pkg     string
-	Methods []FieldType
+	Name string
+	Pkg  string
 }
 
 func (i InterfaceType) GoStr() string { return i.Name }

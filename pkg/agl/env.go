@@ -106,29 +106,7 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 	return funcTypeToFuncType(name, expr, env, native)
 }
 
-func (e *Env) loadBaseValues() {
-	e.DefinePkg("os", "os")
-	e.DefinePkg("io", "io")
-	e.DefinePkg("sync", "sync")
-	e.DefinePkg("bufio", "bufio")
-	e.DefinePkg("fmt", "fmt")
-	e.DefinePkg("http", "net/http")
-	e.DefinePkg("errors", "errors")
-	e.DefinePkg("strings", "strings")
-	e.DefinePkg("time", "time")
-	e.DefinePkg("iter", "iter")
-	e.DefinePkg("path", "path")
-	e.DefinePkg("reflect", "reflect")
-	e.DefinePkg("runtime", "runtime")
-	e.DefinePkg("math", "math")
-	e.DefinePkg("strconv", "strconv")
-	e.Define(nil, "Option", types.OptionType{})
-	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
-	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
-	e.Define(nil, "void", types.TypeType{W: types.VoidType{}})
-	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
-	e.Define(nil, "any", types.TypeType{W: types.AnyType{}})
-
+func (e *Env) loadCoreTypes() {
 	// Number types
 	e.Define(nil, "int", types.TypeType{W: types.IntType{}})
 	e.Define(nil, "uint", types.TypeType{W: types.UintType{}})
@@ -155,13 +133,14 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "float32", types.TypeType{W: types.F32Type{}})
 	e.Define(nil, "float64", types.TypeType{W: types.F64Type{}})
 
-	e.Define(nil, "string", types.TypeType{W: types.StringType{}})
+	e.Define(nil, "void", types.TypeType{W: types.VoidType{}})
+	e.Define(nil, "any", types.TypeType{W: types.AnyType{}})
 	e.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
-	e.Define(nil, "true", types.BoolValue{V: true})
-	e.Define(nil, "false", types.BoolValue{V: false})
+	e.Define(nil, "string", types.TypeType{W: types.StringType{}})
 	e.Define(nil, "byte", types.TypeType{W: types.ByteType{}})
-	e.Define(nil, "cmp.Ordered", types.AnyType{})
-	e.DefineFn("iter.Seq", "func [V any](yield func(V) bool)")
+}
+
+func (e *Env) loadCoreFunctions() {
 	e.DefineFn("assert", "func (pred bool, msg ...string)")
 	e.DefineFn("make", "func[T, U any](t T, size ...U) T")
 	e.DefineFn("len", "func [T any](v T) int")
@@ -171,26 +150,10 @@ func (e *Env) loadBaseValues() {
 	e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")
-	e.DefineFnNative("time.Sleep", "func (time.Duration)")
-	e.Define(nil, "math.Sqrt2", types.F64Type{})
-	e.Define(nil, "math.Pi", types.F64Type{})
-	e.Define(nil, "time.Millisecond", types.I64Type{})
-	e.Define(nil, "time.Second", types.I64Type{})
-	e.Define(nil, "time.Duration", types.I64Type{})
-	e.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
-	e.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
-	e.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
-	e.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
-	e.Define(nil, "sync.Mutex", types.StructType{Name: "Mutex", Pkg: "sync"})
-	e.DefineFnNative("sync.Mutex.Lock", "func ()")
-	e.DefineFnNative("sync.Mutex.Unlock", "func ()")
-	e.DefineFnNative("time.Now", "func () time.Time")
-	e.DefineFnNative("time.Tick", "func (d time.Duration) <-chan time.Time")
-	e.DefineFnNative("time.After", "func (d time.Duration) <-chan time.Time")
-	e.DefineFnNative("math.Sqrt", "func (x float64) float64")
-	e.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
-	e.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
-	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
+}
+
+func (e *Env) loadPkgFmt() {
+	e.DefinePkg("fmt", "fmt")
 	e.DefineFnNative("fmt.Println", "func (a ...any) int!")
 	e.DefineFnNative("fmt.Printf", "func (format string, a ...any) int!")
 	e.DefineFnNative("fmt.Errorf", "func (format string, a ...any) error")
@@ -209,6 +172,13 @@ func (e *Env) loadBaseValues() {
 	e.DefineFnNative("fmt.Fscan", "func (r io.Reader, a ...any) int!")
 	e.DefineFnNative("fmt.Fscanf", "func (r io.Reader, format string, a ...any) int!")
 	e.DefineFnNative("fmt.Fscanln", "func (r io.Reader, a ...any) int!")
+}
+
+func (e *Env) loadPkgIo() {
+	e.DefinePkg("io", "io")
+	e.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
+	e.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
+	e.Define(nil, "io.ReadCloser", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
 	e.DefineFnNative("io.ReadAll", "func (r io.Reader) ([]byte)!")
 	e.DefineFnNative("io.ReadFull", "func (r io.Reader, buf []byte) int!")
 	e.DefineFnNative("io.WriteString", "func (w io.Writer, s string) int!")
@@ -216,42 +186,24 @@ func (e *Env) loadBaseValues() {
 	e.DefineFnNative("io.CopyN", "func (dst io.Writer, src io.Reader, n int64) int64!")
 	e.DefineFnNative("io.Copy", "func (dst io.Writer, src io.Reader) int64!")
 	e.DefineFnNative("io.Pipe", "func () (*io.PipeReader, *io.PipeWriter)")
-	e.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
-	readFn := parseFuncTypeFromStringNative("io.Read", "func (p []byte) int!", e)
-	closeFn := parseFuncTypeFromStringNative("io.Close", "func () !", e)
-	ioReader := types.InterfaceType{
-		Pkg:  "io",
-		Name: "Reader",
-		Methods: []types.FieldType{
-			{Name: "Read", Typ: readFn},
-		},
-	}
-	ioCloser := types.InterfaceType{
-		Pkg:  "io",
-		Name: "Closer",
-		Methods: []types.FieldType{
-			{Name: "Close", Typ: closeFn},
-		},
-	}
-	ioReadCloser := types.InterfaceType{
-		Pkg:  "io",
-		Name: "ReadCloser",
-		Methods: []types.FieldType{
-			{Name: "Reader", Typ: ioReader},
-			{Name: "Closer", Typ: ioCloser},
-		},
-	}
-	e.Define(nil, "io.ReadCloser", ioReadCloser)
 	e.DefineFnNative("io.ReadCloser.Read", "func (p []byte) int!")
 	e.DefineFnNative("io.ReadCloser.Close", "func () !")
+}
+
+func (e *Env) loadPkgNetHttp() {
+	e.DefinePkg("http", "net/http")
 	e.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http", Fields: []types.FieldType{{Name: "Body", Typ: types.InterfaceType{Pkg: "io", Name: "ReadCloser"}}}})
-	e.Define(nil, "http.Response.Body", ioReadCloser)
-	e.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
+	e.Define(nil, "http.Response.Body", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
 	e.Define(nil, "http.Request", types.StructType{Name: "Request", Pkg: "http"})
-	e.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*http.Request)!")
 	e.Define(nil, "http.MethodGet", types.StringType{})
 	e.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
+	e.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
+	e.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*http.Request)!")
 	e.DefineFnNative("http.Client.Do", "func (req *http.Request) (*http.Response)!")
+}
+
+func (e *Env) loadPkgOs() {
+	e.DefinePkg("os", "os")
 	e.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
 	e.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
 	e.DefineFnNative("os.Chdir", "func (string) !")
@@ -278,9 +230,105 @@ func (e *Env) loadBaseValues() {
 	e.DefineFnNative("os.IsPermission", "func (err error) bool")
 	e.DefineFnNative("os.IsTimeout", "func (err error) bool")
 	e.DefineFnNative("os.LookupEnv", "func (key string) string?")
+}
+
+func (e *Env) loadPkgTime() {
+	e.DefinePkg("time", "time")
+	e.Define(nil, "time.Millisecond", types.I64Type{})
+	e.Define(nil, "time.Second", types.I64Type{})
+	e.Define(nil, "time.Duration", types.I64Type{})
+	e.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
+	e.DefineFnNative("time.Sleep", "func (time.Duration)")
+	e.DefineFnNative("time.Now", "func () time.Time")
+	e.DefineFnNative("time.Tick", "func (d time.Duration) <-chan time.Time")
+	e.DefineFnNative("time.After", "func (d time.Duration) <-chan time.Time")
+}
+
+func (e *Env) loadPkgStrings() {
+	e.DefinePkg("strings", "strings")
+	e.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
+	e.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
+	e.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
+	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
+}
+
+func (e *Env) loadPkgStrconv() {
+	e.DefinePkg("strconv", "strconv")
 	e.DefineFnNative("strconv.Itoa", "func(int) string")
 	e.DefineFnNative("strconv.Atoi", "func(string) int!")
+}
+
+func (e *Env) loadPkgMath() {
+	e.DefinePkg("math", "math")
+	e.Define(nil, "math.Sqrt2", types.F64Type{})
+	e.Define(nil, "math.Pi", types.F64Type{})
+	e.DefineFnNative("math.Sqrt", "func (x float64) float64")
+}
+
+func (e *Env) loadPkgSync() {
+	e.DefinePkg("sync", "sync")
+	e.Define(nil, "sync.Mutex", types.StructType{Name: "Mutex", Pkg: "sync"})
+	e.DefineFnNative("sync.Mutex.Lock", "func ()")
+	e.DefineFnNative("sync.Mutex.Unlock", "func ()")
+}
+
+func (e *Env) loadPkgErrors() {
+	e.DefinePkg("errors", "errors")
 	e.DefineFn("errors.New", "func (text string) error")
+}
+
+func (e *Env) loadPkgBufio() {
+	e.DefinePkg("bufio", "bufio")
+	e.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
+}
+
+func (e *Env) loadPkgIter() {
+	e.DefinePkg("iter", "iter")
+	e.DefineFnNative("iter.Seq", "func [V any](yield func(V) bool)")
+}
+
+func (e *Env) loadPkgPath() {
+	e.DefinePkg("path", "path")
+}
+
+func (e *Env) loadPkgReflect() {
+	e.DefinePkg("reflect", "reflect")
+}
+
+func (e *Env) loadPkgRuntime() {
+	e.DefinePkg("runtime", "runtime")
+}
+
+func (e *Env) loadPkgCmp() {
+	e.DefinePkg("cmp", "cmp")
+	e.Define(nil, "cmp.Ordered", types.AnyType{})
+}
+
+func (e *Env) loadBaseValues() {
+	e.loadCoreTypes()
+	e.loadCoreFunctions()
+	e.loadPkgFmt()
+	e.loadPkgIo()
+	e.loadPkgNetHttp()
+	e.loadPkgOs()
+	e.loadPkgTime()
+	e.loadPkgStrings()
+	e.loadPkgStrconv()
+	e.loadPkgMath()
+	e.loadPkgSync()
+	e.loadPkgErrors()
+	e.loadPkgBufio()
+	e.loadPkgIter()
+	e.loadPkgPath()
+	e.loadPkgReflect()
+	e.loadPkgRuntime()
+	e.loadPkgCmp()
+	e.Define(nil, "Option", types.OptionType{})
+	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
+	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
+	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
+	e.Define(nil, "true", types.BoolValue{V: true})
+	e.Define(nil, "false", types.BoolValue{V: false})
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
