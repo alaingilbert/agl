@@ -1759,14 +1759,23 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				return // tODO
 			case *ast.SelectorExpr:
-				lhsIdName := v.X.(*ast.Ident).Name
+				lhsID = v.X.(*ast.Ident)
+				lhsIdName := lhsID.Name
 				xT := infer.env.Get(lhsIdName)
-				if tup, ok := xT.(types.TupleType); ok {
+				if xTv, ok := xT.(types.StarType); ok {
+					xT = xTv.X
+				}
+				switch xTv := xT.(type) {
+				case types.TupleType:
 					argIdx, _ := strconv.Atoi(v.Sel.Name)
 					infer.SetType(v.X, xT)
-					want, got := tup.Elts[argIdx], infer.GetType(rhs)
+					want, got := xTv.Elts[argIdx], infer.GetType(rhs)
 					assertf(cmpTypesLoose(want, got), "type mismatch, wants: %s, got: %s", want, got)
 					return
+				case types.StructType:
+					infer.SetType(v.X, xT)
+				default:
+					panic(fmt.Sprintf("%v", to(xT)))
 				}
 			default:
 				panic(fmt.Sprintf("%v", to(lhs)))
