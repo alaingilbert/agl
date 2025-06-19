@@ -1560,6 +1560,13 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.PackageType:
+		pkg := expr.X.(*ast.Ident).Name
+		sel := expr.Sel.Name
+		pT := types.PackageType{Name: pkg}
+		selT := infer.env.Get(pkg + "." + sel)
+		infer.SetType(expr.Sel, selT)
+		infer.SetType(expr.X, pT)
+		infer.SetType(expr, selT)
 	default:
 		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
 	}
