@@ -780,6 +780,10 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 func (g *Generator) genIndexExpr(expr *ast.IndexExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Index)
+	//switch g.env.GetType(expr.X).(type) {
+	//case types.MapType:
+	//	return fmt.Sprintf("AglMapIndex(%s, %s)", content1, content2)
+	//}
 	return fmt.Sprintf("%s[%s]", content1, content2)
 }
 

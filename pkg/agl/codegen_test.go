@@ -5505,6 +5505,27 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen197(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 1}
+	if el, ok := m["a"]; ok {
+	}
+	v2 := m["a"]
+	m["a"]++
+}`
+	expected := `package main
+func main() {
+	m := map[string]int{"a": 1}
+	if el, ok := m["a"]; ok {
+	}
+	v2 := m["a"]
+	m["a"]++
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }

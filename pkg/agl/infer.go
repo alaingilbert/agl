@@ -1612,7 +1612,20 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
 	//index := infer.GetType(expr.Index)
-	infer.SetType(expr, infer.GetType(expr.X))
+	switch v := expr.X.(type) {
+	case *ast.Ident:
+		vT := infer.GetType(v)
+		switch vTT := vT.(type) {
+		case types.MapType:
+			infer.SetType(expr, types.OptionType{W: vTT.V})
+		default:
+			infer.SetType(expr, infer.GetType(expr.X))
+		}
+	case *ast.SelectorExpr:
+		infer.SetType(expr, infer.GetType(expr.X))
+	default:
+		panic(fmt.Sprintf("%v", to(expr.X)))
+	}
 }
 
 func (infer *FileInferrer) resultExpr(expr *ast.ResultExpr) {
@@ -1818,7 +1831,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.SetType(lhs, rhsT)
 			}
 			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
-		} else {
+		} else { // len(stmt.Lhs) != 1
 			infer.expr(rhs)
 			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
 				for i, x := range rhs1.Values {
@@ -1845,6 +1858,20 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						lhsID := MustCast[*ast.Ident](lhs)
 						infer.SetType(lhs, x)
 						assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
+					}
+				}
+			} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
+				rhsId1XT := infer.GetType(rhsId1.X)
+				switch rhsId1XTT := rhsId1XT.(type) {
+				case types.MapType:
+					switch len(stmt.Lhs) {
+					case 2:
+						infer.SetType(stmt.Lhs[1], types.BoolType{})
+						fallthrough
+					case 1:
+						infer.SetType(stmt.Lhs[0], rhsId1XTT.V)
+					default:
+						panic("")
 					}
 				}
 			} else {
