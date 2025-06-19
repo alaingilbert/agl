@@ -109,6 +109,7 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 func (e *Env) loadBaseValues() {
 	e.DefinePkg("os", "os")
 	e.DefinePkg("io", "io")
+	e.DefinePkg("sync", "sync")
 	e.DefinePkg("bufio", "bufio")
 	e.DefinePkg("fmt", "fmt")
 	e.DefinePkg("http", "net/http")
@@ -157,6 +158,9 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
 	e.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
 	e.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
+	e.Define(nil, "sync.Mutex", types.StructType{Name: "Mutex", Pkg: "sync"})
+	e.DefineFnNative("sync.Mutex.Lock", "func ()")
+	e.DefineFnNative("sync.Mutex.Unlock", "func ()")
 	e.DefineFnNative("time.Now", "func () time.Time")
 	e.DefineFnNative("time.Tick", "func (d time.Duration) <-chan time.Time")
 	e.DefineFnNative("time.After", "func (d time.Duration) <-chan time.Time")

@@ -733,7 +733,11 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 	case types.StructType:
 		structPkg := eT.Pkg
 		structName := eT.Name
-		return infer.env.Get(structPkg + "." + structName + "." + id.Name)
+		name := structName + "." + id.Name
+		if structPkg != "" {
+			name = structPkg + "." + name
+		}
+		return infer.env.Get(name)
 	default:
 		panic("")
 	}
@@ -758,16 +762,23 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					callXTXT = v.X
 				}
 				if v, ok := callXTXT.(types.StructType); ok {
-					n := fmt.Sprintf("%s.%s", v.Name, callXT.Sel)
-					if v.Pkg != "" {
-						n = v.Pkg + "." + n
+					var t types.Type
+					if f := Find(v.Fields, func(ft types.FieldType) bool { return ft.Name == callXT.Sel.Name }); f != nil {
+						t = f.Typ
+					} else {
+						n := fmt.Sprintf("%s.%s", v.Name, callXT.Sel)
+						if v.Pkg != "" {
+							n = v.Pkg + "." + n
+						}
+						t = infer.env.Get(n)
 					}
-					t := infer.env.Get(n)
 					infer.SetType(callXT.Sel, t)
+					exprFunT = t
 				}
+			} else {
+				//infer.SetType(callXT.X, )
+				exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 			}
-			//infer.SetType(callXT.X, )
-			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
