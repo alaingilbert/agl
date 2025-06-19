@@ -5163,6 +5163,49 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen189(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"math"
+)
+type Vertex struct {
+	X, Y f64
+}
+func (v Vertex) Abs() f64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+func (v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	v := Vertex{3, 4}
+	v.Scale(10)
+	fmt.Println(v.Abs())
+}`
+	expected := `package main
+import "fmt"
+import "math"
+type Vertex struct {
+	X, Y float64
+}
+func (v Vertex) Abs() float64 {
+	return math.Sqrt(v.X * v.X + v.Y * v.Y)
+}
+func (v *Vertex) Scale(f float64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	v := Vertex{3, 4}
+	v.Scale(10)
+	fmt.Println(v.Abs())
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen167(t *testing.T) {
 //	src := `package main
 //func test(t (u8, bool)) (u8, bool) { return t }
