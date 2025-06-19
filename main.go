@@ -8,6 +8,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	goast "go/ast"
+	"go/parser"
+	gotoken "go/token"
+	gotypes "go/types"
 	"log"
 	"os"
 	"os/exec"
@@ -110,8 +114,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 
 func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if cmd.NArg() == 0 {
-		fmt.Println("You must specify a file to compile")
-		return nil
+		return buildProject()
 	}
 	fileName := cmd.Args().Get(0)
 	if !strings.HasSuffix(fileName, ".agl") {
@@ -139,6 +142,87 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return nil
+}
+
+func buildProject() error {
+	visited := make(map[string]struct{})
+	if err := buildFolder(".", visited); err != nil {
+		return err
+	}
+	cmd := exec.Command("go", "build")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+const modPrefix = "agl/" // TODO get from go.mod
+
+func buildFolder(folderPath string, visited map[string]struct{}) error {
+	if _, ok := visited[folderPath]; ok {
+		return nil
+	}
+	visited[folderPath] = struct{}{}
+	entries, _ := os.ReadDir(folderPath)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		fileName := filepath.Join(folderPath, entry.Name())
+		if strings.HasSuffix(fileName, ".agl") {
+			if err := buildAglFile(fileName); err != nil {
+				panic(fmt.Sprintf("failed to build %s", fileName))
+			}
+		} else if strings.HasSuffix(fileName, ".go") {
+			if strings.HasSuffix(fileName, "_test.go") {
+				continue
+			}
+			src, err := os.ReadFile(fileName)
+			if err != nil {
+				return err
+			}
+			fset := gotoken.NewFileSet()
+			node, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
+			if err != nil {
+				log.Printf("failed to parse %s\n", fileName)
+				continue
+			}
+			conf := gotypes.Config{Importer: nil}
+			info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
+			_, _ = conf.Check("", fset, []*goast.File{node}, info)
+			for _, decl := range node.Decls {
+				switch d := decl.(type) {
+				case *goast.GenDecl:
+					for _, spec := range d.Specs {
+						switch s := spec.(type) {
+						case *goast.ImportSpec:
+							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
+							if strings.HasPrefix(pathValue, modPrefix) {
+								newPath := strings.TrimPrefix(pathValue, modPrefix)
+								if err := buildFolder(newPath, visited); err != nil {
+									return err
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func buildAglFile(fileName string) error {
+	by, err := os.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	fset, f := parser2(string(by))
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(fset, env)
+	i.InferFile(f)
+	src := agl.NewGenerator(i.Env, f).Generate()
+	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
+	return os.WriteFile(path, []byte(src), 0644)
 }
 
 func startAction(ctx context.Context, cmd *cli.Command) error {
