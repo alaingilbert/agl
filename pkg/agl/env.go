@@ -152,6 +152,7 @@ func NewEnv(fset *token.FileSet) *Env {
 	env.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	env.DefineFn("close", "func (c chan<- Type)")
 	env.DefineFnNative("time.Sleep", "func (time.Duration)")
+	env.Define(nil, "math.Sqrt2", types.F64Type{})
 	env.Define(nil, "time.Duration", types.I64Type{})
 	env.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
 	env.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
