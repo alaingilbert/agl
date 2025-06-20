@@ -97,7 +97,7 @@ func Cast[T any](origin any) (T, bool) {
 func MustCast[T any](origin any) T {
 	v, ok := Cast[T](origin)
 	if !ok {
-		panic("")
+		panic(fmt.Sprintf("%v", reflect.TypeOf(origin)))
 	}
 	return v
 }
