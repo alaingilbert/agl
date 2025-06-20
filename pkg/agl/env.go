@@ -297,11 +297,48 @@ func (e *Env) loadPkgReflect() {
 
 func (e *Env) loadPkgRuntime() {
 	e.DefinePkg("runtime", "runtime")
+	e.DefineFnNative("runtime.GOROOT", "func () string")
 }
 
 func (e *Env) loadPkgCmp() {
 	e.DefinePkg("cmp", "cmp")
 	e.Define(nil, "cmp.Ordered", types.AnyType{})
+}
+
+func (e *Env) loadPkgGoAst() {
+	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
+	e.DefinePkg("ast", "go/ast")
+	e.Define(nil, "ast.Ident", types.StructType{Pkg: "ast", Name: "Ident"})
+	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File"})
+	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl"})
+	e.Define(nil, "ast.FuncDecl.Name", types.StructType{Pkg: "ast", Name: "Ident"})
+	e.Define(nil, "ast.Decl", astDecl)
+	e.Define(nil, "ast.File.Decls", types.ArrayType{Elt: astDecl})
+}
+
+func (e *Env) loadPkgGoParser() {
+	e.DefinePkg("parser", "go/parser")
+	e.Define(nil, "parser.AllErrors", types.UintType{})
+	e.DefineFnNative("parser.ParseFile", "func (fset *token.FileSet, filename string, src any, mode Mode) (*ast.File)!")
+}
+
+func (e *Env) loadPkgGoToken() {
+	e.DefinePkg("token", "go/token")
+	e.Define(nil, "token.FileSet", types.StructType{Pkg: "token", Name: "FileSet"})
+	e.DefineFnNative("token.NewFileSet", "func () *token.FileSet")
+}
+
+func (e *Env) loadPkgGoTypes() {
+	e.DefinePkg("types", "go/types")
+	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package)!")
+	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config"})
+	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info"})
+	e.Define(nil, "types.Object", types.InterfaceType{Pkg: "types", Name: "Object"})
+}
+
+func (e *Env) loadPkgFilepath() {
+	e.DefinePkg("filepath", "path/filepath")
+	e.DefineFnNative("filepath.Join", "func (elem ...string) string")
 }
 
 func (e *Env) loadBaseValues() {
@@ -323,6 +360,11 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgReflect()
 	e.loadPkgRuntime()
 	e.loadPkgCmp()
+	e.loadPkgGoAst()
+	e.loadPkgGoToken()
+	e.loadPkgGoParser()
+	e.loadPkgGoTypes()
+	e.loadPkgFilepath()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
 	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
