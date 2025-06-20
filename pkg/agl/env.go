@@ -344,9 +344,10 @@ func (e *Env) loadPkgFilepath() {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
+	e.loadPkgCmp()
 	e.loadCoreFunctions()
-	e.loadPkgFmt()
 	e.loadPkgIo()
+	e.loadPkgFmt()
 	e.loadPkgNetHttp()
 	e.loadPkgOs()
 	e.loadPkgTime()
@@ -360,7 +361,6 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgPath()
 	e.loadPkgReflect()
 	e.loadPkgRuntime()
-	e.loadPkgCmp()
 	e.loadPkgGoAst()
 	e.loadPkgGoToken()
 	e.loadPkgGoParser()
