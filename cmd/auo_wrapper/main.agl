@@ -1,0 +1,79 @@
+package main
+
+import (
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+)
+
+
+func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
+	env := map[string]string{
+		"io.Reader": "interface",
+	}
+	out := "func " + decl.Name.Name + "("
+ 	var paramsArr []string
+ 	for _, param := range decl.Type.Params.List {
+ 		var name string
+ 		var typ string
+ 		switch param1 := param.Type.(type) {
+		case *ast.SelectorExpr:
+			name = param1.X.(*ast.Ident)?.Name + "." + param1.Sel.Name
+ 		case *ast.Ident:
+ 			name = param1.Name
+ 		}
+ 		var namesArr []string
+		for _, pname := range param.Names {
+			namesArr = append(namesArr, pname.Name)
+		}
+		names := strings.Join(namesArr, ", ")
+		if names != "" {
+			names += " "
+		}
+		paramsStr := names
+		typ = env[name]
+		paramsStr += name
+		if typ == "interface" {
+			paramsStr += "?"
+		}
+		paramsArr = append(paramsArr, paramsStr)
+ 	}
+	out += strings.Join(paramsArr, ", ") + ")"
+	if decl.Type.Results != nil {
+		tmp := decl.Type.Results.List[len(decl.Type.Results.List)-1].Type.(*ast.Ident)?.Name == "error"
+		if tmp {
+			out += "!"
+		}
+ 	}
+	out += " {\n"
+	out += "\t" + decl.Name.Name + "()\n"
+	out += "}\n"
+	fmt.Println(out)
+}
+
+func main() {
+	goroot := runtime.GOROOT()
+	fileName := "request.go"
+	fnName := "NewRequest"
+	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
+	src := os.ReadFile(filePath)!
+	fset := token.NewFileSet()
+	node := parser.ParseFile(fset, fileName, src, parser.AllErrors)!
+	conf := types.Config{Importer: nil}
+	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
+	conf.Check("", fset, []*ast.File{node}, info)
+	for _, decl := range node.Decls {
+	 	switch d := decl.(type) {
+	 	case *ast.FuncDecl:
+			if d.Name.Name == fnName && d.Recv == nil {
+	 			wrapFn(fset, d)
+	 		}
+	 	}
+	}
+}
