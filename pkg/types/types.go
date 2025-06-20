@@ -311,7 +311,13 @@ type InterfaceType struct {
 	Pkg  string
 }
 
-func (i InterfaceType) GoStr() string { return i.Name }
+func (i InterfaceType) GoStr() string {
+	out := i.Name
+	if i.Pkg != "" {
+		out = i.Pkg + "." + out
+	}
+	return out
+}
 
 func (i InterfaceType) StringFull() string {
 	out := i.Name
