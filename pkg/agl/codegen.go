@@ -1748,16 +1748,16 @@ func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
 	return MakeOptionNone[V]()
 }
 
-func AglHttpNewRequest(method, url string, b Option[io.Reader]) Option[*http.Request] {
+func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
 	var body io.Reader
 	if b.IsSome() {
 		body = b.Unwrap()
 	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return MakeOptionNone[*http.Request]()
+		return MakeResultErr[*http.Request](err)
 	}
-	return MakeOptionSome(req)
+	return MakeResultOk(req)
 }
 `
 }
