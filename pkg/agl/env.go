@@ -307,13 +307,14 @@ func (e *Env) loadPkgCmp() {
 
 func (e *Env) loadPkgGoAst() {
 	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
+	astDecls := types.ArrayType{Elt: astDecl}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Ident", types.StructType{Pkg: "ast", Name: "Ident"})
-	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File"})
+	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
 	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl"})
 	e.Define(nil, "ast.FuncDecl.Name", types.StructType{Pkg: "ast", Name: "Ident"})
 	e.Define(nil, "ast.Decl", astDecl)
-	e.Define(nil, "ast.File.Decls", types.ArrayType{Elt: astDecl})
+	e.Define(nil, "ast.File.Decls", astDecls)
 }
 
 func (e *Env) loadPkgGoParser() {
