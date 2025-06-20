@@ -971,6 +971,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
 			}
+		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
+			content1 := g.genExprs(expr.Args)
+			return fmt.Sprintf("AglHttpNewRequest(%s)", content1)
 		}
 	case *ast.Ident:
 		if e.Name == "assert" {
