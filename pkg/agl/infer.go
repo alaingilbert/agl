@@ -1716,22 +1716,14 @@ func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
 func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
-	//index := infer.GetType(expr.Index)
-	switch v := expr.X.(type) {
-	case *ast.Ident:
-		vT := infer.GetType(v)
-		switch vTT := vT.(type) {
-		case types.MapType:
-			infer.SetType(expr, vTT.V) // TODO should return an Option[T] ?
-		case types.ArrayType:
-			infer.SetType(expr, vTT.Elt)
-		default:
-			infer.SetType(expr, infer.GetType(expr.X))
-		}
-	case *ast.SelectorExpr:
-		infer.SetType(expr, infer.GetType(expr.X))
+	exprXT := infer.env.GetType2(expr.X)
+	switch v := exprXT.(type) {
+	case types.MapType:
+		infer.SetType(expr, v.V) // TODO should return an Option[T] ?
+	case types.ArrayType:
+		infer.SetType(expr, v.Elt)
 	default:
-		panic(fmt.Sprintf("%v", to(expr.X)))
+		infer.SetType(expr, infer.GetType(expr.X))
 	}
 }
 
