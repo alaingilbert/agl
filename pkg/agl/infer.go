@@ -1784,7 +1784,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 				infer.env.Define(stmt.Value, name, v.V)
 				infer.SetType(stmt.Value, v.V)
 			default:
-				panic("")
+				panic(fmt.Sprintf("%v", to(xT)))
 			}
 		}
 		if stmt.Body != nil {
