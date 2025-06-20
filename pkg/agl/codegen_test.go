@@ -5837,15 +5837,67 @@ func main() {
 }
 `
 	expected := `package main
-	type Test struct {
-	}
-	func (t Test) Method() {
-	}
-	func main() {
-		a := []Test{Test{}}
-		b := a[0]
-		b.Method()
-	}
+type Test struct {
+}
+func (t Test) Method() {
+}
+func main() {
+	a := []Test{Test{}}
+	b := a[0]
+	b.Method()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen205(t *testing.T) {
+	src := `package main
+type Test struct {}
+func (t Test) Method() []int {
+	return []int{1, 2, 3}
+}
+func main() {
+	a := Test{}
+	b := a.Method()
+	c := b[0]
+}
+`
+	expected := `package main
+type Test struct {
+}
+func (t Test) Method() []int {
+	return []int{1, 2, 3}
+}
+func main() {
+	a := Test{}
+	b := a.Method()
+	c := b[0]
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen206(t *testing.T) {
+	src := `package main
+type Test struct {}
+func (t Test) Method() []int {
+	return []int{1, 2, 3}
+}
+func main() {
+	a := Test{}
+	b := a.Method()[0]
+}
+`
+	expected := `package main
+type Test struct {
+}
+func (t Test) Method() []int {
+	return []int{1, 2, 3}
+}
+func main() {
+	a := Test{}
+	b := a.Method()[0]
+}
 `
 	testCodeGen(t, src, expected)
 }
