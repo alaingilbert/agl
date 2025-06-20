@@ -232,6 +232,12 @@ func (n NoneType) GoStr() string      { return "NoneType" }
 func (n NoneType) String() string     { return fmt.Sprintf("None[%s]", n.W.String()) }
 func (n NoneType) StringFull() string { return fmt.Sprintf("None[%s]", n.W.StringFull()) }
 
+type UntypedNoneType struct{}
+
+func (n UntypedNoneType) GoStr() string      { return "UntypedNoneType" }
+func (n UntypedNoneType) String() string     { return "UntypedNoneType" }
+func (n UntypedNoneType) StringFull() string { return "UntypedNoneType" }
+
 type SomeType struct{ W Type }
 
 func (s SomeType) GoStr() string      { return "SomeType" }
