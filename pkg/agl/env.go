@@ -335,10 +335,12 @@ func (e *Env) loadPkgGoAst() {
 	}})
 	e.Define(nil, "ast.FuncType", types.StructType{Pkg: "ast", Name: "FuncType", Fields: []types.FieldType{
 		{Name: "Params", Typ: astFieldList},
+		{Name: "Results", Typ: astFieldList},
 	}})
 	e.Define(nil, "ast.Field.Name", types.StructType{Pkg: "ast", Name: "Ident"})
 	e.Define(nil, "ast.Field.Type", types.StructType{Pkg: "ast", Name: "FuncType"})
 	e.Define(nil, "ast.FuncType.Params", astFieldList)
+	e.Define(nil, "ast.FuncType.Results", astFieldList)
 	e.Define(nil, "ast.FieldList", astFieldList)
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.File.Decls", astDecls)
