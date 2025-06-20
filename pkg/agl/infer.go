@@ -1957,7 +1957,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					panic(fmt.Sprintf("%v", to(rhsId1XT)))
 				}
 			} else {
-				panic(fmt.Sprintf("%v", to(rhs)))
+				panic(fmt.Sprintf("%s: %v", infer.Pos(rhs), to(rhs)))
 			}
 		}
 	} else {
