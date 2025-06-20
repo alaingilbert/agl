@@ -3544,7 +3544,7 @@ func parseInt(s1 string) Option[int] {
 func inter(s2 string) Option[int] {
 	aglTmp1 := parseInt(s2)
 	if aglTmp1.IsNone() {
-		return aglTmp1
+		return MakeOptionNone[int]()
 	}
 	a := aglTmp1.Unwrap()
 	return MakeOptionSome(42)
@@ -5919,6 +5919,38 @@ func (t Test) Method() {
 func main() {
 	a := []Test{Test{}}
 	a[0].Method()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen208(t *testing.T) {
+	src := `package main
+type Test struct {
+	Name string
+}
+func test() int? {
+	var a any = Test{Name: "foo"}
+	tmp := a.(Test)?.Name == "foo"
+	if tmp {
+	}
+	return Some(42)
+}
+`
+	expected := `package main
+type Test struct {
+	Name string
+}
+func test() Option[int] {
+	var a any = Test{Name: "foo"}
+	aglTmp1 := AglTypeAssert[Test](a)
+	if aglTmp1.IsNone() {
+		return MakeOptionNone[int]()
+	}
+	tmp := aglTmp1.Unwrap().Name == "foo"
+	if tmp {
+	}
+	return MakeOptionSome(42)
 }
 `
 	testCodeGen(t, src, expected)

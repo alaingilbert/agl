@@ -845,7 +845,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			return fmt.Sprintf(`AglIdentity(%s)`, varName)
 		} else {
 			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsNone() {\n\treturn %s\n}\n", varName, varName, varName)
+			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, varName, g.returnType.(types.OptionType).W)
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
 			g.before = append(g.before, before2)
 			out += fmt.Sprintf("%s.Unwrap()", varName)
