@@ -669,8 +669,8 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			typeT = e.GetType2(xx.Type)
 		}
 		n := types.TypeAssertType{X: xT, Type: typeT}
-		nn := e.lspNodeOrCreate(xx)
-		nn.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
+		info := e.lspNodeOrCreate(xx)
+		info.Type = types.OptionType{W: xT, Bubble: true} // TODO ensure xT is the right thing
 		return n
 	case *ast.BubbleOptionExpr:
 		return e.GetType2(xx.X)
