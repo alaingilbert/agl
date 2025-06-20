@@ -5826,6 +5826,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen204(t *testing.T) {
+	src := `package main
+type Test struct {}
+func (t Test) Method() {}
+func main() {
+	a := []Test{Test{}}
+	b := a[0]
+	b.Method()
+}
+`
+	expected := `package main
+	type Test struct {
+	}
+	func (t Test) Method() {
+	}
+	func main() {
+		a := []Test{Test{}}
+		b := a[0]
+		b.Method()
+	}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
