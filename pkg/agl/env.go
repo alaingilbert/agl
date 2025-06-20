@@ -17,6 +17,7 @@ type Env struct {
 	lookupTable   map[string]*Info  // Store constants/variables/functions
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
+	NoIdxUnwrap   bool
 }
 
 type Info struct {
@@ -627,7 +628,14 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 		return nil
 	case *ast.IndexExpr:
-		return e.GetType2(xx.X)
+		t := e.GetType2(xx.X)
+		if !e.NoIdxUnwrap {
+			switch v := t.(type) {
+			case types.ArrayType:
+				return v.Elt
+			}
+		}
+		return t
 	case *ast.ParenExpr:
 		return e.GetType2(xx.X)
 	case *ast.VoidExpr:

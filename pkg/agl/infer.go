@@ -427,7 +427,9 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 	infer.withEnv(func() {
 		if decl.Recv != nil {
 			for _, recv := range decl.Recv.List {
+				infer.env.NoIdxUnwrap = true
 				t := infer.env.GetType2(recv.Type)
+				infer.env.NoIdxUnwrap = false
 				for _, name := range recv.Names {
 					infer.env.SetType(nil, name, t)
 					infer.env.Define(name, name.Name, t)
@@ -809,6 +811,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				//infer.SetType(callXT.X, )
 				exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 			}
+		case *ast.IndexExpr:
+			exprFunT = infer.env.GetType2(callXT)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
