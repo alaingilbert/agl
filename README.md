@@ -311,7 +311,7 @@ import (
 )
 
 func main() {
-    req := http.NewRequest(http.MethodGet, "https://google.com", nil)!
+    req := http.NewRequest(http.MethodGet, "https://google.com", None)!
     c := http.Client{}
     resp := c.Do(req)!
     defer resp.Body.Close()

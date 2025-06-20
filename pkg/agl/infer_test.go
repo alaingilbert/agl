@@ -4,8 +4,6 @@ import (
 	"agl/pkg/ast"
 	"agl/pkg/token"
 	"agl/pkg/types"
-	"fmt"
-	"reflect"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
@@ -81,7 +79,7 @@ func main() {
 		if n == nil {
 			return true
 		}
-		fmt.Println(reflect.TypeOf(n), n, env.GetType(n))
+		//fmt.Println(reflect.TypeOf(n), n, env.GetType(n))
 		return true
 	})
 	//tassert.Equal(t, 1, env.Get("bod"))
