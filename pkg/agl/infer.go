@@ -902,6 +902,16 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			default:
 				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
 			}
+		} else if call.Name == "append" {
+			fnT := infer.env.Get("append").(types.FuncType)
+			arg0 := infer.env.GetType2(expr.Args[0])
+			switch v := arg0.(type) {
+			case types.ArrayType:
+				fnT = fnT.T("T", v.Elt)
+				infer.SetType(expr, fnT.Return)
+			default:
+				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
+			}
 		}
 		callT := infer.env.Get(call.Name)
 		switch callTT := callT.(type) {
@@ -1317,6 +1327,10 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 	if expr.Type != nil {
 		infer.expr(expr.Type)
 	}
+	if expr.Type != nil {
+		t := types.OptionType{W: infer.env.GetType2(expr.Type)}
+		infer.SetType(expr, t)
+	}
 	//infer.SetType(expr, types.OptionType{W: infer.env.GetType2(expr.Type)})
 }
 
@@ -1579,6 +1593,27 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.Sel, selT)
 		infer.SetType(expr.X, pT)
 		infer.SetType(expr, selT)
+	case types.OptionType:
+		infer.SetType(expr.Sel, exprXIdT.W)
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr, exprXIdT.W)
+	case types.TypeAssertType:
+		if v, ok := exprXIdT.Type.(types.StarType); ok {
+			exprXIdT.Type = v.X
+		}
+		if v, ok := exprXIdT.Type.(types.StructType); ok {
+			fieldName := expr.Sel.Name
+			for _, f := range v.Fields {
+				if f.Name == fieldName {
+					infer.SetType(expr.Sel, f.Typ)
+					infer.SetType(expr.X, v)
+					infer.SetType(expr, f.Typ)
+					return
+				}
+			}
+		}
+		infer.SetType(expr.X, exprXIdT.X)
+		infer.SetType(expr, exprXIdT.Type)
 	default:
 		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
 	}
@@ -1591,7 +1626,8 @@ func (infer *FileInferrer) bubbleResultExpr(expr *ast.BubbleResultExpr) {
 
 func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, infer.GetType(expr.X).(types.OptionType).W)
+	tmp := infer.GetType(expr.X)
+	infer.SetType(expr, tmp.(types.OptionType).W)
 }
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
@@ -1845,7 +1881,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			if lhsT := lhsWantedT; lhsT != nil {
 				infer.withForceReturn(lhsT, func() {
 					infer.expr(rhs)
-					rhsT := infer.GetType(rhs)
+					rhsT := infer.env.GetType2(rhs)
 					assertf(cmpTypesLoose(rhsT, lhsT), "%s: return type %s does not match expected type %s", infer.Pos(lhs), rhsT, lhsT)
 				})
 			} else {
@@ -1884,10 +1920,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			var tmp ast.Expr
 			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
 				tmp = Ternary(ta.Type == nil, ta.X, ta.Type)
+				rhsT = infer.env.GetType2(tmp)
+				rhsT = types.OptionType{W: rhsT}
 			} else {
 				tmp = rhs
+				rhsT = infer.env.GetType2(tmp)
 			}
-			rhsT = infer.env.GetType2(tmp)
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
@@ -2052,6 +2090,11 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 			infer.stmt(stmt.Init)
 		}
 		infer.stmt(stmt.Assign)
+		if ass, ok := stmt.Assign.(*ast.AssignStmt); ok {
+			if len(ass.Lhs) == 1 {
+				infer.SetType(ass.Lhs[0], infer.env.GetType2(ass.Rhs[0]).(types.TypeAssertType).X)
+			}
+		}
 		for _, el := range stmt.Body.List {
 			c := el.(*ast.CaseClause)
 			if c.List != nil {

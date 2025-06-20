@@ -294,6 +294,19 @@ type FieldType struct {
 	Typ  Type
 }
 
+func (f FieldType) GoStr() string      { return "FieldType" }
+func (f FieldType) String() string     { return "FieldType" }
+func (f FieldType) StringFull() string { return "FieldType" }
+
+type TypeAssertType struct {
+	X    Type
+	Type Type
+}
+
+func (t TypeAssertType) GoStr() string      { return "TypeAssertType" }
+func (t TypeAssertType) String() string     { return "TypeAssertType" }
+func (t TypeAssertType) StringFull() string { return "TypeAssertType" }
+
 type StructType struct {
 	Name   string
 	Pkg    string

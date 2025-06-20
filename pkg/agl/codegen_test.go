@@ -5758,7 +5758,15 @@ func main() {
 		switch d := decl.(type) {
 	 	case *ast.FuncDecl:
 			if d.Name.Name == fnName && d.Recv == nil {
-	 			fmt.Println(d.Name.Name)
+				var name string
+				for _, param := range d.Type.Params.List {
+					switch param1 := param.Type.(type) {
+					case *ast.SelectorExpr:
+						name = param1.X.(*ast.Ident)?.Name
+					case *ast.Ident:
+						name = param1.Name
+					}
+				}
 	 		}
 	 	}
 	}
@@ -5801,7 +5809,15 @@ func main() {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
 		if d.Name.Name == fnName && d.Recv == nil {
-			fmt.Println(d.Name.Name)
+			var name string
+			for _, param := range d.Type.Params.List {
+				switch param1 := param.Type.(type) {
+				case *ast.SelectorExpr:
+				name = AglTypeAssert[*ast.Ident](param1.X).Unwrap().Name
+				case *ast.Ident:
+				name = param1.Name
+				}
+			}
 		}
 		}
 	}

@@ -834,7 +834,7 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) (out string) {
 }
 
 func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string) {
-	exprXT := MustCast[types.OptionType](g.env.GetType(expr.X))
+	exprXT := MustCast[types.OptionType](g.env.GetInfo(expr.X).Type)
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
 		if exprXT.Native {

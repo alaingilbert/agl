@@ -48,11 +48,11 @@ func wrapFn(fset *gotoken.FileSet, decl *goast.FuncDecl) {
 	for _, param := range decl.Type.Params.List {
 		var name string
 		var typ string
-		switch param := param.Type.(type) {
+		switch param1 := param.Type.(type) {
 		case *goast.SelectorExpr:
-			name = param.X.(*goast.Ident).Name + "." + param.Sel.Name
+			name = param1.X.(*goast.Ident).Name + "." + param1.Sel.Name
 		case *goast.Ident:
-			name = param.Name
+			name = param1.Name
 		}
 		var namesArr []string
 		for _, pname := range param.Names {

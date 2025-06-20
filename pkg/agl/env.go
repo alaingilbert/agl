@@ -308,11 +308,38 @@ func (e *Env) loadPkgCmp() {
 func (e *Env) loadPkgGoAst() {
 	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
 	astDecls := types.ArrayType{Elt: astDecl}
+	astIdent := types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
+		{Name: "Name", Typ: types.StringType{}},
+	}}
+	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
+		{Name: "Type", Typ: types.InterfaceType{Pkg: "ast", Name: "Expr"}},
+		{Name: "Names", Typ: types.ArrayType{Elt: astIdent}},
+	}}
+	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList", Fields: []types.FieldType{
+		{Name: "List", Typ: types.ArrayType{Elt: astField}},
+	}}
 	e.DefinePkg("ast", "go/ast")
-	e.Define(nil, "ast.Ident", types.StructType{Pkg: "ast", Name: "Ident"})
+	e.Define(nil, "ast.Expr", types.InterfaceType{Pkg: "ast", Name: "Expr"})
+	e.Define(nil, "ast.Ident", astIdent)
+	e.Define(nil, "ast.SelectorExpr", types.StructType{Pkg: "ast", Name: "SelectorExpr", Fields: []types.FieldType{
+		{Name: "X", Typ: types.InterfaceType{Name: "Expr", Pkg: "ast"}},
+		{Name: "Sel", Typ: astIdent},
+	}})
+	e.Define(nil, "ast.SelectorExpr.X", types.InterfaceType{Pkg: "ast", Name: "Expr"})
+	e.Define(nil, "ast.Ident.Name", types.StringType{})
 	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
-	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{{Name: "Name", Typ: types.StructType{}}}})
-	e.Define(nil, "ast.FuncDecl.Name", types.StructType{Pkg: "ast", Name: "Ident"})
+	e.Define(nil, "ast.Field", astField)
+	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{
+		{Name: "Name", Typ: astIdent},
+		{Name: "Type", Typ: types.StructType{Pkg: "ast", Name: "FuncType"}},
+	}})
+	e.Define(nil, "ast.FuncType", types.StructType{Pkg: "ast", Name: "FuncType", Fields: []types.FieldType{
+		{Name: "Params", Typ: astFieldList},
+	}})
+	e.Define(nil, "ast.Field.Name", types.StructType{Pkg: "ast", Name: "Ident"})
+	e.Define(nil, "ast.Field.Type", types.StructType{Pkg: "ast", Name: "FuncType"})
+	e.Define(nil, "ast.FuncType.Params", astFieldList)
+	e.Define(nil, "ast.FieldList", astFieldList)
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.File.Decls", astDecls)
 }
@@ -342,6 +369,26 @@ func (e *Env) loadPkgFilepath() {
 	e.DefineFnNative("filepath.Join", "func (elem ...string) string")
 }
 
+func (e *Env) loadPkgAgl() {
+	e.DefinePkg("agl", "agl")
+	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
+	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
+	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
+	e.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
+	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
+	e.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
+	e.DefineFn("agl.Vec.Joined", "func (a []string) string")
+	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
+	e.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
+	e.DefineFn("agl.Option.IsSome", "func () bool")
+	e.DefineFn("agl.Option.IsNone", "func () bool")
+	e.DefineFn("agl.Option.Unwrap", "func [T any]() T")
+	e.DefineFn("agl.Result.UnwrapOr", "func [T any](T) T")
+	e.DefineFn("agl.Result.IsOk", "func () bool")
+	e.DefineFn("agl.Result.IsErr", "func () bool")
+	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
+}
+
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
 	e.loadPkgCmp()
@@ -366,28 +413,13 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgGoParser()
 	e.loadPkgGoTypes()
 	e.loadPkgFilepath()
+	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
 	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 	e.Define(nil, "true", types.BoolValue{V: true})
 	e.Define(nil, "false", types.BoolValue{V: false})
-	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
-	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
-	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
-	e.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
-	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
-	e.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
-	e.DefineFn("agl.Vec.Joined", "func (a []string) string")
-	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
-	e.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
-	e.DefineFn("agl.Option.IsSome", "func () bool")
-	e.DefineFn("agl.Option.IsNone", "func () bool")
-	e.DefineFn("agl.Option.Unwrap", "func [T any]() T")
-	e.DefineFn("agl.Result.UnwrapOr", "func [T any](T) T")
-	e.DefineFn("agl.Result.IsOk", "func () bool")
-	e.DefineFn("agl.Result.IsErr", "func () bool")
-	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
 }
 
 func NewEnv(fset *token.FileSet) *Env {
@@ -562,24 +594,36 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			panic("")
 		}
 	case *ast.SelectorExpr:
-		if v, ok := xx.X.(*ast.SelectorExpr); ok {
-			return e.GetType2(v.X)
+		base := e.GetType2(xx.X)
+		if vv, ok := base.(types.StarType); ok {
+			base = vv.X
 		}
-		name := fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)
-		t := e.GetType2(&ast.Ident{Name: name})
-		if t == nil {
-			st := e.GetType2(xx.X)
-			if s, ok := st.(types.StarType); ok {
-				st = s.X
+		switch v := base.(type) {
+		case types.PackageType:
+			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name})
+		case types.InterfaceType:
+			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
+			if v.Pkg != "" {
+				name = v.Pkg + "." + name
 			}
-			if s, ok := st.(types.StructType); ok {
-				f := Find(s.Fields, func(f types.FieldType) bool { return f.Name == xx.Sel.Name })
-				if f != nil {
-					return f.Typ
-				}
+			return e.GetType2(&ast.Ident{Name: name})
+		case types.StructType:
+			f := Find(v.Fields, func(f types.FieldType) bool { return f.Name == xx.Sel.Name })
+			if f != nil {
+				return f.Typ
 			}
+			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
+			if v.Pkg != "" {
+				name = v.Pkg + "." + name
+			}
+			return e.GetType2(&ast.Ident{Name: name})
+		case types.TypeAssertType:
+			return v.X
+		default:
+			panic(fmt.Sprintf("%v", reflect.TypeOf(base)))
 		}
-		return t
+		return nil
 	case *ast.IndexExpr:
 		return e.GetType2(xx.X)
 	case *ast.ParenExpr:
@@ -608,6 +652,18 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 	case *ast.CompositeLit:
 		ct := e.GetType2(xx.Type).(types.CustomType)
 		return types.StructType{Name: ct.Name}
+	case *ast.TypeAssertExpr:
+		xT := e.GetType2(xx.X)
+		var typeT types.Type
+		if xx.Type != nil {
+			typeT = e.GetType2(xx.Type)
+		}
+		n := types.TypeAssertType{X: xT, Type: typeT}
+		nn := e.lspNodeOrCreate(xx)
+		nn.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
+		return n
+	case *ast.BubbleOptionExpr:
+		return e.GetType2(xx.X)
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
