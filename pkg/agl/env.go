@@ -198,7 +198,7 @@ func (e *Env) loadPkgNetHttp() {
 	e.Define(nil, "http.MethodGet", types.StringType{})
 	e.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
 	e.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
-	e.DefineFnNative("http.NewRequest", "func (method, url string, body io.Reader) (*http.Request)!")
+	e.DefineFn("http.NewRequest", "func (method, url string, body io.Reader?) (*http.Request)!")
 	e.DefineFnNative("http.Client.Do", "func (req *http.Request) (*http.Response)!")
 }
 
