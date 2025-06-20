@@ -5755,6 +5755,12 @@ func main() {
 	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
 	_ = conf.Check("", fset, []*ast.File{node}, info)!
 	for _, decl := range node.Decls {
+		switch d := decl.(type) {
+	 	case *ast.FuncDecl:
+			if d.Name.Name == fnName && d.Recv == nil {
+	 			fmt.Println(d.Name.Name)
+	 		}
+	 	}
 	}
 }
 `
@@ -5792,6 +5798,12 @@ func main() {
 	}
 	_ = AglIdentity(aglTmp3)
 	for _, decl := range node.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+		if d.Name.Name == fnName && d.Recv == nil {
+			fmt.Println(d.Name.Name)
+		}
+		}
 	}
 }
 `

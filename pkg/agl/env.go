@@ -311,7 +311,7 @@ func (e *Env) loadPkgGoAst() {
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Ident", types.StructType{Pkg: "ast", Name: "Ident"})
 	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
-	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl"})
+	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{{Name: "Name", Typ: types.StructType{}}}})
 	e.Define(nil, "ast.FuncDecl.Name", types.StructType{Pkg: "ast", Name: "Ident"})
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.File.Decls", astDecls)
@@ -562,6 +562,9 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			panic("")
 		}
 	case *ast.SelectorExpr:
+		if v, ok := xx.X.(*ast.SelectorExpr); ok {
+			return e.GetType2(v.X)
+		}
 		name := fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)
 		t := e.GetType2(&ast.Ident{Name: name})
 		if t == nil {

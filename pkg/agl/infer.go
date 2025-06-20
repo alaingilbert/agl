@@ -1540,8 +1540,7 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
-	exprXName := expr.X.(*ast.Ident).Name
-	exprXIdTRaw := infer.env.Get(exprXName)
+	exprXIdTRaw := infer.env.GetType2(expr.X)
 	if v, ok := exprXIdTRaw.(types.StarType); ok {
 		exprXIdTRaw = v.X
 	}
@@ -2047,14 +2046,47 @@ func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
 	}
 }
 
+func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
+	infer.withEnv(func() {
+		if stmt.Init != nil {
+			infer.stmt(stmt.Init)
+		}
+		infer.stmt(stmt.Assign)
+		for _, el := range stmt.Body.List {
+			c := el.(*ast.CaseClause)
+			if c.List != nil {
+				infer.exprs(c.List)
+			}
+			if c.Body != nil {
+				infer.withEnv(func() {
+					ass := stmt.Assign.(*ast.AssignStmt)
+					if len(ass.Lhs) == 1 && len(c.List) == 1 {
+						id := ass.Lhs[0].(*ast.Ident).Name
+						idT := infer.env.GetType2(c.List[0])
+						infer.env.Define(nil, id, idT)
+					}
+					infer.stmts(c.Body)
+				})
+			}
+		}
+	})
+}
+
 func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
-	if stmt.Init != nil {
-		infer.stmt(stmt.Init)
-	}
-	if stmt.Tag != nil {
-		infer.expr(stmt.Tag)
-	}
-	infer.stmt(stmt.Body)
+	infer.withEnv(func() {
+		if stmt.Tag != nil {
+			infer.expr(stmt.Tag)
+		}
+		for _, el := range stmt.Body.List {
+			c := el.(*ast.CaseClause)
+			if c.List != nil {
+				infer.exprs(c.List)
+			}
+			if c.Body != nil {
+				infer.stmts(c.Body)
+			}
+		}
+	})
 }
 
 func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
@@ -2098,14 +2130,6 @@ func (infer *FileInferrer) matchClause(stmt *ast.MatchClause) {
 	}
 	infer.expr(stmt.Expr)
 	infer.stmts(stmt.Body)
-}
-
-func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
-	if stmt.Init != nil {
-		infer.stmt(stmt.Init)
-	}
-	infer.stmt(stmt.Assign)
-	infer.stmt(stmt.Body)
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
