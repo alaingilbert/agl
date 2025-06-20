@@ -562,7 +562,21 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			panic("")
 		}
 	case *ast.SelectorExpr:
-		return e.GetType2(&ast.Ident{Name: fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)})
+		name := fmt.Sprintf("%s.%s", xx.X.(*ast.Ident).Name, xx.Sel.Name)
+		t := e.GetType2(&ast.Ident{Name: name})
+		if t == nil {
+			st := e.GetType2(xx.X)
+			if s, ok := st.(types.StarType); ok {
+				st = s.X
+			}
+			if s, ok := st.(types.StructType); ok {
+				f := Find(s.Fields, func(f types.FieldType) bool { return f.Name == xx.Sel.Name })
+				if f != nil {
+					return f.Typ
+				}
+			}
+		}
+		return t
 	case *ast.IndexExpr:
 		return e.GetType2(xx.X)
 	case *ast.ParenExpr:
