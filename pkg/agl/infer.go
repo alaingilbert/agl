@@ -1764,7 +1764,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 	infer.withEnv(func() {
 		infer.expr(stmt.X)
-		xT := infer.GetType(stmt.X)
+		xT := infer.env.GetType2(stmt.X)
 		if stmt.Key != nil {
 			// TODO find correct type for map
 			name := stmt.Key.(*ast.Ident).Name

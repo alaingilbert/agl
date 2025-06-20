@@ -5730,6 +5730,74 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen203(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+)
+func main() {
+	goroot := runtime.GOROOT()
+	fileName := "request.go"
+	fnName := "NewRequest"
+	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
+	src := os.ReadFile(filePath)!
+	fset := token.NewFileSet()
+	node := parser.ParseFile(fset, fileName, src, parser.AllErrors)!
+	conf := types.Config{Importer: nil}
+	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
+	_ = conf.Check("", fset, []*ast.File{node}, info)!
+	for _, decl := range node.Decls {
+	}
+}
+`
+	expected := `package main
+import "fmt"
+import "go/ast"
+import "go/parser"
+import "go/token"
+import "go/types"
+import "os"
+import "path/filepath"
+import "runtime"
+import "strings"
+func main() {
+	goroot := runtime.GOROOT()
+	fileName := "request.go"
+	fnName := "NewRequest"
+	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
+	aglTmp1, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+	src := AglIdentity(aglTmp1)
+	fset := token.NewFileSet()
+	aglTmp2, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
+	if err != nil {
+		panic(err)
+	}
+	node := AglIdentity(aglTmp2)
+	conf := types.Config{Importer: nil}
+	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
+	aglTmp3, err := conf.Check("", fset, []*ast.File{node}, info)
+	if err != nil {
+		panic(err)
+	}
+	_ = AglIdentity(aglTmp3)
+	for _, decl := range node.Decls {
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
