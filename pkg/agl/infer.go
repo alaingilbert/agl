@@ -948,6 +948,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
+			for i, arg := range expr.Args {
+				if _, ok := infer.env.GetType(arg).(types.UntypedNoneType); ok {
+					infer.SetTypeForce(arg, types.NoneType{W: v.Params[i].(types.OptionType).W})
+				}
+			}
 			if infer.env.GetType2(expr) == nil {
 				if v.Return != nil {
 					toReturn := v.Return
@@ -1271,7 +1276,7 @@ func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
-	infer.SetType(expr, types.NoneType{W: infer.returnType.(types.OptionType).W}) // TODO
+	infer.SetType(expr, types.UntypedNoneType{})
 }
 
 func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
@@ -1975,6 +1980,11 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 	if stmt.Result != nil {
 		infer.withOptType(stmt.Result, infer.returnType, func() {
 			infer.expr(stmt.Result)
+			if _, ok := infer.GetType(stmt.Result).(types.UntypedNoneType); ok {
+				if v, ok := infer.returnType.(types.OptionType); ok {
+					infer.SetTypeForce(stmt.Result, types.NoneType{W: v.W})
+				}
+			}
 		})
 	}
 }

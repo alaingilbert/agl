@@ -5691,6 +5691,45 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen202(t *testing.T) {
+	src := `package main
+import (
+   "fmt"
+   "net/http"
+   "io"
+)
+func main() {
+   req := http.NewRequest(http.MethodGet, "https://jsonip.com", None)!
+   c := http.Client{}
+   resp := c.Do(req)!
+   defer resp.Body.Close()
+   by := io.ReadAll(resp.Body)!
+   fmt.Println(string(by))
+}`
+	expected := `package main
+import "fmt"
+import "net/http"
+import "io"
+func main() {
+	req := AglHttpNewRequest(http.MethodGet, "https://jsonip.com", MakeOptionNone[io.Reader]()).Unwrap()
+	c := http.Client{}
+	aglTmp1, err := c.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	resp := AglIdentity(aglTmp1)
+	defer resp.Body.Close()
+	aglTmp2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	by := AglIdentity(aglTmp2)
+	fmt.Println(string(by))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
