@@ -317,23 +317,15 @@ type InterfaceType struct {
 	Pkg  string
 }
 
-func (i InterfaceType) GoStr() string {
+func (i InterfaceType) GoStr() string      { return i.String() }
+func (i InterfaceType) StringFull() string { return i.String() }
+func (i InterfaceType) String() string {
 	out := i.Name
 	if i.Pkg != "" {
 		out = i.Pkg + "." + out
 	}
 	return out
 }
-
-func (i InterfaceType) StringFull() string {
-	out := i.Name
-	if i.Pkg != "" {
-		out = i.Pkg + "." + out
-	}
-	return out
-}
-
-func (i InterfaceType) String() string { return fmt.Sprintf("%s", i.Name) }
 
 type EnumType struct {
 	Name   string
