@@ -11,6 +11,26 @@ import (
 	"runtime"
 )
 
+func main() {
+	goroot := runtime.GOROOT()
+	fileName := "request.go"
+	fnName := "NewRequest"
+	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
+	src := os.ReadFile(filePath)!
+	fset := token.NewFileSet()
+	node := parser.ParseFile(fset, fileName, src, parser.AllErrors)!
+	conf := types.Config{Importer: nil}
+	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
+	conf.Check("", fset, []*ast.File{node}, info)
+	for _, decl := range node.Decls {
+	 	switch d := decl.(type) {
+	 	case *ast.FuncDecl:
+			if d.Name.Name == fnName && d.Recv == nil {
+	 			wrapFn(fset, d)
+	 		}
+	 	}
+	}
+}
 
 func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	env := map[string]string{
@@ -49,25 +69,4 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	out += "\t" + decl.Name.Name + "()\n"
 	out += "}\n"
 	fmt.Println(out)
-}
-
-func main() {
-	goroot := runtime.GOROOT()
-	fileName := "request.go"
-	fnName := "NewRequest"
-	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
-	src := os.ReadFile(filePath)!
-	fset := token.NewFileSet()
-	node := parser.ParseFile(fset, fileName, src, parser.AllErrors)!
-	conf := types.Config{Importer: nil}
-	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
-	conf.Check("", fset, []*ast.File{node}, info)
-	for _, decl := range node.Decls {
-	 	switch d := decl.(type) {
-	 	case *ast.FuncDecl:
-			if d.Name.Name == fnName && d.Recv == nil {
-	 			wrapFn(fset, d)
-	 		}
-	 	}
-	}
 }
