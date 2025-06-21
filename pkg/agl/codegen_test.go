@@ -6149,6 +6149,19 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen218(t *testing.T) {
+//	src := `package main
+//func main() {
+//	a := map[int]struct{}{1: {}, 2: {}, 3: {}}
+//}`
+//	expected := `package main
+//func main() {
+//	a := map[int]struct{}{1: {}, 2: {}, 3: {}}
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
