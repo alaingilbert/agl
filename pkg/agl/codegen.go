@@ -972,6 +972,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Len" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecLen(%s)", content1)
+			} else if e.Sel.Name == "IsEmpty" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecIsEmpty(%s)", content1)
 			} else if e.Sel.Name == "Insert" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1814,6 +1817,10 @@ func AglVecFirst[T any](a []T) (out Option[T]) {
 
 func AglVecLen[T any](a []T) int {
 	return len(a)
+}
+
+func AglVecIsEmpty[T any](a []T) bool {
+	return len(a) == 0
 }
 
 func AglVecPush[T any](a *[]T, els ...T) {
