@@ -328,48 +328,54 @@ func (e *Env) loadPkgGoAst() {
 	astIdent := types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
 		{Name: "Name", Typ: types.StringType{}},
 	}}
+	astFieldNames := types.ArrayType{Elt: types.StarType{X: astIdent}}
 	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
 		{Name: "Type", Typ: astExpr},
-		{Name: "Names", Typ: types.ArrayType{Elt: types.StarType{X: astIdent}}},
+		{Name: "Names", Typ: astFieldNames},
 	}}
 	astFieldListList := types.ArrayType{Elt: types.StarType{X: astField}}
 	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList", Fields: []types.FieldType{
 		{Name: "List", Typ: astFieldListList},
 	}}
+	astStarFieldList := types.StarType{X: astFieldList}
 	astFuncType := types.StructType{Pkg: "ast", Name: "FuncType", Fields: []types.FieldType{
-		{Name: "Params", Typ: types.StarType{X: astFieldList}},
-		{Name: "Results", Typ: types.StarType{X: astFieldList}},
+		{Name: "Params", Typ: astStarFieldList},
+		{Name: "Results", Typ: astStarFieldList},
 	}}
-	e.DefinePkg("ast", "go/ast")
-	e.Define(nil, "ast.Expr", astExpr)
-	e.Define(nil, "ast.Ident", astIdent)
-	e.Define(nil, "ast.SelectorExpr", types.StructType{Pkg: "ast", Name: "SelectorExpr", Fields: []types.FieldType{
+	astSelectorExpr := types.StructType{Pkg: "ast", Name: "SelectorExpr", Fields: []types.FieldType{
 		{Name: "X", Typ: astExpr},
 		{Name: "Sel", Typ: astIdent},
-	}})
-	e.Define(nil, "ast.StarExpr", types.StructType{Pkg: "ast", Name: "StarExpr", Fields: []types.FieldType{
+	}}
+	astStarExpr := types.StructType{Pkg: "ast", Name: "StarExpr", Fields: []types.FieldType{
 		{Name: "X", Typ: astExpr},
-	}})
-	e.Define(nil, "ast.StarExpr.X", astExpr)
-	e.Define(nil, "ast.SelectorExpr.X", astExpr)
-	e.Define(nil, "ast.Ident.Name", types.StringType{})
-	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
-	e.Define(nil, "ast.Field", astField)
-	e.Define(nil, "ast.FuncDecl", types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{
+	}}
+	astFuncDecl := types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{
 		{Name: "Name", Typ: types.StarType{X: astIdent}},
-		{Name: "Recv", Typ: types.StarType{X: astFieldList}},
+		{Name: "Recv", Typ: astStarFieldList},
 		{Name: "Type", Typ: types.StarType{X: astFuncType}},
-	}})
-	e.Define(nil, "ast.FuncType", astFuncType)
-	e.Define(nil, "ast.Field.Name", types.StructType{Pkg: "ast", Name: "Ident"})
-	e.Define(nil, "ast.Field.Type", astFuncType)
-	e.Define(nil, "ast.FuncDecl.Recv", types.StarType{X: astFieldList})
-	e.Define(nil, "ast.FuncType.Params", types.StarType{X: astFieldList})
-	e.Define(nil, "ast.FuncType.Results", types.StarType{X: astFieldList})
+	}}
+	astFile := types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}}
+	e.DefinePkg("ast", "go/ast")
+	e.Define(nil, "ast.Decl", astDecl)
+	e.Define(nil, "ast.Expr", astExpr)
+	e.Define(nil, "ast.Field", astField)
+	e.Define(nil, "ast.Field.Names", astFieldNames)
+	e.Define(nil, "ast.Field.Type", astExpr)
 	e.Define(nil, "ast.FieldList", astFieldList)
 	e.Define(nil, "ast.FieldList.List", astFieldListList)
-	e.Define(nil, "ast.Decl", astDecl)
+	e.Define(nil, "ast.File", astFile)
 	e.Define(nil, "ast.File.Decls", astDecls)
+	e.Define(nil, "ast.FuncDecl", astFuncDecl)
+	e.Define(nil, "ast.FuncDecl.Recv", astStarFieldList)
+	e.Define(nil, "ast.FuncType", astFuncType)
+	e.Define(nil, "ast.FuncType.Params", astStarFieldList)
+	e.Define(nil, "ast.FuncType.Results", astStarFieldList)
+	e.Define(nil, "ast.Ident", astIdent)
+	e.Define(nil, "ast.Ident.Name", types.StringType{})
+	e.Define(nil, "ast.SelectorExpr", astSelectorExpr)
+	e.Define(nil, "ast.SelectorExpr.X", astExpr)
+	e.Define(nil, "ast.StarExpr", astStarExpr)
+	e.Define(nil, "ast.StarExpr.X", astExpr)
 }
 
 func (e *Env) loadPkgGoParser() {
