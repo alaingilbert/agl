@@ -1874,6 +1874,11 @@ func (infer *FileInferrer) Pos(n ast.Node) token.Position {
 }
 
 func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
+	type AssignStruct struct {
+		n    ast.Node
+		name string
+		typ  types.Type
+	}
 	myDefine := func(parentInfo *Info, n ast.Node, name string, typ types.Type) {
 		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.Tok)
 		infer.env.Define(n, name, typ)
@@ -1890,6 +1895,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		}
 		f(parentInfo, n, name, typ)
 	}
+	var assigns []AssignStruct
 	if len(stmt.Rhs) == 1 {
 		rhs := stmt.Rhs[0]
 		if len(stmt.Lhs) == 1 {
@@ -1979,7 +1985,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			default:
 				infer.SetType(lhs, rhsT)
 			}
-			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
+			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 		} else { // len(stmt.Lhs) != 1
 			infer.expr(rhs)
 			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
@@ -1987,7 +1993,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
 					infer.SetType(lhs, infer.GetType(x))
-					assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 				}
 			} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
 				for i, e := range stmt.Lhs {
@@ -1996,9 +2002,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					// AGL: fields.Find({ $0.name == lit })
 					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
 					assert(f != nil)
-					assignFn(e, e.(*ast.Ident).Name, f.Elts[i])
+					assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, f.Elts[i]})
 				}
-				return
 			} else if rhsId, ok := rhs.(*ast.Ident); ok {
 				rhsIdT := infer.env.Get(rhsId.Name)
 				if rhs3, ok := rhsIdT.(types.TupleType); ok {
@@ -2006,7 +2011,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						lhs := stmt.Lhs[i]
 						lhsID := MustCast[*ast.Ident](lhs)
 						infer.SetType(lhs, x)
-						assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
+						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 					}
 				}
 			} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
@@ -2021,13 +2026,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						lhs1 := stmt.Lhs[1].(*ast.Ident)
 						lhs1T := types.BoolType{}
 						infer.SetType(lhs1, lhs1T)
-						assignFn(lhs1, lhs1.Name, lhs1T)
+						assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1T})
 						fallthrough
 					case 1:
 						lhs0 := stmt.Lhs[0].(*ast.Ident)
 						lhs0T := rhsId1XTT.V
 						infer.SetType(lhs0, rhsId1XTT.V)
-						assignFn(lhs0, lhs0.Name, lhs0T)
+						assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0T})
 					default:
 						panic("can only have 1 or 2 args on the left side")
 					}
@@ -2045,8 +2050,11 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			infer.expr(rhs)
 			lhsID := MustCast[*ast.Ident](lhs)
 			infer.SetType(lhsID, infer.GetType(rhs))
-			assignFn(lhsID, lhsID.Name, infer.GetType(lhsID))
+			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 		}
+	}
+	for _, ass := range assigns {
+		assignFn(ass.n, ass.name, ass.typ)
 	}
 }
 
