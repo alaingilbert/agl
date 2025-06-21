@@ -834,6 +834,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, t)
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
+		case types.SetType:
+			fnT := infer.env.GetFn("agl.Set."+call.Sel.Name).T("T", idTT.Elt)
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(call.Sel, fnT)
 		case types.StructType:
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			if idTT.Pkg != "" {
