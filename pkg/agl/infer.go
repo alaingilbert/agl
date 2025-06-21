@@ -471,12 +471,6 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
 					decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
 				}
-
-				infer.env.BubbleOpt = false
-				switch returnTyp.(type) {
-				case types.OptionType:
-					infer.env.BubbleOpt = true
-				}
 				infer.stmt(decl.Body)
 			}
 		})
@@ -1346,7 +1340,8 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 		infer.expr(expr.Type)
 	}
 	if expr.Type != nil {
-		t := types.OptionType{W: infer.env.GetType2(expr.Type)}
+		_, bubble := infer.returnType.(types.OptionType)
+		t := types.OptionType{W: infer.env.GetType2(expr.Type), Bubble: bubble}
 		infer.SetType(expr, t)
 	}
 	//infer.SetType(expr, types.OptionType{W: infer.env.GetType2(expr.Type)})
@@ -1572,6 +1567,7 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
+	infer.expr(expr.X)
 	exprXT := infer.env.GetType2(expr.X)
 	exprXIdTRaw := exprXT
 	if v, ok := exprXIdTRaw.(types.StarType); ok {
@@ -1608,10 +1604,8 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	case types.PackageType:
 		pkg := expr.X.(*ast.Ident).Name
 		sel := expr.Sel.Name
-		pT := types.PackageType{Name: pkg}
 		selT := infer.env.Get(pkg + "." + sel)
 		infer.SetType(expr.Sel, selT)
-		infer.SetType(expr.X, pT)
 		infer.SetType(expr, selT)
 	case types.OptionType:
 		infer.SetType(expr.Sel, exprXIdT.W)
