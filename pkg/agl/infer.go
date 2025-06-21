@@ -2218,6 +2218,7 @@ func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 		if stmt.Init != nil {
 			infer.stmt(stmt.Init)
 		}
+		infer.expr(stmt.Cond)
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}
