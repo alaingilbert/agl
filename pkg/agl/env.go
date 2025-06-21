@@ -154,6 +154,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")
 	e.DefineFn("panic", "func (v any)")
+	e.DefineFn("new", "func [T any](T) *T")
 }
 
 func (e *Env) loadPkgFmt() {
