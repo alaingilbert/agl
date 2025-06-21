@@ -84,9 +84,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		}
 		last := arr.Last()?
 		lastIsErr := last == "error"
-		if lastIsErr {
-			arr.Pop()
-		}
+		arr.PopIf(func () bool { lastIsErr })
 		if arr.Len() == 0 {
 			resultStr = "AglVoid"
 		} else {
