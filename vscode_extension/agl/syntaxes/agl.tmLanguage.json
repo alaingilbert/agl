@@ -43,7 +43,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.agl",
-				"match": "\\b(if|import|for|return|package|fn)\\b"
+				"match": "\\b(if|else|import|for|return|package|func)\\b"
 			}]
 		},
 		"strings": {
