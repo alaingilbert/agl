@@ -2054,7 +2054,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					panic(fmt.Sprintf("%v", to(rhsId1XT)))
 				}
 			} else {
-				panic(fmt.Sprintf("%s: %v", infer.Pos(rhs), to(rhs)))
+				assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
 			}
 		}
 	} else {
