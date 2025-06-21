@@ -972,6 +972,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Len" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecLen(%s)", content1)
+			} else if e.Sel.Name == "Insert" {
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				content3 := g.genExpr(expr.Args[1])
+				return fmt.Sprintf("AglVecInsert(%s)", content1, content2, content3)
 			} else if e.Sel.Name == "Pop" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecPop(&%s)", content1)
@@ -1806,6 +1811,11 @@ func AglVecLen[T any](a []T) int {
 
 func AglVecPush[T any](a *[]T, els ...T) {
 	*a = append(*a, els...)
+}
+
+// AglVecInsert ...
+func AglVecInsert[T any](a *[]T, idx int, el T) {
+	*a = append((*a)[:idx], append([]T{el}, (*a)[idx:]...)...)
 }
 
 // AglVecPop removes the last element from a vector and returns it, or None if it is empty.
