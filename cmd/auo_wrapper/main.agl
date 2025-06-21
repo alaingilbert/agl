@@ -41,7 +41,9 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  	}
 	out += paramsArr.Joined(", ") + ")"
 	if decl.Type.Results != nil {
-		if decl.Type.Results.List[len(decl.Type.Results.List)-1].Type.(*ast.Ident)?.Name == "error" {
+		tmp1 := decl.Type.Results
+		tmp := tmp1.List.Last()?
+		if tmp.Type.(*ast.Ident)?.Name == "error" {
 			out += "!"
 		}
  	}

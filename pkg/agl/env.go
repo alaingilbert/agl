@@ -18,7 +18,6 @@ type Env struct {
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
 	NoIdxUnwrap   bool
-	BubbleOpt     bool
 }
 
 type Info struct {
@@ -448,7 +447,7 @@ func (e *Env) SubEnv() *Env {
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
 		parent:      e,
-		BubbleOpt:   e.BubbleOpt,
+		NoIdxUnwrap: e.NoIdxUnwrap,
 	}
 	return env
 }
@@ -678,7 +677,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 		n := types.TypeAssertType{X: xT, Type: typeT}
 		info := e.lspNodeOrCreate(xx)
-		info.Type = types.OptionType{W: xT, Bubble: e.BubbleOpt} // TODO ensure xT is the right thing
+		info.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
 		return n
 	case *ast.BubbleOptionExpr:
 		return e.GetType2(xx.X)
