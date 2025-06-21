@@ -1047,50 +1047,10 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			findFnT.Params = findFnT.Params[1:]
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
-		} else if fnName == "Sum" {
-			sumFnT := infer.env.GetFn("agl.Vec.Sum").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Last" {
-			sumFnT := infer.env.GetFn("agl.Vec.Last").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "First" {
-			sumFnT := infer.env.GetFn("agl.Vec.First").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Push" {
-			sumFnT := infer.env.GetFn("agl.Vec.Push").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "PushFront" {
-			sumFnT := infer.env.GetFn("agl.Vec.PushFront").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Insert" {
-			sumFnT := infer.env.GetFn("agl.Vec.Insert").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Pop" {
-			sumFnT := infer.env.GetFn("agl.Vec.Pop").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "PopFront" {
-			sumFnT := infer.env.GetFn("agl.Vec.PopFront").T("T", idTArr.Elt)
+		} else if fnName == "Sum" || fnName == "Last" || fnName == "First" || fnName == "Push" ||
+			fnName == "PushFront" || fnName == "Insert" || fnName == "Pop" || fnName == "PopFront" ||
+			fnName == "Len" || fnName == "IsEmpty" {
+			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTArr.Elt)
 			sumFnT.Recv = []types.Type{idTArr}
 			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
@@ -1103,18 +1063,6 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[0], clbT)
 			}
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Len" {
-			sumFnT := infer.env.GetFn("agl.Vec.Len").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "IsEmpty" {
-			sumFnT := infer.env.GetFn("agl.Vec.IsEmpty").T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
-			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Joined" {
