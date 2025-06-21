@@ -471,6 +471,12 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
 					decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
 				}
+
+				infer.env.BubbleOpt = false
+				switch returnTyp.(type) {
+				case types.OptionType:
+					infer.env.BubbleOpt = true
+				}
 				infer.stmt(decl.Body)
 			}
 		})
