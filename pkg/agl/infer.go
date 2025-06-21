@@ -1713,7 +1713,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 					name := fmt.Sprintf("%s.%s.%s", idName, v.Sel.Name, vv.Key.(*ast.Ident).Name)
 					infer.SetType(vv.Key, infer.env.Get(name))
 				default:
-					panic(fmt.Sprintf("%v", to(el)))
+					panic(fmt.Sprintf("%s, %v", infer.Pos(el), to(el)))
 				}
 			}
 		}
