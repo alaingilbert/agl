@@ -6132,6 +6132,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen217(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	a.PopIf({ true })
+}`
+	expected := `package main
+func main() {
+	a := []int{1, 2, 3}
+	AglVecPopIf(&a, func() bool {
+		return true
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"

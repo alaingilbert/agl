@@ -1079,8 +1079,12 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "PopIf" {
 			sumFnT := infer.env.GetFn("agl.Vec.PopIf").T("T", idTArr.Elt)
+			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTArr}
 			sumFnT.Params = sumFnT.Params[1:]
+			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
+				infer.SetType(expr.Args[0], clbT)
+			}
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Len" {
