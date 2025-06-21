@@ -1706,6 +1706,17 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		idName := v.X.(*ast.Ident).Name
 		xT := infer.env.Get(idName)
 		selT := infer.env.Get(fmt.Sprintf("%s.%s", idName, v.Sel.Name))
+		if expr.Elts != nil {
+			for _, el := range expr.Elts {
+				switch vv := el.(type) {
+				case *ast.KeyValueExpr:
+					name := fmt.Sprintf("%s.%s.%s", idName, v.Sel.Name, vv.Key.(*ast.Ident).Name)
+					infer.SetType(vv.Key, infer.env.Get(name))
+				default:
+					panic(fmt.Sprintf("%v", to(el)))
+				}
+			}
+		}
 		infer.SetType(v.X, xT)
 		infer.SetType(v.Sel, selT)
 		infer.SetType(expr, selT)

@@ -322,14 +322,16 @@ func (e *Env) loadPkgCmp() {
 	e.Define(nil, "cmp.Ordered", types.AnyType{})
 }
 
+var astIdent = types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
+	{Name: "Name", Typ: types.StringType{}},
+}}
+var astStarIden = types.StarType{X: astIdent}
+
 func (e *Env) loadPkgGoAst() {
 	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
 	astDecls := types.ArrayType{Elt: astDecl}
 	astExpr := types.InterfaceType{Pkg: "ast", Name: "Expr"}
-	astIdent := types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
-		{Name: "Name", Typ: types.StringType{}},
-	}}
-	astFieldNames := types.ArrayType{Elt: types.StarType{X: astIdent}}
+	astFieldNames := types.ArrayType{Elt: astStarIden}
 	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
 		{Name: "Type", Typ: astExpr},
 		{Name: "Names", Typ: astFieldNames},
@@ -351,7 +353,7 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "X", Typ: astExpr},
 	}}
 	astFuncDecl := types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{
-		{Name: "Name", Typ: types.StarType{X: astIdent}},
+		{Name: "Name", Typ: astStarIden},
 		{Name: "Recv", Typ: astStarFieldList},
 		{Name: "Type", Typ: types.StarType{X: astFuncType}},
 	}}
@@ -361,7 +363,7 @@ func (e *Env) loadPkgGoAst() {
 	}}
 	astFile := types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}}
 	astTypeSpec := types.StructType{Pkg: "ast", Name: "TypeSpec", Fields: []types.FieldType{
-		{Name: "Name", Typ: types.StarType{X: astIdent}},
+		{Name: "Name", Typ: astStarIden},
 	}}
 	astStructType := types.StructType{Pkg: "ast", Name: "StructType", Fields: []types.FieldType{
 		{Name: "Fields", Typ: astStarFieldList},
@@ -414,9 +416,17 @@ func (e *Env) loadPkgGoToken() {
 }
 
 func (e *Env) loadPkgGoTypes() {
+	typesImporter := types.InterfaceType{Pkg: "types", Name: "Importer"}
 	e.DefinePkg("types", "go/types")
-	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config"})
-	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info"})
+	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config", Fields: []types.FieldType{
+		{Name: "Importer", Typ: typesImporter},
+	}})
+	e.Define(nil, "types.Importer", typesImporter)
+	e.Define(nil, "types.Config.Importer", typesImporter)
+	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info", Fields: []types.FieldType{
+		{Name: "Defs", Typ: types.MapType{K: astStarIden, V: types.InterfaceType{Pkg: "types", Name: "Object"}}},
+	}})
+	e.Define(nil, "types.Info.Defs", types.MapType{K: astStarIden, V: types.InterfaceType{Pkg: "types", Name: "Object"}})
 	e.Define(nil, "types.Object", types.InterfaceType{Pkg: "types", Name: "Object"})
 	e.Define(nil, "types.Package", types.InterfaceType{Pkg: "types", Name: "Package"})
 	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *types.Info) (*types.Package)!")
