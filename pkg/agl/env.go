@@ -315,7 +315,7 @@ func (e *Env) loadPkgGoAst() {
 	}}
 	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
 		{Name: "Type", Typ: types.InterfaceType{Pkg: "ast", Name: "Expr"}},
-		{Name: "Names", Typ: types.ArrayType{Elt: astIdent}},
+		{Name: "Names", Typ: types.ArrayType{Elt: types.StarType{X: astIdent}}},
 	}}
 	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList", Fields: []types.FieldType{
 		{Name: "List", Typ: types.ArrayType{Elt: astField}},

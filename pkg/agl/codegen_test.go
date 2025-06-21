@@ -6038,6 +6038,24 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen212(t *testing.T) {
+	src := `package main
+func main() {
+	a := []*ast.Ident{&ast.Ident{Name: "foo"}}
+	b := a.Map({ $0.Name }).Joined(", ")
+}
+`
+	expected := `package main
+func main() {
+	a := []*ast.Ident{&ast.Ident{Name: "foo"}}
+	b := AglJoined(AglVecMap(a, func(aglArg0 *ast.Ident) string {
+		return aglArg0.Name
+	}), ", ")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"

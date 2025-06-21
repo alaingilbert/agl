@@ -313,7 +313,13 @@ type StructType struct {
 	Fields []FieldType
 }
 
-func (s StructType) GoStr() string { return s.Name }
+func (s StructType) GoStr() string {
+	out := s.Name
+	if s.Pkg != "" {
+		out = s.Pkg + "." + out
+	}
+	return out
+}
 
 func (s StructType) String() string { return s.Name }
 
