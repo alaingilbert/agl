@@ -6164,6 +6164,19 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen219(t *testing.T) {
+	src := `package main
+func main() {
+	fmt.Println(@LINE)
+}`
+	expected := `package main
+func main() {
+	fmt.Println("3")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

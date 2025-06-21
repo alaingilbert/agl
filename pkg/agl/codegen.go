@@ -293,6 +293,9 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if strings.HasPrefix(expr.Name, "$") {
 		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
 	}
+	if strings.HasPrefix(expr.Name, "@") {
+		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.env.fset.Position(expr.Pos()).Line), 1)
+	}
 	t := g.env.GetType(expr)
 	switch typ := t.(type) {
 	case types.GenericType:

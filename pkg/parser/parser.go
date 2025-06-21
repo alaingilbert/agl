@@ -1594,6 +1594,10 @@ func (p *parser) parseOperand() ast.Expr {
 	}
 
 	switch p.tok {
+	case token.AT_LINE:
+		pos := p.expect(token.AT_LINE)
+		return &ast.AtLineExpr{AtLine: pos}
+
 	case token.DUMP:
 		dump := p.expect(token.DUMP)
 		lparen := p.expect(token.LPAREN)

@@ -320,6 +320,10 @@ func isDollar(ch rune) bool {
 	return ch == '$'
 }
 
+func isAt(ch rune) bool {
+	return ch == '@'
+}
+
 func isLetter(ch rune) bool {
 	return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' || ch >= utf8.RuneSelf && unicode.IsLetter(ch)
 }
@@ -866,6 +870,10 @@ scanAgain:
 	switch ch := s.ch; {
 	case isDollar(ch) && isDecimal(rune(s.peek())):
 		lit = s.scanIdentifier1()
+		insertSemi = true
+		tok = token.IDENT
+	case isAt(ch) && isLetter(rune(s.peek())):
+		lit = s.scanIdentifier()
 		insertSemi = true
 		tok = token.IDENT
 	case isLetter(ch):
