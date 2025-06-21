@@ -56,7 +56,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  			typeName = param.Name
  		}
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
-			typeName += "?"
+			typeName = "Option[" + typeName + "]"
 		}
 		parts = append(parts, typeName)
 
@@ -64,8 +64,14 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  	}
 	sb.WriteString(paramsArr.Joined(", ") + ")")
 	if decl.Type.Results != nil {
-		if decl.Type.Results.List.Last()?.Type.(*ast.Ident)?.Name == "error" {
-			sb.WriteString("!")
+		results := decl.Type.Results.List
+		last := results.Last()?
+		if Some(id) := last.Type.(*ast.Ident) {
+			if results.Len() == 1 && id.Name == "error" {
+				sb.WriteString(" Result[AglVoid]")
+			} else if id.Name == "error" {
+				sb.WriteString(" Result[...]")
+			}
 		}
  	}
 	sb.WriteString(" {\n")
