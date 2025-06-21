@@ -6222,6 +6222,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen223(t *testing.T) {
+	src := `package main
+type Test struct {}
+func main() {
+	s := new(Test)
+}`
+	expected := `package main
+type Test struct {
+}
+func main() {
+	s := new(Test)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
