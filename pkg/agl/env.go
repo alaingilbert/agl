@@ -700,6 +700,8 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		return n
 	case *ast.BubbleOptionExpr:
 		return e.GetType2(xx.X)
+	case *ast.SliceExpr:
+		return e.GetType2(xx.X) // TODO
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
