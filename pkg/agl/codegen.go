@@ -975,6 +975,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Pop" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecPop(&%s)", content1)
+			} else if e.Sel.Name == "PopIf" {
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglVecPopIf(&%s, %s)", content1, content2)
 			} else if e.Sel.Name == "Push" {
 				content1 := g.genExpr(e.X)
 				var params []string
@@ -1807,6 +1811,20 @@ func AglVecPush[T any](a *[]T, els ...T) {
 // AglVecPop removes the last element from a vector and returns it, or None if it is empty.
 func AglVecPop[T any](a *[]T) Option[T] {
 	if len(*a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	var el T
+	el, *a = (*a)[len(*a)-1], (*a)[:len(*a)-1]
+	return MakeOptionSome(el)
+}
+
+// AglVecPopIf Removes and returns the last element from a vector if the predicate returns true,
+// or None if the predicate returns false or the vector is empty (the predicate will not be called in that case).
+func AglVecPopIf[T any](a *[]T, pred func() bool) Option[T] {
+	if len(*a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	if !pred() {
 		return MakeOptionNone[T]()
 	}
 	var el T
