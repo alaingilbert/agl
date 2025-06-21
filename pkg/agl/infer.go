@@ -763,7 +763,7 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 }
 
 func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type {
-	eTRaw := infer.GetType(e)
+	eTRaw := infer.env.GetType2(e)
 	if v, ok := eTRaw.(types.StarType); ok {
 		eTRaw = v.X
 	}
