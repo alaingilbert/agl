@@ -840,7 +840,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				name = idTT.Pkg + "." + name
 			}
 			nameT := infer.env.Get(name)
-			assertf(nameT != nil, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
+			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := infer.env.GetFn(name)
 			toReturn := fnT.Return
 			toReturn = alterResultBubble(infer.returnType, toReturn)
@@ -863,7 +863,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assertf(pkgT != nil, "package not found '%s'", idTT.Name)
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			nameT := infer.env.Get(name)
-			assertf(nameT != nil, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
+			assertf(nameT != nil, "%s: not found '%s' in package '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := nameT.(types.FuncType)
 			toReturn := fnT.Return
 			if toReturn != nil {
@@ -922,6 +922,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 		}
 		callT := infer.env.Get(call.Name)
+		assertf(callT != nil, "%s: Unresolved reference '%s'", infer.Pos(call), call.Name)
 		switch callTT := callT.(type) {
 		case types.TypeType:
 			infer.expr(expr.Args[0])
