@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 
@@ -40,7 +39,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		}
 		paramsArr = append(paramsArr, paramsStr)
  	}
-	out += strings.Join(paramsArr, ", ") + ")"
+	out += paramsArr.Joined(", ") + ")"
 	if decl.Type.Results != nil {
 		if decl.Type.Results.List[len(decl.Type.Results.List)-1].Type.(*ast.Ident)?.Name == "error" {
 			out += "!"
