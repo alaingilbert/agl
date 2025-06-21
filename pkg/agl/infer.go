@@ -313,6 +313,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 				typ := infer.env.GetType2(f.Type)
 				for _, n := range f.Names {
 					fields = append(fields, types.FieldType{Name: n.Name, Typ: typ})
+					infer.env.Define(nil, spec.Name.Name+"."+n.Name, typ)
 				}
 			}
 		}
@@ -796,16 +797,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					callXTXT = v.X
 				}
 				if v, ok := callXTXT.(types.StructType); ok {
-					var t types.Type
-					if f := Find(v.Fields, func(ft types.FieldType) bool { return ft.Name == callXT.Sel.Name }); f != nil {
-						t = f.Typ
-					} else {
-						n := fmt.Sprintf("%s.%s", v.Name, callXT.Sel)
-						if v.Pkg != "" {
-							n = v.Pkg + "." + n
-						}
-						t = infer.env.Get(n)
-					}
+					name := v.GetFieldName(callXT.Sel.Name)
+					t := infer.env.Get(name)
 					infer.SetType(callXT.Sel, t)
 					exprFunT = t
 				}
@@ -1605,10 +1598,11 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
-		if f := Find(exprXIdT.Fields, func(f types.FieldType) bool { return f.Name == fieldName }); f != nil {
-			infer.SetType(expr.Sel, f.Typ)
+		name := exprXIdT.GetFieldName(fieldName)
+		if f := infer.env.Get(name); f != nil {
+			infer.SetType(expr.Sel, f)
 			infer.SetType(expr.X, exprXT)
-			infer.SetType(expr, f.Typ)
+			infer.SetType(expr, f)
 		} else {
 			infer.SetType(expr.X, exprXT)
 		}
@@ -1649,10 +1643,11 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 		if v, ok := exprXIdT.Type.(types.StructType); ok {
 			fieldName := expr.Sel.Name
-			if f := Find(v.Fields, func(f types.FieldType) bool { return f.Name == fieldName }); f != nil {
-				infer.SetType(expr.Sel, f.Typ)
+			name := v.GetFieldName(fieldName)
+			if f := infer.env.Get(name); f != nil {
+				infer.SetType(expr.Sel, f)
 				infer.SetType(expr.X, v)
-				infer.SetType(expr, f.Typ)
+				infer.SetType(expr, f)
 				return
 			}
 		}

@@ -197,7 +197,7 @@ func (e *Env) loadPkgIo() {
 
 func (e *Env) loadPkgNetHttp() {
 	e.DefinePkg("http", "net/http")
-	e.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http", Fields: []types.FieldType{{Name: "Body", Typ: types.InterfaceType{Pkg: "io", Name: "ReadCloser"}}}})
+	e.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http"})
 	e.Define(nil, "http.Response.Body", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
 	e.Define(nil, "http.Request", types.StructType{Name: "Request", Pkg: "http"})
 	e.Define(nil, "http.MethodGet", types.StringType{})
@@ -242,7 +242,7 @@ func (e *Env) loadPkgTime() {
 	e.Define(nil, "time.Millisecond", types.I64Type{})
 	e.Define(nil, "time.Second", types.I64Type{})
 	e.Define(nil, "time.Duration", types.I64Type{})
-	e.Define(nil, "time.Time", types.StructType{Name: "Time", Pkg: "time"})
+	e.Define(nil, "time.Time", types.StructType{Pkg: "time", Name: "Time"})
 	e.DefineFnNative("time.Sleep", "func (time.Duration)")
 	e.DefineFnNative("time.Now", "func () time.Time")
 	e.DefineFnNative("time.Tick", "func (d time.Duration) <-chan time.Time")
@@ -251,8 +251,8 @@ func (e *Env) loadPkgTime() {
 
 func (e *Env) loadPkgStrings() {
 	e.DefinePkg("strings", "strings")
-	e.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
-	e.Define(nil, "strings.Builder", types.StructType{Name: "Builder", Pkg: "strings"})
+	e.Define(nil, "strings.Reader", types.StructType{Pkg: "strings", Name: "Reader"})
+	e.Define(nil, "strings.Builder", types.StructType{Pkg: "strings", Name: "Builder"})
 	e.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	e.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
 	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
@@ -322,9 +322,7 @@ func (e *Env) loadPkgCmp() {
 	e.Define(nil, "cmp.Ordered", types.AnyType{})
 }
 
-var astIdent = types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
-	{Name: "Name", Typ: types.StringType{}},
-}}
+var astIdent = types.StructType{Pkg: "ast", Name: "Ident"}
 var astStarIden = types.StarType{X: astIdent}
 
 func (e *Env) loadPkgGoAst() {
@@ -332,45 +330,20 @@ func (e *Env) loadPkgGoAst() {
 	astDecls := types.ArrayType{Elt: astDecl}
 	astExpr := types.InterfaceType{Pkg: "ast", Name: "Expr"}
 	astFieldNames := types.ArrayType{Elt: astStarIden}
-	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
-		{Name: "Type", Typ: astExpr},
-		{Name: "Names", Typ: astFieldNames},
-	}}
+	astField := types.StructType{Pkg: "ast", Name: "Field"}
 	astFieldListList := types.ArrayType{Elt: types.StarType{X: astField}}
-	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList", Fields: []types.FieldType{
-		{Name: "List", Typ: astFieldListList},
-	}}
+	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList"}
 	astStarFieldList := types.StarType{X: astFieldList}
-	astFuncType := types.StructType{Pkg: "ast", Name: "FuncType", Fields: []types.FieldType{
-		{Name: "Params", Typ: astStarFieldList},
-		{Name: "Results", Typ: astStarFieldList},
-	}}
-	astSelectorExpr := types.StructType{Pkg: "ast", Name: "SelectorExpr", Fields: []types.FieldType{
-		{Name: "X", Typ: astExpr},
-		{Name: "Sel", Typ: astIdent},
-	}}
-	astStarExpr := types.StructType{Pkg: "ast", Name: "StarExpr", Fields: []types.FieldType{
-		{Name: "X", Typ: astExpr},
-	}}
-	astFuncDecl := types.StructType{Pkg: "ast", Name: "FuncDecl", Fields: []types.FieldType{
-		{Name: "Name", Typ: astStarIden},
-		{Name: "Recv", Typ: astStarFieldList},
-		{Name: "Type", Typ: types.StarType{X: astFuncType}},
-	}}
+	astFuncType := types.StructType{Pkg: "ast", Name: "FuncType"}
+	astSelectorExpr := types.StructType{Pkg: "ast", Name: "SelectorExpr"}
+	astStarExpr := types.StructType{Pkg: "ast", Name: "StarExpr"}
+	astFuncDecl := types.StructType{Pkg: "ast", Name: "FuncDecl"}
 	astSpec := types.InterfaceType{Pkg: "ast", Name: "Spec"}
-	astGenDecl := types.StructType{Pkg: "ast", Name: "GenDecl", Fields: []types.FieldType{
-		{Name: "Specs", Typ: types.ArrayType{Elt: astSpec}},
-	}}
-	astFile := types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}}
-	astTypeSpec := types.StructType{Pkg: "ast", Name: "TypeSpec", Fields: []types.FieldType{
-		{Name: "Name", Typ: astStarIden},
-	}}
-	astStructType := types.StructType{Pkg: "ast", Name: "StructType", Fields: []types.FieldType{
-		{Name: "Fields", Typ: astStarFieldList},
-	}}
-	astInterfaceType := types.StructType{Pkg: "ast", Name: "InterfaceType", Fields: []types.FieldType{
-		{Name: "Methods", Typ: astStarFieldList},
-	}}
+	astGenDecl := types.StructType{Pkg: "ast", Name: "GenDecl"}
+	astFile := types.StructType{Pkg: "ast", Name: "File"}
+	astTypeSpec := types.StructType{Pkg: "ast", Name: "TypeSpec"}
+	astStructType := types.StructType{Pkg: "ast", Name: "StructType"}
+	astInterfaceType := types.StructType{Pkg: "ast", Name: "InterfaceType"}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.Expr", astExpr)
@@ -382,8 +355,11 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.File", astFile)
 	e.Define(nil, "ast.File.Decls", astDecls)
 	e.Define(nil, "ast.FuncDecl", astFuncDecl)
+	e.Define(nil, "ast.FuncDecl.Name", astStarIden)
 	e.Define(nil, "ast.FuncDecl.Recv", astStarFieldList)
+	e.Define(nil, "ast.FuncDecl.Type", types.StarType{X: astFuncType})
 	e.Define(nil, "ast.GenDecl", astGenDecl)
+	e.Define(nil, "ast.GenDecl.Specs", types.ArrayType{Elt: astSpec})
 	e.Define(nil, "ast.FuncType", astFuncType)
 	e.Define(nil, "ast.FuncType.Params", astStarFieldList)
 	e.Define(nil, "ast.FuncType.Results", astStarFieldList)
@@ -391,13 +367,14 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.Ident.Name", types.StringType{})
 	e.Define(nil, "ast.SelectorExpr", astSelectorExpr)
 	e.Define(nil, "ast.SelectorExpr.X", astExpr)
+	e.Define(nil, "ast.SelectorExpr.Sel", astIdent)
 	e.Define(nil, "ast.Spec", astSpec)
 	e.Define(nil, "ast.StarExpr", astStarExpr)
 	e.Define(nil, "ast.StarExpr.X", astExpr)
 	e.Define(nil, "ast.StructType", astStructType)
 	e.Define(nil, "ast.StructType.Fields", astStarFieldList)
 	e.Define(nil, "ast.TypeSpec", astTypeSpec)
-	e.Define(nil, "ast.TypeSpec.Name", types.StarType{X: astIdent})
+	e.Define(nil, "ast.TypeSpec.Name", astStarIden)
 	e.Define(nil, "ast.TypeSpec.Type", astExpr)
 	e.Define(nil, "ast.InterfaceType", astInterfaceType)
 	e.Define(nil, "ast.InterfaceType.Methods", astStarFieldList)
@@ -418,14 +395,10 @@ func (e *Env) loadPkgGoToken() {
 func (e *Env) loadPkgGoTypes() {
 	typesImporter := types.InterfaceType{Pkg: "types", Name: "Importer"}
 	e.DefinePkg("types", "go/types")
-	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config", Fields: []types.FieldType{
-		{Name: "Importer", Typ: typesImporter},
-	}})
+	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config"})
 	e.Define(nil, "types.Importer", typesImporter)
 	e.Define(nil, "types.Config.Importer", typesImporter)
-	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info", Fields: []types.FieldType{
-		{Name: "Defs", Typ: types.MapType{K: astStarIden, V: types.InterfaceType{Pkg: "types", Name: "Object"}}},
-	}})
+	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info"})
 	e.Define(nil, "types.Info.Defs", types.MapType{K: astStarIden, V: types.InterfaceType{Pkg: "types", Name: "Object"}})
 	e.Define(nil, "types.Object", types.InterfaceType{Pkg: "types", Name: "Object"})
 	e.Define(nil, "types.Package", types.InterfaceType{Pkg: "types", Name: "Package"})
@@ -711,14 +684,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			}
 			return e.GetType2(&ast.Ident{Name: name})
 		case types.StructType:
-			f := Find(v.Fields, func(f types.FieldType) bool { return f.Name == xx.Sel.Name })
-			if f != nil {
-				return f.Typ
-			}
-			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
-			if v.Pkg != "" {
-				name = v.Pkg + "." + name
-			}
+			name := v.GetFieldName(xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name})
 		case types.TypeAssertType:
 			return v.X

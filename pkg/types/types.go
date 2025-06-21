@@ -319,6 +319,14 @@ type StructType struct {
 	Fields []FieldType
 }
 
+func (s StructType) GetFieldName(field string) (out string) {
+	out = s.Name + "." + field
+	if s.Pkg != "" {
+		out = s.Pkg + "." + out
+	}
+	return out
+}
+
 func (s StructType) GoStr() string {
 	out := s.Name
 	if s.Pkg != "" {
