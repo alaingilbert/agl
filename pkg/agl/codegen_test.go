@@ -6278,6 +6278,15 @@ func main() {
 	tassert.PanicsWithError(t, "3:2: Assignment count mismatch: 2 = 1", testCodeGenFn(src))
 }
 
+func TestCodeGen228(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b, c := a[1]
+}`
+	tassert.PanicsWithError(t, "4:2: Assignment count mismatch: 2 = 1", testCodeGenFn(src))
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
