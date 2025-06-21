@@ -42,7 +42,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		var parts []string
 		
 		names := param.Names.Map({ $0.Name }).Joined(", ")
-		parts = append(parts, names)
+		parts = parts.Push(names)
 		
 		var typeName string
  		switch param := param.Type.(type) {
@@ -55,7 +55,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 			typeName += "?"
 		}
 		parts = append(parts, typeName)
-		
+
 		paramsArr = paramsArr.Push(parts.Joined(" "))
  	}
 	out += paramsArr.Joined(", ") + ")"
