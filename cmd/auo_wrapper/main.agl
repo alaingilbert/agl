@@ -55,10 +55,11 @@ func wrapGenDecl(fset *token.FileSet, decl *ast.GenDecl) {
 	for _, s := range decl.Specs {
 		switch spec := s.(type) {
 		case *ast.TypeSpec:
-			typ := spec.Type
-			switch tmp := typ.(type) {
+			switch spec.Type.(type) {
 			case *ast.StructType:
-				fmt.Println("struct: ", spec, tmp)
+				fmt.Println("struct: ", spec)
+			case *ast.InterfaceType:
+				fmt.Println("interface: ", spec)
 			}
 		}
 	}

@@ -365,6 +365,9 @@ func (e *Env) loadPkgGoAst() {
 	astStructType := types.StructType{Pkg: "ast", Name: "StructType", Fields: []types.FieldType{
 		{Name: "Fields", Typ: astStarFieldList},
 	}}
+	astInterfaceType := types.StructType{Pkg: "ast", Name: "InterfaceType", Fields: []types.FieldType{
+		{Name: "Methods", Typ: astStarFieldList},
+	}}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.Expr", astExpr)
@@ -393,6 +396,8 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.TypeSpec", astTypeSpec)
 	e.Define(nil, "ast.TypeSpec.Name", types.StarType{X: astIdent})
 	e.Define(nil, "ast.TypeSpec.Type", astExpr)
+	e.Define(nil, "ast.InterfaceType", astInterfaceType)
+	e.Define(nil, "ast.InterfaceType.Methods", astStarFieldList)
 }
 
 func (e *Env) loadPkgGoParser() {
