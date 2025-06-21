@@ -2048,7 +2048,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						infer.SetType(lhs0, rhsId1XTT.V)
 						assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0T})
 					default:
-						panic("can only have 1 or 2 args on the left side")
+						assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
 					}
 				default:
 					panic(fmt.Sprintf("%v", to(rhsId1XT)))
