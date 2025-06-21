@@ -248,9 +248,19 @@ func (e *Env) loadPkgTime() {
 func (e *Env) loadPkgStrings() {
 	e.DefinePkg("strings", "strings")
 	e.Define(nil, "strings.Reader", types.StructType{Name: "Reader", Pkg: "strings"})
+	e.Define(nil, "strings.Builder", types.StructType{Name: "Builder", Pkg: "strings"})
 	e.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
 	e.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
 	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
+	e.DefineFnNative("strings.Builder.Write", "func (p []byte) int!")
+	e.DefineFnNative("strings.Builder.WriteByte", "func (c byte) !")
+	e.DefineFnNative("strings.Builder.WriteRune", "func (r rune) int!")
+	e.DefineFnNative("strings.Builder.WriteString", "func (s string) int!")
+	e.DefineFnNative("strings.Builder.String", "func () string")
+	e.DefineFnNative("strings.Builder.Reset", "func ()")
+	e.DefineFnNative("strings.Builder.Len", "func () int")
+	e.DefineFnNative("strings.Builder.Grow", "func (n int)")
+	e.DefineFnNative("strings.Builder.Cap", "func () int")
 }
 
 func (e *Env) loadPkgStrconv() {
