@@ -576,8 +576,21 @@ func (e *Env) DefinePkg(name, path string) {
 	e.Define(nil, name, types.PackageType{Name: name, Path: path})
 }
 
+func (e *Env) DefineForce(n ast.Node, name string, typ types.Type) {
+	e.defineHelper(n, name, typ, true)
+}
+
 func (e *Env) Define(n ast.Node, name string, typ types.Type) {
-	assertf(e.GetDirect(name) == nil, "duplicate declaration of %s", name)
+	e.defineHelper(n, name, typ, false)
+}
+
+func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) {
+	if name == "_" {
+		return
+	}
+	if !force {
+		assertf(e.GetDirect(name) == nil, "duplicate declaration of %s", name)
+	}
 	info := e.GetOrCreateNameInfo(name)
 	info.Type = typ
 	if n != nil {
