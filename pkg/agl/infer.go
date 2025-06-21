@@ -896,7 +896,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
 		}
 		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
-		infer.inferVecExtensions(expr, exprFunT, call)
+		infer.inferGoExtensions(expr, exprFunT, call)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		if call.Name == "make" {
@@ -983,12 +983,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	}
 }
 
-func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
-	if idTArr, ok := idT.(types.ArrayType); ok {
+func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
+	switch idTT := idT.(type) {
+	case types.ArrayType:
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
-			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTArr.Elt)
+			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTT.Elt)
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(1).(types.FuncType)
@@ -1001,15 +1002,15 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-			filterFnT.Recv = []types.Type{idTArr}
+			filterFnT.Recv = []types.Type{idTT}
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
-			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTArr.Elt)
+			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTT.Elt)
 			clbFnT := mapFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			mapFnT.Recv = []types.Type{idTArr}
+			mapFnT.Recv = []types.Type{idTT}
 			mapFnT.Params = mapFnT.Params[1:]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
@@ -1030,9 +1031,9 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			}
 		} else if fnName == "Reduce" {
-			infer.inferVecReduce(expr, exprT, idTArr)
+			infer.inferVecReduce(expr, exprT, idTT)
 		} else if fnName == "Find" {
-			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", idTArr.Elt)
+			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", idTT.Elt)
 			infer.SetType(expr, findFnT.Return)
 			ft := findFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
@@ -1044,22 +1045,22 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
 			}
-			findFnT.Recv = []types.Type{idTArr}
+			findFnT.Recv = []types.Type{idTT}
 			findFnT.Params = findFnT.Params[1:]
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if fnName == "Sum" || fnName == "Last" || fnName == "First" || fnName == "Push" ||
 			fnName == "PushFront" || fnName == "Insert" || fnName == "Pop" || fnName == "PopFront" ||
 			fnName == "Len" || fnName == "IsEmpty" {
-			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTArr.Elt)
-			sumFnT.Recv = []types.Type{idTArr}
+			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTT.Elt)
+			sumFnT.Recv = []types.Type{idTT}
 			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "PopIf" {
-			sumFnT := infer.env.GetFn("agl.Vec.PopIf").T("T", idTArr.Elt)
+			sumFnT := infer.env.GetFn("agl.Vec.PopIf").T("T", idTT.Elt)
 			clbT := sumFnT.GetParam(1).(types.FuncType)
-			sumFnT.Recv = []types.Type{idTArr}
+			sumFnT.Recv = []types.Type{idTT}
 			sumFnT.Params = sumFnT.Params[1:]
 			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[0], clbT)
@@ -1082,8 +1083,8 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			assert(len(fnT0.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
 			gen0 := fnT0.TypeParams[0].(types.GenericType).W
 			want := types.ArrayType{Elt: gen0}
-			assertf(cmpTypes(gen0, idTArr.Elt), "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTArr, want, fnName)
-			fnT1 := fnT0.T("T", idTArr.Elt)
+			assertf(cmpTypes(gen0, idTT.Elt), "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTT, want, fnName)
+			fnT1 := fnT0.T("T", idTT.Elt)
 			retT := Or[types.Type](fnT1.Return, types.VoidType{})
 			infer.SetType(exprT.Sel, fnT1)
 			infer.SetType(expr.Fun, fnT1)
@@ -1120,28 +1121,28 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			for k, v := range genericMapping {
 				ft = ft.ReplaceGenericParameter(k, v)
 			}
-			ft.Recv = []types.Type{idTArr}
+			ft.Recv = []types.Type{idTT}
 			infer.SetType(exprT.Sel, ft)
 			infer.SetType(expr.Fun, ft)
 			infer.SetType(expr, ft.Return)
 		}
-	} else if idTMap, ok := idT.(types.MapType); ok {
+	case types.MapType:
 		fnName := exprT.Sel.Name
 		if fnName == "Get" {
-			getFnT := infer.env.GetFn("agl.Map.Get").T("K", idTMap.K).T("V", idTMap.V)
-			getFnT.Recv = []types.Type{idTMap}
+			getFnT := infer.env.GetFn("agl.Map.Get").T("K", idTT.K).T("V", idTT.V)
+			getFnT.Recv = []types.Type{idTT}
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
 		} else if fnName == "Keys" {
-			fnT := infer.env.GetFn("agl.Map.Keys").T("K", idTMap.K).T("V", idTMap.V)
-			fnT.Recv = []types.Type{idTMap}
+			fnT := infer.env.GetFn("agl.Map.Keys").T("K", idTT.K).T("V", idTT.V)
+			fnT.Recv = []types.Type{idTT}
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(expr, fnT.Return)
 			infer.SetType(exprT.Sel, fnT)
 		} else if fnName == "Values" {
-			fnT := infer.env.GetFn("agl.Map.Values").T("K", idTMap.K).T("V", idTMap.V)
-			fnT.Recv = []types.Type{idTMap}
+			fnT := infer.env.GetFn("agl.Map.Values").T("K", idTT.K).T("V", idTT.V)
+			fnT.Recv = []types.Type{idTT}
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(expr, fnT.Return)
 			infer.SetType(exprT.Sel, fnT)
