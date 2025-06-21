@@ -477,6 +477,10 @@ func (e *Env) getHelper(name string) types.Type {
 	return nil
 }
 
+func (e *Env) GetNameInfoDirect(name string) *Info {
+	return e.lookupTable[name]
+}
+
 func (e *Env) GetNameInfo(name string) *Info {
 	info := e.lookupTable[name]
 	if info == nil && e.parent != nil {
@@ -486,7 +490,7 @@ func (e *Env) GetNameInfo(name string) *Info {
 }
 
 func (e *Env) GetOrCreateNameInfo(name string) *Info {
-	info := Or(e.GetNameInfo(name), &Info{})
+	info := Or(e.GetNameInfoDirect(name), &Info{})
 	e.lookupTable[name] = info
 	return info
 }

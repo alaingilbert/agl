@@ -6072,6 +6072,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen214(t *testing.T) {
+	src := `package main
+type Test struct {}
+func main() {
+	var a any = Test{}
+	switch a := a.(type) {
+		case Test:
+			fmt.Println(a)
+	}
+}`
+	expected := `package main
+type Test struct {
+}
+func main() {
+	var a any = Test{}
+	switch a := a.(type) {
+	case Test:
+	fmt.Println(a)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
