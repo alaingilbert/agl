@@ -1928,6 +1928,10 @@ func (s *Set[T]) Len() int {
 	return len(s.values)
 }
 
+func (s *Set[T]) Insert(el T) {
+	s.values[el] = struct{}{}
+}
+
 func AglNewSet[T comparable](els ...T) *Set[T] {
 	s := &Set[T]{values: make(map[T]struct{})}
 	for _, el := range els {
