@@ -942,6 +942,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Last" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecLast(%s)", content1)
+			} else if e.Sel.Name == "First" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecFirst(%s)", content1)
 			} else if e.Sel.Name == "Joined" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1747,6 +1750,13 @@ func AglVecSum[T cmp.Ordered](a []T) (out T) {
 func AglVecLast[T any](a []T) (out Option[T]) {
 	if len(a) > 0 {
 		return MakeOptionSome(a[len(a)-1])
+	}
+	return MakeOptionNone[T]()
+}
+
+func AglVecFirst[T any](a []T) (out Option[T]) {
+	if len(a) > 0 {
+		return MakeOptionSome(a[0])
 	}
 	return MakeOptionNone[T]()
 }
