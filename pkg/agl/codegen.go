@@ -1042,6 +1042,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMapValues(%s))", content1)
 			}
+		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
+			content1 := g.genExprs(expr.Args)
+			return fmt.Sprintf("AglNewSet(%s)", content1)
 		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
 			content1 := g.genExprs(expr.Args)
 			return fmt.Sprintf("AglHttpNewRequest(%s)", content1)
@@ -1907,6 +1910,30 @@ func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Req
 		return MakeResultErr[*http.Request](err)
 	}
 	return MakeResultOk(req)
+}
+
+type Set [T comparable]struct {
+	values map[T]struct{}
+}
+
+func (s *Set[T]) String() string {
+	var vals []string
+	for k := range s.values {
+		vals = append(vals, fmt.Sprintf("%s", k))
+	}
+	return "{" + strings.Join(vals, " ") + "}"
+}
+
+func (s *Set[T]) Len() int {
+	return len(s.values)
+}
+
+func AglNewSet[T comparable](els ...T) *Set[T] {
+	s := &Set[T]{values: make(map[T]struct{})}
+	for _, el := range els {
+		s.values[el] = struct{}{}
+	}
+	return s
 }
 `
 }
