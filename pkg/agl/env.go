@@ -376,10 +376,11 @@ func (e *Env) loadPkgGoToken() {
 
 func (e *Env) loadPkgGoTypes() {
 	e.DefinePkg("types", "go/types")
-	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package)!")
 	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config"})
 	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info"})
 	e.Define(nil, "types.Object", types.InterfaceType{Pkg: "types", Name: "Object"})
+	e.Define(nil, "types.Package", types.InterfaceType{Pkg: "types", Name: "Package"})
+	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *types.Info) (*types.Package)!")
 }
 
 func (e *Env) loadPkgFilepath() {
