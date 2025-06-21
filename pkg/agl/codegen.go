@@ -666,7 +666,9 @@ func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 	}
 	var content1 string
 	if expr.Body != nil {
-		content1 = g.genStmts(expr.Body)
+		content1 = g.incrPrefix(func() string {
+			return g.genStmts(expr.Body)
+		})
 	}
 	out += g.prefix + listStr
 	out += content1
