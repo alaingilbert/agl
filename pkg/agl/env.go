@@ -324,11 +324,12 @@ func (e *Env) loadPkgCmp() {
 func (e *Env) loadPkgGoAst() {
 	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
 	astDecls := types.ArrayType{Elt: astDecl}
+	astExpr := types.InterfaceType{Pkg: "ast", Name: "Expr"}
 	astIdent := types.StructType{Pkg: "ast", Name: "Ident", Fields: []types.FieldType{
 		{Name: "Name", Typ: types.StringType{}},
 	}}
 	astField := types.StructType{Pkg: "ast", Name: "Field", Fields: []types.FieldType{
-		{Name: "Type", Typ: types.InterfaceType{Pkg: "ast", Name: "Expr"}},
+		{Name: "Type", Typ: astExpr},
 		{Name: "Names", Typ: types.ArrayType{Elt: types.StarType{X: astIdent}}},
 	}}
 	astFieldListList := types.ArrayType{Elt: types.StarType{X: astField}}
@@ -340,17 +341,17 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "Results", Typ: types.StarType{X: astFieldList}},
 	}}
 	e.DefinePkg("ast", "go/ast")
-	e.Define(nil, "ast.Expr", types.InterfaceType{Pkg: "ast", Name: "Expr"})
+	e.Define(nil, "ast.Expr", astExpr)
 	e.Define(nil, "ast.Ident", astIdent)
 	e.Define(nil, "ast.SelectorExpr", types.StructType{Pkg: "ast", Name: "SelectorExpr", Fields: []types.FieldType{
-		{Name: "X", Typ: types.InterfaceType{Name: "Expr", Pkg: "ast"}},
+		{Name: "X", Typ: astExpr},
 		{Name: "Sel", Typ: astIdent},
 	}})
 	e.Define(nil, "ast.StarExpr", types.StructType{Pkg: "ast", Name: "StarExpr", Fields: []types.FieldType{
-		{Name: "X", Typ: types.InterfaceType{Name: "Expr", Pkg: "ast"}},
+		{Name: "X", Typ: astExpr},
 	}})
-	e.Define(nil, "ast.StarExpr.X", types.InterfaceType{Pkg: "ast", Name: "Expr"})
-	e.Define(nil, "ast.SelectorExpr.X", types.InterfaceType{Pkg: "ast", Name: "Expr"})
+	e.Define(nil, "ast.StarExpr.X", astExpr)
+	e.Define(nil, "ast.SelectorExpr.X", astExpr)
 	e.Define(nil, "ast.Ident.Name", types.StringType{})
 	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
 	e.Define(nil, "ast.Field", astField)
