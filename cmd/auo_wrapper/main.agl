@@ -81,7 +81,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		}
 		last := arr.Last()?
 		if last == "error" {
-			arr = arr[0:len(arr)-1]
+			arr.Pop()
 		}
 		var resultStr string
 		if arr.Len() == 0 {

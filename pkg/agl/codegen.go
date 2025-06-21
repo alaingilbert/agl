@@ -972,6 +972,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Len" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecLen(%s)", content1)
+			} else if e.Sel.Name == "Pop" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecPop(&%s)", content1)
 			} else if e.Sel.Name == "Push" {
 				content1 := g.genExpr(e.X)
 				var params []string
@@ -1799,6 +1802,16 @@ func AglVecLen[T any](a []T) int {
 
 func AglVecPush[T any](a *[]T, els ...T) {
 	*a = append(*a, els...)
+}
+
+// AglVecPop removes the last element from a vector and returns it, or None if it is empty.
+func AglVecPop[T any](a *[]T) Option[T] {
+	if len(*a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	var el T
+	el, *a = (*a)[len(*a)-1], (*a)[:len(*a)-1]
+	return MakeOptionSome(el)
 }
 
 func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
