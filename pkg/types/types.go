@@ -277,6 +277,12 @@ func (n NilType) GoStr() string      { return "nil" }
 func (n NilType) String() string     { return "nil" }
 func (n NilType) StringFull() string { return n.String() }
 
+type SetType struct{ Elt Type }
+
+func (s SetType) GoStr() string      { return fmt.Sprintf("Set[%s]", s.Elt.GoStr()) }
+func (s SetType) String() string     { return fmt.Sprintf("Set[%s]", s.Elt.String()) }
+func (s SetType) StringFull() string { return fmt.Sprintf("Set[%s]", s.Elt.StringFull()) }
+
 type ArrayType struct{ Elt Type }
 
 func (a ArrayType) GoStr() string      { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
