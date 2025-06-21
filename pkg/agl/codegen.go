@@ -945,6 +945,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "First" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecFirst(%s)", content1)
+			} else if e.Sel.Name == "Len" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecLen(%s)", content1)
 			} else if e.Sel.Name == "Push" {
 				content1 := g.genExpr(e.X)
 				var params []string
@@ -1766,6 +1769,10 @@ func AglVecFirst[T any](a []T) (out Option[T]) {
 		return MakeOptionSome(a[0])
 	}
 	return MakeOptionNone[T]()
+}
+
+func AglVecLen[T any](a []T) int {
+	return len(a)
 }
 
 func AglVecPush[T any](a []T, els ...T) []T {
