@@ -52,7 +52,16 @@ func astToStr(n ast.Expr) string {
 }
 
 func wrapGenDecl(fset *token.FileSet, decl *ast.GenDecl) {
-	fmt.Println(decl)
+	for _, s := range decl.Specs {
+		switch spec := s.(type) {
+		case *ast.TypeSpec:
+			typ := spec.Type
+			switch tmp := typ.(type) {
+			case *ast.StructType:
+				fmt.Println("struct: ", spec, tmp)
+			}
+		}
+	}
 }
 
 func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
