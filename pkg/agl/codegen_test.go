@@ -5956,6 +5956,34 @@ func test() Option[int] {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen209(t *testing.T) {
+	src := `package main
+type Test struct {
+	Name string
+}
+func main() {
+	var a any = Test{Name: "foo"}
+	tmp := a.(Test)?.Name == "foo"
+	if tmp {
+	}
+	return Some(42)
+}
+`
+	expected := `package main
+type Test struct {
+	Name string
+}
+func main() {
+	var a any = Test{Name: "foo"}
+	tmp := AglTypeAssert[Test](a).Unwrap().Name == "foo"
+	if tmp {
+	}
+	return MakeOptionSome(42)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
