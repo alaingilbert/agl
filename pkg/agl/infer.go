@@ -1880,12 +1880,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		typ  types.Type
 	}
 	myDefine := func(parentInfo *Info, n ast.Node, name string, typ types.Type) {
-		assertf(name != "_", "%s: No new variables on the left side of ':='", stmt.Tok)
-		infer.env.Define(n, name, typ)
+		infer.env.DefineForce(n, name, typ)
 	}
 	myAssign := func(parentInfo *Info, n ast.Node, name string, _ types.Type) {
 		infer.env.Assign(parentInfo, n, name)
 	}
+	var assigns []AssignStruct
 	assignFn := func(n ast.Node, name string, typ types.Type) {
 		op := stmt.Tok
 		f := Ternary(op == token.DEFINE, myDefine, myAssign)
@@ -1895,7 +1895,21 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		}
 		f(parentInfo, n, name, typ)
 	}
-	var assigns []AssignStruct
+	assignsFn := func() {
+		op := stmt.Tok
+		if op == token.DEFINE {
+			var hasNewVar bool
+			for _, ass := range assigns {
+				if ass.name != "_" && infer.env.GetDirect(ass.name) == nil {
+					hasNewVar = true
+				}
+			}
+			assertf(hasNewVar, "%s: No new variables on the left side of ':='", infer.Pos(stmt))
+		}
+		for _, ass := range assigns {
+			assignFn(ass.n, ass.name, ass.typ)
+		}
+	}
 	if len(stmt.Rhs) == 1 {
 		rhs := stmt.Rhs[0]
 		if len(stmt.Lhs) == 1 {
@@ -2053,9 +2067,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 		}
 	}
-	for _, ass := range assigns {
-		assignFn(ass.n, ass.name, ass.typ)
-	}
+	assignsFn()
 }
 
 func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {

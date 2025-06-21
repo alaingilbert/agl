@@ -6238,6 +6238,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen224(t *testing.T) {
+	src := `package main
+func main() {
+	a, _ := 1, 2
+	_, a, b := 1, 2, 3
+}`
+	expected := `package main
+func main() {
+	a, _ := 1, 2
+	_, a, b := 1, 2, 3
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen225(t *testing.T) {
+	src := `package main
+func main() {
+	a, _ := 1, 2
+	_, a := 1, 2
+}`
+	tassert.PanicsWithError(t, "4:2: No new variables on the left side of ':='", testCodeGenFn(src))
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
