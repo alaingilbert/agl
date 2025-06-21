@@ -885,6 +885,10 @@ type (
 		Rparen token.Pos
 	}
 
+	AtLineExpr struct {
+		AtLine token.Pos
+	}
+
 	// A SendStmt node represents a send statement.
 	SendStmt struct {
 		Chan  Expr
@@ -1031,6 +1035,10 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (a AtLineExpr) Pos() token.Pos { return a.AtLine }
+func (a AtLineExpr) End() token.Pos { return a.AtLine + 1 }
+func (a AtLineExpr) exprNode()      {}
 
 func (d DumpExpr) Pos() token.Pos { return d.Dump }
 func (d DumpExpr) End() token.Pos { return d.Lparen }

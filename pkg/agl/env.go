@@ -139,6 +139,8 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
 	e.Define(nil, "string", types.TypeType{W: types.StringType{}})
 	e.Define(nil, "byte", types.TypeType{W: types.ByteType{}})
+
+	e.Define(nil, "@LINE", types.StringType{})
 }
 
 func (e *Env) loadCoreFunctions() {

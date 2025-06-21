@@ -134,6 +134,7 @@ const (
 	SWITCH
 	MATCH
 	DUMP
+	AT_LINE
 	TYPE
 	VAR
 	LET
@@ -256,6 +257,8 @@ var tokens = [...]string{
 	DUMP:   "dump",
 	TYPE:   "type",
 	VAR:    "var",
+
+	AT_LINE: "@LINE",
 
 	TILDE: "~",
 }
