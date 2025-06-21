@@ -45,7 +45,10 @@ func main() {
 				Name:    "run",
 				Aliases: []string{"r"},
 				Usage:   "run command",
-				Action:  runAction,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "debug"},
+				},
+				Action: runAction,
 			},
 			{
 				Name:    "build",
@@ -90,6 +93,23 @@ func spawnGoRunFromBytes(source []byte) error {
 }
 
 func runAction(ctx context.Context, cmd *cli.Command) error {
+	debugFlag := cmd.Bool("debug")
+
+	defer func() {
+		if r := recover(); r != nil {
+			var aglErr *agl.AglError
+			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
+				msg := aglErr.Error()
+				if msg == "" || debugFlag {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
+				os.Exit(1)
+			}
+			panic(r)
+		}
+	}()
+
 	if cmd.NArg() == 0 {
 		fmt.Println("You must specify a file to compile")
 		return nil
