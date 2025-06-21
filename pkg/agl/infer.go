@@ -1579,12 +1579,10 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
-		for _, f := range exprXIdT.Fields {
-			if f.Name == fieldName {
-				infer.SetType(expr.X, exprXIdT)
-				infer.SetType(expr, f.Typ)
-				return
-			}
+		if f := Find(exprXIdT.Fields, func(f types.FieldType) bool { return f.Name == fieldName }); f != nil {
+			infer.SetType(expr.X, exprXIdT)
+			infer.SetType(expr, f.Typ)
+			return
 		}
 	case types.EnumType:
 		enumName := expr.X.(*ast.Ident).Name
@@ -1621,13 +1619,11 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 		if v, ok := exprXIdT.Type.(types.StructType); ok {
 			fieldName := expr.Sel.Name
-			for _, f := range v.Fields {
-				if f.Name == fieldName {
-					infer.SetType(expr.Sel, f.Typ)
-					infer.SetType(expr.X, v)
-					infer.SetType(expr, f.Typ)
-					return
-				}
+			if f := Find(v.Fields, func(f types.FieldType) bool { return f.Name == fieldName }); f != nil {
+				infer.SetType(expr.Sel, f.Typ)
+				infer.SetType(expr.X, v)
+				infer.SetType(expr, f.Typ)
+				return
 			}
 		}
 		infer.SetType(expr.X, exprXIdT.X)
