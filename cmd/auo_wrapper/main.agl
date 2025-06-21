@@ -16,7 +16,6 @@ import (
 func main() {
 	goroot := runtime.GOROOT()
 	fileName := "request.go"
-	fnName := "NewRequest"
 	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
 	src := os.ReadFile(filePath)!
 	fset := token.NewFileSet()
@@ -27,7 +26,7 @@ func main() {
 	for _, decl := range node.Decls {
 	 	switch d := decl.(type) {
 	 	case *ast.FuncDecl:
-			if d.Name.Name == fnName && d.Recv == nil {
+			if d.Recv == nil {
 	 			wrapFn(fset, d)
 	 		}
 		case *ast.GenDecl:
@@ -57,7 +56,7 @@ func wrapGenDecl(fset *token.FileSet, decl *ast.GenDecl) {
 		case *ast.TypeSpec:
 			switch spec.Type.(type) {
 			case *ast.StructType:
-				fmt.Println("struct: ", spec)
+				fmt.Printf("struct %s {}\n", spec.Name)
 			case *ast.InterfaceType:
 				fmt.Println("interface: ", spec)
 			}
@@ -109,8 +108,6 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  	}
 
 	var sb strings.Builder
-	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {\n")
-	sb.WriteString("\t" + fnName + "()\n")
-	sb.WriteString("}\n")
+	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {}")
 	fmt.Println(sb.String())
 }
