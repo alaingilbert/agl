@@ -945,6 +945,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "First" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecFirst(%s)", content1)
+			} else if e.Sel.Name == "Push" {
+				content1 := g.genExpr(e.X)
+				var params []string
+				for _, el := range expr.Args {
+					params = append(params, g.genExpr(el))
+				}
+				return fmt.Sprintf("AglVecPush(%s, %s)", content1, strings.Join(params, ", "))
 			} else if e.Sel.Name == "Joined" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1759,6 +1766,10 @@ func AglVecFirst[T any](a []T) (out Option[T]) {
 		return MakeOptionSome(a[0])
 	}
 	return MakeOptionNone[T]()
+}
+
+func AglVecPush[T any](a []T, els ...T) []T {
+	return append(a, els...)
 }
 
 func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
