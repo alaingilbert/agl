@@ -442,6 +442,7 @@ func (e *Env) SubEnv() *Env {
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
 		parent:      e,
+		BubbleOpt:   e.BubbleOpt,
 	}
 	return env
 }
