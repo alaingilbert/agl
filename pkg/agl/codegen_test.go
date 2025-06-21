@@ -4903,11 +4903,11 @@ import "fmt"
 func do(i any) {
 	switch v := i.(type) {
 	case int:
-	fmt.Printf("Twice %v is %v\n", v, v * 2)
+		fmt.Printf("Twice %v is %v\n", v, v * 2)
 	case string:
-	fmt.Printf("%q is %v bytes long\n", v, len(v))
+		fmt.Printf("%q is %v bytes long\n", v, len(v))
 	default:
-	fmt.Printf("I don't know about type %T!\n", v)
+		fmt.Printf("I don't know about type %T!\n", v)
 	}
 }
 func main() {
@@ -5808,17 +5808,17 @@ func main() {
 	for _, decl := range node.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-		if d.Name.Name == fnName && d.Recv == nil {
-			var name string
-			for _, param := range d.Type.Params.List {
-				switch param1 := param.Type.(type) {
-				case *ast.SelectorExpr:
-				name = AglTypeAssert[*ast.Ident](param1.X).Unwrap().Name
-				case *ast.Ident:
-				name = param1.Name
+			if d.Name.Name == fnName && d.Recv == nil {
+				var name string
+				for _, param := range d.Type.Params.List {
+					switch param1 := param.Type.(type) {
+					case *ast.SelectorExpr:
+						name = AglTypeAssert[*ast.Ident](param1.X).Unwrap().Name
+					case *ast.Ident:
+						name = param1.Name
+					}
 				}
 			}
-		}
 		}
 	}
 }
@@ -6089,7 +6089,7 @@ func main() {
 	var a any = Test{}
 	switch a := a.(type) {
 	case Test:
-	fmt.Println(a)
+		fmt.Println(a)
 	}
 }
 `
