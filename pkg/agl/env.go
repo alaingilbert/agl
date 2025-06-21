@@ -354,6 +354,10 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "Recv", Typ: astStarFieldList},
 		{Name: "Type", Typ: types.StarType{X: astFuncType}},
 	}}
+	astSpec := types.InterfaceType{Pkg: "ast", Name: "Spec"}
+	astGenDecl := types.StructType{Pkg: "ast", Name: "GenDecl", Fields: []types.FieldType{
+		{Name: "Specs", Typ: types.ArrayType{Elt: astSpec}},
+	}}
 	astFile := types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Decl", astDecl)
@@ -367,6 +371,7 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.File.Decls", astDecls)
 	e.Define(nil, "ast.FuncDecl", astFuncDecl)
 	e.Define(nil, "ast.FuncDecl.Recv", astStarFieldList)
+	e.Define(nil, "ast.GenDecl", astGenDecl)
 	e.Define(nil, "ast.FuncType", astFuncType)
 	e.Define(nil, "ast.FuncType.Params", astStarFieldList)
 	e.Define(nil, "ast.FuncType.Results", astStarFieldList)
@@ -374,6 +379,7 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.Ident.Name", types.StringType{})
 	e.Define(nil, "ast.SelectorExpr", astSelectorExpr)
 	e.Define(nil, "ast.SelectorExpr.X", astExpr)
+	e.Define(nil, "ast.Spec", astSpec)
 	e.Define(nil, "ast.StarExpr", astStarExpr)
 	e.Define(nil, "ast.StarExpr.X", astExpr)
 }
