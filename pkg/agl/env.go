@@ -407,6 +407,8 @@ func (e *Env) loadPkgFilepath() {
 func (e *Env) loadPkgAgl() {
 	e.DefinePkg("agl", "agl")
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
+	e.DefineFn("agl.NewSet", "func [T comparable](els ...T) *Set")
+	e.DefineFn("agl.Set.Len", "func () int")
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
 	e.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
