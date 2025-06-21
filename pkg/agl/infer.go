@@ -1597,6 +1597,7 @@ func cmpTypes(a, b types.Type) bool {
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	infer.expr(expr.X)
 	exprXT := infer.env.GetType2(expr.X)
+	assertf(exprXT != nil, "%s: type not found for '%s' %v", infer.Pos(expr.X), expr.X, to(expr.X))
 	exprXIdTRaw := exprXT
 	if v, ok := exprXIdTRaw.(types.StarType); ok {
 		exprXIdTRaw = v.X
