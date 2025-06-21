@@ -6149,6 +6149,21 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen218(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	a.Push(4)
+}`
+	expected := `package main
+func main() {
+	a := []int{1, 2, 3}
+	AglVecPush(&a, 4)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

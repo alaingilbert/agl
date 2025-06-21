@@ -1069,19 +1069,19 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			sumFnT := infer.env.GetFn("agl.Vec.Push").T("T", idTArr.Elt)
 			sumFnT.Recv = []types.Type{idTArr}
 			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, types.VoidType{})
+			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "PushFront" {
 			sumFnT := infer.env.GetFn("agl.Vec.PushFront").T("T", idTArr.Elt)
 			sumFnT.Recv = []types.Type{idTArr}
 			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, types.VoidType{})
+			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Insert" {
 			sumFnT := infer.env.GetFn("agl.Vec.Insert").T("T", idTArr.Elt)
 			sumFnT.Recv = []types.Type{idTArr}
 			sumFnT.Params = sumFnT.Params[1:]
-			infer.SetType(expr, types.VoidType{})
+			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Pop" {
 			sumFnT := infer.env.GetFn("agl.Vec.Pop").T("T", idTArr.Elt)
