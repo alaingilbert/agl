@@ -34,17 +34,17 @@ func main() {
 	}
 }
 
-func astToStr(n *ast.Field) string {
+func astToStr(n ast.Expr) string {
 	var out string
-	switch param := n.Type.(type) {
+	switch param := n.(type) {
 	case *ast.SelectorExpr:
 		out = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
 	case *ast.Ident:
 		out = param.Name
 	case *ast.StarExpr:
-		out = "*"
+		out = "*" + astToStr(param.X)
 	default:
-		panic(fmt.Sprintf("%v", reflect.TypeOf(n.Type)))
+		panic(fmt.Sprintf("%v", reflect.TypeOf(n)))
 	}
 	return out
 }
@@ -57,7 +57,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {	
 		names := param.Names.Map({ $0.Name }).Joined(", ")	
-		typeName := astToStr(param)
+		typeName := astToStr(param.Type)
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName = "Option[" + typeName + "]"
 		}
@@ -73,7 +73,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		results := decl.Type.Results.List
 		var arr []string
 		for _, res := range results {
-			arr.Push(astToStr(res))
+			arr.Push(astToStr(res.Type))
 		}
 		last := arr.Last()?
 		lastIsErr := last == "error"
