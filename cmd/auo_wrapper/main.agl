@@ -39,25 +39,24 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	out := "func " + decl.Name.Name + "("
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {
- 		var name string
- 		var typ string
+		var parts []string
+		
+		names := param.Names.Map({ $0.Name }).Joined(", ")
+		parts = append(parts, names)
+		
+		var typeName string
  		switch param1 := param.Type.(type) {
 		case *ast.SelectorExpr:
-			name = param1.X.(*ast.Ident)?.Name + "." + param1.Sel.Name
+			typeName = param1.X.(*ast.Ident)?.Name + "." + param1.Sel.Name
  		case *ast.Ident:
- 			name = param1.Name
+ 			typeName = param1.Name
  		}
-		names := param.Names.Map({ $0.Name }).Joined(", ")
-		if names != "" {
-			names += " "
+		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
+			typeName += "?"
 		}
-		paramsStr := names
-		typ = env[name]
-		paramsStr += name
-		if typ == "interface" {
-			paramsStr += "?"
-		}
-		paramsArr = append(paramsArr, paramsStr)
+		parts = append(parts, typeName)
+		
+		paramsArr = append(paramsArr, parts.Joined(" "))
  	}
 	out += paramsArr.Joined(", ") + ")"
 	if decl.Type.Results != nil {
