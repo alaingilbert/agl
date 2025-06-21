@@ -344,7 +344,10 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "X", Typ: types.InterfaceType{Name: "Expr", Pkg: "ast"}},
 		{Name: "Sel", Typ: astIdent},
 	}})
-	e.Define(nil, "ast.StarExpr", types.StructType{Pkg: "ast", Name: "StarExpr"})
+	e.Define(nil, "ast.StarExpr", types.StructType{Pkg: "ast", Name: "StarExpr", Fields: []types.FieldType{
+		{Name: "X", Typ: types.InterfaceType{Name: "Expr", Pkg: "ast"}},
+	}})
+	e.Define(nil, "ast.StarExpr.X", types.InterfaceType{Pkg: "ast", Name: "Expr"})
 	e.Define(nil, "ast.SelectorExpr.X", types.InterfaceType{Pkg: "ast", Name: "Expr"})
 	e.Define(nil, "ast.Ident.Name", types.StringType{})
 	e.Define(nil, "ast.File", types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}})
