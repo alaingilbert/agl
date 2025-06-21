@@ -1604,6 +1604,8 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 			infer.SetType(expr.X, exprXT)
 		}
 		return
+	case types.InterfaceType:
+		return
 	case types.EnumType:
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
