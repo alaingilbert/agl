@@ -2058,6 +2058,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 		}
 	} else {
+		assertf(len(stmt.Lhs) == len(stmt.Rhs), "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
 		for i := range stmt.Lhs {
 			lhs := stmt.Lhs[i]
 			rhs := stmt.Rhs[i]
