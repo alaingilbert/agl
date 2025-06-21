@@ -980,6 +980,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Pop" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecPop(&%s)", content1)
+			} else if e.Sel.Name == "PopFront" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecPopFront(&%s)", content1)
 			} else if e.Sel.Name == "PopIf" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -991,6 +994,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 					params = append(params, g.genExpr(el))
 				}
 				return fmt.Sprintf("AglVecPush(&%s, %s)", content1, strings.Join(params, ", "))
+			} else if e.Sel.Name == "PushFront" {
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglVecPushFront(&%s, %s)", content1, content2)
 			} else if e.Sel.Name == "Joined" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1811,6 +1818,21 @@ func AglVecLen[T any](a []T) int {
 
 func AglVecPush[T any](a *[]T, els ...T) {
 	*a = append(*a, els...)
+}
+
+// AglVecPushFront ...
+func AglVecPushFront[T any](a *[]T, el T) {
+	*a = append([]T{el}, *a...)
+}
+
+// AglVecPopFront ...
+func AglVecPopFront[T any](a *[]T) Option[T] {
+	if len(*a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	var el T
+	el, *a = (*a)[0], (*a)[1:]
+	return MakeOptionSome(el)
 }
 
 // AglVecInsert ...
