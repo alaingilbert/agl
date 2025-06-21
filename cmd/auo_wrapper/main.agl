@@ -83,7 +83,8 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 			arr.Push(astToStr(res))
 		}
 		last := arr.Last()?
-		if last == "error" {
+		lastIsErr := last == "error"
+		if lastIsErr {
 			arr.Pop()
 		}
 		if arr.Len() == 0 {
@@ -94,14 +95,14 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 				resultStr = "(" + resultStr + ")"
 			}
 		}
-		if last == "error" {
+		if lastIsErr {
 			resultStr = "Result[" + resultStr + "]"
 		}
 		resultStr = " " + resultStr
  	}
 
 	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {\n")
-	sb.WriteString("\t" + decl.Name.Name + "()\n")
+	sb.WriteString("\t" + fnName + "()\n")
 	sb.WriteString("}\n")
 	fmt.Println(sb.String())
 }
