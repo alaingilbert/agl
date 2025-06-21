@@ -6056,6 +6056,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen213(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := a.Last()
+}
+`
+	expected := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := AglVecLast(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
