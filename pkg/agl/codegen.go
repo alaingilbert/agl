@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -16,12 +17,21 @@ type Generator struct {
 	a            *ast.File
 	prefix       string
 	before       []IBefore
+	beforeStmt   []IBefore
 	tupleStructs map[string]string
 	varCounter   atomic.Int64
 	returnType   types.Type
 	extensions   map[string]Extension
 	swapGen      bool
 	genMap       map[string]types.Type
+	parent       *Generator
+}
+
+func (g *Generator) WithSub(clb func()) {
+	prev := g.beforeStmt
+	g.beforeStmt = make([]IBefore, 0)
+	clb()
+	g.beforeStmt = prev
 }
 
 type Extension struct {
@@ -272,6 +282,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genIndexListType(expr)
 	case *ast.SliceExpr:
 		return g.genSliceExpr(expr)
+	case *ast.DumpExpr:
+		return g.genDumpExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -442,7 +454,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	}
 	before += "\n"
 	before += g.prefix + "}\n"
-	g.before = append(g.before, NewBeforeStmt(before))
+	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -464,7 +476,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	}
 	before += "\n"
 	before += g.prefix + "}\n"
-	g.before = append(g.before, NewBeforeStmt(before))
+	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -495,7 +507,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 		}
 	}
 	before += g.prefix + "}\n"
-	g.before = append(g.before, NewBeforeStmt(before))
+	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s)", varName)
 }
 
@@ -791,6 +803,16 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) string {
 	return fmt.Sprintf("%s[%s]", content1, content2)
 }
 
+func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
+	content1 := g.genExpr(expr.X)
+	safeContent1 := strconv.Quote(content1)
+	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+	before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.env.fset.Position(expr.X.Pos()), safeContent1, varName)
+	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
+	return content1
+}
+
 func (g *Generator) genSliceExpr(expr *ast.SliceExpr) string {
 	content1 := g.genExpr(expr.X)
 	var content2, content3, content4 string
@@ -841,13 +863,13 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 			tmpl := varName + ", ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
-			g.before = append(g.before, before)
+			g.beforeStmt = append(g.beforeStmt, before)
 			return fmt.Sprintf(`AglIdentity(%s)`, varName)
 		} else {
 			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, varName, g.returnType.(types.OptionType).W)
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
-			g.before = append(g.before, before2)
+			g.beforeStmt = append(g.beforeStmt, before2)
 			out += fmt.Sprintf("%s.Unwrap()", varName)
 		}
 	} else {
@@ -856,7 +878,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
 			out := `AglIdentity(res)`
-			g.before = append(g.before, before)
+			g.beforeStmt = append(g.beforeStmt, before)
 			return out
 		} else {
 			content1 := g.genExpr(expr.X)
@@ -873,22 +895,22 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			tmpl := "if err := %s; err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
-			g.before = append(g.before, before)
+			g.beforeStmt = append(g.beforeStmt, before)
 			return `AglNoop()`
 		} else if exprXT.Native {
 			tmpl := "tmp, err := %s\nif err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W), g.prefix))
-			g.before = append(g.before, before)
+			g.beforeStmt = append(g.beforeStmt, before)
 			return `AglIdentity(tmp)`
 		} else if exprXT.ConvertToNone {
 			tmpl := "res := %s\nif res.IsErr() {\n\treturn MakeOptionNone[%s]()\n}\n"
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStr()), g.prefix))
-			g.before = append(g.before, before2)
+			g.beforeStmt = append(g.beforeStmt, before2)
 			out += "res.Unwrap()"
 		} else {
 			tmpl := "res := %s\nif res.IsErr() {\n\treturn res\n}\n"
 			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
-			g.before = append(g.before, before2)
+			g.beforeStmt = append(g.beforeStmt, before2)
 			out += "res.Unwrap()"
 		}
 	} else {
@@ -905,7 +927,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 			}
 			content1 := g.genExpr(expr.X)
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
-			g.before = append(g.before, before)
+			g.beforeStmt = append(g.beforeStmt, before)
 			return out
 		} else {
 			content1 := g.genExpr(expr.X)
@@ -1146,19 +1168,17 @@ func (g *Generator) genExprs(e []ast.Expr) (out string) {
 
 func (g *Generator) genStmts(s []ast.Stmt) (out string) {
 	for _, stmt := range s {
-		content1 := g.genStmt(stmt)
-		var beforeStmtStr string
-		newBefore := make([]IBefore, 0)
-		for _, b := range g.before {
-			switch v := b.(type) {
-			case *BeforeStmt:
-				beforeStmtStr += v.Content()
-			case *BeforeFn:
-				newBefore = append(newBefore, v)
+		g.WithSub(func() {
+			content1 := g.genStmt(stmt)
+			var beforeStmtStr string
+			for _, b := range g.beforeStmt {
+				switch v := b.(type) {
+				case *BeforeStmt:
+					beforeStmtStr += v.Content()
+				}
 			}
-		}
-		g.before = newBefore
-		out += beforeStmtStr + content1
+			out += beforeStmtStr + content1
+		})
 	}
 	return out
 }
