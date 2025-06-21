@@ -36,16 +36,13 @@ func main() {
 
 func astToStr(n *ast.Field) string {
 	var out string
-	// if Some(e) := n.(*ast.StarExpr) {
-	// 	n = e.X
-	// }
 	switch param := n.Type.(type) {
 	case *ast.SelectorExpr:
 		out = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
 	case *ast.Ident:
 		out = param.Name
 	case *ast.StarExpr:
-		out = "test"
+		out = "*"
 	default:
 		panic(fmt.Sprintf("%v", reflect.TypeOf(n.Type)))
 	}
