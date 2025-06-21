@@ -56,7 +56,6 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	
 	var sb strings.Builder
 
-	sb.WriteString("func " + decl.Name.Name + "(")
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {
 		var parts []string
@@ -72,7 +71,11 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 
 		paramsArr.Push(parts.Joined(" "))
  	}
-	sb.WriteString(paramsArr.Joined(", ") + ")")
+	
+	fnName := decl.Name.Name
+	paramsStr := paramsArr.Joined(", ")
+	
+	var resultStr string
 	if decl.Type.Results != nil {
 		results := decl.Type.Results.List
 		var arr []string
@@ -83,7 +86,6 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		if last == "error" {
 			arr.Pop()
 		}
-		var resultStr string
 		if arr.Len() == 0 {
 			resultStr = "AglVoid"
 		} else {
@@ -95,9 +97,10 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		if last == "error" {
 			resultStr = "Result[" + resultStr + "]"
 		}
-		sb.WriteString(" " + resultStr)
+		resultStr = " " + resultStr
  	}
-	sb.WriteString(" {\n")
+
+	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {\n")
 	sb.WriteString("\t" + decl.Name.Name + "()\n")
 	sb.WriteString("}\n")
 	fmt.Println(sb.String())
