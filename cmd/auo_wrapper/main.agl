@@ -55,18 +55,13 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	}
 
  	var paramsArr []string
- 	for _, param := range decl.Type.Params.List {
-		var parts []string
-		
-		names := param.Names.Map({ $0.Name }).Joined(", ")
-		parts.Push(names)
-		
+ 	for _, param := range decl.Type.Params.List {	
+		names := param.Names.Map({ $0.Name }).Joined(", ")	
 		typeName := astToStr(param)
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName = "Option[" + typeName + "]"
 		}
-		parts.Push(typeName)
-
+		parts := []string{names, typeName}
 		paramsArr.Push(parts.Joined(" "))
  	}
 	
