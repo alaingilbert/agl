@@ -28,11 +28,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  		case *ast.Ident:
  			name = param1.Name
  		}
- 		var namesArr []string
-		for _, pname := range param.Names {
-			namesArr = append(namesArr, pname.Name)
-		}
-		names := strings.Join(namesArr, ", ")
+		names := param.Names.Map({ $0.Name }).Joined(", ")
 		if names != "" {
 			names += " "
 		}
