@@ -30,6 +30,8 @@ func main() {
 			if d.Name.Name == fnName && d.Recv == nil {
 	 			wrapFn(fset, d)
 	 		}
+		case *ast.GenDecl:
+			wrapGenDecl(fset, d)
 	 	}
 	}
 }
@@ -47,6 +49,10 @@ func astToStr(n ast.Expr) string {
 		panic(fmt.Sprintf("%v", reflect.TypeOf(n)))
 	}
 	return out
+}
+
+func wrapGenDecl(fset *token.FileSet, decl *ast.GenDecl) {
+	fmt.Println(decl)
 }
 
 func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
