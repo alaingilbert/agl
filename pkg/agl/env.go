@@ -151,6 +151,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")
+	e.DefineFn("panic", "func (v any)")
 }
 
 func (e *Env) loadPkgFmt() {
@@ -304,6 +305,8 @@ func (e *Env) loadPkgPath() {
 
 func (e *Env) loadPkgReflect() {
 	e.DefinePkg("reflect", "reflect")
+	e.Define(nil, "reflect.Type", types.InterfaceType{Name: "Type", Pkg: "reflect"})
+	e.DefineFnNative("reflect.TypeOf", "func (any) reflect.Type")
 }
 
 func (e *Env) loadPkgRuntime() {
