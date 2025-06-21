@@ -1928,8 +1928,18 @@ func (s *Set[T]) Len() int {
 	return len(s.values)
 }
 
-func (s *Set[T]) Insert(el T) {
-	s.values[el] = struct{}{}
+// Insert Adds a value to the set.
+//
+// Returns whether the value was newly inserted. That is:
+//
+// - If the set did not previously contain this value, true is returned.
+// - If the set already contained this value, false is returned, and the set is not modified: original value is not replaced, and the value passed as argument is dropped.
+func (s *Set[T]) Insert(value T) bool {
+	if _, ok := s.values[value]; ok {
+		return false
+	}
+	s.values[value] = struct{}{}
+	return true
 }
 
 func AglNewSet[T comparable](els ...T) *Set[T] {
