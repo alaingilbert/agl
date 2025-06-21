@@ -404,6 +404,9 @@ func Walk(v Visitor, node Node) {
 
 	case *NoneExpr:
 
+	case *DumpExpr:
+		Walk(v, n.X)
+
 	case *IfLetStmt:
 		Walk(v, n.Ass)
 		if n.Body != nil {
