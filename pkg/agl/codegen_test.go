@@ -6096,6 +6096,25 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen215(t *testing.T) {
+	src := `package main
+func main() {
+	if dump(1 == 1) {
+		fmt.Println("test")
+	}
+}`
+	expected := `package main
+func main() {
+	aglTmp1 := 1 == 1
+	fmt.Printf("3:10: %s: %v\n", "1 == 1", aglTmp1)
+	if 1 == 1 {
+		fmt.Println("test")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
 //import "fmt"
