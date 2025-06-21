@@ -45,11 +45,11 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		parts = append(parts, names)
 		
 		var typeName string
- 		switch param1 := param.Type.(type) {
+ 		switch param := param.Type.(type) {
 		case *ast.SelectorExpr:
-			typeName = param1.X.(*ast.Ident)?.Name + "." + param1.Sel.Name
+			typeName = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
  		case *ast.Ident:
- 			typeName = param1.Name
+ 			typeName = param.Name
  		}
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName += "?"
