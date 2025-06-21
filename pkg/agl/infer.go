@@ -1572,7 +1572,8 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
-	exprXIdTRaw := infer.env.GetType2(expr.X)
+	exprXT := infer.env.GetType2(expr.X)
+	exprXIdTRaw := exprXT
 	if v, ok := exprXIdTRaw.(types.StarType); ok {
 		exprXIdTRaw = v.X
 	}
@@ -1583,8 +1584,10 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 			infer.SetType(expr.Sel, f.Typ)
 			infer.SetType(expr.X, exprXIdT)
 			infer.SetType(expr, f.Typ)
-			return
+		} else {
+			infer.SetType(expr.X, exprXT)
 		}
+		return
 	case types.EnumType:
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
