@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 func main() {
@@ -36,7 +37,10 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	env := map[string]string{
 		"io.Reader": "interface",
 	}
-	out := "func " + decl.Name.Name + "("
+	
+	var sb strings.Builder
+
+	sb.WriteString("func " + decl.Name.Name + "(")
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {
 		var parts []string
@@ -58,14 +62,14 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 
 		paramsArr = paramsArr.Push(parts.Joined(" "))
  	}
-	out += paramsArr.Joined(", ") + ")"
+	sb.WriteString(paramsArr.Joined(", ") + ")")
 	if decl.Type.Results != nil {
 		if decl.Type.Results.List.Last()?.Type.(*ast.Ident)?.Name == "error" {
-			out += "!"
+			sb.WriteString("!")
 		}
  	}
-	out += " {\n"
-	out += "\t" + decl.Name.Name + "()\n"
-	out += "}\n"
-	fmt.Println(out)
+	sb.WriteString(" {\n")
+	sb.WriteString("\t" + decl.Name.Name + "()\n")
+	sb.WriteString("}\n")
+	fmt.Println(sb.String())
 }
