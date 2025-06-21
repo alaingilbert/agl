@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"reflect"
 )
 
 func main() {
@@ -45,8 +46,8 @@ func astToStr(n *ast.Field) string {
 		out = param.Name
 	case *ast.StarExpr:
 		out = "test"
-	// default:
-	// 	panic(fmt.Sprintf("%v", n.Type))
+	default:
+		panic(fmt.Sprintf("%v", reflect.TypeOf(n.Type)))
 	}
 	return out
 }
