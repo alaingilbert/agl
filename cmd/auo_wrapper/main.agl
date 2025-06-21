@@ -68,7 +68,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName = "Option[" + typeName + "]"
 		}
-		parts = append(parts, typeName)
+		parts.Push(typeName)
 
 		paramsArr.Push(parts.Joined(" "))
  	}
