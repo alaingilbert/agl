@@ -33,6 +33,24 @@ func main() {
 	}
 }
 
+func astToStr(n *ast.Field) string {
+	var out string
+	// if Some(e) := n.(*ast.StarExpr) {
+	// 	n = e.X
+	// }
+	switch param := n.Type.(type) {
+	case *ast.SelectorExpr:
+		out = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
+	case *ast.Ident:
+		out = param.Name
+	case *ast.StarExpr:
+		out = "test"
+	// default:
+	// 	panic(fmt.Sprintf("%v", n.Type))
+	}
+	return out
+}
+
 func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	env := map[string]string{
 		"io.Reader": "interface",
@@ -46,32 +64,33 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		var parts []string
 		
 		names := param.Names.Map({ $0.Name }).Joined(", ")
-		parts = parts.Push(names)
+		parts.Push(names)
 		
-		var typeName string
- 		switch param := param.Type.(type) {
-		case *ast.SelectorExpr:
-			typeName = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
- 		case *ast.Ident:
- 			typeName = param.Name
- 		}
+		typeName := astToStr(param)
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName = "Option[" + typeName + "]"
 		}
 		parts = append(parts, typeName)
 
-		paramsArr = paramsArr.Push(parts.Joined(" "))
+		paramsArr.Push(parts.Joined(" "))
  	}
 	sb.WriteString(paramsArr.Joined(", ") + ")")
 	if decl.Type.Results != nil {
 		results := decl.Type.Results.List
-		last := results.Last()?
-		if Some(id) := last.Type.(*ast.Ident) {
-			if results.Len() == 1 && id.Name == "error" {
-				sb.WriteString(" Result[AglVoid]")
-			} else if id.Name == "error" {
-				sb.WriteString(" Result[...]")
+		var arr []string
+		for _, res := range results {
+			arr.Push(astToStr(res))
+		}
+		if arr.Last()? == "error" {
+			if arr.Len() == 2 {
+				arr = arr[0:len(arr)-1]
+				sb.WriteString(" Result[" + arr.Joined(", ") + "]")
+			} else {
+				arr = arr[0:len(arr)-1]
+				sb.WriteString(" Result[(" + arr.Joined(", ") + ")]")
 			}
+		} else {
+			sb.WriteString(" Result[AglVoid]")
 		}
  	}
 	sb.WriteString(" {\n")
