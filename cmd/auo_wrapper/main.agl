@@ -56,7 +56,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		}
 		parts = append(parts, typeName)
 		
-		paramsArr = append(paramsArr, parts.Joined(" "))
+		paramsArr = paramsArr.Push(parts.Joined(" "))
  	}
 	out += paramsArr.Joined(", ") + ")"
 	if decl.Type.Results != nil {

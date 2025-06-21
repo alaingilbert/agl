@@ -388,6 +388,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.Joined", "func (a []string) string")
 	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
+	e.DefineFn("agl.Vec.Push", "func [T any](a []T, els ...T) []T")
 	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
 	e.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
 	e.DefineFn("agl.Option.IsSome", "func () bool")
