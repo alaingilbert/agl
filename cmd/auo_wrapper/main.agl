@@ -53,8 +53,6 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	env := map[string]string{
 		"io.Reader": "interface",
 	}
-	
-	var sb strings.Builder
 
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {
@@ -99,6 +97,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		resultStr = " " + resultStr
  	}
 
+	var sb strings.Builder
 	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {\n")
 	sb.WriteString("\t" + fnName + "()\n")
 	sb.WriteString("}\n")
