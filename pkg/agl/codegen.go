@@ -979,7 +979,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				content3 := g.genExpr(expr.Args[1])
-				return fmt.Sprintf("AglVecInsert(%s)", content1, content2, content3)
+				return fmt.Sprintf("AglVecInsert(%s, %s ,%s)", content1, content2, content3)
 			} else if e.Sel.Name == "Pop" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglVecPop(&%s)", content1)
