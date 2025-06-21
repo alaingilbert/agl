@@ -2112,26 +2112,24 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 			t := infer.env.GetType2(rhs)
 			infer.SetType(ass.Lhs[0], t.(types.TypeAssertType).X)
 		}
-		infer.withEnv(func() {
-			infer.stmt(stmt.Assign)
-			for _, el := range stmt.Body.List {
-				c := el.(*ast.CaseClause)
-				if c.List != nil {
-					infer.exprs(c.List)
-				}
-				if c.Body != nil {
-					infer.withEnv(func() {
-						ass := stmt.Assign.(*ast.AssignStmt)
-						if len(ass.Lhs) == 1 && len(c.List) == 1 {
-							id := ass.Lhs[0].(*ast.Ident).Name
-							idT := infer.env.GetType2(c.List[0])
-							infer.env.Define(nil, id, idT)
-						}
-						infer.stmts(c.Body)
-					})
-				}
+		infer.stmt(stmt.Assign)
+		for _, el := range stmt.Body.List {
+			c := el.(*ast.CaseClause)
+			if c.List != nil {
+				infer.exprs(c.List)
 			}
-		})
+			if c.Body != nil {
+				infer.withEnv(func() {
+					ass := stmt.Assign.(*ast.AssignStmt)
+					if len(ass.Lhs) == 1 && len(c.List) == 1 {
+						id := ass.Lhs[0].(*ast.Ident).Name
+						idT := infer.env.GetType2(c.List[0])
+						infer.env.Define(nil, id, idT)
+					}
+					infer.stmts(c.Body)
+				})
+			}
+		}
 	})
 }
 
