@@ -1184,6 +1184,18 @@ func (infer *FileInferrer) inferVecExtensions(expr *ast.CallExpr, idT types.Type
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
+		} else if fnName == "Keys" {
+			fnT := infer.env.GetFn("agl.Map.Keys").T("K", idTMap.K).T("V", idTMap.V)
+			fnT.Recv = []types.Type{idTMap}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
+		} else if fnName == "Values" {
+			fnT := infer.env.GetFn("agl.Map.Values").T("K", idTMap.K).T("V", idTMap.V)
+			fnT.Recv = []types.Type{idTMap}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
 		}
 	}
 }

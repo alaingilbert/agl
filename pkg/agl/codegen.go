@@ -1032,6 +1032,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
+			} else if e.Sel.Name == "Keys" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglIdentity(AglMapKeys(%s))", content1)
+			} else if e.Sel.Name == "Values" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglIdentity(AglMapValues(%s))", content1)
 			}
 		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
 			content1 := g.genExprs(expr.Args)
@@ -1627,6 +1633,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"iter"
+	"maps"
 )
 
 type AglVoid struct{}
@@ -1876,6 +1884,14 @@ func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
 		return MakeOptionSome(el)
 	}
 	return MakeOptionNone[V]()
+}
+
+func AglMapKeys[K comparable, V any](m map[K]V, index K) iter.Seq[K] {
+	return maps.Keys(m)
+}
+
+func AglMapValues[K comparable, V any](m map[K]V, index K) iter.Seq[V] {
+	return maps.Values(m)
 }
 
 func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {

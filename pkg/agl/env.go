@@ -415,6 +415,8 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.Len", "func [T any](a []T) int")
 	e.DefineFn("agl.Vec.IsEmpty", "func [T any](a []T) bool")
 	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
+	e.DefineFn("agl.Map.Keys", "func [K comparable, V any](m map[K]V) iter.Seq[K]")
+	e.DefineFn("agl.Map.Values", "func [K comparable, V any](m map[K]V) iter.Seq[V]")
 	e.DefineFn("agl.Option.UnwrapOr", "func [T any](T) T")
 	e.DefineFn("agl.Option.IsSome", "func () bool")
 	e.DefineFn("agl.Option.IsNone", "func () bool")
