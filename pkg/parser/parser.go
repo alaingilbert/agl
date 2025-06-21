@@ -1594,6 +1594,13 @@ func (p *parser) parseOperand() ast.Expr {
 	}
 
 	switch p.tok {
+	case token.DUMP:
+		dump := p.expect(token.DUMP)
+		lparen := p.expect(token.LPAREN)
+		x := p.parseExpr()
+		rparen := p.expect(token.RPAREN)
+		return &ast.DumpExpr{X: x, Dump: dump, Lparen: lparen, Rparen: rparen}
+
 	case token.IDENT:
 		x := p.parseIdent()
 		return x

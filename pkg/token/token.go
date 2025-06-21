@@ -133,6 +133,7 @@ const (
 	ENUM
 	SWITCH
 	MATCH
+	DUMP
 	TYPE
 	VAR
 	LET
@@ -252,6 +253,7 @@ var tokens = [...]string{
 	ENUM:   "enum",
 	SWITCH: "switch",
 	MATCH:  "match",
+	DUMP:   "dump",
 	TYPE:   "type",
 	VAR:    "var",
 

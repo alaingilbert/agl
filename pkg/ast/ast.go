@@ -878,6 +878,13 @@ type (
 		X Expr // expression
 	}
 
+	DumpExpr struct {
+		X      Expr // expression
+		Dump   token.Pos
+		Lparen token.Pos
+		Rparen token.Pos
+	}
+
 	// A SendStmt node represents a send statement.
 	SendStmt struct {
 		Chan  Expr
@@ -1024,6 +1031,10 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (d DumpExpr) Pos() token.Pos { return d.Dump }
+func (d DumpExpr) End() token.Pos { return d.Lparen }
+func (d DumpExpr) exprNode()      {}
 
 func (m MatchClause) Pos() token.Pos { return m.Case }
 func (m MatchClause) End() token.Pos {
