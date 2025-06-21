@@ -819,6 +819,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 		case *ast.IndexExpr:
 			exprFunT = infer.env.GetType2(callXT)
+		case *ast.TypeAssertExpr:
+			exprFunT = types.OptionType{W: infer.env.GetType2(callXT)}
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
