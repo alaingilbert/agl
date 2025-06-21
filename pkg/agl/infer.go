@@ -1582,7 +1582,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		fieldName := expr.Sel.Name
 		if f := Find(exprXIdT.Fields, func(f types.FieldType) bool { return f.Name == fieldName }); f != nil {
 			infer.SetType(expr.Sel, f.Typ)
-			infer.SetType(expr.X, exprXIdT)
+			infer.SetType(expr.X, exprXT)
 			infer.SetType(expr, f.Typ)
 		} else {
 			infer.SetType(expr.X, exprXT)

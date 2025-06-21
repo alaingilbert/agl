@@ -322,8 +322,8 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "List", Typ: astFieldListList},
 	}}
 	astFuncType := types.StructType{Pkg: "ast", Name: "FuncType", Fields: []types.FieldType{
-		{Name: "Params", Typ: astFieldList},
-		{Name: "Results", Typ: astFieldList},
+		{Name: "Params", Typ: types.StarType{X: astFieldList}},
+		{Name: "Results", Typ: types.StarType{X: astFieldList}},
 	}}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Expr", types.InterfaceType{Pkg: "ast", Name: "Expr"})
@@ -344,9 +344,9 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.FuncType", astFuncType)
 	e.Define(nil, "ast.Field.Name", types.StructType{Pkg: "ast", Name: "Ident"})
 	e.Define(nil, "ast.Field.Type", astFuncType)
-	e.Define(nil, "ast.FuncDecl.Recv", astFieldList)
-	e.Define(nil, "ast.FuncType.Params", astFieldList)
-	e.Define(nil, "ast.FuncType.Results", astFieldList)
+	e.Define(nil, "ast.FuncDecl.Recv", types.StarType{X: astFieldList})
+	e.Define(nil, "ast.FuncType.Params", types.StarType{X: astFieldList})
+	e.Define(nil, "ast.FuncType.Results", types.StarType{X: astFieldList})
 	e.Define(nil, "ast.FieldList", astFieldList)
 	e.Define(nil, "ast.FieldList.List", astFieldListList)
 	e.Define(nil, "ast.Decl", astDecl)
