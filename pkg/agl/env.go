@@ -359,6 +359,9 @@ func (e *Env) loadPkgGoAst() {
 		{Name: "Specs", Typ: types.ArrayType{Elt: astSpec}},
 	}}
 	astFile := types.StructType{Pkg: "ast", Name: "File", Fields: []types.FieldType{{Name: "Decls", Typ: astDecls}}}
+	astTypeSpec := types.StructType{Pkg: "ast", Name: "TypeSpec", Fields: []types.FieldType{
+		{Name: "Name", Typ: types.StarType{X: astIdent}},
+	}}
 	e.DefinePkg("ast", "go/ast")
 	e.Define(nil, "ast.Decl", astDecl)
 	e.Define(nil, "ast.Expr", astExpr)
@@ -382,6 +385,8 @@ func (e *Env) loadPkgGoAst() {
 	e.Define(nil, "ast.Spec", astSpec)
 	e.Define(nil, "ast.StarExpr", astStarExpr)
 	e.Define(nil, "ast.StarExpr.X", astExpr)
+	e.Define(nil, "ast.TypeSpec", astTypeSpec)
+	e.Define(nil, "ast.TypeSpec.Name", types.StarType{X: astIdent})
 }
 
 func (e *Env) loadPkgGoParser() {
