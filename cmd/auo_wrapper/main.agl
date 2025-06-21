@@ -82,17 +82,23 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		for _, res := range results {
 			arr.Push(astToStr(res))
 		}
-		if arr.Last()? == "error" {
-			if arr.Len() == 2 {
-				arr = arr[0:len(arr)-1]
-				sb.WriteString(" Result[" + arr.Joined(", ") + "]")
-			} else {
-				arr = arr[0:len(arr)-1]
-				sb.WriteString(" Result[(" + arr.Joined(", ") + ")]")
-			}
-		} else {
-			sb.WriteString(" Result[AglVoid]")
+		last := arr.Last()?
+		if last == "error" {
+			arr = arr[0:len(arr)-1]
 		}
+		var resultStr string
+		if arr.Len() == 0 {
+			resultStr = "AglVoid"
+		} else {
+			resultStr = arr.Joined(", ")
+			if arr.Len() > 1 { // more than 1 value, return a Tuple
+				resultStr = "(" + resultStr + ")"
+			}
+		}
+		if last == "error" {
+			resultStr = "Result[" + resultStr + "]"
+		}
+		sb.WriteString(" " + resultStr)
  	}
 	sb.WriteString(" {\n")
 	sb.WriteString("\t" + decl.Name.Name + "()\n")
