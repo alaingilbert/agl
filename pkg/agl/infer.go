@@ -1635,6 +1635,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		pkg := expr.X.(*ast.Ident).Name
 		sel := expr.Sel.Name
 		selT := infer.env.Get(pkg + "." + sel)
+		assertf(selT != nil, "%s: '%s' not found in package '%s'", infer.Pos(expr.Sel), sel, pkg)
 		infer.SetType(expr.Sel, selT)
 		infer.SetType(expr, selT)
 	case types.OptionType:
