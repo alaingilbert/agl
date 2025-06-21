@@ -2143,11 +2143,19 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 			}
 			if c.Body != nil {
 				infer.withEnv(func() {
-					ass := stmt.Assign.(*ast.AssignStmt)
-					if len(ass.Lhs) == 1 && len(c.List) == 1 {
-						id := ass.Lhs[0].(*ast.Ident).Name
-						idT := infer.env.GetType2(c.List[0])
-						infer.env.Define(nil, id, idT)
+					switch ass := stmt.Assign.(type) {
+					case *ast.AssignStmt:
+						if len(ass.Lhs) == 1 && len(c.List) == 1 {
+							id := ass.Lhs[0].(*ast.Ident).Name
+							idT := infer.env.GetType2(c.List[0])
+							infer.env.Define(nil, id, idT)
+						}
+					case *ast.ExprStmt:
+						if len(c.List) == 1 {
+							id := ass.X.(*ast.TypeAssertExpr).X.(*ast.Ident).Name
+							idT := infer.env.GetType2(c.List[0])
+							infer.env.Define(nil, id, idT)
+						}
 					}
 					infer.stmts(c.Body)
 				})
