@@ -194,17 +194,18 @@ func defineFromSrc(env *Env, path string, src []byte) {
 			for _, s := range decl.Specs {
 				switch spec := s.(type) {
 				case *ast.TypeSpec:
+					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *ast.Ident:
 						t := env.GetType2(v)
-						env.Define(nil, pkgName+"."+spec.Name.Name, t)
+						env.Define(nil, specName, t)
 					case *ast.MapType:
 						t := env.GetType2(v)
-						env.Define(nil, pkgName+"."+spec.Name.Name, t)
+						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
-						env.Define(nil, pkgName+"."+spec.Name.Name, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
+						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 					case *ast.StructType:
-						env.Define(nil, pkgName+"."+spec.Name.Name, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
+						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
 							for _, field := range v.Fields.List {
 								t := env.GetType2(field.Type)
