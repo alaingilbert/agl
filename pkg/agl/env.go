@@ -200,10 +200,7 @@ func (e *Env) loadPkgIo() {
 
 func defineFromSrc(env *Env, path string, src []byte) {
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments)
-	if err != nil {
-		panic("")
-	}
+	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	pkgName := node.Name.Name
 	env.DefinePkg(pkgName, path)
 	for _, d := range node.Decls {
@@ -273,33 +270,10 @@ func (e *Env) loadPkgNetHttp() {
 }
 
 func (e *Env) loadPkgOs() {
-	e.DefinePkg("os", "os")
-	e.DefineFnNative("os.ReadFile", "func (name string) ([]byte)!")
-	e.DefineFnNative("os.WriteFile", "func (name string, data []byte, perm os.FileMode) !")
-	e.DefineFnNative("os.Chdir", "func (string) !")
-	e.DefineFnNative("os.Chown", "func (name string, uid, gid int) !")
-	e.DefineFnNative("os.Mkdir", "func (name string, perm FileMode) !")
-	e.DefineFnNative("os.MkdirAll", "func (path string, perm FileMode) !")
-	e.DefineFnNative("os.MkdirTemp", "func (dir, pattern string) string!")
-	e.DefineFnNative("os.Remove", "func (name string) !")
-	e.DefineFnNative("os.RemoveAll", "func (path string) !")
-	e.DefineFnNative("os.Rename", "func (oldpath, newpath string) !")
-	e.DefineFnNative("os.SameFile", "func (fi1, fi2 FileInfo) bool")
-	e.DefineFnNative("os.TempDir", "func () string")
-	e.DefineFnNative("os.Truncate", "func (name string, size int64) !")
-	e.DefineFnNative("os.Setenv", "func (key, value string) !")
-	e.DefineFnNative("os.Unsetenv", "func (key string) !")
-	e.DefineFnNative("os.UserCacheDir", "func () string!")
-	e.DefineFnNative("os.UserConfigDir", "func () string!")
-	e.DefineFnNative("os.UserHomeDir", "func () string!")
-	e.DefineFnNative("os.Getwd", "func () string!")
-	e.DefineFnNative("os.Hostname", "func () string!")
-	e.DefineFnNative("os.IsExist", "func (err error) bool")
-	e.DefineFnNative("os.IsNotExist", "func (err error) bool")
-	e.DefineFnNative("os.IsPathSeparator", "func (c uint8) bool")
-	e.DefineFnNative("os.IsPermission", "func (err error) bool")
-	e.DefineFnNative("os.IsTimeout", "func (err error) bool")
-	e.DefineFnNative("os.LookupEnv", "func (key string) string?")
+	stdFilePath := "std/os/os.agl"
+	by := Must(content.ReadFile(stdFilePath))
+	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
+	defineFromSrc(e, path, by)
 }
 
 func (e *Env) loadPkgTime() {
