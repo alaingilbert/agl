@@ -93,6 +93,14 @@ func Cast[T any](origin any) (T, bool) {
 	return val, ok
 }
 
+// Must ...
+func Must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 // MustCast ...
 func MustCast[T any](origin any) T {
 	v, ok := Cast[T](origin)
