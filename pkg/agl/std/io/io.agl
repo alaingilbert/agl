@@ -3,6 +3,7 @@ package io
 type EOF struct{}
 type Reader struct{}
 type ReadCloser interface{}
+type RuneReader interface{}
 
 func ReadAll(r io.Reader) ([]byte)!
 func ReadFull(r io.Reader, buf []byte) int!
