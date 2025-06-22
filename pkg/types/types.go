@@ -414,6 +414,12 @@ func (r BubbleResultType) GoStr() string { return "BubbleResultType" }
 
 func (r BubbleResultType) String() string { return "BubbleResultType" }
 
+type Complex128Type struct{}
+
+func (c Complex128Type) GoStr() string      { return "complex128" }
+func (c Complex128Type) String() string     { return "complex128" }
+func (c Complex128Type) StringFull() string { return c.String() }
+
 type I64Type struct{}
 
 func (i I64Type) GoStr() string      { return "int64" }

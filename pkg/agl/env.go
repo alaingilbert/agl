@@ -140,6 +140,7 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "float32", types.TypeType{W: types.F32Type{}})
 	e.Define(nil, "float64", types.TypeType{W: types.F64Type{}})
 
+	e.Define(nil, "complex128", types.TypeType{W: types.Complex128Type{}})
 	e.Define(nil, "void", types.TypeType{W: types.VoidType{}})
 	e.Define(nil, "any", types.TypeType{W: types.AnyType{}})
 	e.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
@@ -161,7 +162,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("cap", "func [T any](v T) int")
 	e.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
 	e.DefineFn("max", "func [T cmp.Ordered](x T, y ...T) T")
-	e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
+	//e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")
 	e.DefineFn("panic", "func (v any)")
@@ -496,13 +497,29 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, false)
 	case *ast.Ellipsis:
-		return types.EllipsisType{Elt: e.GetType2(xx.Elt)}
+		t := e.GetType2(xx.Elt)
+		if t == nil {
+			panic(fmt.Sprintf("type not found %v %v", xx.Elt, to(xx.Elt)))
+		}
+		return types.EllipsisType{Elt: t}
 	case *ast.ArrayType:
-		return types.ArrayType{Elt: e.GetType2(xx.Elt)}
+		t := e.GetType2(xx.Elt)
+		if t == nil {
+			panic(fmt.Sprintf("type not found %v %v", xx.Elt, to(xx.Elt)))
+		}
+		return types.ArrayType{Elt: t}
 	case *ast.ResultExpr:
-		return types.ResultType{W: e.GetType2(xx.X)}
+		t := e.GetType2(xx.X)
+		if t == nil {
+			panic(fmt.Sprintf("type not found %v %v", xx.X, to(xx.X)))
+		}
+		return types.ResultType{W: t}
 	case *ast.OptionExpr:
-		return types.OptionType{W: e.GetType2(xx.X)}
+		t := e.GetType2(xx.X)
+		if t == nil {
+			panic(fmt.Sprintf("type not found %v %v", xx.X, to(xx.X)))
+		}
+		return types.OptionType{W: t}
 	case *ast.CallExpr:
 		return nil
 	case *ast.BasicLit:
