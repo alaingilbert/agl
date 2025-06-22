@@ -1,0 +1,48 @@
+package regexp
+
+type Regexp struct {}
+
+func Compile(expr string) (*regexp.Regexp)!
+func CompilePOSIX(expr string) (*regexp.Regexp)!
+func MustCompile(str string) *regexp.Regexp
+func MustCompilePOSIX(str string) *regexp.Regexp
+
+func (re *Regexp) AppendText(b []byte) ([]byte)!
+func (re *Regexp) Expand(dst []byte, template []byte, src []byte, match1 []int) []byte
+func (re *Regexp) ExpandString(dst []byte, template string, src string, match1 []int) []byte
+func (re *Regexp) Find(b []byte) []byte
+func (re *Regexp) FindAll(b []byte, n int) [][]byte
+func (re *Regexp) FindAllIndex(b []byte, n int) [][]int
+func (re *Regexp) FindAllString(s string, n int) []string
+func (re *Regexp) FindAllStringIndex(s string, n int) [][]int
+func (re *Regexp) FindAllStringSubmatch(s string, n int) [][]string
+func (re *Regexp) FindAllStringSubmatchIndex(s string, n int) [][]int
+func (re *Regexp) FindAllSubmatch(b []byte, n int) [][][]byte
+func (re *Regexp) FindAllSubmatchIndex(b []byte, n int) [][]int
+func (re *Regexp) FindIndex(b []byte) []int
+func (re *Regexp) FindReaderIndex(r io.RuneReader) []int
+func (re *Regexp) FindReaderSubmatchIndex(r io.RuneReader) []int
+func (re *Regexp) FindString(s string) string
+func (re *Regexp) FindStringIndex(s string) []int
+func (re *Regexp) FindStringSubmatch(s string) []string
+func (re *Regexp) FindStringSubmatchIndex(s string) []int
+func (re *Regexp) FindSubmatch(b []byte) [][]byte
+func (re *Regexp) FindSubmatchIndex(b []byte) []int
+func (re *Regexp) LiteralPrefix() (string, bool)
+func (re *Regexp) Longest()
+func (re *Regexp) MarshalText() ([]byte)!
+func (re *Regexp) Match(b []byte) bool
+func (re *Regexp) MatchReader(r io.RuneReader) bool
+func (re *Regexp) MatchString(s string) bool
+func (re *Regexp) NumSubexp() int
+func (re *Regexp) ReplaceAll(src, repl []byte) []byte
+func (re *Regexp) ReplaceAllFunc(src []byte, repl func([]byte) []byte) []byte
+func (re *Regexp) ReplaceAllLiteral(src, repl []byte) []byte
+func (re *Regexp) ReplaceAllLiteralString(src, repl string) string
+func (re *Regexp) ReplaceAllString(src, repl string) string
+func (re *Regexp) ReplaceAllStringFunc(src string, repl func(string) string) string
+func (re *Regexp) Split(s string, n int) []string
+func (re *Regexp) String() string
+func (re *Regexp) SubexpIndex(name string) int
+func (re *Regexp) SubexpNames() []string
+func (re *Regexp) UnmarshalText(text []byte) !

@@ -319,6 +319,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("go/parser")
 	e.loadPkg("go/types")
 	e.loadPkg("path/filepath")
+	e.loadPkg("regexp")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
