@@ -1,0 +1,3 @@
+package filepath
+
+func Join(elem ...string) string

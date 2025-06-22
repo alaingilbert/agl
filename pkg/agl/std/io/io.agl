@@ -2,7 +2,7 @@ package io
 
 type EOF struct{}
 type Reader struct{}
-type ReadCloser struct{}
+type ReadCloser interface{}
 
 func ReadAll(r io.Reader) ([]byte)!
 func ReadFull(r io.Reader, buf []byte) int!
@@ -11,5 +11,5 @@ func CopyBuffer(dst io.Writer, src io.Reader, buf []byte) int64!
 func CopyN(dst io.Writer, src io.Reader, n int64) int64!
 func Copy(dst io.Writer, src io.Reader) int64!
 func Pipe(*io.PipeReader, *io.PipeWriter)
-func (ReadCloser) Read(p []byte) int!")
-func (ReadCloser) Close() !")
+func (ReadCloser) Read(p []byte) int!
+func (ReadCloser) Close() !

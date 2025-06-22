@@ -188,6 +188,8 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					recvName = v.Name
 				case *ast.StarExpr:
 					recvName = v.X.(*ast.Ident).Name
+				default:
+					panic(fmt.Sprintf("%v", to(t)))
 				}
 				fullName = recvName + "." + fullName
 			}
@@ -206,6 +208,11 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					case *ast.Ident:
 						t := env.GetType2(v)
 						env.Define(nil, pkgName+"."+spec.Name.Name, t)
+					case *ast.MapType:
+						t := env.GetType2(v)
+						env.Define(nil, pkgName+"."+spec.Name.Name, t)
+					case *ast.InterfaceType:
+						env.Define(nil, pkgName+"."+spec.Name.Name, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 					case *ast.StructType:
 						env.Define(nil, pkgName+"."+spec.Name.Name, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
@@ -216,10 +223,17 @@ func defineFromSrc(env *Env, path string, src []byte) {
 									case types.InterfaceType:
 										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
+									case types.StructType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
+									default:
+										panic(fmt.Sprintf("%v", to(t)))
 									}
 								}
 							}
 						}
+					default:
+						panic(fmt.Sprintf("%v", to(spec.Type)))
 					}
 				}
 			}
@@ -254,10 +268,6 @@ func (e *Env) loadPkgBufio() {
 func (e *Env) loadPkgIter() {
 	e.DefinePkg("iter", "iter")
 	e.DefineFnNative("iter.Seq", "func [V any](yield func(V) bool)")
-}
-
-func (e *Env) loadPkgPath() {
-	e.DefinePkg("path", "path")
 }
 
 var astIdent = types.StructType{Pkg: "ast", Name: "Ident"}
@@ -343,11 +353,6 @@ func (e *Env) loadPkgGoTypes() {
 	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *types.Info) (*types.Package)!")
 }
 
-func (e *Env) loadPkgFilepath() {
-	e.DefinePkg("filepath", "path/filepath")
-	e.DefineFnNative("filepath.Join", "func (elem ...string) string")
-}
-
 func (e *Env) loadPkgAgl() {
 	e.DefinePkg("agl", "agl")
 	e.Define(nil, "agl.Set", types.SetType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
@@ -403,12 +408,12 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("reflect")
 	e.loadPkg("runtime")
 	e.loadPkg("iter")
-	e.loadPkgPath()
+	e.loadPkg("path")
 	e.loadPkgGoAst()
 	e.loadPkgGoToken()
 	e.loadPkgGoParser()
 	e.loadPkgGoTypes()
-	e.loadPkgFilepath()
+	e.loadPkg("path/filepath")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
