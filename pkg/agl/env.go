@@ -208,24 +208,19 @@ func defineFromSrc(env *Env, path string, src []byte) {
 							for _, field := range v.Fields.List {
 								t := env.GetType2(field.Type)
 								for _, name := range field.Names {
+									fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 									switch vv := t.(type) {
 									case types.InterfaceType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
 									case types.StructType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
 									case types.TypeType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, vv.W)
 									case types.ArrayType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, vv)
 									case types.StarType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, vv)
 									case types.MapType:
-										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, vv)
 									default:
 										panic(fmt.Sprintf("%v", to(t)))
@@ -251,24 +246,6 @@ func (e *Env) loadPkg(path string) {
 	by := Must(content.ReadFile(stdFilePath))
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, final, by)
-}
-
-func (e *Env) loadPkgSync() {
-	e.DefinePkg("sync", "sync")
-	e.Define(nil, "sync.Mutex", types.StructType{Name: "Mutex", Pkg: "sync"})
-	e.DefineFnNative("sync.Mutex.Lock", "func ()")
-	e.DefineFnNative("sync.Mutex.Unlock", "func ()")
-}
-
-func (e *Env) loadPkgBufio() {
-	e.DefinePkg("bufio", "bufio")
-	e.Define(nil, "bufio.Reader", types.StructType{Name: "Reader", Pkg: "bufio"})
-	e.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
-}
-
-func (e *Env) loadPkgIter() {
-	e.DefinePkg("iter", "iter")
-	e.DefineFnNative("iter.Seq", "func [V any](yield func(V) bool)")
 }
 
 func (e *Env) loadPkgAgl() {
