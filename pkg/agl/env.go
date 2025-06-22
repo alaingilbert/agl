@@ -233,6 +233,9 @@ func defineFromSrc(env *Env, path string, src []byte) {
 				switch spec := s.(type) {
 				case *ast.TypeSpec:
 					switch v := spec.Type.(type) {
+					case *ast.Ident:
+						t := env.GetType2(v)
+						env.Define(nil, pkgName+"."+spec.Name.Name, t)
 					case *ast.StructType:
 						env.Define(nil, pkgName+"."+spec.Name.Name, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
@@ -267,7 +270,6 @@ func (e *Env) loadPkgNetHttp() {
 	by := Must(content.ReadFile(stdFilePath))
 	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, path, by)
-	e.Define(nil, "http.MethodGet", types.StringType{})
 }
 
 func (e *Env) loadPkgOs() {

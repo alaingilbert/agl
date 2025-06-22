@@ -2,6 +2,8 @@ package http
 
 import "net/url"
 
+type MethodGet string
+
 type Client struct {
 }
 
