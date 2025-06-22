@@ -1,0 +1,39 @@
+package fs
+
+type FS interface {}
+type File interface {}
+type DirEntry interface {}
+type FileInfo interface {}
+type FileMode uint32
+type GlobFS interface {}
+type PathError struct {}
+type ReadDirFS interface {}
+type ReadDirFile interface {}
+type ReadFileFS interface {}
+type StatFS interface {}
+type SubFS interface {}
+//type WalkDirFunc func(path string, d DirEntry, err error) error
+
+func FormatDirEntry(dir fs.DirEntry) string
+func FormatFileInfo(info fs.FileInfo) string
+func Glob(fsys fs.FS, pattern string) ([]string)!
+func ReadFile(fsys fs.FS, name string) ([]byte)!
+func ValidPath(name string) bool
+//func WalkDir(fsys fs.FS, root string, fn fs.WalkDirFunc) error
+
+func FileInfoToDirEntry(info fs.FileInfo) fs.DirEntry
+func ReadDir(fsys fs.FS, name string) ([]fs.DirEntry)!
+
+func Sub(fsys fs.FS, dir string) fs.FS!
+
+func Stat(fsys fs.FS, name string) fs.FileInfo!
+
+func (m FileMode) IsDir() bool
+func (m FileMode) IsRegular() bool
+func (m FileMode) Perm() fs.FileMode
+func (m FileMode) String() string
+func (m FileMode) Type() fs.FileMode
+
+//func (e *PathError) Error() string
+func (e *PathError) Timeout() bool
+func (e *PathError) Unwrap() error
