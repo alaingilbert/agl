@@ -264,10 +264,7 @@ var content embed.FS
 
 func (e *Env) loadPkgNetHttp() {
 	stdFilePath := "std/net/http/http.agl"
-	by, err := content.ReadFile(stdFilePath)
-	if err != nil {
-		panic(err)
-	}
+	by := Must(content.ReadFile(stdFilePath))
 	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, path, by)
 	e.Define(nil, "http.MethodGet", types.StringType{})
