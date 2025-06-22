@@ -140,7 +140,9 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "float32", types.TypeType{W: types.F32Type{}})
 	e.Define(nil, "float64", types.TypeType{W: types.F64Type{}})
 
+	e.Define(nil, "uintptr", types.TypeType{W: types.UintptrType{}})
 	e.Define(nil, "complex128", types.TypeType{W: types.Complex128Type{}})
+	e.Define(nil, "complex64", types.TypeType{W: types.Complex64Type{}})
 	e.Define(nil, "void", types.TypeType{W: types.VoidType{}})
 	e.Define(nil, "any", types.TypeType{W: types.AnyType{}})
 	e.Define(nil, "bool", types.TypeType{W: types.BoolType{}})
