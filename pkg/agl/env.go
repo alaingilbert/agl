@@ -212,6 +212,9 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					case *ast.MapType:
 						t := env.GetType2(v)
 						env.Define(nil, specName, t)
+					case *ast.StarExpr:
+						t := env.GetType2(v)
+						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
 						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 					case *ast.StructType:
