@@ -1,0 +1,4 @@
+package strconv
+
+func Itoa(int) string
+func Atoi(string) int!

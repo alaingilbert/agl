@@ -265,30 +265,6 @@ func (e *Env) loadPkg(path string) {
 	defineFromSrc(e, final, by)
 }
 
-func (e *Env) loadPkgStrings() {
-	e.DefinePkg("strings", "strings")
-	e.Define(nil, "strings.Reader", types.StructType{Pkg: "strings", Name: "Reader"})
-	e.Define(nil, "strings.Builder", types.StructType{Pkg: "strings", Name: "Builder"})
-	e.DefineFnNative("strings.Join", "func (elems []string, sep string) string")
-	e.DefineFnNative("strings.NewReader", "func (s string) *strings.Reader")
-	e.DefineFnNative("strings.Reader.Read", "func (b []byte) int!")
-	e.DefineFnNative("strings.Builder.Write", "func (p []byte) int!")
-	e.DefineFnNative("strings.Builder.WriteByte", "func (c byte) !")
-	e.DefineFnNative("strings.Builder.WriteRune", "func (r rune) int!")
-	e.DefineFnNative("strings.Builder.WriteString", "func (s string) int!")
-	e.DefineFnNative("strings.Builder.String", "func () string")
-	e.DefineFnNative("strings.Builder.Reset", "func ()")
-	e.DefineFnNative("strings.Builder.Len", "func () int")
-	e.DefineFnNative("strings.Builder.Grow", "func (n int)")
-	e.DefineFnNative("strings.Builder.Cap", "func () int")
-}
-
-func (e *Env) loadPkgStrconv() {
-	e.DefinePkg("strconv", "strconv")
-	e.DefineFnNative("strconv.Itoa", "func(int) string")
-	e.DefineFnNative("strconv.Atoi", "func(string) int!")
-}
-
 func (e *Env) loadPkgMath() {
 	e.DefinePkg("math", "math")
 	e.Define(nil, "math.Sqrt2", types.F64Type{})
@@ -474,8 +450,8 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("net/http")
 	e.loadPkg("os")
 	e.loadPkg("time")
-	e.loadPkgStrings()
-	e.loadPkgStrconv()
+	e.loadPkg("strings")
+	e.loadPkg("strconv")
 	e.loadPkgMath()
 	e.loadPkgSync()
 	e.loadPkgErrors()

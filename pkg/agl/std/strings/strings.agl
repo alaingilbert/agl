@@ -1,0 +1,16 @@
+package strings
+
+type Reader struct {}
+type Builder struct {}
+func Join(elems []string, sep string) string
+func NewReader(s string) *strings.Reader
+func (Reader) Read(b []byte) int!
+func (Builder) Write(p []byte) int!
+func (Builder) WriteByte(c byte) !
+func (Builder) WriteRune(r rune) int!
+func (Builder) WriteString(s string) int!
+func (Builder) String() string
+func (Builder) Reset()
+func (Builder) Len() int
+func (Builder) Grow(n int)
+func (Builder) Cap() int
