@@ -1,3 +1,39 @@
 package log
 
 type Logger struct {}
+
+func Fatal(v ...any)
+func Fatalf(format string, v ...any)
+func Fatalln(v ...any)
+func Flags() int
+func Output(calldepth int, s string) error
+func Panic(v ...any)
+func Panicf(format string, v ...any)
+func Panicln(v ...any)
+func Prefix() string
+func Print(v ...any)
+func Printf(format string, v ...any)
+func Println(v ...any)
+func SetFlags(flag int)
+func SetOutput(w io.Writer)
+func SetPrefix(prefix string)
+func Writer() io.Writer
+
+func Default() *log.Logger
+func New(out io.Writer, prefix string, flag int) *log.Logger
+func (l *Logger) Fatal(v ...any)
+func (l *Logger) Fatalf(format string, v ...any)
+func (l *Logger) Fatalln(v ...any)
+func (l *Logger) Flags() int
+func (l *Logger) Output(calldepth int, s string) error
+func (l *Logger) Panic(v ...any)
+func (l *Logger) Panicf(format string, v ...any)
+func (l *Logger) Panicln(v ...any)
+func (l *Logger) Prefix() string
+func (l *Logger) Print(v ...any)
+func (l *Logger) Printf(format string, v ...any)
+func (l *Logger) Println(v ...any)
+func (l *Logger) SetFlags(flag int)
+func (l *Logger) SetOutput(w io.Writer)
+func (l *Logger) SetPrefix(prefix string)
+func (l *Logger) Writer() io.Writer
