@@ -254,11 +254,6 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
-func (e *Env) loadPkgUrl() {
-	e.DefinePkg("url", "net/url")
-	e.Define(nil, "url.Values", types.MapType{K: types.StringType{}, V: types.StringType{}})
-}
-
 //go:embed std/*
 var content embed.FS
 
@@ -475,7 +470,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgIo()
 	e.loadPkgFmt()
 	e.loadPkgBufio()
-	e.loadPkgUrl()
+	e.loadPkg("net/url")
 	e.loadPkg("net/http")
 	e.loadPkg("os")
 	e.loadPkg("time")
