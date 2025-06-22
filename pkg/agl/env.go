@@ -226,6 +226,18 @@ func defineFromSrc(env *Env, path string, src []byte) {
 									case types.StructType:
 										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 										env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
+									case types.TypeType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, vv.W)
+									case types.ArrayType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, vv)
+									case types.StarType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, vv)
+									case types.MapType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, vv)
 									default:
 										panic(fmt.Sprintf("%v", to(t)))
 									}
@@ -268,89 +280,6 @@ func (e *Env) loadPkgBufio() {
 func (e *Env) loadPkgIter() {
 	e.DefinePkg("iter", "iter")
 	e.DefineFnNative("iter.Seq", "func [V any](yield func(V) bool)")
-}
-
-var astIdent = types.StructType{Pkg: "ast", Name: "Ident"}
-var astStarIden = types.StarType{X: astIdent}
-
-func (e *Env) loadPkgGoAst() {
-	astDecl := types.InterfaceType{Pkg: "ast", Name: "Decl"}
-	astDecls := types.ArrayType{Elt: astDecl}
-	astExpr := types.InterfaceType{Pkg: "ast", Name: "Expr"}
-	astFieldNames := types.ArrayType{Elt: astStarIden}
-	astField := types.StructType{Pkg: "ast", Name: "Field"}
-	astFieldListList := types.ArrayType{Elt: types.StarType{X: astField}}
-	astFieldList := types.StructType{Pkg: "ast", Name: "FieldList"}
-	astStarFieldList := types.StarType{X: astFieldList}
-	astFuncType := types.StructType{Pkg: "ast", Name: "FuncType"}
-	astSelectorExpr := types.StructType{Pkg: "ast", Name: "SelectorExpr"}
-	astStarExpr := types.StructType{Pkg: "ast", Name: "StarExpr"}
-	astFuncDecl := types.StructType{Pkg: "ast", Name: "FuncDecl"}
-	astSpec := types.InterfaceType{Pkg: "ast", Name: "Spec"}
-	astGenDecl := types.StructType{Pkg: "ast", Name: "GenDecl"}
-	astFile := types.StructType{Pkg: "ast", Name: "File"}
-	astTypeSpec := types.StructType{Pkg: "ast", Name: "TypeSpec"}
-	astStructType := types.StructType{Pkg: "ast", Name: "StructType"}
-	astInterfaceType := types.StructType{Pkg: "ast", Name: "InterfaceType"}
-	e.DefinePkg("ast", "go/ast")
-	e.Define(nil, "ast.Decl", astDecl)
-	e.Define(nil, "ast.Expr", astExpr)
-	e.Define(nil, "ast.Field", astField)
-	e.Define(nil, "ast.Field.Names", astFieldNames)
-	e.Define(nil, "ast.Field.Type", astExpr)
-	e.Define(nil, "ast.FieldList", astFieldList)
-	e.Define(nil, "ast.FieldList.List", astFieldListList)
-	e.Define(nil, "ast.File", astFile)
-	e.Define(nil, "ast.File.Decls", astDecls)
-	e.Define(nil, "ast.FuncDecl", astFuncDecl)
-	e.Define(nil, "ast.FuncDecl.Name", astStarIden)
-	e.Define(nil, "ast.FuncDecl.Recv", astStarFieldList)
-	e.Define(nil, "ast.FuncDecl.Type", types.StarType{X: astFuncType})
-	e.Define(nil, "ast.GenDecl", astGenDecl)
-	e.Define(nil, "ast.GenDecl.Specs", types.ArrayType{Elt: astSpec})
-	e.Define(nil, "ast.FuncType", astFuncType)
-	e.Define(nil, "ast.FuncType.Params", astStarFieldList)
-	e.Define(nil, "ast.FuncType.Results", astStarFieldList)
-	e.Define(nil, "ast.Ident", astIdent)
-	e.Define(nil, "ast.Ident.Name", types.StringType{})
-	e.Define(nil, "ast.SelectorExpr", astSelectorExpr)
-	e.Define(nil, "ast.SelectorExpr.X", astExpr)
-	e.Define(nil, "ast.SelectorExpr.Sel", astIdent)
-	e.Define(nil, "ast.Spec", astSpec)
-	e.Define(nil, "ast.StarExpr", astStarExpr)
-	e.Define(nil, "ast.StarExpr.X", astExpr)
-	e.Define(nil, "ast.StructType", astStructType)
-	e.Define(nil, "ast.StructType.Fields", astStarFieldList)
-	e.Define(nil, "ast.TypeSpec", astTypeSpec)
-	e.Define(nil, "ast.TypeSpec.Name", astStarIden)
-	e.Define(nil, "ast.TypeSpec.Type", astExpr)
-	e.Define(nil, "ast.InterfaceType", astInterfaceType)
-	e.Define(nil, "ast.InterfaceType.Methods", astStarFieldList)
-}
-
-func (e *Env) loadPkgGoParser() {
-	e.DefinePkg("parser", "go/parser")
-	e.Define(nil, "parser.AllErrors", types.UintType{})
-	e.DefineFnNative("parser.ParseFile", "func (fset *token.FileSet, filename string, src any, mode Mode) (*ast.File)!")
-}
-
-func (e *Env) loadPkgGoToken() {
-	e.DefinePkg("token", "go/token")
-	e.Define(nil, "token.FileSet", types.StructType{Pkg: "token", Name: "FileSet"})
-	e.DefineFnNative("token.NewFileSet", "func () *token.FileSet")
-}
-
-func (e *Env) loadPkgGoTypes() {
-	typesImporter := types.InterfaceType{Pkg: "types", Name: "Importer"}
-	e.DefinePkg("types", "go/types")
-	e.Define(nil, "types.Config", types.StructType{Pkg: "types", Name: "Config"})
-	e.Define(nil, "types.Importer", typesImporter)
-	e.Define(nil, "types.Config.Importer", typesImporter)
-	e.Define(nil, "types.Info", types.StructType{Pkg: "types", Name: "Info"})
-	e.Define(nil, "types.Info.Defs", types.MapType{K: astStarIden, V: types.InterfaceType{Pkg: "types", Name: "Object"}})
-	e.Define(nil, "types.Object", types.InterfaceType{Pkg: "types", Name: "Object"})
-	e.Define(nil, "types.Package", types.InterfaceType{Pkg: "types", Name: "Package"})
-	e.DefineFnNative("types.Config.Check", "func (path string, fset *token.FileSet, files []*ast.File, info *types.Info) (*types.Package)!")
 }
 
 func (e *Env) loadPkgAgl() {
@@ -409,10 +338,10 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("runtime")
 	e.loadPkg("iter")
 	e.loadPkg("path")
-	e.loadPkgGoAst()
-	e.loadPkgGoToken()
-	e.loadPkgGoParser()
-	e.loadPkgGoTypes()
+	e.loadPkg("go/ast")
+	e.loadPkg("go/token")
+	e.loadPkg("go/parser")
+	e.loadPkg("go/types")
 	e.loadPkg("path/filepath")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
