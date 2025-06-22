@@ -313,6 +313,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("reflect")
 	e.loadPkg("runtime")
 	e.loadPkg("iter")
+	e.loadPkg("bytes")
 	e.loadPkg("path")
 	e.loadPkg("go/ast")
 	e.loadPkg("go/token")
