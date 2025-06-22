@@ -202,6 +202,12 @@ func (b BoolType) GoStr() string      { return "bool" }
 func (b BoolType) String() string     { return "bool" }
 func (b BoolType) StringFull() string { return b.String() }
 
+type RuneType struct{ W Type }
+
+func (r RuneType) GoStr() string      { return "RuneType" }
+func (r RuneType) String() string     { return "RuneType" }
+func (r RuneType) StringFull() string { return "RuneType" }
+
 type ByteType struct{ W Type }
 
 func (b ByteType) GoStr() string      { return "byte" }

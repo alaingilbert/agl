@@ -1,4 +1,36 @@
 package strconv
 
+func AppendBool(dst []byte, b bool) []byte
+func AppendFloat(dst []byte, f float64, fmt byte, prec, bitSize int) []byte
+func AppendInt(dst []byte, i int64, base int) []byte
+func AppendQuote(dst []byte, s string) []byte
+func AppendQuoteRune(dst []byte, r rune) []byte
+func AppendQuoteRuneToASCII(dst []byte, r rune) []byte
+func AppendQuoteRuneToGraphic(dst []byte, r rune) []byte
+func AppendQuoteToASCII(dst []byte, s string) []byte
+func AppendQuoteToGraphic(dst []byte, s string) []byte
+func AppendUint(dst []byte, i uint64, base int) []byte
 func Itoa(int) string
 func Atoi(string) int!
+func ParseBool(str string) bool!
+//func ParseComplex(s string, bitSize int) complex128!
+func ParseFloat(s string, bitSize int) f64!
+func ParseInt(s string, base int, bitSize int) i64!
+func ParseUint(s string, base int, bitSize int) u64!
+func CanBackquote(s string) bool
+func FormatBool(b bool) string
+//func FormatComplex(c complex128, fmt byte, prec, bitSize int) string
+func FormatFloat(f float64, fmt byte, prec, bitSize int) string
+func FormatInt(i int64, base int) string
+func FormatUint(i uint64, base int) string
+func IsGraphic(r rune) bool
+func IsPrint(r rune) bool
+func Quote(s string) string
+func QuoteRune(r rune) string
+func QuoteRuneToASCII(r rune) string
+func QuoteRuneToGraphic(r rune) string
+func QuoteToASCII(s string) string
+func QuoteToGraphic(s string) string
+func QuotedPrefix(s string) string!
+func Unquote(s string) string!
+func UnquoteChar(s string, quote byte) (rune, bool, string)!
