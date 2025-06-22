@@ -1,0 +1,33 @@
+package os
+
+type FileMode u32
+
+type FileInfo interface {
+}
+
+func ReadFile(name string) ([]byte)! {}
+func WriteFile(name string, data []byte, perm os.FileMode) ! {}
+func Chdir(string) ! {}
+func Chown(name string, uid, gid int) !
+func Mkdir(name string, perm os.FileMode) !
+func MkdirAll(path string, perm os.FileMode) !
+func MkdirTemp(dir, pattern string) string!
+func Remove(name string) !
+func RemoveAll(path string) !
+func Rename(oldpath, newpath string) !
+func SameFile(fi1, fi2 os.FileInfo) bool
+func TempDir() string
+func Truncate(name string, size int64) !
+func Setenv(key, value string) !
+func Unsetenv(key string) !
+func UserCacheDir() string!
+func UserConfigDir() string!
+func UserHomeDir() string!
+func Getwd() string!
+func Hostname() string!
+func IsExist(err error) bool
+func IsNotExist(err error) bool
+func IsPathSeparator(c uint8) bool
+func IsPermission(err error) bool
+func IsTimeout(err error) bool
+func LookupEnv(key string) string?
