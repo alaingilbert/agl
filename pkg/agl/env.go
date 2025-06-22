@@ -316,6 +316,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("math/big")
 	e.loadPkg("crypto/rand")
 	e.loadPkg("errors")
+	e.loadPkg("unsafe")
 	e.loadPkg("sync")
 	e.loadPkg("sync/atomic")
 	e.loadPkg("log")
