@@ -205,11 +205,17 @@ func defineFromSrc(env *Env, src string) {
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
+			fullName := decl.Name.Name
+			if decl.Recv != nil {
+				recvName := decl.Recv.List[0].Type.(*ast.Ident).Name
+				fullName = recvName + "." + fullName
+			}
+			fullName = pkgName + "." + fullName
 			ft := funcTypeToFuncType("", decl.Type, env, true)
 			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
-				env.DefineFn(pkgName+"."+decl.Name.Name, ft.String())
+				env.DefineFn(fullName, ft.String())
 			} else {
-				env.DefineFnNative(pkgName+"."+decl.Name.Name, ft.String())
+				env.DefineFnNative(fullName, ft.String())
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
@@ -240,12 +246,17 @@ func defineFromSrc(env *Env, src string) {
 func (e *Env) loadPkgNetHttp() {
 	src := `package http
 
+type Client struct {
+}
+
 type Response struct {
 	Body io.ReadCloser
 }
 
 type Request struct {
 }
+
+func (c Client) Do(req *http.Request) (*http.Response)! {}
 
 func Get (url string) (*http.Response)! {}
 
@@ -257,8 +268,6 @@ func NewRequest(method, url string, body (io.Reader)?) (*http.Request)! {}
 	e.DefinePkg("http", "net/http")
 	defineFromSrc(e, src)
 	e.Define(nil, "http.MethodGet", types.StringType{})
-	e.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
-	e.DefineFnNative("http.Client.Do", "func (req *http.Request) (*http.Response)!")
 }
 
 func (e *Env) loadPkgOs() {
