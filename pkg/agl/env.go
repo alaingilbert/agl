@@ -215,6 +215,9 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					case *ast.StarExpr:
 						t := env.GetType2(v)
 						env.Define(nil, specName, t)
+					case *ast.ArrayType:
+						t := env.GetType2(v)
+						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
 						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 					case *ast.StructType:
@@ -332,6 +335,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("runtime")
 	e.loadPkg("iter")
 	e.loadPkg("bytes")
+	e.loadPkg("encoding/json")
 	e.loadPkg("path")
 	e.loadPkg("go/ast")
 	e.loadPkg("go/token")
