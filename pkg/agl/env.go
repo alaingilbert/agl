@@ -262,25 +262,12 @@ func (e *Env) loadPkgUrl() {
 //go:embed std/*
 var content embed.FS
 
-func (e *Env) loadPkgNetHttp() {
-	stdFilePath := "std/net/http/http.agl"
+func (e *Env) loadPkg(path string) {
+	f := filepath.Base(path)
+	stdFilePath := filepath.Join("std", path, f+".agl")
 	by := Must(content.ReadFile(stdFilePath))
-	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, path, by)
-}
-
-func (e *Env) loadPkgOs() {
-	stdFilePath := "std/os/os.agl"
-	by := Must(content.ReadFile(stdFilePath))
-	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, path, by)
-}
-
-func (e *Env) loadPkgTime() {
-	stdFilePath := "std/time/time.agl"
-	by := Must(content.ReadFile(stdFilePath))
-	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, path, by)
+	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
+	defineFromSrc(e, final, by)
 }
 
 func (e *Env) loadPkgStrings() {
@@ -489,9 +476,9 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgFmt()
 	e.loadPkgBufio()
 	e.loadPkgUrl()
-	e.loadPkgNetHttp()
-	e.loadPkgOs()
-	e.loadPkgTime()
+	e.loadPkg("net/http")
+	e.loadPkg("os")
+	e.loadPkg("time")
 	e.loadPkgStrings()
 	e.loadPkgStrconv()
 	e.loadPkgMath()
