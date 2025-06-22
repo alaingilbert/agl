@@ -6,6 +6,7 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -195,19 +196,28 @@ func (e *Env) loadPkgIo() {
 	e.DefineFnNative("io.ReadCloser.Close", "func () !")
 }
 
-func defineFromSrc(env *Env, src string) {
+func defineFromSrc(env *Env, path, src string) {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		panic("")
 	}
 	pkgName := node.Name.Name
+	fullPath := filepath.Join(path, pkgName)
+	env.DefinePkg(pkgName, fullPath)
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
 			fullName := decl.Name.Name
 			if decl.Recv != nil {
-				recvName := decl.Recv.List[0].Type.(*ast.Ident).Name
+				t := decl.Recv.List[0].Type
+				var recvName string
+				switch v := t.(type) {
+				case *ast.Ident:
+					recvName = v.Name
+				case *ast.StarExpr:
+					recvName = v.X.(*ast.Ident).Name
+				}
 				fullName = recvName + "." + fullName
 			}
 			fullName = pkgName + "." + fullName
@@ -243,8 +253,15 @@ func defineFromSrc(env *Env, src string) {
 	}
 }
 
+func (e *Env) loadPkgUrl() {
+	e.DefinePkg("url", "net/url")
+	e.Define(nil, "url.Values", types.MapType{K: types.StringType{}, V: types.StringType{}})
+}
+
 func (e *Env) loadPkgNetHttp() {
 	src := `package http
+
+import "net/url"
 
 type Client struct {
 }
@@ -256,7 +273,11 @@ type Response struct {
 type Request struct {
 }
 
-func (c Client) Do(req *http.Request) (*http.Response)! {}
+func (c *Client) Do(req *http.Request) (*http.Response)! {}
+func (c *Client) Get(url string) (*http.Response)! {}
+func (c *Client) Post(url, contentType string, body io.Reader) (*http.Response)! {}
+func (c *Client) PostForm(url string, data url.Values) (*http.Response)! {}
+func (c *Client) Head(url string) (*http.Response)! {}
 
 func Get (url string) (*http.Response)! {}
 
@@ -265,8 +286,8 @@ func ReadRequest(b *bufio.Reader) (*http.Request)! {}
 // agl:wrapped
 func NewRequest(method, url string, body (io.Reader)?) (*http.Request)! {}
 `
-	e.DefinePkg("http", "net/http")
-	defineFromSrc(e, src)
+	path := "net"
+	defineFromSrc(e, path, src)
 	e.Define(nil, "http.MethodGet", types.StringType{})
 }
 
@@ -517,6 +538,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgIo()
 	e.loadPkgFmt()
 	e.loadPkgBufio()
+	e.loadPkgUrl()
 	e.loadPkgNetHttp()
 	e.loadPkgOs()
 	e.loadPkgTime()
