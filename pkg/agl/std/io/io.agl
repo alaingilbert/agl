@@ -4,7 +4,13 @@ type EOF struct{}
 type Reader struct{}
 type ReadCloser interface{}
 type RuneReader interface{}
+type Seeker interface{}
+type StringWriter interface{}
+type WriteCloser interface{}
+type WriteSeeker interface{}
+type Writer interface{}
 
+func MultiWriter(writers ...io.Writer) io.Writer
 func ReadAll(r io.Reader) ([]byte)!
 func ReadFull(r io.Reader, buf []byte) int!
 func WriteString(w io.Writer, s string) int!
