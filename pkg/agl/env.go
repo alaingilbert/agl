@@ -277,15 +277,10 @@ func (e *Env) loadPkgOs() {
 }
 
 func (e *Env) loadPkgTime() {
-	e.DefinePkg("time", "time")
-	e.Define(nil, "time.Millisecond", types.I64Type{})
-	e.Define(nil, "time.Second", types.I64Type{})
-	e.Define(nil, "time.Duration", types.I64Type{})
-	e.Define(nil, "time.Time", types.StructType{Pkg: "time", Name: "Time"})
-	e.DefineFnNative("time.Sleep", "func (time.Duration)")
-	e.DefineFnNative("time.Now", "func () time.Time")
-	e.DefineFnNative("time.Tick", "func (d time.Duration) <-chan time.Time")
-	e.DefineFnNative("time.After", "func (d time.Duration) <-chan time.Time")
+	stdFilePath := "std/time/time.agl"
+	by := Must(content.ReadFile(stdFilePath))
+	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
+	defineFromSrc(e, path, by)
 }
 
 func (e *Env) loadPkgStrings() {
