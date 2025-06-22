@@ -93,6 +93,17 @@ func Cast[T any](origin any) (T, bool) {
 	return val, ok
 }
 
+// NotNil panics if the input is nil.
+func NotNil[T any](v T) T {
+	if vi, ok := any(v).(interface{ IsNil() bool }); ok && vi.IsNil() {
+		panic("value is nil")
+	}
+	if any(v) == nil {
+		panic("value is nil")
+	}
+	return v
+}
+
 // Must ...
 func Must[T any](v T, err error) T {
 	if err != nil {

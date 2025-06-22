@@ -13,13 +13,13 @@ func AppendUint(dst []byte, i uint64, base int) []byte
 func Itoa(int) string
 func Atoi(string) int!
 func ParseBool(str string) bool!
-//func ParseComplex(s string, bitSize int) complex128!
+func ParseComplex(s string, bitSize int) complex128!
 func ParseFloat(s string, bitSize int) f64!
 func ParseInt(s string, base int, bitSize int) i64!
 func ParseUint(s string, base int, bitSize int) u64!
 func CanBackquote(s string) bool
 func FormatBool(b bool) string
-//func FormatComplex(c complex128, fmt byte, prec, bitSize int) string
+func FormatComplex(c complex128, fmt byte, prec, bitSize int) string
 func FormatFloat(f float64, fmt byte, prec, bitSize int) string
 func FormatInt(i int64, base int) string
 func FormatUint(i uint64, base int) string
