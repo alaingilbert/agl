@@ -318,6 +318,8 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("errors")
 	e.loadPkg("sync")
 	e.loadPkg("sync/atomic")
+	e.loadPkg("log")
+	e.loadPkg("log/slog")
 	e.loadPkg("reflect")
 	e.loadPkg("runtime")
 	e.loadPkg("iter")
