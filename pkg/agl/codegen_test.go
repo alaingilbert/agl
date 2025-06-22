@@ -6287,6 +6287,35 @@ func main() {
 	tassert.PanicsWithError(t, "4:2: Assignment count mismatch: 2 = 1", testCodeGenFn(src))
 }
 
+func TestCodeGen229(t *testing.T) {
+	src := `package main
+type ITest interface {
+	Test()
+}
+type Test struct {
+}
+func (t *Test) Test() {
+}
+func main() {
+	var t ITest = Test{}
+	t.Test()
+}`
+	expected := `package main
+type ITest interface {
+	Test()
+}
+type Test struct {
+}
+func (t *Test) Test() {
+}
+func main() {
+	var t ITest = Test{}
+	t.Test()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
