@@ -162,24 +162,6 @@ func (e *Env) loadCoreFunctions() {
 
 func (e *Env) loadPkgFmt() {
 	e.DefinePkg("fmt", "fmt")
-	e.DefineFnNative("fmt.Println", "func (a ...any) int!")
-	e.DefineFnNative("fmt.Printf", "func (format string, a ...any) int!")
-	e.DefineFnNative("fmt.Errorf", "func (format string, a ...any) error")
-	e.DefineFnNative("fmt.Sprintf", "func (format string, a ...any) string")
-	e.DefineFnNative("fmt.Scan", "func (a ...any) int!")
-	e.DefineFnNative("fmt.Scanf", "func (format string, a ...any) int!")
-	e.DefineFnNative("fmt.Scanln", "func (a ...any) int!")
-	e.DefineFnNative("fmt.Sprint", "func (a ...any) string")
-	e.DefineFnNative("fmt.Sprintln", "func (a ...any) string")
-	e.DefineFnNative("fmt.Sscan", "func (str string, a ...any) int!")
-	e.DefineFnNative("fmt.Sscanf", "func (str string, format string, a ...any) int!")
-	e.DefineFnNative("fmt.Sscanln", "func (str string, a ...any) int!")
-	e.DefineFnNative("fmt.Fprint", "func (w io.Writer, a ...any) int!")
-	e.DefineFnNative("fmt.Fprintf", "func (w io.Writer, format string, a ...any) int!")
-	e.DefineFnNative("fmt.Fprintln", "func (w io.Writer, a ...any) int!")
-	e.DefineFnNative("fmt.Fscan", "func (r io.Reader, a ...any) int!")
-	e.DefineFnNative("fmt.Fscanf", "func (r io.Reader, format string, a ...any) int!")
-	e.DefineFnNative("fmt.Fscanln", "func (r io.Reader, a ...any) int!")
 }
 
 func (e *Env) loadPkgIo() {
@@ -187,15 +169,6 @@ func (e *Env) loadPkgIo() {
 	e.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
 	e.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
 	e.Define(nil, "io.ReadCloser", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
-	e.DefineFnNative("io.ReadAll", "func (r io.Reader) ([]byte)!")
-	e.DefineFnNative("io.ReadFull", "func (r io.Reader, buf []byte) int!")
-	e.DefineFnNative("io.WriteString", "func (w io.Writer, s string) int!")
-	e.DefineFnNative("io.CopyBuffer", "func (dst io.Writer, src io.Reader, buf []byte) int64!")
-	e.DefineFnNative("io.CopyN", "func (dst io.Writer, src io.Reader, n int64) int64!")
-	e.DefineFnNative("io.Copy", "func (dst io.Writer, src io.Reader) int64!")
-	e.DefineFnNative("io.Pipe", "func () (*io.PipeReader, *io.PipeWriter)")
-	e.DefineFnNative("io.ReadCloser.Read", "func (p []byte) int!")
-	e.DefineFnNative("io.ReadCloser.Close", "func () !")
 }
 
 func defineFromSrc(env *Env, path string, src []byte) {
@@ -265,23 +238,11 @@ func (e *Env) loadPkg(path string) {
 	defineFromSrc(e, final, by)
 }
 
-func (e *Env) loadPkgMath() {
-	e.DefinePkg("math", "math")
-	e.Define(nil, "math.Sqrt2", types.F64Type{})
-	e.Define(nil, "math.Pi", types.F64Type{})
-	e.DefineFnNative("math.Sqrt", "func (x float64) float64")
-}
-
 func (e *Env) loadPkgSync() {
 	e.DefinePkg("sync", "sync")
 	e.Define(nil, "sync.Mutex", types.StructType{Name: "Mutex", Pkg: "sync"})
 	e.DefineFnNative("sync.Mutex.Lock", "func ()")
 	e.DefineFnNative("sync.Mutex.Unlock", "func ()")
-}
-
-func (e *Env) loadPkgErrors() {
-	e.DefinePkg("errors", "errors")
-	e.DefineFn("errors.New", "func (text string) error")
 }
 
 func (e *Env) loadPkgBufio() {
@@ -297,22 +258,6 @@ func (e *Env) loadPkgIter() {
 
 func (e *Env) loadPkgPath() {
 	e.DefinePkg("path", "path")
-}
-
-func (e *Env) loadPkgReflect() {
-	e.DefinePkg("reflect", "reflect")
-	e.Define(nil, "reflect.Type", types.InterfaceType{Name: "Type", Pkg: "reflect"})
-	e.DefineFnNative("reflect.TypeOf", "func (any) reflect.Type")
-}
-
-func (e *Env) loadPkgRuntime() {
-	e.DefinePkg("runtime", "runtime")
-	e.DefineFnNative("runtime.GOROOT", "func () string")
-}
-
-func (e *Env) loadPkgCmp() {
-	e.DefinePkg("cmp", "cmp")
-	e.Define(nil, "cmp.Ordered", types.AnyType{})
 }
 
 var astIdent = types.StructType{Pkg: "ast", Name: "Ident"}
@@ -441,24 +386,24 @@ func (e *Env) loadPkgAgl() {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	e.loadPkgCmp()
+	e.loadPkg("cmp")
 	e.loadCoreFunctions()
-	e.loadPkgIo()
-	e.loadPkgFmt()
-	e.loadPkgBufio()
+	e.loadPkg("io")
+	e.loadPkg("fmt")
+	e.loadPkg("bufio")
 	e.loadPkg("net/url")
 	e.loadPkg("net/http")
 	e.loadPkg("os")
 	e.loadPkg("time")
 	e.loadPkg("strings")
 	e.loadPkg("strconv")
-	e.loadPkgMath()
-	e.loadPkgSync()
-	e.loadPkgErrors()
-	e.loadPkgIter()
+	e.loadPkg("math")
+	e.loadPkg("errors")
+	e.loadPkg("sync")
+	e.loadPkg("reflect")
+	e.loadPkg("runtime")
+	e.loadPkg("iter")
 	e.loadPkgPath()
-	e.loadPkgReflect()
-	e.loadPkgRuntime()
 	e.loadPkgGoAst()
 	e.loadPkgGoToken()
 	e.loadPkgGoParser()

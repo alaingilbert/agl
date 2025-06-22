@@ -1,0 +1,7 @@
+package sync
+
+type Mutex struct {
+}
+
+func (Mutex) Lock()
+func (Mutex) Unlock()
