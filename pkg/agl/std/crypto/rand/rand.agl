@@ -1,0 +1,6 @@
+package rand
+
+func Int(rand io.Reader, max *big.Int) (*big.Int)!
+func Prime(rand io.Reader, bits int) (*big.Int)!
+func Read(b []byte) int!
+func Text() string
