@@ -1,0 +1,12 @@
+package time
+
+type Millisecond i64
+type Second i64
+type Duration i64
+type Time struct {
+}
+func Sleep(time.Duration)
+func Now() time.Time
+func Tick(d time.Duration) <-chan time.Time
+func After(d time.Duration) <-chan time.Time
+func (t Time) Format(layout string) string

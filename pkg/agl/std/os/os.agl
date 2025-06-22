@@ -5,8 +5,8 @@ type FileMode u32
 type FileInfo interface {
 }
 
-func ReadFile(name string) ([]byte)! {}
-func WriteFile(name string, data []byte, perm os.FileMode) ! {}
+func ReadFile(name string) ([]byte)!
+func WriteFile(name string, data []byte, perm os.FileMode) !
 func Chdir(string) ! {}
 func Chown(name string, uid, gid int) !
 func Mkdir(name string, perm os.FileMode) !
