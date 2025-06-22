@@ -143,7 +143,7 @@ func (o OptionType) String() string {
 	case ArrayType, StarType:
 		return fmt.Sprintf("(%s)?", o.W.String())
 	default:
-		return fmt.Sprintf("%s?", o.W.String())
+		return fmt.Sprintf("(%s)?", o.W.String())
 	}
 }
 func (o OptionType) StringFull() string {
@@ -151,7 +151,7 @@ func (o OptionType) StringFull() string {
 	case ArrayType, StarType:
 		return fmt.Sprintf("(%s)?", o.W.StringFull())
 	default:
-		return fmt.Sprintf("%s?", o.W.StringFull())
+		return fmt.Sprintf("(%s)?", o.W.StringFull())
 	}
 }
 

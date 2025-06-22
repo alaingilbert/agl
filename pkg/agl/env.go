@@ -195,15 +195,69 @@ func (e *Env) loadPkgIo() {
 	e.DefineFnNative("io.ReadCloser.Close", "func () !")
 }
 
+func defineFromSrc(env *Env, src string) {
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		panic("")
+	}
+	pkgName := node.Name.Name
+	for _, d := range node.Decls {
+		switch decl := d.(type) {
+		case *ast.FuncDecl:
+			ft := funcTypeToFuncType("", decl.Type, env, true)
+			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
+				env.DefineFn(pkgName+"."+decl.Name.Name, ft.String())
+			} else {
+				env.DefineFnNative(pkgName+"."+decl.Name.Name, ft.String())
+			}
+		case *ast.GenDecl:
+			for _, s := range decl.Specs {
+				switch spec := s.(type) {
+				case *ast.TypeSpec:
+					switch v := spec.Type.(type) {
+					case *ast.StructType:
+						env.Define(nil, pkgName+"."+spec.Name.Name, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
+						if v.Fields != nil {
+							for _, field := range v.Fields.List {
+								t := env.GetType2(field.Type)
+								for _, name := range field.Names {
+									switch vv := t.(type) {
+									case types.InterfaceType:
+										fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+										env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func (e *Env) loadPkgNetHttp() {
+	src := `package http
+
+type Response struct {
+	Body io.ReadCloser
+}
+
+type Request struct {
+}
+
+func Get (url string) (*http.Response)! {}
+
+func ReadRequest(b *bufio.Reader) (*http.Request)! {}
+
+// agl:wrapped
+func NewRequest(method, url string, body (io.Reader)?) (*http.Request)! {}
+`
 	e.DefinePkg("http", "net/http")
-	e.Define(nil, "http.Response", types.StructType{Name: "Response", Pkg: "http"})
-	e.Define(nil, "http.Response.Body", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
-	e.Define(nil, "http.Request", types.StructType{Name: "Request", Pkg: "http"})
+	defineFromSrc(e, src)
 	e.Define(nil, "http.MethodGet", types.StringType{})
 	e.Define(nil, "http.Client", types.StructType{Pkg: "http", Name: "Client"})
-	e.DefineFnNative("http.Get", "func (url string) (*http.Response)!")
-	e.DefineFn("http.NewRequest", "func (method, url string, body io.Reader?) (*http.Request)!")
 	e.DefineFnNative("http.Client.Do", "func (req *http.Request) (*http.Response)!")
 }
 
@@ -294,6 +348,7 @@ func (e *Env) loadPkgErrors() {
 
 func (e *Env) loadPkgBufio() {
 	e.DefinePkg("bufio", "bufio")
+	e.Define(nil, "bufio.Reader", types.StructType{Name: "Reader", Pkg: "bufio"})
 	e.DefineFnNative("bufio.ScanBytes", "func (data []byte, atEOF bool) (int, []byte)!")
 }
 
@@ -452,6 +507,7 @@ func (e *Env) loadBaseValues() {
 	e.loadCoreFunctions()
 	e.loadPkgIo()
 	e.loadPkgFmt()
+	e.loadPkgBufio()
 	e.loadPkgNetHttp()
 	e.loadPkgOs()
 	e.loadPkgTime()
@@ -460,7 +516,6 @@ func (e *Env) loadBaseValues() {
 	e.loadPkgMath()
 	e.loadPkgSync()
 	e.loadPkgErrors()
-	e.loadPkgBufio()
 	e.loadPkgIter()
 	e.loadPkgPath()
 	e.loadPkgReflect()
