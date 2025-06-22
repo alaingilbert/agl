@@ -1,0 +1,44 @@
+package sort
+
+//type Interface interface {}
+//type StringSlice []string
+//type IntSlice []int
+//type Float64Slice []float64
+//
+//func (x Float64Slice) Len() int
+//func (x Float64Slice) Less(i, j int) bool
+//func (p Float64Slice) Search(x float64) int
+//func (x Float64Slice) Sort()
+//func (x Float64Slice) Swap(i, j int)
+//
+//func (x IntSlice) Len() int
+//func (x IntSlice) Less(i, j int) bool
+//func (p IntSlice) Search(x int) int
+//func (x IntSlice) Sort()
+//func (x IntSlice) Swap(i, j int)
+//
+//func (x StringSlice) Len() int
+//func (x StringSlice) Less(i, j int) bool
+//func (p StringSlice) Search(x string) int
+//func (x StringSlice) Sort()
+//func (x StringSlice) Swap(i, j int)
+//
+//func Reverse(data sort.Interface) sort.Interface
+
+func Find(n int, cmp func(int) int) (int, bool)
+func Float64s(x []float64)
+func Float64sAreSorted(x []float64) bool
+func Ints(x []int)
+func IntsAreSorted(x []int) bool
+//func IsSorted(data sort.Interface) bool
+func Search(n int, f func(int) bool) int
+func SearchFloat64s(a []float64, x float64) int
+func SearchInts(a []int, x int) int
+func SearchStrings(a []string, x string) int
+func Slice(x any, less func(i, j int) bool)
+func SliceIsSorted(x any, less func(i, j int) bool) bool
+func SliceStable(x any, less func(i, j int) bool)
+//func Sort(data sort.Interface)
+//func Stable(data sort.Interface)
+func Strings(x []string)
+func StringsAreSorted(x []string) bool
