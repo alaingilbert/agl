@@ -1,5 +1,12 @@
 package fmt
 
+type Formatter interface {}
+type GoStringer interface {}
+type Scanner interface {}
+type Stringer interface {}
+type ScanState interface {}
+type State interface {}
+
 func Println(a ...any) int!
 func Printf(format string, a ...any) int!
 func Errorf(format string, a ...any) error
