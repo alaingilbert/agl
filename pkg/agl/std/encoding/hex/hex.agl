@@ -1,0 +1,16 @@
+package hex
+
+type InvalidByteError byte
+
+func AppendDecode(dst, src []byte) ([]byte)!
+func AppendEncode(dst, src []byte) []byte
+func Decode(dst, src []byte) int!
+func DecodeString(s string) ([]byte)!
+func DecodedLen(x int) int
+func Dump(data []byte) string
+func Dumper(w io.Writer) io.WriteCloser
+func Encode(dst, src []byte) int
+func EncodeToString(src []byte) string
+func EncodedLen(n int) int
+func NewDecoder(r io.Reader) io.Reader
+func NewEncoder(w io.Writer) io.Writer
