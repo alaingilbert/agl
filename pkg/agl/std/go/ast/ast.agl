@@ -10,7 +10,7 @@ type File struct {
 }
 type Field struct{
     Names []*ast.Ident
-    Type *ast.FieldList
+    Type ast.Expr
 }
 type FieldList struct {
     List []*ast.Field

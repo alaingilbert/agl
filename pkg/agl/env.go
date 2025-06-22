@@ -160,17 +160,6 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func (e *Env) loadPkgFmt() {
-	e.DefinePkg("fmt", "fmt")
-}
-
-func (e *Env) loadPkgIo() {
-	e.DefinePkg("io", "io")
-	e.Define(nil, "io.EOF", types.StructType{Name: "error", Pkg: "errors"})
-	e.Define(nil, "io.Reader", types.InterfaceType{Name: "Reader", Pkg: "io"})
-	e.Define(nil, "io.ReadCloser", types.InterfaceType{Pkg: "io", Name: "ReadCloser"})
-}
-
 func defineFromSrc(env *Env, path string, src []byte) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
