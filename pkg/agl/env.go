@@ -476,6 +476,12 @@ func (e *Env) GetType(x ast.Node) types.Type {
 	return nil
 }
 
+func panicIfNil(t types.Type, typ any) {
+	if t == nil {
+		panic(fmt.Sprintf("type not found %v %v", typ, to(typ)))
+	}
+}
+
 func (e *Env) GetType2(x ast.Node) types.Type {
 	res := e.getType2Helper(x)
 	if res == nil && e.parent != nil {
@@ -498,27 +504,19 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		return funcTypeToFuncType("", xx, e, false)
 	case *ast.Ellipsis:
 		t := e.GetType2(xx.Elt)
-		if t == nil {
-			panic(fmt.Sprintf("type not found %v %v", xx.Elt, to(xx.Elt)))
-		}
+		panicIfNil(t, xx.Elt)
 		return types.EllipsisType{Elt: t}
 	case *ast.ArrayType:
 		t := e.GetType2(xx.Elt)
-		if t == nil {
-			panic(fmt.Sprintf("type not found %v %v", xx.Elt, to(xx.Elt)))
-		}
+		panicIfNil(t, xx.Elt)
 		return types.ArrayType{Elt: t}
 	case *ast.ResultExpr:
 		t := e.GetType2(xx.X)
-		if t == nil {
-			panic(fmt.Sprintf("type not found %v %v", xx.X, to(xx.X)))
-		}
+		panicIfNil(t, xx.X)
 		return types.ResultType{W: t}
 	case *ast.OptionExpr:
 		t := e.GetType2(xx.X)
-		if t == nil {
-			panic(fmt.Sprintf("type not found %v %v", xx.X, to(xx.X)))
-		}
+		panicIfNil(t, xx.X)
 		return types.OptionType{W: t}
 	case *ast.CallExpr:
 		return nil
