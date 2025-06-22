@@ -1,0 +1,63 @@
+package json
+
+type Decoder struct {}
+type Delim rune
+type Encoder struct {}
+type Marshaler interface {}
+type MarshalerError struct {}
+type Number string
+type RawMessage []byte
+type SyntaxError struct {}
+type Token any
+type UnmarshalFieldError struct {}
+type UnmarshalTypeError struct {}
+type Unmarshaler interface {}
+type UnsupportedTypeError struct {}
+type UnsupportedValueError struct {}
+type InvalidUTF8Error struct {}
+
+func Compact(dst *bytes.Buffer, src []byte) !
+func HTMLEscape(dst *bytes.Buffer, src []byte)
+func Indent(dst *bytes.Buffer, src []byte, prefix, indent string) !
+func Marshal(v any) ([]byte)!
+func MarshalIndent(v any, prefix, indent string) ([]byte)!
+func Unmarshal(data []byte, v any) !
+func Valid(data []byte) bool
+
+func NewDecoder(r io.Reader) *json.Decoder
+func (dec *Decoder) Buffered() io.Reader
+func (dec *Decoder) Decode(v any) !
+func (dec *Decoder) DisallowUnknownFields()
+func (dec *Decoder) InputOffset() int64
+func (dec *Decoder) More() bool
+func (dec *Decoder) Token() json.Token!
+func (dec *Decoder) UseNumber()
+
+func (d Delim) String() string
+
+func NewEncoder(w io.Writer) *json.Encoder
+func (enc *Encoder) Encode(v any) !
+func (enc *Encoder) SetEscapeHTML(on bool)
+func (enc *Encoder) SetIndent(prefix, indent string)
+
+func (e *InvalidUnmarshalError) Error() string
+
+func (e *MarshalerError) Error() string
+func (e *MarshalerError) Unwrap() !
+
+func (n Number) Float64() float64!
+func (n Number) Int64() int64!
+func (n Number) String() string
+
+func (m RawMessage) MarshalJSON() ([]byte)!
+func (m *RawMessage) UnmarshalJSON(data []byte) !
+
+func (e *SyntaxError) Error() string
+
+func (e *UnmarshalFieldError) Error() string
+
+func (e *UnmarshalTypeError) Error() string
+
+func (e *UnsupportedTypeError) Error() string
+
+func (e *UnsupportedValueError) Error() string
