@@ -304,6 +304,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("net/url")
 	e.loadPkg("net/http")
 	e.loadPkg("os")
+	e.loadPkg("sort")
 	e.loadPkg("time")
 	e.loadPkg("strings")
 	e.loadPkg("strconv")
