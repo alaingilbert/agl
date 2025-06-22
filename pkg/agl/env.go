@@ -5,6 +5,8 @@ import (
 	"agl/pkg/parser"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"embed"
+	_ "embed"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -196,15 +198,14 @@ func (e *Env) loadPkgIo() {
 	e.DefineFnNative("io.ReadCloser.Close", "func () !")
 }
 
-func defineFromSrc(env *Env, path, src string) {
+func defineFromSrc(env *Env, path string, src []byte) {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		panic("")
 	}
 	pkgName := node.Name.Name
-	fullPath := filepath.Join(path, pkgName)
-	env.DefinePkg(pkgName, fullPath)
+	env.DefinePkg(pkgName, path)
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -258,36 +259,17 @@ func (e *Env) loadPkgUrl() {
 	e.Define(nil, "url.Values", types.MapType{K: types.StringType{}, V: types.StringType{}})
 }
 
+//go:embed std/*
+var content embed.FS
+
 func (e *Env) loadPkgNetHttp() {
-	src := `package http
-
-import "net/url"
-
-type Client struct {
-}
-
-type Response struct {
-	Body io.ReadCloser
-}
-
-type Request struct {
-}
-
-func (c *Client) Do(req *http.Request) (*http.Response)! {}
-func (c *Client) Get(url string) (*http.Response)! {}
-func (c *Client) Post(url, contentType string, body io.Reader) (*http.Response)! {}
-func (c *Client) PostForm(url string, data url.Values) (*http.Response)! {}
-func (c *Client) Head(url string) (*http.Response)! {}
-
-func Get (url string) (*http.Response)! {}
-
-func ReadRequest(b *bufio.Reader) (*http.Request)! {}
-
-// agl:wrapped
-func NewRequest(method, url string, body (io.Reader)?) (*http.Request)! {}
-`
-	path := "net"
-	defineFromSrc(e, path, src)
+	stdFilePath := "std/net/http/http.agl"
+	by, err := content.ReadFile(stdFilePath)
+	if err != nil {
+		panic(err)
+	}
+	path := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
+	defineFromSrc(e, path, by)
 	e.Define(nil, "http.MethodGet", types.StringType{})
 }
 
