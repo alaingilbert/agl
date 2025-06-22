@@ -414,11 +414,23 @@ func (r BubbleResultType) GoStr() string { return "BubbleResultType" }
 
 func (r BubbleResultType) String() string { return "BubbleResultType" }
 
+type UintptrType struct{}
+
+func (u UintptrType) GoStr() string      { return "uintptr" }
+func (u UintptrType) String() string     { return "uintptr" }
+func (u UintptrType) StringFull() string { return u.String() }
+
 type Complex128Type struct{}
 
 func (c Complex128Type) GoStr() string      { return "complex128" }
 func (c Complex128Type) String() string     { return "complex128" }
 func (c Complex128Type) StringFull() string { return c.String() }
+
+type Complex64Type struct{}
+
+func (c Complex64Type) GoStr() string      { return "complex64" }
+func (c Complex64Type) String() string     { return "complex64" }
+func (c Complex64Type) StringFull() string { return c.String() }
 
 type I64Type struct{}
 

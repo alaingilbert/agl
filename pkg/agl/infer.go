@@ -671,7 +671,10 @@ func isIntType(t types.Type) bool {
 func isNumericType(t types.Type) bool {
 	return isIntType(t) ||
 		TryCast[types.F64Type](t) ||
-		TryCast[types.F32Type](t)
+		TryCast[types.F32Type](t) ||
+		TryCast[types.UintptrType](t) ||
+		TryCast[types.Complex64Type](t) ||
+		TryCast[types.Complex128Type](t)
 }
 
 func (infer *FileInferrer) tryConvertType(e ast.Expr, optType types.Type) {
