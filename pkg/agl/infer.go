@@ -231,12 +231,16 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 		pkgFullPath := trimPrefixPath(pkgPath)
 		entries, err := os.ReadDir(pkgFullPath)
 		if err != nil {
-			//goroot := runtime.GOROOT()
-			//pkgFullPath = filepath.Join(goroot, "src", pkgPath)
-			//entries, err = os.ReadDir(pkgFullPath)
-			//if err != nil {
-			log.Fatalf("failed to laod package %v\n", pkgPath)
-			//}
+			pkgFullPath = filepath.Join("vendor", pkgPath)
+			entries, err = os.ReadDir(pkgFullPath)
+			if err != nil {
+				//goroot := runtime.GOROOT()
+				//pkgFullPath = filepath.Join(goroot, "src", pkgPath)
+				//entries, err = os.ReadDir(pkgFullPath)
+				//if err != nil {
+				log.Fatalf("failed to laod package %v: %v\n", pkgPath, err)
+				//}
+			}
 		}
 		for _, e := range entries {
 			fName := e.Name()
