@@ -2,6 +2,7 @@ package strings
 
 type Reader struct {}
 type Builder struct {}
+type Replacer struct {}
 
 func Clone(s string) string
 func Compare(a, b string) int
@@ -60,7 +61,18 @@ func TrimSpace(s string) string
 func TrimSuffix(s, suffix string) string
 
 func NewReader(s string) *strings.Reader
-func (Reader) Read(b []byte) int!
+func (r *Reader) Len() int
+func (r *Reader) Read(b []byte) int!
+func (r *Reader) ReadAt(b []byte, off int64) int!
+func (r *Reader) ReadByte() byte!
+func (r *Reader) ReadRune() (rune, int)!
+func (r *Reader) Reset(s string)
+func (r *Reader) Seek(offset int64, whence int) i64!
+func (r *Reader) Size() i64
+func (r *Reader) UnreadByte() error
+func (r *Reader) UnreadRune() error
+func (r *Reader) WriteTo(w io.Writer) int64!
+
 func (Builder) Write(p []byte) int!
 func (Builder) WriteByte(c byte) !
 func (Builder) WriteRune(r rune) int!
@@ -70,3 +82,7 @@ func (Builder) Reset()
 func (Builder) Len() int
 func (Builder) Grow(n int)
 func (Builder) Cap() int
+
+func NewReplacer(oldnew ...string) *strings.Replacer
+func (r *Replacer) Replace(s string) string
+func (r *Replacer) WriteString(w io.Writer, s string) int!
