@@ -1,0 +1,6 @@
+package token
+
+type FileSet struct {
+}
+
+func NewFileSet() *token.FileSet
