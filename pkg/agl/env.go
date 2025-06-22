@@ -305,6 +305,7 @@ func (e *Env) loadBaseValues() {
 	e.loadCoreFunctions()
 	e.loadPkg("io")
 	e.loadPkg("fmt")
+	e.loadPkg("encoding/binary")
 	e.loadPkg("bufio")
 	e.loadPkg("net/url")
 	e.loadPkg("net/http")
