@@ -1,7 +1,7 @@
 package unsafe
 
 type ArbitraryType int
-type Pointer *unsafe.ArbitraryType
+//type Pointer *unsafe.ArbitraryType
 type IntegerType int
 
 func Alignof(x unsafe.ArbitraryType) uintptr
@@ -13,4 +13,4 @@ func StringData(str string) *byte
 func Slice(ptr *unsafe.ArbitraryType, len IntegerType) []unsafe.ArbitraryType
 func SliceData(slice []unsafe.ArbitraryType) *unsafe.ArbitraryType
 
-func Add(ptr unsafe.Pointer, len unsafe.IntegerType) unsafe.Pointer
+//func Add(ptr unsafe.Pointer, len unsafe.IntegerType) unsafe.Pointer
