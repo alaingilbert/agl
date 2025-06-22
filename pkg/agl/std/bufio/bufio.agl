@@ -1,0 +1,5 @@
+package bufio
+
+type Reader struct{}
+
+func ScanBytes(data []byte, atEOF bool) (int, []byte)!

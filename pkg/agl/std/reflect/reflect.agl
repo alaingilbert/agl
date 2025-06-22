@@ -1,0 +1,6 @@
+package reflect
+
+type Type interface {
+}
+
+func TypeOf(any) reflect.Type

@@ -1,0 +1,6 @@
+package math
+
+type Sqrt2 f64
+type Pi f64
+
+func Sqrt(x float64) f64
