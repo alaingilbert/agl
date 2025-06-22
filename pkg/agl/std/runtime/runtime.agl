@@ -1,3 +1,10 @@
 package runtime
 
 func GOROOT() string
+func GOMAXPROCS(n int) int
+func NumCPU() int
+func NumCgoCall() i64
+func NumGoroutine() int
+func Breakpoint()
+func Version() string
+func Stack(buf []byte, all bool) int
