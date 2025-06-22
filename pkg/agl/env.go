@@ -62,6 +62,9 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 	var result types.Type
 	if expr.Result != nil {
 		result = env.GetType2(expr.Result)
+		if result == nil {
+			panic(fmt.Sprintf("%s: type not found %v %v", env.fset.Position(expr.Pos()), expr.Result, to(expr.Result)))
+		}
 		if t, ok := result.(types.ResultType); ok {
 			t.Native = native
 			result = t
@@ -143,6 +146,10 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "string", types.TypeType{W: types.StringType{}})
 	e.Define(nil, "byte", types.TypeType{W: types.ByteType{}})
 	e.Define(nil, "rune", types.TypeType{W: types.RuneType{}})
+	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
+	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
+	e.Define(nil, "true", types.BoolValue{V: true})
+	e.Define(nil, "false", types.BoolValue{V: false})
 
 	e.Define(nil, "@LINE", types.StringType{})
 }
@@ -313,11 +320,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("path/filepath")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
-	e.Define(nil, "error", types.TypeType{W: types.AnyType{}})
-	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
-	e.Define(nil, "true", types.BoolValue{V: true})
-	e.Define(nil, "false", types.BoolValue{V: false})
 }
 
 func NewEnv(fset *token.FileSet) *Env {
