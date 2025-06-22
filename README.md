@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="agl.png" alt="AGL" width="250"/>
+</p>
+
 # AGL (AnotherGoLang)
 
 ## Description
