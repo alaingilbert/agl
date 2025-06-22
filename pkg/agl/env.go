@@ -308,6 +308,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("strings")
 	e.loadPkg("strconv")
 	e.loadPkg("math")
+	//e.loadPkg("math/rand")
 	e.loadPkg("math/big")
 	e.loadPkg("crypto/rand")
 	e.loadPkg("errors")
