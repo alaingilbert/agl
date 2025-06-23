@@ -1,0 +1,58 @@
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "golang.org/x/net/html"
+	"strings"
+)
+
+func main () {
+    resp := http.Get("https://news.ycombinator.com")!
+	doc := html.Parse(resp.Body)!
+	var titles []string
+	var traverse func(*html.Node)
+	traverse = func (n *html.Node) {
+    	if n.Type == html.ElementNode && n.Data == "tr" {
+        	for _, attr := range n.Attr {
+            	if attr.Key == "class" && attr.Val == "athing submission" {
+                	title := findTitleInAthing(n)
+                	if title != "" {
+                    	titles = append(titles, title)
+                	}
+            	}
+        	}
+    	}
+    	for c := n.FirstChild; c != nil; c = c.NextSibling {
+        	traverse(c)
+    	}
+	}
+    traverse(doc)
+    for i, t := range titles {
+        fmt.Printf("%d. %s\n", i+1, t)
+    }
+}
+
+func findTitleInAthing(n *html.Node) string {
+	var find func(*html.Node) string
+	find = func(n *html.Node) string {
+		if n.Type == html.ElementNode && n.Data == "span" {
+			for _, attr := range n.Attr {
+				if attr.Key == "class" && attr.Val == "titleline" {
+					for c := n.FirstChild; c != nil; c = c.NextSibling {
+						if c.Type == html.ElementNode && c.Data == "a" && c.FirstChild != nil {
+							return strings.TrimSpace(c.FirstChild.Data)
+						}
+					}
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if result := find(c); result != "" {
+				return result
+			}
+		}
+		return ""
+	}
+	return find(n)
+}
