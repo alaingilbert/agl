@@ -1,0 +1,14 @@
+package html
+
+type NodeType uint32
+type Attribute struct {}
+type Token struct {}
+type Node struct {
+    FirstChild *html.Node
+    NextSibling *html.Node
+    Data string
+}
+
+type ElementNode u32
+
+func Parse(r io.Reader) (*html.Node)!

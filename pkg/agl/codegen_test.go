@@ -6316,6 +6316,60 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen230(t *testing.T) {
+	src := `package main
+import (
+    "fmt"
+    "net/http"
+    "golang.org/x/net/html"
+    "io"
+)
+func findTitle(n *html.Node) string {
+	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
+		return n.FirstChild.Data
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if title := findTitle(c); title != "" {
+			return title
+		}
+	}
+	return ""
+}
+func main () {
+    resp := http.Get("https://news.ycombinator.com")!
+	doc := html.Parse(resp.Body)!
+    title := findTitle(doc)
+    fmt.Println("Title:", title)
+}`
+	expected := `package main
+import "fmt"
+import "net/http"
+import "golang.org/x/net/html"
+import "io"
+func findTitle(n *html.Node) string {
+	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
+		return n.FirstChild.Data
+	}
+	return ""
+}
+func main() {
+	aglTmp1, err := http.Get("https://news.ycombinator.com")
+	if err != nil {
+		panic(err)
+	}
+	resp := AglIdentity(aglTmp1)
+	aglTmp2, err := html.Parse(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	doc := AglIdentity(aglTmp2)
+	title := findTitle(doc)
+	fmt.Println("Title:", title)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
