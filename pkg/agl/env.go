@@ -255,7 +255,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
-//go:embed std/*
+//go:embed std/* pkgs/*
 var content embed.FS
 
 func (e *Env) loadPkg(path string) {
@@ -263,6 +263,14 @@ func (e *Env) loadPkg(path string) {
 	stdFilePath := filepath.Join("std", path, f+".agl")
 	by := Must(content.ReadFile(stdFilePath))
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
+	defineFromSrc(e, final, by)
+}
+
+func (e *Env) loadVendor(path string) {
+	f := filepath.Base(path)
+	stdFilePath := filepath.Join("pkgs", path, f+".agl")
+	by := Must(content.ReadFile(stdFilePath))
+	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
 	defineFromSrc(e, final, by)
 }
 
@@ -343,6 +351,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("go/types")
 	e.loadPkg("path/filepath")
 	e.loadPkg("regexp")
+	e.loadVendor("golang.org/x/net/html")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
