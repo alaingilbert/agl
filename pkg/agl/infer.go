@@ -1259,9 +1259,11 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 	infer.withEnv(func() {
 		if expr.Type.Params != nil {
 			for _, field := range expr.Type.Params.List {
+				infer.expr(field.Type)
 				t := infer.env.GetType2(field.Type)
 				for _, name := range field.Names {
 					infer.env.Define(nil, name.Name, t)
+					infer.SetType(name, t)
 				}
 			}
 		}
