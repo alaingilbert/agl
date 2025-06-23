@@ -1256,6 +1256,17 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 		expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 	}
 	infer.SetType(expr, ft)
+	infer.withEnv(func() {
+		if expr.Type.Params != nil {
+			for _, field := range expr.Type.Params.List {
+				t := infer.env.GetType2(field.Type)
+				for _, name := range field.Names {
+					infer.env.Define(nil, name.Name, t)
+				}
+			}
+		}
+		infer.stmt(expr.Body)
+	})
 }
 
 func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {

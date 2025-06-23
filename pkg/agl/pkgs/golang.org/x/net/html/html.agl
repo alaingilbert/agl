@@ -1,12 +1,18 @@
 package html
 
 type NodeType uint32
-type Attribute struct {}
+type Attribute struct {
+    Namespace string
+    Key string
+    Val string
+}
 type Token struct {}
 type Node struct {
     FirstChild *html.Node
     NextSibling *html.Node
     Data string
+    Type html.NodeType
+    Attr []html.Attribute
 }
 
 type ElementNode u32
