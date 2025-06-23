@@ -1660,6 +1660,10 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		}
 		infer.SetType(expr.X, exprXIdT.X)
 		infer.SetType(expr, exprXIdT.Type)
+	case types.TypeType:
+		infer.SetType(expr.Sel, exprXIdT.W)
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr, exprXIdT.W)
 	default:
 		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
 	}
