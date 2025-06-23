@@ -5446,6 +5446,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen195_1(t *testing.T) {
+	src := `package main
+import "time"
+func main() {
+	var a time.Duration
+	a.Round(time.Millisecond)
+}`
+	expected := `package main
+import "time"
+func main() {
+	var a time.Duration
+	a.Round(time.Millisecond)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen196(t *testing.T) {
 	src := `package main
 import (
@@ -6349,6 +6366,11 @@ import "io"
 func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
 		return n.FirstChild.Data
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if title := findTitle(c); title != "" {
+			return title
+		}
 	}
 	return ""
 }
