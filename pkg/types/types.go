@@ -156,12 +156,17 @@ func (o OptionType) StringFull() string {
 }
 
 type CustomType struct {
+	Pkg  string
 	Name string
 	W    Type
 }
 
 func (c CustomType) GoStr() string {
-	return c.Name
+	out := c.Name
+	if c.Pkg != "" {
+		out = c.Pkg + "." + out
+	}
+	return out
 }
 func (c CustomType) String() string     { return "CustomType" }
 func (c CustomType) StringFull() string { return "CustomType" }

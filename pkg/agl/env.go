@@ -618,7 +618,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		return types.AnyType{}
 	case *ast.CompositeLit:
 		ct := e.GetType2(xx.Type).(types.CustomType)
-		return types.StructType{Name: ct.Name}
+		return types.StructType{Pkg: ct.Pkg, Name: ct.Name}
 	case *ast.TypeAssertExpr:
 		xT := e.GetType2(xx.X)
 		var typeT types.Type
