@@ -1435,21 +1435,22 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	lhs := g.genExpr(ass.Lhs[0])
 	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
 	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	var cond string
 	unwrapFn := "Unwrap"
 	switch stmt.Op {
 	case token.SOME:
-		cond = "tmp.IsSome()"
+		cond = fmt.Sprintf("%s.IsSome()", varName)
 	case token.OK:
-		cond = "tmp.IsOk()"
+		cond = fmt.Sprintf("%s.IsOk()", varName)
 	case token.ERR:
-		cond = "tmp.IsErr()"
+		cond = fmt.Sprintf("%s.IsErr()", varName)
 		unwrapFn = "Err"
 	default:
 		panic("")
 	}
-	out += g.prefix + fmt.Sprintf("if tmp := %s; %s {\n", rhs, cond)
-	out += g.prefix + fmt.Sprintf("\t%s := tmp.%s()\n", lhs, unwrapFn)
+	out += g.prefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
+	out += g.prefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
 	out += body
 	out += g.prefix + "}\n"
 	return out

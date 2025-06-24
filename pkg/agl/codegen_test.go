@@ -2747,8 +2747,8 @@ func testSome() Option[int] {
 	return MakeOptionSome(42)
 }
 func main() {
-	if tmp := testSome(); tmp.IsSome() {
-		a := tmp.Unwrap()
+	if aglTmp1 := testSome(); aglTmp1.IsSome() {
+		a := aglTmp1.Unwrap()
 		fmt.Println(a)
 	}
 }
@@ -2772,8 +2772,8 @@ func testOk() Result[int] {
 	return MakeResultOk(42)
 }
 func main() {
-	if tmp := testOk(); tmp.IsOk() {
-		a := tmp.Unwrap()
+	if aglTmp1 := testOk(); aglTmp1.IsOk() {
+		a := aglTmp1.Unwrap()
 		fmt.Println(a)
 	}
 }
@@ -2797,8 +2797,8 @@ func testOk() Result[int] {
 	return MakeResultErr[int](errors.New("error"))
 }
 func main() {
-	if tmp := testOk(); tmp.IsErr() {
-		e := tmp.Err()
+	if aglTmp1 := testOk(); aglTmp1.IsErr() {
+		e := aglTmp1.Err()
 		fmt.Println(e)
 	}
 }
@@ -5047,8 +5047,8 @@ func run() Result[AglVoid] {
 	return MakeResultErr[AglVoid](&MyError{time.Now(), "it didn't work"})
 }
 func main() {
-	if tmp := run(); tmp.IsErr() {
-		err := tmp.Err()
+	if aglTmp1 := run(); aglTmp1.IsErr() {
+		err := aglTmp1.Err()
 		fmt.Println(err)
 	}
 }
@@ -5093,8 +5093,8 @@ func run() Result[AglVoid] {
 }
 func main() {
 	res := run()
-	if tmp := res; tmp.IsErr() {
-		err := tmp.Err()
+	if aglTmp1 := res; aglTmp1.IsErr() {
+		err := aglTmp1.Err()
 		fmt.Println(err)
 	}
 }
@@ -5172,9 +5172,9 @@ func main() {
 	r := strings.NewReader("Hello, Reader!")
 	b := make([]byte, 8)
 	for {
-		tmp, tmpErr := r.Read(b)
+		aglTmp1, tmpErr := r.Read(b)
 		if tmpErr == nil {
-			n := tmp
+			n := aglTmp1
 			fmt.Printf("n = %v b = %v\n", n, b)
 			fmt.Printf("b[:n] = %q\n", b[:n])
 		}
@@ -5666,19 +5666,19 @@ func Crawl(url string, depth int, fetcher1 Fetcher) {
 	if depth <= 0 {
 		return
 	}
-	tmp := fetcher1.Fetch(url)
-	if tmp.IsOk() {
-		res := tmp.Unwrap()
-		aglVar1 := res
-		body, urls := aglVar1.Arg0, aglVar1.Arg1
+	aglTmp1 := fetcher1.Fetch(url)
+	if aglTmp1.IsOk() {
+		res := aglTmp1.Unwrap()
+		aglVar2 := res
+		body, urls := aglVar2.Arg0, aglVar2.Arg1
 		fmt.Printf("found: %s %q\n", url, body)
 		for _, u := range urls {
 			Crawl(u, depth - 1, fetcher1)
 		}
 		return
 	}
-	if tmp.IsErr() {
-		err := tmp.Err()
+	if aglTmp1.IsErr() {
+		err := aglTmp1.Err()
 		fmt.Println(err)
 		return
 	}
