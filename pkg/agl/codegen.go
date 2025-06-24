@@ -581,12 +581,13 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
 func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 	content1 := strings.TrimSpace(g.genStmt(expr.Init))
 	initT := g.env.GetType(expr.Init)
+	varName := fmt.Sprintf(`aglTmp%d`, g.varCounter.Add(1))
 	switch v := initT.(type) {
 	case types.ResultType:
 		if v.Native {
-			out += g.prefix + fmt.Sprintf("tmp, tmpErr := %s\n", content1)
+			out += g.prefix + fmt.Sprintf("%s, tmpErr := %s\n", varName, content1)
 		} else {
-			out += g.prefix + fmt.Sprintf("tmp := %s\n", content1)
+			out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		}
 		if expr.Body != nil {
 			for _, c := range expr.Body.List {
@@ -594,7 +595,7 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				if v.Native {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += g.prefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := tmp\n", g.prefix, g.genExpr(v.X))
+						out += g.prefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := %s\n", g.prefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
 						out += g.prefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s := tmpErr\n", g.prefix, g.genExpr(v.X))
 					default:
@@ -603,9 +604,9 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				} else {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += g.prefix + fmt.Sprintf("if tmp.IsOk() {\n%s\t%s := tmp.Unwrap()\n", g.prefix, g.genExpr(v.X))
+						out += g.prefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, g.prefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
-						out += g.prefix + fmt.Sprintf("if tmp.IsErr() {\n%s\t%s := tmp.Err()\n", g.prefix, g.genExpr(v.X))
+						out += g.prefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, g.prefix, g.genExpr(v.X), varName)
 					default:
 						panic("")
 					}
@@ -618,15 +619,15 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 			}
 		}
 	case types.OptionType:
-		out += g.prefix + fmt.Sprintf("tmp := %s\n", content1)
+		out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		if expr.Body != nil {
 			for _, c := range expr.Body.List {
 				c := c.(*ast.MatchClause)
 				switch v := c.Expr.(type) {
 				case *ast.SomeExpr:
-					out += g.prefix + fmt.Sprintf("if tmp.IsSome() {\n%s\t%s := tmp.Unwrap()\n", g.prefix, g.genExpr(v.X))
+					out += g.prefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, g.prefix, g.genExpr(v.X), varName)
 				case *ast.NoneExpr:
-					out += g.prefix + fmt.Sprintf("if tmp.IsNone() {\n")
+					out += g.prefix + fmt.Sprintf("if %s.IsNone() {\n", varName)
 				default:
 					panic("")
 				}
