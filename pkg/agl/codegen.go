@@ -1929,7 +1929,7 @@ type Set [T comparable]struct {
 func (s *Set[T]) String() string {
 	var vals []string
 	for k := range s.values {
-		vals = append(vals, aglImportFmt.Sprintf("%s", k))
+		vals = append(vals, aglImportFmt.Sprintf("%v", k))
 	}
 	return "{" + aglImportStrings.Join(vals, " ") + "}"
 }
