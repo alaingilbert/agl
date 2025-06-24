@@ -6431,6 +6431,61 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen231(t *testing.T) {
+	src := `package main
+
+import "fmt"
+
+func getInt() int! { Ok(42) }
+
+func maybeInt() int? { Some(42) }
+
+func main() {
+    match getInt() {
+    case Ok(num):
+        fmt.Println("Num:", num)
+    case Err(err):
+        fmt.Println("Error:", err)
+    }
+
+    match maybeInt() {
+    case Some(num):
+        fmt.Println("Num:", num)
+    case None:
+        fmt.Println("No value")
+    }
+}`
+	expected := `package main
+import "fmt"
+func getInt() Result[int] {
+	return MakeResultOk(42)
+}
+func maybeInt() Option[int] {
+	return MakeOptionSome(42)
+}
+func main() {
+	aglTmp1 := getInt()
+	if aglTmp1.IsOk() {
+		num := aglTmp1.Unwrap()
+		fmt.Println("Num:", num)
+	}
+	if aglTmp1.IsErr() {
+		err := aglTmp1.Err()
+		fmt.Println("Error:", err)
+	}
+	aglTmp2 := maybeInt()
+	if aglTmp2.IsSome() {
+		num := aglTmp2.Unwrap()
+		fmt.Println("Num:", num)
+	}
+	if aglTmp2.IsNone() {
+		fmt.Println("No value")
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
