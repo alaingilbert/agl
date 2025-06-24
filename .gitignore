@@ -4,5 +4,3 @@ vendor
 /agl_agl
 node_modules/
 language_server/agl-lsp
-*.wasm
-wasm_exec.js
