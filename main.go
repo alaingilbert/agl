@@ -152,8 +152,8 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	src := agl.NewGenerator(i.Env, f).Generate()
 	coreHeaders := agl.GenHeaders()
 
-	fmt.Println(insertHeadersAfterFirstLine(src, coreHeaders))
-	fmt.Println(agl.GenContent())
+	out := insertHeadersAfterFirstLine(src, coreHeaders) + agl.GenContent()
+	fmt.Println(out)
 	return nil
 }
 
