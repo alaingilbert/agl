@@ -150,8 +150,10 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
-	fmt.Println(src)
-	fmt.Println(agl.GenCore())
+	coreHeaders := agl.GenHeaders()
+
+	fmt.Println(insertHeadersAfterFirstLine(src, coreHeaders))
+	fmt.Println(agl.GenContent())
 	return nil
 }
 
@@ -301,4 +303,33 @@ func parser2(src string) (*token.FileSet, *ast.File) {
 		panic(err)
 	}
 	return fset, f
+}
+
+func insertHeadersAfterFirstLine(src, headers string) string {
+	lines := strings.Split(src, "\n")
+	if len(lines) == 0 {
+		return src
+	}
+
+	// Find the package declaration line
+	packageLineIndex := -1
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+			packageLineIndex = i
+			break
+		}
+	}
+
+	if packageLineIndex == -1 {
+		// If no package declaration found, just prepend headers
+		return headers + "\n" + src
+	}
+
+	// Insert headers after the package declaration
+	var result []string
+	result = append(result, lines[:packageLineIndex+1]...)
+	result = append(result, headers)
+	result = append(result, lines[packageLineIndex+1:]...)
+
+	return strings.Join(result, "\n")
 }

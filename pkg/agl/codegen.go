@@ -1632,26 +1632,26 @@ func addPrefix(s, prefix string) string {
 	return strings.Join(newArr, "\n")
 }
 
-func genHeaders() string {
+func GenHeaders() string {
 	return `import (
-	"cmp"
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
-	"iter"
-	"maps"
+	aglImportCmp "cmp"
+	aglImportFmt "fmt"
+	aglImportIo "io"
+	aglImportHttp "net/http"
+	aglImportStrings "strings"
+	aglImportIter "iter"
+	aglImportMaps "maps"
 )`
 }
 
 func GenCore() string {
 	out := "package main\n"
-	out += genHeaders()
-	out += genContent()
+	out += GenHeaders()
+	out += GenContent()
 	return out
 }
 
-func genContent() string {
+func GenContent() string {
 	return `
 type AglVoid struct{}
 
@@ -1663,7 +1663,7 @@ func (o Option[T]) String() string {
 	if o.IsNone() {
 		return "None"
 	}
-	return fmt.Sprintf("Some(%v)", *o.t)
+	return aglImportFmt.Sprintf("Some(%v)", *o.t)
 }
 
 func (o Option[T]) IsSome() bool {
@@ -1703,9 +1703,9 @@ type Result[T any] struct {
 
 func (r Result[T]) String() string {
 	if r.IsErr() {
-		return fmt.Sprintf("Err(%v)", r.e)
+		return aglImportFmt.Sprintf("Err(%v)", r.e)
 	}
-	return fmt.Sprintf("Ok(%v)", *r.t)
+	return aglImportFmt.Sprintf("Ok(%v)", *r.t)
 }
 
 func (r Result[T]) IsErr() bool {
@@ -1718,7 +1718,7 @@ func (r Result[T]) IsOk() bool {
 
 func (r Result[T]) Unwrap() T {
 	if r.IsErr() {
-		panic(fmt.Sprintf("unwrap on an Err value: %s", r.e))
+		panic(aglImportFmt.Sprintf("unwrap on an Err value: %s", r.e))
 	}
 	return *r.t
 }
@@ -1760,7 +1760,7 @@ func AglVecFilter[T any](a []T, f func(T) bool) []T {
 	return out
 }
 
-func AglReduce[T any, R cmp.Ordered](a []T, r R, f func(R, T) R) R {
+func AglReduce[T any, R aglImportCmp.Ordered](a []T, r R, f func(R, T) R) R {
 	var acc R
 	for _, v := range a {
 		acc = f(acc, v)
@@ -1778,14 +1778,14 @@ func AglAssert(pred bool, msg ...string) {
 	}
 }
 
-func AglSum[T cmp.Ordered](a []T) (out T) {
+func AglSum[T aglImportCmp.Ordered](a []T) (out T) {
 	for _, el := range a {
 		out += el
 	}
 	return
 }
 
-func AglVecIn[T cmp.Ordered](a []T, v T) bool {
+func AglVecIn[T aglImportCmp.Ordered](a []T, v T) bool {
 	for _, el := range a {
 		if el == v {
 			return true
@@ -1815,10 +1815,10 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 }
 
 func AglJoined(a []string, s string) string {
-	return strings.Join(a, s)
+	return aglImportStrings.Join(a, s)
 }
 
-func AglVecSum[T cmp.Ordered](a []T) (out T) {
+func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
 	for _, el := range a {
 		out += el
 	}
@@ -1902,22 +1902,22 @@ func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
 	return MakeOptionNone[V]()
 }
 
-func AglMapKeys[K comparable, V any](m map[K]V, index K) iter.Seq[K] {
-	return maps.Keys(m)
+func AglMapKeys[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[K] {
+	return aglImportMaps.Keys(m)
 }
 
-func AglMapValues[K comparable, V any](m map[K]V, index K) iter.Seq[V] {
-	return maps.Values(m)
+func AglMapValues[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[V] {
+	return aglImportMaps.Values(m)
 }
 
-func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
-	var body io.Reader
+func AglHttpNewRequest(method, url string, b Option[aglImportIo.Reader]) Result[*aglImportHttp.Request] {
+	var body aglImportIo.Reader
 	if b.IsSome() {
 		body = b.Unwrap()
 	}
-	req, err := http.NewRequest(method, url, body)
+	req, err := aglImportHttp.NewRequest(method, url, body)
 	if err != nil {
-		return MakeResultErr[*http.Request](err)
+		return MakeResultErr[*aglImportHttp.Request](err)
 	}
 	return MakeResultOk(req)
 }
@@ -1929,9 +1929,9 @@ type Set [T comparable]struct {
 func (s *Set[T]) String() string {
 	var vals []string
 	for k := range s.values {
-		vals = append(vals, fmt.Sprintf("%s", k))
+		vals = append(vals, aglImportFmt.Sprintf("%s", k))
 	}
-	return "{" + strings.Join(vals, " ") + "}"
+	return "{" + aglImportStrings.Join(vals, " ") + "}"
 }
 
 func (s *Set[T]) Len() int {
