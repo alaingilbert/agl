@@ -1632,11 +1632,8 @@ func addPrefix(s, prefix string) string {
 	return strings.Join(newArr, "\n")
 }
 
-func GenCore() string {
-	return `
-package main
-
-import (
+func genHeaders() string {
+	return `import (
 	"cmp"
 	"fmt"
 	"io"
@@ -1644,8 +1641,18 @@ import (
 	"strings"
 	"iter"
 	"maps"
-)
+)`
+}
 
+func GenCore() string {
+	out := "package main\n"
+	out += genHeaders()
+	out += genContent()
+	return out
+}
+
+func genContent() string {
+	return `
 type AglVoid struct{}
 
 type Option[T any] struct {
