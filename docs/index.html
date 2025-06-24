@@ -78,8 +78,10 @@
                     
                     if (data.Errors) {
                         outputElem.textContent = `Compilation Error:\n${data.Errors}`;
-                    } else {
+                    } else if (data.Events && data.Events.length > 0 && data.Events[0].Message) {
                         outputElem.textContent = `Execution Output:\n${data.Events[0].Message}`;
+                    } else {
+                        outputElem.textContent = "No output";
                     }
                 } catch (error) {
                     outputElem.textContent = `Error sending to Go Playground: ${error.message}`;
