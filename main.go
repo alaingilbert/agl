@@ -12,6 +12,7 @@ import (
 	"go/parser"
 	gotoken "go/token"
 	gotypes "go/types"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -55,6 +56,12 @@ func main() {
 				Aliases: []string{"b"},
 				Usage:   "build command",
 				Action:  buildAction,
+			},
+			{
+				Name:    "execute",
+				Aliases: []string{"e"},
+				Usage:   "execute command",
+				Action:  executeAction,
 			},
 		},
 		Action: startAction,
@@ -129,6 +136,20 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
 	_ = spawnGoRunFromBytes([]byte(src))
+	return nil
+}
+
+func executeAction(ctx context.Context, cmd *cli.Command) error {
+	by, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return err
+	}
+	fset, f := parser2(string(by))
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(fset, env)
+	i.InferFile(f)
+	src := agl.NewGenerator(i.Env, f).Generate()
+	fmt.Println(src)
 	return nil
 }
 
