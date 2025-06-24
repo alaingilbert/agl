@@ -208,7 +208,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					switch v := spec.Type.(type) {
 					case *ast.Ident:
 						t := env.GetType2(v)
-						env.Define(nil, specName, t)
+						env.Define(nil, specName, types.CustomType{Pkg: pkgName, Name: spec.Name.Name, W: t})
 					case *ast.MapType:
 						t := env.GetType2(v)
 						env.Define(nil, specName, t)
@@ -239,6 +239,8 @@ func defineFromSrc(env *Env, path string, src []byte) {
 									case types.StarType:
 										env.Define(nil, fieldName, vv)
 									case types.MapType:
+										env.Define(nil, fieldName, vv)
+									case types.CustomType:
 										env.Define(nil, fieldName, vv)
 									default:
 										panic(fmt.Sprintf("%v", to(t)))
@@ -351,7 +353,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("go/types")
 	e.loadPkg("path/filepath")
 	e.loadPkg("regexp")
-	e.loadVendor("golang.org/x/net/html")
+	//e.loadVendor("golang.org/x/net/html")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
