@@ -168,8 +168,8 @@ func (c CustomType) GoStr() string {
 	}
 	return out
 }
-func (c CustomType) String() string     { return "CustomType" }
-func (c CustomType) StringFull() string { return "CustomType" }
+func (c CustomType) String() string     { return c.GoStr() }
+func (c CustomType) StringFull() string { return c.GoStr() }
 
 type TypeType struct{ W Type }
 
