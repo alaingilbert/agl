@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <script src="wasm_exec.js"></script>
+        <script>
+            let go = new Go();
+
+            async function runWasmWithInput(inputText) {
+                // Set up args: first is program name, then your args
+                go.argv = ["main.wasm", "execute", inputText];
+
+                // Capture output
+                const outputElem = document.getElementById("output");
+                let output = "";
+                const origLog = console.log;
+                const origErr = console.error;
+                console.log = function(...args) {
+                    output += args.join(" ") + "\n";
+                    origLog.apply(console, args);
+                };
+                console.error = function(...args) {
+                    output += args.join(" ") + "\n";
+                    origErr.apply(console, args);
+                };
+
+                outputElem.textContent = ""; // Clear previous output
+
+                try {
+                    const result = await WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject);
+                    await go.run(result.instance);
+                } finally {
+                    console.log = origLog;
+                    console.error = origErr;
+                    outputElem.textContent = output;
+                }
+            }
+
+            window.onload = function() {
+                document.getElementById("runBtn").onclick = function() {
+                    const code = document.getElementById("code").value;
+                    runWasmWithInput(code);
+                };
+            };
+        </script>
+    </head>
+    <body>
+        <textarea name="code" id="code" rows="10" cols="50">package main</textarea>
+        <button id="runBtn">Run</button>
+        <pre id="output"></pre>
+    </body>
+</html>

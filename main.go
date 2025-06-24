@@ -12,7 +12,6 @@ import (
 	"go/parser"
 	gotoken "go/token"
 	gotypes "go/types"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -140,16 +139,19 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func executeAction(ctx context.Context, cmd *cli.Command) error {
-	by, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return err
+	var input string
+	if cmd.NArg() > 0 {
+		input = cmd.Args().Get(0)
+	} else {
+		input = ""
 	}
-	fset, f := parser2(string(by))
+	fset, f := parser2(input)
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
 	fmt.Println(src)
+	fmt.Println(agl.GenCore())
 	return nil
 }
 
