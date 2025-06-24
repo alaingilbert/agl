@@ -79,7 +79,7 @@
                     if (data.Errors) {
                         outputElem.textContent = `Compilation Error:\n${data.Errors}`;
                     } else {
-                        outputElem.textContent = `Generated Code:\n${generatedCode}\n\nExecution Output:\n${data.Events[0].Message}`;
+                        outputElem.textContent = `Execution Output:\n${data.Events[0].Message}`;
                     }
                 } catch (error) {
                     outputElem.textContent = `Error sending to Go Playground: ${error.message}`;
@@ -87,10 +87,6 @@
             }
 
             window.onload = function() {
-                document.getElementById("runBtn").onclick = function() {
-                    const code = document.getElementById("code").value;
-                    runWasmWithInput(code);
-                };
                 document.getElementById("playgroundBtn").onclick = function() {
                     runInPlayground();
                 };
@@ -98,10 +94,21 @@
         </script>
     </head>
     <body>
-        <textarea name="code" id="code" rows="10" cols="50">package main
-func test() int? { 42 }</textarea>
-        <button id="runBtn">Run</button>
-        <button id="playgroundBtn">Run in Go Playground</button>
+        <textarea name="code" id="code" rows="15" cols="80">package main
+
+import "fmt"
+
+func MaybeInt() int? { Some(42) }
+
+func main() {
+    fmt.Println(MaybeInt())
+
+    arr := []int{1, 2, 3}
+    sum := arr.Map({ $0 + 1 }).Sum()
+    fmt.Println("Sum: ", sum) // 9
+}
+</textarea>
+        <button id="playgroundBtn">Run</button>
         <pre id="output"></pre>
     </body>
 </html>
