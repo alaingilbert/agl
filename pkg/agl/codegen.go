@@ -36,7 +36,7 @@ func (g *Generator) WithSub(clb func()) {
 
 type Extension struct {
 	decl *ast.FuncDecl
-	gen  []ExtensionTest
+	gen  map[string]ExtensionTest
 }
 
 type ExtensionTest struct {
@@ -1015,7 +1015,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				concreteT := g.env.GetType(expr.Fun)
 				m := types.FindGen(rawFnT, concreteT)
 				tmp := g.extensions[extName]
-				tmp.gen = append(tmp.gen, ExtensionTest{raw: rawFnT, concrete: concreteT})
+				if tmp.gen == nil {
+					tmp.gen = make(map[string]ExtensionTest)
+				}
+				tmp.gen[rawFnT.StringFull()+"_"+concreteT.StringFull()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
 				g.extensions[extName] = tmp
 				content1 := g.genExpr(e.X)
 				var els []string
