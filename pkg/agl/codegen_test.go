@@ -3895,6 +3895,45 @@ func AglVecEven_T_int(v []int) []int {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen147_1(t *testing.T) {
+	src := `package main
+import "fmt"
+func (v agl.Vec[T]) Even() []T {
+    out := make([]T, len(v))
+    for _, el := range v {
+        if el % 2 == 0 {
+            out = append(out, el)
+        }
+    }
+    return out
+}
+func main() {
+    arr := []int{1, 2, 3}
+    fmt.Println(arr.Even())
+    arr1 := []int{4, 5, 6}
+    fmt.Println(arr1.Even())
+}`
+	expected := `package main
+import "fmt"
+func main() {
+	arr := []int{1, 2, 3}
+	fmt.Println(AglVecEven_T_int(arr))
+	arr1 := []int{4, 5, 6}
+	fmt.Println(AglVecEven_T_int(arr1))
+}
+func AglVecEven_T_int(v []int) []int {
+	out := make([]int, len(v))
+	for _, el := range v {
+		if el % 2 == 0 {
+			out = append(out, el)
+		}
+	}
+	return out
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen148(t *testing.T) {
 	src := `package main
 import "fmt"
