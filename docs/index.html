@@ -127,8 +127,12 @@
                     
                     if (data.Errors) {
                         outputElem.textContent = `Compilation Error:\n${data.Errors}`;
-                    } else if (data.Events && data.Events.length > 0 && data.Events[0].Message) {
-                        outputElem.textContent = `Execution Output:\n${data.Events[0].Message}`;
+                    } else if (data.Events && data.Events.length > 0) {
+                        const allMessages = data.Events
+                            .filter(event => event.Message)
+                            .map(event => event.Message)
+                            .join('');
+                        outputElem.textContent = `Execution Output:\n${allMessages}`;
                     } else {
                         outputElem.textContent = "No output";
                     }
