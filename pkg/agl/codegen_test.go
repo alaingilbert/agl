@@ -6486,6 +6486,50 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen232(t *testing.T) {
+	src := `package main
+
+import "fmt"
+import "time"
+
+func test(i int) int? {
+    if i >= 2 {
+        return None
+    }
+    return Some(i)
+}
+
+func main() {
+    for i := 0; i < 10; i++ {
+        res := test(i) or_break
+        fmt.Println(res)
+        time.Sleep(time.Second)
+    }
+}`
+	expected := `package main
+import "fmt"
+import "time"
+func test(i int) Option[int] {
+	if i >= 2 {
+		return MakeOptionNone[int]()
+	}
+	return MakeOptionSome(i)
+}
+func main() {
+	for i := 0; i < 10; i++ {
+		aglTmp1 := test(i)
+		if aglTmp1.IsNone() {
+			break
+		}
+		res := AglIdentity(aglTmp1).Unwrap()
+		fmt.Println(res)
+		time.Sleep(time.Second)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
