@@ -111,6 +111,13 @@
                     console.error = origErr;
                 }
 
+                // Check for EXIT_CODE:1 and display as error if present
+                if (generatedCode.includes("EXIT_CODE:1")) {
+                    const cleanedOutput = generatedCode.replace(/EXIT_CODE:1\s*/g, "");
+                    outputElem.textContent = "Error:\n" + cleanedOutput;
+                    return;
+                }
+
                 // Now send to Go Playground
                 outputElem.textContent = "Sending to Go Playground...";
                 

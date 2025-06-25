@@ -139,6 +139,21 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func executeAction(ctx context.Context, cmd *cli.Command) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("EXIT_CODE:1")
+			var aglErr *agl.AglError
+			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
+				msg := aglErr.Error()
+				if msg == "" {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
+				os.Exit(1)
+			}
+			panic(r)
+		}
+	}()
 	var input string
 	if cmd.NArg() > 0 {
 		input = cmd.Args().Get(0)
