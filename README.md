@@ -168,9 +168,13 @@ func main() {
 ## Short anonymous function (type inferred)
 
 Arguments are mapped into `$0`|`$1`...  
-In this example, `a` becomes `$0` when using the short form.  
-`func(a, b int) int { return a + b }`  
-`{ $0 + $1 }`  
+In this example, `x` becomes `$0` when using the short form.
+
+| Lang | Expression                                                  |
+|------|-------------------------------------------------------------|
+| Go   | `utils.Filter(arr, func(x int) bool { return x % 2 == 0 })` |
+| AGL  | `arr.Filter({ $0 % 2 == 0 })`                               |
+
 Since the function is expected to return something and there is only one expression, it will be returned automatically.  
 
 ```go
