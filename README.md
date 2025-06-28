@@ -337,9 +337,7 @@ func main() {
 #!/usr/bin/env agl run
 package main
 
-import (
-    "fmt"
-)
+import "fmt"
 
 func main() {
     fmt.Println("Hello AGL!")
