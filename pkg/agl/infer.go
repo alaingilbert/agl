@@ -730,8 +730,6 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.emptyStmt(stmt)
 	case *ast.MatchStmt:
 		infer.matchStmt(stmt)
-	case *ast.MatchClause:
-		infer.matchClause(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -874,6 +872,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr.Fun, fnT)
 			if toReturn != nil {
 				infer.SetType(expr, toReturn)
+			} else {
+				infer.SetType(expr, types.VoidType{})
 			}
 		case types.OptionType:
 			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}),
@@ -981,6 +981,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				}
 			}
 		}
+	}
+	if infer.env.GetType(expr) == nil {
+		infer.SetType(expr, types.VoidType{})
 	}
 }
 
@@ -2270,24 +2273,28 @@ func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 	infer.stmt(stmt.Init)
 	infer.withOptType(stmt.Init, infer.env.GetType2(stmt.Init), func() {
-		infer.stmt(stmt.Body)
+		for _, stmtEl := range stmt.Body.List {
+			clause := stmtEl.(*ast.MatchClause)
+			if v, ok := clause.Expr.(*ast.OkExpr); ok {
+				t := infer.optType.Type.(types.ResultType).W
+				infer.env.Define(v.X, v.X.(*ast.Ident).Name, t)
+				infer.SetType(v.X, t)
+			} else if v1, ok := clause.Expr.(*ast.ErrExpr); ok {
+				t := infer.env.Get("error")
+				infer.env.Define(v1.X, v1.X.(*ast.Ident).Name, t)
+				infer.SetType(v1.X, t)
+			}
+			infer.expr(clause.Expr)
+			infer.stmts(clause.Body)
+			if len(clause.Body) == 0 {
+				infer.SetType(clause, types.VoidType{})
+			} else {
+				infer.SetType(clause, infer.GetType(clause.Body[len(clause.Body)-1]))
+			}
+		}
+		infer.SetType(stmt.Body, infer.GetType(stmt.Body.List[len(stmt.Body.List)-1]))
 	})
-	infer.SetType(stmt, types.VoidType{})
-}
-
-func (infer *FileInferrer) matchClause(stmt *ast.MatchClause) {
-	if v, ok := stmt.Expr.(*ast.OkExpr); ok {
-		t := infer.optType.Type.(types.ResultType).W
-		infer.env.Define(v.X, v.X.(*ast.Ident).Name, t)
-		infer.SetType(v.X, t)
-	} else if v1, ok := stmt.Expr.(*ast.ErrExpr); ok {
-		t := infer.env.Get("error")
-		infer.env.Define(v1.X, v1.X.(*ast.Ident).Name, t)
-		infer.SetType(v1.X, t)
-	}
-	infer.expr(stmt.Expr)
-	infer.stmts(stmt.Body)
-	infer.SetType(stmt, types.VoidType{})
+	infer.SetType(stmt, infer.GetType(stmt.Body))
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
