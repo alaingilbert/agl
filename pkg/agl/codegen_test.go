@@ -18,12 +18,17 @@ func parser2(src string) (*token.FileSet, *ast.File) {
 	return fset, f
 }
 
-func testCodeGen(t *testing.T, src, expected string) {
+func getGenOutput(src string) string {
 	fset, f := parser2(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
-	got := NewGenerator(i.Env, f).Generate()
+	out := NewGenerator(i.Env, f).Generate()
+	return out
+}
+
+func testCodeGen(t *testing.T, src, expected string) {
+	got := getGenOutput(src)
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
 	}
@@ -31,11 +36,7 @@ func testCodeGen(t *testing.T, src, expected string) {
 
 func testCodeGenFn(src string) func() {
 	return func() {
-		fset, f := parser2(src)
-		env := NewEnv(fset)
-		i := NewInferrer(fset, env)
-		i.InferFile(f)
-		NewGenerator(i.Env, f).Generate()
+		_ = getGenOutput(src)
 	}
 }
 
