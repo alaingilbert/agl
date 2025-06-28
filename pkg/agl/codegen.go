@@ -292,7 +292,9 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 
 func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if strings.HasPrefix(expr.Name, "$") {
+		beforeT := g.env.GetType(expr)
 		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
+		g.env.SetType(nil, expr, beforeT)
 	}
 	if strings.HasPrefix(expr.Name, "@") {
 		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.env.fset.Position(expr.Pos()).Line), 1)

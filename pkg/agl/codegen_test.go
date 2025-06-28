@@ -6738,6 +6738,29 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen240(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	arr := [](u8, u8){(0, 0)}
+    fmt.Println(arr.Map({ $0.0 }))
+}`
+	expected := `package main
+import "fmt"
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+func main() {
+	arr := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}}
+	fmt.Println(AglVecMap(arr, func(aglArg0 AglTupleStruct_uint8_uint8) uint8 {
+		return aglArg0.Arg0
+	}))
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
