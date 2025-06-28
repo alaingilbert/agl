@@ -1705,7 +1705,11 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		return
 	case *ast.ArrayType:
 		t := infer.env.GetType2(v.Elt)
-		infer.exprs(expr.Elts)
+		for _, elExpr := range expr.Elts {
+			infer.withOptType(elExpr, t, func() {
+				infer.expr(elExpr)
+			})
+		}
 		infer.SetType(v.Elt, t)
 		infer.SetType(expr, types.ArrayType{Elt: t})
 		return

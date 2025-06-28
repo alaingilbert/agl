@@ -6565,6 +6565,23 @@ func main() {
 	tassert.PanicsWithError(t, "4:2: if branches must have the same type `void` VS `UntypedNumType`", testCodeGenFn(src))
 }
 
+func TestCodeGen235(t *testing.T) {
+	src := `package main
+func main() {
+	a := [](u8, u8){(0, 0), (0, 1)}
+}`
+	expected := `package main
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+func main() {
+	a := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}, AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 1}}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
