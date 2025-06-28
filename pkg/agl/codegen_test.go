@@ -4,12 +4,17 @@ import (
 	"agl/pkg/ast"
 	parser1 "agl/pkg/parser"
 	"agl/pkg/token"
+	"strings"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
 )
 
 func parser2(src string) (*token.FileSet, *ast.File) {
+	// support "#!/usr/bin/env agl run" as first line of agl "script"
+	if strings.HasPrefix(src, "#!") {
+		src = "//" + src
+	}
 	var fset = token.NewFileSet()
 	f, err := parser1.ParseFile(fset, "", src, 0)
 	if err != nil {
@@ -6712,6 +6717,22 @@ func test(t AglTupleStruct_uint8_uint8) {
 }
 func main() {
 	test(AglTupleStruct_uint8_uint8{Arg0: uint8(1), Arg1: uint8(2)})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen239(t *testing.T) {
+	src := `#!/usr/bin/env agl run
+package main
+import "fmt"
+func main() {
+	fmt.Println("Hello world!")
+}`
+	expected := `package main
+import "fmt"
+func main() {
+	fmt.Println("Hello world!")
 }
 `
 	testCodeGen(t, src, expected)
