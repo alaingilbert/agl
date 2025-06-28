@@ -975,7 +975,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			panic(fmt.Sprintf("%v", to(callT)))
 		}
 		parentInfo := infer.env.GetNameInfo(call.Name)
-		infer.SetType(call, callT, WithDefinition(parentInfo))
+		if infer.env.GetType(call) == nil {
+			infer.SetType(call, callT, WithDefinition(parentInfo))
+		}
 	case *ast.FuncLit:
 		callT := funcTypeToFuncType("", call.Type, infer.env, false)
 		infer.SetType(call, callT)
