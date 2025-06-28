@@ -312,6 +312,9 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func parser2(src string) (*token.FileSet, *ast.File) {
+	if strings.HasPrefix(src, "#!") {
+		src = "//" + src
+	}
 	var fset = token.NewFileSet()
 	f, err := parser1.ParseFile(fset, "", src, 0)
 	if err != nil {
