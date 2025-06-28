@@ -11,6 +11,7 @@ It uses Go's syntax, in fact its lexer/parser is a fork of the original Go imple
 The main differences are:  
 - Functions return only a single value. This makes it possible to use types like `Option[T]` and `Result[T]`, and to support automatic error propagation via an operator.  
 - To make returning multiple values easy, a Tuple type has been introduced. For example: `Result[(u8, string, bool)]`  
+- AGL can be used as a scripting language
 
 Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64`  
 
@@ -24,6 +25,7 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 - Operator overloading
 - Compile down to Go code
 - VSCode extension & LSP (language server protocol)
+- Shell "shebang" support
 
 ## How to use
 
@@ -327,4 +329,25 @@ func main() {
     by := io.ReadAll(resp.Body)!
     fmt.Println(string(by))
 }
+```
+
+## Scripting
+
+```go
+#!/usr/bin/env agl run
+package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    fmt.Println("Hello AGL!")
+}
+```
+
+```bash
+$ chmod +x hello.agl
+$ ./hello.agl
+Hello AGL!
 ```
