@@ -396,10 +396,15 @@ type GenericType struct {
 	IsType bool
 }
 
-func (g GenericType) TypeParamGoStr() string { return fmt.Sprintf("%s %s", g.Name, g.W.String()) }
-func (g GenericType) GoStr() string          { return fmt.Sprintf("%s", g.Name) }
-func (g GenericType) String() string         { return fmt.Sprintf("%s", g.Name) }
-func (g GenericType) StringFull() string     { return g.String() }
+func (g GenericType) TypeParamGoStr() string {
+	if g.W == nil {
+		return fmt.Sprintf("%s UNKNOWN", g.Name)
+	}
+	return fmt.Sprintf("%s %s", g.Name, g.W.String())
+}
+func (g GenericType) GoStr() string      { return fmt.Sprintf("%s", g.Name) }
+func (g GenericType) String() string     { return fmt.Sprintf("%s", g.Name) }
+func (g GenericType) StringFull() string { return g.String() }
 
 type BubbleOptionType struct {
 	Elt    Type
