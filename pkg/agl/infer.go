@@ -815,6 +815,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		fnName := call.Sel.Name
 		switch idTT := exprFunT.(type) {
+		case types.StringType:
 		case types.ArrayType:
 		case types.MapType:
 		case types.CustomType:
@@ -989,6 +990,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
 	switch idTT := idT.(type) {
+	case types.StringType:
+		fnName := exprT.Sel.Name
+		if fnName == "Split" {
+			fnT := infer.env.GetFn("agl.String.Split")
+			infer.SetType(expr.Args[0], fnT.Params[1])
+			infer.SetType(expr, fnT.Return)
+		}
 	case types.ArrayType:
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
