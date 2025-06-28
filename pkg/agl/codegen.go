@@ -798,7 +798,25 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 		}
 	}
 	if params := expr.Params; params != nil {
-		paramsStr = g.joinList(params)
+		var fieldsItems []string
+		for _, field := range params.List {
+			var namesItems []string
+			for _, n := range field.Names {
+				namesItems = append(namesItems, n.Name)
+			}
+			tmp2Str := strings.Join(namesItems, ", ")
+			var content string
+			if _, ok := field.Type.(*ast.TupleExpr); ok {
+				content = g.env.GetType(field.Type).GoStr()
+			} else {
+				content = g.genExpr(field.Type)
+			}
+			if tmp2Str != "" {
+				tmp2Str = tmp2Str + " "
+			}
+			fieldsItems = append(fieldsItems, tmp2Str+content)
+		}
+		paramsStr = strings.Join(fieldsItems, ", ")
 	}
 	if content1 != "" {
 		content1 = " " + content1
