@@ -2740,6 +2740,36 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen95_6(t *testing.T) {
+	src := `package main
+import "strconv"
+func main() {
+	a := "1 2, 3 4"
+	a.Split(",").Map({
+		tmp1 := $0.Split(" ")
+		return tmp1.Map({ strconv.Atoi($0)! })
+	})
+}
+`
+	expected := `package main
+import "strconv"
+func main() {
+	a := "1 2, 3 4"
+	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
+		tmp1 := AglStringSplit(aglArg0, " ")
+		return AglVecMap(tmp1, func(aglArg0 string) int {
+			aglTmp1, err := strconv.Atoi(aglArg0)
+			if err != nil {
+				panic(err)
+			}
+			return AglIdentity(aglTmp1)
+		})
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen96(t *testing.T) {
 	src := `package main
 type Person struct {
