@@ -1599,10 +1599,7 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.IndexType](a) && TryCast[types.IndexType](b) {
 		return cmpTypes(a.(types.IndexType).X, b.(types.IndexType).X)
 	}
-	if a == b {
-		return true
-	}
-	return false
+	return a == b
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
