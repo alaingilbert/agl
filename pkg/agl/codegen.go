@@ -1014,6 +1014,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
+			} else if e.Sel.Name == "Sorted" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglVecSorted(%s)", content1)
 			} else {
 				extName := "agl.Vec." + e.Sel.Name
 				t := g.env.Get(extName)
@@ -1654,6 +1657,7 @@ func GenHeaders() string {
 	aglImportStrings "strings"
 	aglImportIter "iter"
 	aglImportMaps "maps"
+	aglImportSlices "slices"
 )`
 }
 
@@ -1829,6 +1833,10 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 
 func AglStringSplit(s string, sep string) []string {
 	return aglImportStrings.Split(s, sep)
+}
+
+func AglVecSorted[E aglImportCmp.Ordered](a []E) []E {
+	return aglImportSlices.Sorted(aglImportSlices.Values(a))
 }
 
 func AglJoined(a []string, s string) string {

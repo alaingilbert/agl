@@ -290,6 +290,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
 	e.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
 	e.DefineFn("agl.Vec.Joined", "func (a []string) string")
+	e.DefineFn("agl.Vec.Sorted", "func [E cmp.Ordered](a []E) []E")
 	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Push", "func [T any](a []T, els ...T)")
