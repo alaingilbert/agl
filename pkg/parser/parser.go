@@ -152,7 +152,7 @@ func (p *parser) next0() {
 	}
 
 	for {
-		p.pos, p.tok, p.lit = p.scanner.Scan()
+		p.pos, p.tok, p.lit = p.scanner.Scan(p.tok)
 		if p.tok == token.COMMENT {
 			if p.top && strings.HasPrefix(p.lit, "//go:build") {
 				//	if x, err := constraint.Parse(p.lit); err == nil {

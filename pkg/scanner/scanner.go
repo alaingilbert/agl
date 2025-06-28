@@ -850,7 +850,7 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 // Scan adds line information to the file added to the file
 // set with Init. Token positions are relative to that file
 // and thus relative to the file set.
-func (s *Scanner) Scan() (pos token.Pos, tok token.Token, lit string) {
+func (s *Scanner) Scan(prevTok token.Token) (pos token.Pos, tok token.Token, lit string) {
 scanAgain:
 	if s.nlPos.IsValid() {
 		// Return artificial ';' token after /*...*/ comment
@@ -891,7 +891,7 @@ scanAgain:
 		}
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		// Check if we're after an identifier
-		if s.offset > 0 && isLetter(rune(s.src[s.offset-1])) {
+		if s.offset > 0 && prevTok == token.IDENT {
 			// If we're after an identifier, treat the period as a separate token
 			tok = token.PERIOD
 			lit = "."
