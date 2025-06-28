@@ -1451,7 +1451,7 @@ func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 				infer.SetType(x, expectedI)
 				elts = append(elts, expectedI)
 			} else {
-				assertf(cmpTypesLoose(xT, expectedI), "%s: type mismatch, want: %s, got: %s", infer.Pos(expr), expectedI, xT)
+				assertf(cmpTypesLoose(xT, expectedI), "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
 				elts = append(elts, xT)
 			}
 		}

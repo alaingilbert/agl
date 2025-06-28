@@ -6588,7 +6588,7 @@ func test(t (u8, u8)) {}
 func main() {
 	test((u8(1), int(2)))
 }`
-	tassert.PanicsWithError(t, "4:7: type mismatch, want: u8, got: int", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "4:15: type mismatch, want: u8, got: int", testCodeGenFn(src))
 }
 
 func TestCodeGen237(t *testing.T) {
