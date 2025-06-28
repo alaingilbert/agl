@@ -49,7 +49,8 @@ func NewGenerator(env *Env, a *ast.File) *Generator {
 }
 
 func (g *Generator) genExtension(e Extension) (out string) {
-	for _, ge := range e.gen {
+	for _, key := range slices.Sorted(maps.Keys(e.gen)) {
+		ge := e.gen[key]
 		m := types.FindGen(ge.raw, ge.concrete)
 		decl := e.decl
 		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
