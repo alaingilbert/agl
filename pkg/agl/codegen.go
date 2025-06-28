@@ -1852,6 +1852,14 @@ func AglStringInt(s string) Result[int] {
 	return MakeResultOk(v)
 }
 
+func AglStringF64(s string) Result[float64] {
+	v, err := aglImportStrconv.ParseFloat(s, 64)
+	if err != nil {
+		return MakeResultErr[float64](err)
+	}
+	return MakeResultOk(v)
+}
+
 func AglVecSorted[E aglImportCmp.Ordered](a []E) []E {
 	return aglImportSlices.Sorted(aglImportSlices.Values(a))
 }
