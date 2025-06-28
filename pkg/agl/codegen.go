@@ -1905,13 +1905,17 @@ func AglAbs[T AglNumber](e T) (out T) {
 	return T(aglImportMath.Abs(float64(e)))
 }
 
-type Zip[A, B any] struct {
-	A A
-	B B
+type AglTupleStruct_T_U[T, U any] struct {
+	Arg0 T
+	Arg1 U
 }
 
-func AglZip[T, U any](x []T, y []U) Zip[[]T, []U] {
-	return Zip[[]T, []U]{A: x, B: y}
+func AglZip[T, U any](x []T, y []U) []AglTupleStruct_T_U[T, U] {
+	var out []AglTupleStruct_T_U[T, U]
+	for i := range x {
+		out = append(out, AglTupleStruct_T_U[T, U]{Arg0: x[i], Arg1: y[i]})
+	}
+	return out
 }
 
 func AglVecLast[T any](a []T) (out Option[T]) {
