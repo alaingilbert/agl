@@ -21,9 +21,8 @@ func parser2(src string) (*token.FileSet, *ast.File) {
 func getGenOutput(src string) string {
 	fset, f := parser2(src)
 	env := NewEnv(fset)
-	i := NewInferrer(fset, env)
-	i.InferFile(f)
-	return NewGenerator(i.Env, f).Generate()
+	NewInferrer(fset, env).InferFile(f)
+	return NewGenerator(env, f).Generate()
 }
 
 func testCodeGen(t *testing.T, src, expected string) {
