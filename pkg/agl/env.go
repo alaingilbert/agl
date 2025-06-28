@@ -164,6 +164,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("cap", "func [T any](v T) int")
 	e.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
 	e.DefineFn("max", "func [T cmp.Ordered](x T, y ...T) T")
+	e.DefineFn("abs", "func [T AglNumber](x T) T")
 	//e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")

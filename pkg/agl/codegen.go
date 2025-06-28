@@ -313,6 +313,9 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if expr.Name == "make" {
 		return "make"
 	}
+	if expr.Name == "abs" {
+		return "AglAbs"
+	}
 	if v := g.env.Get(expr.Name); v != nil {
 		if _, ok := v.(types.TypeType); ok {
 			return v.GoStr()
@@ -1658,6 +1661,7 @@ func GenHeaders() string {
 	aglImportIter "iter"
 	aglImportMaps "maps"
 	aglImportSlices "slices"
+	aglImportMath "math"
 )`
 }
 
@@ -1848,6 +1852,16 @@ func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
 		out += el
 	}
 	return
+}
+
+type AglNumber interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
+}
+
+func AglAbs[T AglNumber](e T) (out T) {
+	return T(aglImportMath.Abs(float64(e)))
 }
 
 func AglVecLast[T any](a []T) (out Option[T]) {
