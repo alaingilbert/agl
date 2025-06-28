@@ -312,8 +312,7 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	}
 	if expr.Name == "make" {
 		return "make"
-	}
-	if expr.Name == "abs" {
+	} else if expr.Name == "abs" {
 		return "AglAbs"
 	} else if expr.Name == "zip" {
 		return "AglZip"
