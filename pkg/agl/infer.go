@@ -1815,6 +1815,7 @@ func (infer *FileInferrer) declStmt(stmt *ast.DeclStmt) {
 	case *ast.GenDecl:
 		infer.specs(d.Specs)
 	}
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) specs(s []ast.Spec) {
@@ -1844,6 +1845,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 
 func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 	infer.expr(stmt.X)
+	infer.SetType(stmt, infer.GetType(stmt.X))
 }
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
@@ -1861,6 +1863,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			infer.stmt(stmt.Body)
 		}
 	})
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
@@ -1893,6 +1896,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			infer.stmt(stmt.Body)
 		}
 	})
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) Pos(n ast.Node) token.Position {
@@ -1900,6 +1904,7 @@ func (infer *FileInferrer) Pos(n ast.Node) token.Position {
 }
 
 func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
+	infer.SetType(stmt, types.VoidType{})
 	type AssignStruct struct {
 		n    ast.Node
 		name string
@@ -2112,10 +2117,16 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 			}
 		})
 	}
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {
 	infer.stmts(stmt.List)
+	if stmt.List == nil || len(stmt.List) == 0 {
+		infer.SetType(stmt, types.VoidType{})
+	} else if infer.env.GetType(stmt) == nil {
+		infer.SetType(stmt, infer.GetType(stmt.List[len(stmt.List)-1]))
+	}
 }
 
 func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
@@ -2157,10 +2168,12 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 func (infer *FileInferrer) sendStmt(stmt *ast.SendStmt) {
 	infer.expr(stmt.Chan)
 	infer.expr(stmt.Value)
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) selectStmt(stmt *ast.SelectStmt) {
 	infer.stmt(stmt.Body)
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
@@ -2170,6 +2183,7 @@ func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
 	if stmt.Body != nil {
 		infer.stmts(stmt.Body)
 	}
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
@@ -2204,6 +2218,7 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 			}
 		}
 	})
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
@@ -2221,6 +2236,7 @@ func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
 			}
 		}
 	})
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
@@ -2233,16 +2249,20 @@ func (infer *FileInferrer) caseClause(stmt *ast.CaseClause) {
 }
 
 func (infer *FileInferrer) branchStmt(stmt *ast.BranchStmt) {
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
 	infer.expr(stmt.Call)
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) goStmt(stmt *ast.GoStmt) {
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
@@ -2250,6 +2270,7 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 	infer.withOptType(stmt.Init, infer.env.GetType2(stmt.Init), func() {
 		infer.stmt(stmt.Body)
 	})
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) matchClause(stmt *ast.MatchClause) {
@@ -2264,11 +2285,13 @@ func (infer *FileInferrer) matchClause(stmt *ast.MatchClause) {
 	}
 	infer.expr(stmt.Expr)
 	infer.stmts(stmt.Body)
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
 	infer.env.Define(stmt.Label, stmt.Label.Name, types.LabelType{})
 	infer.stmt(stmt.Stmt)
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
@@ -2298,6 +2321,7 @@ func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
 			infer.stmt(stmt.Else)
 		})
 	}
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
@@ -2314,5 +2338,13 @@ func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 		infer.withEnv(func() {
 			infer.stmt(stmt.Else)
 		})
+		a := infer.GetType(stmt.Body)
+		b := infer.GetType(stmt.Else)
+		assertf(cmpTypesLoose(a, b), "%s: if branches must have the same type `%s` VS `%s`", infer.Pos(stmt), a, b)
+	}
+	if stmt.Body != nil {
+		infer.SetType(stmt, infer.GetType(stmt.Body))
+	} else {
+		infer.SetType(stmt, types.VoidType{})
 	}
 }

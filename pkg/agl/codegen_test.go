@@ -6529,6 +6529,42 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen233(t *testing.T) {
+	src := `package main
+func main() {
+	var a int
+	if true {
+		a = 1
+	} else {
+		a = 2
+	}
+}`
+	expected := `package main
+func main() {
+	var a int
+	if true {
+		a = 1
+	} else {
+		a = 2
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen234(t *testing.T) {
+	src := `package main
+func main() {
+	var a int
+	if true {
+		a = 1
+	} else {
+		2
+	}
+}`
+	tassert.PanicsWithError(t, "4:2: if branches must have the same type `void` VS `UntypedNumType`", testCodeGenFn(src))
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
