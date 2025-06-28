@@ -947,7 +947,11 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	switch e := expr.Fun.(type) {
 	case *ast.SelectorExpr:
-		if _, ok := g.env.GetType(e.X).(types.ArrayType); ok {
+		tmp := g.env.GetType(e.X)
+		if el, ok := tmp.(types.TypeType); ok {
+			tmp = el.W
+		}
+		if _, ok := tmp.(types.ArrayType); ok {
 			if e.Sel.Name == "Filter" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1035,13 +1039,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
-		} else if _, ok := g.env.GetType(e.X).(types.StringType); ok {
+		} else if _, ok := tmp.(types.StringType); ok {
 			if e.Sel.Name == "Split" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglStringSplit(%s, %s)", content1, content2)
 			}
-		} else if _, ok := g.env.GetType(e.X).(types.MapType); ok {
+		} else if _, ok := tmp.(types.MapType); ok {
 			if e.Sel.Name == "Get" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
