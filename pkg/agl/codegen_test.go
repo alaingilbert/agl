@@ -23,8 +23,7 @@ func getGenOutput(src string) string {
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
-	out := NewGenerator(i.Env, f).Generate()
-	return out
+	return NewGenerator(i.Env, f).Generate()
 }
 
 func testCodeGen(t *testing.T, src, expected string) {
