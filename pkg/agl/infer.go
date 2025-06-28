@@ -1550,7 +1550,9 @@ func cmpTypes(a, b types.Type) bool {
 				return false
 			}
 			for i := range aa.Elts {
-				return cmpTypesLoose(aa.Elts[i], bb.Elts[i])
+				if !cmpTypesLoose(aa.Elts[i], bb.Elts[i]) {
+					return false
+				}
 			}
 			return true
 		}
