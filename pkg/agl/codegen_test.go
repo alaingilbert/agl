@@ -5152,8 +5152,8 @@ func main() {
 	for {
 		match r.Read(b) {
 		case Ok(n):
-			fmt.Printf("n = %v b = %v\n", n, b)
-			fmt.Printf("b[:n] = %q\n", b[:n])
+			_ = fmt.Printf("n = %v b = %v\n", n, b)
+			_ = fmt.Printf("b[:n] = %q\n", b[:n])
 		case Err(err):
 			fmt.Printf("err = %v", err)
 			if err == io.EOF {
@@ -5174,8 +5174,8 @@ func main() {
 		aglTmp1, tmpErr := r.Read(b)
 		if tmpErr == nil {
 			n := aglTmp1
-			fmt.Printf("n = %v b = %v\n", n, b)
-			fmt.Printf("b[:n] = %q\n", b[:n])
+			_ = fmt.Printf("n = %v b = %v\n", n, b)
+			_ = fmt.Printf("b[:n] = %q\n", b[:n])
 		}
 		if tmpErr != nil {
 			err := tmpErr
