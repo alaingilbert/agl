@@ -2289,10 +2289,10 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 			if len(clause.Body) == 0 {
 				infer.SetType(clause, types.VoidType{})
 			} else {
-				infer.SetType(clause, infer.GetType(clause.Body[len(clause.Body)-1]))
+				infer.SetType(clause, infer.GetType(Must(Last(clause.Body))))
 			}
 		}
-		infer.SetType(stmt.Body, infer.GetType(stmt.Body.List[len(stmt.Body.List)-1]))
+		infer.SetType(stmt.Body, infer.GetType(Must(Last(stmt.Body.List))))
 	})
 	infer.SetType(stmt, infer.GetType(stmt.Body))
 }

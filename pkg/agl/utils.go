@@ -2,6 +2,7 @@ package agl
 
 import (
 	"agl/pkg/ast"
+	"errors"
 	"fmt"
 	"iter"
 	"os"
@@ -102,6 +103,14 @@ func NotNil[T any](v T) T {
 		panic("value is nil")
 	}
 	return v
+}
+
+func Last[T any](arr []T) (T, error) {
+	var zero T
+	if len(arr) == 0 {
+		return zero, errors.New("empty array")
+	}
+	return arr[len(arr)-1], nil
 }
 
 // Must ...
