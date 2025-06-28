@@ -4,3 +4,4 @@ vendor
 /agl_agl
 node_modules/
 language_server/agl-lsp
+examples/adventOfCode2024/*/data.txt
