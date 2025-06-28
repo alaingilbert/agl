@@ -2664,6 +2664,82 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen95_3(t *testing.T) {
+	src := `package main
+import "strconv"
+func main() {
+	a := []string{"1", "2"}
+	a.Map({ strconv.Atoi($0)! })
+}
+`
+	expected := `package main
+import "strconv"
+func main() {
+	a := []string{"1", "2"}
+	AglVecMap(a, func(aglArg0 string) int {
+		aglTmp1, err := strconv.Atoi(aglArg0)
+		if err != nil {
+			panic(err)
+		}
+		return AglIdentity(aglTmp1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen95_4(t *testing.T) {
+	src := `package main
+import "strconv"
+func main() {
+	a := "1 2"
+	a.Split(" ").Map({ strconv.Atoi($0)! })
+}
+`
+	expected := `package main
+import "strconv"
+func main() {
+	a := "1 2"
+	AglVecMap(AglStringSplit(a, " "), func(aglArg0 string) int {
+		aglTmp1, err := strconv.Atoi(aglArg0)
+		if err != nil {
+			panic(err)
+		}
+		return AglIdentity(aglTmp1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen95_5(t *testing.T) {
+	src := `package main
+import "strconv"
+func main() {
+	a := "1 2, 3 4"
+	a.Split(",").Map({
+		$0.Split(" ").Map({ strconv.Atoi($0)! })
+	})
+}
+`
+	expected := `package main
+import "strconv"
+func main() {
+	a := "1 2, 3 4"
+	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
+		return AglVecMap(AglStringSplit(aglArg0, " "), func(aglArg0 string) int {
+			aglTmp1, err := strconv.Atoi(aglArg0)
+			if err != nil {
+				panic(err)
+			}
+			return AglIdentity(aglTmp1)
+		})
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen96(t *testing.T) {
 	src := `package main
 type Person struct {

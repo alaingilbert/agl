@@ -814,6 +814,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			exprFunT = starT.X
 		}
 		fnName := call.Sel.Name
+		if el, ok := exprFunT.(types.TypeType); ok {
+			exprFunT = el.W
+		}
 		switch idTT := exprFunT.(type) {
 		case types.TypeType:
 		case types.StringType:
@@ -990,9 +993,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 }
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
-	if el, ok := idT.(types.TypeType); ok {
-		idT = el.W
-	}
 	switch idTT := idT.(type) {
 	case types.StringType:
 		fnName := exprT.Sel.Name
@@ -1305,6 +1305,17 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				}
 			}
 			expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
+		} else if len(expr.Body.List) == 1 && TryCast[*ast.ReturnStmt](expr.Body.List[0]) {
+			returnStmt := expr.Body.List[0].(*ast.ReturnStmt)
+			if infer.env.GetType(returnStmt) != nil {
+				if infer.env.GetType(expr) != nil {
+					ft := infer.env.GetType(expr).(types.FuncType)
+					if t, ok := ft.Return.(types.GenericType); ok {
+						ft = ft.T(t.Name, infer.env.GetType(returnStmt.Result))
+						infer.SetType(expr, ft)
+					}
+				}
+			}
 		}
 		// expr type is set in CallExpr
 	})
