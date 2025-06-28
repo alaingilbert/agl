@@ -2273,6 +2273,7 @@ func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 	infer.stmt(stmt.Init)
 	infer.withOptType(stmt.Init, infer.env.GetType2(stmt.Init), func() {
+		var prevBranchT types.Type
 		for _, stmtEl := range stmt.Body.List {
 			clause := stmtEl.(*ast.MatchClause)
 			if v, ok := clause.Expr.(*ast.OkExpr); ok {
@@ -2286,11 +2287,17 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 			}
 			infer.expr(clause.Expr)
 			infer.stmts(clause.Body)
+			var branchT types.Type
 			if len(clause.Body) == 0 {
-				infer.SetType(clause, types.VoidType{})
+				branchT = types.VoidType{}
 			} else {
-				infer.SetType(clause, infer.GetType(Must(Last(clause.Body))))
+				branchT = infer.GetType(Must(Last(clause.Body)))
 			}
+			infer.SetType(clause, branchT)
+			if prevBranchT != nil {
+				assertf(cmpTypesLoose(prevBranchT, branchT), "%s: match branches must have the same type `%s` VS `%s`", infer.Pos(stmt), prevBranchT, branchT)
+			}
+			prevBranchT = branchT
 		}
 		infer.SetType(stmt.Body, infer.GetType(Must(Last(stmt.Body.List))))
 	})
