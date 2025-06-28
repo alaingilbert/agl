@@ -354,6 +354,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("go/types")
 	e.loadPkg("path/filepath")
 	e.loadPkg("regexp")
+	e.loadPkg("slices")
 	//e.loadVendor("golang.org/x/net/html")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
