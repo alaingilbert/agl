@@ -926,6 +926,15 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			default:
 				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
 			}
+		} else if call.Name == "zip" {
+			fnT := infer.env.Get("zip").(types.FuncType)
+			infer.expr(expr.Args[0])
+			infer.expr(expr.Args[1])
+			arg0 := infer.env.GetType(expr.Args[0])
+			arg1 := infer.env.GetType(expr.Args[1])
+			fnT = fnT.T("T", arg0).T("U", arg1)
+			infer.SetType(expr.Fun, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if call.Name == "abs" {
 			fnT := infer.env.Get("abs").(types.FuncType)
 			infer.expr(expr.Args[0])

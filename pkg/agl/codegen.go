@@ -315,6 +315,8 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	}
 	if expr.Name == "abs" {
 		return "AglAbs"
+	} else if expr.Name == "zip" {
+		return "AglZip"
 	}
 	if v := g.env.Get(expr.Name); v != nil {
 		if _, ok := v.(types.TypeType); ok {
@@ -1862,6 +1864,15 @@ type AglNumber interface {
 
 func AglAbs[T AglNumber](e T) (out T) {
 	return T(aglImportMath.Abs(float64(e)))
+}
+
+type Zip[A, B any] struct {
+	A A
+	B B
+}
+
+func AglZip[T, U any](x []T, y []U) Zip[[]T, []U] {
+	return Zip[[]T, []U]{A: x, B: y}
 }
 
 func AglVecLast[T any](a []T) (out Option[T]) {
