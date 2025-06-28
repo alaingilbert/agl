@@ -815,6 +815,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		fnName := call.Sel.Name
 		switch idTT := exprFunT.(type) {
+		case types.TypeType:
 		case types.StringType:
 		case types.ArrayType:
 		case types.MapType:
@@ -989,6 +990,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 }
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
+	if el, ok := idT.(types.TypeType); ok {
+		idT = el.W
+	}
 	switch idTT := idT.(type) {
 	case types.StringType:
 		fnName := exprT.Sel.Name
