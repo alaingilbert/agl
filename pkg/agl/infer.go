@@ -2140,10 +2140,12 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 		infer.expr(expr.Y)
 	}
 	if infer.env.GetType2(expr.X) != nil && infer.env.GetType2(expr.Y) != nil {
-		if isNumericType(infer.env.GetType2(expr.X)) && TryCast[types.UntypedNumType](infer.env.GetType2(expr.Y)) {
-			infer.SetType(expr.Y, infer.env.GetType2(expr.X))
+		tmpFn := func(x, y ast.Expr) bool {
+			return isNumericType(infer.env.GetType2(x)) && TryCast[types.UntypedNumType](infer.env.GetType2(y))
 		}
-		if isNumericType(infer.env.GetType2(expr.Y)) && TryCast[types.UntypedNumType](infer.env.GetType2(expr.X)) {
+		if tmpFn(expr.X, expr.Y) {
+			infer.SetType(expr.Y, infer.env.GetType2(expr.X))
+		} else if tmpFn(expr.Y, expr.X) {
 			infer.SetType(expr.X, infer.env.GetType2(expr.Y))
 		}
 	}
