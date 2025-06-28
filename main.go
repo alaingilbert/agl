@@ -3,13 +3,13 @@ package main
 import (
 	"agl/pkg/agl"
 	"agl/pkg/ast"
-	parser1 "agl/pkg/parser"
+	"agl/pkg/parser"
 	"agl/pkg/token"
 	"context"
 	"errors"
 	"fmt"
 	goast "go/ast"
-	"go/parser"
+	goparser "go/parser"
 	gotoken "go/token"
 	gotypes "go/types"
 	"log"
@@ -129,7 +129,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := parser2(string(by))
+	fset, f := ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -160,7 +160,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		input = ""
 	}
-	fset, f := parser2(input)
+	fset, f := ParseSrc(input)
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -185,7 +185,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := parser2(string(by))
+	fset, f := ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -241,7 +241,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 				return err
 			}
 			fset := gotoken.NewFileSet()
-			node, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
+			node, err := goparser.ParseFile(fset, fileName, src, goparser.AllErrors)
 			if err != nil {
 				log.Printf("failed to parse %s\n", fileName)
 				continue
@@ -276,7 +276,7 @@ func buildAglFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	fset, f := parser2(string(by))
+	fset, f := ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -302,7 +302,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := parser2(string(by))
+	fset, f := ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -311,13 +311,13 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func parser2(src string) (*token.FileSet, *ast.File) {
+func ParseSrc(src string) (*token.FileSet, *ast.File) {
 	// support "#!/usr/bin/env agl run" as first line of agl "script"
 	if strings.HasPrefix(src, "#!") {
 		src = "//" + src
 	}
 	var fset = token.NewFileSet()
-	f, err := parser1.ParseFile(fset, "", src, 0)
+	f, err := parser.ParseFile(fset, "", src, 0)
 	if err != nil {
 		panic(err)
 	}
