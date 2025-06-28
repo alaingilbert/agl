@@ -1091,6 +1091,14 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			joinedFnT.Recv = []types.Type{param0}
 			joinedFnT.Params = joinedFnT.Params[1:]
 			infer.SetType(exprT.Sel, joinedFnT)
+		} else if fnName == "Sorted" {
+			fnT := infer.env.GetFn("agl.Vec.Sorted").T("E", idTT.Elt)
+			param0 := fnT.Params[0]
+			assertf(cmpTypes(idT, param0), "type mismatch, wants: %s, got: %s", param0, idT)
+			infer.SetType(expr, fnT.Return)
+			fnT.Recv = []types.Type{param0}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
 			fnT := infer.env.Get(fnFullName)
