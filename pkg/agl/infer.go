@@ -1018,6 +1018,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT := infer.env.GetFn("agl.String.Split")
 			infer.SetType(expr.Args[0], fnT.Params[1])
 			infer.SetType(expr, fnT.Return)
+		} else if fnName == "Int" {
+			fnT := infer.env.GetFn("agl.String.Int")
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		}
 	case types.ArrayType:
 		fnName := exprT.Sel.Name
