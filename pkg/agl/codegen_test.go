@@ -6582,6 +6582,35 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen236(t *testing.T) {
+	src := `package main
+func test(t (u8, u8)) {}
+func main() {
+	test((u8(1), int(2)))
+}`
+	tassert.PanicsWithError(t, "4:7: type mismatch, want: u8, got: int", testCodeGenFn(src))
+}
+
+func TestCodeGen237(t *testing.T) {
+	src := `package main
+func test(t (u8, u8)) {}
+func main() {
+	test((u8(1), u8(2)))
+}`
+	expected := `package main
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+func test(t AglTupleStruct_uint8_uint8) {
+}
+func main() {
+	test(AglTupleStruct_uint8_uint8{Arg0: uint8(1), Arg1: uint8(2)})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

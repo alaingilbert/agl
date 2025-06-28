@@ -1442,12 +1442,20 @@ func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {
 func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 	infer.exprs(expr.Values)
 	if infer.optType.IsDefinedFor(expr) {
+		var elts []types.Type
 		expected := infer.optType.Type.(types.TupleType).Elts
 		for i, x := range expr.Values {
-			if _, ok := infer.GetType(x).(types.UntypedNumType); ok {
-				infer.SetType(x, expected[i])
+			expectedI := expected[i]
+			xT := infer.GetType(x)
+			if _, ok := xT.(types.UntypedNumType); ok {
+				infer.SetType(x, expectedI)
+				elts = append(elts, expectedI)
+			} else {
+				assertf(cmpTypesLoose(xT, expectedI), "%s: type mismatch, want: %s, got: %s", infer.Pos(expr), expectedI, xT)
+				elts = append(elts, xT)
 			}
 		}
+		infer.SetType(expr, types.TupleType{Elts: elts})
 	} else {
 		var elts []types.Type
 		for _, v := range expr.Values {
