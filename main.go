@@ -22,6 +22,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+var version = "0.0.1"
+
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -38,8 +40,9 @@ func main() {
 		}
 	}()
 	cmd := &cli.Command{
-		Name:  "AGL",
-		Usage: "AnotherGoLang",
+		Name:    "AGL",
+		Usage:   "AnotherGoLang",
+		Version: version,
 		Commands: []*cli.Command{
 			{
 				Name:    "run",
@@ -61,6 +64,11 @@ func main() {
 				Aliases: []string{"e"},
 				Usage:   "execute command",
 				Action:  executeAction,
+			},
+			{
+				Name:   "version",
+				Usage:  "print AGL version",
+				Action: versionAction,
 			},
 		},
 		Action: startAction,
@@ -351,4 +359,9 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 	result = append(result, lines[packageLineIndex+1:]...)
 
 	return strings.Join(result, "\n")
+}
+
+func versionAction(ctx context.Context, cmd *cli.Command) error {
+	fmt.Printf("AGL v%s\n", version)
+	return nil
 }
