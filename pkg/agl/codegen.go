@@ -1080,6 +1080,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Int" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringInt(%s)", content1)
+			} else if e.Sel.Name == "F64" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglStringF64(%s)", content1)
 			}
 		} else if _, ok := tmp.(types.MapType); ok {
 			if e.Sel.Name == "Get" {
