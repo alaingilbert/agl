@@ -1195,24 +1195,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		}
 	case types.MapType:
 		fnName := exprT.Sel.Name
-		if fnName == "Get" {
-			getFnT := infer.env.GetFn("agl.Map.Get").T("K", idTT.K).T("V", idTT.V)
+		if InArray(fnName, []string{"Get", "Keys", "Values"}) {
+			getFnT := infer.env.GetFn("agl.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
 			getFnT.Recv = []types.Type{idTT}
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
-		} else if fnName == "Keys" {
-			fnT := infer.env.GetFn("agl.Map.Keys").T("K", idTT.K).T("V", idTT.V)
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(expr, fnT.Return)
-			infer.SetType(exprT.Sel, fnT)
-		} else if fnName == "Values" {
-			fnT := infer.env.GetFn("agl.Map.Values").T("K", idTT.K).T("V", idTT.V)
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(expr, fnT.Return)
-			infer.SetType(exprT.Sel, fnT)
 		}
 	}
 }
