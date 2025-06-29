@@ -678,6 +678,13 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return t
 	case StructType: // TODO
 		return t
+	case TupleType:
+		var params []Type
+		for _, p := range t1.Elts {
+			p = ReplGen(p, name, newTyp)
+			params = append(params, p)
+		}
+		return TupleType{Elts: params}
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
