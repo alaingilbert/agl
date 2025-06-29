@@ -1084,6 +1084,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglStringI32(%s)", g.genExpr(e.X))
 			case "I64":
 				return fmt.Sprintf("AglStringI64(%s)", g.genExpr(e.X))
+			case "Uint":
+				return fmt.Sprintf("AglStringUint(%s)", g.genExpr(e.X))
+			case "U8":
+				return fmt.Sprintf("AglStringU8(%s)", g.genExpr(e.X))
+			case "U16":
+				return fmt.Sprintf("AglStringU16(%s)", g.genExpr(e.X))
+			case "U32":
+				return fmt.Sprintf("AglStringU32(%s)", g.genExpr(e.X))
+			case "U64":
+				return fmt.Sprintf("AglStringU64(%s)", g.genExpr(e.X))
 			case "F64":
 				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
 			}
@@ -1925,6 +1935,46 @@ func AglStringI64(s string) Result[int64] {
 		return MakeResultErr[int64](err)
 	}
 	return MakeResultOk(v)
+}
+
+func AglStringUint(s string) Result[uint] {
+	v, err := aglImportStrconv.ParseUint(s, 10, 0)
+	if err != nil {
+		return MakeResultErr[uint](err)
+	}
+	return MakeResultOk(uint(v))
+}
+
+func AglStringU8(s string) Result[uint8] {
+	v, err := aglImportStrconv.ParseUint(s, 10, 8)
+	if err != nil {
+		return MakeResultErr[uint8](err)
+	}
+	return MakeResultOk(uint8(v))
+}
+
+func AglStringU16(s string) Result[uint16] {
+	v, err := aglImportStrconv.ParseUint(s, 10, 16)
+	if err != nil {
+		return MakeResultErr[uint16](err)
+	}
+	return MakeResultOk(uint16(v))
+}
+
+func AglStringU32(s string) Result[uint32] {
+	v, err := aglImportStrconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return MakeResultErr[uint32](err)
+	}
+	return MakeResultOk(uint32(v))
+}
+
+func AglStringU64(s string) Result[uint64] {
+	v, err := aglImportStrconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return MakeResultErr[uint64](err)
+	}
+	return MakeResultOk(uint64(v))
 }
 
 func AglStringF64(s string) Result[float64] {
