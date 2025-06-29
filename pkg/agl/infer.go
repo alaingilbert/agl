@@ -6,7 +6,7 @@ import (
 	"agl/pkg/types"
 	"fmt"
 	goast "go/ast"
-	"go/parser"
+	goparser "go/parser"
 	gotoken "go/token"
 	gotypes "go/types"
 	"log"
@@ -246,7 +246,7 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 				continue
 			}
 			fset := gotoken.NewFileSet()
-			node, err := parser.ParseFile(fset, fName, src, parser.AllErrors)
+			node, err := goparser.ParseFile(fset, fName, src, goparser.AllErrors)
 			if err != nil {
 				log.Printf("failed to parse %s\n", fPath)
 				continue
