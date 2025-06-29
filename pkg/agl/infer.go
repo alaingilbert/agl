@@ -11,9 +11,11 @@ import (
 	gotoken "go/token"
 	gotypes "go/types"
 	"log"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -1166,7 +1168,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 					infer.expr(arg)
 					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
-					for k, v := range m {
+					for _, k := range slices.Sorted(maps.Keys(m)) {
+						v := m[k]
 						if el, ok := genericMapping[k]; ok {
 							assertf(el == v, "generic type parameter type mismatch. want: %v, got: %v", el, v)
 						}
