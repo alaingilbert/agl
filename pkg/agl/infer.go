@@ -819,7 +819,6 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		if el, ok := exprFunT.(types.TypeType); ok {
 			exprFunT = el.W
 		}
-		p("?", exprFunT, to(exprFunT))
 		switch idTT := exprFunT.(type) {
 		case types.TypeType:
 		case types.UntypedStringType:
@@ -1019,32 +1018,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 	switch idTT := idT.(type) {
 	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
-		if fnName == "Split" {
-			fnT := infer.env.GetFn("agl.String.Split")
+		var fnT types.FuncType
+		switch fnName {
+		case "Split":
+			fnT = infer.env.GetFn("agl.String.Split")
 			infer.SetType(expr.Args[0], fnT.Params[1])
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "Lowercased" {
-			fnT := infer.env.GetFn("agl.String.Lowercased")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "Uppercased" {
-			fnT := infer.env.GetFn("agl.String.Uppercased")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if InArray(fnName, []string{"Int", "I8", "I16", "I32", "I64", "F64"}) {
-			fnT := infer.env.GetFn("agl.String." + fnName)
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
+		case "Int", "I8", "I16", "I32", "I64", "F64", "Uppercased", "Lowercased":
+			fnT = infer.env.GetFn("agl.String." + fnName)
 		}
+		fnT.Recv = []types.Type{idTT}
+		fnT.Params = fnT.Params[1:]
+		infer.SetType(exprT.Sel, fnT)
+		infer.SetType(expr, fnT.Return)
 	case types.ArrayType:
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
