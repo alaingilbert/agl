@@ -806,9 +806,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 		}
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
-	if content1 != "" {
-		content1 = " " + content1
-	}
+	content1 = prefixIf(content1, " ")
 	return fmt.Sprintf("func%s(%s)%s", typeParamsStr, paramsStr, content1)
 }
 
