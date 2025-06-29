@@ -689,6 +689,20 @@ func ReplGenM(t Type, m map[string]Type) (out Type) {
 	return t
 }
 
+func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
+	switch currT := currTyp.(type) {
+	case ArrayType:
+		return ReplGen2(t, currT.Elt, newTyp.(ArrayType).Elt)
+	case GenericType:
+		t = t.(FuncType).ReplaceGenericParameter(currT.Name, newTyp)
+		return t
+	default:
+		return t
+		panic(fmt.Sprintf("%v", reflect.TypeOf(currT)))
+	}
+	return t
+}
+
 func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	switch t1 := t.(type) {
 	case ArrayType:
