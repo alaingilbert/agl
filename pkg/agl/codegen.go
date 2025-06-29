@@ -1086,6 +1086,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "I16" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringI16(%s)", content1)
+			} else if e.Sel.Name == "I32" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglStringI32(%s)", content1)
+			} else if e.Sel.Name == "I64" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglStringI64(%s)", content1)
 			} else if e.Sel.Name == "F64" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringF64(%s)", content1)
@@ -1912,6 +1918,22 @@ func AglStringI16(s string) Result[int16] {
 		return MakeResultErr[int16](err)
 	}
 	return MakeResultOk(int16(v))
+}
+
+func AglStringI32(s string) Result[int32] {
+	v, err := aglImportStrconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return MakeResultErr[int32](err)
+	}
+	return MakeResultOk(int32(v))
+}
+
+func AglStringI64(s string) Result[int64] {
+	v, err := aglImportStrconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return MakeResultErr[int64](err)
+	}
+	return MakeResultOk(v)
 }
 
 func AglStringF64(s string) Result[float64] {

@@ -1052,6 +1052,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
+		} else if fnName == "I32" {
+			fnT := infer.env.GetFn("agl.String.I32")
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
+		} else if fnName == "I64" {
+			fnT := infer.env.GetFn("agl.String.I64")
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if fnName == "F64" {
 			fnT := infer.env.GetFn("agl.String.F64")
 			fnT.Recv = []types.Type{idTT}
