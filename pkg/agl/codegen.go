@@ -1067,6 +1067,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglStringU32(%s)", g.genExpr(e.X))
 			case "U64":
 				return fmt.Sprintf("AglStringU64(%s)", g.genExpr(e.X))
+			case "F32":
+				return fmt.Sprintf("AglStringF32(%s)", g.genExpr(e.X))
 			case "F64":
 				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
 			}
@@ -1977,6 +1979,14 @@ func AglStringU64(s string) Result[uint64] {
 		return MakeResultErr[uint64](err)
 	}
 	return MakeResultOk(uint64(v))
+}
+
+func AglStringF32(s string) Result[float32] {
+	v, err := aglImportStrconv.ParseFloat(s, 32)
+	if err != nil {
+		return MakeResultErr[float32](err)
+	}
+	return MakeResultOk(float32(v))
 }
 
 func AglStringF64(s string) Result[float64] {
