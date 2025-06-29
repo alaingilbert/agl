@@ -1961,7 +1961,8 @@ func AglStringI64(s string) Result[int64] {
 }
 
 func AglStringUint(s string) Result[uint] {
-	v, err := aglImportStrconv.ParseUint(s, 10, 0)
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseUint(s, base, 0)
 	if err != nil {
 		return MakeResultErr[uint](err)
 	}
@@ -1969,7 +1970,8 @@ func AglStringUint(s string) Result[uint] {
 }
 
 func AglStringU8(s string) Result[uint8] {
-	v, err := aglImportStrconv.ParseUint(s, 10, 8)
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseUint(s, base, 8)
 	if err != nil {
 		return MakeResultErr[uint8](err)
 	}
@@ -1977,7 +1979,8 @@ func AglStringU8(s string) Result[uint8] {
 }
 
 func AglStringU16(s string) Result[uint16] {
-	v, err := aglImportStrconv.ParseUint(s, 10, 16)
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseUint(s, base, 16)
 	if err != nil {
 		return MakeResultErr[uint16](err)
 	}
@@ -1985,7 +1988,8 @@ func AglStringU16(s string) Result[uint16] {
 }
 
 func AglStringU32(s string) Result[uint32] {
-	v, err := aglImportStrconv.ParseUint(s, 10, 32)
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseUint(s, base, 32)
 	if err != nil {
 		return MakeResultErr[uint32](err)
 	}
@@ -1993,7 +1997,8 @@ func AglStringU32(s string) Result[uint32] {
 }
 
 func AglStringU64(s string) Result[uint64] {
-	v, err := aglImportStrconv.ParseUint(s, 10, 64)
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseUint(s, base, 64)
 	if err != nil {
 		return MakeResultErr[uint64](err)
 	}
