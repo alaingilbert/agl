@@ -260,12 +260,12 @@ func defineFromSrc(env *Env, path string, src []byte) {
 }
 
 //go:embed std/* pkgs/*
-var content embed.FS
+var contentFs embed.FS
 
 func (e *Env) loadPkg(path string) {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("std", path, f+".agl")
-	by := Must(content.ReadFile(stdFilePath))
+	by := Must(contentFs.ReadFile(stdFilePath))
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, final, by)
 }
@@ -273,7 +273,7 @@ func (e *Env) loadPkg(path string) {
 func (e *Env) loadVendor(path string) {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
-	by := Must(content.ReadFile(stdFilePath))
+	by := Must(contentFs.ReadFile(stdFilePath))
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
 	defineFromSrc(e, final, by)
 }
