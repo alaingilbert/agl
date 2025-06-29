@@ -1067,36 +1067,25 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
 		} else if _, ok := tmp.(types.StringType); ok {
-			fnName := e.Sel.Name
-			switch fnName {
+			switch e.Sel.Name {
 			case "Split":
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglStringSplit(%s, %s)", content1, content2)
+				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Lowercased":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringLowercased(%s)", content1)
+				return fmt.Sprintf("AglStringLowercased(%s)", g.genExpr(e.X))
 			case "Uppercased":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringUppercased(%s)", content1)
+				return fmt.Sprintf("AglStringUppercased(%s)", g.genExpr(e.X))
 			case "Int":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringInt(%s)", content1)
+				return fmt.Sprintf("AglStringInt(%s)", g.genExpr(e.X))
 			case "I8":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringI8(%s)", content1)
+				return fmt.Sprintf("AglStringI8(%s)", g.genExpr(e.X))
 			case "I16":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringI16(%s)", content1)
+				return fmt.Sprintf("AglStringI16(%s)", g.genExpr(e.X))
 			case "I32":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringI32(%s)", content1)
+				return fmt.Sprintf("AglStringI32(%s)", g.genExpr(e.X))
 			case "I64":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringI64(%s)", content1)
+				return fmt.Sprintf("AglStringI64(%s)", g.genExpr(e.X))
 			case "F64":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglStringF64(%s)", content1)
+				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
 			}
 		} else if _, ok := tmp.(types.MapType); ok {
 			if e.Sel.Name == "Get" {
