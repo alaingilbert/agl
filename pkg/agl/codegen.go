@@ -1074,6 +1074,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if e.Sel.Name == "Lowercased" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringLowercased(%s)", content1)
+			} else if e.Sel.Name == "Uppercased" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglStringUppercased(%s)", content1)
 			} else if e.Sel.Name == "Int" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringInt(%s)", content1)
@@ -1872,6 +1875,10 @@ func AglStringSplit(s string, sep string) []string {
 
 func AglStringLowercased(s string) string {
 	return aglImportStrings.ToLower(s)
+}
+
+func AglStringUppercased(s string) string {
+	return aglImportStrings.ToUpper(s)
 }
 
 func AglStringInt(s string) Result[int] {
