@@ -94,9 +94,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			for _, field := range params {
 				tmp2Str := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 				content := g.genExpr(field.Type)
-				if tmp2Str != "" {
-					tmp2Str = tmp2Str + " "
-				}
+				tmp2Str = suffixIf(tmp2Str, " ")
 				fieldsItems = append(fieldsItems, tmp2Str+content)
 			}
 			paramsStr = strings.Join(fieldsItems, ", ")
