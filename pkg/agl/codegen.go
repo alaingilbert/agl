@@ -1222,13 +1222,6 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType2(x).GoStr())
 	}
 	structStr += fmt.Sprintf("}\n")
-	//structStr += fmt.Sprintf("func (s %s) String() string {\n", structName)
-	//var tmp []string
-	//for _, x := range expr.Values {
-	//	tmp = append(tmp, g.genExpr(x))
-	//}
-	//structStr += fmt.Sprintf("\treturn \"(%s)\"\n", strings.Join(tmp, ", "))
-	//structStr += "}\n"
 	g.tupleStructs[structName] = structStr
 	var fields []string
 	for i, x := range expr.Values {
