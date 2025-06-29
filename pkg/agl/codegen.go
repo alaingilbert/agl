@@ -449,15 +449,16 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 		check = "IsNone()"
 	}
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	gPrefix := g.prefix
 	before := ""
-	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
-	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-	before += g.prefix + "\tbreak"
+	before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
+	before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+	before += gPrefix + "\tbreak"
 	if expr.Label != nil {
 		before += " " + expr.Label.String()
 	}
 	before += "\n"
-	before += g.prefix + "}\n"
+	before += gPrefix + "}\n"
 	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
@@ -472,14 +473,15 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	}
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	before := ""
-	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
-	before += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-	before += g.prefix + "\tcontinue"
+	gPrefix := g.prefix
+	before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
+	before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+	before += gPrefix + "\tcontinue"
 	if expr.Label != nil {
 		before += " " + expr.Label.String()
 	}
 	before += "\n"
-	before += g.prefix + "}\n"
+	before += gPrefix + "}\n"
 	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
@@ -583,12 +585,13 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 	content1 := strings.TrimSpace(g.genStmt(expr.Init))
 	initT := g.env.GetType(expr.Init)
 	varName := fmt.Sprintf(`aglTmp%d`, g.varCounter.Add(1))
+	gPrefix := g.prefix
 	switch v := initT.(type) {
 	case types.ResultType:
 		if v.Native {
-			out += g.prefix + fmt.Sprintf("%s, tmpErr := %s\n", varName, content1)
+			out += gPrefix + fmt.Sprintf("%s, tmpErr := %s\n", varName, content1)
 		} else {
-			out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		}
 		if expr.Body != nil {
 			for _, c := range expr.Body.List {
@@ -596,18 +599,18 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				if v.Native {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += g.prefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := %s\n", g.prefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := %s\n", gPrefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
-						out += g.prefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s := tmpErr\n", g.prefix, g.genExpr(v.X))
+						out += gPrefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s := tmpErr\n", gPrefix, g.genExpr(v.X))
 					default:
 						panic("")
 					}
 				} else {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += g.prefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, g.prefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
-						out += g.prefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, g.prefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, gPrefix, g.genExpr(v.X), varName)
 					default:
 						panic("")
 					}
@@ -616,19 +619,19 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 					return g.genStmts(c.Body)
 				})
 				out += content3
-				out += g.prefix + "}\n"
+				out += gPrefix + "}\n"
 			}
 		}
 	case types.OptionType:
-		out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+		out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		if expr.Body != nil {
 			for _, c := range expr.Body.List {
 				c := c.(*ast.MatchClause)
 				switch v := c.Expr.(type) {
 				case *ast.SomeExpr:
-					out += g.prefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, g.prefix, g.genExpr(v.X), varName)
+					out += gPrefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X), varName)
 				case *ast.NoneExpr:
-					out += g.prefix + fmt.Sprintf("if %s.IsNone() {\n", varName)
+					out += gPrefix + fmt.Sprintf("if %s.IsNone() {\n", varName)
 				default:
 					panic("")
 				}
@@ -636,7 +639,7 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 					return g.genStmts(c.Body)
 				})
 				out += content3
-				out += g.prefix + "}\n"
+				out += gPrefix + "}\n"
 			}
 		}
 	default:
@@ -760,16 +763,17 @@ func (g *Generator) genFuncLit(expr *ast.FuncLit) (out string) {
 }
 
 func (g *Generator) genStructType(expr *ast.StructType) (out string) {
-	out += g.prefix + "struct {\n"
+	gPrefix := g.prefix
+	out += gPrefix + "struct {\n"
 	for _, field := range expr.Fields.List {
 		content1 := g.genExpr(field.Type)
 		var namesArr []string
 		for _, name := range field.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += g.prefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + "\n"
+		out += gPrefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + "\n"
 	}
-	out += g.prefix + "}"
+	out += gPrefix + "}"
 	return
 }
 
@@ -1491,22 +1495,23 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 	if init != "" {
 		initStr = init + "; "
 	}
-	out += g.prefix + "if " + initStr + cond + " {\n"
+	gPrefix := g.prefix
+	out += gPrefix + "if " + initStr + cond + " {\n"
 	out += body
 	if stmt.Else != nil {
 		if _, ok := stmt.Else.(*ast.IfStmt); ok {
 			content3 := g.genStmt(stmt.Else)
-			out += g.prefix + "} else " + strings.TrimSpace(content3) + "\n"
+			out += gPrefix + "} else " + strings.TrimSpace(content3) + "\n"
 		} else {
 			content3 := g.incrPrefix(func() string {
 				return g.genStmt(stmt.Else)
 			})
-			out += g.prefix + "} else {\n"
+			out += gPrefix + "} else {\n"
 			out += content3
-			out += g.prefix + "}\n"
+			out += gPrefix + "}\n"
 		}
 	} else {
-		out += g.prefix + "}\n"
+		out += gPrefix + "}\n"
 	}
 	return out
 }
