@@ -1313,6 +1313,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		if infer.optType.IsDefinedFor(expr) {
 			infer.SetType(expr, infer.optType.Type)
 		}
+		// Define args shortcuts in environment ($0, $1...)
 		if t := infer.env.GetType(expr); t != nil {
 			for i, param := range t.(types.FuncType).Params {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
