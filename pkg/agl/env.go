@@ -287,6 +287,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.Insert", "func [T comparable](s *agl.Set[T], el T) bool")
 	e.DefineFn("agl.String.Split", "func (s, sep string) []string")
 	e.DefineFn("agl.String.Lowercased", "func (s string) string")
+	e.DefineFn("agl.String.Uppercased", "func (s string) string")
 	e.DefineFn("agl.String.Int", "func (s) int!")
 	e.DefineFn("agl.String.F64", "func (s) f64!")
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
