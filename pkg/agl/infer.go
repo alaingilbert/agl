@@ -972,12 +972,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			oParams := callTT.Params
 			for i := range expr.Args {
 				arg := expr.Args[i]
-				var oArg types.Type
-				if i >= len(oParams) {
-					oArg = oParams[len(oParams)-1]
-				} else {
-					oArg = oParams[i]
-				}
+				oArg := oParams[min(i, len(oParams)-1)]
 				infer.withOptType(arg, oArg, func() {
 					infer.expr(arg)
 				})
