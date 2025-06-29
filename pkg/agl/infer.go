@@ -1162,9 +1162,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			for i, arg := range expr.Args {
 				if TryCast[*ast.ShortFuncLit](arg) || TryCast[*ast.FuncLit](arg) {
 					genFn := ft.GetParam(i)
-					if TryCast[*ast.ShortFuncLit](arg) {
-						infer.SetType(arg, genFn)
-					}
+					infer.SetType(arg, genFn)
 					infer.expr(arg)
 					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
