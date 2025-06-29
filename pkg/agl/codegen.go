@@ -976,73 +976,48 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			tmp = el.W
 		}
 		if _, ok := tmp.(types.ArrayType); ok {
-			if e.Sel.Name == "Filter" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglVecFilter(%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Map" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglVecMap(%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Reduce" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				content3 := g.genExpr(expr.Args[1])
-				return fmt.Sprintf("AglReduce(%s, %s, %s)", content1, content2, content3)
-			} else if e.Sel.Name == "Find" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglVecFind(%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Sum" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecSum(%s)", content1)
-			} else if e.Sel.Name == "Last" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecLast(%s)", content1)
-			} else if e.Sel.Name == "First" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecFirst(%s)", content1)
-			} else if e.Sel.Name == "Len" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecLen(%s)", content1)
-			} else if e.Sel.Name == "IsEmpty" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecIsEmpty(%s)", content1)
-			} else if e.Sel.Name == "Insert" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				content3 := g.genExpr(expr.Args[1])
-				return fmt.Sprintf("AglVecInsert(%s, %s ,%s)", content1, content2, content3)
-			} else if e.Sel.Name == "Pop" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecPop(&%s)", content1)
-			} else if e.Sel.Name == "PopFront" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecPopFront(&%s)", content1)
-			} else if e.Sel.Name == "PopIf" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglVecPopIf(&%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Push" {
+			fnName := e.Sel.Name
+			if fnName == "Filter" {
+				return fmt.Sprintf("AglVecFilter(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Map" {
+				return fmt.Sprintf("AglVecMap(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Reduce" {
+				return fmt.Sprintf("AglReduce(%s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+			} else if fnName == "Find" {
+				return fmt.Sprintf("AglVecFind(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Sum" {
+				return fmt.Sprintf("AglVecSum(%s)", g.genExpr(e.X))
+			} else if fnName == "Last" {
+				return fmt.Sprintf("AglVecLast(%s)", g.genExpr(e.X))
+			} else if fnName == "First" {
+				return fmt.Sprintf("AglVecFirst(%s)", g.genExpr(e.X))
+			} else if fnName == "Len" {
+				return fmt.Sprintf("AglVecLen(%s)", g.genExpr(e.X))
+			} else if fnName == "IsEmpty" {
+				return fmt.Sprintf("AglVecIsEmpty(%s)", g.genExpr(e.X))
+			} else if fnName == "Insert" {
+				return fmt.Sprintf("AglVecInsert(%s, %s ,%s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+			} else if fnName == "Pop" {
+				return fmt.Sprintf("AglVecPop(&%s)", g.genExpr(e.X))
+			} else if fnName == "PopFront" {
+				return fmt.Sprintf("AglVecPopFront(&%s)", g.genExpr(e.X))
+			} else if fnName == "PopIf" {
+				return fmt.Sprintf("AglVecPopIf(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Push" {
 				content1 := g.genExpr(e.X)
 				var params []string
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
 				return fmt.Sprintf("AglVecPush(&%s, %s)", content1, strings.Join(params, ", "))
-			} else if e.Sel.Name == "PushFront" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglVecPushFront(&%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Joined" {
-				content1 := g.genExpr(e.X)
-				content2 := g.genExpr(expr.Args[0])
-				return fmt.Sprintf("AglJoined(%s, %s)", content1, content2)
-			} else if e.Sel.Name == "Sorted" {
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglVecSorted(%s)", content1)
+			} else if fnName == "PushFront" {
+				return fmt.Sprintf("AglVecPushFront(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Joined" {
+				return fmt.Sprintf("AglJoined(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Sorted" {
+				return fmt.Sprintf("AglVecSorted(%s)", g.genExpr(e.X))
 			} else {
-				extName := "agl.Vec." + e.Sel.Name
+				extName := "agl.Vec." + fnName
 				t := g.env.Get(extName)
 				rawFnT := t
 				concreteT := g.env.GetType(expr.Fun)
@@ -1064,7 +1039,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 				elsStr := strings.Join(els, "_")
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
-				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
+				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, content1, content2)
 			}
 		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
 			switch e.Sel.Name {
