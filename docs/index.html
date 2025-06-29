@@ -53,6 +53,11 @@
         <script>
             let go = new Go();
             let editor;
+            const examples = {
+                Example1: `package main\n\nimport \"fmt\"\n\nfunc MaybeInt() int? { Some(42) }\n\nfunc main() {\n    fmt.Println(MaybeInt())\n\n    arr := []int{1, 2, 3}\n    sum := arr.Map({ $0 + 1 }).Sum()\n    fmt.Println(\"Sum:\", sum) // 9\n}`,
+                sumArray: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    arr := []int{1, 2, 3, 4, 5}\n    fmt.Println(\"Sum:\", arr.Sum())\n}`,
+                stringBuiltIns: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println("Hello World!".Lowercased())\n    fmt.Println("Hello World!".Uppercased())\n    fmt.Println("42".U64()!)\n    fmt.Println("0b101010".Int()!)\n}`,
+            };
 
             async function runWasmWithInput(inputText) {
                 // Set up args: first is program name, then your args
@@ -151,19 +156,7 @@
             window.onload = function() {
                 // Initialize CodeMirror
                 editor = CodeMirror(document.getElementById("code"), {
-                    value: `package main
-
-import "fmt"
-
-func MaybeInt() int? { Some(42) }
-
-func main() {
-    fmt.Println(MaybeInt())
-
-    arr := []int{1, 2, 3}
-    sum := arr.Map({ $0 + 1 }).Sum()
-    fmt.Println("Sum:", sum) // 9
-}`,
+                    value: examples["Example1"],
                     mode: "go",
                     theme: "monokai",
                     lineNumbers: true,
@@ -177,7 +170,12 @@ func main() {
                         "Ctrl-Space": "autocomplete"
                     }
                 });
-
+                document.getElementById("exampleSelect").onchange = function() {
+                    const selected = this.value;
+                    if (examples[selected]) {
+                        editor.setValue(examples[selected]);
+                    }
+                };
                 document.getElementById("playgroundBtn").onclick = function() {
                     runInPlayground();
                 };
@@ -187,6 +185,12 @@ func main() {
     <body>
         <div class="container">
             <h1>AGL Playground</h1>
+            <label for="exampleSelect">Examples:</label>
+            <select id="exampleSelect">
+                <option value="Example1">Example1</option>
+                <option value="sumArray">Sum array</option>
+                <option value="stringBuiltIns">String build-ins</option>
+            </select>
             <div id="code"></div>
             <button id="playgroundBtn">Run</button>
             <pre id="output"></pre>
