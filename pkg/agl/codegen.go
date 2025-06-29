@@ -1123,18 +1123,19 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	return fmt.Sprintf("%s(%s)", content1, content2)
 }
 
-func prefixIf(s, prefix string) string {
+func applyIf(s string, clb func() string) string {
 	if s != "" {
-		return prefix + s
+		return clb()
 	}
 	return s
 }
 
+func prefixIf(s, prefix string) string {
+	return applyIf(s, func() string { return prefix + s })
+}
+
 func suffixIf(s, suffix string) string {
-	if s != "" {
-		return s + suffix
-	}
-	return s
+	return applyIf(s, func() string { return s + suffix })
 }
 
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
