@@ -6792,6 +6792,14 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen243(t *testing.T) {
+	src := `package main
+func main() {
+	"".DoNotExists()
+}`
+	tassert.PanicsWithError(t, "3:5: method 'DoNotExists' of type String does not exists", testCodeGenFn(src))
+}
+
 //func TestCodeGen243(t *testing.T) {
 //	src := `package main
 //import "fmt"
