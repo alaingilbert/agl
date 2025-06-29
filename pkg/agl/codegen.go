@@ -1930,7 +1930,21 @@ func AglStringI32(s string) Result[int32] {
 }
 
 func AglStringI64(s string) Result[int64] {
-	v, err := aglImportStrconv.ParseInt(s, 10, 64)
+	s = aglImportStrings.ReplaceAll(s, "_", "")
+	var base int
+	switch {
+	case aglImportStrings.HasPrefix(s, "0b"):
+		s, base = s[2:], 2
+	case aglImportStrings.HasPrefix(s, "0o"):
+		s, base = s[2:], 8
+	case aglImportStrings.HasPrefix(s, "0x"):
+		s, base = s[2:], 16
+	case aglImportStrings.HasPrefix(s, "0") && len(s) > 1:
+		base = 8 // legacy octal (e.g., 0755)
+	default:
+		base = 10
+	}
+	v, err := aglImportStrconv.ParseInt(s, base, 64)
 	if err != nil {
 		return MakeResultErr[int64](err)
 	}
