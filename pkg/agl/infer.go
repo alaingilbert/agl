@@ -930,8 +930,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			fnT := infer.env.Get("zip").(types.FuncType)
 			infer.expr(expr.Args[0])
 			infer.expr(expr.Args[1])
-			arg0 := infer.env.GetType(expr.Args[0])
-			arg1 := infer.env.GetType(expr.Args[1])
+			arg0 := infer.env.GetType(expr.Args[0]).(types.ArrayType).Elt
+			arg1 := infer.env.GetType(expr.Args[1]).(types.ArrayType).Elt
 			fnT = fnT.T("T", arg0).T("U", arg1)
 			infer.SetType(expr.Fun, fnT)
 			infer.SetType(expr, fnT.Return)
