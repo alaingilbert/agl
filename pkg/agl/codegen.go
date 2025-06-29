@@ -1573,9 +1573,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	}
 	if result := decl.Type.Result; result != nil {
 		resultStr = g.env.GetType(result).GoStr()
-		if resultStr != "" {
-			resultStr = " " + resultStr
-		}
+		resultStr = prefixIf(resultStr, " ")
 	}
 	if decl.Body != nil {
 		content := g.incrPrefix(func() string {
