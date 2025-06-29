@@ -1066,7 +1066,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", e.Sel.Name, elsStr, content1, content2)
 			}
-		} else if _, ok := tmp.(types.StringType); ok {
+		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
