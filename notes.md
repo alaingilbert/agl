@@ -10,5 +10,5 @@ go mod vendor && go build -o agl-lsp main.go
 
 To update the wasm build (playground) 
 ```sh
-go build -o docs/main.wasm main.go
+GOOS=js GOARCH=wasm go build -o docs/main.wasm main.go
 ```
