@@ -1146,17 +1146,17 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(exprT.Sel, fnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
-			fnT := infer.env.Get(fnFullName)
-			assertf(fnT != nil, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
-			fnT0 := fnT.(types.FuncType)
-			assert(len(fnT0.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
-			gen0 := fnT0.TypeParams[0].(types.GenericType).W
+			fnTRaw := infer.env.Get(fnFullName)
+			assertf(fnTRaw != nil, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
+			fnT := fnTRaw.(types.FuncType)
+			assert(len(fnT.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
+			gen0 := fnT.TypeParams[0].(types.GenericType).W
 			want := types.ArrayType{Elt: gen0}
 			assertf(cmpTypes(gen0, idTT.Elt), "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTT, want, fnName)
-			fnT1 := fnT0.T("T", idTT.Elt)
-			retT := Or[types.Type](fnT1.Return, types.VoidType{})
-			infer.SetType(exprT.Sel, fnT1)
-			infer.SetType(expr.Fun, fnT1)
+			fnT = fnT.T("T", idTT.Elt)
+			retT := Or[types.Type](fnT.Return, types.VoidType{})
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr.Fun, fnT)
 			infer.SetType(expr, retT)
 			ft := infer.GetTypeFn(expr.Fun)
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
