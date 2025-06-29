@@ -290,6 +290,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.String.Uppercased", "func (s string) string")
 	e.DefineFn("agl.String.Int", "func (s) int!")
 	e.DefineFn("agl.String.I8", "func (s) i8!")
+	e.DefineFn("agl.String.I16", "func (s) i16!")
 	e.DefineFn("agl.String.F64", "func (s) f64!")
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
