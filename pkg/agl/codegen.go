@@ -661,11 +661,8 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 	var listStr string
 	if expr.List != nil {
-		var els []string
-		for _, el := range expr.List {
-			els = append(els, g.genExpr(el))
-		}
-		listStr = "case " + strings.Join(els, ", ") + ":\n"
+		tmp := MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+		listStr = "case " + tmp + ":\n"
 	} else {
 		listStr = "default:\n"
 	}
@@ -1226,12 +1223,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 }
 
 func (g *Generator) genExprs(e []ast.Expr) (out string) {
-	var tmp []string
-	for _, expr := range e {
-		content1 := g.genExpr(expr)
-		tmp = append(tmp, content1)
-	}
-	return strings.Join(tmp, ", ")
+	return MapJoin(e, func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
 }
 
 func (g *Generator) genStmts(s []ast.Stmt) (out string) {
@@ -1566,11 +1558,6 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	if params := decl.Type.Params; params != nil {
 		var fieldsItems []string
 		for _, field := range params.List {
-			var namesItems []string
-			for _, n := range field.Names {
-				namesItems = append(namesItems, n.Name)
-			}
-			tmp2Str := strings.Join(namesItems, ", ")
 			var content string
 			switch field.Type.(type) {
 			case *ast.TupleExpr:
@@ -1578,10 +1565,9 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 			default:
 				content = g.genExpr(field.Type)
 			}
-			if tmp2Str != "" {
-				tmp2Str = tmp2Str + " "
-			}
-			fieldsItems = append(fieldsItems, tmp2Str+content)
+			namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+			namesStr = suffixIf(namesStr, " ")
+			fieldsItems = append(fieldsItems, namesStr+content)
 		}
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
@@ -1607,16 +1593,10 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 	}
 	var fieldsItems []string
 	for _, field := range l.List {
-		var namesItems []string
-		for _, n := range field.Names {
-			namesItems = append(namesItems, n.Name)
-		}
-		tmp2Str := strings.Join(namesItems, ", ")
 		content := g.genExpr(field.Type)
-		if tmp2Str != "" {
-			tmp2Str = tmp2Str + " "
-		}
-		fieldsItems = append(fieldsItems, tmp2Str+content)
+		namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+		namesStr = suffixIf(namesStr, " ")
+		fieldsItems = append(fieldsItems, namesStr+content)
 	}
 	return strings.Join(fieldsItems, ", ")
 }
