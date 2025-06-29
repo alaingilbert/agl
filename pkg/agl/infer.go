@@ -1160,21 +1160,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
 			for i, arg := range expr.Args {
-				if argFn, ok := arg.(*ast.ShortFuncLit); ok {
+				if TryCast[*ast.ShortFuncLit](arg) || TryCast[*ast.FuncLit](arg) {
 					genFn := ft.GetParam(i)
-					infer.SetType(argFn, genFn)
-					infer.expr(argFn)
-					concreteFn := infer.env.GetType(arg)
-					m := types.FindGen(genFn, concreteFn)
-					for k, v := range m {
-						if el, ok := genericMapping[k]; ok {
-							assertf(el == v, "generic type parameter type mismatch. want: %v, got: %v", el, v)
-						}
-						genericMapping[k] = v
+					if TryCast[*ast.ShortFuncLit](arg) {
+						infer.SetType(arg, genFn)
 					}
-				} else if argFn, ok := arg.(*ast.FuncLit); ok {
-					infer.expr(argFn)
-					genFn := ft.GetParam(i)
+					infer.expr(arg)
 					concreteFn := infer.env.GetType(arg)
 					m := types.FindGen(genFn, concreteFn)
 					for k, v := range m {
