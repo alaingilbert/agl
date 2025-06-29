@@ -1034,38 +1034,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
-		} else if fnName == "Int" {
-			fnT := infer.env.GetFn("agl.String.Int")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "I8" {
-			fnT := infer.env.GetFn("agl.String.I8")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "I16" {
-			fnT := infer.env.GetFn("agl.String.I16")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "I32" {
-			fnT := infer.env.GetFn("agl.String.I32")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "I64" {
-			fnT := infer.env.GetFn("agl.String.I64")
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "F64" {
-			fnT := infer.env.GetFn("agl.String.F64")
+		} else if InArray(fnName, []string{"Int", "I8", "I16", "I32", "I64", "F64"}) {
+			fnT := infer.env.GetFn("agl.String." + fnName)
 			fnT.Recv = []types.Type{idTT}
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
