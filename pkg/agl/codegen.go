@@ -1897,39 +1897,7 @@ func AglStringUppercased(s string) string {
 	return aglImportStrings.ToUpper(s)
 }
 
-func AglStringInt(s string) Result[int] {
-	v, err := aglImportStrconv.Atoi(s)
-	if err != nil {
-		return MakeResultErr[int](err)
-	}
-	return MakeResultOk(v)
-}
-
-func AglStringI8(s string) Result[int8] {
-	v, err := aglImportStrconv.ParseInt(s, 10, 8)
-	if err != nil {
-		return MakeResultErr[int8](err)
-	}
-	return MakeResultOk(int8(v))
-}
-
-func AglStringI16(s string) Result[int16] {
-	v, err := aglImportStrconv.ParseInt(s, 10, 16)
-	if err != nil {
-		return MakeResultErr[int16](err)
-	}
-	return MakeResultOk(int16(v))
-}
-
-func AglStringI32(s string) Result[int32] {
-	v, err := aglImportStrconv.ParseInt(s, 10, 32)
-	if err != nil {
-		return MakeResultErr[int32](err)
-	}
-	return MakeResultOk(int32(v))
-}
-
-func AglStringI64(s string) Result[int64] {
+func AglCleanupIntString(s string) (string, int) {
 	s = aglImportStrings.ReplaceAll(s, "_", "")
 	var base int
 	switch {
@@ -1944,6 +1912,47 @@ func AglStringI64(s string) Result[int64] {
 	default:
 		base = 10
 	}
+	return s, base
+}
+
+func AglStringInt(s string) Result[int] {
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseInt(s, base, 0)
+	if err != nil {
+		return MakeResultErr[int](err)
+	}
+	return MakeResultOk(int(v))
+}
+
+func AglStringI8(s string) Result[int8] {
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseInt(s, base, 8)
+	if err != nil {
+		return MakeResultErr[int8](err)
+	}
+	return MakeResultOk(int8(v))
+}
+
+func AglStringI16(s string) Result[int16] {
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseInt(s, base, 16)
+	if err != nil {
+		return MakeResultErr[int16](err)
+	}
+	return MakeResultOk(int16(v))
+}
+
+func AglStringI32(s string) Result[int32] {
+	s, base := AglCleanupIntString(s)
+	v, err := aglImportStrconv.ParseInt(s, base, 32)
+	if err != nil {
+		return MakeResultErr[int32](err)
+	}
+	return MakeResultOk(int32(v))
+}
+
+func AglStringI64(s string) Result[int64] {
+	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 64)
 	if err != nil {
 		return MakeResultErr[int64](err)
