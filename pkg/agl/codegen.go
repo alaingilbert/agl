@@ -1004,12 +1004,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if fnName == "PopIf" {
 				return fmt.Sprintf("AglVecPopIf(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Push" {
-				content1 := g.genExpr(e.X)
 				var params []string
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
-				return fmt.Sprintf("AglVecPush(&%s, %s)", content1, strings.Join(params, ", "))
+				return fmt.Sprintf("AglVecPush(&%s, %s)", g.genExpr(e.X), strings.Join(params, ", "))
 			} else if fnName == "PushFront" {
 				return fmt.Sprintf("AglVecPushFront(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Joined" {
@@ -1028,7 +1027,6 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 				tmp.gen[rawFnT.StringFull()+"_"+concreteT.StringFull()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
 				g.extensions[extName] = tmp
-				content1 := g.genExpr(e.X)
 				var els []string
 				for _, k := range slices.Sorted(maps.Keys(m)) {
 					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
@@ -1039,7 +1037,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 				elsStr := strings.Join(els, "_")
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
-				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, content1, content2)
+				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
 		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
 			switch e.Sel.Name {
