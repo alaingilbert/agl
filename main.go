@@ -320,7 +320,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func ParseSrc(src string) (*token.FileSet, *ast.File) {
-	// support "#!/usr/bin/env agl run" as first line of agl "script"
+	// support "#!/usr/bin/env agl run" as the first line of agl "script"
 	if strings.HasPrefix(src, "#!") {
 		src = "//" + src
 	}
