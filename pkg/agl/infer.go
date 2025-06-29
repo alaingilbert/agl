@@ -807,6 +807,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			exprFunT = infer.env.GetType2(callXT)
 		case *ast.TypeAssertExpr:
 			exprFunT = types.OptionType{W: infer.env.GetType2(callXT)}
+		case *ast.BasicLit:
+			exprFunT = infer.env.GetType2(callXT)
 		default:
 			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
 		}
@@ -817,8 +819,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		if el, ok := exprFunT.(types.TypeType); ok {
 			exprFunT = el.W
 		}
+		p("?", exprFunT, to(exprFunT))
 		switch idTT := exprFunT.(type) {
 		case types.TypeType:
+		case types.UntypedStringType:
 		case types.StringType:
 		case types.ArrayType:
 		case types.MapType:
@@ -1013,7 +1017,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
 	switch idTT := idT.(type) {
-	case types.StringType:
+	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
 		if fnName == "Split" {
 			fnT := infer.env.GetFn("agl.String.Split")

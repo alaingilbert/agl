@@ -572,8 +572,10 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		switch xx.Kind {
 		case token.INT:
 			return types.UntypedNumType{}
+		case token.STRING:
+			return types.UntypedStringType{}
 		default:
-			panic("")
+			panic(fmt.Sprintf("%v", xx.Kind))
 		}
 	case *ast.SelectorExpr:
 		base := e.GetType2(xx.X)

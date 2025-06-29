@@ -496,6 +496,12 @@ func (i UntypedNumType) GoStr() string      { return "int" }
 func (i UntypedNumType) String() string     { return "UntypedNumType" }
 func (i UntypedNumType) StringFull() string { return i.String() }
 
+type UntypedStringType struct{}
+
+func (i UntypedStringType) GoStr() string      { return "string" }
+func (i UntypedStringType) String() string     { return "UntypedStringType" }
+func (i UntypedStringType) StringFull() string { return i.String() }
+
 type IntType struct{}
 
 func (i IntType) GoStr() string      { return "int" }
