@@ -6784,6 +6784,31 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen242(t *testing.T) {
+	src := `package main
+import "fmt"
+func test[T, U any](a []T, b []U) [](T, U) {
+	return [](T, U){(a[0], b[0])}
+}
+func main() {
+	test([]int{1}, []int{2})
+}`
+	expected := `package main
+import "fmt"
+type AglTupleStruct_T_U[T any, U any] struct {
+	Arg0 T
+	Arg1 U
+}
+func test[T, U any](a []T, b []U) []AglTupleStruct_T_U[T, U] {
+	return []AglTupleStruct_T_U[T, U]{AglTupleStruct_T_U[T, U]{Arg0: a[0], Arg1: b[0]}}
+}
+func main() {
+	test([]int{1}, []int{2})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
