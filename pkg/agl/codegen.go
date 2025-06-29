@@ -1071,6 +1071,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglStringSplit(%s, %s)", content1, content2)
+			} else if e.Sel.Name == "Lowercased" {
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglStringLowercased(%s)", content1)
 			} else if e.Sel.Name == "Int" {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglStringInt(%s)", content1)
@@ -1865,6 +1868,10 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 
 func AglStringSplit(s string, sep string) []string {
 	return aglImportStrings.Split(s, sep)
+}
+
+func AglStringLowercased(s string) string {
+	return aglImportStrings.ToLower(s)
 }
 
 func AglStringInt(s string) Result[int] {

@@ -1022,6 +1022,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
+		} else if fnName == "Lowercased" {
+			fnT := infer.env.GetFn("agl.String.Lowercased")
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Int" {
 			fnT := infer.env.GetFn("agl.String.Int")
 			fnT.Recv = []types.Type{idTT}
