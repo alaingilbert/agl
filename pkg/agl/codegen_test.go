@@ -6809,6 +6809,41 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen243(t *testing.T) {
+//	src := `package main
+//import "fmt"
+//func zip2[T, U any](a []T, b []U) [](T, U) {
+//	out := make([](T, U), 0)
+//	for i := range a {
+//		out.Push((a[i], b[i]))
+//	}
+//	return nil
+//}
+//func main() {
+//	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
+//}`
+//	expected := `package main
+//import "fmt"
+//type AglTupleStruct_int_int struct {
+//	Arg0 int
+//	Arg1 int
+//}
+//func zip2[T, U any](a []T, b []U) []AglTupleStruct_T_U[T, U] {
+//	out := make([]AglTupleStruct_T_U[T, U], 0)
+//	for i := range a {
+//		AglVecPush(&out, AglTupleStruct_T_U[T, U]{Arg0: a[i], Arg1: b[i]})
+//	}
+//	return nil
+//}
+//func main() {
+//	AglVecMap(zip2([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_T_U[int, int]) int {
+//		return aglArg0.Arg0 + aglArg0.Arg1
+//	})
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
