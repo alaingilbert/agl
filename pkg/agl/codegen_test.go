@@ -1,30 +1,13 @@
 package agl
 
 import (
-	"agl/pkg/ast"
-	parser1 "agl/pkg/parser"
-	"agl/pkg/token"
-	"strings"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
 )
 
-func parser2(src string) (*token.FileSet, *ast.File) {
-	// support "#!/usr/bin/env agl run" as the first line of agl "script"
-	if strings.HasPrefix(src, "#!") {
-		src = "//" + src
-	}
-	var fset = token.NewFileSet()
-	f, err := parser1.ParseFile(fset, "", src, 0)
-	if err != nil {
-		panic(err)
-	}
-	return fset, f
-}
-
 func getGenOutput(src string) string {
-	fset, f := parser2(src)
+	fset, f := ParseSrc(src)
 	env := NewEnv(fset)
 	NewInferrer(fset, env).InferFile(f)
 	return NewGenerator(env, f).Generate()
