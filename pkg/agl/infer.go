@@ -1039,6 +1039,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F64", "Uppercased", "Lowercased":
 			fnT = infer.env.GetFn("agl.String." + fnName)
+		default:
+			assertf(false, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
 		}
 		fnT.Recv = []types.Type{idTT}
 		fnT.Params = fnT.Params[1:]
