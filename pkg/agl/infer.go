@@ -1252,29 +1252,25 @@ func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
 	currIsResult := TryCast[types.ResultType](curr)
 	currIsOption := TryCast[types.OptionType](curr)
 	out = curr
-	if fnReturnIsResult {
-		if currIsResult {
-			tmp := MustCast[types.ResultType](curr)
-			tmp.Bubble = true
-			out = tmp
-		}
+	if fnReturnIsResult && currIsResult {
+		tmp := MustCast[types.ResultType](curr)
+		tmp.Bubble = true
+		out = tmp
 	} else if fnReturnIsOption && currIsOption {
 		tmp := MustCast[types.OptionType](curr)
 		tmp.Bubble = true
 		out = tmp
-	} else {
-		if currIsResult {
-			tmp := MustCast[types.ResultType](curr)
-			if fnReturnIsOption {
-				fnReturnOpt := MustCast[types.OptionType](fnReturn)
-				tmp.Bubble = true
-				tmp.ConvertToNone = true
-				tmp.ToNoneType = fnReturnOpt.W
-				out = tmp
-			} else {
-				tmp.Bubble = false
-				out = tmp
-			}
+	} else if currIsResult {
+		tmp := MustCast[types.ResultType](curr)
+		if fnReturnIsOption {
+			fnReturnOpt := MustCast[types.OptionType](fnReturn)
+			tmp.Bubble = true
+			tmp.ConvertToNone = true
+			tmp.ToNoneType = fnReturnOpt.W
+			out = tmp
+		} else {
+			tmp.Bubble = false
+			out = tmp
 		}
 	}
 	if !fnReturnIsOption {
