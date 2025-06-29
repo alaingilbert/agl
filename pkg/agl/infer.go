@@ -970,6 +970,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					oArg = oArgT.X
 				}
 				assertf(cmpTypesLoose(oArg, got), "%s: types not equal, %v %v", infer.Pos(arg), oArg, got)
+				callT = types.ReplGen2(callT, oArg, got)
 			}
 		default:
 			panic(fmt.Sprintf("%v", to(callT)))
