@@ -6821,6 +6821,7 @@ func main() {
 //}
 //func main() {
 //	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
+//	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
 //}`
 //	expected := `package main
 //import "fmt"
@@ -6828,16 +6829,30 @@ func main() {
 //	Arg0 int
 //	Arg1 int
 //}
-//func zip2[T, U any](a []T, b []U) []AglTupleStruct_T_U[T, U] {
-//	out := make([]AglTupleStruct_T_U[T, U], 0)
+//type AglTupleStruct_int_uint8 struct {
+//	Arg0 int
+//	Arg1 uint8
+//}
+//func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
+//	out := make([]AglTupleStruct_int_int, 0)
 //	for i := range a {
-//		AglVecPush(&out, AglTupleStruct_T_U[T, U]{Arg0: a[i], Arg1: b[i]})
+//		AglVecPush(&out, AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
+//	}
+//	return nil
+//}
+//func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
+//	out := make([]AglTupleStruct_int_uint8, 0)
+//	for i := range a {
+//		AglVecPush(&out, AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
 //	}
 //	return nil
 //}
 //func main() {
-//	AglVecMap(zip2([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_T_U[int, int]) int {
+//	AglVecMap(zip2_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
 //		return aglArg0.Arg0 + aglArg0.Arg1
+//	})
+//	AglVecMap(zip2_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+//		return aglArg0.Arg0 + int(aglArg0.Arg1)
 //	})
 //}
 //`
