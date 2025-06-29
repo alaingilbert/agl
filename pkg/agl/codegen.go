@@ -92,10 +92,10 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		if params := paramsClone; params != nil {
 			var fieldsItems []string
 			for _, field := range params {
-				tmp2Str := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 				content := g.genExpr(field.Type)
-				tmp2Str = suffixIf(tmp2Str, " ")
-				fieldsItems = append(fieldsItems, tmp2Str+content)
+				namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+				namesStr = suffixIf(namesStr, " ")
+				fieldsItems = append(fieldsItems, namesStr+content)
 			}
 			paramsStr = strings.Join(fieldsItems, ", ")
 		}
