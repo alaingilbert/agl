@@ -1217,10 +1217,20 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
 func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	_ = g.genExprs(expr.Values)
 	structName := g.env.GetType(expr).(types.TupleType).GoStr()
-	structStr := fmt.Sprintf("type %s struct {\n", structName)
+	structName1 := g.env.GetType(expr).(types.TupleType).GoStr2()
+	var typeParams []string
+	var typeParamsFull []string
+	var args []string
 	for i, x := range expr.Values {
-		structStr += fmt.Sprintf("\tArg%d %s\n", i, g.env.GetType2(x).GoStr())
+		xT := g.env.GetType2(x)
+		if genT, ok := xT.(types.GenericType); ok {
+			typeParams = append(typeParams, fmt.Sprintf("%s", genT.Name))
+			typeParamsFull = append(typeParamsFull, fmt.Sprintf("%s %s", genT.Name, genT.W.GoStr()))
+		}
+		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, xT.GoStr()))
 	}
+	structStr := fmt.Sprintf("type %s struct {\n", structName1)
+	structStr += strings.Join(args, "")
 	structStr += fmt.Sprintf("}\n")
 	g.tupleStructs[structName] = structStr
 	var fields []string

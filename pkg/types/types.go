@@ -524,7 +524,7 @@ type TupleType struct {
 	Elts []Type
 }
 
-func (t TupleType) GoStr() string {
+func (t TupleType) GoStr1() string {
 	name := "AglTupleStruct_"
 	var tmp []string
 	for _, el := range t.Elts {
@@ -538,6 +538,55 @@ func (t TupleType) GoStr() string {
 	tmpName = r.Replace(tmpName)
 	return name + tmpName
 }
+
+func (t TupleType) GoStr() string {
+	name := "AglTupleStruct_"
+	var tmp []string
+	for _, el := range t.Elts {
+		tmp = append(tmp, el.GoStr())
+	}
+	r := strings.NewReplacer(
+		"[", "_",
+		"]", "_",
+	)
+	tmpName := strings.Join(tmp, "_")
+	tmpName = r.Replace(tmpName)
+	var typeParams []string
+	for _, el := range t.Elts {
+		if v, ok := el.(GenericType); ok {
+			typeParams = append(typeParams, v.Name)
+		}
+	}
+	if len(typeParams) > 0 {
+		tmpName += "[" + strings.Join(typeParams, ", ") + "]"
+	}
+	return name + tmpName
+}
+
+func (t TupleType) GoStr2() string {
+	name := "AglTupleStruct_"
+	var tmp []string
+	for _, el := range t.Elts {
+		tmp = append(tmp, el.GoStr())
+	}
+	r := strings.NewReplacer(
+		"[", "_",
+		"]", "_",
+	)
+	tmpName := strings.Join(tmp, "_")
+	tmpName = r.Replace(tmpName)
+	var typeParams []string
+	for _, el := range t.Elts {
+		if v, ok := el.(GenericType); ok {
+			typeParams = append(typeParams, fmt.Sprintf("%s %s", v.Name, v.W.GoStr()))
+		}
+	}
+	if len(typeParams) > 0 {
+		tmpName += "[" + strings.Join(typeParams, ", ") + "]"
+	}
+	return name + tmpName
+}
+
 func (t TupleType) String() string {
 	var tmp []string
 	for _, el := range t.Elts {
