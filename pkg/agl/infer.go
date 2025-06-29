@@ -2,6 +2,7 @@ package agl
 
 import (
 	"agl/pkg/ast"
+	"agl/pkg/parser"
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"fmt"
@@ -16,6 +17,19 @@ import (
 	"strconv"
 	"strings"
 )
+
+func ParseSrc(src string) (*token.FileSet, *ast.File) {
+	// support "#!/usr/bin/env agl run" as the first line of agl "script"
+	if strings.HasPrefix(src, "#!") {
+		src = "//" + src
+	}
+	var fset = token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", src, 0)
+	if err != nil {
+		panic(err)
+	}
+	return fset, f
+}
 
 type Inferrer struct {
 	fset *token.FileSet

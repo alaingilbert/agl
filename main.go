@@ -2,9 +2,6 @@ package main
 
 import (
 	"agl/pkg/agl"
-	"agl/pkg/ast"
-	"agl/pkg/parser"
-	"agl/pkg/token"
 	"context"
 	"errors"
 	"fmt"
@@ -137,7 +134,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := ParseSrc(string(by))
+	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -168,7 +165,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		input = ""
 	}
-	fset, f := ParseSrc(input)
+	fset, f := agl.ParseSrc(input)
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -193,7 +190,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := ParseSrc(string(by))
+	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -284,7 +281,7 @@ func buildAglFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	fset, f := ParseSrc(string(by))
+	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
@@ -310,26 +307,13 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := ParseSrc(string(by))
+	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	g := agl.NewGenerator(i.Env, f)
 	fmt.Println(g.Generate())
 	return nil
-}
-
-func ParseSrc(src string) (*token.FileSet, *ast.File) {
-	// support "#!/usr/bin/env agl run" as the first line of agl "script"
-	if strings.HasPrefix(src, "#!") {
-		src = "//" + src
-	}
-	var fset = token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, 0)
-	if err != nil {
-		panic(err)
-	}
-	return fset, f
 }
 
 func insertHeadersAfterFirstLine(src, headers string) string {

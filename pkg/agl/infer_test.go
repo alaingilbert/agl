@@ -41,7 +41,7 @@ func main() {
 	bod.Close()
 }
 `
-	fset, f := parser2(src)
+	fset, f := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
@@ -57,7 +57,7 @@ func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
 `
-	fset, f := parser2(src)
+	fset, f := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
@@ -70,7 +70,7 @@ func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
 `
-	fset, f := parser2(src)
+	fset, f := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
