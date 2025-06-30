@@ -4,6 +4,7 @@ import (
 	"agl/pkg/ast"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"agl/pkg/utils"
 	"fmt"
 	"maps"
 	"slices"
@@ -93,7 +94,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			var fieldsItems []string
 			for _, field := range params {
 				content := g.genExpr(field.Type)
-				namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+				namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 				namesStr = suffixIf(namesStr, " ")
 				fieldsItems = append(fieldsItems, namesStr+content)
 			}
@@ -664,7 +665,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 	var listStr string
 	if expr.List != nil {
-		tmp := MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+		tmp := utils.MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
 		listStr = "case " + tmp + ":\n"
 	} else {
 		listStr = "default:\n"
@@ -801,7 +802,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 			} else {
 				content = g.genExpr(field.Type)
 			}
-			namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 			namesStr = suffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
@@ -1227,7 +1228,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 }
 
 func (g *Generator) genExprs(e []ast.Expr) (out string) {
-	return MapJoin(e, func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
+	return utils.MapJoin(e, func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
 }
 
 func (g *Generator) genStmts(s []ast.Stmt) (out string) {
@@ -1570,7 +1571,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 			default:
 				content = g.genExpr(field.Type)
 			}
-			namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 			namesStr = suffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
@@ -1597,7 +1598,7 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 	var fieldsItems []string
 	for _, field := range l.List {
 		content := g.genExpr(field.Type)
-		namesStr := MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+		namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 		namesStr = suffixIf(namesStr, " ")
 		fieldsItems = append(fieldsItems, namesStr+content)
 	}
