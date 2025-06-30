@@ -2,6 +2,7 @@ package agl
 
 import (
 	"agl/pkg/ast"
+	"agl/pkg/utils"
 	"errors"
 	"fmt"
 	"iter"
@@ -185,22 +186,9 @@ func Default[T any](v *T, d T) T {
 	return *v
 }
 
-// Ternary ...
-func Ternary[T any](predicate bool, a, b T) T {
-	if predicate {
-		return a
-	}
-	return b
-}
-
-// TernaryOrZero ...
-func TernaryOrZero[T any](predicate bool, a T) (zero T) {
-	return Ternary(predicate, a, zero)
-}
-
 // Or return "a" if it is non-zero otherwise "b"
 func Or[T comparable](a, b T) (zero T) {
-	return Ternary(a != zero, a, b)
+	return utils.Ternary(a != zero, a, b)
 }
 
 // InArray returns either or not a string is in an array

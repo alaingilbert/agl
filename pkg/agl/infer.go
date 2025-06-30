@@ -5,6 +5,7 @@ import (
 	"agl/pkg/parser"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"agl/pkg/utils"
 	"fmt"
 	goast "go/ast"
 	goparser "go/parser"
@@ -503,7 +504,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 						defaultName := "T" // Should not hardcode "T"
 						vecExt = true
 						id := tmp.Index.(*ast.Ident)
-						typeName := Ternary(id.Name == defaultName, "any", id.Name)
+						typeName := utils.Ternary(id.Name == defaultName, "any", id.Name)
 						t := &ast.Field{Names: []*ast.Ident{{Name: defaultName}}, Type: &ast.Ident{Name: typeName}}
 						if decl.Type.TypeParams == nil {
 							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{t}}
@@ -1979,7 +1980,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	var assigns []AssignStruct
 	assignFn := func(n ast.Node, name string, typ types.Type) {
 		op := stmt.Tok
-		f := Ternary(op == token.DEFINE, myDefine, myAssign)
+		f := utils.Ternary(op == token.DEFINE, myDefine, myAssign)
 		var parentInfo *Info
 		if op != token.DEFINE {
 			parentInfo = infer.env.GetNameInfo(name)
@@ -2071,7 +2072,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			var rhsT types.Type
 			var tmp ast.Expr
 			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
-				tmp = Ternary(ta.Type == nil, ta.X, ta.Type)
+				tmp = utils.Ternary(ta.Type == nil, ta.X, ta.Type)
 				rhsT = infer.env.GetType2(tmp)
 				rhsT = types.OptionType{W: rhsT}
 			} else {

@@ -808,12 +808,7 @@ func (f FuncType) GoStr1() string { // TODO
 	if f.Params != nil {
 		var tmp1 []string
 		for _, param := range f.Params {
-			var val string
-			if param == nil {
-				val = "nil"
-			} else {
-				val = param.GoStr()
-			}
+			val := utils.Ternary(param == nil, "nil", param.GoStr())
 			tmp1 = append(tmp1, val)
 		}
 		paramsStr = strings.Join(tmp1, ", ")
