@@ -1776,8 +1776,7 @@ func AglVecFilter[T any](a []T, f func(T) bool) []T {
 	return out
 }
 
-func AglReduce[T any, R aglImportCmp.Ordered](a []T, r R, f func(R, T) R) R {
-	var acc R
+func AglReduce[T any, R aglImportCmp.Ordered](a []T, acc R, f func(R, T) R) R {
 	for _, v := range a {
 		acc = f(acc, v)
 	}
@@ -1792,13 +1791,6 @@ func AglAssert(pred bool, msg ...string) {
 		}
 		panic(m)
 	}
-}
-
-func AglSum[T aglImportCmp.Ordered](a []T) (out T) {
-	for _, el := range a {
-		out += el
-	}
-	return
 }
 
 func AglVecIn[T aglImportCmp.Ordered](a []T, v T) bool {
@@ -1975,10 +1967,8 @@ func AglJoined(a []string, s string) string {
 }
 
 func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
-	for _, el := range a {
-		out += el
-	}
-	return
+	var zero T
+	return AglReduce(a, zero, func(acc, el T) T { return acc + el })
 }
 
 type AglNumber interface {
