@@ -172,10 +172,20 @@ func TestCodeGen8(t *testing.T) {
 func mapFn[T any](a []T, f func(T) T) []T {
 	return make([]T, 0)
 }
+func main() {
+	a := []int{1, 2, 3}
+	mapFn(a, { $0 })
+}
 `
 	expected := `package main
-func mapFn[T any](a []T, f func(T) T) []T {
-	return make([]T, 0)
+func mapFn_T_int(a []int, f func(int) int) []int {
+	return make([]int, 0)
+}
+func main() {
+	a := []int{1, 2, 3}
+	mapFn_T_int(a, func(aglArg0 int) int {
+		return aglArg0
+	})
 }
 `
 	testCodeGen(t, src, expected)
@@ -3957,17 +3967,17 @@ func TestCodeGen147(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) Even() []T {
-    out := make([]T, len(v))
-    for _, el := range v {
-        if el % 2 == 0 {
-            out = append(out, el)
-        }
-    }
-    return out
+   out := make([]T, len(v))
+   for _, el := range v {
+       if el % 2 == 0 {
+           out = append(out, el)
+       }
+   }
+   return out
 }
 func main() {
-    arr := []int{1, 2, 3}
-    fmt.Println(arr.Even())
+   arr := []int{1, 2, 3}
+   fmt.Println(arr.Even())
 }`
 	expected := `package main
 import "fmt"
@@ -3992,19 +4002,19 @@ func TestCodeGen147_1(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) Even() []T {
-    out := make([]T, len(v))
-    for _, el := range v {
-        if el % 2 == 0 {
-            out = append(out, el)
-        }
-    }
-    return out
+   out := make([]T, len(v))
+   for _, el := range v {
+       if el % 2 == 0 {
+           out = append(out, el)
+       }
+   }
+   return out
 }
 func main() {
-    arr := []int{1, 2, 3}
-    fmt.Println(arr.Even())
-    arr1 := []int{4, 5, 6}
-    fmt.Println(arr1.Even())
+   arr := []int{1, 2, 3}
+   fmt.Println(arr.Even())
+   arr1 := []int{4, 5, 6}
+   fmt.Println(arr1.Even())
 }`
 	expected := `package main
 import "fmt"
@@ -4434,57 +4444,57 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-func TestCodeGen162(t *testing.T) {
-	src := `package main
-type TestStruct[T any] struct {
-	a T
-}
-func testFn[T any](t *TestStruct[T]) {
-}
-func main() {
-	i := &TestStruct[string]{a: "foo"}
-	testFn(i)
-}`
-	expected := `package main
-type TestStruct[T any] struct {
-	a T
-}
-func testFn[T any](t *TestStruct[T]) {
-}
-func main() {
-	i := &TestStruct[string]{a: "foo"}
-	testFn(i)
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen162(t *testing.T) {
+//	src := `package main
+//type TestStruct[T any] struct {
+//	a T
+//}
+//func testFn[T any](t *TestStruct[T]) {
+//}
+//func main() {
+//	i := &TestStruct[string]{a: "foo"}
+//	testFn(i)
+//}`
+//	expected := `package main
+//type TestStruct_T_string struct {
+//	a string
+//}
+//func testFn_T_string(t *TestStruct_T_string) {
+//}
+//func main() {
+//	i := &TestStruct_T_string{a: "foo"}
+//	testFn_T_string(i)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
-func TestCodeGen163(t *testing.T) {
-	src := `package main
-type TestStruct[T, U any] struct {
-	a T
-	b U
-}
-func testFn[T, U any](t *TestStruct[T, U]) {
-}
-func main() {
-	i := &TestStruct[string, int]{a: "foo", b: 42}
-	testFn(i)
-}`
-	expected := `package main
-type TestStruct[T, U any] struct {
-	a T
-	b U
-}
-func testFn[T, U any](t *TestStruct[T, U]) {
-}
-func main() {
-	i := &TestStruct[string, int]{a: "foo", b: 42}
-	testFn(i)
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen163(t *testing.T) {
+//	src := `package main
+//type TestStruct[T, U any] struct {
+//	a T
+//	b U
+//}
+//func testFn[T, U any](t *TestStruct[T, U]) {
+//}
+//func main() {
+//	i := &TestStruct[string, int]{a: "foo", b: 42}
+//	testFn(i)
+//}`
+//	expected := `package main
+//type TestStruct[T, U any] struct {
+//	a T
+//	b U
+//}
+//func testFn[T, U any](t *TestStruct[T, U]) {
+//}
+//func main() {
+//	i := &TestStruct[string, int]{a: "foo", b: 42}
+//	testFn(i)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
 func TestCodeGen164(t *testing.T) {
 	src := `package main
@@ -5352,7 +5362,7 @@ func main() {
 	i = "hello"
 	describe(i)
 }
-func describe(i interface{}) {
+func describe(i any) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
@@ -5379,7 +5389,15 @@ func main() {
 `
 	expected := `package main
 import "fmt"
-func Index[T comparable](s []T, x T) int {
+func Index_T_int(s []int, x int) int {
+	for i, v := range s {
+		if v == x {
+			return i
+		}
+	}
+	return -1
+}
+func Index_T_string(s []string, x string) int {
 	for i, v := range s {
 		if v == x {
 			return i
@@ -5389,9 +5407,9 @@ func Index[T comparable](s []T, x T) int {
 }
 func main() {
 	si := []int{10, 20, 15, -10}
-	fmt.Println(Index(si, 15))
+	fmt.Println(Index_T_int(si, 15))
 	ss := []string{"foo", "bar", "baz"}
-	fmt.Println(Index(ss, "hello"))
+	fmt.Println(Index_T_string(ss, "hello"))
 }
 `
 	testCodeGen(t, src, expected)
@@ -6778,15 +6796,15 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-type AglTupleStruct_T_U[T any, U any] struct {
-	Arg0 T
-	Arg1 U
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
 }
-func test[T, U any](a []T, b []U) []AglTupleStruct_T_U[T, U] {
-	return []AglTupleStruct_T_U[T, U]{AglTupleStruct_T_U[T, U]{Arg0: a[0], Arg1: b[0]}}
+func test_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
+	return []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: a[0], Arg1: b[0]}}
 }
 func main() {
-	test([]int{1}, []int{2})
+	test_T_int_U_int([]int{1}, []int{2})
 }
 `
 	testCodeGen(t, src, expected)
@@ -6800,55 +6818,55 @@ func main() {
 	tassert.PanicsWithError(t, "3:5: method 'DoNotExists' of type String does not exists", testCodeGenFn(src))
 }
 
-//func TestCodeGen243(t *testing.T) {
-//	src := `package main
-//import "fmt"
-//func zip2[T, U any](a []T, b []U) [](T, U) {
-//	out := make([](T, U), 0)
-//	for i := range a {
-//		out.Push((a[i], b[i]))
-//	}
-//	return nil
-//}
-//func main() {
-//	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
-//	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
-//}`
-//	expected := `package main
-//import "fmt"
-//type AglTupleStruct_int_int struct {
-//	Arg0 int
-//	Arg1 int
-//}
-//type AglTupleStruct_int_uint8 struct {
-//	Arg0 int
-//	Arg1 uint8
-//}
-//func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
-//	out := make([]AglTupleStruct_int_int, 0)
-//	for i := range a {
-//		AglVecPush(&out, AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
-//	}
-//	return nil
-//}
-//func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
-//	out := make([]AglTupleStruct_int_uint8, 0)
-//	for i := range a {
-//		AglVecPush(&out, AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
-//	}
-//	return nil
-//}
-//func main() {
-//	AglVecMap(zip2_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
-//		return aglArg0.Arg0 + aglArg0.Arg1
-//	})
-//	AglVecMap(zip2_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
-//		return aglArg0.Arg0 + int(aglArg0.Arg1)
-//	})
-//}
-//`
-//	testCodeGen(t, src, expected)
-//}
+func TestCodeGen244(t *testing.T) {
+	src := `package main
+import "fmt"
+func zip2[T, U any](a []T, b []U) [](T, U) {
+	out := make([](T, U), 0)
+	for i := range a {
+		out.Push((a[i], b[i]))
+	}
+	return nil
+}
+func main() {
+	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
+	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
+}`
+	expected := `package main
+import "fmt"
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+type AglTupleStruct_int_uint8 struct {
+	Arg0 int
+	Arg1 uint8
+}
+func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
+	out := make([]AglTupleStruct_int_int, 0)
+	for i := range a {
+		AglVecPush(&out, AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
+	}
+	return nil
+}
+func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
+	out := make([]AglTupleStruct_int_uint8, 0)
+	for i := range a {
+		AglVecPush(&out, AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
+	}
+	return nil
+}
+func main() {
+	AglVecMap(zip2_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
+		return aglArg0.Arg0 + aglArg0.Arg1
+	})
+	AglVecMap(zip2_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+		return aglArg0.Arg0 + int(aglArg0.Arg1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
 
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main

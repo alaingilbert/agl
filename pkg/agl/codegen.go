@@ -20,6 +20,7 @@ type Generator struct {
 	before       []IBefore
 	beforeStmt   []IBefore
 	tupleStructs map[string]string
+	genFuncDecls map[string]*ast.FuncDecl
 	varCounter   atomic.Int64
 	returnType   types.Type
 	extensions   map[string]Extension
@@ -35,6 +36,16 @@ func (g *Generator) WithSub(clb func()) {
 	g.beforeStmt = prev
 }
 
+func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
+	prevSwapGen := g.swapGen
+	prev := g.genMap
+	g.swapGen = true
+	g.genMap = m
+	clb()
+	g.swapGen = prevSwapGen
+	g.genMap = prev
+}
+
 type Extension struct {
 	decl *ast.FuncDecl
 	gen  map[string]ExtensionTest
@@ -46,7 +57,14 @@ type ExtensionTest struct {
 }
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
-	return &Generator{env: env, a: a, extensions: make(map[string]Extension), tupleStructs: make(map[string]string)}
+	genFns := make(map[string]*ast.FuncDecl)
+	for _, f := range env.RawGenFns {
+		genFns[env.GetType(f).String()] = f
+	}
+	return &Generator{env: env, a: a,
+		extensions:   make(map[string]Extension),
+		tupleStructs: make(map[string]string),
+		genFuncDecls: genFns}
 }
 
 func (g *Generator) genExtension(e Extension) (out string) {
@@ -89,33 +107,48 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		}
 		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
 		g.swapGen = true
-		g.genMap = m
-		if params := paramsClone; params != nil {
-			var fieldsItems []string
-			for _, field := range params {
-				content := g.genExpr(field.Type)
-				namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
-				namesStr = suffixIf(namesStr, " ")
-				fieldsItems = append(fieldsItems, namesStr+content)
+		g.WithGenMapping(m, func() {
+			if params := paramsClone; params != nil {
+				var fieldsItems []string
+				for _, field := range params {
+					var content string
+					if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
+						if _, ok := v.W.(types.FuncType); ok {
+							content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
+						} else {
+							content = g.genExpr(field.Type)
+						}
+					} else {
+						switch field.Type.(type) {
+						case *ast.TupleExpr:
+							content = g.env.GetType(field.Type).GoStr()
+						default:
+							content = g.genExpr(field.Type)
+						}
+					}
+					namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+					namesStr = suffixIf(namesStr, " ")
+					fieldsItems = append(fieldsItems, namesStr+content)
+				}
+				paramsStr = strings.Join(fieldsItems, ", ")
 			}
-			paramsStr = strings.Join(fieldsItems, ", ")
-		}
-		if result := decl.Type.Result; result != nil {
-			resT := g.env.GetType(result)
-			for k, v := range m {
-				resT = types.ReplGen(resT, k, v)
+			if result := decl.Type.Result; result != nil {
+				resT := g.env.GetType(result)
+				for k, v := range m {
+					resT = types.ReplGen(resT, k, v)
+				}
+				resultStr = prefixIf(resT.GoStr(), " ")
 			}
-			resultStr = prefixIf(resT.GoStr(), " ")
-		}
-		if decl.Body != nil {
-			content := g.incrPrefix(func() string {
-				return g.genStmt(decl.Body)
-			})
-			bodyStr = content
-		}
-		g.swapGen = false
-		out += fmt.Sprintf("func AglVec%s_%s%s(%s)%s {\n%s}", name, strings.Join(elts, "_"), typeParamsStr, paramsStr, resultStr, bodyStr)
-		out += "\n"
+			if decl.Body != nil {
+				content := g.incrPrefix(func() string {
+					return g.genStmt(decl.Body)
+				})
+				bodyStr = content
+			}
+			g.swapGen = false
+			out += fmt.Sprintf("func AglVec%s_%s%s(%s)%s {\n%s}", name, strings.Join(elts, "_"), typeParamsStr, paramsStr, resultStr, bodyStr)
+			out += "\n"
+		})
 	}
 	return
 }
@@ -128,6 +161,10 @@ func (g *Generator) Generate() (out string) {
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
 		extStr += g.genExtension(g.extensions[extKey])
 	}
+	//var funcDeclsStr string
+	//for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls)) {
+	//	funcDeclsStr += g.genFuncDecl(g.genFuncDecls[k])
+	//}
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
@@ -295,24 +332,25 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.env.fset.Position(expr.Pos()).Line), 1)
 	}
 	t := g.env.GetType(expr)
-	switch typ := t.(type) {
-	case types.GenericType:
-		if g.swapGen && typ.IsType {
-			for k, v := range g.genMap {
-				if typ.Name == k {
-					typ.Name = v.GoStr()
-					typ.W = v
+	if v, ok := t.(types.TypeType); ok {
+		t = v.W
+		switch typ := t.(type) {
+		case types.GenericType:
+			if g.swapGen && typ.IsType {
+				for k, v := range g.genMap {
+					if typ.Name == k {
+						typ.Name = v.GoStr()
+						typ.W = v
+					}
 				}
+				return fmt.Sprintf("%s", typ.GoStr())
 			}
-			return fmt.Sprintf("%s", typ.GoStr())
 		}
 	}
 	if expr.Name == "make" {
 		return "make"
 	} else if expr.Name == "abs" {
 		return "AglAbs"
-	} else if expr.Name == "zip" {
-		return "AglZip"
 	}
 	if v := g.env.Get(expr.Name); v != nil {
 		if _, ok := v.(types.TypeType); ok {
@@ -332,6 +370,14 @@ func (g *Generator) incrPrefix(clb func() string) string {
 	return out
 }
 
+func (g *Generator) decrPrefix(clb func() string) string {
+	before := g.prefix
+	g.prefix = g.prefix[:len(g.prefix)-1]
+	out := clb()
+	g.prefix = before
+	return out
+}
+
 func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) (out string) {
 	t := g.env.GetType(expr).(types.FuncType)
 	content1 := g.incrPrefix(func() string {
@@ -341,11 +387,11 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) (out string) {
 	if len(t.Params) > 0 {
 		var tmp []string
 		for i, arg := range t.Params {
-			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, arg.GoStr()))
+			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, types.ReplGenM(arg, g.genMap).GoStr()))
 		}
 		argsStr = strings.Join(tmp, ", ")
 	}
-	ret := t.Return
+	ret := types.ReplGenM(t.Return, g.genMap)
 	if ret != nil {
 		returnStr = " " + ret.GoStr()
 	}
@@ -965,6 +1011,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			fnName := e.Sel.Name
 			if fnName == "Filter" {
 				return fmt.Sprintf("AglVecFilter(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "AllSatisfy" {
+				return fmt.Sprintf("AglVecAllSatisfy(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Contains" {
+				return fmt.Sprintf("AglVecContains(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Map" {
 				return fmt.Sprintf("AglVecMap(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Reduce" {
@@ -983,6 +1033,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVecIsEmpty(%s)", g.genExpr(e.X))
 			} else if fnName == "Insert" {
 				return fmt.Sprintf("AglVecInsert(%s, %s ,%s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+			} else if fnName == "Remove" {
+				return fmt.Sprintf("AglVecRemove(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Clone" {
+				return fmt.Sprintf("AglVecClone(%s)", g.genExpr(e.X))
+			} else if fnName == "Indices" {
+				return fmt.Sprintf("AglVecIndices(%s)", g.genExpr(e.X))
 			} else if fnName == "Pop" {
 				return fmt.Sprintf("AglVecPop(&%s)", g.genExpr(e.X))
 			} else if fnName == "PopFront" {
@@ -1095,19 +1151,59 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			return fmt.Sprintf("AglAssert(%s)", out)
 		}
 	}
-	var content1 string
+	var content1, content2 string
 	switch v := expr.Fun.(type) {
 	case *ast.Ident:
 		t1 := g.env.Get(v.Name)
 		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
 			content1 = expr.Fun.(*ast.Ident).Name
+			content2 = g.genExprs(expr.Args)
 		} else {
 			content1 = g.genExpr(expr.Fun)
+			if fnT, ok := t1.(types.FuncType); ok {
+				if !InArray(content1, []string{"make", "append", "len", "new", "AglAbs"}) && fnT.IsGeneric() {
+					oFnT := g.env.Get(v.Name)
+					newFnT := g.env.GetType(expr.Fun)
+					fnDecl := g.genFuncDecls[oFnT.String()]
+					m := types.FindGen(oFnT, newFnT)
+					var outFnDecl string
+					g.WithGenMapping(m, func() {
+						outFnDecl = g.decrPrefix(func() string {
+							return g.genFuncDecl(fnDecl, false) + "\n"
+						})
+					})
+					g.before = append(g.before, NewBeforeFn(outFnDecl))
+					for _, k := range slices.Sorted(maps.Keys(m)) {
+						content1 += fmt.Sprintf("_%s_%s", k, m[k].GoStr())
+					}
+					g.WithGenMapping(m, func() {
+						content2 = g.genExprs(expr.Args)
+					})
+				} else if content1 == "make" {
+					content1 = g.genExpr(expr.Fun)
+					if g.genMap != nil {
+						content2 = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
+						if len(expr.Args) > 1 {
+							content2 += ", " + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
+						}
+					} else {
+						content2 = g.genExprs(expr.Args)
+					}
+				} else {
+					content1 = g.genExpr(expr.Fun)
+					content2 = g.genExprs(expr.Args)
+				}
+			} else {
+				content2 = g.genExprs(expr.Args)
+			}
 		}
 	default:
 		content1 = g.genExpr(expr.Fun)
+		content2 = g.genExprs(expr.Args)
 	}
-	content2 := g.genExprs(expr.Args)
+	if expr.Ellipsis != 0 {
+		content2 += "..."
+	}
 	return fmt.Sprintf("%s(%s)", content1, content2)
 }
 
@@ -1134,7 +1230,7 @@ func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	var content string
 	switch v := expr.Elt.(type) {
 	case *ast.TupleExpr:
-		content = g.env.GetType(v).GoStr()
+		content = types.ReplGenM(g.env.GetType(v), g.genMap).GoStr()
 	default:
 		content = g.genExpr(expr.Elt)
 	}
@@ -1204,18 +1300,12 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
 
 func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	_ = g.genExprs(expr.Values)
-	structName := g.env.GetType(expr).(types.TupleType).GoStr()
-	structName1 := g.env.GetType(expr).(types.TupleType).GoStr2()
-	var typeParams []string
-	var typeParamsFull []string
+	structName := types.ReplGenM(g.env.GetType(expr), g.genMap).(types.TupleType).GoStr()
+	structName1 := types.ReplGenM(g.env.GetType(expr), g.genMap).(types.TupleType).GoStr2()
 	var args []string
 	for i, x := range expr.Values {
 		xT := g.env.GetType2(x)
-		if genT, ok := xT.(types.GenericType); ok {
-			typeParams = append(typeParams, fmt.Sprintf("%s", genT.Name))
-			typeParamsFull = append(typeParamsFull, fmt.Sprintf("%s %s", genT.Name, genT.W.GoStr()))
-		}
-		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, xT.GoStr()))
+		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
 	}
 	structStr := fmt.Sprintf("type %s struct {\n", structName1)
 	structStr += strings.Join(args, "")
@@ -1303,14 +1393,16 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 	return
 }
 
-func (g *Generator) genDecl(d ast.Decl) (out string) {
+func (g *Generator) genDecl(d ast.Decl, first bool) (out string) {
 	switch decl := d.(type) {
 	case *ast.GenDecl:
 		return g.genGenDecl(decl)
 	case *ast.FuncDecl:
-		out1 := g.genFuncDecl(decl)
+		out1 := g.genFuncDecl(decl, first)
 		for _, b := range g.before {
-			out += b.Content()
+			if b != nil {
+				out += b.Content()
+			}
 		}
 		clear(g.before)
 		out += suffixIf(out1, "\n")
@@ -1326,7 +1418,7 @@ func (g *Generator) genGenDecl(decl *ast.GenDecl) string {
 }
 
 func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) string {
-	return g.genDecl(stmt.Decl)
+	return g.genDecl(stmt.Decl, false)
 }
 
 func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
@@ -1519,14 +1611,17 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 
 func (g *Generator) genDecls() (out string) {
 	for _, decl := range g.a.Decls {
+		g.genDecl(decl, true)
+	}
+	for _, decl := range g.a.Decls {
 		g.prefix = ""
-		content1 := g.genDecl(decl)
+		content1 := g.genDecl(decl, false)
 		out += content1
 	}
 	return
 }
 
-func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
+func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var name, recv, typeParamsStr, paramsStr, resultStr, bodyStr string
 	if decl.Recv != nil {
@@ -1548,6 +1643,14 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 			recv = " (" + recv + ")"
 		}
 	}
+	fnT := g.env.GetType(decl)
+	if g.genMap == nil && fnT.(types.FuncType).IsGeneric() {
+		g.genFuncDecls[fnT.String()] = decl
+		return ""
+	}
+	if first {
+		return ""
+	}
 	if decl.Name != nil {
 		fnName := decl.Name.Name
 		if newName, ok := overloadMapping[fnName]; ok {
@@ -1563,11 +1666,19 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 		var fieldsItems []string
 		for _, field := range params.List {
 			var content string
-			switch field.Type.(type) {
-			case *ast.TupleExpr:
-				content = g.env.GetType(field.Type).GoStr()
-			default:
-				content = g.genExpr(field.Type)
+			if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
+				if _, ok := v.W.(types.FuncType); ok {
+					content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
+				} else {
+					content = types.ReplGenM(v.W, g.genMap).GoStr()
+				}
+			} else {
+				switch field.Type.(type) {
+				case *ast.TupleExpr:
+					content = g.env.GetType(field.Type).GoStr()
+				default:
+					content = g.genExpr(field.Type)
+				}
 			}
 			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
 			namesStr = suffixIf(namesStr, " ")
@@ -1576,7 +1687,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
 	if result := decl.Type.Result; result != nil {
-		resultStr = g.env.GetType(result).GoStr()
+		resultStr = types.ReplGenM(g.env.GetType(result), g.genMap).GoStr()
 		resultStr = prefixIf(resultStr, " ")
 	}
 	if decl.Body != nil {
@@ -1584,6 +1695,13 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 			return g.genStmt(decl.Body)
 		})
 		bodyStr = content
+	}
+	if g.genMap != nil {
+		typeParamsStr = ""
+		for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
+			v := g.genMap[k]
+			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
+		}
 	}
 	out += fmt.Sprintf("func%s%s%s(%s)%s {\n%s}", recv, name, typeParamsStr, paramsStr, resultStr, bodyStr)
 	return
@@ -1596,7 +1714,9 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 	var fieldsItems []string
 	for _, field := range l.List {
 		content := g.genExpr(field.Type)
-		namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+		namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string {
+			return g.genIdent(n)
+		}, ", ")
 		namesStr = suffixIf(namesStr, " ")
 		fieldsItems = append(fieldsItems, namesStr+content)
 	}
@@ -1773,6 +1893,24 @@ func AglVecFilter[T any](a []T, f func(T) bool) []T {
 		}
 	}
 	return out
+}
+
+func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
+	for _, v := range a {
+		if !f(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func AglVecContains[T any](a []T, f func(T) bool) bool {
+	for _, v := range a {
+		if f(v) {
+			return true
+		}
+	}
+	return false
 }
 
 func AglReduce[T any, R aglImportCmp.Ordered](a []T, acc R, f func(R, T) R) R {
@@ -1980,19 +2118,6 @@ func AglAbs[T AglNumber](e T) (out T) {
 	return T(aglImportMath.Abs(float64(e)))
 }
 
-//type AglTupleStruct_T_U[T, U any] struct {
-//	Arg0 T
-//	Arg1 U
-//}
-//
-//func AglZip[T, U any](x []T, y []U) []AglTupleStruct_T_U[T, U] {
-//	var out []AglTupleStruct_T_U[T, U]
-//	for i := range x {
-//		out = append(out, AglTupleStruct_T_U[T, U]{Arg0: x[i], Arg1: y[i]})
-//	}
-//	return out
-//}
-
 func AglVecLast[T any](a []T) (out Option[T]) {
 	if len(a) > 0 {
 		return MakeOptionSome(a[len(a)-1])
@@ -2037,6 +2162,25 @@ func AglVecPopFront[T any](a *[]T) Option[T] {
 // AglVecInsert ...
 func AglVecInsert[T any](a *[]T, idx int, el T) {
 	*a = append((*a)[:idx], append([]T{el}, (*a)[idx:]...)...)
+}
+
+// AglVecRemove ...
+func AglVecRemove[T any](a *[]T, idx int) {
+	*a = append((*a)[:idx], (*a)[idx+1:]...)
+}
+
+// AglVecClone ...
+func AglVecClone[S ~[]E, E any](a S) S {
+	return aglImportSlices.Clone(a)
+}
+
+// AglVecIndices ...
+func AglVecIndices[T any](a []T) []int {
+	out := make([]int, len(a))
+	for i := range a {
+		out[i] = i
+	}
+	return out
 }
 
 // AglVecPop removes the last element from a vector and returns it, or None if it is empty.
