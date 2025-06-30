@@ -794,21 +794,13 @@ func (f FuncType) GoStr1() string { // TODO
 		nameStr = " " + f.Name
 	}
 	if f.Recv != nil {
-		var tmp []string
-		for _, recv := range f.Recv {
-			tmp = append(tmp, recv.GoStr())
-		}
-		recvStr = strings.Join(tmp, ", ")
+		recvStr = utils.MapJoin(f.Recv, func(t Type) string { return t.GoStr() }, ", ")
 		if recvStr != "" {
 			recvStr = " (" + recvStr + ")"
 		}
 	}
 	if f.TypeParams != nil {
-		var tmp []string
-		for _, typeParam := range f.TypeParams {
-			tmp = append(tmp, typeParam.(GenericType).TypeParamGoStr())
-		}
-		typeParamsStr = strings.Join(tmp, ", ")
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
 		if typeParamsStr != "" {
 			typeParamsStr = "[" + typeParamsStr + "]"
 		}
@@ -849,21 +841,13 @@ func (f FuncType) String() string {
 		nameStr = " " + f.Name
 	}
 	if f.Recv != nil {
-		var tmp []string
-		for _, recv := range f.Recv {
-			tmp = append(tmp, recv.String())
-		}
-		recvStr = strings.Join(tmp, ", ")
+		recvStr = utils.MapJoin(f.Recv, func(t Type) string { return t.String() }, ", ")
 		if recvStr != "" {
 			recvStr = " (" + recvStr + ")"
 		}
 	}
 	if f.TypeParams != nil {
-		var tmp []string
-		for _, typeParam := range f.TypeParams {
-			tmp = append(tmp, typeParam.(GenericType).TypeParamGoStr())
-		}
-		typeParamsStr = strings.Join(tmp, ", ")
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
 		if typeParamsStr != "" {
 			typeParamsStr = "[" + typeParamsStr + "]"
 		}
