@@ -789,9 +789,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 	var paramsStr, typeParamsStr string
 	if typeParams := expr.TypeParams; typeParams != nil {
 		typeParamsStr = g.joinList(expr.TypeParams)
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
+		typeParamsStr = wrapIf(typeParamsStr, "[", "]")
 	}
 	if params := expr.Params; params != nil {
 		var fieldsItems []string
@@ -1128,6 +1126,10 @@ func suffixIf(s, suffix string) string {
 	return applyIf(s, func() string { return s + suffix })
 }
 
+func wrapIf(s, prefix, suffix string) string {
+	return applyIf(s, func() string { return prefix + s + suffix })
+}
+
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	var content string
 	switch v := expr.Elt.(type) {
@@ -1286,9 +1288,7 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 			var typeParamsStr string
 			if typeParams := spec.TypeParams; typeParams != nil {
 				typeParamsStr = g.joinList(spec.TypeParams)
-				if typeParamsStr != "" {
-					typeParamsStr = "[" + typeParamsStr + "]"
-				}
+				typeParamsStr = wrapIf(typeParamsStr, "[", "]")
 			}
 			content1 := g.genExpr(spec.Type)
 			out += g.prefix + "type " + spec.Name.Name + typeParamsStr + " " + content1 + "\n"
@@ -1557,9 +1557,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	}
 	if typeParams := decl.Type.TypeParams; typeParams != nil {
 		typeParamsStr = g.joinList(decl.Type.TypeParams)
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
+		typeParamsStr = wrapIf(typeParamsStr, "[", "]")
 	}
 	if params := decl.Type.Params; params != nil {
 		var fieldsItems []string
