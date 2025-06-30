@@ -47,7 +47,7 @@ type MapType struct {
 	K, V Type
 }
 
-func (m MapType) GoStr() string  { return "MapType" }
+func (m MapType) GoStr() string  { return fmt.Sprintf("map[%s]%s", m.K.GoStr(), m.V.GoStr()) }
 func (m MapType) String() string { return fmt.Sprintf("map[%s]%s", m.K, m.V) }
 func (m MapType) StringFull() string {
 	return fmt.Sprintf("map[%s]%s", m.K.StringFull(), m.V.StringFull())
@@ -55,7 +55,7 @@ func (m MapType) StringFull() string {
 
 type ChanType struct{ W Type }
 
-func (m ChanType) GoStr() string      { return "ChanType" }
+func (m ChanType) GoStr() string      { return fmt.Sprintf("chan %s", m.W) }
 func (m ChanType) String() string     { return fmt.Sprintf("chan %s", m.W) }
 func (m ChanType) StringFull() string { return fmt.Sprintf("chan %s", m.W.StringFull()) }
 
@@ -779,6 +779,8 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case IntType:
 	case U8Type:
 	case I64Type:
+	case EllipsisType:
+	case StarType:
 	case TypeType:
 		findGenHelper(m, t1.W, b.(TypeType).W)
 	default:

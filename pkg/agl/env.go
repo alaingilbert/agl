@@ -21,6 +21,7 @@ type Env struct {
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
 	NoIdxUnwrap   bool
+	RawGenFns     []*ast.FuncDecl
 }
 
 type Info struct {
@@ -165,7 +166,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
 	e.DefineFn("max", "func [T cmp.Ordered](x T, y ...T) T")
 	e.DefineFn("abs", "func [T AglNumber](x T) T")
-	e.DefineFn("zip", "func [T, U any](x []T, y []U) [](T, U)")
+	//e.DefineFn("zip", "func [T, U any](x []T, y []U) [](T, U)")
 	//e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 	e.DefineFn("append", "func [T any](slice []T, elems ...T) []T")
 	e.DefineFn("close", "func (c chan<- Type)")
@@ -301,6 +302,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.String.F32", "func (s) f32!")
 	e.DefineFn("agl.String.F64", "func (s) f64!")
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
+	e.DefineFn("agl.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool")
 	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")
 	e.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R")
 	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
@@ -309,6 +311,10 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.Sorted", "func [E cmp.Ordered](a []E) []E")
 	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
+	e.DefineFn("agl.Vec.Remove", "func [T any](a []T, i int)")
+	e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
+	e.DefineFn("agl.Vec.Indices", "func [T any](a []T) []int")
+	e.DefineFn("agl.Vec.Contains", "func [T any](a []T, f func(T) bool) bool")
 	e.DefineFn("agl.Vec.Push", "func [T any](a []T, els ...T)")
 	e.DefineFn("agl.Vec.PushFront", "func [T any](a []T, el T)")
 	e.DefineFn("agl.Vec.Pop", "func [T any](a []T) T?")
@@ -374,6 +380,16 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("slices")
 	//e.loadVendor("golang.org/x/net/html")
 	e.loadPkgAgl()
+	e.DefineFnRaw(`func zip[T, U any](a []T, b []U) [](T, U) {
+	out := make([](T, U), 0)
+	for i := range a {
+		if len(b) <= i {
+			break
+		}
+		out.Push((a[i], b[i]))
+	}
+	return out
+}`)
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
@@ -442,6 +458,17 @@ func (e *Env) GetOrCreateNameInfo(name string) *Info {
 
 func (e *Env) GetFn(name string) types.FuncType {
 	return e.Get(name).(types.FuncType)
+}
+
+func (e *Env) DefineFnRaw(fnStr string) {
+	fset, f := ParseSrc("package main\n" + fnStr)
+	i := NewInferrer(fset, e)
+	i.InferFile(f)
+	for _, f := range f.Decls {
+		if fn, ok := f.(*ast.FuncDecl); ok {
+			e.RawGenFns = append(e.RawGenFns, fn)
+		}
+	}
 }
 
 func (e *Env) DefineFn(name string, fnStr string) {

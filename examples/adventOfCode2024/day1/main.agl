@@ -17,12 +17,7 @@ func main() {
 }
 
 func part1(list1, list2 []int) int {
-    //return zip(list1, list2).Map({ abs($0.0 - $0.1) }).Sum()
-    var sum int
-    for i := range list1 {
-        sum += abs(list1[i] - list2[i])
-    }
-    return sum
+    return zip(list1, list2).Map({ abs($0.0 - $0.1) }).Sum()
 }
 
 func part2(list1, list2 []int) int {

@@ -1,0 +1,38 @@
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func isSafe(report []int) bool {
+    direction := report[0] < report[1]
+    return zip(report, report[1:]).AllSatisfy({
+        diff := $0.0 - $0.1
+        return diff != 0 && abs(diff) <= 3 && diff < 0 == direction
+    })
+}
+
+func main() {
+    data := os.ReadFile("examples/adventOfCode2024/day2/data.txt")!
+    lines := string(data).Split("\n").Map({
+        $0.Split(" ").Map({ $0.Int()! })
+    })
+    fmt.Printf("part1: %d\n", part1(lines))
+    fmt.Printf("part2: %d\n", part2(lines))
+}
+
+func part1(data [][]int) int {
+    return data.Filter({ isSafe($0) }).Len()
+}
+
+func part2(data [][]int) int {
+    return data.Filter({
+        report := $0
+        return report.Indices().Contains({
+            modified := report.Clone()
+            modified.Remove($0)
+            return isSafe(modified)
+        })
+    }).Len()
+}

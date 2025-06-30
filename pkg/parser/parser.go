@@ -1643,8 +1643,11 @@ func (p *parser) parseOperand() ast.Expr {
 		lparen := p.expect(token.LPAREN)
 		values := p.parseExprList()
 		rparen := p.expect(token.RPAREN)
-		x := &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
-		return x
+		if len(values) > 1 {
+			return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
+		} else {
+			return &ast.ParenExpr{Lparen: lparen, X: values[0], Rparen: rparen}
+		}
 	}
 
 	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil { // do not consume trailing type parameters
