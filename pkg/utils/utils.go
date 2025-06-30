@@ -63,3 +63,16 @@ func Map[T, R any](a []T, clb func(T) R) (out []R) {
 func MapJoin[T any](a []T, clb func(T) string, sep string) string {
 	return strings.Join(Map(a, clb), sep)
 }
+
+// Ternary ...
+func Ternary[T any](predicate bool, a, b T) T {
+	if predicate {
+		return a
+	}
+	return b
+}
+
+// TernaryOrZero ...
+func TernaryOrZero[T any](predicate bool, a T) (zero T) {
+	return Ternary(predicate, a, zero)
+}
