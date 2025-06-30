@@ -532,30 +532,22 @@ type TupleType struct {
 
 func (t TupleType) GoStr1() string {
 	name := "AglTupleStruct_"
-	var tmp []string
-	for _, el := range t.Elts {
-		tmp = append(tmp, el.GoStr())
-	}
 	r := strings.NewReplacer(
 		"[", "_",
 		"]", "_",
 	)
-	tmpName := strings.Join(tmp, "_")
+	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
 	tmpName = r.Replace(tmpName)
 	return name + tmpName
 }
 
 func (t TupleType) GoStr() string {
 	name := "AglTupleStruct_"
-	var tmp []string
-	for _, el := range t.Elts {
-		tmp = append(tmp, el.GoStr())
-	}
 	r := strings.NewReplacer(
 		"[", "_",
 		"]", "_",
 	)
-	tmpName := strings.Join(tmp, "_")
+	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
 	tmpName = r.Replace(tmpName)
 	var typeParams []string
 	for _, el := range t.Elts {
@@ -571,15 +563,11 @@ func (t TupleType) GoStr() string {
 
 func (t TupleType) GoStr2() string {
 	name := "AglTupleStruct_"
-	var tmp []string
-	for _, el := range t.Elts {
-		tmp = append(tmp, el.GoStr())
-	}
 	r := strings.NewReplacer(
 		"[", "_",
 		"]", "_",
 	)
-	tmpName := strings.Join(tmp, "_")
+	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
 	tmpName = r.Replace(tmpName)
 	var typeParams []string
 	for _, el := range t.Elts {
@@ -615,6 +603,10 @@ type FuncType struct {
 	Params     []Type
 	Return     Type
 	IsNative   bool
+}
+
+func (f FuncType) IsGeneric() bool {
+	return len(f.TypeParams) > 0
 }
 
 func (f FuncType) GetParam(i int) Type {
@@ -769,6 +761,10 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	switch t1 := a.(type) {
 	case ArrayType:
 		findGenHelper(m, t1.Elt, b.(ArrayType).Elt)
+	case TupleType:
+		for i, elt := range t1.Elts {
+			findGenHelper(m, elt, b.(TupleType).Elts[i])
+		}
 	case GenericType:
 		m[t1.Name] = b
 	case FuncType:

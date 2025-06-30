@@ -1,6 +1,9 @@
 package utils
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
 
 func Noop(...any) {}
 
@@ -48,4 +51,15 @@ func CastInto[T any](origin any, into *T) bool {
 		}
 	}
 	return false
+}
+
+func Map[T, R any](a []T, clb func(T) R) (out []R) {
+	for _, el := range a {
+		out = append(out, clb(el))
+	}
+	return
+}
+
+func MapJoin[T any](a []T, clb func(T) string, sep string) string {
+	return strings.Join(Map(a, clb), sep)
 }

@@ -9,7 +9,6 @@ import (
 	"path"
 	"reflect"
 	"runtime"
-	"strings"
 )
 
 func noop(_ ...any) {}
@@ -256,15 +255,4 @@ func SliceSeq[T any](s []T) iter.Seq[T] {
 			}
 		}
 	}
-}
-
-func Map[T, R any](a []T, clb func(T) R) (out []R) {
-	for _, el := range a {
-		out = append(out, clb(el))
-	}
-	return
-}
-
-func MapJoin[T any](a []T, clb func(T) string, sep string) string {
-	return strings.Join(Map(a, clb), sep)
 }
