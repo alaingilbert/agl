@@ -29,7 +29,7 @@ func part1(data [][]int) int {
 func part2(data [][]int) int {
     return data.Filter({
         report := $0
-        return report.Indices().Contains({
+        return report.Indices().Any({
             modified := report.Clone()
             modified.Remove($0)
             return isSafe(modified)
