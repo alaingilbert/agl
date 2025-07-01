@@ -28,7 +28,7 @@ func part1(lines [][]string, width, height int) int {
             directions.Push((e1, e2))
         }
     }
-    target := []string{"X", "M", "A", "S"}
+    target := "XMAS".Split("")
     found := 0
     for y, line := range lines {
         for x := range line {
