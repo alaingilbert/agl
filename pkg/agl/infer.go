@@ -26,6 +26,26 @@ func ParseSrc(src string) (*token.FileSet, *ast.File) {
 	if strings.HasPrefix(src, "#!") {
 		src = "//" + src
 	}
+	src += `
+	func zip[T, U any](a []T, b []U) [](T, U) {
+		out := make([](T, U), 0)
+		for i := range a {
+			if len(a) <= i || len(b) <= i {
+				break
+			}
+			out.Push((a[i], b[i]))
+		}
+		return out
+	}
+	
+	func (v agl.Vec[T]) Enumerated() [](int, T) {
+		out := make([](int, T), 0)
+		for i := range v {
+			out.Push((i, v[i]))
+		}
+		return out
+	}
+	`
 	var fset = token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", src, 0)
 	if err != nil {

@@ -344,27 +344,6 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Result.IsErr", "func () bool")
 	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
 	//e.DefineFn("agl.Vec.Enumerated", "func [T any](a []T) [](int, T)")
-
-	e.DefineFnRaw(`package main
-	func zip[T, U any](a []T, b []U) [](T, U) {
-		out := make([](T, U), 0)
-		for i := range a {
-			if len(a) <= i || len(b) <= i {
-				break
-			}
-			out.Push((a[i], b[i]))
-		}
-		return out
-	}
-	
-	func (v agl.Vec[T]) Enumerated() [](int, T) {
-		out := make([](int, T), 0)
-		for i := range v {
-			out.Push((i, v[i]))
-		}
-		return out
-	}
-	`)
 }
 
 func (e *Env) loadBaseValues() {
