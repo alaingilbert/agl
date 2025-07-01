@@ -7,33 +7,29 @@ import (
 )
 
 func main() {
-    fmt.Printf("part1: %d\n", part1())
-    fmt.Printf("part2: %d\n", part2())
+    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
+    fmt.Printf("part1: %d\n", part1(data))
+    fmt.Printf("part2: %d\n", part2(data))
 }
 
-func part1() int {
-    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
+func part1(data []byte) int {
    	rgxMul := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
 	matches := rgxMul.FindAllStringSubmatch(string(data), -1)
     return matches.Map({ $0[1].Int()! * $0[2].Int()! }).Sum()
 }
 
-func part2() int {
-    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
+func part2(data []byte) int {
     rgx := regexp.MustCompile(`mul\((\d+),(\d+)\)|do\(\)|don't\(\)`)
 	matches := rgx.FindAllStringSubmatch(string(data), -1)
-	res := 0
 	enabled := true
-	for _, m := range matches {
-		if m[0] == "do()" {
+    return matches.Map({
+        if $0[0] == "do()" {
 			enabled = true
-		} else if m[0] == "don't()" {
+		} else if $0[0] == "don't()" {
 			enabled = false
 		} else if enabled {
-			a := m[1].Int()!
-			b := m[2].Int()!
-			res += a * b
+			return $0[1].Int()! * $0[2].Int()!
 		}
-	}
-	return res
+        return 0
+    }).Sum()
 }
