@@ -57,8 +57,8 @@ func part2(lines [][]string) int {
     for y := 1; y < height-1; y++ {
         for x := 1; x < width-1; x++ {
             if lines[y][x] == "A" {
-                d1 := string(lines[y-1][x-1]) + string(lines[y+1][x+1])
-                d2 := string(lines[y-1][x+1]) + string(lines[y+1][x-1])
+                d1 := lines[y-1][x-1] + lines[y+1][x+1]
+                d2 := lines[y-1][x+1] + lines[y+1][x-1]
                 if arr.Contains({ $0 == d1 }) && arr.Contains({ $0 == d2 }) {
                     found++
                 }
