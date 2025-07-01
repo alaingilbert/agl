@@ -92,6 +92,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 		}
 	}()
 	// Parse the file
+	content += agl.CoreFns()
 	file, err := parser.ParseFile(s.fset, uri, content, 0)
 	if err != nil {
 		// Convert parser errors to LSP diagnostics
