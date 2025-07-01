@@ -10,6 +10,7 @@ import (
 
 type Type interface {
 	GoStr() string
+	GoStrType() string
 	String() string
 	StringFull() string
 }
@@ -20,6 +21,7 @@ type BaseType struct {
 type VoidType struct{}
 
 func (v VoidType) GoStr() string      { return "AglVoid" }
+func (v VoidType) GoStrType() string  { return "AglVoid" }
 func (v VoidType) String() string     { return "void" }
 func (v VoidType) StringFull() string { return v.String() }
 
@@ -27,9 +29,8 @@ type StarType struct {
 	X Type
 }
 
-func (s StarType) GoStr() string {
-	return fmt.Sprintf("*%s", s.X.GoStr())
-}
+func (s StarType) GoStr() string     { return fmt.Sprintf("*%s", s.X.GoStr()) }
+func (s StarType) GoStrType() string { return s.GoStr() }
 func (s StarType) String() string {
 	if s.X == nil {
 		return "*UNKNOWN"
@@ -47,7 +48,10 @@ type MapType struct {
 	K, V Type
 }
 
-func (m MapType) GoStr() string  { return fmt.Sprintf("map[%s]%s", m.K.GoStr(), m.V.GoStr()) }
+func (m MapType) GoStr() string { return fmt.Sprintf("map[%s]%s", m.K.GoStr(), m.V.GoStr()) }
+func (m MapType) GoStrType() string {
+	return fmt.Sprintf("map[%s]%s", m.K.GoStrType(), m.V.GoStrType())
+}
 func (m MapType) String() string { return fmt.Sprintf("map[%s]%s", m.K, m.V) }
 func (m MapType) StringFull() string {
 	return fmt.Sprintf("map[%s]%s", m.K.StringFull(), m.V.StringFull())
@@ -56,6 +60,7 @@ func (m MapType) StringFull() string {
 type ChanType struct{ W Type }
 
 func (m ChanType) GoStr() string      { return fmt.Sprintf("chan %s", m.W) }
+func (m ChanType) GoStrType() string  { return m.GoStr() }
 func (m ChanType) String() string     { return fmt.Sprintf("chan %s", m.W) }
 func (m ChanType) StringFull() string { return fmt.Sprintf("chan %s", m.W.StringFull()) }
 
@@ -64,6 +69,7 @@ type BinaryType struct {
 }
 
 func (b BinaryType) GoStr() string      { return "BinaryType" }
+func (b BinaryType) GoStrType() string  { return "BinaryType" }
 func (b BinaryType) String() string     { return "BinaryType" }
 func (b BinaryType) StringFull() string { return "BinaryType" }
 
@@ -72,12 +78,14 @@ type UnaryType struct {
 }
 
 func (u UnaryType) GoStr() string      { return "UnaryType" }
+func (u UnaryType) GoStrType() string  { return "UnaryType" }
 func (u UnaryType) String() string     { return "UnaryType" }
 func (u UnaryType) StringFull() string { return "UnaryType" }
 
 type LabelType struct{ W Type }
 
 func (l LabelType) GoStr() string      { return "LabelType" }
+func (l LabelType) GoStrType() string  { return "LabelType" }
 func (l LabelType) String() string     { return "LabelType" }
 func (l LabelType) StringFull() string { return "LabelType" }
 
@@ -86,8 +94,9 @@ type IndexType struct {
 	Index []FieldType
 }
 
-func (i IndexType) GoStr() string  { return i.X.GoStr() }
-func (i IndexType) String() string { return i.X.String() }
+func (i IndexType) GoStr() string     { return i.X.GoStr() }
+func (i IndexType) GoStrType() string { return i.X.GoStr() }
+func (i IndexType) String() string    { return i.X.String() }
 func (i IndexType) StringFull() string {
 	var tmp []string
 	for _, e := range i.Index {
@@ -102,6 +111,7 @@ type IndexListType struct {
 }
 
 func (i IndexListType) GoStr() string      { return i.X.GoStr() }
+func (i IndexListType) GoStrType() string  { return i.X.GoStr() }
 func (i IndexListType) String() string     { return i.X.String() }
 func (i IndexListType) StringFull() string { return i.X.StringFull() }
 
@@ -113,7 +123,8 @@ type ResultType struct {
 	ToNoneType    Type
 }
 
-func (r ResultType) GoStr() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
+func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
+func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
 func (r ResultType) StringFull() string {
 	switch r.W.(type) {
 	case ArrayType, StarType:
@@ -137,7 +148,8 @@ type OptionType struct {
 	Bubble bool
 }
 
-func (o OptionType) GoStr() string { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
+func (o OptionType) GoStr() string     { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
+func (o OptionType) GoStrType() string { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
 func (o OptionType) String() string {
 	switch o.W.(type) {
 	case ArrayType, StarType:
@@ -168,24 +180,28 @@ func (c CustomType) GoStr() string {
 	}
 	return out
 }
+func (c CustomType) GoStrType() string  { return c.GoStr() }
 func (c CustomType) String() string     { return c.GoStr() }
 func (c CustomType) StringFull() string { return c.GoStr() }
 
 type TypeType struct{ W Type }
 
 func (t TypeType) GoStr() string      { return t.W.GoStr() }
+func (t TypeType) GoStrType() string  { return t.GoStr() }
 func (t TypeType) String() string     { return t.W.String() }
 func (t TypeType) StringFull() string { return t.String() }
 
 type StringType struct{ W Type }
 
 func (s StringType) GoStr() string      { return "string" }
+func (s StringType) GoStrType() string  { return "string" }
 func (s StringType) String() string     { return "string" }
 func (s StringType) StringFull() string { return s.String() }
 
 type CharType struct{ W Type }
 
 func (s CharType) GoStr() string      { return "char" }
+func (s CharType) GoStrType() string  { return "char" }
 func (s CharType) String() string     { return "char" }
 func (s CharType) StringFull() string { return "char" }
 
@@ -198,66 +214,77 @@ func (b BoolValue) GoStr() string {
 		return "false"
 	}
 }
+func (b BoolValue) GoStrType() string  { return b.GoStr() }
 func (b BoolValue) String() string     { return b.GoStr() }
 func (b BoolValue) StringFull() string { return b.GoStr() }
 
 type BoolType struct{}
 
 func (b BoolType) GoStr() string      { return "bool" }
+func (b BoolType) GoStrType() string  { return "bool" }
 func (b BoolType) String() string     { return "bool" }
 func (b BoolType) StringFull() string { return b.String() }
 
 type RuneType struct{ W Type }
 
 func (r RuneType) GoStr() string      { return "RuneType" }
+func (r RuneType) GoStrType() string  { return "RuneType" }
 func (r RuneType) String() string     { return "RuneType" }
 func (r RuneType) StringFull() string { return "RuneType" }
 
 type ByteType struct{ W Type }
 
 func (b ByteType) GoStr() string      { return "byte" }
+func (b ByteType) GoStrType() string  { return "byte" }
 func (b ByteType) String() string     { return "byte" }
 func (b ByteType) StringFull() string { return b.String() }
 
 type MakeType struct{ W Type }
 
 func (o MakeType) GoStr() string      { return "make" }
+func (o MakeType) GoStrType() string  { return "make" }
 func (o MakeType) String() string     { return "make" }
 func (o MakeType) StringFull() string { return o.String() }
 
 type LenType struct{ W Type }
 
 func (l LenType) GoStr() string      { return "len" }
+func (l LenType) GoStrType() string  { return "len" }
 func (l LenType) String() string     { return "len" }
 func (l LenType) StringFull() string { return l.String() }
 
 type UnderscoreType struct{ W Type }
 
 func (u UnderscoreType) GoStr() string      { return "_" }
+func (u UnderscoreType) GoStrType() string  { return "_" }
 func (u UnderscoreType) String() string     { return "_" }
 func (u UnderscoreType) StringFull() string { return u.String() }
 
 type NoneType struct{ W Type }
 
 func (n NoneType) GoStr() string      { return "NoneType" }
+func (n NoneType) GoStrType() string  { return "NoneType" }
 func (n NoneType) String() string     { return fmt.Sprintf("None[%s]", n.W.String()) }
 func (n NoneType) StringFull() string { return fmt.Sprintf("None[%s]", n.W.StringFull()) }
 
 type UntypedNoneType struct{}
 
 func (n UntypedNoneType) GoStr() string      { return "UntypedNoneType" }
+func (n UntypedNoneType) GoStrType() string  { return "UntypedNoneType" }
 func (n UntypedNoneType) String() string     { return "UntypedNoneType" }
 func (n UntypedNoneType) StringFull() string { return "UntypedNoneType" }
 
 type SomeType struct{ W Type }
 
 func (s SomeType) GoStr() string      { return "SomeType" }
+func (s SomeType) GoStrType() string  { return "SomeType" }
 func (s SomeType) String() string     { return fmt.Sprintf("Some[%s]", s.W.String()) }
 func (s SomeType) StringFull() string { return fmt.Sprintf("Some[%s]", s.W.StringFull()) }
 
 type OkType struct{ W Type }
 
 func (o OkType) GoStr() string      { return "OkType" }
+func (o OkType) GoStrType() string  { return "OkType" }
 func (o OkType) String() string     { return fmt.Sprintf("Ok[%s]", o.W.String()) }
 func (o OkType) StringFull() string { return fmt.Sprintf("Ok[%s]", o.W.StringFull()) }
 
@@ -267,42 +294,49 @@ type ErrType struct {
 }
 
 func (e ErrType) GoStr() string      { return "ErrType" }
+func (e ErrType) GoStrType() string  { return "ErrType" }
 func (e ErrType) String() string     { return fmt.Sprintf("Err[%s]", e.T.String()) }
 func (e ErrType) StringFull() string { return fmt.Sprintf("Err[%s]", e.T.StringFull()) }
 
 type PackageType struct{ Name, Path string }
 
 func (p PackageType) GoStr() string      { return p.Name }
+func (p PackageType) GoStrType() string  { return p.Name }
 func (p PackageType) String() string     { return "package " + p.Name }
 func (p PackageType) StringFull() string { return "package " + p.Name }
 
 type AnyType struct{}
 
 func (a AnyType) GoStr() string      { return "any" }
+func (a AnyType) GoStrType() string  { return "any" }
 func (a AnyType) String() string     { return "any" }
 func (a AnyType) StringFull() string { return "any" }
 
 type NilType struct{}
 
 func (n NilType) GoStr() string      { return "nil" }
+func (n NilType) GoStrType() string  { return "nil" }
 func (n NilType) String() string     { return "nil" }
 func (n NilType) StringFull() string { return n.String() }
 
 type SetType struct{ Elt Type }
 
 func (s SetType) GoStr() string      { return fmt.Sprintf("Set[%s]", s.Elt.GoStr()) }
+func (s SetType) GoStrType() string  { return fmt.Sprintf("Set[%s]", s.Elt.GoStr()) }
 func (s SetType) String() string     { return fmt.Sprintf("Set[%s]", s.Elt.String()) }
 func (s SetType) StringFull() string { return fmt.Sprintf("Set[%s]", s.Elt.StringFull()) }
 
 type ArrayType struct{ Elt Type }
 
 func (a ArrayType) GoStr() string      { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
+func (a ArrayType) GoStrType() string  { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
 func (a ArrayType) String() string     { return fmt.Sprintf("[]%s", a.Elt.String()) }
 func (a ArrayType) StringFull() string { return fmt.Sprintf("[]%s", a.Elt.StringFull()) }
 
 type EllipsisType struct{ Elt Type }
 
 func (e EllipsisType) GoStr() string      { return fmt.Sprintf("...%s", e.Elt.GoStr()) }
+func (e EllipsisType) GoStrType() string  { return fmt.Sprintf("...%s", e.Elt.GoStr()) }
 func (e EllipsisType) String() string     { return fmt.Sprintf("...%s", e.Elt.String()) }
 func (e EllipsisType) StringFull() string { return fmt.Sprintf("...%s", e.Elt.StringFull()) }
 
@@ -312,6 +346,7 @@ type FieldType struct {
 }
 
 func (f FieldType) GoStr() string      { return "FieldType" }
+func (f FieldType) GoStrType() string  { return "FieldType" }
 func (f FieldType) String() string     { return "FieldType" }
 func (f FieldType) StringFull() string { return "FieldType" }
 
@@ -321,6 +356,7 @@ type TypeAssertType struct {
 }
 
 func (t TypeAssertType) GoStr() string      { return "TypeAssertType" }
+func (t TypeAssertType) GoStrType() string  { return "TypeAssertType" }
 func (t TypeAssertType) String() string     { return "TypeAssertType" }
 func (t TypeAssertType) StringFull() string { return "TypeAssertType" }
 
@@ -346,7 +382,8 @@ func (s StructType) GoStr() string {
 	return out
 }
 
-func (s StructType) String() string { return s.Name }
+func (s StructType) GoStrType() string { return "struct{}" }
+func (s StructType) String() string    { return s.Name }
 
 func (s StructType) StringFull() string {
 	out := s.Name
@@ -362,6 +399,7 @@ type InterfaceType struct {
 }
 
 func (i InterfaceType) GoStr() string      { return i.String() }
+func (i InterfaceType) GoStrType() string  { return i.String() }
 func (i InterfaceType) StringFull() string { return i.String() }
 func (i InterfaceType) String() string {
 	out := i.Name
@@ -378,6 +416,7 @@ type EnumType struct {
 }
 
 func (e EnumType) GoStr() string      { return e.Name }
+func (e EnumType) GoStrType() string  { return e.Name }
 func (e EnumType) String() string     { return e.Name }
 func (e EnumType) StringFull() string { return e.Name }
 
@@ -386,9 +425,9 @@ type EnumFieldType struct {
 	Elts []Type
 }
 
-func (e EnumFieldType) GoStr() string { return "EnumFieldType" }
-
-func (e EnumFieldType) String() string { return "EnumFieldType" }
+func (e EnumFieldType) GoStr() string     { return "EnumFieldType" }
+func (e EnumFieldType) GoStrType() string { return "EnumFieldType" }
+func (e EnumFieldType) String() string    { return "EnumFieldType" }
 
 type GenericType struct {
 	W      Type
@@ -403,6 +442,7 @@ func (g GenericType) TypeParamGoStr() string {
 	return fmt.Sprintf("%s %s", g.Name, g.W.String())
 }
 func (g GenericType) GoStr() string      { return fmt.Sprintf("%s", g.Name) }
+func (g GenericType) GoStrType() string  { return fmt.Sprintf("%s", g.Name) }
 func (g GenericType) String() string     { return fmt.Sprintf("%s", g.Name) }
 func (g GenericType) StringFull() string { return g.String() }
 
@@ -411,118 +451,135 @@ type BubbleOptionType struct {
 	Bubble bool
 }
 
-func (b BubbleOptionType) GoStr() string { return "BubbleOptionType" }
-
-func (b BubbleOptionType) String() string { return "BubbleOptionType" }
+func (b BubbleOptionType) GoStr() string     { return "BubbleOptionType" }
+func (b BubbleOptionType) GoStrType() string { return "BubbleOptionType" }
+func (b BubbleOptionType) String() string    { return "BubbleOptionType" }
 
 type BubbleResultType struct {
 	Elt    Type
 	Bubble bool
 }
 
-func (r BubbleResultType) GoStr() string { return "BubbleResultType" }
-
-func (r BubbleResultType) String() string { return "BubbleResultType" }
+func (r BubbleResultType) GoStr() string     { return "BubbleResultType" }
+func (r BubbleResultType) GoStrType() string { return "BubbleResultType" }
+func (r BubbleResultType) String() string    { return "BubbleResultType" }
 
 type UintptrType struct{}
 
 func (u UintptrType) GoStr() string      { return "uintptr" }
+func (u UintptrType) GoStrType() string  { return "uintptr" }
 func (u UintptrType) String() string     { return "uintptr" }
 func (u UintptrType) StringFull() string { return u.String() }
 
 type Complex128Type struct{}
 
 func (c Complex128Type) GoStr() string      { return "complex128" }
+func (c Complex128Type) GoStrType() string  { return "complex128" }
 func (c Complex128Type) String() string     { return "complex128" }
 func (c Complex128Type) StringFull() string { return c.String() }
 
 type Complex64Type struct{}
 
 func (c Complex64Type) GoStr() string      { return "complex64" }
+func (c Complex64Type) GoStrType() string  { return "complex64" }
 func (c Complex64Type) String() string     { return "complex64" }
 func (c Complex64Type) StringFull() string { return c.String() }
 
 type I64Type struct{}
 
 func (i I64Type) GoStr() string      { return "int64" }
+func (i I64Type) GoStrType() string  { return "int64" }
 func (i I64Type) String() string     { return "i64" }
 func (i I64Type) StringFull() string { return i.String() }
 
 type U8Type struct{}
 
 func (u U8Type) GoStr() string      { return "uint8" }
+func (u U8Type) GoStrType() string  { return "uint8" }
 func (u U8Type) String() string     { return "u8" }
 func (u U8Type) StringFull() string { return u.String() }
 
 type U16Type struct{}
 
 func (u U16Type) GoStr() string      { return "uint16" }
+func (u U16Type) GoStrType() string  { return "uint16" }
 func (u U16Type) String() string     { return "u16" }
 func (u U16Type) StringFull() string { return u.String() }
 
 type U32Type struct{}
 
 func (u U32Type) GoStr() string      { return "uint32" }
+func (u U32Type) GoStrType() string  { return "uint32" }
 func (u U32Type) String() string     { return "u32" }
 func (u U32Type) StringFull() string { return u.String() }
 
 type U64Type struct{}
 
 func (u U64Type) GoStr() string      { return "uint64" }
+func (u U64Type) GoStrType() string  { return "uint64" }
 func (u U64Type) String() string     { return "u64" }
 func (u U64Type) StringFull() string { return u.String() }
 
 type I8Type struct{}
 
 func (i I8Type) GoStr() string      { return "i8" }
+func (i I8Type) GoStrType() string  { return "i8" }
 func (i I8Type) String() string     { return "int8" }
 func (i I8Type) StringFull() string { return i.String() }
 
 type I16Type struct{}
 
 func (i I16Type) GoStr() string      { return "int16" }
+func (i I16Type) GoStrType() string  { return "int16" }
 func (i I16Type) String() string     { return "i16" }
 func (i I16Type) StringFull() string { return i.String() }
 
 type I32Type struct{}
 
 func (i I32Type) GoStr() string      { return "int32" }
+func (i I32Type) GoStrType() string  { return "int32" }
 func (i I32Type) String() string     { return "i32" }
 func (i I32Type) StringFull() string { return i.String() }
 
 type UntypedNumType struct{}
 
 func (i UntypedNumType) GoStr() string      { return "int" }
+func (i UntypedNumType) GoStrType() string  { return "int" }
 func (i UntypedNumType) String() string     { return "UntypedNumType" }
 func (i UntypedNumType) StringFull() string { return i.String() }
 
 type UntypedStringType struct{}
 
 func (i UntypedStringType) GoStr() string      { return "string" }
+func (i UntypedStringType) GoStrType() string  { return "string" }
 func (i UntypedStringType) String() string     { return "UntypedStringType" }
 func (i UntypedStringType) StringFull() string { return i.String() }
 
 type IntType struct{}
 
 func (i IntType) GoStr() string      { return "int" }
+func (i IntType) GoStrType() string  { return "int" }
 func (i IntType) String() string     { return "int" }
 func (i IntType) StringFull() string { return i.String() }
 
 type UintType struct{}
 
 func (u UintType) GoStr() string      { return "uint" }
+func (u UintType) GoStrType() string  { return "uint" }
 func (u UintType) String() string     { return "uint" }
 func (u UintType) StringFull() string { return u.String() }
 
 type F32Type struct{}
 
 func (f F32Type) GoStr() string      { return "float32" }
+func (f F32Type) GoStrType() string  { return "float32" }
 func (f F32Type) String() string     { return "f32" }
 func (f F32Type) StringFull() string { return f.String() }
 
 type F64Type struct{}
 
 func (f F64Type) GoStr() string      { return "float64" }
+func (f F64Type) GoStrType() string  { return "float64" }
 func (f F64Type) String() string     { return "f64" }
 func (f F64Type) StringFull() string { return f.String() }
 
@@ -580,6 +637,8 @@ func (t TupleType) GoStr2() string {
 	}
 	return name + tmpName
 }
+
+func (t TupleType) GoStrType() string { return t.GoStr() }
 
 func (t TupleType) String() string {
 	var tmp []string
@@ -788,7 +847,8 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	}
 }
 
-func (f FuncType) GoStr() string { return f.Name }
+func (f FuncType) GoStr() string     { return f.Name }
+func (f FuncType) GoStrType() string { return f.Name }
 
 func (f FuncType) GoStr1() string { // TODO
 	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
@@ -881,6 +941,6 @@ type ShortFuncLitType struct {
 	Return Type
 }
 
-func (f ShortFuncLitType) String() string { return "" }
-
-func (f ShortFuncLitType) GoStr() string { return "" }
+func (f ShortFuncLitType) String() string    { return "" }
+func (f ShortFuncLitType) GoStr() string     { return "" }
+func (f ShortFuncLitType) GoStrType() string { return "" }

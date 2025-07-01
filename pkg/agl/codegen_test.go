@@ -6935,6 +6935,19 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen250(t *testing.T) {
+	src := `package main
+func main() {
+	make(map[int]map[int]struct{})
+}`
+	expected := `package main
+func main() {
+	make(map[int]map[int]struct{})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
