@@ -480,8 +480,8 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
 func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
 	var content2 string
-	if g.isType && TryCast[types.StructType](g.env.GetType(expr.Value)) {
-		content2 = "struct{}"
+	if g.isType {
+		content2 = g.env.GetType2(expr.Value).GoStrType()
 	} else {
 		content2 = g.env.GetType2(expr.Value).GoStr()
 	}
