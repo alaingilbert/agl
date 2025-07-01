@@ -8,17 +8,17 @@ import (
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day4/data.txt")!
     lines := string(data).Split("\n").Map({ $0.Split("") })
-    fmt.Printf("part1: %d\n", part1(lines))
-    fmt.Printf("part2: %d\n", part2(lines))
+    height := lines.Len()
+    width := lines.First()?.Len()
+    fmt.Printf("part1: %d\n", part1(lines, width, height))
+    fmt.Printf("part2: %d\n", part2(lines, width, height))
 }
 
 func isValidPosition(x, y, width, height int) bool {
     return x >= 0 && y >= 0 && x < width && y < height
 }
 
-func part1(lines [][]string) int {
-    height := lines.Len()
-    width := lines.First()?.Len()
+func part1(lines [][]string, width, height int) int {
     directions := make([](int, int), 0)
     for _, e1 := range []int{-1, 0, 1} {
         for _, e2 := range []int{-1, 0, 1} {
@@ -49,9 +49,7 @@ func part1(lines [][]string) int {
     return found
 }
 
-func part2(lines [][]string) int {
-    height := lines.Len()
-    width := lines.First()?.Len()
+func part2(lines [][]string, width, height int) int {
     found := 0
     arr := []string{"MS", "SM"}
     for y := 1; y < height-1; y++ {
