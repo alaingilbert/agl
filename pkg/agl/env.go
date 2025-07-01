@@ -334,6 +334,19 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Result.IsOk", "func () bool")
 	e.DefineFn("agl.Result.IsErr", "func () bool")
 	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
+	e.DefineFnRaw(`
+func zip[T, U any](a []T, b []U) [](T, U) {
+	out := make([](T, U), 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i {
+			break
+		}
+		out.Push((a[i], b[i]))
+	}
+	return out
+}
+
+`)
 }
 
 func (e *Env) loadBaseValues() {
@@ -380,16 +393,6 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("slices")
 	//e.loadVendor("golang.org/x/net/html")
 	e.loadPkgAgl()
-	e.DefineFnRaw(`func zip[T, U any](a []T, b []U) [](T, U) {
-	out := make([](T, U), 0)
-	for i := range a {
-		if len(b) <= i {
-			break
-		}
-		out.Push((a[i], b[i]))
-	}
-	return out
-}`)
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
