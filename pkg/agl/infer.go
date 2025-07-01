@@ -1813,6 +1813,18 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		return
 	case *ast.Ident:
 		infer.SetType(expr, infer.env.Get(v.Name))
+		for _, elExpr := range expr.Elts {
+			switch v1 := elExpr.(type) {
+			case *ast.KeyValueExpr:
+				infer.expr(v1.Value)
+			case *ast.BasicLit:
+				infer.expr(v1)
+			case *ast.CallExpr:
+				infer.expr(v1)
+			default:
+				panic(fmt.Sprintf("%v", to(elExpr)))
+			}
+		}
 		return
 	case *ast.MapType:
 		keyT := infer.env.GetType2(v.Key)
