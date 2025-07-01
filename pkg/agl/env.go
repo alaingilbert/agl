@@ -363,8 +363,6 @@ func (v agl.Vec[T]) ForEach(f func(T)) {
 		f(v[i])
 	}
 }
-
-func noop(_ ...any) {}
 `
 }
 
