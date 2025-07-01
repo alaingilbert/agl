@@ -1,0 +1,28 @@
+package main
+
+import (
+    "fmt"
+    "regexp"
+    "os"
+)
+
+func main() {
+    fmt.Printf("part1: %d\n", part1())
+}
+
+func part1() int {
+    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
+   	rgxMul := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
+	matches := rgxMul.FindAllStringSubmatch(string(data), -1)
+    test := matches.Map({
+        $0[1].Int()! * $0[2].Int()!
+    }).Sum()
+    fmt.Println(test)
+    res := 0
+	for _, m := range matches {
+		a := m[1].Int()!
+		b := m[2].Int()!
+		res += a * b
+	}
+    return res
+}
