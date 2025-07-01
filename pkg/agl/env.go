@@ -346,6 +346,29 @@ func (e *Env) loadPkgAgl() {
 	//e.DefineFn("agl.Vec.Enumerated", "func [T any](a []T) [](int, T)")
 }
 
+func CoreFns() string {
+	return `
+	func zip[T, U any](a []T, b []U) [](T, U) {
+		out := make([](T, U), 0)
+		for i := range a {
+			if len(a) <= i || len(b) <= i {
+				break
+			}
+			out.Push((a[i], b[i]))
+		}
+		return out
+	}
+	
+	func (v agl.Vec[T]) Enumerated() [](int, T) {
+		out := make([](int, T), 0)
+		for i := range v {
+			out.Push((i, v[i]))
+		}
+		return out
+	}
+	`
+}
+
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
 	e.loadPkg("cmp")
