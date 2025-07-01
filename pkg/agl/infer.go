@@ -1329,11 +1329,9 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 	}
 	ft := funcTypeToFuncType("", expr.Type, infer.env, false)
 	// implicit return
-	if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) {
-		if !TryCast[types.VoidType](ft.Return) {
-			returnStmt := expr.Body.List[0].(*ast.ExprStmt)
-			expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
-		}
+	if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) && !TryCast[types.VoidType](ft.Return) {
+		returnStmt := expr.Body.List[0].(*ast.ExprStmt)
+		expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 	}
 	infer.SetType(expr, ft)
 	infer.withEnv(func() {
