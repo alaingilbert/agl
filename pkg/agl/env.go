@@ -357,7 +357,15 @@ func CoreFns() string {
 		}
 		return out
 	}
-	`
+
+func (v agl.Vec[T]) ForEach(f func(T)) {
+	for i := range v {
+		f(v[i])
+	}
+}
+
+func noop(_ ...any) {}
+`
 }
 
 func (e *Env) loadBaseValues() {
