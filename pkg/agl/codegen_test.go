@@ -6868,6 +6868,34 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen245(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []string{"a", "b"}
+	arr.Contains("a")
+}`
+	expected := `package main
+func main() {
+	arr := []string{"a", "b"}
+	AglVecContains(arr, "a")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen246(t *testing.T) {
+	src := `package main
+func main() {
+	[]string{"a", "b"}.Contains("a")
+}`
+	expected := `package main
+func main() {
+	AglVecContains([]string{"a", "b"}, "a")
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

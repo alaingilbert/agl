@@ -806,6 +806,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.Ident:
 			exprFunT = infer.env.Get(callXT.Name)
 			callXParent = infer.env.GetNameInfo(callXT.Name)
+		case *ast.CompositeLit:
+			infer.expr(callXT)
+			exprFunT = infer.env.GetType2(callXT)
 		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 			infer.expr(callXT)
 			exprFunT = infer.GetType(callXT)
