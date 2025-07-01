@@ -14,7 +14,5 @@ func part1() int {
     data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
    	rgxMul := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
 	matches := rgxMul.FindAllStringSubmatch(string(data), -1)
-    return matches.Map({
-        $0[1].Int()! * $0[2].Int()!
-    }).Sum()
+    return matches.Map({ $0[1].Int()! * $0[2].Int()! }).Sum()
 }
