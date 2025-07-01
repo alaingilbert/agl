@@ -1022,6 +1022,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVecAllSatisfy(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Contains" {
 				return fmt.Sprintf("AglVecContains(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			} else if fnName == "Any" {
+				return fmt.Sprintf("AglVecAny(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Map" {
 				return fmt.Sprintf("AglVecMap(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Reduce" {
@@ -1911,7 +1913,16 @@ func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
 	return true
 }
 
-func AglVecContains[T any](a []T, f func(T) bool) bool {
+func AglVecContains[T comparable](a []T, e T) bool {
+	for _, v := range a {
+		if v == e {
+			return true
+		}
+	}
+	return false
+}
+
+func AglVecAny[T any](a []T, f func(T) bool) bool {
 	for _, v := range a {
 		if f(v) {
 			return true

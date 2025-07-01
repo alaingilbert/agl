@@ -1084,6 +1084,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT := infer.env.GetFn("agl.Vec.Contains").T("T", idTT.Elt)
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
+			filterFnT.Recv = []types.Type{idTT}
+			filterFnT.Params = filterFnT.Params[1:]
+			infer.SetType(exprT.Sel, filterFnT)
+		} else if fnName == "Any" {
+			filterFnT := infer.env.GetFn("agl.Vec.Any").T("T", idTT.Elt)
+			infer.SetType(expr.Args[0], filterFnT.Params[1])
+			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {

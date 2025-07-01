@@ -59,7 +59,7 @@ func part2(lines [][]string) int {
             if lines[y][x] == "A" {
                 d1 := lines[y-1][x-1] + lines[y+1][x+1]
                 d2 := lines[y-1][x+1] + lines[y+1][x-1]
-                if arr.Contains({ $0 == d1 }) && arr.Contains({ $0 == d2 }) {
+                if arr.Contains(d1) && arr.Contains(d2) {
                     found++
                 }
             }
