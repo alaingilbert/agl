@@ -339,24 +339,24 @@ func (e *Env) loadPkgAgl() {
 
 func CoreFns() string {
 	return `
-	func zip[T, U any](a []T, b []U) [](T, U) {
-		out := make([](T, U), 0)
-		for i := range a {
-			if len(a) <= i || len(b) <= i {
-				break
-			}
-			out.Push((a[i], b[i]))
+func zip[T, U any](a []T, b []U) [](T, U) {
+	out := make([](T, U), 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i {
+			break
 		}
-		return out
+		out.Push((a[i], b[i]))
 	}
-	
-	func (v agl.Vec[T]) Enumerated() [](int, T) {
-		out := make([](int, T), 0)
-		for i := range v {
-			out.Push((i, v[i]))
-		}
-		return out
+	return out
+}
+
+func (v agl.Vec[T]) Enumerated() [](int, T) {
+	out := make([](int, T), 0)
+	for i := range v {
+		out.Push((i, v[i]))
 	}
+	return out
+}
 
 func (v agl.Vec[T]) ForEach(f func(T)) {
 	for i := range v {
