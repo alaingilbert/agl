@@ -1363,17 +1363,19 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		infer.stmt(expr.Body)
 		// implicit return
 		if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) {
-			returnStmt := expr.Body.List[0].(*ast.ExprStmt)
-			if infer.env.GetType(returnStmt.X) != nil {
-				if infer.env.GetType(expr) != nil {
-					ft := infer.env.GetType(expr).(types.FuncType)
-					if t, ok := ft.Return.(types.GenericType); ok {
-						ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
-						infer.SetType(expr, ft)
+			ft := infer.env.GetType(expr).(types.FuncType)
+			if !TryCast[types.VoidType](ft.Return) {
+				returnStmt := expr.Body.List[0].(*ast.ExprStmt)
+				if infer.env.GetType(returnStmt.X) != nil {
+					if infer.env.GetType(expr) != nil {
+						if t, ok := ft.Return.(types.GenericType); ok {
+							ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
+							infer.SetType(expr, ft)
+						}
 					}
 				}
+				expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 			}
-			expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 		} else if len(expr.Body.List) > 0 && TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) {
 			returnStmt := Must(Last(expr.Body.List)).(*ast.ReturnStmt)
 			if infer.env.GetType(returnStmt) != nil {
