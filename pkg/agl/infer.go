@@ -826,6 +826,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 			}
 		case *ast.IndexExpr:
+			infer.expr(callXT)
 			exprFunT = infer.env.GetType2(callXT)
 		case *ast.TypeAssertExpr:
 			exprFunT = types.OptionType{W: infer.env.GetType2(callXT)}
