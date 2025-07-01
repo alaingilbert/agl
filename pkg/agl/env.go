@@ -21,7 +21,15 @@ type Env struct {
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
 	NoIdxUnwrap   bool
-	RawGenFns     []*ast.FuncDecl
+	RawGenFns     map[string]*ast.FuncDecl
+	namespace     string
+}
+
+func (e *Env) withNamespace(ns string, clb func()) {
+	prev := e.namespace
+	e.namespace = ns
+	clb()
+	e.namespace = prev
 }
 
 type Info struct {
@@ -335,19 +343,28 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Result.IsOk", "func () bool")
 	e.DefineFn("agl.Result.IsErr", "func () bool")
 	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
-	//	e.DefineFnRaw(`
-	//func zip[T, U any](a []T, b []U) [](T, U) {
-	//	out := make([](T, U), 0)
-	//	for i := range a {
-	//		if len(a) <= i || len(b) <= i {
-	//			break
-	//		}
-	//		out.Push((a[i], b[i]))
-	//	}
-	//	return out
-	//}
-	//
-	//`)
+	//e.DefineFn("agl.Vec.Enumerated", "func [T any](a []T) [](int, T)")
+
+	e.DefineFnRaw(`package main
+	func zip[T, U any](a []T, b []U) [](T, U) {
+		out := make([](T, U), 0)
+		for i := range a {
+			if len(a) <= i || len(b) <= i {
+				break
+			}
+			out.Push((a[i], b[i]))
+		}
+		return out
+	}
+	
+	func (v agl.Vec[T]) Enumerated() [](int, T) {
+		out := make([](int, T), 0)
+		for i := range v {
+			out.Push((i, v[i]))
+		}
+		return out
+	}
+	`)
 }
 
 func (e *Env) loadBaseValues() {
@@ -399,10 +416,15 @@ func (e *Env) loadBaseValues() {
 }
 
 func NewEnv(fset *token.FileSet) *Env {
+	return NewEnv1(fset, false)
+}
+
+func NewEnv1(fset *token.FileSet, isCore bool) *Env {
 	env := &Env{
 		fset:        fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    make(map[NodeKey]*Info),
+		RawGenFns:   make(map[string]*ast.FuncDecl),
 	}
 	env.loadBaseValues()
 	return env
@@ -413,8 +435,10 @@ func (e *Env) SubEnv() *Env {
 		fset:        e.fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
+		RawGenFns:   e.RawGenFns,
 		parent:      e,
 		NoIdxUnwrap: e.NoIdxUnwrap,
+		namespace:   e.namespace,
 	}
 	return env
 }
@@ -465,14 +489,16 @@ func (e *Env) GetFn(name string) types.FuncType {
 }
 
 func (e *Env) DefineFnRaw(fnStr string) {
-	fset, f := ParseSrc("package main\n" + fnStr)
+	fset, f := ParseSrc(fnStr)
 	i := NewInferrer(fset, e)
-	i.InferFile(f)
-	for _, f := range f.Decls {
-		if fn, ok := f.(*ast.FuncDecl); ok {
-			e.RawGenFns = append(e.RawGenFns, fn)
+	e.withNamespace("agl_core", func() {
+		i.InferFile(f)
+		for _, f := range f.Decls {
+			if fn, ok := f.(*ast.FuncDecl); ok {
+				e.RawGenFns[e.GetType(fn).String()] = fn
+			}
 		}
-	}
+	})
 }
 
 func (e *Env) DefineFn(name string, fnStr string) {
@@ -514,7 +540,7 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) 
 }
 
 func (e *Env) lspNode(n ast.Node) *Info {
-	return e.lspTable[makeKey(n)]
+	return e.lspTable[e.makeKey(n)]
 }
 
 func (e *Env) lspNodeOrCreate(n ast.Node) *Info {
@@ -524,7 +550,7 @@ func (e *Env) lspNodeOrCreate(n ast.Node) *Info {
 }
 
 func (e *Env) lspSetNode(n ast.Node, info *Info) {
-	e.lspTable[makeKey(n)] = info
+	e.lspTable[e.makeKey(n)] = info
 }
 
 func (e *Env) Assign(parentInfo *Info, n ast.Node, name string) {
@@ -546,8 +572,12 @@ func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 
 type NodeKey string
 
-func makeKey(n ast.Node) NodeKey {
-	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
+func makeKey(namespace string, n ast.Node) NodeKey {
+	return NodeKey(fmt.Sprintf("%s_%d_%d", namespace, n.Pos(), n.End()))
+}
+
+func (e *Env) makeKey(x ast.Node) NodeKey {
+	return makeKey(e.namespace, x)
 }
 
 func (e *Env) GetInfo(x ast.Node) *Info {
