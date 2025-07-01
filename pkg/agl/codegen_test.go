@@ -6896,6 +6896,32 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen247(t *testing.T) {
+	src := `package main
+func main() {
+	arr := make([](int, int), 0)
+}`
+	expected := `package main
+func main() {
+	arr := make([]AglTupleStruct_int_int, 0)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen248(t *testing.T) {
+	src := `package main
+func main() {
+	var arr [](int, int)
+}`
+	expected := `package main
+func main() {
+	var arr []AglTupleStruct_int_int
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -1946,6 +1946,7 @@ func (infer *FileInferrer) specs(s []ast.Spec) {
 func (infer *FileInferrer) spec(s ast.Spec) {
 	switch spec := s.(type) {
 	case *ast.ValueSpec:
+		infer.expr(spec.Type)
 		t := infer.env.GetType2(spec.Type)
 		for i, name := range spec.Names {
 			if len(spec.Values) > 0 {

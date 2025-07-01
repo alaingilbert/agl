@@ -28,6 +28,14 @@ type Generator struct {
 	swapGen       bool
 	genMap        map[string]types.Type
 	parent        *Generator
+	isType        bool
+}
+
+func (g *Generator) withType(clb func()) {
+	prev := g.isType
+	g.isType = true
+	clb()
+	g.isType = prev
 }
 
 func (g *Generator) WithSub(clb func()) {
@@ -1320,6 +1328,9 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	structStr += strings.Join(args, "")
 	structStr += fmt.Sprintf("}\n")
 	g.tupleStructs[structName] = structStr
+	if g.isType {
+		return fmt.Sprintf("%s", structName)
+	}
 	var fields []string
 	for i, x := range expr.Values {
 		content1 := g.genExpr(x)
@@ -1365,7 +1376,9 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 	case *ast.ValueSpec:
 		var content1 string
 		if spec.Type != nil {
-			content1 = g.genExpr(spec.Type)
+			g.withType(func() {
+				content1 = g.genExpr(spec.Type)
+			})
 		}
 		var namesArr []string
 		for _, name := range spec.Names {
