@@ -20,8 +20,8 @@ type BaseType struct {
 
 type VoidType struct{}
 
-func (v VoidType) GoStr() string      { return "" }
-func (v VoidType) GoStrType() string  { return "" }
+func (v VoidType) GoStr() string      { return "AglVoid" }
+func (v VoidType) GoStrType() string  { return "AglVoid" }
 func (v VoidType) String() string     { return "void" }
 func (v VoidType) StringFull() string { return v.String() }
 
