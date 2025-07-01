@@ -67,8 +67,8 @@ type ExtensionTest struct {
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
 	genFns := make(map[string]*ast.FuncDecl)
-	for _, f := range env.RawGenFns {
-		genFns[env.GetType(f).String()] = f
+	for _, k := range slices.Collect(maps.Keys(env.RawGenFns)) {
+		genFns[k] = env.RawGenFns[k]
 	}
 	return &Generator{env: env, a: a,
 		extensions:    make(map[string]Extension),
@@ -82,6 +82,9 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		ge := e.gen[key]
 		m := types.FindGen(ge.raw, ge.concrete)
 		decl := e.decl
+		if decl == nil {
+			return ""
+		}
 		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
 		if decl.Name != nil {
 			name = decl.Name.Name
