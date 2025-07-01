@@ -664,6 +664,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.dumpExpr(expr)
 	case *ast.ParenExpr:
 		infer.parenExpr(expr)
+	case *ast.StructType:
+		infer.structTypeExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1866,6 +1868,11 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 
 func (infer *FileInferrer) parenExpr(expr *ast.ParenExpr) {
 	infer.expr(expr.X)
+}
+
+func (infer *FileInferrer) structTypeExpr(expr *ast.StructType) {
+	//infer.expr(expr.Fields)
+	infer.SetType(expr, types.StructType{})
 }
 
 func (infer *FileInferrer) dumpExpr(expr *ast.DumpExpr) {
