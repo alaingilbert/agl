@@ -67,9 +67,6 @@ type ExtensionTest struct {
 
 func NewGenerator(env *Env, a *ast.File) *Generator {
 	genFns := make(map[string]*ast.FuncDecl)
-	for _, k := range slices.Collect(maps.Keys(env.RawGenFns)) {
-		genFns[k] = env.RawGenFns[k]
-	}
 	return &Generator{env: env, a: a,
 		extensions:    make(map[string]Extension),
 		tupleStructs:  make(map[string]string),

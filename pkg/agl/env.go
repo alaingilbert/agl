@@ -21,15 +21,6 @@ type Env struct {
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
 	NoIdxUnwrap   bool
-	RawGenFns     map[string]*ast.FuncDecl
-	namespace     string
-}
-
-func (e *Env) withNamespace(ns string, clb func()) {
-	prev := e.namespace
-	e.namespace = ns
-	clb()
-	e.namespace = prev
 }
 
 type Info struct {
@@ -426,7 +417,6 @@ func NewEnv1(fset *token.FileSet, isCore bool) *Env {
 		fset:        fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    make(map[NodeKey]*Info),
-		RawGenFns:   make(map[string]*ast.FuncDecl),
 	}
 	env.loadBaseValues()
 	return env
@@ -437,10 +427,8 @@ func (e *Env) SubEnv() *Env {
 		fset:        e.fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
-		RawGenFns:   e.RawGenFns,
 		parent:      e,
 		NoIdxUnwrap: e.NoIdxUnwrap,
-		namespace:   e.namespace,
 	}
 	return env
 }
@@ -488,19 +476,6 @@ func (e *Env) GetOrCreateNameInfo(name string) *Info {
 
 func (e *Env) GetFn(name string) types.FuncType {
 	return e.Get(name).(types.FuncType)
-}
-
-func (e *Env) DefineFnRaw(fnStr string) {
-	fset, f := ParseSrc(fnStr)
-	i := NewInferrer(fset, e)
-	e.withNamespace("agl_core", func() {
-		i.InferFile(f)
-		for _, f := range f.Decls {
-			if fn, ok := f.(*ast.FuncDecl); ok {
-				e.RawGenFns[e.GetType(fn).String()] = fn
-			}
-		}
-	})
 }
 
 func (e *Env) DefineFn(name string, fnStr string) {
@@ -574,12 +549,12 @@ func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 
 type NodeKey string
 
-func makeKey(namespace string, n ast.Node) NodeKey {
-	return NodeKey(fmt.Sprintf("%s_%d_%d", namespace, n.Pos(), n.End()))
+func makeKey(n ast.Node) NodeKey {
+	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
 }
 
 func (e *Env) makeKey(x ast.Node) NodeKey {
-	return makeKey(e.namespace, x)
+	return makeKey(x)
 }
 
 func (e *Env) GetInfo(x ast.Node) *Info {
