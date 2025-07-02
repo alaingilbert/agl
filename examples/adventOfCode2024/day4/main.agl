@@ -22,10 +22,9 @@ func part1(lines [][]string, width, height int) int {
     var directions [](int, int)
     for _, e1 := range []int{-1, 0, 1} {
         for _, e2 := range []int{-1, 0, 1} {
-            if e1 == 0 && e2 == 0 {
-                continue
+            if e1 != 0 || e2 != 0 {
+                directions.Push((e1, e2))
             }
-            directions.Push((e1, e2))
         }
     }
     target := "XMAS".Split("")
