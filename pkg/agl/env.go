@@ -384,6 +384,32 @@ func (v agl.Vec[T]) ForEach(f func(T) void) {
 		f(v[i])
 	}
 }
+
+func (v agl.Vec[T]) Min() T? {
+	if len(v) == 0 {
+		return None
+	}
+	out := v[0]
+	for _, el := range v {
+		if el < out {
+			out = el
+		}
+	}
+	return Some(out)
+}
+
+func (v agl.Vec[T]) Max() T? {
+	if len(v) == 0 {
+		return None
+	}
+	out := v[0]
+	for _, el := range v {
+		if el > out {
+			out = el
+		}
+	}
+	return Some(out)
+}
 `
 }
 
