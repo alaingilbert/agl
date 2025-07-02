@@ -1376,6 +1376,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 						if t, ok := ft.Return.(types.OptionType); ok {
 							ft.Return = t.W
 						}
+						if t, ok := ft.Return.(types.ResultType); ok {
+							ft.Return = t.W
+						}
 						if t, ok := ft.Return.(types.GenericType); ok {
 							ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
 							infer.SetType(expr, ft)
@@ -1393,6 +1396,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 						ft.Return = t.Elt
 					}
 					if t, ok := ft.Return.(types.OptionType); ok {
+						ft.Return = t.W
+					}
+					if t, ok := ft.Return.(types.ResultType); ok {
 						ft.Return = t.W
 					}
 					if t, ok := ft.Return.(types.GenericType); ok {
