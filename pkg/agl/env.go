@@ -14,6 +14,9 @@ import (
 	"sync/atomic"
 )
 
+//go:embed std/* pkgs/*
+var contentFs embed.FS
+
 type Env struct {
 	fset          *token.FileSet
 	structCounter atomic.Int64
@@ -258,9 +261,6 @@ func defineFromSrc(env *Env, path string, src []byte) {
 		}
 	}
 }
-
-//go:embed std/* pkgs/*
-var contentFs embed.FS
 
 func (e *Env) loadPkg(path string) {
 	f := filepath.Base(path)
