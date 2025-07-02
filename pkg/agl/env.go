@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 )
 
-//go:embed std/* pkgs/*
+//go:embed std/* pkgs/* core/*
 var contentFs embed.FS
 
 type Env struct {
@@ -340,94 +340,8 @@ func (e *Env) loadPkgAgl() {
 }
 
 func CoreFns() string {
-	return `
-func zip[T, U any](a []T, b []U) [](T, U) {
-	out := make([](T, U), 0)
-	for i := range a {
-		if len(a) <= i || len(b) <= i {
-			break
-		}
-		out.Push((a[i], b[i]))
-	}
-	return out
-}
-
-func (v agl.Vec[T]) Enumerated() [](int, T) {
-	out := make([](int, T), 0)
-	for i := range v {
-		out.Push((i, v[i]))
-	}
-	return out
-}
-
-func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
-	out := make([]R, 0)
-	for _, el := range v {
-		if Some(res) := f(el) {
-			out.Push(res)
-		}
-	}
-	return out
-}
-
-func (v agl.Vec[T]) FlatMap[R any](f func(T) []R) []R {
-	out := make([]R, 0)
-	for _, el := range v {
-		subArr := f(el)
-		for _, el1 := range subArr {
-			out.Push(el1)
-		}
-	}
-	return out
-}
-
-func (v agl.Vec[T]) ForEach(f func(T) void) {
-	for i := range v {
-		f(v[i])
-	}
-}
-
-func (v agl.Vec[T]) Min() T? {
-	if len(v) == 0 {
-		return None
-	}
-	out := v[0]
-	for _, el := range v {
-		out = min(out, el)
-	}
-	return Some(out)
-}
-
-func (v agl.Vec[T]) Max() T? {
-	if len(v) == 0 {
-		return None
-	}
-	out := v[0]
-	for _, el := range v {
-		out = max(out, el)
-	}
-	return Some(out)
-}
-
-func (v agl.Vec[T]) Reversed() []T {
-	out := make([]T, len(v))
-	for i := 0; i < len(v); i++ {
-		out[i] = v[len(v)-1-i] 
-	}
-	return out
-}
-
-//func (v agl.Vec[T]) Shuffled() []T {
-//	out := make([]T, len(v))
-//	for i := 0; i < len(v); i++ {
-//		out[i] = v[i]
-//	}
-//	rand.Shuffle(len(s), func(i, j int) {
-//		out[i], out[j] = out[j], out[i]
-//	})
-//	return out
-//}
-`
+	by, _ := contentFs.ReadFile(filepath.Join("core", "core.agl"))
+	return string(by)
 }
 
 func (e *Env) loadBaseValues() {
