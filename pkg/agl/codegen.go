@@ -2032,110 +2032,110 @@ func AglCleanupIntString(s string) (string, int) {
 	return s, base
 }
 
-func AglStringInt(s string) Result[int] {
+func AglStringInt(s string) Option[int] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 0)
 	if err != nil {
-		return MakeResultErr[int](err)
+		return MakeOptionNone[int]()
 	}
-	return MakeResultOk(int(v))
+	return MakeOptionSome(int(v))
 }
 
-func AglStringI8(s string) Result[int8] {
+func AglStringI8(s string) Option[int8] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 8)
 	if err != nil {
-		return MakeResultErr[int8](err)
+		return MakeOptionNone[int8]()
 	}
-	return MakeResultOk(int8(v))
+	return MakeOptionSome(int8(v))
 }
 
-func AglStringI16(s string) Result[int16] {
+func AglStringI16(s string) Option[int16] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 16)
 	if err != nil {
-		return MakeResultErr[int16](err)
+		return MakeOptionNone[int16]()
 	}
-	return MakeResultOk(int16(v))
+	return MakeOptionSome(int16(v))
 }
 
-func AglStringI32(s string) Result[int32] {
+func AglStringI32(s string) Option[int32] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 32)
 	if err != nil {
-		return MakeResultErr[int32](err)
+		return MakeOptionNone[int32]()
 	}
-	return MakeResultOk(int32(v))
+	return MakeOptionSome(int32(v))
 }
 
-func AglStringI64(s string) Result[int64] {
+func AglStringI64(s string) Option[int64] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseInt(s, base, 64)
 	if err != nil {
-		return MakeResultErr[int64](err)
+		return MakeOptionNone[int64]()
 	}
-	return MakeResultOk(v)
+	return MakeOptionSome(v)
 }
 
-func AglStringUint(s string) Result[uint] {
+func AglStringUint(s string) Option[uint] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseUint(s, base, 0)
 	if err != nil {
-		return MakeResultErr[uint](err)
+		return MakeOptionNone[uint]()
 	}
-	return MakeResultOk(uint(v))
+	return MakeOptionSome(uint(v))
 }
 
-func AglStringU8(s string) Result[uint8] {
+func AglStringU8(s string) Option[uint8] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseUint(s, base, 8)
 	if err != nil {
-		return MakeResultErr[uint8](err)
+		return MakeOptionNone[uint8]()
 	}
-	return MakeResultOk(uint8(v))
+	return MakeOptionSome(uint8(v))
 }
 
-func AglStringU16(s string) Result[uint16] {
+func AglStringU16(s string) Option[uint16] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseUint(s, base, 16)
 	if err != nil {
-		return MakeResultErr[uint16](err)
+		return MakeOptionNone[uint16]()
 	}
-	return MakeResultOk(uint16(v))
+	return MakeOptionSome(uint16(v))
 }
 
-func AglStringU32(s string) Result[uint32] {
+func AglStringU32(s string) Option[uint32] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseUint(s, base, 32)
 	if err != nil {
-		return MakeResultErr[uint32](err)
+		return MakeOptionNone[uint32]()
 	}
-	return MakeResultOk(uint32(v))
+	return MakeOptionSome(uint32(v))
 }
 
-func AglStringU64(s string) Result[uint64] {
+func AglStringU64(s string) Option[uint64] {
 	s, base := AglCleanupIntString(s)
 	v, err := aglImportStrconv.ParseUint(s, base, 64)
 	if err != nil {
-		return MakeResultErr[uint64](err)
+		return MakeOptionNone[uint64]()
 	}
-	return MakeResultOk(uint64(v))
+	return MakeOptionSome(uint64(v))
 }
 
-func AglStringF32(s string) Result[float32] {
+func AglStringF32(s string) Option[float32] {
 	v, err := aglImportStrconv.ParseFloat(s, 32)
 	if err != nil {
-		return MakeResultErr[float32](err)
+		return MakeOptionNone[float32]()
 	}
-	return MakeResultOk(float32(v))
+	return MakeOptionSome(float32(v))
 }
 
-func AglStringF64(s string) Result[float64] {
+func AglStringF64(s string) Option[float64] {
 	v, err := aglImportStrconv.ParseFloat(s, 64)
 	if err != nil {
-		return MakeResultErr[float64](err)
+		return MakeOptionNone[float64]()
 	}
-	return MakeResultOk(v)
+	return MakeOptionSome(v)
 }
 
 func AglVecSorted[E aglImportCmp.Ordered](a []E) []E {
