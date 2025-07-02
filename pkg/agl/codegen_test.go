@@ -5294,6 +5294,59 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+//func TestCodeGen188_1(t *testing.T) {
+//	src := `package main
+//import (
+//	"fmt"
+//	"io"
+//	"strings"
+//)
+//func main() {
+//	r := strings.NewReader("Hello, Reader!")
+//	b := make([]byte, 8)
+//	for {
+//		tmp := r.Read(b)
+//		match tmp {
+//		case Ok(n):
+//			_ = fmt.Printf("n = %v b = %v\n", n, b)
+//			_ = fmt.Printf("b[:n] = %q\n", b[:n])
+//		case Err(err):
+//			fmt.Printf("err = %v", err)
+//			if err == io.EOF {
+//				break
+//			}
+//		}
+//	}
+//}
+//`
+//	expected := `package main
+//import "fmt"
+//import "io"
+//import "strings"
+//func main() {
+//	r := strings.NewReader("Hello, Reader!")
+//	b := make([]byte, 8)
+//	for {
+//		tmp := r.Read(b)
+//		aglTmp1, tmpErr := tmp
+//		if tmpErr == nil {
+//			n := aglTmp1
+//			_ = AglWrapNative2(fmt.Printf("n = %v b = %v\n", n, b))
+//			_ = AglWrapNative2(fmt.Printf("b[:n] = %q\n", b[:n]))
+//		}
+//		if tmpErr != nil {
+//			err := tmpErr
+//			fmt.Printf("err = %v", err)
+//			if err == io.EOF {
+//				break
+//			}
+//		}
+//	}
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 func TestCodeGen189(t *testing.T) {
 	src := `package main
 import (
