@@ -1364,7 +1364,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		// implicit return
 		if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) {
 			ft := infer.env.GetType(expr).(types.FuncType)
-			if !TryCast[types.VoidType](ft.Return) {
+			if TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W) {
+				expr.Body.List = append(expr.Body.List, &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}})
+			} else {
 				returnStmt := expr.Body.List[0].(*ast.ExprStmt)
 				if infer.env.GetType(returnStmt.X) != nil {
 					if infer.env.GetType(expr) != nil {
