@@ -1386,6 +1386,12 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			if infer.env.GetType(returnStmt) != nil {
 				if infer.env.GetType(expr) != nil {
 					ft := infer.env.GetType(expr).(types.FuncType)
+					if t, ok := ft.Return.(types.ArrayType); ok {
+						ft.Return = t.Elt
+					}
+					if t, ok := ft.Return.(types.OptionType); ok {
+						ft.Return = t.W
+					}
 					if t, ok := ft.Return.(types.GenericType); ok {
 						ft = ft.T(t.Name, infer.env.GetType(returnStmt.Result))
 						infer.SetType(expr, ft)
