@@ -13,7 +13,7 @@ func isPrivate(ip IpAddr) bool {
     // case IpAddr.V4(a, b, _, _):
     //     return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
     // case IpAddr.V6(s):
-    //     return strings.HasPrefix(s, "fc00::")
+    //     return s.HasPrefix("fc00::")
     // }
     return true
 }
