@@ -157,3 +157,69 @@ func main() {
 //	f := parseFuncTypeFromString("fn filter[T any](a []T, f fn(e T) bool) []T", NewEnv())
 //	tassert.Equal(t, "func [T any] filter([]T, func(T) bool) []T", f.GoStr())
 //}
+
+func TestInferOsArgs(t *testing.T) {
+	src := `package main
+import "os"
+func main() {
+	args := os.Args
+	firstArg := os.Args[0]
+	argCount := len(os.Args)
+	_ = args
+	_ = firstArg
+	_ = argCount
+}
+`
+	fset, f := ParseSrc(src)
+	env := NewEnv(fset)
+	i := NewInferrer(fset, env)
+	i.InferFile(f)
+
+	// Find the main function
+	var mainFunc *ast.FuncDecl
+	for _, decl := range f.Decls {
+		if fd, ok := decl.(*ast.FuncDecl); ok && fd.Name.Name == "main" {
+			mainFunc = fd
+			break
+		}
+	}
+
+	if mainFunc == nil {
+		t.Fatal("Could not find main function")
+	}
+
+	// Check the types of the variables
+	stmts := mainFunc.Body.List
+
+	// args := os.Args should be []string
+	if assign, ok := stmts[0].(*ast.AssignStmt); ok {
+		if ident, ok := assign.Lhs[0].(*ast.Ident); ok {
+			argType := env.GetType(ident)
+			if arrType, ok := argType.(types.ArrayType); !ok {
+				t.Fatalf("Expected os.Args to be array type, got %T", argType)
+			} else if arrType.GoStr() != "[]string" {
+				t.Fatalf("Expected os.Args to be []string, got %s", arrType.GoStr())
+			}
+		}
+	}
+
+	// firstArg := os.Args[0] should be string
+	if assign, ok := stmts[1].(*ast.AssignStmt); ok {
+		if ident, ok := assign.Lhs[0].(*ast.Ident); ok {
+			argType := env.GetType(ident)
+			if argType.GoStr() != "string" {
+				t.Fatalf("Expected os.Args[0] to be string, got %s", argType.GoStr())
+			}
+		}
+	}
+
+	// argCount := len(os.Args) should be int
+	if assign, ok := stmts[2].(*ast.AssignStmt); ok {
+		if ident, ok := assign.Lhs[0].(*ast.Ident); ok {
+			argType := env.GetType(ident)
+			if argType.GoStr() != "int" {
+				t.Fatalf("Expected len(os.Args) to be int, got %s", argType.GoStr())
+			}
+		}
+	}
+}

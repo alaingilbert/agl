@@ -7437,3 +7437,129 @@ func main() {
 `
 	tassert.NotPanics(t, testCodeGenFn(src))
 }
+
+func TestCodeGen_OsArgs(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"os"
+)
+func main() {
+	if len(os.Args) > 1 {
+		fmt.Println(os.Args[1])
+	}
+	for i, arg := range os.Args {
+		fmt.Printf("Arg %d: %s\n", i, arg)
+	}
+}`
+	expected := `package main
+import "fmt"
+import "os"
+func main() {
+	if len(os.Args) > 1 {
+		fmt.Println(os.Args[1])
+	}
+	for i, arg := range os.Args {
+		fmt.Printf("Arg %d: %s\n", i, arg)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_OsArgsWithResult(t *testing.T) {
+	src := `package main
+import (
+	"os"
+	"fmt"
+)
+func getFirstArg() string! {
+	if len(os.Args) < 2 {
+		return Err("no arguments provided")
+	}
+	return Ok(os.Args[1])
+}
+func main() {
+	arg := getFirstArg()!
+	fmt.Println(arg)
+}`
+	expected := `package main
+import "os"
+import "fmt"
+func getFirstArg() Result[string] {
+	if len(os.Args) < 2 {
+		return MakeResultErr[string](errors.New("no arguments provided"))
+	}
+	return MakeResultOk(os.Args[1])
+}
+func main() {
+	arg := getFirstArg().Unwrap()
+	fmt.Println(arg)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen_WcExample(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+func countLines(filename string) int! {
+	data := os.ReadFile(filename)!
+	content := string(data)
+	lines := strings.Split(content, "\n")
+	totalCount := lines.Map({ 1 }).Sum() - 1
+	return Ok(totalCount)
+}
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("usage: wc <filename>")
+		return
+	}
+	filename := os.Args[1]
+	match countLines(filename) {
+	case Ok(total):
+		fmt.Printf("%8d %s\n", total, filename)
+	case Err(err):
+		fmt.Printf("wc: %s: %s\n", filename, err)
+	}
+}`
+	expected := `package main
+import "fmt"
+import "os"
+import "strings"
+func countLines(filename string) Result[int] {
+	tmp, err := os.ReadFile(filename)
+	if err != nil {
+		return MakeResultErr[int](err)
+	}
+	data := AglIdentity(tmp)
+	content := string(data)
+	lines := strings.Split(content, "\n")
+	totalCount := AglVecSum(AglVecMap(lines, func(aglArg0 string) int {
+		return 1
+	})) - 1
+	return MakeResultOk(totalCount)
+}
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("usage: wc <filename>")
+		return
+	}
+	filename := os.Args[1]
+	aglTmp1 := countLines(filename)
+	if aglTmp1.IsOk() {
+		total := aglTmp1.Unwrap()
+		fmt.Printf("%8d %s\n", total, filename)
+	}
+	if aglTmp1.IsErr() {
+		err := aglTmp1.Err()
+		fmt.Printf("wc: %s: %s\n", filename, err)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
