@@ -393,9 +393,7 @@ func (v agl.Vec[T]) Min() T? {
 	}
 	out := v[0]
 	for _, el := range v {
-		if el < out {
-			out = el
-		}
+		out = min(out, el)
 	}
 	return Some(out)
 }
@@ -406,9 +404,7 @@ func (v agl.Vec[T]) Max() T? {
 	}
 	out := v[0]
 	for _, el := range v {
-		if el > out {
-			out = el
-		}
+		out = max(out, el)
 	}
 	return Some(out)
 }

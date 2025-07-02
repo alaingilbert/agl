@@ -7224,6 +7224,29 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen257(t *testing.T) {
+	src := `package main
+func main() {
+	[]int{1, 2}.Min()
+}`
+	expected := `package main
+func main() {
+	AglVecMin_T_int([]int{1, 2})
+}
+func AglVecMin_T_int(v []int) Option[int] {
+	if len(v) == 0 {
+		return MakeOptionNone[int]()
+	}
+	out := v[0]
+	for _, el := range v {
+		out = min(out, el)
+	}
+	return MakeOptionSome(out)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
