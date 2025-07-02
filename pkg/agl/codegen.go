@@ -439,7 +439,19 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	out += "}\n"
 	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", enumName)
 	for _, field := range expr.Values.List {
-		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn \"%s\"\n", enumName, field.Name.Name, field.Name.Name)
+		tmp := fmt.Sprintf("%s", field.Name.Name)
+		if field.Params != nil {
+			var tmpp1 []string
+			var tmpp2 []string
+			for i := range field.Params.List {
+				tmpp1 = append(tmpp1, "%v")
+				tmpp2 = append(tmpp2, fmt.Sprintf("v.%s_%d", field.Name.Name, i))
+			}
+			tmp = fmt.Sprintf("fmt.Sprintf(\"%s(%s)\", %s)", tmp, strings.Join(tmpp1, ", "), strings.Join(tmpp2, ", "))
+		} else {
+			tmp = `"` + tmp + `"`
+		}
+		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn %s\n", enumName, field.Name.Name, tmp)
 	}
 	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
 	for _, field := range expr.Values.List {

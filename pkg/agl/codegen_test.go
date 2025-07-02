@@ -1490,7 +1490,7 @@ func (v Color) String() string {
 	case Color_red:
 		return "red"
 	case Color_other:
-		return "other"
+		return fmt.Sprintf("other(%v, %v)", v.other_0, v.other_1)
 	default:
 		panic("")
 	}
@@ -1538,7 +1538,7 @@ func (v Color) String() string {
 	case Color_red:
 		return "red"
 	case Color_other:
-		return "other"
+		return fmt.Sprintf("other(%v, %v)", v.other_0, v.other_1)
 	default:
 		panic("")
 	}
@@ -1585,7 +1585,7 @@ func (v Color) String() string {
 	case Color_red:
 		return "red"
 	case Color_other:
-		return "other"
+		return fmt.Sprintf("other(%v, %v)", v.other_0, v.other_1)
 	default:
 		panic("")
 	}
@@ -2050,7 +2050,7 @@ func (v Color) String() string {
 	case Color_red:
 		return "red"
 	case Color_other:
-		return "other"
+		return fmt.Sprintf("other(%v, %v)", v.other_0, v.other_1)
 	default:
 		panic("")
 	}
@@ -3135,9 +3135,9 @@ type IpAddr struct {
 func (v IpAddr) String() string {
 	switch v.tag {
 	case IpAddr_v4:
-		return "v4"
+		return fmt.Sprintf("v4(%v, %v, %v, %v)", v.v4_0, v.v4_1, v.v4_2, v.v4_3)
 	case IpAddr_v6:
-		return "v6"
+		return fmt.Sprintf("v6(%v)", v.v6_0)
 	default:
 		panic("")
 	}
@@ -7188,9 +7188,9 @@ type IpAddr struct {
 func (v IpAddr) String() string {
 	switch v.tag {
 	case IpAddr_V4:
-		return "V4"
+		return fmt.Sprintf("V4(%v, %v, %v, %v)", v.V4_0, v.V4_1, v.V4_2, v.V4_3)
 	case IpAddr_V6:
-		return "V6"
+		return fmt.Sprintf("V6(%v)", v.V6_0)
 	default:
 		panic("")
 	}
