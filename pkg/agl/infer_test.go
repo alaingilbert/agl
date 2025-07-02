@@ -33,13 +33,31 @@ func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position)
 	return result
 }
 
-func tmp(src string) (*ast.File, *token.FileSet, *token.File, *Env) {
+type Test struct {
+	f    *ast.File
+	fset *token.FileSet
+	env  *Env
+	file *token.File
+}
+
+func NewTest(src string) *Test {
 	fset, f := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(fset, env)
 	i.InferFile(f)
 	file := fset.File(1)
-	return f, fset, file, env
+	return &Test{
+		f:    f,
+		fset: fset,
+		env:  env,
+		file: file,
+	}
+}
+
+func (t *Test) TypeAt(row, col int) types.Type {
+	offset := t.file.LineStart(row) + token.Pos(col-1)
+	n := findNodeAtPosition(t.f, t.fset, t.fset.Position(offset))
+	return t.env.GetType(n)
 }
 
 func TestInfer1(t *testing.T) {
@@ -50,10 +68,7 @@ func main() {
 	bod.Close()
 }
 `
-	f, fset, file, env := tmp(src)
-	offset := file.LineStart(4) + token.Pos(2-1)
-	n := findNodeAtPosition(f, fset, fset.Position(offset))
-	tassert.Equal(t, "ReadCloser", env.GetType(n).(types.InterfaceType).Name)
+	tassert.Equal(t, "ReadCloser", NewTest(src).TypeAt(4, 2).(types.InterfaceType).Name)
 }
 
 func TestInfer2(t *testing.T) {
@@ -62,7 +77,7 @@ func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
 `
-	_, _, _, _ = tmp(src)
+	NewTest(src)
 	//tassert.Equal(t, 1, env.Get("bod"))
 }
 
@@ -72,9 +87,8 @@ func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
 `
-	f, _, _, _ := tmp(src)
-
-	ast.Inspect(f, func(n ast.Node) bool {
+	tt := NewTest(src)
+	ast.Inspect(tt.f, func(n ast.Node) bool {
 		if n == nil {
 			return true
 		}
