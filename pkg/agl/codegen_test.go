@@ -7160,7 +7160,7 @@ type IpAddr enum {
 }
 func isPrivate(ip IpAddr) bool {
     match ip {
-    case IpAddr.V4(a, b, c, d):
+    case IpAddr.V4(a, b, _, _):
         return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
     case IpAddr.V6(s):
         return s.HasPrefix("fc00::")
@@ -7206,8 +7206,8 @@ func isPrivate(ip IpAddr) bool {
 	if ip.tag == IpAddr_V4 {
 		a := ip.V4_0
 		b := ip.V4_1
-		c := ip.V4_2
-		d := ip.V4_3
+		_ = ip.V4_2
+		_ = ip.V4_3
 		return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
 	}
 	if ip.tag == IpAddr_V6 {
