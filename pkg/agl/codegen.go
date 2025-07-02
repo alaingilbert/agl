@@ -504,7 +504,7 @@ func (g *Generator) genMapType(expr *ast.MapType) string {
 
 func (g *Generator) genSetType(expr *ast.SetType) string {
 	content1 := g.genExpr(expr.Key)
-	return fmt.Sprintf("map[%s]struct{}", content1)
+	return fmt.Sprintf("AglSet[%s]", content1)
 }
 
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
@@ -2093,11 +2093,21 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 	return MakeOptionNone[T]()
 }
 
-func AglSetLen[T comparable](s map[T]struct{}) int {
+type AglSet[T comparable] map[T]struct{}
+
+func (s AglSet[T]) String() string {
+	var tmp []string
+	for k := range s {
+		tmp = append(tmp, aglImportFmt.Sprintf("%v", k))
+	}
+	return aglImportFmt.Sprintf("set(%s)", aglImportStrings.Join(tmp, " "))
+}
+
+func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
 
-func AglSetInsert[T comparable](s map[T]struct{}, el T) bool {
+func AglSetInsert[T comparable](s AglSet[T], el T) bool {
 	if _, ok := s[el]; ok {
 		return false
 	}
@@ -2105,8 +2115,8 @@ func AglSetInsert[T comparable](s map[T]struct{}, el T) bool {
 	return true
 }
 
-func AglSetUnion[T comparable](s, other map[T]struct{}) map[T]struct{} {
-	newSet := make(map[T]struct{})
+func AglSetUnion[T comparable](s, other AglSet[T]) AglSet[T] {
+	newSet := make(AglSet[T])
 	for k := range s {
 		newSet[k] = struct{}{}
 	}

@@ -7254,7 +7254,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	s := map[int]struct{}{1: {}, 2: {}, 3: {}}
+	s := AglSet[int]{1: {}, 2: {}, 3: {}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -7269,8 +7269,8 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	s1 := map[int]struct{}{1: {}, 2: {}, 3: {}}
-	s2 := map[int]struct{}{3: {}, 4: {}, 5: {}}
+	s1 := AglSet[int]{1: {}, 2: {}, 3: {}}
+	s2 := AglSet[int]{3: {}, 4: {}, 5: {}}
 	s3 := AglSetUnion(s1, s2)
 }
 `
