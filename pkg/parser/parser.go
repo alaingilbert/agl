@@ -2487,8 +2487,8 @@ func (p *parser) parseMatchStmt() ast.Stmt {
 		defer un(trace(p, "MatchStmt"))
 	}
 	pos := p.expect(token.MATCH)
-	var s1 ast.Stmt
-	s1, _ = p.parseSimpleStmt(basic)
+	var s1 ast.Expr
+	s1 = p.parsePrimaryExpr2()
 	lbrace := p.expect(token.LBRACE)
 	var list []ast.Stmt
 	for p.tok == token.CASE {
@@ -2496,7 +2496,7 @@ func (p *parser) parseMatchStmt() ast.Stmt {
 	}
 	rbrace := p.expect(token.RBRACE)
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
-	return &ast.MatchStmt{Match: pos, Init: s1, Body: body}
+	return &ast.MatchStmt{Match: pos, Init: &ast.ExprStmt{X: s1}, Body: body}
 }
 
 func (p *parser) parseSwitchStmt() ast.Stmt {
