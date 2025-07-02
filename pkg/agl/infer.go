@@ -1381,7 +1381,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				}
 				expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 			}
-		} else if len(expr.Body.List) > 0 && TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) {
+		} else if len(expr.Body.List) > 0 && TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) { // Explicit return
 			returnStmt := Must(Last(expr.Body.List)).(*ast.ReturnStmt)
 			if infer.env.GetType(returnStmt) != nil {
 				if infer.env.GetType(expr) != nil {
