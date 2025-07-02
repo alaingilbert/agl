@@ -884,7 +884,7 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 			f.name = p.parseIdent()
 		}
 		switch p.tok {
-		case token.IDENT, token.MUL, token.ARROW, token.FUNC, token.CHAN, token.MAP, token.STRUCT, token.INTERFACE, token.LPAREN:
+		case token.IDENT, token.MUL, token.ARROW, token.FUNC, token.CHAN, token.MAP, token.SET, token.STRUCT, token.INTERFACE, token.LPAREN:
 			// name type
 			f.typ = p.parseType()
 
@@ -917,7 +917,7 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 			}
 		}
 
-	case token.MUL, token.ARROW, token.FUNC, token.LBRACK, token.CHAN, token.MAP, token.STRUCT, token.INTERFACE, token.LPAREN:
+	case token.MUL, token.ARROW, token.FUNC, token.LBRACK, token.CHAN, token.MAP, token.SET, token.STRUCT, token.INTERFACE, token.LPAREN:
 		// type
 		f.typ = p.parseType()
 
@@ -1381,6 +1381,17 @@ parseElements:
 	}
 }
 
+func (p *parser) parseSetType() *ast.SetType {
+	if p.trace {
+		defer un(trace(p, "SetType"))
+	}
+	pos := p.expect(token.SET)
+	p.expect(token.LBRACK)
+	key := p.parseType()
+	p.expect(token.RBRACK)
+	return &ast.SetType{Set: pos, Key: key}
+}
+
 func (p *parser) parseMapType() *ast.MapType {
 	if p.trace {
 		defer un(trace(p, "MapType"))
@@ -1502,6 +1513,8 @@ func (p *parser) tryIdentOrTypeOrShortFnHelper(canBeShortFn bool) ast.Expr {
 		return p.parseInterfaceType()
 	case token.MAP:
 		return p.parseMapType()
+	case token.SET:
+		return p.parseSetType()
 	case token.CHAN, token.ARROW:
 		return p.parseChanType()
 	case token.LPAREN:
@@ -1958,7 +1971,7 @@ func (p *parser) parsePrimaryExprHelper(x ast.Expr, braceAllowed bool) ast.Expr 
 					return x
 				}
 				// x is possibly a composite literal type
-			case *ast.ArrayType, *ast.StructType, *ast.MapType:
+			case *ast.ArrayType, *ast.StructType, *ast.MapType, *ast.SetType:
 				// x is a composite literal type
 			default:
 				return x
@@ -2722,7 +2735,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
-		token.LBRACK, token.STRUCT, token.MAP, token.CHAN, token.INTERFACE, // composite types
+		token.LBRACK, token.STRUCT, token.MAP, token.SET, token.CHAN, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)
 		// because of the required look-ahead, labeled statements are
@@ -3005,7 +3018,7 @@ func extractName(x ast.Expr, force bool) (*ast.Ident, ast.Expr) {
 // The result is false if x could be a type element OR an ordinary (value) expression.
 func isTypeElem(x ast.Expr) bool {
 	switch x := x.(type) {
-	case *ast.ArrayType, *ast.StructType, *ast.FuncType, *ast.InterfaceType, *ast.MapType, *ast.ChanType:
+	case *ast.ArrayType, *ast.StructType, *ast.FuncType, *ast.InterfaceType, *ast.MapType, *ast.SetType, *ast.ChanType:
 		return true
 	case *ast.BinaryExpr:
 		return isTypeElem(x.X) || isTypeElem(x.Y)
