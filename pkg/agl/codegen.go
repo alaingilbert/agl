@@ -441,13 +441,13 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	for _, field := range expr.Values.List {
 		tmp := fmt.Sprintf("%s", field.Name.Name)
 		if field.Params != nil {
-			var tmpp1 []string
-			var tmpp2 []string
+			var placeholders []string
+			var args []string
 			for i := range field.Params.List {
-				tmpp1 = append(tmpp1, "%v")
-				tmpp2 = append(tmpp2, fmt.Sprintf("v.%s_%d", field.Name.Name, i))
+				placeholders = append(placeholders, "%v")
+				args = append(args, fmt.Sprintf("v.%s_%d", field.Name.Name, i))
 			}
-			tmp = fmt.Sprintf("fmt.Sprintf(\"%s(%s)\", %s)", tmp, strings.Join(tmpp1, ", "), strings.Join(tmpp2, ", "))
+			tmp = fmt.Sprintf("fmt.Sprintf(\"%s(%s)\", %s)", tmp, strings.Join(placeholders, ", "), strings.Join(args, ", "))
 		} else {
 			tmp = `"` + tmp + `"`
 		}
