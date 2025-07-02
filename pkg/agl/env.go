@@ -340,8 +340,7 @@ func (e *Env) loadPkgAgl() {
 }
 
 func CoreFns() string {
-	by, _ := contentFs.ReadFile(filepath.Join("core", "core.agl"))
-	return string(by)
+	return string(Must(contentFs.ReadFile(filepath.Join("core", "core.agl"))))
 }
 
 func (e *Env) loadBaseValues() {
