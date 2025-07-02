@@ -1920,6 +1920,10 @@ func (r Result[T]) Unwrap() T {
 	return *r.t
 }
 
+func (r Result[T]) NativeUnwrap() (T, error) {
+	return r.t, r.e
+}
+
 func (r Result[T]) UnwrapOr(d T) T {
 	if r.IsErr() {
 		return d
