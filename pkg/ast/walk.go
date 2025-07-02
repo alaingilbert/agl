@@ -398,7 +398,7 @@ func Walk(v Visitor, node Node) {
 	case *OrReturnExpr:
 		Walk(v, n.X)
 
-	case *MatchStmt:
+	case *MatchExpr:
 		Walk(v, n.Init)
 		Walk(v, n.Body)
 

@@ -1609,6 +1609,8 @@ func (p *parser) parseOperand() ast.Expr {
 		x := p.parseIdent()
 		return x
 
+	case token.MATCH:
+		return p.parseMatchExpr()
 	case token.SOME, token.OK, token.ERR:
 		op := p.tok
 		opPos := p.pos
@@ -2482,7 +2484,7 @@ func (p *parser) isTypeSwitchGuard(s ast.Stmt) bool {
 	return false
 }
 
-func (p *parser) parseMatchStmt() ast.Stmt {
+func (p *parser) parseMatchExpr() ast.Expr {
 	if p.trace {
 		defer un(trace(p, "MatchStmt"))
 	}
@@ -2496,7 +2498,7 @@ func (p *parser) parseMatchStmt() ast.Stmt {
 	}
 	rbrace := p.expect(token.RBRACE)
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
-	return &ast.MatchStmt{Match: pos, Init: e1, Body: body}
+	return &ast.MatchExpr{Match: pos, Init: e1, Body: body}
 }
 
 func (p *parser) parseSwitchStmt() ast.Stmt {
@@ -2713,7 +2715,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.SOME, token.OK, token.ERR, token.NONE:
+	case token.MATCH, token.SOME, token.OK, token.ERR, token.NONE:
 		s = &ast.ExprStmt{X: p.parseExpr()}
 	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
@@ -2744,8 +2746,6 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = p.parseIfStmt()
 	case token.SWITCH:
 		s = p.parseSwitchStmt()
-	case token.MATCH:
-		s = p.parseMatchStmt()
 	case token.SELECT:
 		s = p.parseSelectStmt()
 	case token.FOR:

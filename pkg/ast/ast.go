@@ -987,7 +987,7 @@ type (
 		Body   *BlockStmt // CaseClauses only
 	}
 
-	MatchStmt struct {
+	MatchExpr struct {
 		Match token.Pos
 		Init  Expr
 		Body  *BlockStmt
@@ -1053,9 +1053,9 @@ func (m MatchClause) End() token.Pos {
 }
 func (m MatchClause) stmtNode() {}
 
-func (m MatchStmt) Pos() token.Pos { return m.Match }
-func (m MatchStmt) End() token.Pos { return m.Body.End() }
-func (m MatchStmt) stmtNode()      {}
+func (m MatchExpr) Pos() token.Pos { return m.Match }
+func (m MatchExpr) End() token.Pos { return m.Body.End() }
+func (m MatchExpr) exprNode()      {}
 
 func (s IfLetStmt) Pos() token.Pos {
 	return s.If
