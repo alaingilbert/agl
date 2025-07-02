@@ -1156,6 +1156,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch e.Sel.Name {
 			case "Insert":
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Union":
+				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			}
@@ -2101,6 +2103,17 @@ func AglSetInsert[T comparable](s map[T]struct{}, el T) bool {
 	}
 	s[el] = struct{}{}
 	return true
+}
+
+func AglSetUnion[T comparable](s, other map[T]struct{}) map[T]struct{} {
+	newSet := make(map[T]struct{})
+	for k := range s {
+		newSet[k] = struct{}{}
+	}
+	for k := range other {
+		newSet[k] = struct{}{}	
+	}
+	return newSet
 }
 
 func AglStringHasPrefix(s string, prefix string) bool {

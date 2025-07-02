@@ -1056,7 +1056,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
 		switch fnName {
-		case "Insert":
+		case "Insert", "Union":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Len":
@@ -1709,6 +1709,11 @@ func cmpTypes(a, b types.Type) bool {
 		aa := MustCast[types.MapType](a)
 		bb := MustCast[types.MapType](b)
 		return cmpTypes(aa.K, bb.K) && cmpTypes(aa.V, bb.V)
+	}
+	if TryCast[types.SetType](a) && TryCast[types.SetType](b) {
+		aa := MustCast[types.SetType](a)
+		bb := MustCast[types.SetType](b)
+		return cmpTypes(aa.K, bb.K)
 	}
 	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
 		return true

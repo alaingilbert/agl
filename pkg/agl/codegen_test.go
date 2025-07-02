@@ -7260,6 +7260,23 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen259(t *testing.T) {
+	src := `package main
+func main() {
+	s1 := set[int]{1, 2, 3}
+	s2 := set[int]{3, 4, 5}
+	s3 := s1.Union(s2)
+}`
+	expected := `package main
+func main() {
+	s1 := map[int]struct{}{1: {}, 2: {}, 3: {}}
+	s2 := map[int]struct{}{3: {}, 4: {}, 5: {}}
+	s3 := AglSetUnion(s1, s2)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
