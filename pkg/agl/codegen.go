@@ -649,7 +649,7 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
 }
 
 func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
-	content1 := strings.TrimSpace(g.genStmt(expr.Init))
+	content1 := strings.TrimSpace(g.genExpr(expr.Init))
 	initT := g.env.GetType(expr.Init)
 	varName := fmt.Sprintf(`aglTmp%d`, g.varCounter.Add(1))
 	gPrefix := g.prefix

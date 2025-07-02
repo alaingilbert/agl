@@ -2435,7 +2435,7 @@ func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 }
 
 func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
-	infer.stmt(stmt.Init)
+	infer.expr(stmt.Init)
 	infer.withOptType(stmt.Init, infer.env.GetType2(stmt.Init), func() {
 		var prevBranchT types.Type
 		for _, stmtEl := range stmt.Body.List {
