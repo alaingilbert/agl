@@ -15,7 +15,7 @@ func main() {
 func part1(data []byte) int {
    	rgxMul := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
 	matches := rgxMul.FindAllStringSubmatch(string(data), -1)
-    return matches.Map({ $0[1].Int()! * $0[2].Int()! }).Sum()
+    return matches.Map({ $0[1].Int()? * $0[2].Int()? }).Sum()
 }
 
 func part2(data []byte) int {
@@ -28,7 +28,7 @@ func part2(data []byte) int {
 		} else if $0[0] == "don't()" {
 			enabled = false
 		} else if enabled {
-			return $0[1].Int()! * $0[2].Int()!
+			return $0[1].Int()? * $0[2].Int()?
 		}
         return 0
     }).Sum()
