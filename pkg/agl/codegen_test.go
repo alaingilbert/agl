@@ -5278,8 +5278,8 @@ func main() {
 		aglTmp1, tmpErr := r.Read(b)
 		if tmpErr == nil {
 			n := aglTmp1
-			_ = fmt.Printf("n = %v b = %v\n", n, b)
-			_ = fmt.Printf("b[:n] = %q\n", b[:n])
+			_ = AglWrapNative2(fmt.Printf("n = %v b = %v\n", n, b))
+			_ = AglWrapNative2(fmt.Printf("b[:n] = %q\n", b[:n]))
 		}
 		if tmpErr != nil {
 			err := tmpErr
@@ -7081,6 +7081,19 @@ func AglVecMyMin_T_int(v []int) Option[int] {
 	}
 	out := v[0]
 	return MakeOptionSome(out)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen255(t *testing.T) {
+	src := `package main
+func main() {
+	_ = fmt.Printf("")
+}`
+	expected := `package main
+func main() {
+	_ = AglWrapNative2(fmt.Printf(""))
 }
 `
 	testCodeGen(t, src, expected)

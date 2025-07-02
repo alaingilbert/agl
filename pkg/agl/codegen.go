@@ -1587,6 +1587,16 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		lhs = content1
 	}
 	content2 := g.genExprs(stmt.Rhs)
+	if len(stmt.Rhs) == 1 {
+		if v, ok := g.env.GetType(stmt.Rhs[0]).(types.ResultType); ok && v.Native {
+			switch tup := v.W.(type) {
+			case types.TupleType:
+				panic(fmt.Sprintf("need to implement AglWrapNative for tuple len %d", len(tup.Elts)))
+			default:
+				content2 = fmt.Sprintf("AglWrapNative2(%s)", content2)
+			}
+		}
+	}
 	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
 	out += after
 	return out
