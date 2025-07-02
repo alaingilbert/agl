@@ -280,7 +280,7 @@ func (e *Env) loadVendor(path string) {
 
 func (e *Env) loadPkgAgl() {
 	e.DefinePkg("agl", "agl")
-	e.Define(nil, "agl.Set", types.SetType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
+	e.Define(nil, "agl.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.DefineFn("agl.NewSet", "func [T comparable](els ...T) *agl.Set")
 	e.DefineFn("agl.Set.Len", "func [T comparable](s *agl.Set[T]) int")
@@ -645,6 +645,8 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		return types.StarType{X: e.GetType2(xx.X)}
 	case *ast.MapType:
 		return types.MapType{K: e.GetType2(xx.Key), V: e.GetType2(xx.Value)}
+	case *ast.SetType:
+		return types.SetType{K: e.GetType2(xx.Key)}
 	case *ast.ChanType:
 		return types.ChanType{W: e.GetType2(xx.Value)}
 	case *ast.TupleExpr:

@@ -308,6 +308,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genStarExpr(expr)
 	case *ast.MapType:
 		return g.genMapType(expr)
+	case *ast.SetType:
+		return g.genSetType(expr)
 	case *ast.SomeExpr:
 		return g.genSomeExpr(expr)
 	case *ast.OkExpr:
@@ -498,6 +500,11 @@ func (g *Generator) genMapType(expr *ast.MapType) string {
 		content2 = g.env.GetType2(expr.Value).GoStr()
 	}
 	return fmt.Sprintf("map[%s]%s", content1, content2)
+}
+
+func (g *Generator) genSetType(expr *ast.SetType) string {
+	content1 := g.genExpr(expr.Key)
+	return fmt.Sprintf("map[%s]struct{}", content1)
 }
 
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
@@ -1365,11 +1372,19 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 }
 
 func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
-	var content1 string
+	var content1, content2 string
 	if expr.Type != nil {
 		content1 = g.genExpr(expr.Type)
 	}
-	content2 := g.genExprs(expr.Elts)
+	if expr.Type != nil && TryCast[types.SetType](g.env.GetType(expr.Type)) {
+		var tmp []string
+		for _, el := range expr.Elts {
+			tmp = append(tmp, fmt.Sprintf("%s: {}", g.genExpr(el)))
+		}
+		content2 = strings.Join(tmp, ", ")
+	} else {
+		content2 = g.genExprs(expr.Elts)
+	}
 	return fmt.Sprintf("%s{%s}", content1, content2)
 }
 
