@@ -709,8 +709,25 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				out += gPrefix + "}\n"
 			}
 		}
+	case types.EnumType:
+		if expr.Body != nil {
+			for i, cc := range expr.Body.List {
+				out += gPrefix + fmt.Sprintf("if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+				c := cc.(*ast.MatchClause)
+				switch cv := c.Expr.(type) {
+				case *ast.CallExpr:
+					for j, id := range cv.Args {
+						out += gPrefix + fmt.Sprintf("\t%s := %s.%s_%d\n", g.genExpr(id), expr.Init, v.Fields[i].Name, j)
+					}
+					out += gPrefix + g.genStmts(c.Body)
+				default:
+					panic("")
+				}
+				out += gPrefix + fmt.Sprintf("}\n")
+			}
+		}
 	default:
-		panic("")
+		panic(fmt.Sprintf("%v", to(initT)))
 	}
 	return
 }

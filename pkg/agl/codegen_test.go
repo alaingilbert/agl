@@ -7152,6 +7152,78 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen256(t *testing.T) {
+	src := `package main
+type IpAddr enum {
+    V4(u8, u8, u8, u8)
+    V6(string)
+}
+func isPrivate(ip IpAddr) bool {
+    match ip {
+    case IpAddr.V4(a, b, c, d):
+        return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
+    case IpAddr.V6(s):
+        return s.HasPrefix("fc00::")
+    }
+    return true
+}
+func main() {
+	home := IpAddr.V4(127, 0, 0, 1)
+	isPrivate(home)
+}`
+	expected := `package main
+type IpAddrTag int
+const (
+	IpAddr_V4 IpAddrTag = iota + 1
+	IpAddr_V6
+)
+type IpAddr struct {
+	tag IpAddrTag
+	V4_0 uint8
+	V4_1 uint8
+	V4_2 uint8
+	V4_3 uint8
+	V6_0 string
+}
+func (v IpAddr) String() string {
+	switch v.tag {
+	case IpAddr_V4:
+		return "V4"
+	case IpAddr_V6:
+		return "V6"
+	default:
+		panic("")
+	}
+}
+func Make_IpAddr_V4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
+	return IpAddr{tag: IpAddr_V4, V4_0: arg0, V4_1: arg1, V4_2: arg2, V4_3: arg3}
+}
+func Make_IpAddr_V6(arg0 string) IpAddr {
+	return IpAddr{tag: IpAddr_V6, V6_0: arg0}
+}
+
+func isPrivate(ip IpAddr) bool {
+	if ip.tag == IpAddr_V4 {
+		a := ip.V4_0
+		b := ip.V4_1
+		c := ip.V4_2
+		d := ip.V4_3
+		return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
+	}
+	if ip.tag == IpAddr_V6 {
+		s := ip.V6_0
+		return AglStringHasPrefix(s, "fc00::")
+	}
+	return true
+}
+func main() {
+	home := Make_IpAddr_V4(127, 0, 0, 1)
+	isPrivate(home)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

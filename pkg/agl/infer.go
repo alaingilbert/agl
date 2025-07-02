@@ -2449,6 +2449,17 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 				t := infer.env.Get("error")
 				infer.env.Define(v.X, v.X.(*ast.Ident).Name, t)
 				infer.SetType(v.X, t)
+			case *ast.CallExpr:
+				if vv, ok := v.Fun.(*ast.SelectorExpr); ok {
+					if vvv, ok := infer.optType.Type.(types.EnumType); ok {
+						f := Find(vvv.Fields, func(f types.EnumFieldType) bool { return f.Name == vv.Sel.Name })
+						for i, el := range f.Elts {
+							arg := v.Args[i]
+							infer.env.Define(arg, arg.(*ast.Ident).Name, el)
+							infer.SetType(arg, el)
+						}
+					}
+				}
 			}
 			infer.expr(clause.Expr)
 			infer.stmts(clause.Body)
