@@ -416,6 +416,9 @@ func Walk(v Visitor, node Node) {
 			Walk(v, n.Else)
 		}
 
+	case *SetType:
+		Walk(v, n.Key)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}

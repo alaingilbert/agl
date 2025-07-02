@@ -124,6 +124,7 @@ const (
 
 	INTERFACE
 	MAP
+	SET
 	PACKAGE
 	RANGE
 	RETURN
@@ -245,6 +246,7 @@ var tokens = [...]string{
 
 	INTERFACE: "interface",
 	MAP:       "map",
+	SET:       "set",
 	PACKAGE:   "package",
 	RANGE:     "range",
 	RETURN:    "return",
