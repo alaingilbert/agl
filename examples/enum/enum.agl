@@ -1,0 +1,46 @@
+package main
+
+import "fmt"
+
+type IpAddr enum {
+    V4(u8, u8, u8, u8)
+    V6(string)
+}
+
+func isPrivate(ip IpAddr) bool {
+    fmt.Println(ip)
+    return true
+//   match ip {
+//     IpAddr.V4(a, b, _, _) => {
+//         return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
+//     }
+//     IpAddr.V6(s) => strings.HasPrefix(s, "fc00::")
+//   }
+}
+
+type Coin enum {
+    Penny
+    Nickel
+    Dime
+    Quarter
+}
+
+func valueInCents(coin Coin) int {
+    switch coin {
+    case Coin.Penny:   return 1
+    case Coin.Nickel:  return 5
+    case Coin.Dime:    return 10
+    case Coin.Quarter: return 25
+    default:           return 0
+    }
+}
+
+func main() {
+    home := IpAddr.V4(127, 0, 0, 1)
+    loopback := IpAddr.V6("::1")
+    fmt.Println("home ip is private: ", home, isPrivate(home))
+    fmt.Println("loopback: ", loopback)
+
+    cents := valueInCents(Coin.Nickel)
+    fmt.Println("cents:", cents)
+}
