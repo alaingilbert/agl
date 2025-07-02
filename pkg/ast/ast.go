@@ -989,7 +989,7 @@ type (
 
 	MatchStmt struct {
 		Match token.Pos
-		Init  Stmt
+		Init  Expr
 		Body  *BlockStmt
 	}
 
