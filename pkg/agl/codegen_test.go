@@ -6951,7 +6951,7 @@ func main() {
 func TestCodeGen251(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyForEach(f func(T) void) {
+func (v agl.Vec[T]) MyForEach(f func(T)) {
 	for i := range v {
 		f(v[i])
 	}
@@ -6967,7 +6967,7 @@ func main() {
 		return AglVoid{}
 	})
 }
-func AglVecMyForEach_T_int(v []int, f func(int) AglVoid) {
+func AglVecMyForEach_T_int(v []int, f func(int)) {
 	for i := range v {
 		f(v[i])
 	}
