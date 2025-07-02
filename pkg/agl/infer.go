@@ -142,6 +142,9 @@ func WithDefinition(i *Info) SetTypeOption {
 }
 
 func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOption) {
+	if t == nil {
+		return
+	}
 	conf := &SetTypeConf{}
 	for _, opt := range opts {
 		opt(conf)
@@ -2326,6 +2329,9 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 }
 
 func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
+	if expr.Name == "_" {
+		return nil
+	}
 	v := infer.env.Get(expr.Name)
 	assertf(v != nil, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
 	if expr.Name == "true" || expr.Name == "false" {

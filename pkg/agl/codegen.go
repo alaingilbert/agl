@@ -717,7 +717,11 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				switch cv := c.Expr.(type) {
 				case *ast.CallExpr:
 					for j, id := range cv.Args {
-						out += gPrefix + fmt.Sprintf("\t%s := %s.%s_%d\n", g.genExpr(id), expr.Init, v.Fields[i].Name, j)
+						if id.(*ast.Ident).Name == "_" {
+							out += gPrefix + fmt.Sprintf("\t_ = %s.%s_%d\n", expr.Init, v.Fields[i].Name, j)
+						} else {
+							out += gPrefix + fmt.Sprintf("\t%s := %s.%s_%d\n", g.genExpr(id), expr.Init, v.Fields[i].Name, j)
+						}
 					}
 					out += gPrefix + g.genStmts(c.Body)
 				default:
