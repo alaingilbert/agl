@@ -58,6 +58,52 @@
                 sumArray: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    arr := []int{1, 2, 3, 4, 5}\n    fmt.Println(\"Sum:\", arr.Sum())\n}`,
                 stringBuiltIns: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println("Hello World!".Lowercased())\n    fmt.Println("Hello World!".Uppercased())\n    fmt.Println("42".U64()?)\n    fmt.Println("0b101010".Int()?)\n}`,
                 vecBuiltIns: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Printf("Min: %v\\n", []int{1, 2, 3}.Min())\n    fmt.Printf("Max: %v\\n", []int{1, 2, 3}.Max())\n    fmt.Printf("Find(2): %v\\n", []int{1, 2, 3}.Find({ $0 == 2 }))\n    fmt.Printf("Find(42): %v\\n", []int{1, 2, 3}.Find({ $0 == 42 }))\n    fmt.Printf("Reversed: %v\\n", []int{1, 2, 3}.Reversed())\n}`,
+                enum1: `package main
+
+import "fmt"
+
+type IpAddr enum {
+    V4(u8, u8, u8, u8)
+    V6(string)
+}
+
+func isPrivate(ip IpAddr) bool {
+    match ip {
+    case IpAddr.V4(a, b, _, _):
+        return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
+    case IpAddr.V6(s):
+        return s.HasPrefix("fc00::")
+    }
+    return true
+}
+
+type Coin enum {
+    Penny
+    Nickel
+    Dime
+    Quarter
+}
+
+func valueInCents(coin Coin) int {
+    switch coin {
+    case Coin.Penny:   return 1
+    case Coin.Nickel:  return 5
+    case Coin.Dime:    return 10
+    case Coin.Quarter: return 25
+    default:           return 0
+    }
+}
+
+func main() {
+    home := IpAddr.V4(127, 0, 0, 1)
+    loopback := IpAddr.V6("::1")
+    fmt.Println("home ip is private:", home, isPrivate(home))
+    fmt.Println("loopback:", loopback)
+
+    cents := valueInCents(Coin.Nickel)
+    fmt.Println("cents:", cents)
+}
+`,
             };
 
             async function runWasmWithInput(inputText) {
@@ -192,6 +238,7 @@
                 <option value="sumArray">Sum array</option>
                 <option value="stringBuiltIns">String build-ins</option>
                 <option value="vecBuiltIns">Vec build-ins</option>
+                <option value="enum1">Enum</option>
             </select>
             <div id="code"></div>
             <button id="playgroundBtn">Run</button>
