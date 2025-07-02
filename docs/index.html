@@ -57,6 +57,7 @@
                 Example1: `package main\n\nimport \"fmt\"\n\nfunc MaybeInt() int? { Some(42) }\n\nfunc main() {\n    fmt.Println(MaybeInt())\n\n    arr := []int{1, 2, 3}\n    sum := arr.Map({ $0 + 1 }).Sum()\n    fmt.Println(\"Sum:\", sum) // 9\n}`,
                 sumArray: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    arr := []int{1, 2, 3, 4, 5}\n    fmt.Println(\"Sum:\", arr.Sum())\n}`,
                 stringBuiltIns: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println("Hello World!".Lowercased())\n    fmt.Println("Hello World!".Uppercased())\n    fmt.Println("42".U64()?)\n    fmt.Println("0b101010".Int()?)\n}`,
+                vecBuiltIns: `package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Printf("Min: %v\\n", []int{1, 2, 3}.Min())\n    fmt.Printf("Max: %v\\n", []int{1, 2, 3}.Max())\n    fmt.Printf("Find(2): %v\\n", []int{1, 2, 3}.Find({ $0 == 2 }))\n    fmt.Printf("Find(42): %v\\n", []int{1, 2, 3}.Find({ $0 == 42 }))\n    fmt.Printf("Reversed: %v\\n", []int{1, 2, 3}.Reversed())\n}`,
             };
 
             async function runWasmWithInput(inputText) {
@@ -190,6 +191,7 @@
                 <option value="Example1">Example1</option>
                 <option value="sumArray">Sum array</option>
                 <option value="stringBuiltIns">String build-ins</option>
+                <option value="vecBuiltIns">Vec build-ins</option>
             </select>
             <div id="code"></div>
             <button id="playgroundBtn">Run</button>
