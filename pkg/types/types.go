@@ -840,6 +840,9 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case I64Type:
 	case EllipsisType:
 	case StarType:
+		findGenHelper(m, t1.X, b.(StarType).X)
+	case OptionType:
+		findGenHelper(m, t1.W, b.(OptionType).W)
 	case TypeType:
 		findGenHelper(m, t1.W, b.(TypeType).W)
 	default:
