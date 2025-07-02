@@ -2172,14 +2172,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				panic(fmt.Sprintf("%v", to(lhs)))
 			}
 			var rhsT types.Type
-			var tmp ast.Expr
 			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
-				tmp = utils.Ternary(ta.Type == nil, ta.X, ta.Type)
+				tmp := utils.Ternary(ta.Type == nil, ta.X, ta.Type)
 				rhsT = infer.env.GetType2(tmp)
 				rhsT = types.OptionType{W: rhsT}
 			} else {
-				tmp = rhs
-				rhsT = infer.env.GetType2(tmp)
+				rhsT = infer.env.GetType2(rhs)
 			}
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
 			lhsT := infer.env.GetType(lhs)
