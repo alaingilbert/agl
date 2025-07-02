@@ -1370,6 +1370,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				returnStmt := expr.Body.List[0].(*ast.ExprStmt)
 				if infer.env.GetType(returnStmt.X) != nil {
 					if infer.env.GetType(expr) != nil {
+						if t, ok := ft.Return.(types.OptionType); ok {
+							ft.Return = t.W
+						}
 						if t, ok := ft.Return.(types.GenericType); ok {
 							ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
 							infer.SetType(expr, ft)
@@ -1478,8 +1481,9 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 		_, bubble := infer.returnType.(types.OptionType)
 		t := types.OptionType{W: infer.env.GetType2(expr.Type), Bubble: bubble}
 		infer.SetType(expr, t)
+	} else if infer.env.GetType(expr) == nil {
+		infer.SetType(expr, types.VoidType{})
 	}
-	//infer.SetType(expr, types.OptionType{W: infer.env.GetType2(expr.Type)})
 }
 
 func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
@@ -2248,6 +2252,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 
 func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 	infer.expr(stmt.X)
+	infer.SetType(stmt, infer.GetType(stmt.X))
 }
 
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {

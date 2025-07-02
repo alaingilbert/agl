@@ -358,6 +358,16 @@ func (v agl.Vec[T]) Enumerated() [](int, T) {
 	return out
 }
 
+func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
+	out := make([]R, 0)
+	for _, el := range v {
+		if Some(res) := f(el) {
+			out.Push(res)
+		}
+	}
+	return out
+}
+
 func (v agl.Vec[T]) ForEach(f func(T) void) {
 	for i := range v {
 		f(v[i])
