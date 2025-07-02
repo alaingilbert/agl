@@ -1229,7 +1229,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		} else {
 			content1 = g.genExpr(expr.Fun)
 			if fnT, ok := t1.(types.FuncType); ok {
-				if !InArray(content1, []string{"make", "append", "len", "new", "AglAbs"}) && fnT.IsGeneric() {
+				if !InArray(content1, []string{"make", "append", "len", "new", "AglAbs", "min", "max"}) && fnT.IsGeneric() {
 					oFnT := g.env.Get(v.Name)
 					newFnT := g.env.GetType(expr.Fun)
 					fnDecl := g.genFuncDecls[oFnT.String()]
