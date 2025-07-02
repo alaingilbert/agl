@@ -6976,6 +6976,42 @@ func AglVecMyForEach_T_int(v []int, f func(int)) {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen252(t *testing.T) {
+	src := `package main
+import "fmt"
+func (v agl.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
+	out := make([]R, 0)
+	for _, el := range v {
+		if Some(res) := f(el) {
+			out.Push(res)
+		}
+	}
+	return out
+}
+func main() {
+	[]string{"1", "two"}.MyCompactMap({ $0.Int() })
+}`
+	expected := `package main
+import "fmt"
+func main() {
+	AglVecMyCompactMap_R_int_T_string([]string{"1", "two"}, func(aglArg0 string) Option[int] {
+		return AglStringInt(aglArg0)
+	})
+}
+func AglVecMyCompactMap_R_int_T_string(v []string, f func(string) Option[int]) []int {
+	out := make([]int, 0)
+	for _, el := range v {
+		if aglTmp1 := f(el); aglTmp1.IsSome() {
+			res := aglTmp1.Unwrap()
+			AglVecPush(&out, res)
+		}
+	}
+	return out
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
