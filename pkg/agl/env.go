@@ -556,7 +556,7 @@ func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 type NodeKey string
 
 func makeKey(n ast.Node) NodeKey {
-	return NodeKey(fmt.Sprintf("%d_%d", n.Pos(), n.End()))
+	return NodeKey(fmt.Sprintf("%d_%d_%v", n.Pos(), n.End(), reflect.TypeOf(n)))
 }
 
 func (e *Env) makeKey(x ast.Node) NodeKey {
