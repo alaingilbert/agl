@@ -1833,6 +1833,13 @@ func GenCore() string {
 
 func GenContent() string {
 	return `
+func AglWrapNative2[T any](v1 T, err error) Result[T] {
+	if err != nil {
+		return MakeResultErr[T](err)
+	}
+	return MakeResultOk(v1)
+}
+
 type AglVoid struct{}
 
 type Option[T any] struct {
