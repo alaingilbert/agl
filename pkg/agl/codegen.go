@@ -786,7 +786,8 @@ func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
 
 func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
 	//content1 := g.genExpr(expr)
-	return fmt.Sprintf("MakeOptionNone[%s]()", g.env.GetType(expr).(types.NoneType).W.GoStr())
+	nT := MustCast[types.NoneType](g.env.GetType(expr))
+	return fmt.Sprintf("MakeOptionNone[%s]()", nT.W.GoStr())
 }
 
 func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
