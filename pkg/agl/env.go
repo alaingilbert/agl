@@ -418,6 +418,17 @@ func (v agl.Vec[T]) Reversed() []T {
 	}
 	return out
 }
+
+//func (v agl.Vec[T]) Shuffled() []T {
+//	out := make([]T, len(v))
+//	for i := 0; i < len(v); i++ {
+//		out[i] = v[i]
+//	}
+//	rand.Shuffle(len(s), func(i, j int) {
+//		out[i], out[j] = out[j], out[i]
+//	})
+//	return out
+//}
 `
 }
 
