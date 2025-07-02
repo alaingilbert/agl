@@ -656,7 +656,7 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 	switch v := initT.(type) {
 	case types.ResultType:
 		if v.Native {
-			out += gPrefix + fmt.Sprintf("%s, tmpErr := %s\n", varName, content1)
+			out += gPrefix + fmt.Sprintf("%s, tmpErr := AglWrapNative2(%s).NativeUnwrap()\n", varName, content1)
 		} else {
 			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		}
@@ -666,7 +666,7 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 				if v.Native {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := %s\n", gPrefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := *%s\n", gPrefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
 						out += gPrefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s := tmpErr\n", gPrefix, g.genExpr(v.X))
 					default:
@@ -1920,7 +1920,7 @@ func (r Result[T]) Unwrap() T {
 	return *r.t
 }
 
-func (r Result[T]) NativeUnwrap() (T, error) {
+func (r Result[T]) NativeUnwrap() (*T, error) {
 	return r.t, r.e
 }
 

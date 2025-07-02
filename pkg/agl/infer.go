@@ -2189,7 +2189,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
 				infer.SetTypeForce(lhs, rhsT)
 			default:
-				infer.SetType(lhs, rhsT)
+				tmp := rhsT
+				if v, ok := rhsT.(types.ResultType); ok {
+					v.Native = false
+					tmp = v
+				}
+				infer.SetType(lhs, tmp)
 			}
 			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, infer.GetType(lhsID)})
 		} else { // len(stmt.Lhs) != 1
