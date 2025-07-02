@@ -248,8 +248,6 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genTypeSwitchStmt(stmt)
 	case *ast.EmptyStmt:
 		return g.genEmptyStmt(stmt)
-	case *ast.MatchStmt:
-		return g.genMatchStmt(stmt)
 	case *ast.MatchClause:
 		return g.genMatchClause(stmt)
 	default:
@@ -260,6 +258,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 func (g *Generator) genExpr(e ast.Expr) (out string) {
 	//p("genExpr", to(e))
 	switch expr := e.(type) {
+	case *ast.MatchExpr:
+		return g.genMatchExpr(expr)
 	case *ast.Ident:
 		return g.genIdent(expr)
 	case *ast.ShortFuncLit:
@@ -660,7 +660,7 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
 	return out + content1
 }
 
-func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
+func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 	content1 := strings.TrimSpace(g.genExpr(expr.Init))
 	initT := g.env.GetType(expr.Init)
 	varName := fmt.Sprintf(`aglTmp%d`, g.varCounter.Add(1))
@@ -668,9 +668,9 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 	switch v := initT.(type) {
 	case types.ResultType:
 		if v.Native {
-			out += gPrefix + fmt.Sprintf("%s, tmpErr := AglWrapNative2(%s).NativeUnwrap()\n", varName, content1)
+			out += fmt.Sprintf("%s, tmpErr := AglWrapNative2(%s).NativeUnwrap()\n", varName, content1)
 		} else {
-			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
+			out += fmt.Sprintf("%s := %s\n", varName, content1)
 		}
 		if expr.Body != nil {
 			for _, c := range expr.Body.List {
@@ -746,6 +746,7 @@ func (g *Generator) genMatchStmt(expr *ast.MatchStmt) (out string) {
 	default:
 		panic(fmt.Sprintf("%v", to(initT)))
 	}
+	out = strings.TrimSpace(out)
 	return
 }
 

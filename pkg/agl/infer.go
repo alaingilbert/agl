@@ -595,6 +595,8 @@ func (infer *FileInferrer) exprType(e ast.Expr) {
 func (infer *FileInferrer) expr(e ast.Expr) {
 	//p("infer.expr", to(e))
 	switch expr := e.(type) {
+	case *ast.MatchExpr:
+		infer.matchExpr(expr)
 	case *ast.Ident:
 		t := infer.identExpr(expr)
 		infer.SetType(expr, t)
@@ -756,8 +758,6 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.typeSwitchStmt(stmt)
 	case *ast.EmptyStmt:
 		infer.emptyStmt(stmt)
-	case *ast.MatchStmt:
-		infer.matchStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unknown statement %v", to(stmt)))
 	}
@@ -2440,11 +2440,11 @@ func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 	infer.SetType(stmt, types.VoidType{})
 }
 
-func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
-	infer.expr(stmt.Init)
-	infer.withOptType(stmt.Init, infer.env.GetType2(stmt.Init), func() {
+func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
+	infer.expr(expr.Init)
+	infer.withOptType(expr.Init, infer.env.GetType2(expr.Init), func() {
 		var prevBranchT types.Type
-		for _, stmtEl := range stmt.Body.List {
+		for _, stmtEl := range expr.Body.List {
 			clause := stmtEl.(*ast.MatchClause)
 			switch v := clause.Expr.(type) {
 			case *ast.OkExpr:
@@ -2477,13 +2477,13 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 			}
 			infer.SetType(clause, branchT)
 			if prevBranchT != nil {
-				assertf(cmpTypesLoose(prevBranchT, branchT), "%s: match branches must have the same type `%s` VS `%s`", infer.Pos(stmt), prevBranchT, branchT)
+				assertf(cmpTypesLoose(prevBranchT, branchT), "%s: match branches must have the same type `%s` VS `%s`", infer.Pos(expr), prevBranchT, branchT)
 			}
 			prevBranchT = branchT
 		}
-		infer.SetType(stmt.Body, infer.GetType(Must(Last(stmt.Body.List))))
+		infer.SetType(expr.Body, infer.GetType(Must(Last(expr.Body.List))))
 	})
-	infer.SetType(stmt, infer.GetType(stmt.Body))
+	infer.SetType(expr, infer.GetType(expr.Body))
 }
 
 func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
