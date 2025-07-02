@@ -37,8 +37,8 @@ func valueInCents(coin Coin) int {
 func main() {
     home := IpAddr.V4(127, 0, 0, 1)
     loopback := IpAddr.V6("::1")
-    fmt.Println("home ip is private: ", home, isPrivate(home))
-    fmt.Println("loopback: ", loopback)
+    fmt.Println("home ip is private:", home, isPrivate(home))
+    fmt.Println("loopback:", loopback)
 
     cents := valueInCents(Coin.Nickel)
     fmt.Println("cents:", cents)
