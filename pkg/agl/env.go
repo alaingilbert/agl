@@ -410,6 +410,14 @@ func (v agl.Vec[T]) Max() T? {
 	}
 	return Some(out)
 }
+
+func (v agl.Vec[T]) Reversed() []T {
+	out := make([]T, len(v))
+	for i := 0; i < len(v); i++ {
+		out[i] = v[len(v)-1-i] 
+	}
+	return out
+}
 `
 }
 
