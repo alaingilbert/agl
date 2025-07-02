@@ -358,7 +358,7 @@ func (v agl.Vec[T]) Enumerated() [](int, T) {
 	return out
 }
 
-func (v agl.Vec[T]) ForEach(f func(T)) {
+func (v agl.Vec[T]) ForEach(f func(T) void) {
 	for i := range v {
 		f(v[i])
 	}
