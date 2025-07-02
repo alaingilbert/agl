@@ -1284,7 +1284,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	infer.SetType(expr, reduceFnT.Return)
 }
 
-func alterResultBubble(fnReturn types.Type, curr types.Type) (out types.Type) {
+func alterResultBubble(fnReturn, curr types.Type) (out types.Type) {
 	if fnReturn == nil {
 		return
 	}
