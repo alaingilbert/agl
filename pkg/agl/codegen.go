@@ -1114,6 +1114,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "HasPrefix":
+				return fmt.Sprintf("AglStringHasPrefix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "HasSuffix":
+				return fmt.Sprintf("AglStringHasSuffix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Lowercased":
 				return fmt.Sprintf("AglStringLowercased(%s)", g.genExpr(e.X))
 			case "Uppercased":
@@ -2007,6 +2011,14 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 		}
 	}
 	return MakeOptionNone[T]()
+}
+
+func AglStringHasPrefix(s string, prefix string) bool {
+	return aglImportStrings.HasPrefix(s, prefix)
+}
+
+func AglStringHasSuffix(s string, suffix string) bool {
+	return aglImportStrings.HasSuffix(s, suffix)
 }
 
 func AglStringSplit(s string, sep string) []string {
