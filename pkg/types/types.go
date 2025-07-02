@@ -319,12 +319,12 @@ func (n NilType) GoStrType() string  { return "nil" }
 func (n NilType) String() string     { return "nil" }
 func (n NilType) StringFull() string { return n.String() }
 
-type SetType struct{ Elt Type }
+type SetType struct{ K Type }
 
-func (s SetType) GoStr() string      { return fmt.Sprintf("Set[%s]", s.Elt.GoStr()) }
-func (s SetType) GoStrType() string  { return fmt.Sprintf("Set[%s]", s.Elt.GoStr()) }
-func (s SetType) String() string     { return fmt.Sprintf("Set[%s]", s.Elt.String()) }
-func (s SetType) StringFull() string { return fmt.Sprintf("Set[%s]", s.Elt.StringFull()) }
+func (s SetType) GoStr() string      { return fmt.Sprintf("set[%s]", s.K.GoStr()) }
+func (s SetType) GoStrType() string  { return fmt.Sprintf("set[%s]", s.K.GoStr()) }
+func (s SetType) String() string     { return fmt.Sprintf("set[%s]", s.K.String()) }
+func (s SetType) StringFull() string { return fmt.Sprintf("set[%s]", s.K.StringFull()) }
 
 type ArrayType struct{ Elt Type }
 

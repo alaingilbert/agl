@@ -6397,50 +6397,50 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
-func TestCodeGen220(t *testing.T) {
-	src := `package main
-func main() {
-	s := agl.NewSet()
-	fmt.Println(s)
-}`
-	expected := `package main
-func main() {
-	s := AglNewSet()
-	fmt.Println(s)
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen220(t *testing.T) {
+//	src := `package main
+//func main() {
+//	s := agl.NewSet()
+//	fmt.Println(s)
+//}`
+//	expected := `package main
+//func main() {
+//	s := AglNewSet()
+//	fmt.Println(s)
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
-func TestCodeGen221(t *testing.T) {
-	src := `package main
-func main() {
-	s := agl.NewSet()
-	fmt.Println(s.Len())
-}`
-	expected := `package main
-func main() {
-	s := AglNewSet()
-	fmt.Println(s.Len())
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen221(t *testing.T) {
+//	src := `package main
+//func main() {
+//	s := agl.NewSet()
+//	fmt.Println(s.Len())
+//}`
+//	expected := `package main
+//func main() {
+//	s := AglNewSet()
+//	fmt.Println(s.Len())
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
-func TestCodeGen222(t *testing.T) {
-	src := `package main
-func main() {
-	s := agl.NewSet("a")
-	s.Insert("b")
-}`
-	expected := `package main
-func main() {
-	s := AglNewSet("a")
-	s.Insert("b")
-}
-`
-	testCodeGen(t, src, expected)
-}
+//func TestCodeGen222(t *testing.T) {
+//	src := `package main
+//func main() {
+//	s := agl.NewSet("a")
+//	s.Insert("b")
+//}`
+//	expected := `package main
+//func main() {
+//	s := AglNewSet("a")
+//	s.Insert("b")
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
 
 func TestCodeGen223(t *testing.T) {
 	src := `package main
@@ -7242,6 +7242,19 @@ func AglVecMin_T_int(v []int) Option[int] {
 		out = min(out, el)
 	}
 	return MakeOptionSome(out)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen258(t *testing.T) {
+	src := `package main
+func main() {
+	s := set[int]{1, 2, 3}
+}`
+	expected := `package main
+func main() {
+	s := map[int]struct{}{1: {}, 2: {}, 3: {}}
 }
 `
 	testCodeGen(t, src, expected)
