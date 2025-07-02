@@ -804,6 +804,8 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			params = append(params, p)
 		}
 		return TupleType{Elts: params}
+	case NoneType:
+		return ReplGen(t1.W, name, newTyp)
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))

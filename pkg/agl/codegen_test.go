@@ -7059,6 +7059,33 @@ func AglVecFlatMap_R_int_T_int(v []int, f func(int) []int) []int {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen254(t *testing.T) {
+	src := `package main
+func (v agl.Vec[T]) MyMin() T? {
+	if len(v) == 0 {
+		return None
+	}
+	out := v[0]
+	return Some(out)
+}
+func main() {
+	[]int{1, 2}.MyMin()
+}`
+	expected := `package main
+func main() {
+	AglVecMyMin_T_int([]int{1, 2})
+}
+func AglVecMyMin_T_int(v []int) Option[int] {
+	if len(v) == 0 {
+		return MakeOptionNone[int]()
+	}
+	out := v[0]
+	return MakeOptionSome(out)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
