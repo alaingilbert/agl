@@ -2491,7 +2491,7 @@ func (p *parser) parseMatchStmt() ast.Stmt {
 	s1, _ = p.parseSimpleStmt(basic)
 	lbrace := p.expect(token.LBRACE)
 	var list []ast.Stmt
-	for p.tok == token.CASE || p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME || p.tok == token.NONE {
+	for p.tok == token.CASE {
 		list = append(list, p.parseMatchClause())
 	}
 	rbrace := p.expect(token.RBRACE)
