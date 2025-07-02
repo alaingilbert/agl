@@ -1370,6 +1370,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				returnStmt := expr.Body.List[0].(*ast.ExprStmt)
 				if infer.env.GetType(returnStmt.X) != nil {
 					if infer.env.GetType(expr) != nil {
+						if t, ok := ft.Return.(types.ArrayType); ok {
+							ft.Return = t.Elt
+						}
 						if t, ok := ft.Return.(types.OptionType); ok {
 							ft.Return = t.W
 						}

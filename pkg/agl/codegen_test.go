@@ -7012,6 +7012,53 @@ func AglVecMyCompactMap_R_int_T_string(v []string, f func(string) Option[int]) [
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen253(t *testing.T) {
+	src := `package main
+import "fmt"
+func (v agl.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
+	out := make([]R, 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			out.Push(el1)
+		}
+	}
+	return out
+}
+func main() {
+	[]int{1, 2}.FlatMap({
+        out := make([]int, 0)
+        for i := 0; i < $0; i++ {
+            out.Push($0)
+        }
+        return out
+    })
+}`
+	expected := `package main
+import "fmt"
+func main() {
+	AglVecFlatMap_R_int_T_int([]int{1, 2}, func(aglArg0 int) []int {
+		out := make([]int, 0)
+		for i := 0; i < aglArg0; i++ {
+			AglVecPush(&out, aglArg0)
+		}
+		return out
+	})
+}
+func AglVecFlatMap_R_int_T_int(v []int, f func(int) []int) []int {
+	out := make([]int, 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			AglVecPush(&out, el1)
+		}
+	}
+	return out
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {

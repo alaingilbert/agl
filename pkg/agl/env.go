@@ -368,6 +368,17 @@ func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
 	return out
 }
 
+func (v agl.Vec[T]) FlatMap[R any](f func(T) []R) []R {
+	out := make([]R, 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			out.Push(el1)
+		}
+	}
+	return out
+}
+
 func (v agl.Vec[T]) ForEach(f func(T) void) {
 	for i := range v {
 		f(v[i])
