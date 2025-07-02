@@ -6948,6 +6948,34 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen251(t *testing.T) {
+	src := `package main
+import "fmt"
+func (v agl.Vec[T]) MyForEach(f func(T) void) {
+	for i := range v {
+		f(v[i])
+	}
+}
+func main() {
+	[]int{1, 2}.MyForEach({ fmt.Println($0) })
+}`
+	expected := `package main
+import "fmt"
+func main() {
+	AglVecMyForEach_T_int([]int{1, 2}, func(aglArg0 int) AglVoid {
+		fmt.Println(aglArg0)
+		return AglVoid{}
+	})
+}
+func AglVecMyForEach_T_int(v []int, f func(int) AglVoid) {
+	for i := range v {
+		f(v[i])
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen218(t *testing.T) {
 //	src := `package main
 //func main() {
