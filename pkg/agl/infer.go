@@ -2437,14 +2437,15 @@ func (infer *FileInferrer) matchStmt(stmt *ast.MatchStmt) {
 		var prevBranchT types.Type
 		for _, stmtEl := range stmt.Body.List {
 			clause := stmtEl.(*ast.MatchClause)
-			if v, ok := clause.Expr.(*ast.OkExpr); ok {
+			switch v := clause.Expr.(type) {
+			case *ast.OkExpr:
 				t := infer.optType.Type.(types.ResultType).W
 				infer.env.Define(v.X, v.X.(*ast.Ident).Name, t)
 				infer.SetType(v.X, t)
-			} else if v1, ok := clause.Expr.(*ast.ErrExpr); ok {
+			case *ast.ErrExpr:
 				t := infer.env.Get("error")
-				infer.env.Define(v1.X, v1.X.(*ast.Ident).Name, t)
-				infer.SetType(v1.X, t)
+				infer.env.Define(v.X, v.X.(*ast.Ident).Name, t)
+				infer.SetType(v.X, t)
 			}
 			infer.expr(clause.Expr)
 			infer.stmts(clause.Body)
