@@ -855,6 +855,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.TypeType:
 		case types.UntypedStringType:
 		case types.StringType:
+		case types.SetType:
 		case types.ArrayType:
 		case types.MapType:
 		case types.CustomType:
@@ -1046,6 +1047,20 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT = infer.env.GetFn("agl.String." + fnName)
 		default:
 			assertf(false, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+		}
+		fnT.Recv = []types.Type{idTT}
+		fnT.Params = fnT.Params[1:]
+		infer.SetType(exprT.Sel, fnT)
+		infer.SetType(expr, fnT.Return)
+	case types.SetType:
+		fnName := exprT.Sel.Name
+		var fnT types.FuncType
+		switch fnName {
+		case "Insert":
+			fnT = infer.env.GetFn("agl.Set." + fnName)
+			infer.SetType(expr.Args[0], fnT.Params[1])
+		case "Len":
+			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		fnT.Recv = []types.Type{idTT}
 		fnT.Params = fnT.Params[1:]

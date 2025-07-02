@@ -1152,6 +1152,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
+		} else if TryCast[types.SetType](tmp) {
+			switch e.Sel.Name {
+			case "Insert":
+				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Len":
+				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
+			}
 		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
 			switch e.Sel.Name {
 			case "Split":
@@ -2082,6 +2089,18 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 		}
 	}
 	return MakeOptionNone[T]()
+}
+
+func AglSetLen[T comparable](s map[T]struct{}) int {
+	return len(s)
+}
+
+func AglSetInsert[T comparable](s map[T]struct{}, el T) bool {
+	if _, ok := s[el]; ok {
+		return false
+	}
+	s[el] = struct{}{}
+	return true
 }
 
 func AglStringHasPrefix(s string, prefix string) bool {
