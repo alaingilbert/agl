@@ -1182,6 +1182,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetIsDisjoint(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
+			case "Min":
+				return fmt.Sprintf("AglSetMin(%s)", g.genExpr(e.X))
+			case "Max":
+				return fmt.Sprintf("AglSetMax(%s)", g.genExpr(e.X))
 			}
 		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
 			switch e.Sel.Name {
@@ -2136,6 +2140,30 @@ func (s AglSet[T]) String() string {
 
 func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
+}
+
+func AglSetMin[T aglImportCmp.Ordered](s AglSet[T]) Option[T] {
+	if len(s) == 0 {
+		return MakeOptionNone[T]()
+	}
+	keys := aglImportSlices.Sorted(aglImportMaps.Keys(s))
+	out := keys[0]
+	for _, k := range keys {
+		out = min(out, k)
+	}
+	return MakeOptionSome(out) 
+}
+
+func AglSetMax[T aglImportCmp.Ordered](s AglSet[T]) Option[T] {
+	if len(s) == 0 {
+		return MakeOptionNone[T]()
+	}
+	keys := aglImportSlices.Sorted(aglImportMaps.Keys(s))
+	out := keys[0]
+	for _, k := range keys {
+		out = max(out, k)
+	}
+	return MakeOptionSome(out) 
 }
 
 // AglSetEquals returns a Boolean value indicating whether two sets have equal elements.

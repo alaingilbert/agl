@@ -1059,7 +1059,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "SymmetricDifference", "IsSubset", "IsSuperset", "IsDisjoint", "Equals":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 			infer.SetType(expr.Args[0], fnT.Params[1])
-		case "Len":
+		case "Len", "Min", "Max":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		fnT.Recv = []types.Type{idTT}
