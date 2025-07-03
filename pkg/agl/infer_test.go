@@ -196,6 +196,20 @@ func main() {
 	tassert.Equal(t, "u8", test.TypeAt(4, 6).String())
 }
 
+func TestInfer11(t *testing.T) {
+	src := `package main
+func main() {
+	k1 := u8(1)
+	arr := []int{1, 2}
+	arr[k1] = 2
+	arr[1] = 2
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "[]int", test.TypeAt(5, 2).String())
+	tassert.Nil(t, test.TypeAt(6, 6))
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
