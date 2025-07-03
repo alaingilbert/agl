@@ -1158,6 +1158,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Union":
 				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Subtracting":
+				return fmt.Sprintf("AglSetSubtracting(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			}
@@ -2122,6 +2124,17 @@ func AglSetUnion[T comparable](s, other AglSet[T]) AglSet[T] {
 	}
 	for k := range other {
 		newSet[k] = struct{}{}	
+	}
+	return newSet
+}
+
+func AglSetSubtracting[T comparable](s, other AglSet[T]) AglSet[T] {
+	newSet := make(AglSet[T])
+	for k := range s {
+		newSet[k] = struct{}{}
+	}
+	for k := range other {
+		delete(newSet, k)	
 	}
 	return newSet
 }
