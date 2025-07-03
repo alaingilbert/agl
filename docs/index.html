@@ -104,6 +104,17 @@ func main() {
     fmt.Println("cents:", cents)
 }
 `,
+                set1: `package main
+
+import "fmt"
+
+func main() {
+    s1 := set[int]{1, 2, 3}
+    s2 := set[int]{1, 2, 3, 4, 5}
+    fmt.Println("s1.IsSubset(s2):", s1.IsSubset(s2))
+    fmt.Println("s2.IsSuperset(s1):", s2.IsSuperset(s1))
+}
+`,
             };
 
             async function runWasmWithInput(inputText) {
@@ -239,6 +250,7 @@ func main() {
                 <option value="stringBuiltIns">String build-ins</option>
                 <option value="vecBuiltIns">Vec build-ins</option>
                 <option value="enum1">Enum</option>
+                <option value="set1">Set</option>
             </select>
             <div id="code"></div>
             <button id="playgroundBtn">Run</button>
