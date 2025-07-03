@@ -110,8 +110,9 @@ func main() {
 	}
 }
 `
-	tassert.Equal(t, "int", NewTest(src).TypeAt(7, 11).String())
-	tassert.Equal(t, "error", NewTest(src).TypeAt(8, 12).String())
+	test := NewTest(src)
+	tassert.Equal(t, "int", test.TypeAt(7, 11).String())
+	tassert.Equal(t, "error", test.TypeAt(8, 12).String())
 }
 
 //func TestInfer1(t *testing.T) {
