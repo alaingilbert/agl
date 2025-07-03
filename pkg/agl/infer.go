@@ -1153,6 +1153,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				ftReal := funcTypeToFuncType("", arg0, infer.env, false)
 				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					rT := tmp.Return
+					infer.SetType(expr, types.ArrayType{Elt: rT})
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT))
+				}
 				if tmp, ok := exprArg0.(*ast.FuncLit); ok {
 					infer.expr(tmp)
 					retT := infer.GetTypeFn(tmp).Return

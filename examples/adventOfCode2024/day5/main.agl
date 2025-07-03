@@ -47,5 +47,6 @@ func isValid(update []int) bool { !isInvalid(update) }
 func middlePage(update []int) int { update[update.Len() / 2] }
 
 func part1() {
+    a := updates.Filter(isValid).Map({ $0[$0.Len() / 2] }).Sum()
     fmt.Println("part1:", updates.Filter(isValid).Map(middlePage).Sum())
 }
