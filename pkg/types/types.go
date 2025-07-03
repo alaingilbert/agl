@@ -764,6 +764,9 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	case ArrayType:
 		t1.Elt = ReplGen(t1.Elt, name, newTyp)
 		return t1
+	case SetType:
+		t1.K = ReplGen(t1.K, name, newTyp)
+		return t1
 	case AnyType:
 		return t
 	case GenericType:

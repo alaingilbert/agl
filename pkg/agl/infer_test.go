@@ -118,6 +118,18 @@ func main() {
 	tassert.Equal(t, "error", test.TypeAt(8, 12).String())
 }
 
+func TestInfer5(t *testing.T) {
+	src := `package main
+func main() {
+	s1 := set[int]{1, 2}
+	s2 := set[int]{2, 3}
+	s3 := s1.IsDisjoint(s2)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "func (set[int]) IsDisjoint(set[int]) bool", test.TypeAt(5, 12).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
