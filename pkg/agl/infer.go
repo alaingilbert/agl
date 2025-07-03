@@ -674,6 +674,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.parenExpr(expr)
 	case *ast.StructType:
 		infer.structTypeExpr(expr)
+	case *ast.SetType:
+		infer.setTypeExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1942,6 +1944,11 @@ func (infer *FileInferrer) parenExpr(expr *ast.ParenExpr) {
 func (infer *FileInferrer) structTypeExpr(expr *ast.StructType) {
 	//infer.expr(expr.Fields)
 	infer.SetType(expr, types.StructType{})
+}
+
+func (infer *FileInferrer) setTypeExpr(expr *ast.SetType) {
+	kT := infer.env.GetType2(expr.Key)
+	infer.SetType(expr, types.SetType{K: kT})
 }
 
 func (infer *FileInferrer) dumpExpr(expr *ast.DumpExpr) {

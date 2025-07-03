@@ -321,8 +321,8 @@ func (n NilType) StringFull() string { return n.String() }
 
 type SetType struct{ K Type }
 
-func (s SetType) GoStr() string      { return fmt.Sprintf("set[%s]", s.K.GoStr()) }
-func (s SetType) GoStrType() string  { return fmt.Sprintf("set[%s]", s.K.GoStr()) }
+func (s SetType) GoStr() string      { return fmt.Sprintf("AglSet[%s]", s.K.GoStr()) }
+func (s SetType) GoStrType() string  { return fmt.Sprintf("AglSet[%s]", s.K.GoStr()) }
 func (s SetType) String() string     { return fmt.Sprintf("set[%s]", s.K.String()) }
 func (s SetType) StringFull() string { return fmt.Sprintf("set[%s]", s.K.StringFull()) }
 
