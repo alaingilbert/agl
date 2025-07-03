@@ -1661,6 +1661,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		}
 	}
 	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
+	//out += g.prefix + fmt.Sprintf("AglNoop(%s)\n", lhs) // Allow to have "declared and not used" variables
 	out += after
 	return out
 }
