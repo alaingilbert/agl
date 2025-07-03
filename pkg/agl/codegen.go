@@ -1162,6 +1162,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetFormUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Subtracting":
 				return fmt.Sprintf("AglSetSubtracting(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Subtract":
+				return fmt.Sprintf("AglSetSubtract(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Intersection":
 				return fmt.Sprintf("AglSetIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "SymmetricDifference":
@@ -2153,6 +2155,12 @@ func AglSetSubtracting[T comparable](s, other AglSet[T]) AglSet[T] {
 		delete(newSet, k)	
 	}
 	return newSet
+}
+
+func AglSetSubtract[T comparable](s, other AglSet[T]) {
+	for k := range other {
+		delete(s, k)	
+	}
 }
 
 func AglSetIntersection[T comparable](s, other AglSet[T]) AglSet[T] {

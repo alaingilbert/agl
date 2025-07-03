@@ -287,6 +287,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.Union", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.FormUnion", "func [T comparable](s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Subtracting", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
+	e.DefineFn("agl.Set.Subtract", "func [T comparable](s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Intersection", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.SymmetricDifference", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.String.Split", "func (s, sep string) []string")
