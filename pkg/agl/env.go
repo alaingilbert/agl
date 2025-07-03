@@ -292,6 +292,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.Subtract", "func [T comparable](s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Intersection", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.SymmetricDifference", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
+	e.DefineFn("agl.Set.IsSubset", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.String.Split", "func (s, sep string) []string")
 	e.DefineFn("agl.String.HasPrefix", "func (s, prefix string) bool")
 	e.DefineFn("agl.String.HasSuffix", "func (s, prefix string) bool")

@@ -1056,7 +1056,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
 		switch fnName {
-		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "SymmetricDifference":
+		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "SymmetricDifference", "IsSubset":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Len":
