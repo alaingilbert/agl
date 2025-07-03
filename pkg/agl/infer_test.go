@@ -100,7 +100,7 @@ func main() {
 
 func TestInfer4(t *testing.T) {
 	src := `package main
-func test() ! {
+func test() int! {
 	return Err("error")
 }
 func main() {
@@ -110,6 +110,7 @@ func main() {
 	}
 }
 `
+	tassert.Equal(t, "int", NewTest(src).TypeAt(7, 11).String())
 	tassert.Equal(t, "error", NewTest(src).TypeAt(8, 12).String())
 }
 
