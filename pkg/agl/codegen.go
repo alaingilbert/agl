@@ -1388,11 +1388,11 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 			rhsName := g.env.GetType(expr.Y).(types.StructType).Name
 			if lhsName == rhsName {
 				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
-					if op == "==" {
-						return fmt.Sprintf("%s.__EQL(%s)", content1, content2)
-					} else {
-						return fmt.Sprintf("!%s.__EQL(%s)", content1, content2)
+					out := fmt.Sprintf("%s.__EQL(%s)", content1, content2)
+					if op == "!=" {
+						out = "!" + out
 					}
+					return out
 				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
 					return fmt.Sprintf("%s.__ADD(%s)", content1, content2)
 				} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
