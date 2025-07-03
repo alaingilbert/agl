@@ -1,5 +1,7 @@
 package parser
 
+import "go/token"
+
 type AllErrors uint
 
 func ParseFile(fset *token.FileSet, filename string, src any, mode Mode) (*ast.File)!

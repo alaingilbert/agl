@@ -62,17 +62,19 @@ func (t *Test) TypeAt(row, col int) types.Type {
 
 func TestInfer1(t *testing.T) {
 	src := `package main
+import "net/http"
 func main() {
 	r := http.Get("")!
 	bod := r.Body
 	bod.Close()
 }
 `
-	tassert.Equal(t, "ReadCloser", NewTest(src).TypeAt(4, 2).(types.InterfaceType).Name)
+	tassert.Equal(t, "ReadCloser", NewTest(src).TypeAt(5, 2).(types.InterfaceType).Name)
 }
 
 func TestInfer2(t *testing.T) {
 	src := `package main
+import "net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
@@ -83,6 +85,7 @@ func main() {
 
 func TestInfer3(t *testing.T) {
 	src := `package main
+import "net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }

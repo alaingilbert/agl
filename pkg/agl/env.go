@@ -180,7 +180,14 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	pkgName := node.Name.Name
-	env.DefinePkg(pkgName, path)
+	if err := env.DefinePkg(pkgName, path); err != nil {
+		return
+	}
+	for _, d := range node.Imports {
+		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
+			panic(err)
+		}
+	}
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -262,12 +269,16 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
-func (e *Env) loadPkg(path string) {
+func (e *Env) loadPkg(path string) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("std", path, f+".agl")
-	by := Must(contentFs.ReadFile(stdFilePath))
+	by, err := contentFs.ReadFile(stdFilePath)
+	if err != nil {
+		return err
+	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, final, by)
+	return nil
 }
 
 func (e *Env) loadVendor(path string) {
@@ -362,50 +373,10 @@ func CoreFns() string {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	e.loadPkg("cmp")
+	_ = e.loadPkg("cmp")
 	e.loadCoreFunctions()
-	e.loadPkg("iter")
+	_ = e.loadPkg("iter")
 	e.loadPkgAgl()
-
-	e.loadPkg("io")
-	e.loadPkg("fmt")
-	e.loadPkg("encoding/binary")
-	e.loadPkg("encoding/hex")
-	e.loadPkg("bufio")
-	e.loadPkg("net/url")
-	e.loadPkg("net/http")
-	e.loadPkg("os")
-	e.loadPkg("sort")
-	e.loadPkg("time")
-	e.loadPkg("strings")
-	e.loadPkg("strconv")
-	e.loadPkg("context")
-	e.loadPkg("math")
-	//e.loadPkg("math/rand")
-	e.loadPkg("math/big")
-	e.loadPkg("crypto/rand")
-	e.loadPkg("errors")
-	e.loadPkg("unsafe")
-	e.loadPkg("io/fs")
-	e.loadPkg("embed")
-	e.loadPkg("sync")
-	e.loadPkg("sync/atomic")
-	e.loadPkg("log")
-	e.loadPkg("log/slog")
-	e.loadPkg("reflect")
-	e.loadPkg("runtime")
-	e.loadPkg("bytes")
-	e.loadPkg("encoding/json")
-	e.loadPkg("path")
-	e.loadPkg("go/ast")
-	e.loadPkg("go/token")
-	e.loadPkg("go/parser")
-	e.loadPkg("go/types")
-	e.loadPkg("path/filepath")
-	e.loadPkg("regexp")
-	e.loadPkg("slices")
-	//e.loadVendor("golang.org/x/net/html")
-
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
@@ -486,24 +457,37 @@ func (e *Env) DefineFnNative(name string, fnStr string) {
 	e.Define(nil, name, fnT)
 }
 
-func (e *Env) DefinePkg(name, path string) {
-	e.Define(nil, name, types.PackageType{Name: name, Path: path})
+func (e *Env) DefinePkg(name, path string) error {
+	return e.DefineErr(nil, name, types.PackageType{Name: name, Path: path})
 }
 
 func (e *Env) DefineForce(n ast.Node, name string, typ types.Type) {
-	e.defineHelper(n, name, typ, true)
+	err := e.defineHelper(n, name, typ, true)
+	if err != nil {
+		assert(false, err.Error())
+	}
 }
 
 func (e *Env) Define(n ast.Node, name string, typ types.Type) {
-	e.defineHelper(n, name, typ, false)
+	err := e.defineHelper(n, name, typ, false)
+	if err != nil {
+		assert(false, err.Error())
+	}
 }
 
-func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) {
+func (e *Env) DefineErr(n ast.Node, name string, typ types.Type) error {
+	return e.defineHelper(n, name, typ, false)
+}
+
+func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) error {
 	if name == "_" {
-		return
+		return nil
 	}
 	if !force {
-		assertf(e.GetDirect(name) == nil, "duplicate declaration of %s", name)
+		t := e.GetDirect(name)
+		if t != nil {
+			return fmt.Errorf("duplicate declaration of %s", name)
+		}
 	}
 	info := e.GetOrCreateNameInfo(name)
 	info.Type = typ
@@ -512,6 +496,7 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) 
 		lookupInfo := e.lspNodeOrCreate(n)
 		lookupInfo.Definition = n.Pos()
 	}
+	return nil
 }
 
 func (e *Env) lspNode(n ast.Node) *Info {

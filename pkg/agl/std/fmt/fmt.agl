@@ -1,5 +1,7 @@
 package fmt
 
+import "io"
+
 type Formatter interface {}
 type GoStringer interface {}
 type Scanner interface {}

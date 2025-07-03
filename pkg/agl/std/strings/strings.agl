@@ -1,5 +1,8 @@
 package strings
 
+import "io"
+import "iter"
+
 type Reader struct {}
 type Builder struct {}
 type Replacer struct {}
