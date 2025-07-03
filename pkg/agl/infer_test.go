@@ -142,6 +142,23 @@ func main() {
 	tassert.Equal(t, "func ([][]int) Map(func([]int) int) []int", test.TypeAt(5, 14).String())
 }
 
+func TestInfer7(t *testing.T) {
+	src := `package main
+func main() {
+	a := make([]int, 0)
+	b := make(map[int]int)
+	c := make(set[int])
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "map[int]int", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "set[int]", test.TypeAt(5, 2).String())
+	//tassert.Equal(t, "func make([]int, ...IntegerType) []int", test.TypeAt(3, 7).String())
+	//tassert.Equal(t, "func make(map[int]int, ...IntegerType) map[int]int", test.TypeAt(4, 7).String())
+	//tassert.Equal(t, "func make(set[int], ...IntegerType) set[int]", test.TypeAt(5, 7).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
