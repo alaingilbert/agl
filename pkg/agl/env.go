@@ -295,6 +295,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.SymmetricDifference", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.FormSymmetricDifference", "func [T comparable](s, other agl.Set[T])")
 	e.DefineFn("agl.Set.IsSubset", "func [T comparable](s, other agl.Set[T]) bool")
+	e.DefineFn("agl.Set.IsStrictSubset", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.IsSuperset", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.IsDisjoint", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.Equals", "func [T comparable](s, other agl.Set[T]) bool")

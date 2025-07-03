@@ -1178,6 +1178,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetFormSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSubset":
 				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "IsStrictSubset":
+				return fmt.Sprintf("AglSetIsStrictSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSuperset":
 				return fmt.Sprintf("AglSetIsSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Equals":
@@ -2301,6 +2303,23 @@ func AglSetIsSubset[T comparable](s, other AglSet[T]) bool {
 		}
 	}
 	return true
+}
+
+
+// AglSetIsStrictSubset returns a Boolean value that indicates whether the set is a strict subset of the given sequence.
+// Set A is a strict subset of another set B if every member of A is also a member of B and B contains at least one element that is not a member of A.
+func AglSetIsStrictSubset[T comparable](s, other AglSet[T]) bool {
+	for k := range s {
+		if _, ok := other[k]; !ok {
+			return false
+		}
+	}
+	for k := range other {
+		if _, ok := s[k]; !ok {
+			return true
+		}
+	}
+	return false
 }
 
 // AglSetIsSuperset returns a Boolean value that indicates whether this set is a superset of the given set.
