@@ -518,7 +518,7 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string) {
 	if name == "_" {
 		return
 	}
-	assertf(e.Get(name) != nil, "undeclared %s", name)
+	assertf(e.Get(name) != nil, "%s: undeclared %s", e.fset.Position(n.Pos()), name)
 	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
 }
 
