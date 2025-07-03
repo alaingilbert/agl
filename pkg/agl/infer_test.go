@@ -98,6 +98,21 @@ func main() {
 	//tassert.Equal(t, 1, env.Get("bod"))
 }
 
+func TestInfer4(t *testing.T) {
+	src := `package main
+func test() ! {
+	return Err("error")
+}
+func main() {
+	match test() {
+	case Ok(res):
+	case Err(err):
+	}
+}
+`
+	tassert.Equal(t, "error", NewTest(src).TypeAt(8, 12).(types.TypeType).W.(types.InterfaceType).Name)
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
