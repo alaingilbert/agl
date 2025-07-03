@@ -9,10 +9,9 @@ import (
 func countLines(filename string) int! {
     data := os.ReadFile(filename)!
     content := string(data)
-    lines := content.Split("\n")
     
     // Count total lines (wc -l compatible)
-    totalCount := lines.Map({ 1 }).Sum() - 1
+    totalCount := content.Split("\n").Len() - 1
     
     return Ok(totalCount)
 }
