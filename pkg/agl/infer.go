@@ -1864,6 +1864,10 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 }
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
+	if expr.Type == nil {
+		infer.SetType(expr, infer.optType.Type)
+		return
+	}
 	switch v := expr.Type.(type) {
 	case *ast.IndexExpr:
 		t := infer.env.Get(v.X.(*ast.Ident).Name)

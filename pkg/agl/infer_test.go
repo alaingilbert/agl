@@ -172,6 +172,16 @@ func main() {
 	tassert.Equal(t, "func min(int, int, int) int", test.TypeAt(5, 7).String())
 }
 
+func TestInfer9(t *testing.T) {
+	src := `package main
+func main() {
+	a := [][]int{{1, 2}, {2, 3}}
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "[][]int", test.TypeAt(3, 2).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
