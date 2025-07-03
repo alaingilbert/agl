@@ -1162,6 +1162,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetSubtracting(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Intersection":
 				return fmt.Sprintf("AglSetIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "SymmetricDifference":
+				return fmt.Sprintf("AglSetSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			}
@@ -2146,6 +2148,22 @@ func AglSetIntersection[T comparable](s, other AglSet[T]) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
 		if _, ok := other[k]; ok {
+			newSet[k] = struct{}{}
+		}
+	}
+	return newSet
+}
+
+// AglSetSymmetricDifference returns a new set with the elements that are either in this set or in the given sequence, but not in both.
+func AglSetSymmetricDifference[T comparable](s, other AglSet[T]) AglSet[T] {
+	newSet := make(AglSet[T])
+	for k := range s {
+		if _, ok := other[k]; !ok {
+			newSet[k] = struct{}{}
+		}
+	}
+	for k := range other {
+		if _, ok := s[k]; !ok {
 			newSet[k] = struct{}{}
 		}
 	}
