@@ -182,6 +182,20 @@ func main() {
 	tassert.Equal(t, "[][]int", test.TypeAt(3, 2).String())
 }
 
+func TestInfer10(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]u8{}
+	m[1] = 2
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "map[int]u8", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "map[int]u8", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "int", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "u8", test.TypeAt(4, 6).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

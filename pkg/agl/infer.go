@@ -2215,7 +2215,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v
 			case *ast.IndexExpr:
 				lhsID = v.X.(*ast.Ident)
-				return // tODO
+				lhsIDT := infer.env.Get(lhsID.Name)
+				infer.SetType(lhsID, lhsIDT)
+				if mT, ok := lhsIDT.(types.MapType); ok {
+					infer.SetType(v.Index, mT.K)
+					infer.SetType(v, mT.V)
+				}
+				return
 			case *ast.SelectorExpr:
 				lhsID = v.X.(*ast.Ident)
 				lhsIdName := lhsID.Name
