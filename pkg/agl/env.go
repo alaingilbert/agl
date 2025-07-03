@@ -364,6 +364,9 @@ func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
 	e.loadPkg("cmp")
 	e.loadCoreFunctions()
+	e.loadPkg("iter")
+	e.loadPkgAgl()
+
 	e.loadPkg("io")
 	e.loadPkg("fmt")
 	e.loadPkg("encoding/binary")
@@ -391,7 +394,6 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("log/slog")
 	e.loadPkg("reflect")
 	e.loadPkg("runtime")
-	e.loadPkg("iter")
 	e.loadPkg("bytes")
 	e.loadPkg("encoding/json")
 	e.loadPkg("path")
@@ -403,7 +405,7 @@ func (e *Env) loadBaseValues() {
 	e.loadPkg("regexp")
 	e.loadPkg("slices")
 	//e.loadVendor("golang.org/x/net/html")
-	e.loadPkgAgl()
+
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
