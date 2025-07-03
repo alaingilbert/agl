@@ -3,12 +3,19 @@ package main
 import "os"
 import "fmt"
 
-func main() {
+var data1 [][]int
+var updates [][]int
+var rules map[int]set[int]
+
+func init() {
     data := os.ReadFile("examples/adventOfCode2024/day5/data.txt")!
     parts := string(data).Split("\n\n")
-    data1 := parts[0].Split("\n").Map({ $0.Split("|").Map({ $0.Int()? }) })
-    updates := parts[1].Split("\n").Map({ $0.Split(",").Map({ $0.Int()? }) })
-    rules := make(map[int]set[int])
+    data1 = parts[0].Split("\n").Map({ $0.Split("|").Map({ $0.Int()? }) })
+    updates = parts[1].Split("\n").Map({ $0.Split(",").Map({ $0.Int()? }) })
+    rules = make(map[int]set[int])
+}
+
+func main() {
     for _, d := range data1 {
         a, b := d[0], d[1]
         s := rules[a]
@@ -18,10 +25,10 @@ func main() {
         s.Insert(b)
         rules[a] = s
     }
-    part1(updates, rules)
+    part1()
 }
 
-func isInvalid(update []int, rules map[int]set[int]) bool {
+func isInvalid(update []int) bool {
     for i, v := range update {
         s1 := rules[v]
         s2 := set[int]{}
@@ -35,10 +42,10 @@ func isInvalid(update []int, rules map[int]set[int]) bool {
     return false
 }
 
-func isValid(update []int, rules map[int]set[int]) bool { !isInvalid(update, rules) }
+func isValid(update []int) bool { !isInvalid(update) }
 
 func middlePage(update []int) int { update[update.Len() / 2] }
 
-func part1(updates [][]int, rules map[int]set[int]) {
-    fmt.Println("part1:", updates.Filter({ isValid($0, rules) }).Map(middlePage).Sum())
+func part1() {
+    fmt.Println("part1:", updates.Filter(isValid).Map(middlePage).Sum())
 }
