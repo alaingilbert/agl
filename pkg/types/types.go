@@ -583,6 +583,13 @@ func (f F64Type) GoStrType() string  { return "float64" }
 func (f F64Type) String() string     { return "f64" }
 func (f F64Type) StringFull() string { return f.String() }
 
+type MutType struct{ W Type }
+
+func (m MutType) GoStr() string      { return m.W.GoStr() }
+func (m MutType) GoStrType() string  { return m.W.GoStrType() }
+func (m MutType) String() string     { return m.W.String() }
+func (m MutType) StringFull() string { return m.W.StringFull() }
+
 type TupleType struct {
 	Elts []Type
 }
@@ -747,6 +754,12 @@ func ReplGenM(t Type, m map[string]Type) (out Type) {
 }
 
 func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
+	if v, ok := currTyp.(MutType); ok {
+		currTyp = v.W
+	}
+	if v, ok := newTyp.(MutType); ok {
+		newTyp = v.W
+	}
 	switch currT := currTyp.(type) {
 	case ArrayType:
 		return ReplGen2(t, currT.Elt, newTyp.(ArrayType).Elt)
@@ -908,7 +921,17 @@ func (f FuncType) String() string {
 		nameStr = " " + f.Name
 	}
 	if f.Recv != nil {
-		recvStr = utils.MapJoin(f.Recv, func(t Type) string { return t.String() }, ", ")
+		recvStr = utils.MapJoin(f.Recv, func(t Type) string {
+			if t == nil {
+				return "NIL"
+			}
+			out := ""
+			if utils.TryCast[MutType](t) {
+				out += "mut "
+				t = t.(MutType).W
+			}
+			return out + t.String()
+		}, ", ")
 		if recvStr != "" {
 			recvStr = " (" + recvStr + ")"
 		}
@@ -923,10 +946,57 @@ func (f FuncType) String() string {
 		var tmp1 []string
 		for _, param := range f.Params {
 			var val string
+			if utils.TryCast[MutType](param) {
+				val += "mut "
+				param = param.(MutType).W
+			}
 			if param == nil {
-				val = "nil"
+				val += "nil"
 			} else {
-				val = param.StringFull()
+				val += param.StringFull()
+			}
+			tmp1 = append(tmp1, val)
+		}
+		paramsStr = strings.Join(tmp1, ", ")
+	}
+	if result := f.Return; result != nil {
+		if _, ok := result.(VoidType); !ok {
+			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
+				resultStr = " !"
+			} else {
+				val := result.StringFull()
+				if val != "" {
+					resultStr = " " + val
+				}
+			}
+		}
+	}
+	return fmt.Sprintf("func%s%s%s(%s)%s", recvStr, nameStr, typeParamsStr, paramsStr, resultStr)
+}
+
+func (f FuncType) String1() string {
+	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
+	if f.Name != "" {
+		nameStr = " " + f.Name
+	}
+	if f.TypeParams != nil {
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
+		if typeParamsStr != "" {
+			typeParamsStr = "[" + typeParamsStr + "]"
+		}
+	}
+	if f.Params != nil {
+		var tmp1 []string
+		for _, param := range f.Params {
+			var val string
+			if utils.TryCast[MutType](param) {
+				val += "mut "
+				param = param.(MutType).W
+			}
+			if param == nil {
+				val += "nil"
+			} else {
+				val += param.StringFull()
 			}
 			tmp1 = append(tmp1, val)
 		}

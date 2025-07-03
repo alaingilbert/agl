@@ -506,6 +506,24 @@ func (p *parser) parseIdentOrNum() *ast.Ident {
 }
 
 func (p *parser) parseIdent() *ast.Ident {
+	return p.parseIdentHelper(false)
+}
+
+func (p *parser) parseIdentOrMutIdent() *ast.Ident {
+	if p.tok == token.IDENT {
+		return p.parseIdent()
+	} else if p.tok == token.MUT {
+		p.expect(token.MUT)
+		return p.parseMutIdent()
+	}
+	panic("")
+}
+
+func (p *parser) parseMutIdent() *ast.Ident {
+	return p.parseIdentHelper(true)
+}
+
+func (p *parser) parseIdentHelper(mutable bool) *ast.Ident {
 	pos := p.pos
 	name := "_"
 	if p.tok == token.IDENT {
@@ -514,7 +532,7 @@ func (p *parser) parseIdent() *ast.Ident {
 	} else {
 		p.expect(token.IDENT) // use expect() error handling
 	}
-	return &ast.Ident{NamePos: pos, Name: name}
+	return &ast.Ident{NamePos: pos, Name: name, Mutable: mutable}
 }
 
 func (p *parser) parseIdentList() (list []*ast.Ident) {
@@ -522,10 +540,10 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 		defer un(trace(p, "IdentList"))
 	}
 
-	list = append(list, p.parseIdent())
+	list = append(list, p.parseIdentOrMutIdent())
 	for p.tok == token.COMMA {
 		p.next()
-		list = append(list, p.parseIdent())
+		list = append(list, p.parseIdentOrMutIdent())
 	}
 
 	return
@@ -694,11 +712,22 @@ func (p *parser) parseFieldDecl() *ast.Field {
 
 	doc := p.leadComment
 
+	var mutable bool
+	if p.tok == token.MUT {
+		p.next()
+		mutable = true
+	}
+
 	var names []*ast.Ident
 	var typ ast.Expr
 	switch p.tok {
 	case token.IDENT:
-		name := p.parseIdent()
+		var name *ast.Ident
+		if mutable {
+			name = p.parseMutIdent()
+		} else {
+			name = p.parseIdent()
+		}
 		if p.tok == token.PERIOD || p.tok == token.STRING || p.tok == token.SEMICOLON || p.tok == token.RBRACE {
 			// embedded type
 			typ = name
@@ -710,7 +739,7 @@ func (p *parser) parseFieldDecl() *ast.Field {
 			names = []*ast.Ident{name}
 			for p.tok == token.COMMA {
 				p.next()
-				names = append(names, p.parseIdent())
+				names = append(names, p.parseIdentOrMutIdent())
 			}
 			// Careful dance: We don't know if we have an embedded instantiated
 			// type T[P1, P2, ...] or a field T of array type []E or [P]E.
@@ -814,7 +843,7 @@ func (p *parser) parseStructType() *ast.StructType {
 	pos := p.expect(token.STRUCT)
 	lbrace := p.expect(token.LBRACE)
 	var list []*ast.Field
-	for p.tok == token.IDENT || p.tok == token.MUL || p.tok == token.LPAREN {
+	for p.tok == token.MUT || p.tok == token.IDENT || p.tok == token.MUL || p.tok == token.LPAREN {
 		// a field declaration cannot start with a '(' but we accept
 		// it here for more robust parsing and better error messages
 		// (parseFieldDecl will check and complain if necessary)
@@ -866,6 +895,12 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 		defer un(trace(p, "ParamDecl"))
 	}
 
+	var mutable bool
+	if p.tok == token.MUT {
+		p.expect(token.MUT)
+		mutable = true
+	}
+
 	ptok := p.tok
 	if name != nil {
 		p.tok = token.IDENT // force token.IDENT case in switch below
@@ -881,7 +916,11 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 			f.name = name
 			p.tok = ptok
 		} else {
-			f.name = p.parseIdent()
+			if mutable {
+				f.name = p.parseMutIdent()
+			} else {
+				f.name = p.parseIdent()
+			}
 		}
 		switch p.tok {
 		case token.IDENT, token.MUL, token.ARROW, token.FUNC, token.CHAN, token.MAP, token.SET, token.STRUCT, token.INTERFACE, token.LPAREN:
@@ -1607,6 +1646,10 @@ func (p *parser) parseOperand() ast.Expr {
 	}
 
 	switch p.tok {
+	case token.MUT:
+		p.expect(token.MUT)
+		return p.parseMutIdent()
+
 	case token.AT_LINE:
 		pos := p.expect(token.AT_LINE)
 		return &ast.AtLineExpr{AtLine: pos}
@@ -2734,7 +2777,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.MUT, token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
 		token.LBRACK, token.STRUCT, token.MAP, token.SET, token.CHAN, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)

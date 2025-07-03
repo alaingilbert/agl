@@ -39,6 +39,23 @@ func (i *Info) GetType() types.Type {
 	return nil
 }
 
+func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bool) types.FuncType {
+	fT := funcTypeToFuncType(name, expr.Type, env, native)
+	var recvT []types.Type
+	if expr.Recv != nil {
+		for _, recv := range expr.Recv.List {
+			for _, _ = range recv.Names {
+				recvTyp := recv.Type
+				t := env.GetType2(recvTyp)
+				//env.Define(recvName, recvName.Name, t)
+				recvT = append(recvT, t)
+			}
+		}
+	}
+	fT.Recv = recvT
+	return fT
+}
+
 func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) types.FuncType {
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
@@ -58,6 +75,9 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 			t := env.GetType2(param.Type)
 			n := max(len(param.Names), 1)
 			for i := 0; i < n; i++ {
+				if len(param.Names) > i && param.Names[i].Mutable {
+					t = types.MutType{W: t}
+				}
 				params = append(params, t)
 			}
 		}
@@ -199,18 +219,27 @@ func defineFromSrc(env *Env, path string, src []byte) {
 				case *ast.Ident:
 					recvName = v.Name
 				case *ast.StarExpr:
-					recvName = v.X.(*ast.Ident).Name
+					switch vv := v.X.(type) {
+					case *ast.Ident:
+						recvName = vv.Name
+					case *ast.SelectorExpr:
+						recvName = vv.Sel.Name
+					default:
+						panic(fmt.Sprintf("%v", to(v.X)))
+					}
+				case *ast.SelectorExpr:
+					recvName = v.Sel.Name
 				default:
 					panic(fmt.Sprintf("%v", to(t)))
 				}
 				fullName = recvName + "." + fullName
 			}
 			fullName = pkgName + "." + fullName
-			ft := funcTypeToFuncType("", decl.Type, env, true)
+			ft := funcDeclTypeToFuncType("", decl, env, true)
 			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
 				env.DefineFn(fullName, ft.String())
 			} else {
-				env.DefineFnNative(fullName, ft.String())
+				env.DefineFnNative(fullName, ft.String1())
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
@@ -518,7 +547,9 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string) {
 	if name == "_" {
 		return
 	}
-	assertf(e.Get(name) != nil, "%s: undeclared %s", e.fset.Position(n.Pos()), name)
+	t := e.Get(name)
+	assertf(t != nil, "%s: undeclared %s", e.fset.Position(n.Pos()), name)
+	assertf(TryCast[types.MutType](t), "%s: cannot assign to immutable variable '%s'", e.fset.Position(n.Pos()), name)
 	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
 }
 

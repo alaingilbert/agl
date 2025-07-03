@@ -18,6 +18,7 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 ## features
 
 - Tuple / Enum / Set
+- Immutable variables/structs by default
 - Error propagation operators (`?` for Option[T] / `!` for Result[T])
 - Concise anonymous function with type inferred arguments (`other := someArr.Filter({ $0 % 2 == 0 })`)
 - Array built-in Map/Reduce/Filter/Find/Sum methods
@@ -276,7 +277,7 @@ Methods can have generic type parameters
 
 ```go
 func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-    out := make([]R, 0)
+    mut out := make([]R, 0)
     for _, el := range v {
         out = append(out, clb(el))
     }

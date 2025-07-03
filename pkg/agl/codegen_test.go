@@ -626,7 +626,7 @@ func parseInt(s string) Result[int] {
 func TestCodeGen30(t *testing.T) {
 	src := `package main
 func main() {
-	a := 0
+	mut a := 0
 	a += 1
 	a -= 1
 	a *= 1
@@ -4041,7 +4041,7 @@ func TestCodeGen147(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) Even() []T {
-   out := make([]T, len(v))
+   mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
            out = append(out, el)
@@ -4076,7 +4076,7 @@ func TestCodeGen147_1(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) Even() []T {
-   out := make([]T, len(v))
+   mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
            out = append(out, el)
@@ -4115,7 +4115,7 @@ func TestCodeGen148(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-	out := make([]R, len(v))
+	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4150,7 +4150,7 @@ func TestCodeGen148_1(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-	out := make([]R, len(v))
+	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4185,7 +4185,7 @@ func TestCodeGen148_2(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-	out := make([]R, len(v))
+	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4219,7 +4219,7 @@ func AglVecMyMap_R_uint8_T_int64(v []int64, clb func(int64) uint8) []uint8 {
 func TestCodeGen149(t *testing.T) {
 	src := `package main
 func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-	out := make([]R, len(v))
+	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4376,7 +4376,7 @@ func TestCodeGen154(t *testing.T) {
 	src := `package main
 func main() {
 	arr := []int{1, 2, 3}
-	var a u8
+	var mut a u8
 	a = arr.Reduce(0, { $0 + u8($1) })
 }`
 	expected := `package main
@@ -4784,7 +4784,7 @@ func test(t (int, bool)) (bool, int) {
 }
 func main() {
     t1 := (1, true)
-    t2 := test(t1)
+    mut t2 := test(t1)
     fmt.Println(t2)
     t2 = (false, 3)
     fmt.Println(t2)
@@ -4839,7 +4839,7 @@ type Abser interface {
 	Abs() f64
 }
 func main() {
-	var a Abser
+	var mut a Abser
 	f := MyFloat(-math.Sqrt2)
 	v := Vertex{3, 4}
 	a = f  // a MyFloat implements Abser
@@ -4945,7 +4945,7 @@ func (f F) M() {
 	fmt.Println(f)
 }
 func main() {
-	var i I
+	var mut i I
 	i = &T{"Hello"}
 	describe(i)
 	i.M()
@@ -5005,7 +5005,7 @@ func (t *T) M() {
 	fmt.Println(t.S)
 }
 func main() {
-	var i I
+	var mut i I
 	var t *T
 	i = t
 	describe(i)
@@ -5053,7 +5053,7 @@ func TestCodeGen180(t *testing.T) {
 	src := `package main
 import "fmt"
 func main() {
-	var i any
+	var mut i any
 	describe(i)
 	i = 42
 	describe(i)
@@ -5432,22 +5432,134 @@ func main() {
 
 func TestCodeGen189(t *testing.T) {
 	src := `package main
-import (
-	"fmt"
-	"math"
-)
 type Vertex struct {
-	X, Y f64
+	mut X, mut Y f64
 }
-func (v Vertex) Abs() f64 {
-	return math.Sqrt(v.X*v.X + v.Y*v.Y)
-}
-func (v *Vertex) Scale(f f64) {
+func (mut v *Vertex) Scale(f f64) {
 	v.X = v.X * f
 	v.Y = v.Y * f
 }
 func main() {
 	v := Vertex{3, 4}
+	v.Scale(10)
+}`
+	tassert.PanicsWithError(t, "11:4: method cannot be called on immutable type", testCodeGenFn(src))
+}
+
+func TestCodeGen189_1(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	v := &Vertex{3, 4}
+	mut vv := v
+	vv.Scale(10)
+}`
+	tassert.PanicsWithError(t, "11:6: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+}
+
+func TestCodeGen189_2(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	mut v := &Vertex{3, 4}
+	mut vv := v
+	vv.Scale(10)
+}`
+	tassert.NotPanics(t, testCodeGenFn(src))
+}
+
+func TestCodeGen189_3(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	v := &Vertex{3, 4}
+	mut vv, vvv := v, v
+	vv.Scale(10)
+}`
+	tassert.PanicsWithError(t, "11:6: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+}
+
+func TestCodeGen189_4(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, Y f64
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	mut v := &Vertex{3, 4}
+	v.Scale(10)
+}`
+	tassert.PanicsWithError(t, "7:4: assign to immutable prop 'Y'", testCodeGenFn(src))
+}
+
+func TestCodeGen189_5(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	mut v := &Vertex{3, 4}
+	v.Scale(10)
+}`
+	expected := `package main
+type Vertex struct {
+	X, Y float64
+}
+func (v *Vertex) Scale(f float64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	v := &Vertex{3, 4}
+	v.Scale(10)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen189_6(t *testing.T) {
+	src := `package main
+import (
+	"fmt"
+	"math"
+)
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (v Vertex) Abs() f64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+func (mut v *Vertex) Scale(f f64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+func main() {
+	mut v := Vertex{3, 4}
 	v.Scale(10)
 	fmt.Println(v.Abs())
 }`
@@ -5477,7 +5589,7 @@ func TestCodeGen190(t *testing.T) {
 	src := `package main
 import "fmt"
 func main() {
-	var i interface{}
+	var mut i interface{}
 	describe(i)
 	i = 42
 	describe(i)
@@ -5589,7 +5701,7 @@ func TestCodeGen193(t *testing.T) {
 	src := `package main
 import "fmt"
 func sum(s []int, c chan int) {
-	sum1 := 0
+	mut sum1 := 0
 	for _, v := range s {
 		sum1 += v
 	}
@@ -5628,7 +5740,7 @@ func TestCodeGen194(t *testing.T) {
 	src := `package main
 import "fmt"
 func fibonacci(c, quit chan int) {
-	x, y := 0, 1
+	mut x, mut y := 0, 1
 	for {
 		select {
 		case c <- x:
@@ -6059,7 +6171,7 @@ func main() {
 		switch d := decl.(type) {
 	 	case *ast.FuncDecl:
 			if d.Name.Name == fnName && d.Recv == nil {
-				var name string
+				var mut name string
 				for _, param := range d.Type.Params.List {
 					switch param1 := param.Type.(type) {
 					case *ast.SelectorExpr:
@@ -6635,7 +6747,7 @@ func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
 		return n.FirstChild.Data
 	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
+	for mut c := n.FirstChild; c != nil; c = c.NextSibling {
 		if title := findTitle(c); title != "" {
 			return title
 		}
@@ -6784,7 +6896,7 @@ func main() {
 func TestCodeGen233(t *testing.T) {
 	src := `package main
 func main() {
-	var a int
+	var mut a int
 	if true {
 		a = 1
 	} else {
@@ -6807,7 +6919,7 @@ func main() {
 func TestCodeGen234(t *testing.T) {
 	src := `package main
 func main() {
-	var a int
+	var mut a int
 	if true {
 		a = 1
 	} else {
@@ -7379,6 +7491,88 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen261(t *testing.T) {
+	src := `package main
+func main() {
+	mut a := 42
+}`
+	expected := `package main
+func main() {
+	a := 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen262(t *testing.T) {
+	src := `package main
+func main() {
+	mut a := 42
+	a = 43
+}`
+	expected := `package main
+func main() {
+	a := 42
+	a = 43
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen263(t *testing.T) {
+	src := `package main
+func main() {
+	a := 42
+	a = 43
+}`
+	tassert.PanicsWithError(t, "4:2: cannot assign to immutable variable 'a'", testCodeGenFn(src))
+}
+
+func TestCodeGen264(t *testing.T) {
+	src := `package main
+func test(a int) {
+	a = 43
+}
+func main() {
+	a := 42
+	test(a)
+}`
+	tassert.PanicsWithError(t, "3:2: cannot assign to immutable variable 'a'", testCodeGenFn(src))
+}
+
+func TestCodeGen265(t *testing.T) {
+	src := `package main
+func test(mut a int) {
+	a = 43
+}
+func main() {
+	mut a := 42
+	test(a)
+}`
+	expected := `package main
+func test(a int) {
+	a = 43
+}
+func main() {
+	a := 42
+	test(a)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen266(t *testing.T) {
+	src := `package main
+func test(mut a int) {
+	a = 43
+}
+func main() {
+	a := 42
+	test(a)
+}`
+	tassert.PanicsWithError(t, "7:7: cannot use immutable 'a'", testCodeGenFn(src))
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
@@ -7519,7 +7713,7 @@ func main() {
 //	src := `package main
 //import "fmt"
 //func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
-//	out := make([]R, len(v))
+//	mut out := make([]R, len(v))
 //	for _, el := range v {
 //		out = append(out, clb(el))
 //	}

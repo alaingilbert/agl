@@ -1,6 +1,6 @@
 
 func zip[T, U any](a []T, b []U) [](T, U) {
-	out := make([](T, U), 0)
+	mut out := make([](T, U), 0)
 	for i := range a {
 		if len(a) <= i || len(b) <= i {
 			break
@@ -11,7 +11,7 @@ func zip[T, U any](a []T, b []U) [](T, U) {
 }
 
 func (v agl.Vec[T]) Enumerated() [](int, T) {
-	out := make([](int, T), 0)
+	mut out := make([](int, T), 0)
 	for i := range v {
 		out.Push((i, v[i]))
 	}
@@ -19,7 +19,7 @@ func (v agl.Vec[T]) Enumerated() [](int, T) {
 }
 
 func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
-	out := make([]R, 0)
+	mut out := make([]R, 0)
 	for _, el := range v {
 		if Some(res) := f(el) {
 			out.Push(res)
@@ -29,7 +29,7 @@ func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
 }
 
 func (v agl.Vec[T]) FlatMap[R any](f func(T) []R) []R {
-	out := make([]R, 0)
+	mut out := make([]R, 0)
 	for _, el := range v {
 		subArr := f(el)
 		for _, el1 := range subArr {
@@ -49,7 +49,7 @@ func (v agl.Vec[T]) Min() T? {
 	if len(v) == 0 {
 		return None
 	}
-	out := v[0]
+	mut out := v[0]
 	for _, el := range v {
 		out = min(out, el)
 	}
@@ -60,7 +60,7 @@ func (v agl.Vec[T]) Max() T? {
 	if len(v) == 0 {
 		return None
 	}
-	out := v[0]
+	mut out := v[0]
 	for _, el := range v {
 		out = max(out, el)
 	}
@@ -68,7 +68,7 @@ func (v agl.Vec[T]) Max() T? {
 }
 
 func (v agl.Vec[T]) Reversed() []T {
-	out := make([]T, len(v))
+	mut out := make([]T, len(v))
 	for i := 0; i < len(v); i++ {
 		out[i] = v[len(v)-1-i]
 	}
