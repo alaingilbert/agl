@@ -7,15 +7,12 @@ var data1 [][]int
 var updates [][]int
 var rules map[int]set[int]
 
-func init() {
+func main() {
     data := os.ReadFile("examples/adventOfCode2024/day5/data.txt")!
     parts := string(data).Split("\n\n")
     data1 = parts[0].Split("\n").Map({ $0.Split("|").Map({ $0.Int()? }) })
     updates = parts[1].Split("\n").Map({ $0.Split(",").Map({ $0.Int()? }) })
     rules = make(map[int]set[int])
-}
-
-func main() {
     for _, d := range data1 {
         a, b := d[0], d[1]
         s := rules[a]
