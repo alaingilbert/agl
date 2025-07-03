@@ -1176,6 +1176,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSuperset":
 				return fmt.Sprintf("AglSetIsSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Equals":
+				return fmt.Sprintf("AglSetEquals(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsDisjoint":
 				return fmt.Sprintf("AglSetIsDisjoint(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
@@ -2126,6 +2128,19 @@ func (s AglSet[T]) String() string {
 
 func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
+}
+
+// AglSetEquals returns a Boolean value indicating whether two sets have equal elements.
+func AglSetEquals[T comparable](s, other AglSet[T]) bool {
+	if len(s) != len(other) {
+	    return false
+	}
+	for k := range s {
+	    if _, ok := other[k]; !ok {
+	        return false
+	    }
+	}
+	return true
 }
 
 func AglSetInsert[T comparable](s AglSet[T], el T) bool {

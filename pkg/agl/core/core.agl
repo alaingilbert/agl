@@ -85,3 +85,15 @@ func (v agl.Vec[T]) Reversed() []T {
 //	})
 //	return out
 //}
+
+//func (s agl.Set[T]) == (other agl.Set) bool {
+//	if s.Len() != other.Len() {
+//	    return false
+//	}
+//	for k := range s {
+//	    if !other.Contains(k) {
+//	        return false
+//	    }
+//	}
+//	return true
+//}
