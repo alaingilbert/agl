@@ -1158,6 +1158,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Remove":
 				return fmt.Sprintf("AglSetRemove(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Contains":
+				return fmt.Sprintf("AglSetContains(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Union":
 				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "FormUnion":
@@ -2127,6 +2129,13 @@ func AglSetInsert[T comparable](s AglSet[T], el T) bool {
 	s[el] = struct{}{}
 	return true
 }
+
+// AglSetContains returns a Boolean value that indicates whether the given element exists in the set.
+func AglSetContains[T comparable](s AglSet[T], el T) bool {
+	_, ok := s[el]
+	return ok
+}
+
 
 // AglSetRemove removes the specified element from the set.
 // Return: The value of the member parameter if it was a member of the set; otherwise, nil.
