@@ -1174,6 +1174,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSubset":
 				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "IsSuperset":
+				return fmt.Sprintf("AglSetIsSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			}
@@ -2217,6 +2219,18 @@ func AglSetSymmetricDifference[T comparable](s, other AglSet[T]) AglSet[T] {
 func AglSetIsSubset[T comparable](s, other AglSet[T]) bool {
 	for k := range s {
 		if _, ok := other[k]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// AglSetIsSuperset returns a Boolean value that indicates whether this set is a superset of the given set.
+// Return: true if the set is a superset of other; otherwise, false.
+// Set A is a superset of another set B if every member of B is also a member of A.
+func AglSetIsSuperset[T comparable](s, other AglSet[T]) bool {
+	for k := range other {
+		if _, ok := s[k]; !ok {
 			return false
 		}
 	}
