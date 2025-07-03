@@ -17,8 +17,7 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 
 ## features
 
-- Tuple
-- Enum
+- Tuple / Enum / Set
 - Error propagation operators (`?` for Option[T] / `!` for Result[T])
 - Concise anonymous function with type inferred arguments (`other := someArr.Filter({ $0 % 2 == 0 })`)
 - Array built-in Map/Reduce/Filter/Find/Sum methods
