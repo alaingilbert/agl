@@ -1156,6 +1156,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch e.Sel.Name {
 			case "Insert":
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Remove":
+				return fmt.Sprintf("AglSetRemove(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Union":
 				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "FormUnion":
@@ -2124,6 +2126,16 @@ func AglSetInsert[T comparable](s AglSet[T], el T) bool {
 	}
 	s[el] = struct{}{}
 	return true
+}
+
+// AglSetRemove removes the specified element from the set.
+// Return: The value of the member parameter if it was a member of the set; otherwise, nil.
+func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
+	if _, ok := s[el]; ok {
+		delete(s, el)
+		return MakeOptionSome(el)	 
+	}
+	return MakeOptionNone[T]()
 }
 
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.

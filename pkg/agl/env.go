@@ -284,6 +284,7 @@ func (e *Env) loadPkgAgl() {
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int")
 	e.DefineFn("agl.Set.Insert", "func [T comparable](s agl.Set[T], el T) bool")
+	e.DefineFn("agl.Set.Remove", "func [T comparable](s agl.Set[T], el T) T?")
 	e.DefineFn("agl.Set.Union", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.FormUnion", "func [T comparable](s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Subtracting", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
