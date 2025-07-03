@@ -1158,6 +1158,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Union":
 				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "FormUnion":
+				return fmt.Sprintf("AglSetFormUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Subtracting":
 				return fmt.Sprintf("AglSetSubtracting(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Intersection":
@@ -2122,6 +2124,7 @@ func AglSetInsert[T comparable](s AglSet[T], el T) bool {
 	return true
 }
 
+// AglSetUnion returns a new set with the elements of both this set and the given sequence.
 func AglSetUnion[T comparable](s, other AglSet[T]) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
@@ -2131,6 +2134,14 @@ func AglSetUnion[T comparable](s, other AglSet[T]) AglSet[T] {
 		newSet[k] = struct{}{}	
 	}
 	return newSet
+}
+
+
+// AglSetFormUnion inserts the elements of the given sequence into the set.
+func AglSetFormUnion[T comparable](s, other AglSet[T]) AglSet[T] {
+	for k := range other {
+		s[k] = struct{}{}	
+	}
 }
 
 func AglSetSubtracting[T comparable](s, other AglSet[T]) AglSet[T] {
