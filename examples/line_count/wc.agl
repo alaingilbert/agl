@@ -3,14 +3,13 @@ package main
 import (
     "fmt"
     "os"
-    "strings"
 )
 
 // Returns the line count of a filename using a result type
 func countLines(filename string) int! {
     data := os.ReadFile(filename)!
     content := string(data)
-    lines := strings.Split(content, "\n")
+    lines := content.Split("\n")
     
     // Count total lines (wc -l compatible)
     totalCount := lines.Map({ 1 }).Sum() - 1
