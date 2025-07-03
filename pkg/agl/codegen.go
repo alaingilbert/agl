@@ -1176,6 +1176,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSuperset":
 				return fmt.Sprintf("AglSetIsSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "IsDisjoint":
+				return fmt.Sprintf("AglSetIsDisjoint(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			}
@@ -2231,6 +2233,17 @@ func AglSetIsSubset[T comparable](s, other AglSet[T]) bool {
 func AglSetIsSuperset[T comparable](s, other AglSet[T]) bool {
 	for k := range other {
 		if _, ok := s[k]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// AglSetIsDisjoint returns a Boolean value that indicates whether the set has no members in common with the given sequence.
+// Return: true if the set has no elements in common with other; otherwise, false.
+func AglSetIsDisjoint[T comparable](s, other AglSet[T]) bool {
+	for k := range s {
+		if _, ok := other[k]; ok {
 			return false
 		}
 	}
