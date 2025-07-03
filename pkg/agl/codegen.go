@@ -1172,6 +1172,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "SymmetricDifference":
 				return fmt.Sprintf("AglSetSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "FormSymmetricDifference":
+				return fmt.Sprintf("AglSetFormSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSubset":
 				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsSuperset":
@@ -2264,6 +2266,17 @@ func AglSetSymmetricDifference[T comparable](s, other AglSet[T]) AglSet[T] {
 		}
 	}
 	return newSet
+}
+
+// AglSetFormSymmetricDifference removes the elements of the set that are also in the given sequence and adds the members of the sequence that are not already in the set.
+func AglSetFormSymmetricDifference[T comparable](s, other AglSet[T]) {
+	for k := range other {
+		if _, ok := s[k]; !ok {
+			s[k] = struct{}{}
+		} else {
+			delete(s, k)
+		}
+	}
 }
 
 // AglSetIsSubset returns a Boolean value that indicates whether the set is a subset of the given sequence.
