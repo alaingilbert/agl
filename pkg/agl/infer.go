@@ -1955,6 +1955,7 @@ func (infer *FileInferrer) structTypeExpr(expr *ast.StructType) {
 }
 
 func (infer *FileInferrer) setTypeExpr(expr *ast.SetType) {
+	infer.expr(expr.Key)
 	kT := infer.env.GetType2(expr.Key)
 	infer.SetType(expr, types.SetType{K: kT})
 }
