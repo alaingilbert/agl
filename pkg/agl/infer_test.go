@@ -159,6 +159,19 @@ func main() {
 	//tassert.Equal(t, "func make(set[int], ...IntegerType) set[int]", test.TypeAt(5, 7).String())
 }
 
+func TestInfer8(t *testing.T) {
+	src := `package main
+func main() {
+	var a int = 42
+	b := min(a, 1)
+	c := min(a, 1, 2)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "func min(int, int) int", test.TypeAt(4, 7).String())
+	tassert.Equal(t, "func min(int, int, int) int", test.TypeAt(5, 7).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

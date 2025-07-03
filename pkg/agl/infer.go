@@ -962,6 +962,20 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			default:
 				panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
 			}
+		} else if call.Name == "min" {
+			arg0T := infer.env.GetType2(expr.Args[0])
+			fnT := infer.env.Get("min").(types.FuncType).T("T", arg0T)
+			for i := 0; i < len(expr.Args)-2; i++ {
+				fnT.Params = append(fnT.Params, arg0T)
+			}
+			infer.SetType(expr.Fun, fnT)
+		} else if call.Name == "max" {
+			arg0T := infer.env.GetType2(expr.Args[0])
+			fnT := infer.env.Get("max").(types.FuncType).T("T", arg0T)
+			for i := 0; i < len(expr.Args)-2; i++ {
+				fnT.Params = append(fnT.Params, arg0T)
+			}
+			infer.SetType(expr.Fun, fnT)
 		} else if call.Name == "append" {
 			fnT := infer.env.Get("append").(types.FuncType)
 			arg0 := infer.env.GetType2(expr.Args[0])
@@ -2045,7 +2059,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 				infer.exprs(spec.Values)
 				value := spec.Values[i]
 				valueT := infer.env.GetType(value)
-				assertf(cmpTypes(t, valueT), "%s: type mismatch, want: %s, got: %s", infer.Pos(name), t, valueT)
+				assertf(cmpTypesLoose(t, valueT), "%s: type mismatch, want: %s, got: %s", infer.Pos(name), t, valueT)
 			}
 			infer.SetType(name, t)
 			infer.env.Define(name, name.Name, t)
