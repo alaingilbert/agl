@@ -1,0 +1,36 @@
+package main
+
+import (
+    "fmt"
+    "os"
+    "strings"
+)
+
+// Returns the line count of a filename using a result type
+func countLines(filename string) int! {
+    data := os.ReadFile(filename)!
+    content := string(data)
+    lines := strings.Split(content, "\n")
+    
+    // Count total lines (wc -l compatible)
+    totalCount := lines.Map({ 1 }).Sum() - 1
+    
+    return Ok(totalCount)
+}
+
+func main() {
+    // Get filename from command line arguments
+    if len(os.Args) < 2 {
+        fmt.Println("usage: wc <filename>")
+        return
+    }
+    
+    filename := os.Args[1]
+    
+    match countLines(filename) {
+    case Ok(total):
+        fmt.Printf("%8d %s\n", total, filename)
+    case Err(err):
+        fmt.Printf("wc: %s: %s\n", filename, err)
+    }
+}

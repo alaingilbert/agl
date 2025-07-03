@@ -75,7 +75,7 @@ func main() {
 	}
 }
 
-func spawnGoRunFromBytes(source []byte) error {
+func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "gorun")
 	if err != nil {
@@ -96,8 +96,9 @@ func spawnGoRunFromBytes(source []byte) error {
 		return err
 	}
 
-	// Run `go run` on the file
-	cmd := exec.Command("go", "run", tmpFile, coreFile)
+	// Run `go run` on the file with additional arguments
+	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
+	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -139,7 +140,14 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	i := agl.NewInferrer(fset, env)
 	i.InferFile(f)
 	src := agl.NewGenerator(i.Env, f).Generate()
-	_ = spawnGoRunFromBytes([]byte(src))
+
+	// Get any additional arguments to pass to the program
+	var programArgs []string
+	if cmd.NArg() > 1 {
+		programArgs = cmd.Args().Slice()[1:] // Skip the .agl filename
+	}
+
+	_ = spawnGoRunFromBytes([]byte(src), programArgs)
 	return nil
 }
 

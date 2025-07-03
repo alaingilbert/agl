@@ -31,3 +31,4 @@ func IsPathSeparator(c uint8) bool
 func IsPermission(err error) bool
 func IsTimeout(err error) bool
 func LookupEnv(key string) string?
+type Args []string
