@@ -950,7 +950,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assert(len(expr.Args) >= 1, "'make' must have at least 1 argument")
 			arg0 := expr.Args[0]
 			switch v := arg0.(type) {
-			case *ast.ArrayType, *ast.ChanType, *ast.MapType:
+			case *ast.ArrayType, *ast.ChanType, *ast.MapType, *ast.SetType:
 				fnT = fnT.T("T", infer.env.GetType2(v))
 				infer.SetType(expr, fnT.Return)
 				infer.SetType(expr.Args[0], types.TypeType{W: fnT.GetParam(0)})

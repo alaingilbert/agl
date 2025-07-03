@@ -12,7 +12,7 @@ func main() {
     for _, d := range data1 {
         s := rules[d[0]]
         if s == nil {
-            s = set[int]{}
+            s = make(set[int])
         }
         s.Insert(d[1])
         rules[d[0]] = s
