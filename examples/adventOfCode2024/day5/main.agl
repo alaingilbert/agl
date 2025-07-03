@@ -27,7 +27,7 @@ func isInvalid(update []int, rules map[int]set[int]) bool {
         for _, e := range update[:i] {
             s2.Insert(e)
         }
-        if !s1.IsDisjoint(s2) {
+        if s1.Intersects(s2) {
             return true
         }
     }

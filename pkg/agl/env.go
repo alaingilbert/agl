@@ -310,6 +310,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.IsSuperset", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.IsStrictSuperset", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.IsDisjoint", "func [T comparable](s, other agl.Set[T]) bool")
+	e.DefineFn("agl.Set.Intersects", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.Equals", "func [T comparable](s, other agl.Set[T]) bool")
 	e.DefineFn("agl.Set.Min", "func [T comparable](s agl.Set[T]) T?")
 	e.DefineFn("agl.Set.Max", "func [T comparable](s agl.Set[T]) T?")

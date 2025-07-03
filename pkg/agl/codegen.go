@@ -1188,6 +1188,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetEquals(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "IsDisjoint":
 				return fmt.Sprintf("AglSetIsDisjoint(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Intersects":
+				return fmt.Sprintf("AglSetIntersects(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len":
 				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
 			case "Min":
@@ -2360,6 +2362,11 @@ func AglSetIsDisjoint[T comparable](s, other AglSet[T]) bool {
 		}
 	}
 	return true
+}
+
+// AglSetIntersects ...
+func AglSetIntersects[T comparable](s, other AglSet[T]) bool {
+	return !AglSetIsDisjoint(s, other)
 }
 
 func AglStringHasPrefix(s string, prefix string) bool {
