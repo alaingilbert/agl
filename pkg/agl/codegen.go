@@ -1170,6 +1170,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetSubtract(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Intersection":
 				return fmt.Sprintf("AglSetIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "FormIntersection":
+				return fmt.Sprintf("AglSetFormIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "SymmetricDifference":
 				return fmt.Sprintf("AglSetSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "FormSymmetricDifference":
@@ -2242,6 +2244,7 @@ func AglSetSubtract[T comparable](s, other AglSet[T]) {
 	}
 }
 
+// AglSetIntersection returns a new set with the elements that are common to both this set and the given sequence.
 func AglSetIntersection[T comparable](s, other AglSet[T]) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
@@ -2250,6 +2253,15 @@ func AglSetIntersection[T comparable](s, other AglSet[T]) AglSet[T] {
 		}
 	}
 	return newSet
+}
+
+// AglSetFormIntersection removes the elements of the set that aren’t also in the given sequence.
+func AglSetFormIntersection[T comparable](s, other AglSet[T]) {
+	for k := range s {
+		if _, ok := other[k]; !ok {
+			delete(s, k)
+		}
+	}
 }
 
 // AglSetSymmetricDifference returns a new set with the elements that are either in this set or in the given sequence, but not in both.
