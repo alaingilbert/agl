@@ -110,7 +110,7 @@ func main() {
 	}
 }
 `
-	tassert.Equal(t, "error", NewTest(src).TypeAt(8, 12).(types.TypeType).W.(types.InterfaceType).Name)
+	tassert.Equal(t, "error", NewTest(src).TypeAt(8, 12).String())
 }
 
 //func TestInfer1(t *testing.T) {
