@@ -1377,11 +1377,11 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	if g.env.GetType(expr.X) != nil && g.env.GetType(expr.Y) != nil {
 		if TryCast[types.SetType](g.env.GetType(expr.X)) && TryCast[types.SetType](g.env.GetType(expr.Y)) {
 			if (op == "==" || op == "!=") && g.env.Get("agl.Set.Equals") != nil {
-				if op == "==" {
-					return fmt.Sprintf("AglSetEquals(%s, %s)", content1, content2)
-				} else {
-					return fmt.Sprintf("!AglSetEquals(%s, %s)", content1, content2)
+				out := fmt.Sprintf("AglSetEquals(%s, %s)", content1, content2)
+				if op == "!=" {
+					out = "!" + out
 				}
+				return out
 			}
 		} else if TryCast[types.StructType](g.env.GetType(expr.X)) && TryCast[types.StructType](g.env.GetType(expr.Y)) {
 			lhsName := g.env.GetType(expr.X).(types.StructType).Name
