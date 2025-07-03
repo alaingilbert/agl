@@ -282,7 +282,6 @@ func (e *Env) loadPkgAgl() {
 	e.DefinePkg("agl", "agl")
 	e.Define(nil, "agl.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
-	e.DefineFn("agl.NewSet", "func [T comparable](els ...T) *agl.Set")
 	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int")
 	e.DefineFn("agl.Set.Insert", "func [T comparable](s agl.Set[T], el T) bool")
 	e.DefineFn("agl.Set.Union", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
