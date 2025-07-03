@@ -409,10 +409,6 @@ func (e *Env) loadBaseValues() {
 }
 
 func NewEnv(fset *token.FileSet) *Env {
-	return NewEnv1(fset, false)
-}
-
-func NewEnv1(fset *token.FileSet, isCore bool) *Env {
 	env := &Env{
 		fset:        fset,
 		lookupTable: make(map[string]*Info),
