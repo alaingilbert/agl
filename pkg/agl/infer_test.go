@@ -207,6 +207,7 @@ func main() {
 `
 	test := NewTest(src)
 	tassert.Equal(t, "[]int", test.TypeAt(5, 2).String())
+	tassert.Equal(t, "u8", test.TypeAt(5, 6).String())
 	tassert.Nil(t, test.TypeAt(6, 6))
 }
 
