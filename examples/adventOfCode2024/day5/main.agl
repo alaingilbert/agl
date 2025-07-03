@@ -10,12 +10,13 @@ func main() {
     updates := parts[1].Split("\n").Map({ $0.Split(",").Map({ $0.Int()? }) })
     rules := make(map[int]set[int])
     for _, d := range data1 {
-        s := rules[d[0]]
+        a, b := d[0], d[1]
+        s := rules[a]
         if s == nil {
             s = make(set[int])
         }
-        s.Insert(d[1])
-        rules[d[0]] = s
+        s.Insert(b)
+        rules[a] = s
     }
     part1(updates, rules)
 }
