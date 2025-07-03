@@ -312,8 +312,10 @@ func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 	if spec.Values != nil {
 		t = infer.env.GetType2(spec.Values[0])
 	}
+	if spec.Type != nil {
+		t = infer.env.GetType2(spec.Type)
+	}
 	for _, name := range spec.Names {
-		noop(name)
 		infer.env.Define(name, name.Name, t)
 	}
 }
