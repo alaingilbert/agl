@@ -116,7 +116,7 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 			results = append(results, env.GetGoType2(pkgName, resultEl))
 		}
 	}
-	if len(results) >= 1 {
+	if len(results) > 0 {
 		lastResult := results[len(results)-1]
 		lastResult = types.Unwrap(lastResult)
 		switch v := lastResult.(type) {
