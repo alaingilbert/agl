@@ -75,6 +75,14 @@ func main() {
 						Usage:  "initialize a new module",
 						Action: modInitAction,
 					},
+					{
+						Name:   "tidy",
+						Action: modTidyAction,
+					},
+					{
+						Name:   "vendor",
+						Action: modVendorAction,
+					},
 				},
 			},
 		},
@@ -365,6 +373,20 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 
 func modInitAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "init", c.Args().First())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func modTidyAction(_ context.Context, c *cli.Command) error {
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func modVendorAction(_ context.Context, c *cli.Command) error {
+	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
