@@ -933,12 +933,12 @@ func (f FuncType) String() string {
 			if t == nil {
 				return "NIL"
 			}
-			out := ""
+			tmp := ""
 			if utils.TryCast[MutType](t) {
-				out += "mut "
+				tmp += "mut "
 				t = t.(MutType).W
 			}
-			return out + t.String()
+			return tmp + t.String()
 		}, ", ")
 		if recvStr != "" {
 			recvStr = " (" + recvStr + ")"
