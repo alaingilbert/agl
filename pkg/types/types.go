@@ -926,10 +926,8 @@ func (f FuncType) GoStr1() string { // TODO
 func (f FuncType) StringFull() string { return f.String() }
 
 func (f FuncType) String() string {
-	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
-	if f.Name != "" {
-		nameStr = " " + f.Name
-	}
+	out := f.String1()
+	var recvStr string
 	if f.Recv != nil {
 		recvStr = utils.MapJoin(f.Recv, func(t Type) string {
 			if t == nil {
@@ -946,46 +944,11 @@ func (f FuncType) String() string {
 			recvStr = " (" + recvStr + ")"
 		}
 	}
-	if f.TypeParams != nil {
-		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
-	}
-	if f.Params != nil {
-		var tmp1 []string
-		for _, param := range f.Params {
-			var val string
-			if utils.TryCast[MutType](param) {
-				val += "mut "
-				param = param.(MutType).W
-			}
-			if param == nil {
-				val += "nil"
-			} else {
-				val += param.StringFull()
-			}
-			tmp1 = append(tmp1, val)
-		}
-		paramsStr = strings.Join(tmp1, ", ")
-	}
-	if result := f.Return; result != nil {
-		if _, ok := result.(VoidType); !ok {
-			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
-				resultStr = " !"
-			} else {
-				val := result.StringFull()
-				if val != "" {
-					resultStr = " " + val
-				}
-			}
-		}
-	}
-	return fmt.Sprintf("func%s%s%s(%s)%s", recvStr, nameStr, typeParamsStr, paramsStr, resultStr)
+	return out[0:4] + recvStr + out[4:]
 }
 
 func (f FuncType) String1() string {
-	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
+	var nameStr, resultStr, paramsStr, typeParamsStr string
 	if f.Name != "" {
 		nameStr = " " + f.Name
 	}
@@ -1024,7 +987,7 @@ func (f FuncType) String1() string {
 			}
 		}
 	}
-	return fmt.Sprintf("func%s%s%s(%s)%s", recvStr, nameStr, typeParamsStr, paramsStr, resultStr)
+	return fmt.Sprintf("func%s%s(%s)%s", nameStr, typeParamsStr, paramsStr, resultStr)
 }
 
 type ShortFuncLitType struct {
