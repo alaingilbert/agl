@@ -8,6 +8,9 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	goast "go/ast"
+	goparser "go/parser"
+	gotoken "go/token"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -317,6 +320,117 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
+func defineFromGoSrc(env *Env, path string, src []byte) {
+	fset := gotoken.NewFileSet()
+	node := Must(goparser.ParseFile(fset, "", src, goparser.AllErrors|goparser.ParseComments))
+	pkgName := node.Name.Name
+	_ = env.DefinePkg(pkgName, path)
+	for _, d := range node.Decls {
+		switch decl := d.(type) {
+		case *goast.FuncDecl:
+			//fullName := decl.Name.Name
+			//if decl.Recv != nil {
+			//	t := decl.Recv.List[0].Type
+			//	var recvName string
+			//	switch v := t.(type) {
+			//	case *goast.Ident:
+			//		recvName = v.Name
+			//	case *goast.StarExpr:
+			//		switch vv := v.X.(type) {
+			//		case *goast.Ident:
+			//			recvName = vv.Name
+			//		case *goast.SelectorExpr:
+			//			recvName = vv.Sel.Name
+			//		default:
+			//			panic(fmt.Sprintf("%v", to(v.X)))
+			//		}
+			//	case *goast.SelectorExpr:
+			//		recvName = v.Sel.Name
+			//	default:
+			//		panic(fmt.Sprintf("%v", to(t)))
+			//	}
+			//	fullName = recvName + "." + fullName
+			//}
+			//fullName = pkgName + "." + fullName
+			//ft := funcDeclTypeToFuncType("", decl, env, true)
+			//if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
+			//	ft.IsNative = false
+			//	switch v := ft.Return.(type) {
+			//	case types.ResultType:
+			//		v.Native = false
+			//		ft.Return = v
+			//	case types.OptionType:
+			//		v.Native = false
+			//		ft.Return = v
+			//	}
+			//	env.DefineFnNative2(fullName, ft)
+			//} else {
+			//	ft.IsNative = true
+			//	env.DefineFnNative2(fullName, ft)
+			//}
+		case *goast.GenDecl:
+			for _, s := range decl.Specs {
+				switch spec := s.(type) {
+				case *goast.TypeSpec:
+					specName := pkgName + "." + spec.Name.Name
+					switch v := spec.Type.(type) {
+					case *goast.StructType:
+						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
+						if v.Fields != nil {
+							//for _, field := range v.Fields.List {
+							//	t := env.GetType2(field.Type)
+							//	for _, name := range field.Names {
+							//		fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
+							//		switch vv := t.(type) {
+							//		case types.InterfaceType:
+							//			env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
+							//		case types.StructType:
+							//			env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
+							//		case types.TypeType:
+							//			env.Define(nil, fieldName, vv.W)
+							//		case types.ArrayType:
+							//			env.Define(nil, fieldName, vv)
+							//		case types.StarType:
+							//			env.Define(nil, fieldName, vv)
+							//		case types.MapType:
+							//			env.Define(nil, fieldName, vv)
+							//		case types.CustomType:
+							//			env.Define(nil, fieldName, vv)
+							//		default:
+							//			panic(fmt.Sprintf("%v", to(t)))
+							//		}
+							//	}
+							//}
+						}
+					}
+				}
+			}
+			//			specName := pkgName + "." + spec.Name.Name
+			//			switch v := spec.Type.(type) {
+			//			case *goast.Ident:
+			//				t := env.GetType2(v)
+			//				env.Define(nil, specName, types.CustomType{Pkg: pkgName, Name: spec.Name.Name, W: t})
+			//			case *goast.MapType:
+			//				t := env.GetType2(v)
+			//				env.Define(nil, specName, t)
+			//			case *goast.StarExpr:
+			//				t := env.GetType2(v)
+			//				env.Define(nil, specName, t)
+			//			case *goast.ArrayType:
+			//				t := env.GetType2(v)
+			//				env.Define(nil, specName, t)
+			//			case *goast.InterfaceType:
+			//				env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
+			//
+			//			default:
+			//				panic(fmt.Sprintf("%v", to(spec.Type)))
+			//			}
+			//		}
+			//	}
+		}
+	}
+}
+
 func (e *Env) loadPkg(path string) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("std", path, f+".agl")
@@ -342,8 +456,7 @@ func (e *Env) loadVendor(path string) {
 			if err != nil {
 				continue
 			}
-			p(string(by)[:10])
-			//p("loading", entry.Name(), "from", vendorPath)
+			defineFromGoSrc(e, path, by)
 		}
 	}
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
