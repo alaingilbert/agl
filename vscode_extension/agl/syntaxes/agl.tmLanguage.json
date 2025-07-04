@@ -31,7 +31,7 @@
 		"types": {
 			"patterns": [{
 				"name": "storage.type.agl",
-				"match": "\\b(u8|u16|u32|u64|i8|i16|i32|i64|int|uint|f32|f64|bool|string)\\b"
+				"match": "\\b(u8|u16|u32|u64|i8|i16|i32|i64|int|uint|f32|f64|bool|string|map|set)\\b"
 			}]
 		},
 		"functions": {
