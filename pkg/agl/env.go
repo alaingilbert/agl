@@ -121,16 +121,15 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 		lastResult = types.Unwrap(lastResult)
 		switch v := lastResult.(type) {
 		case types.InterfaceType:
+			var inner types.Type = types.TupleType{Elts: results}
 			if v.Name == "error" {
 				results = results[:len(results)-1]
+				inner = types.TupleType{Elts: results}
 				if len(results) == 0 {
-					result = types.ResultType{W: types.VoidType{}, Native: native}
-				} else {
-					result = types.ResultType{W: types.TupleType{Elts: results}, Native: native}
+					inner = types.VoidType{}
 				}
-			} else {
-				result = types.ResultType{W: types.TupleType{Elts: results}, Native: native}
 			}
+			result = types.ResultType{W: inner, Native: native}
 		default:
 			result = types.TupleType{Elts: results}
 		}
