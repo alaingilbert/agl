@@ -133,6 +133,8 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 		} else {
 			result = types.TupleType{Elts: results}
 		}
+	} else {
+		result = types.VoidType{}
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
