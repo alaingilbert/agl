@@ -128,6 +128,8 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 				} else {
 					result = types.ResultType{W: types.TupleType{Elts: results}, Native: native}
 				}
+			} else {
+				result = types.ResultType{W: types.TupleType{Elts: results}, Native: native}
 			}
 		default:
 			result = types.TupleType{Elts: results}
