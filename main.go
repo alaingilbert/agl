@@ -67,6 +67,16 @@ func main() {
 				Usage:  "print AGL version",
 				Action: versionAction,
 			},
+			{
+				Name: "mod",
+				Commands: []*cli.Command{
+					{
+						Name:   "init",
+						Usage:  "initialize a new module",
+						Action: modInitAction,
+					},
+				},
+			},
 		},
 		Action: startAction,
 	}
@@ -351,6 +361,13 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 	result = append(result, lines[packageLineIndex+1:]...)
 
 	return strings.Join(result, "\n")
+}
+
+func modInitAction(_ context.Context, c *cli.Command) error {
+	cmd := exec.Command("go", "mod", "init", c.Args().First())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func versionAction(ctx context.Context, cmd *cli.Command) error {
