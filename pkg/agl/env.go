@@ -427,7 +427,6 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *goast.StructType:
-						p("?S", specName)
 						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
 						}
@@ -451,7 +450,16 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 				continue
 			}
 			fnT := goFuncDeclTypeToFuncType("", pkgName, decl, env)
-			p("?", fnT)
+			fullName := decl.Name.Name
+			if decl.Recv != nil {
+				recvName := getGoRecv(decl.Recv.List[0].Type)
+				if recvName == "" {
+					continue
+				}
+				fullName = recvName + "." + fullName
+			}
+			fullName = pkgName + "." + fullName
+			env.DefineFnNative2(fullName, fnT)
 		}
 	}
 }
@@ -481,7 +489,6 @@ func (e *Env) loadVendor(path string) {
 			if err != nil {
 				continue
 			}
-			//p("?loading", fullPath)
 			defineFromGoSrc(e, path, by)
 		}
 	}
