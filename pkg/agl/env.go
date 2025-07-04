@@ -137,16 +137,6 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
-	//if result == nil {
-	//	switch expr.Result.(type) {
-	//	case *ast.ResultExpr:
-	//		result = types.ResultType{W: types.VoidType{}}
-	//	case *ast.OptionExpr:
-	//		result = types.OptionType{W: types.VoidType{}}
-	//	default:
-	//		result = types.VoidType{}
-	//	}
-	//}
 	ft := types.FuncType{
 		Name:       name,
 		TypeParams: paramsT,
