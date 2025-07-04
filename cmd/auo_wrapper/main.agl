@@ -36,7 +36,7 @@ func main() {
 }
 
 func astToStr(n ast.Expr) string {
-	var out string
+	var mut out string
 	switch param := n.(type) {
 	case *ast.SelectorExpr:
 		out = param.X.(*ast.Ident)?.Name + "." + param.Sel.Name
@@ -72,7 +72,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
  	var paramsArr []string
  	for _, param := range decl.Type.Params.List {	
 		names := param.Names.Map({ $0.Name }).Joined(", ")	
-		typeName := astToStr(param.Type)
+		mut typeName := astToStr(param.Type)
 		if env[typeName] == "interface" { // interfaces can be "nil", we use Option instead
 			typeName = "Option[" + typeName + "]"
 		}
@@ -83,7 +83,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 	fnName := decl.Name.Name
 	paramsStr := paramsArr.Joined(", ")
 	
-	var resultStr string
+	var mut resultStr string
 	if decl.Type.Results != nil {
 		results := decl.Type.Results.List
 		var arr []string
