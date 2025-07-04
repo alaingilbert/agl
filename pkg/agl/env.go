@@ -126,7 +126,21 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 			}
 		}
 	} else if len(results) > 1 {
-		result = results[0]
+		lastResult := results[len(results)-1]
+		lastResult = types.Unwrap(lastResult)
+		switch v := lastResult.(type) {
+		case types.InterfaceType:
+			if v.Name == "error" {
+				results = results[:len(results)-1]
+				if len(results) == 0 {
+					result = types.ResultType{W: types.VoidType{}, Native: native}
+				} else {
+					result = types.ResultType{W: types.TupleType{Elts: results}, Native: native}
+				}
+			}
+		default:
+			result = types.TupleType{Elts: results}
+		}
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
