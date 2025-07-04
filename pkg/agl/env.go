@@ -938,8 +938,8 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 		}
 		return types.VoidType{}
 		return nil
-	//case *goast.FuncType:
-	//	return funcTypeToFuncType("", xx, e, false)
+	case *goast.FuncType:
+		return goFuncTypeToFuncType("", pkgName, xx, e)
 	case *goast.Ellipsis:
 		t := e.GetGoType2(pkgName, xx.Elt)
 		panicIfNil(t, xx.Elt)
