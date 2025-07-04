@@ -822,12 +822,7 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 	eTRaw = types.Unwrap(eTRaw)
 	switch eT := eTRaw.(type) {
 	case types.StructType:
-		structPkg := eT.Pkg
-		structName := eT.Name
-		name := structName + "." + id.Name
-		if structPkg != "" {
-			name = structPkg + "." + name
-		}
+		name := eT.GetFieldName(id.Name)
 		return infer.env.Get(name)
 	default:
 		panic("")
