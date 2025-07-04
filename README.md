@@ -27,6 +27,10 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 - VSCode extension & LSP (language server protocol)
 - Shell "shebang" support
 
+## Community
+
+- Discord server https://discord.gg/uFxBsSnm
+
 ## How to use
 
 ```go
