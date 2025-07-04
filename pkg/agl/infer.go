@@ -973,7 +973,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		default:
 			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
 		}
-		infer.SetType(call.X, exprFunT, WithDefinition(callXParent))
+		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
 		infer.inferGoExtensions(expr, exprFunT, call)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
