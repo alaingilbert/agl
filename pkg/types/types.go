@@ -946,21 +946,19 @@ func (f FuncType) String1() string {
 		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if f.Params != nil {
-		var tmp1 []string
-		for _, param := range f.Params {
+		paramsStr = utils.MapJoin(f.Params, func(p Type) string {
 			var val string
-			if utils.TryCast[MutType](param) {
+			if utils.TryCast[MutType](p) {
 				val += "mut "
-				param = param.(MutType).W
+				p = p.(MutType).W
 			}
-			if param == nil {
+			if p == nil {
 				val += "nil"
 			} else {
-				val += param.StringFull()
+				val += p.StringFull()
 			}
-			tmp1 = append(tmp1, val)
-		}
-		paramsStr = strings.Join(tmp1, ", ")
+			return val
+		}, ", ")
 	}
 	if result := f.Return; result != nil {
 		if _, ok := result.(VoidType); !ok {
