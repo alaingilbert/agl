@@ -124,6 +124,8 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 			var inner types.Type = types.TupleType{Elts: results}
 			if len(results) == 0 {
 				inner = types.VoidType{}
+			} else if len(results) == 1 {
+				inner = results[0]
 			}
 			result = types.ResultType{W: inner, Native: native}
 		} else if len(results) == 1 {
