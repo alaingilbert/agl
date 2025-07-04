@@ -43,13 +43,35 @@ func (i *Info) GetType() types.Type {
 	return nil
 }
 
+func getGoRecv(e goast.Expr) string {
+	recvTyp := e
+	switch v := recvTyp.(type) {
+	case *goast.Ident:
+		if v.IsExported() {
+			return v.Name
+		}
+	case *goast.StarExpr:
+		return getGoRecv(v.X)
+	case *goast.IndexExpr:
+		return getGoRecv(v.X)
+	case *goast.IndexListExpr:
+		return getGoRecv(v.X)
+	default:
+		panic(fmt.Sprintf("%v", to(recvTyp)))
+	}
+	return ""
+}
+
 func goFuncDeclTypeToFuncType(name string, expr *goast.FuncDecl, env *Env) types.FuncType {
 	fT := goFuncTypeToFuncType(name, expr.Type, env)
 	var recvT []types.Type
 	if expr.Recv != nil {
 		for _, recv := range expr.Recv.List {
-			for range recv.Names {
+			for _, recvName := range recv.Names {
 				recvTyp := recv.Type
+				if n := getGoRecv(recv.Type); n != "" {
+					p("?>", recvName, n)
+				}
 				t := env.GetGoType2(recvTyp)
 				recvT = append(recvT, t)
 			}
@@ -406,13 +428,6 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 	_ = env.DefinePkg(pkgName, path)
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
-		case *goast.FuncDecl:
-			if !decl.Name.IsExported() {
-				continue
-			}
-			fnT := goFuncDeclTypeToFuncType("", decl, env)
-			p("?", fnT)
-
 		case *goast.GenDecl:
 			for _, s := range decl.Specs {
 				switch spec := s.(type) {
@@ -420,58 +435,23 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *goast.StructType:
+						p("?", specName)
 						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
-							//for _, field := range v.Fields.List {
-							//	t := env.GetType2(field.Type)
-							//	for _, name := range field.Names {
-							//		fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
-							//		switch vv := t.(type) {
-							//		case types.InterfaceType:
-							//			env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
-							//		case types.StructType:
-							//			env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
-							//		case types.TypeType:
-							//			env.Define(nil, fieldName, vv.W)
-							//		case types.ArrayType:
-							//			env.Define(nil, fieldName, vv)
-							//		case types.StarType:
-							//			env.Define(nil, fieldName, vv)
-							//		case types.MapType:
-							//			env.Define(nil, fieldName, vv)
-							//		case types.CustomType:
-							//			env.Define(nil, fieldName, vv)
-							//		default:
-							//			panic(fmt.Sprintf("%v", to(t)))
-							//		}
-							//	}
-							//}
 						}
 					}
 				}
 			}
-			//			specName := pkgName + "." + spec.Name.Name
-			//			switch v := spec.Type.(type) {
-			//			case *goast.Ident:
-			//				t := env.GetType2(v)
-			//				env.Define(nil, specName, types.CustomType{Pkg: pkgName, Name: spec.Name.Name, W: t})
-			//			case *goast.MapType:
-			//				t := env.GetType2(v)
-			//				env.Define(nil, specName, t)
-			//			case *goast.StarExpr:
-			//				t := env.GetType2(v)
-			//				env.Define(nil, specName, t)
-			//			case *goast.ArrayType:
-			//				t := env.GetType2(v)
-			//				env.Define(nil, specName, t)
-			//			case *goast.InterfaceType:
-			//				env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
-			//
-			//			default:
-			//				panic(fmt.Sprintf("%v", to(spec.Type)))
-			//			}
-			//		}
-			//	}
+		}
+	}
+	for _, d := range node.Decls {
+		switch decl := d.(type) {
+		case *goast.FuncDecl:
+			if !decl.Name.IsExported() {
+				continue
+			}
+			fnT := goFuncDeclTypeToFuncType("", decl, env)
+			p("?", fnT)
 		}
 	}
 }
