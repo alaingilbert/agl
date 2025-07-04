@@ -819,9 +819,7 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 
 func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type {
 	eTRaw := infer.env.GetType2(e)
-	if v, ok := eTRaw.(types.StarType); ok {
-		eTRaw = v.X
-	}
+	eTRaw = types.Unwrap(eTRaw)
 	switch eT := eTRaw.(type) {
 	case types.StructType:
 		structPkg := eT.Pkg
@@ -855,9 +853,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.SelectorExpr:
 			infer.expr(callXT.X)
 			if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
-				if v, ok := callXTXT.(types.StarType); ok {
-					callXTXT = v.X
-				}
+				callXTXT = types.Unwrap(callXTXT)
 				if v, ok := callXTXT.(types.StructType); ok {
 					name := v.GetFieldName(callXT.Sel.Name)
 					t := infer.env.Get(name)
@@ -881,15 +877,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 
 		fnName := call.Sel.Name
 		oexprFunT := exprFunT
-		if el, ok := exprFunT.(types.MutType); ok {
-			exprFunT = el.W
-		}
-		if starT, ok := exprFunT.(types.StarType); ok {
-			exprFunT = starT.X
-		}
-		if el, ok := exprFunT.(types.TypeType); ok {
-			exprFunT = el.W
-		}
+		exprFunT = types.Unwrap(exprFunT)
 		switch idTT := exprFunT.(type) {
 		case types.TypeType:
 		case types.UntypedStringType:
@@ -991,9 +979,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 		} else if call.Name == "min" {
 			arg0T := infer.env.GetType2(expr.Args[0])
-			if vv, ok := arg0T.(types.MutType); ok {
-				arg0T = vv.W
-			}
+			arg0T = types.Unwrap(arg0T)
 			fnT := infer.env.Get("min").(types.FuncType).T("T", arg0T)
 			for i := 0; i < len(expr.Args)-2; i++ {
 				fnT.Params = append(fnT.Params, arg0T)
@@ -1001,9 +987,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr.Fun, fnT)
 		} else if call.Name == "max" {
 			arg0T := infer.env.GetType2(expr.Args[0])
-			if vv, ok := arg0T.(types.MutType); ok {
-				arg0T = vv.W
-			}
+			arg0T = types.Unwrap(arg0T)
 			fnT := infer.env.Get("max").(types.FuncType).T("T", arg0T)
 			for i := 0; i < len(expr.Args)-2; i++ {
 				fnT.Params = append(fnT.Params, arg0T)
@@ -1012,9 +996,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		} else if call.Name == "append" {
 			fnT := infer.env.Get("append").(types.FuncType)
 			arg0 := infer.env.GetType2(expr.Args[0])
-			if vv, ok := arg0.(types.MutType); ok {
-				arg0 = vv.W
-			}
+			arg0 = types.Unwrap(arg0)
 			switch v := arg0.(type) {
 			case types.ArrayType:
 				fnT = fnT.T("T", v.Elt)
@@ -1332,9 +1314,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	eltT := idTArr.Elt
 	exprPos := infer.Pos(expr)
 	forceReturnType := infer.forceReturnType
-	if v, ok := forceReturnType.(types.MutType); ok {
-		forceReturnType = v.W
-	}
+	forceReturnType = types.Unwrap(forceReturnType)
 	fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", idTArr.Elt)
 	if forceReturnType != nil {
 		fnT = fnT.T("R", forceReturnType)
@@ -1353,22 +1333,16 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	reduceFnT := infer.env.GetType(exprFun.Sel).(types.FuncType)
 	ft := reduceFnT.GetParam(2).(types.FuncType)
 	if forceReturnType != nil {
-		if v, ok := arg0T.(types.MutType); ok {
-			arg0T = v.W
-		}
+		arg0T = types.Unwrap(arg0T)
 		ft = ft.T("R", forceReturnType)
 		reduceFnT = reduceFnT.T("R", forceReturnType)
 		assertf(cmpTypes(arg0T, forceReturnType), "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
 	} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
-		if v, ok := eltT.(types.MutType); ok {
-			eltT = v.W
-		}
+		eltT = types.Unwrap(eltT)
 		ft = ft.T("R", eltT)
 		reduceFnT = reduceFnT.T("R", eltT)
 	} else {
-		if v, ok := arg0T.(types.MutType); ok {
-			arg0T = v.W
-		}
+		arg0T = types.Unwrap(arg0T)
 		ft = ft.T("R", arg0T)
 		reduceFnT = reduceFnT.T("R", arg0T)
 	}
@@ -1716,30 +1690,8 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 }
 
 func cmpTypesLoose(a, b types.Type) bool {
-	if v, ok := a.(types.StarType); ok {
-		a = v.X
-	}
-	if v, ok := b.(types.StarType); ok {
-		b = v.X
-	}
-	if v, ok := a.(types.CustomType); ok {
-		a = v.W
-	}
-	if v, ok := b.(types.CustomType); ok {
-		b = v.W
-	}
-	if v, ok := a.(types.MutType); ok {
-		a = v.W
-	}
-	if v, ok := b.(types.MutType); ok {
-		b = v.W
-	}
-	if v, ok := a.(types.TypeType); ok {
-		a = v.W
-	}
-	if v, ok := b.(types.TypeType); ok {
-		b = v.W
-	}
+	a = types.Unwrap(a)
+	b = types.Unwrap(b)
 	if isNumericType(a) && TryCast[types.UntypedNumType](b) {
 		return true
 	}
@@ -1750,18 +1702,8 @@ func cmpTypesLoose(a, b types.Type) bool {
 }
 
 func cmpTypes(a, b types.Type) bool {
-	if tt, ok := a.(types.TypeType); ok {
-		a = tt.W
-	}
-	if tt, ok := b.(types.TypeType); ok {
-		b = tt.W
-	}
-	if tt, ok := a.(types.MutType); ok {
-		a = tt.W
-	}
-	if tt, ok := b.(types.MutType); ok {
-		b = tt.W
-	}
+	a = types.Unwrap(a)
+	b = types.Unwrap(b)
 	if aa, ok := a.(types.FuncType); ok {
 		if bb, ok := b.(types.FuncType); ok {
 			if aa.GoStr() == bb.GoStr() {
@@ -1852,12 +1794,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	exprXT := infer.env.GetType2(expr.X)
 	assertf(exprXT != nil, "%s: type not found for '%s' %v", infer.Pos(expr.X), expr.X, to(expr.X))
 	exprXIdTRaw := exprXT
-	if v, ok := exprXIdTRaw.(types.MutType); ok {
-		exprXIdTRaw = v.W
-	}
-	if v, ok := exprXIdTRaw.(types.StarType); ok {
-		exprXIdTRaw = v.X
-	}
+	exprXIdTRaw = types.Unwrap(exprXIdTRaw)
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
@@ -1901,9 +1838,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr, exprXIdT.W)
 	case types.TypeAssertType:
-		if v, ok := exprXIdT.Type.(types.StarType); ok {
-			exprXIdT.Type = v.X
-		}
+		exprXIdT.Type = types.Unwrap(exprXIdT.Type)
 		if v, ok := exprXIdT.Type.(types.StructType); ok {
 			fieldName := expr.Sel.Name
 			name := v.GetFieldName(fieldName)
@@ -2339,9 +2274,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			case *ast.IndexExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
 				lhsIdNameT := infer.env.Get(lhsIdName)
-				if vv, ok := lhsIdNameT.(types.MutType); ok {
-					lhsIdNameT = vv.W
-				}
+				lhsIdNameT = types.Unwrap(lhsIdNameT)
 				switch vv := lhsIdNameT.(type) {
 				case types.MapType:
 					lhsWantedT = vv.V
@@ -2353,12 +2286,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			case *ast.SelectorExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
 				xT := infer.env.Get(lhsIdName)
-				if vv, ok := xT.(types.MutType); ok {
-					xT = vv.W
-				}
-				if vv, ok := xT.(types.StarType); ok {
-					xT = vv.X
-				}
+				xT = types.Unwrap(xT)
 				switch vv := xT.(type) {
 				case types.TupleType:
 					argIdx, err := strconv.Atoi(v.Sel.Name)
@@ -2405,12 +2333,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				lhsIdName := lhsID.Name
 				xT := infer.env.Get(lhsIdName)
-				if xTv, ok := xT.(types.MutType); ok {
-					xT = xTv.W
-				}
-				if xTv, ok := xT.(types.StarType); ok {
-					xT = xTv.X
-				}
+				xT = types.Unwrap(xT)
 				switch xTv := xT.(type) {
 				case types.TupleType:
 					argIdx, _ := strconv.Atoi(v.Sel.Name)

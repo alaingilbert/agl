@@ -638,9 +638,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 	case *ast.SelectorExpr:
 		base := e.GetType2(xx.X)
-		if vv, ok := base.(types.StarType); ok {
-			base = vv.X
-		}
+		base = types.Unwrap(base)
 		switch v := base.(type) {
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)

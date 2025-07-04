@@ -1073,12 +1073,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	switch e := expr.Fun.(type) {
 	case *ast.SelectorExpr:
 		eXT := g.env.GetType(e.X)
-		if el, ok := eXT.(types.MutType); ok {
-			eXT = el.W
-		}
-		if el, ok := eXT.(types.TypeType); ok {
-			eXT = el.W
-		}
+		eXT = types.Unwrap(eXT)
 		switch eXT.(type) {
 		case types.ArrayType:
 			fnName := e.Sel.Name

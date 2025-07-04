@@ -585,10 +585,24 @@ func (f F64Type) StringFull() string { return f.String() }
 
 type MutType struct{ W Type }
 
+func (m MutType) Unwrap() Type       { return m.W }
 func (m MutType) GoStr() string      { return m.W.GoStr() }
 func (m MutType) GoStrType() string  { return m.W.GoStrType() }
 func (m MutType) String() string     { return m.W.String() }
 func (m MutType) StringFull() string { return m.W.StringFull() }
+
+func Unwrap(t Type) Type {
+	if v, ok := t.(MutType); ok {
+		t = v.Unwrap()
+	}
+	if starT, ok := t.(StarType); ok {
+		t = starT.X
+	}
+	if v, ok := t.(TypeType); ok {
+		t = v.W
+	}
+	return t
+}
 
 type TupleType struct {
 	Elts []Type
@@ -754,12 +768,8 @@ func ReplGenM(t Type, m map[string]Type) (out Type) {
 }
 
 func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
-	if v, ok := currTyp.(MutType); ok {
-		currTyp = v.W
-	}
-	if v, ok := newTyp.(MutType); ok {
-		newTyp = v.W
-	}
+	currTyp = Unwrap(currTyp)
+	newTyp = Unwrap(newTyp)
 	switch currT := currTyp.(type) {
 	case ArrayType:
 		return ReplGen2(t, currT.Elt, newTyp.(ArrayType).Elt)
