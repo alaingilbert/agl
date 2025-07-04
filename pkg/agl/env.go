@@ -8,6 +8,7 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -330,8 +331,20 @@ func (e *Env) loadPkg(path string) error {
 
 func (e *Env) loadVendor(path string) {
 	f := filepath.Base(path)
+	vendorPath := filepath.Join("vendor", path)
+	if entries, err := os.ReadDir(vendorPath); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+				continue
+			}
+			//p("loading", entry.Name(), "from", vendorPath)
+		}
+	}
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
-	by := Must(contentFs.ReadFile(stdFilePath))
+	by, err := contentFs.ReadFile(stdFilePath)
+	if err != nil {
+		return
+	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
 	defineFromSrc(e, final, by)
 }
