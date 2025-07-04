@@ -337,6 +337,12 @@ func (e *Env) loadVendor(path string) {
 			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
 				continue
 			}
+			fullPath := filepath.Join(vendorPath, entry.Name())
+			by, err := os.ReadFile(fullPath)
+			if err != nil {
+				continue
+			}
+			p(string(by)[:10])
 			//p("loading", entry.Name(), "from", vendorPath)
 		}
 	}
