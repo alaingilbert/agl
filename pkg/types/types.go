@@ -901,12 +901,7 @@ func (f FuncType) GoStr1() string { // TODO
 		}
 	}
 	if f.Params != nil {
-		var tmp1 []string
-		for _, param := range f.Params {
-			val := utils.Ternary(param == nil, "nil", param.GoStr())
-			tmp1 = append(tmp1, val)
-		}
-		paramsStr = strings.Join(tmp1, ", ")
+		paramsStr = utils.MapJoin(f.Params, func(p Type) string { return p.GoStr() }, ", ")
 	}
 	if result := f.Return; result != nil {
 		if _, ok := result.(VoidType); !ok {
