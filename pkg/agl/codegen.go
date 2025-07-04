@@ -1072,14 +1072,14 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	switch e := expr.Fun.(type) {
 	case *ast.SelectorExpr:
-		tmp := g.env.GetType(e.X)
-		if el, ok := tmp.(types.MutType); ok {
-			tmp = el.W
+		eXT := g.env.GetType(e.X)
+		if el, ok := eXT.(types.MutType); ok {
+			eXT = el.W
 		}
-		if el, ok := tmp.(types.TypeType); ok {
-			tmp = el.W
+		if el, ok := eXT.(types.TypeType); ok {
+			eXT = el.W
 		}
-		if _, ok := tmp.(types.ArrayType); ok {
+		if _, ok := eXT.(types.ArrayType); ok {
 			fnName := e.Sel.Name
 			if fnName == "Filter" {
 				return fmt.Sprintf("AglVecFilter(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1155,7 +1155,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
-		} else if TryCast[types.SetType](tmp) {
+		} else if TryCast[types.SetType](eXT) {
 			switch e.Sel.Name {
 			case "Insert":
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1200,7 +1200,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Max":
 				return fmt.Sprintf("AglSetMax(%s)", g.genExpr(e.X))
 			}
-		} else if TryCast[types.StringType](tmp) || TryCast[types.UntypedStringType](tmp) {
+		} else if TryCast[types.StringType](eXT) || TryCast[types.UntypedStringType](eXT) {
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1237,7 +1237,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "F64":
 				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
 			}
-		} else if _, ok := tmp.(types.MapType); ok {
+		} else if _, ok := eXT.(types.MapType); ok {
 			if e.Sel.Name == "Get" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
