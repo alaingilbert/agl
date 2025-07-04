@@ -107,7 +107,7 @@ func wrapFn(fset *token.FileSet, decl *ast.FuncDecl) {
 		resultStr = " " + resultStr
  	}
 
-	var sb strings.Builder
+	var mut sb strings.Builder
 	sb.WriteString("func " + fnName + "(" + paramsStr + ")" + resultStr + " {}")
 	fmt.Println(sb.String())
 }
