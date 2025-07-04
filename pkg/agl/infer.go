@@ -2260,10 +2260,68 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			assignFn(ass.n, ass.name, ass.mutable, ass.typ)
 		}
 	}
-	if len(stmt.Rhs) == 1 {
+	if len(stmt.Rhs) == 1 && len(stmt.Lhs) > 1 { // eg: `e, ok := m[0]`
 		rhs := stmt.Rhs[0]
-		if len(stmt.Lhs) == 1 {
-			lhs := stmt.Lhs[0]
+		infer.expr(rhs)
+		if rhs1, ok := rhs.(*ast.TupleExpr); ok {
+			for i, x := range rhs1.Values {
+				lhs := stmt.Lhs[i]
+				lhsID := MustCast[*ast.Ident](lhs)
+				infer.SetType(lhs, infer.GetType(x))
+				assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
+			}
+		} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
+			for i, e := range stmt.Lhs {
+				lit := rhs2.SubTyp
+				fields := rhs2.Fields
+				// AGL: fields.Find({ $0.name == lit })
+				f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
+				assert(f != nil)
+				assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable, f.Elts[i]})
+			}
+		} else if rhsId, ok := rhs.(*ast.Ident); ok {
+			rhsIdT := infer.env.Get(rhsId.Name)
+			if rhs3, ok := rhsIdT.(types.TupleType); ok {
+				for i, x := range rhs3.Elts {
+					lhs := stmt.Lhs[i]
+					lhsID := MustCast[*ast.Ident](lhs)
+					infer.SetType(lhs, x)
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
+				}
+			}
+		} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
+			rhsId1XT := infer.GetType(rhsId1.X)
+			if v, ok := rhsId1XT.(types.CustomType); ok {
+				rhsId1XT = v.W
+			}
+			switch rhsId1XTT := rhsId1XT.(type) {
+			case types.MapType:
+				switch len(stmt.Lhs) {
+				case 2:
+					lhs1 := stmt.Lhs[1].(*ast.Ident)
+					lhs1T := types.BoolType{}
+					infer.SetType(lhs1, lhs1T)
+					assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable, lhs1T})
+					fallthrough
+				case 1:
+					lhs0 := stmt.Lhs[0].(*ast.Ident)
+					lhs0T := rhsId1XTT.V
+					infer.SetType(lhs0, rhsId1XTT.V)
+					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable, lhs0T})
+				default:
+					assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+				}
+			default:
+				assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			}
+		} else {
+			assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+		}
+	} else {
+		assertf(len(stmt.Lhs) == len(stmt.Rhs), "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+		for i := range stmt.Lhs {
+			lhs := stmt.Lhs[i]
+			rhs := stmt.Rhs[i]
 
 			if v1, ok := lhs.(*ast.Ident); ok {
 				if v2, ok := rhs.(*ast.Ident); ok {
@@ -2393,79 +2451,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				infer.SetType(lhs, tmp)
 			}
-			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
-		} else { // len(stmt.Lhs) != 1
-			infer.expr(rhs)
-			if rhs1, ok := rhs.(*ast.TupleExpr); ok {
-				for i, x := range rhs1.Values {
-					lhs := stmt.Lhs[i]
-					lhsID := MustCast[*ast.Ident](lhs)
-					infer.SetType(lhs, infer.GetType(x))
-					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
-				}
-			} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
-				for i, e := range stmt.Lhs {
-					lit := rhs2.SubTyp
-					fields := rhs2.Fields
-					// AGL: fields.Find({ $0.name == lit })
-					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
-					assert(f != nil)
-					assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable, f.Elts[i]})
-				}
-			} else if rhsId, ok := rhs.(*ast.Ident); ok {
-				rhsIdT := infer.env.Get(rhsId.Name)
-				if rhs3, ok := rhsIdT.(types.TupleType); ok {
-					for i, x := range rhs3.Elts {
-						lhs := stmt.Lhs[i]
-						lhsID := MustCast[*ast.Ident](lhs)
-						infer.SetType(lhs, x)
-						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
-					}
-				}
-			} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
-				rhsId1XT := infer.GetType(rhsId1.X)
-				if v, ok := rhsId1XT.(types.CustomType); ok {
-					rhsId1XT = v.W
-				}
-				switch rhsId1XTT := rhsId1XT.(type) {
-				case types.MapType:
-					switch len(stmt.Lhs) {
-					case 2:
-						lhs1 := stmt.Lhs[1].(*ast.Ident)
-						lhs1T := types.BoolType{}
-						infer.SetType(lhs1, lhs1T)
-						assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable, lhs1T})
-						fallthrough
-					case 1:
-						lhs0 := stmt.Lhs[0].(*ast.Ident)
-						lhs0T := rhsId1XTT.V
-						infer.SetType(lhs0, rhsId1XTT.V)
-						assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable, lhs0T})
-					default:
-						assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
-					}
-				default:
-					assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
-				}
-			} else {
-				assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
-			}
-		}
-	} else {
-		assertf(len(stmt.Lhs) == len(stmt.Rhs), "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
-		for i := range stmt.Lhs {
-			lhs := stmt.Lhs[i]
-			rhs := stmt.Rhs[i]
-			if v1, ok := lhs.(*ast.Ident); ok {
-				if v2, ok := rhs.(*ast.Ident); ok {
-					if v1.Mutable {
-						assertf(TryCast[types.MutType](infer.env.Get(v2.Name)), "%s: cannot make mutable bind of an immutable variable", infer.Pos(lhs))
-					}
-				}
-			}
-			infer.expr(rhs)
-			lhsID := MustCast[*ast.Ident](lhs)
-			infer.SetType(lhsID, infer.GetType(rhs))
 			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
 		}
 	}
