@@ -6,6 +6,7 @@ Otherwise, build it with `go build`, then move it in `mv agl /usr/local/bin`
 ```sh
 mkdir myProject && cd myProject
 agl mod init myProject
+go get github.com/google/uuid
 cat <<EOF > main.agl
 package main
 
