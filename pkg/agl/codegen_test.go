@@ -5460,7 +5460,7 @@ func main() {
 	mut vv := v
 	vv.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:6: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "11:2: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
 }
 
 func TestCodeGen189_2(t *testing.T) {
@@ -5494,7 +5494,7 @@ func main() {
 	mut vv, vvv := v, v
 	vv.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:6: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "11:2: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
 }
 
 func TestCodeGen189_4(t *testing.T) {

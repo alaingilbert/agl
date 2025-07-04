@@ -75,7 +75,7 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 			t := env.GetType2(param.Type)
 			n := max(len(param.Names), 1)
 			for i := 0; i < n; i++ {
-				if len(param.Names) > i && param.Names[i].Mutable {
+				if len(param.Names) > i && param.Names[i].Mutable.IsValid() {
 					t = types.MutType{W: t}
 				}
 				params = append(params, t)

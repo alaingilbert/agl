@@ -337,7 +337,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 				typ := infer.env.GetType2(f.Type)
 				for _, n := range f.Names {
 					tt := typ
-					if n.Mutable {
+					if n.Mutable.IsValid() {
 						tt = types.MutType{W: tt}
 					}
 					fields = append(fields, types.FieldType{Name: n.Name, Typ: tt})
@@ -460,7 +460,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				t := infer.env.GetType2(recv.Type)
 				infer.env.NoIdxUnwrap = false
 				for _, name := range recv.Names {
-					if name.Mutable {
+					if name.Mutable.IsValid() {
 						t = types.MutType{W: t}
 					}
 					infer.env.SetType(nil, name, t)
@@ -486,7 +486,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					infer.SetType(param.Type, types.TypeType{W: t})
 				}
 				for _, name := range param.Names {
-					if name.Mutable {
+					if name.Mutable.IsValid() {
 						t = types.MutType{W: t}
 					}
 					infer.env.Define(name, name.Name, t)
@@ -542,7 +542,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 		for _, recv := range decl.Recv.List {
 			for _, name := range recv.Names {
 				t := infer.env.GetType2(recv.Type)
-				if name.Mutable {
+				if name.Mutable.IsValid() {
 					t = types.MutType{W: t}
 				}
 				recvT = append(recvT, t)
@@ -566,7 +566,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			infer.expr(param.Type)
 			t := infer.env.GetType2(param.Type)
 			for i := range param.Names {
-				if param.Names[i].Mutable {
+				if param.Names[i].Mutable.IsValid() {
 					t = types.MutType{W: t}
 				}
 				paramsT = append(paramsT, t)
@@ -2139,7 +2139,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 		t := infer.env.GetType2(spec.Type)
 		for i, name := range spec.Names {
 			tt := t
-			if name.Mutable {
+			if name.Mutable.IsValid() {
 				tt = types.MutType{W: t}
 			}
 			if len(spec.Values) > 0 {
@@ -2268,7 +2268,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhs := stmt.Lhs[i]
 				lhsID := MustCast[*ast.Ident](lhs)
 				infer.SetType(lhs, infer.GetType(x))
-				assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
+				assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 			}
 		} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
 			for i, e := range stmt.Lhs {
@@ -2277,7 +2277,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				// AGL: fields.Find({ $0.name == lit })
 				f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
 				assert(f != nil)
-				assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable, f.Elts[i]})
+				assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable.IsValid(), f.Elts[i]})
 			}
 		} else if rhsId, ok := rhs.(*ast.Ident); ok {
 			rhsIdT := infer.env.Get(rhsId.Name)
@@ -2286,7 +2286,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
 					infer.SetType(lhs, x)
-					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 				}
 			}
 		} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
@@ -2301,13 +2301,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhs1 := stmt.Lhs[1].(*ast.Ident)
 					lhs1T := types.BoolType{}
 					infer.SetType(lhs1, lhs1T)
-					assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable, lhs1T})
+					assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable.IsValid(), lhs1T})
 					fallthrough
 				case 1:
 					lhs0 := stmt.Lhs[0].(*ast.Ident)
 					lhs0T := rhsId1XTT.V
 					infer.SetType(lhs0, rhsId1XTT.V)
-					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable, lhs0T})
+					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
 				default:
 					assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
 				}
@@ -2325,7 +2325,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 
 			if v1, ok := lhs.(*ast.Ident); ok {
 				if v2, ok := rhs.(*ast.Ident); ok {
-					if v1.Mutable {
+					if v1.Mutable.IsValid() {
 						assertf(TryCast[types.MutType](infer.env.Get(v2.Name)), "%s: cannot make mutable bind of an immutable variable", infer.Pos(lhs))
 					}
 				}
@@ -2451,7 +2451,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				infer.SetType(lhs, tmp)
 			}
-			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable, infer.GetType(lhsID)})
+			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 		}
 	}
 	assignsFn()

@@ -247,6 +247,27 @@ func main() {
 	tassert.Equal(t, "*Vertex", test.TypeAt(11, 2).String())
 }
 
+func TestInfer14(t *testing.T) {
+	src := `package main
+type Vertex struct {
+	mut X, mut Y f64
+}
+func (mut v *Vertex) Scale(f f64) int {
+	v.X = v.X * f
+	v.Y = v.Y * f
+    return 1
+}
+func main() {
+	mut v := &Vertex{3, 4}
+	mut vv := v
+	vv.Scale(10)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, "*Vertex", test.TypeAt(12, 2).String())
+	tassert.Equal(t, "*Vertex", test.TypeAt(12, 6).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

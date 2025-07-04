@@ -506,24 +506,24 @@ func (p *parser) parseIdentOrNum() *ast.Ident {
 }
 
 func (p *parser) parseIdent() *ast.Ident {
-	return p.parseIdentHelper(false)
+	return p.parseIdentHelper(token.NoPos)
 }
 
 func (p *parser) parseIdentOrMutIdent() *ast.Ident {
 	if p.tok == token.IDENT {
 		return p.parseIdent()
 	} else if p.tok == token.MUT {
-		p.expect(token.MUT)
-		return p.parseMutIdent()
+		mutPos := p.expect(token.MUT)
+		return p.parseMutIdent(mutPos)
 	}
 	panic("")
 }
 
-func (p *parser) parseMutIdent() *ast.Ident {
-	return p.parseIdentHelper(true)
+func (p *parser) parseMutIdent(mutPos token.Pos) *ast.Ident {
+	return p.parseIdentHelper(mutPos)
 }
 
-func (p *parser) parseIdentHelper(mutable bool) *ast.Ident {
+func (p *parser) parseIdentHelper(mutPos token.Pos) *ast.Ident {
 	pos := p.pos
 	name := "_"
 	if p.tok == token.IDENT {
@@ -532,7 +532,7 @@ func (p *parser) parseIdentHelper(mutable bool) *ast.Ident {
 	} else {
 		p.expect(token.IDENT) // use expect() error handling
 	}
-	return &ast.Ident{NamePos: pos, Name: name, Mutable: mutable}
+	return &ast.Ident{NamePos: pos, Name: name, Mutable: mutPos}
 }
 
 func (p *parser) parseIdentList() (list []*ast.Ident) {
@@ -713,8 +713,9 @@ func (p *parser) parseFieldDecl() *ast.Field {
 	doc := p.leadComment
 
 	var mutable bool
+	var mutPos token.Pos
 	if p.tok == token.MUT {
-		p.next()
+		mutPos = p.expect(token.MUT)
 		mutable = true
 	}
 
@@ -724,7 +725,7 @@ func (p *parser) parseFieldDecl() *ast.Field {
 	case token.IDENT:
 		var name *ast.Ident
 		if mutable {
-			name = p.parseMutIdent()
+			name = p.parseMutIdent(mutPos)
 		} else {
 			name = p.parseIdent()
 		}
@@ -895,10 +896,9 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 		defer un(trace(p, "ParamDecl"))
 	}
 
-	var mutable bool
+	var mutable token.Pos
 	if p.tok == token.MUT {
-		p.expect(token.MUT)
-		mutable = true
+		mutable = p.expect(token.MUT)
 	}
 
 	ptok := p.tok
@@ -916,8 +916,8 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 			f.name = name
 			p.tok = ptok
 		} else {
-			if mutable {
-				f.name = p.parseMutIdent()
+			if mutable.IsValid() {
+				f.name = p.parseMutIdent(mutable)
 			} else {
 				f.name = p.parseIdent()
 			}
@@ -1647,8 +1647,8 @@ func (p *parser) parseOperand() ast.Expr {
 
 	switch p.tok {
 	case token.MUT:
-		p.expect(token.MUT)
-		return p.parseMutIdent()
+		mutPos := p.expect(token.MUT)
+		return p.parseMutIdent(mutPos)
 
 	case token.AT_LINE:
 		pos := p.expect(token.AT_LINE)
