@@ -386,6 +386,23 @@ func modTidyAction(_ context.Context, c *cli.Command) error {
 }
 
 func modVendorAction(_ context.Context, c *cli.Command) error {
+	entries, _ := os.ReadDir(".")
+	var imports []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(entry.Name(), ".agl") {
+			by, _ := os.ReadFile(entry.Name())
+			_, f := agl.ParseSrc(string(by))
+			for _, i := range f.Imports {
+				imports = append(imports, fmt.Sprintf("import _ %s", i.Path.Value))
+			}
+		}
+	}
+	importsStr := strings.Join(imports, "\n")
+	_ = os.WriteFile("aglTmp.go", []byte("package main\n"+importsStr), 0644)
+	defer os.Remove("aglTmp.go")
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
