@@ -401,8 +401,9 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 		}
 	}
 	importsStr := strings.Join(imports, "\n")
-	_ = os.WriteFile("aglTmp.go", []byte("package main\n"+importsStr), 0644)
-	defer os.Remove("aglTmp.go")
+	const tmpGoFile = "aglTmp.go"
+	_ = os.WriteFile(tmpGoFile, []byte("package main\n"+importsStr), 0644)
+	defer os.Remove(tmpGoFile)
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
