@@ -1079,7 +1079,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		if el, ok := eXT.(types.TypeType); ok {
 			eXT = el.W
 		}
-		if _, ok := eXT.(types.ArrayType); ok {
+		switch eXT.(type) {
+		case types.ArrayType:
 			fnName := e.Sel.Name
 			if fnName == "Filter" {
 				return fmt.Sprintf("AglVecFilter(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1155,7 +1156,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content2 := prefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
-		} else if TryCast[types.SetType](eXT) {
+		case types.SetType:
 			switch e.Sel.Name {
 			case "Insert":
 				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1200,7 +1201,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Max":
 				return fmt.Sprintf("AglSetMax(%s)", g.genExpr(e.X))
 			}
-		} else if TryCast[types.StringType](eXT) || TryCast[types.UntypedStringType](eXT) {
+		case types.StringType, types.UntypedStringType:
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
@@ -1237,7 +1238,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "F64":
 				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
 			}
-		} else if _, ok := eXT.(types.MapType); ok {
+		case types.MapType:
 			if e.Sel.Name == "Get" {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -1249,12 +1250,14 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMapValues(%s))", content1)
 			}
-		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
-			content1 := g.genExprs(expr.Args)
-			return fmt.Sprintf("AglNewSet(%s)", content1)
-		} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
-			content1 := g.genExprs(expr.Args)
-			return fmt.Sprintf("AglHttpNewRequest(%s)", content1)
+		default:
+			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
+				content1 := g.genExprs(expr.Args)
+				return fmt.Sprintf("AglNewSet(%s)", content1)
+			} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
+				content1 := g.genExprs(expr.Args)
+				return fmt.Sprintf("AglHttpNewRequest(%s)", content1)
+			}
 		}
 	case *ast.Ident:
 		if e.Name == "assert" {
