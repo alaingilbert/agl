@@ -268,6 +268,19 @@ func main() {
 	tassert.Equal(t, "*Vertex", test.TypeAt(12, 6).String())
 }
 
+func TestInfer15(t *testing.T) {
+	src := `package main
+import "fmt"
+import "strings"
+func main() {
+	var mut sb strings.Builder
+	sb.WriteString("hello world")
+	fmt.Println(sb.String())
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "func (mut *Builder) WriteString(string) int!", test.TypeAt(6, 5).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

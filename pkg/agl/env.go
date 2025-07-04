@@ -55,6 +55,7 @@ func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bo
 		}
 	}
 	fT.Recv = recvT
+	fT.Name = expr.Name.Name
 	return fT
 }
 
@@ -130,10 +131,7 @@ func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
 
 func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.FuncType {
 	env = env.SubEnv()
-	e, err := parser.ParseExpr(s)
-	if err != nil {
-		panic(err)
-	}
+	e := Must(parser.ParseExpr(s))
 	expr := e.(*ast.FuncType)
 	return funcTypeToFuncType(name, expr, env, native)
 }
@@ -247,9 +245,19 @@ func defineFromSrc(env *Env, path string, src []byte) {
 			fullName = pkgName + "." + fullName
 			ft := funcDeclTypeToFuncType("", decl, env, true)
 			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
-				env.DefineFn(fullName, ft.String())
+				ft.IsNative = false
+				switch v := ft.Return.(type) {
+				case types.ResultType:
+					v.Native = false
+					ft.Return = v
+				case types.OptionType:
+					v.Native = false
+					ft.Return = v
+				}
+				env.DefineFnNative2(fullName, ft)
 			} else {
-				env.DefineFnNative(fullName, ft.String1())
+				ft.IsNative = true
+				env.DefineFnNative2(fullName, ft)
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
@@ -381,7 +389,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Remove", "func [T any](a []T, i int)")
-	e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
+	//e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
 	e.DefineFn("agl.Vec.Indices", "func [T any](a []T) []int")
 	e.DefineFn("agl.Vec.Contains", "func [T comparable](a []T, e T) bool")
 	e.DefineFn("agl.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
@@ -493,7 +501,11 @@ func (e *Env) DefineFn(name string, fnStr string) {
 }
 
 func (e *Env) DefineFnNative(name string, fnStr string) {
-	fnT := parseFuncTypeFromStringNative(name, fnStr, e)
+	fnT := parseFuncDeclFromStringHelper(name, fnStr, e)
+	e.Define(nil, name, fnT)
+}
+
+func (e *Env) DefineFnNative2(name string, fnT types.FuncType) {
 	e.Define(nil, name, fnT)
 }
 

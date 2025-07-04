@@ -7573,6 +7573,39 @@ func main() {
 	tassert.PanicsWithError(t, "7:7: cannot use immutable 'a'", testCodeGenFn(src))
 }
 
+func TestCodeGen267(t *testing.T) {
+	src := `package main
+import "fmt"
+import "strings"
+func main() {
+	var mut sb strings.Builder
+	sb.WriteString("hello world")
+	fmt.Println(sb.String())
+}`
+	expected := `package main
+import "fmt"
+import "strings"
+func main() {
+	var sb strings.Builder
+	sb.WriteString("hello world")
+	fmt.Println(sb.String())
+}
+`
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen268(t *testing.T) {
+	src := `package main
+import "fmt"
+import "strings"
+func main() {
+	var sb strings.Builder
+	sb.WriteString("hello world")
+	fmt.Println(sb.String())
+}`
+	tassert.PanicsWithError(t, "6:5: method cannot be called on immutable type", testCodeGenFn(src))
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

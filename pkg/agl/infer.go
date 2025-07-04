@@ -891,10 +891,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
 		case types.StructType:
-			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
-			if idTT.Pkg != "" {
-				name = idTT.Pkg + "." + name
-			}
+			name := idTT.GetFieldName(call.Sel.Name)
 			nameT := infer.env.Get(name)
 			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := infer.env.GetFn(name)
@@ -1973,7 +1970,6 @@ func (infer *FileInferrer) structTypeExpr(expr *ast.StructType) {
 	if expr.Fields != nil {
 		for _, f := range expr.Fields.List {
 			infer.expr(f.Type)
-			p("?1", infer.env.GetType(f.Type))
 		}
 	}
 	infer.SetType(expr, types.StructType{})
