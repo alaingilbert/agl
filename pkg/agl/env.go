@@ -138,7 +138,7 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 	return funcTypeToFuncType(name, expr, env, native)
 }
 
-func parseFuncTypeFromStringHelper2(name, s string, env *Env) types.FuncType {
+func parseFuncDeclFromStringHelper(name, s string, env *Env) types.FuncType {
 	s = "package main\n" + s
 	env = env.SubEnv()
 	e, err := parser.ParseFile(token.NewFileSet(), "", s, parser.AllErrors)
