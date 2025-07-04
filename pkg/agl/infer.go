@@ -335,6 +335,9 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		if t.Fields != nil {
 			for _, f := range t.Fields.List {
 				typ := infer.env.GetType2(f.Type)
+				if len(f.Names) == 0 {
+					fields = append(fields, types.FieldType{Name: "", Typ: typ})
+				}
 				for _, n := range f.Names {
 					tt := typ
 					if n.Mutable.IsValid() {
@@ -893,6 +896,18 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.StructType:
 			name := idTT.GetFieldName(call.Sel.Name)
 			nameT := infer.env.Get(name)
+			if nameT == nil {
+				for _, f := range idTT.Fields {
+					if f.Name == "" {
+						t := types.Unwrap(f.Typ)
+						if v, ok := t.(types.StructType); ok {
+							name = v.GetFieldName(call.Sel.Name)
+							nameT = infer.env.Get(name)
+							nameT = types.Unwrap(nameT)
+						}
+					}
+				}
+			}
 			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {

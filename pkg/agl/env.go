@@ -439,9 +439,19 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *goast.StructType:
-						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
+						var fields []types.FieldType
 						if v.Fields != nil {
+							for _, field := range v.Fields.List {
+								t := env.GetGoType2(pkgName, field.Type)
+								if len(field.Names) == 0 {
+									fields = append(fields, types.FieldType{Name: "", Typ: t})
+								}
+								for _, name := range field.Names {
+									fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
+								}
+							}
 						}
+						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 					case *goast.InterfaceType:
 					case *goast.IndexListExpr:
 					case *goast.ArrayType:

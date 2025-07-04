@@ -7606,6 +7606,33 @@ func main() {
 	tassert.PanicsWithError(t, "6:5: method 'WriteString' cannot be called on immutable type 'Builder'", testCodeGenFn(src))
 }
 
+func TestCodeGen269(t *testing.T) {
+	src := `package main
+type A struct {}
+type B struct {
+	*A
+}
+func (a *A) AMethod() {}
+func main() {
+	b := B{}
+	b.AMethod()
+}`
+	expected := `package main
+type A struct {
+}
+type B struct {
+	 *A
+}
+func (a *A) AMethod() {
+}
+func main() {
+	b := B{}
+	b.AMethod()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
