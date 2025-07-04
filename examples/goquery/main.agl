@@ -1,0 +1,15 @@
+package main
+
+import (
+    "fmt"
+    "github.com/PuerkitoBio/goquery"
+    "net/http"
+)
+
+func main() {
+    res := http.Get("http://metalsucks.net")!
+    defer res.Body.Close()
+    assert(res.StatusCode == 200)
+    doc := goquery.NewDocumentFromReader(res.Body)!
+    fmt.Println(doc)
+}
