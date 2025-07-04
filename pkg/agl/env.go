@@ -5,6 +5,7 @@ import (
 	"agl/pkg/parser"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"agl/pkg/utils"
 	"embed"
 	_ "embed"
 	"fmt"
@@ -85,7 +86,7 @@ func goFuncDeclTypeToFuncType(name, pkgName string, expr *goast.FuncDecl, env *E
 }
 
 func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) types.FuncType {
-	native := true
+	native := utils.True()
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
 		for _, typeParam := range expr.TypeParams.List {
@@ -109,23 +110,36 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 		}
 	}
 	var result types.Type
+	var results []types.Type
 	if expr.Results != nil {
 		for _, resultEl := range expr.Results.List {
-			result = env.GetGoType2(pkgName, resultEl)
+			results = append(results, env.GetGoType2(pkgName, resultEl))
 		}
+	}
+	if len(results) == 1 {
+		result = results[0]
+		result = types.Unwrap(result)
+		switch v := result.(type) {
+		case types.InterfaceType:
+			if v.Name == "error" {
+				result = types.ResultType{W: types.VoidType{}, Native: native}
+			}
+		}
+	} else if len(results) > 1 {
+		result = results[0]
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
-	if result == nil {
-		//switch expr.Result.(type) {
-		//case *ast.ResultExpr:
-		//	result = types.ResultType{W: types.VoidType{}}
-		//case *ast.OptionExpr:
-		//	result = types.OptionType{W: types.VoidType{}}
-		//default:
-		//	result = types.VoidType{}
-		//}
-	}
+	//if result == nil {
+	//	switch expr.Result.(type) {
+	//	case *ast.ResultExpr:
+	//		result = types.ResultType{W: types.VoidType{}}
+	//	case *ast.OptionExpr:
+	//		result = types.OptionType{W: types.VoidType{}}
+	//	default:
+	//		result = types.VoidType{}
+	//	}
+	//}
 	ft := types.FuncType{
 		Name:       name,
 		TypeParams: paramsT,
@@ -451,6 +465,7 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 			}
 			fnT := goFuncDeclTypeToFuncType("", pkgName, decl, env)
 			fullName := decl.Name.Name
+			//p(fnT, "  |  ", fullName)
 			if decl.Recv != nil {
 				recvName := getGoRecv(decl.Recv.List[0].Type)
 				if recvName == "" {

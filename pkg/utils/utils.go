@@ -7,6 +7,8 @@ import (
 
 func Noop(...any) {}
 
+func True() bool { return true }
+
 func Test() string {
 	return "test"
 }
