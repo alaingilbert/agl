@@ -43,6 +43,85 @@ func (i *Info) GetType() types.Type {
 	return nil
 }
 
+func goFuncDeclTypeToFuncType(name string, expr *goast.FuncDecl, env *Env) types.FuncType {
+	fT := goFuncTypeToFuncType(name, expr.Type, env)
+	var recvT []types.Type
+	if expr.Recv != nil {
+		for _, recv := range expr.Recv.List {
+			for range recv.Names {
+				recvTyp := recv.Type
+				t := env.GetGoType2(recvTyp)
+				recvT = append(recvT, t)
+			}
+		}
+	}
+	fT.Recv = recvT
+	fT.Name = expr.Name.Name
+	return fT
+}
+
+func goFuncTypeToFuncType(name string, expr *goast.FuncType, env *Env) types.FuncType {
+	native := true
+	var paramsT []types.Type
+	if expr.TypeParams != nil {
+		for _, typeParam := range expr.TypeParams.List {
+			for _, typeParamName := range typeParam.Names {
+				typeParamType := typeParam.Type
+				t := env.GetGoType2(typeParamType)
+				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
+				//env.Define(typeParamName, typeParamName.Name, t)
+				paramsT = append(paramsT, t)
+			}
+		}
+	}
+	var params []types.Type
+	if expr.Params != nil {
+		for _, param := range expr.Params.List {
+			t := env.GetGoType2(param.Type)
+			n := max(len(param.Names), 1)
+			for i := 0; i < n; i++ {
+				params = append(params, t)
+			}
+		}
+	}
+	var result types.Type
+	if expr.Results != nil {
+		//for _, resultEl := range expr.Results.List {
+		//	resultEl = env.GetType2(expr.Result)
+		//	if resultEl == nil {
+		//		panic(fmt.Sprintf("%s: type not found %v %v", env.fset.Position(expr.Pos()), expr.Result, to(expr.Result)))
+		//	}
+		//	if t, ok := resultEl.(types.ResultType); ok {
+		//		t.Native = native
+		//		resultEl = t
+		//	} else if t1, ok := resultEl.(types.OptionType); ok {
+		//		t1.Native = native
+		//		resultEl = t1
+		//	}
+		//}
+	}
+	parts := strings.Split(name, ".")
+	name = parts[len(parts)-1]
+	if result == nil {
+		//switch expr.Result.(type) {
+		//case *ast.ResultExpr:
+		//	result = types.ResultType{W: types.VoidType{}}
+		//case *ast.OptionExpr:
+		//	result = types.OptionType{W: types.VoidType{}}
+		//default:
+		//	result = types.VoidType{}
+		//}
+	}
+	ft := types.FuncType{
+		Name:       name,
+		TypeParams: paramsT,
+		Params:     params,
+		Return:     result,
+		IsNative:   native,
+	}
+	return ft
+}
+
 func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bool) types.FuncType {
 	fT := funcTypeToFuncType(name, expr.Type, env, native)
 	var recvT []types.Type
@@ -328,46 +407,12 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
-			//fullName := decl.Name.Name
-			//if decl.Recv != nil {
-			//	t := decl.Recv.List[0].Type
-			//	var recvName string
-			//	switch v := t.(type) {
-			//	case *goast.Ident:
-			//		recvName = v.Name
-			//	case *goast.StarExpr:
-			//		switch vv := v.X.(type) {
-			//		case *goast.Ident:
-			//			recvName = vv.Name
-			//		case *goast.SelectorExpr:
-			//			recvName = vv.Sel.Name
-			//		default:
-			//			panic(fmt.Sprintf("%v", to(v.X)))
-			//		}
-			//	case *goast.SelectorExpr:
-			//		recvName = v.Sel.Name
-			//	default:
-			//		panic(fmt.Sprintf("%v", to(t)))
-			//	}
-			//	fullName = recvName + "." + fullName
-			//}
-			//fullName = pkgName + "." + fullName
-			//ft := funcDeclTypeToFuncType("", decl, env, true)
-			//if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
-			//	ft.IsNative = false
-			//	switch v := ft.Return.(type) {
-			//	case types.ResultType:
-			//		v.Native = false
-			//		ft.Return = v
-			//	case types.OptionType:
-			//		v.Native = false
-			//		ft.Return = v
-			//	}
-			//	env.DefineFnNative2(fullName, ft)
-			//} else {
-			//	ft.IsNative = true
-			//	env.DefineFnNative2(fullName, ft)
-			//}
+			if !decl.Name.IsExported() {
+				continue
+			}
+			fnT := goFuncDeclTypeToFuncType("", decl, env)
+			p("?", fnT)
+
 		case *goast.GenDecl:
 			for _, s := range decl.Specs {
 				switch spec := s.(type) {
@@ -866,6 +911,105 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 	case *ast.IndexListExpr:
 		return e.GetType2(xx.X) // TODO
 	case *ast.StructType:
+		return types.StructType{}
+	default:
+		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
+	}
+}
+
+func (e *Env) GetGoType2(x goast.Node) types.Type {
+	res := e.getGoType2Helper(x)
+	if res == nil && e.parent != nil {
+		return e.parent.GetGoType2(x)
+	}
+	return res
+}
+
+func (e *Env) getGoType2Helper(x goast.Node) types.Type {
+	//if v := e.lspNode(x); v != nil {
+	//	return v.Type
+	//}
+	switch xx := x.(type) {
+	case *goast.Ident:
+		if v2 := e.GetNameInfo(xx.Name); v2 != nil {
+			return v2.Type
+		}
+		return nil
+	//case *goast.FuncType:
+	//	return funcTypeToFuncType("", xx, e, false)
+	case *goast.Ellipsis:
+		t := e.GetGoType2(xx.Elt)
+		panicIfNil(t, xx.Elt)
+		return types.EllipsisType{Elt: t}
+	case *goast.ArrayType:
+		t := e.GetGoType2(xx.Elt)
+		panicIfNil(t, xx.Elt)
+		return types.ArrayType{Elt: t}
+	case *goast.CallExpr:
+		return nil
+	case *goast.BasicLit:
+		switch xx.Kind {
+		case gotoken.INT:
+			return types.UntypedNumType{}
+		case gotoken.STRING:
+			return types.UntypedStringType{}
+		default:
+			panic(fmt.Sprintf("%v", xx.Kind))
+		}
+	case *goast.SelectorExpr:
+		base := e.GetGoType2(xx.X)
+		base = types.Unwrap(base)
+		switch v := base.(type) {
+		case types.PackageType:
+			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
+			return e.GetGoType2(&goast.Ident{Name: name})
+		case types.InterfaceType:
+			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
+			if v.Pkg != "" {
+				name = v.Pkg + "." + name
+			}
+			return e.GetGoType2(&goast.Ident{Name: name})
+		case types.StructType:
+			name := v.GetFieldName(xx.Sel.Name)
+			return e.GetGoType2(&goast.Ident{Name: name})
+		case types.TypeAssertType:
+			return v.X
+		default:
+			return types.VoidType{}
+			panic(fmt.Sprintf("%v %v %v", reflect.TypeOf(base), xx, xx.X))
+		}
+		return nil
+	case *goast.IndexExpr:
+		t := e.GetGoType2(xx.X)
+		if !e.NoIdxUnwrap {
+			switch v := t.(type) {
+			case types.ArrayType:
+				return v.Elt
+			}
+		}
+		return t
+	case *goast.ParenExpr:
+		return e.GetGoType2(xx.X)
+	case *goast.StarExpr:
+		return types.StarType{X: e.GetGoType2(xx.X)}
+	case *goast.MapType:
+		return types.MapType{K: e.GetGoType2(xx.Key), V: e.GetGoType2(xx.Value)}
+	case *goast.ChanType:
+		return types.ChanType{W: e.GetGoType2(xx.Value)}
+	case *goast.BinaryExpr:
+		return types.BinaryType{X: e.GetGoType2(xx.X), Y: e.GetGoType2(xx.Y)}
+	case *goast.UnaryExpr:
+		return types.UnaryType{X: e.GetGoType2(xx.X)}
+	case *goast.InterfaceType:
+		return types.AnyType{}
+	case *goast.CompositeLit:
+		ct := e.GetGoType2(xx.Type).(types.CustomType)
+		return types.StructType{Pkg: ct.Pkg, Name: ct.Name}
+	case *goast.SliceExpr:
+		return e.GetGoType2(xx.X) // TODO
+	case *goast.IndexListExpr:
+		return e.GetGoType2(xx.X) // TODO
+	case *goast.StructType:
 		return types.StructType{}
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
