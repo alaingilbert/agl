@@ -5443,7 +5443,7 @@ func main() {
 	v := Vertex{3, 4}
 	v.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:4: method cannot be called on immutable type", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "11:4: method 'Scale' cannot be called on immutable type 'Vertex'", testCodeGenFn(src))
 }
 
 func TestCodeGen189_1(t *testing.T) {
@@ -7603,7 +7603,7 @@ func main() {
 	sb.WriteString("hello world")
 	fmt.Println(sb.String())
 }`
-	tassert.PanicsWithError(t, "6:5: method cannot be called on immutable type", testCodeGenFn(src))
+	tassert.PanicsWithError(t, "6:5: method 'WriteString' cannot be called on immutable type 'Builder'", testCodeGenFn(src))
 }
 
 //func TestCodeGen257(t *testing.T) {
