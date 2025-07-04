@@ -35,6 +35,13 @@ func Test4(t *testing.T) {
 	tassert.Equal(t, "func Close() !", tt.String())
 }
 
+func Test5(t *testing.T) {
+	env := NewEnv(token.NewFileSet())
+	_ = env.loadPkg("strings")
+	fT := parseFuncTypeFromStringHelper2("WriteString", "func (mut r *strings.Builder) WriteString(io.Writer, string) int!", env)
+	tassert.Equal(t, "func (mut *Builder) WriteString(io.Writer, string) int!", fT.String())
+}
+
 //func Test5(t *testing.T) {
 //	env := NewEnv(nil)
 //	tt := parseFuncTypeFromString("Test", "func (a (int, bool)) (int, bool)", env)

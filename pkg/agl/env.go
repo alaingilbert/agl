@@ -44,10 +44,12 @@ func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bo
 	var recvT []types.Type
 	if expr.Recv != nil {
 		for _, recv := range expr.Recv.List {
-			for _, _ = range recv.Names {
+			for _, n := range recv.Names {
 				recvTyp := recv.Type
 				t := env.GetType2(recvTyp)
-				//env.Define(recvName, recvName.Name, t)
+				if n.Mutable.IsValid() {
+					t = types.MutType{W: t}
+				}
 				recvT = append(recvT, t)
 			}
 		}
@@ -134,6 +136,17 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 	}
 	expr := e.(*ast.FuncType)
 	return funcTypeToFuncType(name, expr, env, native)
+}
+
+func parseFuncTypeFromStringHelper2(name, s string, env *Env) types.FuncType {
+	s = "package main\n" + s
+	env = env.SubEnv()
+	e, err := parser.ParseFile(token.NewFileSet(), "", s, parser.AllErrors)
+	if err != nil {
+		panic(err)
+	}
+	expr := e.Decls[0].(*ast.FuncDecl)
+	return funcDeclTypeToFuncType(name, expr, env, true)
 }
 
 func (e *Env) loadCoreTypes() {

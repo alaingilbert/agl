@@ -79,7 +79,7 @@ func (r *strings.Reader) WriteTo(w io.Writer) int64!
 func (s *strings.Builder) Write(p []byte) int!
 func (s *strings.Builder) WriteByte(c byte) !
 func (s *strings.Builder) WriteRune(r rune) int!
-func (s *strings.Builder) WriteString(s string) int!
+func (mut s *strings.Builder) WriteString(s string) int!
 func (s *strings.Builder) String() string
 func (s *strings.Builder) Reset()
 func (s *strings.Builder) Len() int
@@ -87,5 +87,5 @@ func (s *strings.Builder) Grow(n int)
 func (s *strings.Builder) Cap() int
 
 func NewReplacer(oldnew ...string) *strings.Replacer
-func (r *strings.Replacer) Replace(s string) string
-func (r *strings.Replacer) WriteString(w io.Writer, s string) int!
+func (mut r *strings.Replacer) Replace(s string) string
+func (mut r *strings.Replacer) WriteString(w io.Writer, s string) int!
