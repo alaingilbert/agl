@@ -141,10 +141,7 @@ func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.
 func parseFuncDeclFromStringHelper(name, s string, env *Env) types.FuncType {
 	s = "package main\n" + s
 	env = env.SubEnv()
-	e, err := parser.ParseFile(token.NewFileSet(), "", s, parser.AllErrors)
-	if err != nil {
-		panic(err)
-	}
+	e := Must(parser.ParseFile(token.NewFileSet(), "", s, parser.AllErrors))
 	expr := e.Decls[0].(*ast.FuncDecl)
 	return funcDeclTypeToFuncType(name, expr, env, true)
 }
