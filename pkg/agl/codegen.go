@@ -1308,19 +1308,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				} else if content1 == "make" {
 					content1 = g.genExpr(expr.Fun)
 					if g.genMap != nil {
-						g.withType(func() {
-							content2 = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
-						})
-						if len(expr.Args) > 1 {
-							content2 += ", " + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
-						}
+						g.withType(func() { content2 = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr() })
 					} else {
-						g.withType(func() {
-							content2 = g.genExpr(expr.Args[0])
-						})
-						if len(expr.Args) > 1 {
-							content2 += ", " + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
-						}
+						g.withType(func() { content2 = g.genExpr(expr.Args[0]) })
+					}
+					if len(expr.Args) > 1 {
+						content2 += ", " + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
 					}
 				} else {
 					content1 = g.genExpr(expr.Fun)
