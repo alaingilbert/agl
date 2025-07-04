@@ -1,7 +1,13 @@
 # Guide on using Go libraries
 
 We assume that `agl` tool is available in your `$PATH`  
-Otherwise, build it with `go build`, then move it in `mv agl /usr/local/bin`  
+
+Otherwise, build and install it  
+```sh
+cd /path/to/agl
+go build
+mv agl /usr/local/bin
+```
 
 ```sh
 mkdir myProject && cd myProject
