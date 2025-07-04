@@ -1034,7 +1034,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 }
 
 func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
-	switch call.Name {
+	fnName := call.Name
+	switch fnName {
 	case "make":
 		fnT := infer.env.Get("make").(types.FuncType)
 		assert(len(expr.Args) >= 1, "'make' must have at least 1 argument")
@@ -1047,18 +1048,10 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 		default:
 			panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
 		}
-	case "min":
+	case "min", "max":
 		arg0T := infer.env.GetType2(expr.Args[0])
 		arg0T = types.Unwrap(arg0T)
-		fnT := infer.env.Get("min").(types.FuncType).T("T", arg0T)
-		for i := 0; i < len(expr.Args)-2; i++ {
-			fnT.Params = append(fnT.Params, arg0T)
-		}
-		infer.SetType(expr.Fun, fnT)
-	case "max":
-		arg0T := infer.env.GetType2(expr.Args[0])
-		arg0T = types.Unwrap(arg0T)
-		fnT := infer.env.Get("max").(types.FuncType).T("T", arg0T)
+		fnT := infer.env.Get(fnName).(types.FuncType).T("T", arg0T)
 		for i := 0; i < len(expr.Args)-2; i++ {
 			fnT.Params = append(fnT.Params, arg0T)
 		}
