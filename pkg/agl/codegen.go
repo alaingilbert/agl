@@ -137,7 +137,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 						}
 					}
 					namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
-					namesStr = suffixIf(namesStr, " ")
+					namesStr = utils.SuffixIf(namesStr, " ")
 					fieldsItems = append(fieldsItems, namesStr+content)
 				}
 				paramsStr = strings.Join(fieldsItems, ", ")
@@ -147,7 +147,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 				for k, v := range m {
 					resT = types.ReplGen(resT, k, v)
 				}
-				resultStr = prefixIf(resT.GoStr(), " ")
+				resultStr = utils.PrefixIf(resT.GoStr(), " ")
 			}
 			if decl.Body != nil {
 				content := g.incrPrefix(func() string {
@@ -904,7 +904,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 	var paramsStr, typeParamsStr string
 	if typeParams := expr.TypeParams; typeParams != nil {
 		typeParamsStr = g.joinList(expr.TypeParams)
-		typeParamsStr = wrapIf(typeParamsStr, "[", "]")
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if params := expr.Params; params != nil {
 		var fieldsItems []string
@@ -916,12 +916,12 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 				content = g.genExpr(field.Type)
 			}
 			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
-			namesStr = suffixIf(namesStr, " ")
+			namesStr = utils.SuffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
-	content1 = prefixIf(content1, " ")
+	content1 = utils.PrefixIf(content1, " ")
 	return fmt.Sprintf("func%s(%s)%s", typeParamsStr, paramsStr, content1)
 }
 
@@ -1148,7 +1148,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 					els = append(els, fmt.Sprintf("%s_%s", "T", recvTName))
 				}
 				elsStr := strings.Join(els, "_")
-				content2 := prefixIf(g.genExprs(expr.Args), ", ")
+				content2 := utils.PrefixIf(g.genExprs(expr.Args), ", ")
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
 		case types.SetType:
@@ -1328,25 +1328,6 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	return fmt.Sprintf("%s(%s)", content1, content2)
 }
 
-func applyIf(s string, clb func() string) string {
-	if s != "" {
-		return clb()
-	}
-	return s
-}
-
-func prefixIf(s, prefix string) string {
-	return applyIf(s, func() string { return prefix + s })
-}
-
-func suffixIf(s, suffix string) string {
-	return applyIf(s, func() string { return s + suffix })
-}
-
-func wrapIf(s, prefix, suffix string) string {
-	return applyIf(s, func() string { return prefix + s + suffix })
-}
-
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	var content string
 	switch v := expr.Elt.(type) {
@@ -1520,7 +1501,7 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 			var typeParamsStr string
 			if typeParams := spec.TypeParams; typeParams != nil {
 				typeParamsStr = g.joinList(spec.TypeParams)
-				typeParamsStr = wrapIf(typeParamsStr, "[", "]")
+				typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 			}
 			content1 := g.genExpr(spec.Type)
 			out += g.prefix + "type " + spec.Name.Name + typeParamsStr + " " + content1 + "\n"
@@ -1547,7 +1528,7 @@ func (g *Generator) genDecl(d ast.Decl, first bool) (out string) {
 			}
 		}
 		clear(g.before)
-		out += suffixIf(out1, "\n")
+		out += utils.SuffixIf(out1, "\n")
 		return
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
@@ -1595,7 +1576,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 		els = append(els, post)
 	}
 	tmp := strings.Join(els, "; ")
-	tmp = suffixIf(tmp, " ")
+	tmp = utils.SuffixIf(tmp, " ")
 	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	out += g.prefix + fmt.Sprintf("for %s{\n", tmp)
 	out += body
@@ -1813,7 +1794,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 	}
 	if typeParams := decl.Type.TypeParams; typeParams != nil {
 		typeParamsStr = g.joinList(decl.Type.TypeParams)
-		typeParamsStr = wrapIf(typeParamsStr, "[", "]")
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if params := decl.Type.Params; params != nil {
 		var fieldsItems []string
@@ -1834,14 +1815,14 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 				}
 			}
 			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
-			namesStr = suffixIf(namesStr, " ")
+			namesStr = utils.SuffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
 	if result := decl.Type.Result; result != nil {
 		resultStr = types.ReplGenM(g.env.GetType(result), g.genMap).GoStr()
-		resultStr = prefixIf(resultStr, " ")
+		resultStr = utils.PrefixIf(resultStr, " ")
 	}
 	if decl.Body != nil {
 		content := g.incrPrefix(func() string {
@@ -1870,7 +1851,7 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 		namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string {
 			return g.genIdent(n)
 		}, ", ")
-		namesStr = suffixIf(namesStr, " ")
+		namesStr = utils.SuffixIf(namesStr, " ")
 		fieldsItems = append(fieldsItems, namesStr+content)
 	}
 	return strings.Join(fieldsItems, ", ")

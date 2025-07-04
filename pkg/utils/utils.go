@@ -76,3 +76,22 @@ func Ternary[T any](predicate bool, a, b T) T {
 func TernaryOrZero[T any](predicate bool, a T) (zero T) {
 	return Ternary(predicate, a, zero)
 }
+
+func ApplyIf(s string, clb func() string) string {
+	if s != "" {
+		return clb()
+	}
+	return s
+}
+
+func PrefixIf(s, prefix string) string {
+	return ApplyIf(s, func() string { return prefix + s })
+}
+
+func SuffixIf(s, suffix string) string {
+	return ApplyIf(s, func() string { return s + suffix })
+}
+
+func WrapIf(s, prefix, suffix string) string {
+	return ApplyIf(s, func() string { return prefix + s + suffix })
+}

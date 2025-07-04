@@ -890,15 +890,11 @@ func (f FuncType) GoStr1() string { // TODO
 	}
 	if f.Recv != nil {
 		recvStr = utils.MapJoin(f.Recv, func(t Type) string { return t.GoStr() }, ", ")
-		if recvStr != "" {
-			recvStr = " (" + recvStr + ")"
-		}
+		recvStr = utils.WrapIf(recvStr, "(", ")")
 	}
 	if f.TypeParams != nil {
 		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if f.Params != nil {
 		paramsStr = utils.MapJoin(f.Params, func(p Type) string { return p.GoStr() }, ", ")
@@ -935,9 +931,7 @@ func (f FuncType) String() string {
 			}
 			return tmp + t.String()
 		}, ", ")
-		if recvStr != "" {
-			recvStr = " (" + recvStr + ")"
-		}
+		recvStr = utils.WrapIf(recvStr, " (", ")")
 	}
 	return out[0:4] + recvStr + out[4:]
 }
@@ -949,9 +943,7 @@ func (f FuncType) String1() string {
 	}
 	if f.TypeParams != nil {
 		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
-		if typeParamsStr != "" {
-			typeParamsStr = "[" + typeParamsStr + "]"
-		}
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if f.Params != nil {
 		var tmp1 []string
