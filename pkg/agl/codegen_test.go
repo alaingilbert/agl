@@ -3066,7 +3066,7 @@ func main() {
 func TestCodeGen108(t *testing.T) {
 	src := `package main
 func main() {
-	a := map[string]int{"a": 1}
+	mut a := map[string]int{"a": 1}
 	a["a"] = 2
 }
 `
@@ -4682,7 +4682,7 @@ func main() {
 func TestCodeGen168(t *testing.T) {
 	src := `package main
 func main() {
-	arr := []int{1, 2, 3}
+	mut arr := []int{1, 2, 3}
 	arr[1] = 42
 }`
 	expected := `package main
@@ -4697,7 +4697,7 @@ func main() {
 func TestCodeGen169(t *testing.T) {
 	src := `package main
 func main() {
-	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	mut m := map[string]int{"a": 1, "b": 2, "c": 3}
 	m["a"] = 42
 }`
 	expected := `package main

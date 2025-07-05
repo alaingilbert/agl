@@ -185,12 +185,12 @@ func main() {
 func TestInfer10(t *testing.T) {
 	src := `package main
 func main() {
-	m := map[int]u8{}
+	mut m := map[int]u8{}
 	m[1] = 2
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "map[int]u8", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "map[int]u8", test.TypeAt(3, 6).String())
 	tassert.Equal(t, "map[int]u8", test.TypeAt(4, 2).String())
 	tassert.Equal(t, "int", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "u8", test.TypeAt(4, 6).String())
@@ -200,7 +200,7 @@ func TestInfer11(t *testing.T) {
 	src := `package main
 func main() {
 	k1 := u8(1)
-	arr := []int{1, 2}
+	mut arr := []int{1, 2}
 	arr[k1] = 2
 	arr[1] = 2
 }
@@ -279,6 +279,18 @@ func main() {
 }`
 	test := NewTest(src)
 	tassert.Equal(t, "func (mut *Builder) WriteString(string) int!", test.TypeAt(6, 5).String())
+}
+
+func TestInfer16(t *testing.T) {
+	src := `package main
+var mut m map[int]set[int]
+func main() {
+	m = make(map[int]set[int])
+	s := m[1]
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "map[int]set[int]", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "set[int]", test.TypeAt(5, 2).String())
 }
 
 //func TestInfer1(t *testing.T) {

@@ -2333,6 +2333,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v.X.(*ast.Ident)
 				lhsIDT := infer.env.Get(lhsID.Name)
 				infer.SetType(lhsID, lhsIDT)
+				lhsIDT = types.Unwrap(lhsIDT)
 				switch vv := lhsIDT.(type) {
 				case types.MapType:
 					infer.SetType(v.Index, vv.K)
@@ -2369,6 +2370,15 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				tmp := utils.Ternary(ta.Type == nil, ta.X, ta.Type)
 				rhsT = infer.env.GetType2(tmp)
 				rhsT = types.OptionType{W: rhsT}
+			} else if ta, ok := rhs.(*ast.IndexExpr); ok {
+				rhsT = infer.env.GetType2(ta.X)
+				rhsT = types.Unwrap(rhsT)
+				switch v := rhsT.(type) {
+				case types.MapType:
+					rhsT = v.V
+				case types.ArrayType:
+					rhsT = v.Elt
+				}
 			} else {
 				rhsT = infer.env.GetType2(rhs)
 			}
@@ -2386,8 +2396,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				if v, ok := rhsT.(types.ResultType); ok {
 					v.Native = false
 					tmp = v
-				} else if v, ok := rhsT.(types.MapType); ok {
-					tmp = v.V
 				}
 				infer.SetType(lhs, tmp)
 			}
