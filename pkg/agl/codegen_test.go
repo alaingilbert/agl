@@ -9,7 +9,7 @@ import (
 func getGenOutput(src string) string {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
-	NewInferrer(fset, env).InferFile("", f)
+	NewInferrer(env).InferFile("", f, fset)
 	return NewGenerator(env, f, fset).Generate()
 }
 

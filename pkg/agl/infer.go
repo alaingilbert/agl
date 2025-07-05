@@ -36,16 +36,15 @@ func ParseSrc(src string) (*token.FileSet, *ast.File) {
 }
 
 type Inferrer struct {
-	fset *token.FileSet
-	Env  *Env
+	Env *Env
 }
 
-func NewInferrer(fset *token.FileSet, env *Env) *Inferrer {
-	return &Inferrer{fset: fset, Env: env}
+func NewInferrer(env *Env) *Inferrer {
+	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File) {
-	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: infer.fset}
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet) {
+	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset}
 	fileInferrer.Infer()
 }
 
