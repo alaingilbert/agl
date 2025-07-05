@@ -600,7 +600,7 @@ func (e *Env) loadVendor(path string, m map[string]struct{}) {
 }
 
 func (e *Env) loadPkgAgl() {
-	e.DefinePkg("agl", "agl")
+	_ = e.DefinePkg("agl", "agl")
 	e.Define(nil, "agl.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int", WithDesc("The number of elements in the set."))
