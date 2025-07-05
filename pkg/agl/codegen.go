@@ -364,9 +364,10 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 			}
 		}
 	}
-	if expr.Name == "make" {
+	switch expr.Name {
+	case "make":
 		return "make"
-	} else if expr.Name == "abs" {
+	case "abs":
 		return "AglAbs"
 	}
 	if v := g.env.Get(expr.Name); v != nil {
