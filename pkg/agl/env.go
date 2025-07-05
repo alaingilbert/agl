@@ -425,11 +425,9 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
-func defineFromGoSrc(env *Env, path string, src []byte) {
-	fset := gotoken.NewFileSet()
-	node := Must(goparser.ParseFile(fset, "", src, goparser.AllErrors|goparser.ParseComments))
+func defineStructsFromGoSrc(env *Env, path string, src []byte, m map[string]struct{}) {
+	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
-	_ = env.DefinePkg(pkgName, path)
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *goast.GenDecl:
@@ -465,6 +463,15 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 			}
 		}
 	}
+}
+
+func defineFromGoSrc(env *Env, path string, src []byte, m map[string]struct{}) {
+	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
+	pkgName := node.Name.Name
+	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
+	for _, d := range node.Imports {
+		env.loadVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
+	}
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
@@ -499,7 +506,7 @@ func (e *Env) loadPkg(path string) error {
 	return nil
 }
 
-func (e *Env) loadVendor(path string) {
+func (e *Env) loadVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
@@ -508,11 +515,30 @@ func (e *Env) loadVendor(path string) {
 				continue
 			}
 			fullPath := filepath.Join(vendorPath, entry.Name())
+			if _, ok := m[fullPath]; ok {
+				continue
+			}
 			by, err := os.ReadFile(fullPath)
 			if err != nil {
 				continue
 			}
-			defineFromGoSrc(e, path, by)
+			defineStructsFromGoSrc(e, path, by, m)
+		}
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+				continue
+			}
+			fullPath := filepath.Join(vendorPath, entry.Name())
+			if _, ok := m[fullPath]; ok {
+				continue
+			}
+			//p("LOADING", fullPath)
+			m[fullPath] = struct{}{}
+			by, err := os.ReadFile(fullPath)
+			if err != nil {
+				continue
+			}
+			defineFromGoSrc(e, path, by, m)
 		}
 	}
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")

@@ -252,7 +252,8 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 		entries, err := os.ReadDir(pkgFullPath)
 		if err != nil {
 			if err := infer.env.loadPkg(pkgPath); err != nil {
-				infer.env.loadVendor(pkgPath)
+				m := make(map[string]struct{})
+				infer.env.loadVendor(pkgPath, m)
 			}
 		} else {
 			infer.env.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
