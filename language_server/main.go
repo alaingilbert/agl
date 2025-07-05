@@ -125,7 +125,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 		return fmt.Errorf("failed to parse file: %v", err)
 	}
 
-	// Create environment and infer types
+	// Create an environment and infer types
 	env := agl.NewEnv()
 	inferrer := agl.NewInferrer(env)
 	inferrer.InferFile(uri, file, s.fset)
