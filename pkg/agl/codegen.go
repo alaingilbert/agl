@@ -171,10 +171,6 @@ func (g *Generator) Generate() (out string) {
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
 		extStr += g.genExtension(g.extensions[extKey])
 	}
-	//var funcDeclsStr string
-	//for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls)) {
-	//	funcDeclsStr += g.genFuncDecl(g.genFuncDecls[k])
-	//}
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
