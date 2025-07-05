@@ -127,8 +127,8 @@ func (s *Server) updateDocument(uri string, content string) error {
 
 	// Create environment and infer types
 	env := agl.NewEnv()
-	inferrer := agl.NewInferrer(s.fset, env)
-	inferrer.InferFile(uri, file)
+	inferrer := agl.NewInferrer(env)
+	inferrer.InferFile(uri, file, s.fset)
 
 	// Store the document
 	s.documents[uri] = &Document{
