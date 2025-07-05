@@ -611,7 +611,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.FormUnion", "func [T comparable](mut s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Subtracting", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.Subtract", "func [T comparable](mut s, other agl.Set[T])")
-	e.DefineFn("agl.Set.Intersection", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
+	e.DefineFn("agl.Set.Intersection", "func [T comparable](s, other agl.Set[T]) agl.Set[T]", WithDesc("Returns a new set with the elements that are common to both this set and the given sequence."))
 	e.DefineFn("agl.Set.FormIntersection", "func [T comparable](mut s, other agl.Set[T])")
 	e.DefineFn("agl.Set.SymmetricDifference", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.FormSymmetricDifference", "func [T comparable](mut s, other agl.Set[T])")
