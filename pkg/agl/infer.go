@@ -2335,12 +2335,15 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			} else {
 				infer.expr(rhs)
 			}
+			var mutable bool
 			var lhsID *ast.Ident
 			switch v := lhs.(type) {
 			case *ast.Ident:
 				lhsID = v
+				mutable = v.Mutable.IsValid()
 			case *ast.IndexExpr:
 				lhsID = v.X.(*ast.Ident)
+				mutable = lhsID.Mutable.IsValid()
 				lhsIDT := infer.env.Get(lhsID.Name)
 				infer.SetType(lhsID, lhsIDT)
 				lhsIDT = types.Unwrap(lhsIDT)
@@ -2357,6 +2360,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				return
 			case *ast.SelectorExpr:
 				lhsID = v.X.(*ast.Ident)
+				mutable = lhsID.Mutable.IsValid()
 				lhsIdName := lhsID.Name
 				xT := infer.env.Get(lhsIdName)
 				xT = types.Unwrap(xT)
@@ -2407,6 +2411,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				if v, ok := rhsT.(types.ResultType); ok {
 					v.Native = false
 					tmp = v
+				}
+				if mutable && !TryCast[types.MutType](tmp) {
+					tmp = types.MutType{W: tmp}
 				}
 				infer.SetType(lhs, tmp)
 			}
