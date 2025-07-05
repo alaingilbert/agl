@@ -580,8 +580,8 @@ type MutType struct{ W Type }
 func (m MutType) Unwrap() Type       { return m.W }
 func (m MutType) GoStr() string      { return m.W.GoStr() }
 func (m MutType) GoStrType() string  { return m.W.GoStrType() }
-func (m MutType) String() string     { return m.W.String() }
-func (m MutType) StringFull() string { return m.W.StringFull() }
+func (m MutType) String() string     { return "mut " + m.W.String() }
+func (m MutType) StringFull() string { return "mut " + m.W.StringFull() }
 
 func Unwrap(t Type) Type {
 	if v, ok := t.(MutType); ok {

@@ -191,7 +191,7 @@ func main() {
 `
 	test := NewTest(src)
 	tassert.Equal(t, "map[int]u8", test.TypeAt(3, 6).String())
-	tassert.Equal(t, "map[int]u8", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "mut map[int]u8", test.TypeAt(4, 2).String())
 	tassert.Equal(t, "int", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "u8", test.TypeAt(4, 6).String())
 }
@@ -206,7 +206,7 @@ func main() {
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "[]int", test.TypeAt(5, 2).String())
+	tassert.Equal(t, "mut []int", test.TypeAt(5, 2).String())
 	tassert.Equal(t, "u8", test.TypeAt(5, 6).String())
 	tassert.Nil(t, test.TypeAt(6, 6))
 }
@@ -244,7 +244,7 @@ func main() {
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "*Vertex", test.TypeAt(11, 2).String())
+	tassert.Equal(t, "mut *Vertex", test.TypeAt(11, 2).String())
 }
 
 func TestInfer14(t *testing.T) {
@@ -264,8 +264,8 @@ func main() {
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "*Vertex", test.TypeAt(12, 2).String())
-	tassert.Equal(t, "*Vertex", test.TypeAt(12, 6).String())
+	tassert.Equal(t, "mut *Vertex", test.TypeAt(12, 2).String())
+	tassert.Equal(t, "mut *Vertex", test.TypeAt(12, 6).String())
 }
 
 func TestInfer15(t *testing.T) {
