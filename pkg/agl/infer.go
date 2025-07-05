@@ -978,7 +978,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
 		}
 		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
-		infer.inferGoExtensions(expr, oexprFunT, exprFunT, call)
+		infer.inferGoExtensions(expr, exprFunT, call)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		infer.langFns(expr, call)
@@ -1098,7 +1098,7 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 	}
 }
 
-func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, oidT, idT types.Type, exprT *ast.SelectorExpr) {
+func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
 	switch idTT := idT.(type) {
 	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
@@ -1128,9 +1128,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, oidT, idT types
 		case "Len", "Min", "Max":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
-		fnT.Recv = []types.Type{oidT}
 		if TryCast[types.MutType](fnT.Params[0]) {
 			assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
+			fnT.Recv = []types.Type{types.MutType{W: idT}}
+		} else {
+			fnT.Recv = []types.Type{idT}
 		}
 		fnT.Params = fnT.Params[1:]
 		infer.SetType(exprT.Sel, fnT)

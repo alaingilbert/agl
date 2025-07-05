@@ -298,9 +298,11 @@ func TestInfer17(t *testing.T) {
 func main() {
 	mut s := set[int]{1, 2}
 	s.Insert(3)
+	s.Contains(3)
 }`
 	test := NewTest(src)
 	tassert.Equal(t, "func (mut set[int]) Insert(int) bool", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (set[int]) Contains(int) bool", test.TypeAt(5, 4).String())
 }
 
 //func TestInfer1(t *testing.T) {
