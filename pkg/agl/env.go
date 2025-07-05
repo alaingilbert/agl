@@ -425,39 +425,52 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
-func defineStructsFromGoSrc(env *Env, path string, src []byte, m map[string]struct{}) {
-	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
-	pkgName := node.Name.Name
-	for _, d := range node.Decls {
-		switch decl := d.(type) {
-		case *goast.GenDecl:
-			for _, s := range decl.Specs {
-				switch spec := s.(type) {
-				case *goast.TypeSpec:
-					specName := pkgName + "." + spec.Name.Name
-					switch v := spec.Type.(type) {
-					case *goast.StructType:
-						var fields []types.FieldType
-						if v.Fields != nil {
-							for _, field := range v.Fields.List {
-								t := env.GetGoType2(pkgName, field.Type)
-								if len(field.Names) == 0 {
-									fields = append(fields, types.FieldType{Name: "", Typ: t})
-								}
-								for _, name := range field.Names {
-									fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
+func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m map[string]struct{}) {
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+		fullPath := filepath.Join(vendorPath, entry.Name())
+		if _, ok := m[fullPath]; ok {
+			continue
+		}
+		by, err := os.ReadFile(fullPath)
+		if err != nil {
+			continue
+		}
+		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
+		pkgName := node.Name.Name
+		for _, d := range node.Decls {
+			switch decl := d.(type) {
+			case *goast.GenDecl:
+				for _, s := range decl.Specs {
+					switch spec := s.(type) {
+					case *goast.TypeSpec:
+						specName := pkgName + "." + spec.Name.Name
+						switch v := spec.Type.(type) {
+						case *goast.StructType:
+							var fields []types.FieldType
+							if v.Fields != nil {
+								for _, field := range v.Fields.List {
+									t := env.GetGoType2(pkgName, field.Type)
+									if len(field.Names) == 0 {
+										fields = append(fields, types.FieldType{Name: "", Typ: t})
+									}
+									for _, name := range field.Names {
+										fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
+									}
 								}
 							}
+							env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+						case *goast.InterfaceType:
+						case *goast.IndexListExpr:
+						case *goast.ArrayType:
+						case *goast.Ident:
+						case *goast.FuncType:
+						case *goast.SelectorExpr:
+						default:
+							panic(fmt.Sprintf("%v", to(spec.Type)))
 						}
-						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
-					case *goast.InterfaceType:
-					case *goast.IndexListExpr:
-					case *goast.ArrayType:
-					case *goast.Ident:
-					case *goast.FuncType:
-					case *goast.SelectorExpr:
-					default:
-						panic(fmt.Sprintf("%v", to(spec.Type)))
 					}
 				}
 			}
@@ -510,6 +523,7 @@ func (e *Env) loadVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
+		defineStructsFromGoSrc(entries, e, vendorPath, m)
 		for _, entry := range entries {
 			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
 				continue
@@ -518,21 +532,6 @@ func (e *Env) loadVendor(path string, m map[string]struct{}) {
 			if _, ok := m[fullPath]; ok {
 				continue
 			}
-			by, err := os.ReadFile(fullPath)
-			if err != nil {
-				continue
-			}
-			defineStructsFromGoSrc(e, path, by, m)
-		}
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
-				continue
-			}
-			fullPath := filepath.Join(vendorPath, entry.Name())
-			if _, ok := m[fullPath]; ok {
-				continue
-			}
-			//p("LOADING", fullPath)
 			m[fullPath] = struct{}{}
 			by, err := os.ReadFile(fullPath)
 			if err != nil {
