@@ -425,7 +425,13 @@ func defineFromSrc(env *Env, path string, src []byte) {
 	}
 }
 
+type Later struct {
+	pkgName string
+	s       goast.Spec
+}
+
 func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m map[string]struct{}) {
+	var tryLater []Later
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
 			continue
@@ -434,46 +440,93 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 		if _, ok := m[fullPath]; ok {
 			continue
 		}
+		//p("LOADING", fullPath)
 		by, err := os.ReadFile(fullPath)
 		if err != nil {
 			continue
 		}
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
+		for _, d := range node.Imports {
+			env.loadVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
+		}
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
 			case *goast.GenDecl:
 				for _, s := range decl.Specs {
-					switch spec := s.(type) {
-					case *goast.TypeSpec:
-						specName := pkgName + "." + spec.Name.Name
-						switch v := spec.Type.(type) {
-						case *goast.StructType:
-							var fields []types.FieldType
-							if v.Fields != nil {
-								for _, field := range v.Fields.List {
-									t := env.GetGoType2(pkgName, field.Type)
-									if len(field.Names) == 0 {
-										fields = append(fields, types.FieldType{Name: "", Typ: t})
-									}
-									for _, name := range field.Names {
-										fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
-									}
-								}
-							}
-							env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
-						case *goast.InterfaceType:
-						case *goast.IndexListExpr:
-						case *goast.ArrayType:
-						case *goast.Ident:
-						case *goast.FuncType:
-						case *goast.SelectorExpr:
-						default:
-							panic(fmt.Sprintf("%v", to(spec.Type)))
+					processSpec(s, env, pkgName, &tryLater)
+				}
+			}
+		}
+	}
+	i := 0
+	for len(tryLater) > 0 {
+		var d Later
+		d, tryLater = tryLater[0], tryLater[1:]
+		processSpec(d.s, env, d.pkgName, &tryLater)
+		i++
+		if i > 10 {
+			break
+		}
+	}
+}
+
+func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
+	switch spec := s.(type) {
+	case *goast.TypeSpec:
+		if !spec.Name.IsExported() {
+			return
+		}
+		specName := pkgName + "." + spec.Name.Name
+		switch v := spec.Type.(type) {
+		case *goast.StructType:
+			var fields []types.FieldType
+			if v.Fields != nil {
+				for _, field := range v.Fields.List {
+					t := env.GetGoType2(pkgName, field.Type)
+					t = types.Unwrap(t)
+					if TryCast[types.VoidType](t) {
+						fT := field.Type
+						if vv, ok := field.Type.(*goast.StarExpr); ok {
+							fT = vv.X
 						}
+						if vv, ok := fT.(*goast.Ident); ok && vv.Name == spec.Name.Name {
+							t = types.StructType{Pkg: pkgName, Name: spec.Name.Name}
+						} else {
+							*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName})
+							env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+							return
+						}
+					}
+					if len(field.Names) == 0 {
+						fields = append(fields, types.FieldType{Name: "", Typ: t})
+					}
+					for _, name := range field.Names {
+						if !name.IsExported() {
+							continue
+						}
+						fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
 					}
 				}
 			}
+			env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+		case *goast.InterfaceType:
+		case *goast.IndexListExpr:
+		case *goast.ArrayType:
+		case *goast.Ident:
+			t := env.GetGoType2(pkgName, v)
+			if TryCast[types.VoidType](t) {
+				if !v.IsExported() {
+					return
+				}
+				*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName})
+				return
+			}
+			env.Define(nil, specName, t)
+		case *goast.FuncType:
+		case *goast.SelectorExpr:
+		default:
+			panic(fmt.Sprintf("%v", to(spec.Type)))
 		}
 	}
 }
@@ -482,9 +535,6 @@ func defineFromGoSrc(env *Env, path string, src []byte, m map[string]struct{}) {
 	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
 	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
-	for _, d := range node.Imports {
-		env.loadVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
-	}
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *goast.FuncDecl:
