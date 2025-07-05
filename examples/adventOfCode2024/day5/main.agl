@@ -3,9 +3,9 @@ package main
 import "os"
 import "fmt"
 
-var data1 [][]int
-var updates [][]int
-var rules map[int]set[int]
+var mut data1 [][]int
+var mut updates [][]int
+var mut rules map[int]set[int]
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day5/data.txt")!
