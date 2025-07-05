@@ -7648,6 +7648,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen271(t *testing.T) {
+	src := `package main
+func main() {
+	m := make(map[int]set[int])
+	m[1] = set[int]{1, 2, 3}
+}`
+	tassert.PanicsWithError(t, "4:2: cannot assign to immutable variable 'm'", testCodeGenFn(src))
+}
+
+func TestCodeGen272(t *testing.T) {
+	src := `package main
+func main() {
+	mut m := make(map[int]set[int])
+	m[1] = set[int]{1, 2, 3}
+}`
+	expected := `package main
+func main() {
+	m := make(map[int]AglSet[int])
+	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

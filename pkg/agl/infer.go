@@ -2286,6 +2286,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			case *ast.IndexExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
 				lhsIdNameT := infer.env.Get(lhsIdName)
+				assertf(TryCast[types.MutType](lhsIdNameT), "%s: cannot assign to immutable variable '%s'", infer.Pos(v.X), lhsIdName)
 				lhsIdNameT = types.Unwrap(lhsIdNameT)
 				switch vv := lhsIdNameT.(type) {
 				case types.MapType:
