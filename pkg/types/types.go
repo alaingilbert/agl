@@ -110,7 +110,7 @@ func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.Go
 func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
 func (r ResultType) String() string {
 	switch r.W.(type) {
-	case ArrayType, StarType:
+	case ArrayType, SetType, StarType, StructType, InterfaceType, CustomType:
 		return fmt.Sprintf("(%s)!", r.W.String())
 	default:
 		return fmt.Sprintf("%s!", r.W.String())
