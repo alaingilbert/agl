@@ -370,15 +370,16 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 		return "AglAbs"
 	}
 	if v := g.env.Get(expr.Name); v != nil {
-		if _, ok := v.(types.TypeType); ok {
+		switch vv := v.(type) {
+		case types.TypeType:
 			return v.GoStr()
-		} else if vv, ok := v.(types.FuncType); ok {
+		case types.FuncType:
 			name := expr.Name
 			if vv.Pub {
 				name = "AglPub_" + name
 			}
 			return name
-		} else {
+		default:
 			return expr.Name
 		}
 	}
