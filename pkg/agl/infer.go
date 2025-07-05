@@ -889,10 +889,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.ArrayType:
 		case types.MapType:
 		case types.CustomType:
-			name := fmt.Sprintf("%s.%s", idTT.Name, fnName)
-			if idTT.Pkg != "" {
-				name = idTT.Pkg + "." + name
-			}
+			name := fmt.Sprintf("%s.%s", idTT, fnName)
 			t := infer.env.Get(name)
 			tr := t.(types.FuncType).Return
 			infer.SetType(call.Sel, t)
