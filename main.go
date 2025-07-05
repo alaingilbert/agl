@@ -149,10 +149,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
-	by, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err)
-	}
+	by := agl.Must(os.ReadFile(fileName))
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
