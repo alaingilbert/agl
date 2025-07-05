@@ -314,8 +314,8 @@ func main() {
 }
 ```
 
-Here is a guide on how to use external libraries https://github.com/alaingilbert/agl/blob/master/docs/using_go_libs.md  
-And here is a simple example https://github.com/alaingilbert/agl/blob/master/examples/goquery/main.agl  
+Here is a [guide](https://github.com/alaingilbert/agl/blob/master/docs/using_go_libs.md) on how to use external libraries  
+And here is a [simple example](https://github.com/alaingilbert/agl/blob/master/examples/goquery/main.agl)  
 
 ## Making http request
 
