@@ -7672,6 +7672,29 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen273(t *testing.T) {
+	src := `package main
+func main() {
+	mut m := make(map[int]set[int])
+	m[1] = set[int]{1, 2, 3}
+	mut s := m[1]
+	if s == nil {
+		s = make(set[int])
+	}
+}`
+	expected := `package main
+func main() {
+	m := make(map[int]AglSet[int])
+	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
+	s := m[1]
+	if s == nil {
+		s = make(AglSet[int])
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

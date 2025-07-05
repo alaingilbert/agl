@@ -2293,6 +2293,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsWantedT = vv.V
 				case types.ArrayType:
 					lhsWantedT = vv.Elt
+				case types.SetType:
 				default:
 					panic(fmt.Sprintf("%v", to(lhsIdNameT)))
 				}
@@ -2384,6 +2385,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				if v, ok := rhsT.(types.ResultType); ok {
 					v.Native = false
 					tmp = v
+				} else if v, ok := rhsT.(types.MapType); ok {
+					tmp = v.V
 				}
 				infer.SetType(lhs, tmp)
 			}
