@@ -7633,6 +7633,21 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen270(t *testing.T) {
+	src := `package main
+var mut a int
+func main() {
+	a = 42
+}`
+	expected := `package main
+var a int
+func main() {
+	a = 42
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
