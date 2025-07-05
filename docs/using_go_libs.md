@@ -9,6 +9,12 @@ go build
 mv agl /usr/local/bin
 ```
 
+- Make a new project directory "myProject"
+- Initialize a module named "myProject" `agl mod init myProject`
+- Get an external dependency that we want to use the project `go get ...`
+- Vendor our external dependencies `agl mod vendor`
+- Run the script `agl run main.agl`
+
 ```sh
 mkdir myProject && cd myProject
 agl mod init myProject
