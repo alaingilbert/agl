@@ -927,10 +927,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr, toReturn)
 		case types.InterfaceType:
-			name := fmt.Sprintf("%s.%s", idTT.Name, fnName)
-			if idTT.Pkg != "" {
-				name = idTT.Pkg + "." + name
-			}
+			name := fmt.Sprintf("%s.%s", idTT, fnName)
 			t := infer.env.Get(name)
 			tr := t.(types.FuncType).Return
 			infer.SetType(call.Sel, t)
