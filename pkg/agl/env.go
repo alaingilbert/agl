@@ -603,8 +603,8 @@ func (e *Env) loadPkgAgl() {
 	e.DefinePkg("agl", "agl")
 	e.Define(nil, "agl.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
-	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int")
-	e.DefineFn("agl.Set.Insert", "func [T comparable](mut s agl.Set[T], el T) bool")
+	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int", WithDesc("The number of elements in the set."))
+	e.DefineFn("agl.Set.Insert", "func [T comparable](mut s agl.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))
 	e.DefineFn("agl.Set.Remove", "func [T comparable](mut s agl.Set[T], el T) T?")
 	e.DefineFn("agl.Set.Contains", "func [T comparable](s agl.Set[T], el T) bool")
 	e.DefineFn("agl.Set.Union", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
@@ -757,9 +757,9 @@ func (e *Env) GetFn(name string) types.FuncType {
 	return e.Get(name).(types.FuncType)
 }
 
-func (e *Env) DefineFn(name string, fnStr string) {
+func (e *Env) DefineFn(name string, fnStr string, opts ...SetTypeOption) {
 	fnT := parseFuncTypeFromString(name, fnStr, e)
-	e.Define(nil, name, fnT)
+	e.Define(nil, name, fnT, opts...)
 }
 
 func (e *Env) DefineFnNative(name string, fnStr string) {
@@ -782,8 +782,8 @@ func (e *Env) DefineForce(n ast.Node, name string, typ types.Type) {
 	}
 }
 
-func (e *Env) Define(n ast.Node, name string, typ types.Type) {
-	err := e.defineHelper(n, name, typ, false)
+func (e *Env) Define(n ast.Node, name string, typ types.Type, opts ...SetTypeOption) {
+	err := e.defineHelper(n, name, typ, false, opts...)
 	if err != nil {
 		assert(false, err.Error())
 	}
@@ -793,9 +793,13 @@ func (e *Env) DefineErr(n ast.Node, name string, typ types.Type) error {
 	return e.defineHelper(n, name, typ, false)
 }
 
-func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) error {
+func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, opts ...SetTypeOption) error {
 	if name == "_" {
 		return nil
+	}
+	conf := &SetTypeConf{}
+	for _, opt := range opts {
+		opt(conf)
 	}
 	if !force {
 		t := e.GetDirect(name)
@@ -805,6 +809,9 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool) 
 	}
 	info := e.GetOrCreateNameInfo(name)
 	info.Type = typ
+	if conf.description != "" {
+		info.Message = conf.description
+	}
 	if n != nil {
 		info.Definition = n.Pos()
 		lookupInfo := e.lspNodeOrCreate(n)
@@ -842,6 +849,7 @@ func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
 	info := e.lspNodeOrCreate(x)
 	info.Type = t
 	if p != nil {
+		info.Message = p.Message
 		info.Definition = p.Definition
 	}
 }

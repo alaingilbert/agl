@@ -130,7 +130,8 @@ func (infer *FileInferrer) SetTypeForce(a ast.Node, t types.Type) {
 }
 
 type SetTypeConf struct {
-	definition *Info
+	definition  *Info
+	description string
 }
 
 type SetTypeOption func(*SetTypeConf)
@@ -141,6 +142,12 @@ func WithDefinition(i *Info) SetTypeOption {
 	}
 }
 
+func WithDesc(desc string) SetTypeOption {
+	return func(o *SetTypeConf) {
+		o.description = desc
+	}
+}
+
 func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOption) {
 	if t == nil {
 		return
@@ -148,6 +155,12 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	conf := &SetTypeConf{}
 	for _, opt := range opts {
 		opt(conf)
+	}
+	if conf.description != "" {
+		if conf.definition == nil {
+			conf.definition = &Info{}
+		}
+		conf.definition.Message = conf.description
 	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypes(tt, t) {
@@ -1113,10 +1126,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 	case types.SetType:
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
+		var info *Info
 		switch fnName {
 		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
 			"IsDisjoint", "Intersects", "Equals":
+			info = infer.env.GetNameInfo("agl.Set." + fnName)
 			fnT = infer.env.GetFn("agl.Set."+fnName).T("T", idTT.K)
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Len", "Min", "Max":
@@ -1129,7 +1144,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT.Recv = []types.Type{idT}
 		}
 		fnT.Params = fnT.Params[1:]
-		infer.SetType(exprT.Sel, fnT)
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.ArrayType:
 		fnName := exprT.Sel.Name

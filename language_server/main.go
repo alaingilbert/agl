@@ -271,8 +271,13 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 		l := int(node.End() - node.Pos())
 		startPos := lsp.Position{Line: pos.Line - 1, Character: pos.Column - 1}
 		endPos := lsp.Position{Line: startPos.Line, Character: startPos.Character + l}
+		var contents []lsp.MarkedString
+		contents = append(contents, lsp.MarkedString{Language: "agl", Value: typ.String()})
+		if info.Message != "" {
+			contents = append(contents, lsp.MarkedString{Language: "markdown", Value: info.Message})
+		}
 		return &lsp.Hover{
-			Contents: []lsp.MarkedString{{Language: "agl", Value: typ.String()}},
+			Contents: contents,
 			Range: &lsp.Range{
 				Start: startPos,
 				End:   endPos,
