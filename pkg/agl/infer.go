@@ -912,7 +912,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					}
 				}
 			}
-			
+
 			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
