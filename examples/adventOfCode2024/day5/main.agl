@@ -15,7 +15,7 @@ func main() {
     rules = make(map[int]set[int])
     for _, d := range data1 {
         a, b := d[0], d[1]
-        s := rules[a]
+        mut s := rules[a]
         if s == nil {
             s = make(set[int])
         }
