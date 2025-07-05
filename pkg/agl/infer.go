@@ -2139,6 +2139,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 		}
 		if stmt.Value != nil {
 			name := stmt.Value.(*ast.Ident).Name
+			xT = types.Unwrap(xT)
 			switch v := xT.(type) {
 			case types.StringType:
 				infer.env.Define(stmt.Value, name, types.I32Type{})
