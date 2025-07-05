@@ -976,12 +976,14 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.ResultType:
 			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}),
 				"Unresolved reference '%s'", fnName)
+			info := infer.env.GetNameInfo("agl.Result." + fnName)
 			fnT := infer.env.GetFn("agl.Result." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			} else if fnName == "Err" {
 				panic("user cannot call Err")
 			}
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		default:
 			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
