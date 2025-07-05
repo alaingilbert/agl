@@ -293,6 +293,16 @@ func main() {
 	tassert.Equal(t, "set[int]", test.TypeAt(5, 2).String())
 }
 
+func TestInfer17(t *testing.T) {
+	src := `package main
+func main() {
+	mut s := set[int]{1, 2}
+	s.Insert(3)
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "func (mut set[int]) Insert(int) bool", test.TypeAt(4, 4).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
