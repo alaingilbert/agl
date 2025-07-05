@@ -7735,6 +7735,18 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen277(t *testing.T) {
+	src := "package main\n" +
+		"type Test struct {\n" +
+		"	SomeProp int `json:\"some_prop\"`\n" +
+		"}\n"
+	expected := "package main\n" +
+		"type Test struct {\n" +
+		"	SomeProp int `json:\"some_prop\"`\n" +
+		"}\n"
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

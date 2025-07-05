@@ -891,7 +891,12 @@ func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 		for _, name := range field.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += gPrefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + "\n"
+		var content2 string
+		if field.Tag != nil {
+			content2 = g.genExpr(field.Tag)
+			content2 = utils.PrefixIf(content2, " ")
+		}
+		out += gPrefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + content2 + "\n"
 	}
 	out += gPrefix + "}"
 	return
