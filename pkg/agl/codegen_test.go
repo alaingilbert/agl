@@ -8,9 +8,9 @@ import (
 
 func getGenOutput(src string) string {
 	fset, f := ParseSrc(src)
-	env := NewEnv(fset)
-	NewInferrer(fset, env).InferFile(f)
-	return NewGenerator(env, f).Generate()
+	env := NewEnv()
+	NewInferrer(fset, env).InferFile("", f)
+	return NewGenerator(env, f, fset).Generate()
 }
 
 func testCodeGen(t *testing.T, src, expected string) {

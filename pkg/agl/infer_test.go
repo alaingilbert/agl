@@ -42,9 +42,9 @@ type Test struct {
 
 func NewTest(src string) *Test {
 	fset, f := ParseSrc(src)
-	env := NewEnv(fset)
+	env := NewEnv()
 	i := NewInferrer(fset, env)
-	i.InferFile(f)
+	i.InferFile("", f)
 	file := fset.File(1)
 	return &Test{
 		f:    f,

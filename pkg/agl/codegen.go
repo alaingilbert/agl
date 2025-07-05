@@ -14,6 +14,7 @@ import (
 )
 
 type Generator struct {
+	fset          *token.FileSet
 	env           *Env
 	a             *ast.File
 	prefix        string
@@ -65,9 +66,12 @@ type ExtensionTest struct {
 	concrete types.Type
 }
 
-func NewGenerator(env *Env, a *ast.File) *Generator {
+func NewGenerator(env *Env, a *ast.File, fset *token.FileSet) *Generator {
 	genFns := make(map[string]*ast.FuncDecl)
-	return &Generator{env: env, a: a,
+	return &Generator{
+		fset:          fset,
+		env:           env,
+		a:             a,
 		extensions:    make(map[string]Extension),
 		tupleStructs:  make(map[string]string),
 		genFuncDecls2: make(map[string]string),
@@ -339,10 +343,10 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if strings.HasPrefix(expr.Name, "$") {
 		beforeT := g.env.GetType(expr)
 		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
-		g.env.SetType(nil, expr, beforeT)
+		g.env.SetType(nil, expr, beforeT, g.fset)
 	}
 	if strings.HasPrefix(expr.Name, "@") {
-		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.env.fset.Position(expr.Pos()).Line), 1)
+		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Line), 1)
 	}
 	t := g.env.GetType(expr)
 	if v, ok := t.(types.TypeType); ok {
@@ -438,7 +442,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	for _, field := range expr.Values.List {
 		if field.Params != nil {
 			for i, el := range field.Params.List {
-				out += fmt.Sprintf("\t%s_%d %s\n", field.Name.Name, i, g.env.GetType2(el.Type).GoStr())
+				out += fmt.Sprintf("\t%s_%d %s\n", field.Name.Name, i, g.env.GetType2(el.Type, g.fset).GoStr())
 			}
 		}
 	}
@@ -465,7 +469,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		var tmp1 []string
 		if field.Params != nil {
 			for i, el := range field.Params.List {
-				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType2(el.Type).GoStr()))
+				tmp = append(tmp, fmt.Sprintf("arg%d %s", i, g.env.GetType2(el.Type, g.fset).GoStr()))
 				tmp1 = append(tmp1, fmt.Sprintf("%s_%d: arg%d", field.Name.Name, i, i))
 			}
 		}
@@ -499,9 +503,9 @@ func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
 	var content2 string
 	if g.isType {
-		content2 = g.env.GetType2(expr.Value).GoStrType()
+		content2 = g.env.GetType2(expr.Value, g.fset).GoStrType()
 	} else {
-		content2 = g.env.GetType2(expr.Value).GoStr()
+		content2 = g.env.GetType2(expr.Value, g.fset).GoStr()
 	}
 	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
@@ -949,7 +953,7 @@ func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
 	safeContent1 := strconv.Quote(content1)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
-	before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.env.fset.Position(expr.X.Pos()), safeContent1, varName)
+	before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
 	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
 	return content1
 }
@@ -1270,7 +1274,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(arg)
 				contents = append(contents, content1)
 			}
-			line := g.env.fset.Position(expr.Pos()).Line
+			line := g.fset.Position(expr.Pos()).Line
 			msg := fmt.Sprintf(`"assert failed line %d"`, line)
 			if len(contents) == 1 {
 				contents = append(contents, msg)
@@ -1431,7 +1435,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	structName1 := types.ReplGenM(g.env.GetType(expr), g.genMap).(types.TupleType).GoStr2()
 	var args []string
 	for i, x := range expr.Values {
-		xT := g.env.GetType2(x)
+		xT := g.env.GetType2(x, g.fset)
 		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
 	}
 	structStr := fmt.Sprintf("type %s struct {\n", structName1)

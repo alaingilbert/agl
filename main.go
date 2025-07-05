@@ -154,10 +154,10 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
+	env := agl.NewEnv()
 	i := agl.NewInferrer(fset, env)
-	i.InferFile(f)
-	src := agl.NewGenerator(i.Env, f).Generate()
+	i.InferFile(fileName, f)
+	src := agl.NewGenerator(i.Env, f, fset).Generate()
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -192,10 +192,10 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 		input = ""
 	}
 	fset, f := agl.ParseSrc(input)
-	env := agl.NewEnv(fset)
+	env := agl.NewEnv()
 	i := agl.NewInferrer(fset, env)
-	i.InferFile(f)
-	src := agl.NewGenerator(i.Env, f).Generate()
+	i.InferFile("", f)
+	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	coreHeaders := agl.GenHeaders()
 
 	out := insertHeadersAfterFirstLine(src, coreHeaders) + agl.GenContent()
@@ -217,10 +217,10 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
+	env := agl.NewEnv()
 	i := agl.NewInferrer(fset, env)
-	i.InferFile(f)
-	src := agl.NewGenerator(i.Env, f).Generate()
+	i.InferFile(fileName, f)
+	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
@@ -308,10 +308,10 @@ func buildAglFile(fileName string) error {
 		return err
 	}
 	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
+	env := agl.NewEnv()
 	i := agl.NewInferrer(fset, env)
-	i.InferFile(f)
-	src := agl.NewGenerator(i.Env, f).Generate()
+	i.InferFile(fileName, f)
+	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
 	return os.WriteFile(path, []byte(src), 0644)
 }
@@ -334,10 +334,10 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		panic(err)
 	}
 	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
+	env := agl.NewEnv()
 	i := agl.NewInferrer(fset, env)
-	i.InferFile(f)
-	g := agl.NewGenerator(i.Env, f)
+	i.InferFile(fileName, f)
+	g := agl.NewGenerator(i.Env, f, fset)
 	fmt.Println(g.Generate())
 	return nil
 }

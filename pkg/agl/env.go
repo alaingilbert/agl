@@ -23,7 +23,6 @@ import (
 var contentFs embed.FS
 
 type Env struct {
-	fset          *token.FileSet
 	structCounter atomic.Int64
 	lookupTable   map[string]*Info  // Store constants/variables/functions
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
@@ -148,14 +147,14 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 	return ft
 }
 
-func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bool) types.FuncType {
-	fT := funcTypeToFuncType(name, expr.Type, env, native)
+func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, fset *token.FileSet, native bool) types.FuncType {
+	fT := funcTypeToFuncType(name, expr.Type, env, fset, native)
 	var recvT []types.Type
 	if expr.Recv != nil {
 		for _, recv := range expr.Recv.List {
 			for _, n := range recv.Names {
 				recvTyp := recv.Type
-				t := env.GetType2(recvTyp)
+				t := env.GetType2(recvTyp, fset)
 				if n.Mutable.IsValid() {
 					t = types.MutType{W: t}
 				}
@@ -168,13 +167,13 @@ func funcDeclTypeToFuncType(name string, expr *ast.FuncDecl, env *Env, native bo
 	return fT
 }
 
-func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) types.FuncType {
+func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, fset *token.FileSet, native bool) types.FuncType {
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
 		for _, typeParam := range expr.TypeParams.List {
 			for _, typeParamName := range typeParam.Names {
 				typeParamType := typeParam.Type
-				t := env.GetType2(typeParamType)
+				t := env.GetType2(typeParamType, fset)
 				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
 				env.Define(typeParamName, typeParamName.Name, t)
 				paramsT = append(paramsT, t)
@@ -184,7 +183,7 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 	var params []types.Type
 	if expr.Params != nil {
 		for _, param := range expr.Params.List {
-			t := env.GetType2(param.Type)
+			t := env.GetType2(param.Type, fset)
 			n := max(len(param.Names), 1)
 			for i := 0; i < n; i++ {
 				if len(param.Names) > i && param.Names[i].Mutable.IsValid() {
@@ -196,9 +195,9 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 	}
 	var result types.Type
 	if expr.Result != nil {
-		result = env.GetType2(expr.Result)
+		result = env.GetType2(expr.Result, fset)
 		if result == nil {
-			panic(fmt.Sprintf("%s: type not found %v %v", env.fset.Position(expr.Pos()), expr.Result, to(expr.Result)))
+			panic(fmt.Sprintf("%s: type not found %v %v", fset.Position(expr.Pos()), expr.Result, to(expr.Result)))
 		}
 		if t, ok := result.(types.ResultType); ok {
 			t.Native = native
@@ -230,27 +229,27 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, native bool) 
 	return ft
 }
 
-func parseFuncTypeFromString(name, s string, env *Env) types.FuncType {
-	return parseFuncTypeFromStringHelper(name, s, env, false)
+func parseFuncTypeFromString(name, s string, env *Env, fset *token.FileSet) types.FuncType {
+	return parseFuncTypeFromStringHelper(name, s, env, fset, false)
 }
 
-func parseFuncTypeFromStringNative(name, s string, env *Env) types.FuncType {
-	return parseFuncTypeFromStringHelper(name, s, env, true)
+func parseFuncTypeFromStringNative(name, s string, env *Env, fset *token.FileSet) types.FuncType {
+	return parseFuncTypeFromStringHelper(name, s, env, fset, true)
 }
 
-func parseFuncTypeFromStringHelper(name, s string, env *Env, native bool) types.FuncType {
+func parseFuncTypeFromStringHelper(name, s string, env *Env, fset *token.FileSet, native bool) types.FuncType {
 	env = env.SubEnv()
 	e := Must(parser.ParseExpr(s))
 	expr := e.(*ast.FuncType)
-	return funcTypeToFuncType(name, expr, env, native)
+	return funcTypeToFuncType(name, expr, env, fset, native)
 }
 
-func parseFuncDeclFromStringHelper(name, s string, env *Env) types.FuncType {
+func parseFuncDeclFromStringHelper(name, s string, env *Env, fset *token.FileSet) types.FuncType {
 	s = "package main\n" + s
 	env = env.SubEnv()
 	e := Must(parser.ParseFile(token.NewFileSet(), "", s, parser.AllErrors))
 	expr := e.Decls[0].(*ast.FuncDecl)
-	return funcDeclTypeToFuncType(name, expr, env, true)
+	return funcDeclTypeToFuncType(name, expr, env, fset, true)
 }
 
 func (e *Env) loadCoreTypes() {
@@ -352,7 +351,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 				fullName = recvName + "." + fullName
 			}
 			fullName = pkgName + "." + fullName
-			ft := funcDeclTypeToFuncType("", decl, env, true)
+			ft := funcDeclTypeToFuncType("", decl, env, fset, true)
 			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
 				ft.IsNative = false
 				switch v := ft.Return.(type) {
@@ -375,16 +374,16 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *ast.Ident:
-						t := env.GetType2(v)
+						t := env.GetType2(v, fset)
 						env.Define(nil, specName, types.CustomType{Pkg: pkgName, Name: spec.Name.Name, W: t})
 					case *ast.MapType:
-						t := env.GetType2(v)
+						t := env.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.StarExpr:
-						t := env.GetType2(v)
+						t := env.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.ArrayType:
-						t := env.GetType2(v)
+						t := env.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
 						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
@@ -392,7 +391,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
 							for _, field := range v.Fields.List {
-								t := env.GetType2(field.Type)
+								t := env.GetType2(field.Type, fset)
 								for _, name := range field.Names {
 									fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 									switch vv := t.(type) {
@@ -693,9 +692,8 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
 
-func NewEnv(fset *token.FileSet) *Env {
+func NewEnv() *Env {
 	env := &Env{
-		fset:        fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    make(map[NodeKey]*Info),
 	}
@@ -705,7 +703,6 @@ func NewEnv(fset *token.FileSet) *Env {
 
 func (e *Env) SubEnv() *Env {
 	env := &Env{
-		fset:        e.fset,
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
 		parent:      e,
@@ -760,12 +757,12 @@ func (e *Env) GetFn(name string) types.FuncType {
 }
 
 func (e *Env) DefineFn(name string, fnStr string, opts ...SetTypeOption) {
-	fnT := parseFuncTypeFromString(name, fnStr, e)
+	fnT := parseFuncTypeFromString(name, fnStr, e, nil)
 	e.Define(nil, name, fnT, opts...)
 }
 
-func (e *Env) DefineFnNative(name string, fnStr string) {
-	fnT := parseFuncDeclFromStringHelper(name, fnStr, e)
+func (e *Env) DefineFnNative(name string, fnStr string, fset *token.FileSet) {
+	fnT := parseFuncDeclFromStringHelper(name, fnStr, e, fset)
 	e.Define(nil, name, fnT)
 }
 
@@ -836,18 +833,18 @@ func (e *Env) lspSetNode(n ast.Node, info *Info) {
 	e.lspTable[e.makeKey(n)] = info
 }
 
-func (e *Env) Assign(parentInfo *Info, n ast.Node, name string) {
+func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.FileSet) {
 	if name == "_" {
 		return
 	}
 	t := e.Get(name)
-	assertf(t != nil, "%s: undeclared %s", e.fset.Position(n.Pos()), name)
-	assertf(TryCast[types.MutType](t), "%s: cannot assign to immutable variable '%s'", e.fset.Position(n.Pos()), name)
+	assertf(t != nil, "%s: undeclared %s", fset.Position(n.Pos()), name)
+	assertf(TryCast[types.MutType](t), "%s: cannot assign to immutable variable '%s'", fset.Position(n.Pos()), name)
 	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
 }
 
-func (e *Env) SetType(p *Info, x ast.Node, t types.Type) {
-	assertf(t != nil, "%s: try to set type nil, %v %v", e.fset.Position(x.Pos()), x, to(x))
+func (e *Env) SetType(p *Info, x ast.Node, t types.Type, fset *token.FileSet) {
+	assertf(t != nil, "%s: try to set type nil, %v %v", fset.Position(x.Pos()), x, to(x))
 	info := e.lspNodeOrCreate(x)
 	info.Type = t
 	if p != nil {
@@ -883,15 +880,15 @@ func panicIfNil(t types.Type, typ any) {
 	}
 }
 
-func (e *Env) GetType2(x ast.Node) types.Type {
-	res := e.getType2Helper(x)
+func (e *Env) GetType2(x ast.Node, fset *token.FileSet) types.Type {
+	res := e.getType2Helper(x, fset)
 	if res == nil && e.parent != nil {
-		return e.parent.GetType2(x)
+		return e.parent.GetType2(x, fset)
 	}
 	return res
 }
 
-func (e *Env) getType2Helper(x ast.Node) types.Type {
+func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	if v := e.lspNode(x); v != nil {
 		return v.Type
 	}
@@ -902,21 +899,21 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 		return nil
 	case *ast.FuncType:
-		return funcTypeToFuncType("", xx, e, false)
+		return funcTypeToFuncType("", xx, e, fset, false)
 	case *ast.Ellipsis:
-		t := e.GetType2(xx.Elt)
+		t := e.GetType2(xx.Elt, fset)
 		panicIfNil(t, xx.Elt)
 		return types.EllipsisType{Elt: t}
 	case *ast.ArrayType:
-		t := e.GetType2(xx.Elt)
+		t := e.GetType2(xx.Elt, fset)
 		panicIfNil(t, xx.Elt)
 		return types.ArrayType{Elt: t}
 	case *ast.ResultExpr:
-		t := e.GetType2(xx.X)
+		t := e.GetType2(xx.X, fset)
 		panicIfNil(t, xx.X)
 		return types.ResultType{W: t}
 	case *ast.OptionExpr:
-		t := e.GetType2(xx.X)
+		t := e.GetType2(xx.X, fset)
 		panicIfNil(t, xx.X)
 		return types.OptionType{W: t}
 	case *ast.CallExpr:
@@ -931,21 +928,21 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 			panic(fmt.Sprintf("%v", xx.Kind))
 		}
 	case *ast.SelectorExpr:
-		base := e.GetType2(xx.X)
+		base := e.GetType2(xx.X, fset)
 		base = types.Unwrap(base)
 		switch v := base.(type) {
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
-			return e.GetType2(&ast.Ident{Name: name})
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.InterfaceType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
 			if v.Pkg != "" {
 				name = v.Pkg + "." + name
 			}
-			return e.GetType2(&ast.Ident{Name: name})
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
-			return e.GetType2(&ast.Ident{Name: name})
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.TypeAssertType:
 			return v.X
 		default:
@@ -953,7 +950,7 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 		return nil
 	case *ast.IndexExpr:
-		t := e.GetType2(xx.X)
+		t := e.GetType2(xx.X, fset)
 		if !e.NoIdxUnwrap {
 			switch v := t.(type) {
 			case types.ArrayType:
@@ -962,49 +959,49 @@ func (e *Env) getType2Helper(x ast.Node) types.Type {
 		}
 		return t
 	case *ast.ParenExpr:
-		return e.GetType2(xx.X)
+		return e.GetType2(xx.X, fset)
 	case *ast.VoidExpr:
 		return types.VoidType{}
 	case *ast.StarExpr:
-		return types.StarType{X: e.GetType2(xx.X)}
+		return types.StarType{X: e.GetType2(xx.X, fset)}
 	case *ast.MapType:
-		return types.MapType{K: e.GetType2(xx.Key), V: e.GetType2(xx.Value)}
+		return types.MapType{K: e.GetType2(xx.Key, fset), V: e.GetType2(xx.Value, fset)}
 	case *ast.SetType:
-		return types.SetType{K: e.GetType2(xx.Key)}
+		return types.SetType{K: e.GetType2(xx.Key, fset)}
 	case *ast.ChanType:
-		return types.ChanType{W: e.GetType2(xx.Value)}
+		return types.ChanType{W: e.GetType2(xx.Value, fset)}
 	case *ast.TupleExpr:
 		var elts []types.Type
 		for _, v := range xx.Values { // TODO NO GOOD
-			elt := e.GetType2(v)
+			elt := e.GetType2(v, fset)
 			elts = append(elts, elt)
 		}
 		return types.TupleType{Elts: elts}
 	case *ast.BinaryExpr:
-		return types.BinaryType{X: e.GetType2(xx.X), Y: e.GetType2(xx.Y)}
+		return types.BinaryType{X: e.GetType2(xx.X, fset), Y: e.GetType2(xx.Y, fset)}
 	case *ast.UnaryExpr:
-		return types.UnaryType{X: e.GetType2(xx.X)}
+		return types.UnaryType{X: e.GetType2(xx.X, fset)}
 	case *ast.InterfaceType:
 		return types.AnyType{}
 	case *ast.CompositeLit:
-		ct := e.GetType2(xx.Type).(types.CustomType)
+		ct := e.GetType2(xx.Type, fset).(types.CustomType)
 		return types.StructType{Pkg: ct.Pkg, Name: ct.Name}
 	case *ast.TypeAssertExpr:
-		xT := e.GetType2(xx.X)
+		xT := e.GetType2(xx.X, fset)
 		var typeT types.Type
 		if xx.Type != nil {
-			typeT = e.GetType2(xx.Type)
+			typeT = e.GetType2(xx.Type, fset)
 		}
 		n := types.TypeAssertType{X: xT, Type: typeT}
 		info := e.lspNodeOrCreate(xx)
 		info.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
 		return n
 	case *ast.BubbleOptionExpr:
-		return e.GetType2(xx.X)
+		return e.GetType2(xx.X, fset)
 	case *ast.SliceExpr:
-		return e.GetType2(xx.X) // TODO
+		return e.GetType2(xx.X, fset) // TODO
 	case *ast.IndexListExpr:
-		return e.GetType2(xx.X) // TODO
+		return e.GetType2(xx.X, fset) // TODO
 	case *ast.StructType:
 		return types.StructType{}
 	default:
