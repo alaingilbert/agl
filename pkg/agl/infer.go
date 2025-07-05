@@ -1110,8 +1110,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
+		info := &Info{}
 		switch fnName {
 		case "Split", "HasPrefix", "HasSuffix":
+			info = infer.env.GetNameInfo("agl.String." + fnName)
 			fnT = infer.env.GetFn("agl.String." + fnName)
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Uppercased", "Lowercased":
@@ -1121,12 +1123,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		}
 		fnT.Recv = []types.Type{idTT}
 		fnT.Params = fnT.Params[1:]
-		infer.SetType(exprT.Sel, fnT)
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.SetType:
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
-		var info *Info
+		info := &Info{}
 		switch fnName {
 		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
