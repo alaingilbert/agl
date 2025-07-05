@@ -841,6 +841,7 @@ func FindGen(a, b Type) map[string]Type {
 func findGenHelper(m map[string]Type, a, b Type) {
 	switch t1 := a.(type) {
 	case ArrayType:
+		b = Unwrap(b)
 		findGenHelper(m, t1.Elt, b.(ArrayType).Elt)
 	case TupleType:
 		for i, elt := range t1.Elts {

@@ -1244,6 +1244,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		} else if InArray(fnName, []string{"Sum", "Last", "First", "Push", "Remove", "Clone", "Indices", "PushFront", "Insert", "Pop", "PopFront", "Len", "IsEmpty"}) {
 			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{idTT}
+			if TryCast[types.MutType](sumFnT.Params[0]) {
+				assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+			}
 			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
@@ -1251,6 +1254,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			sumFnT := infer.env.GetFn("agl.Vec.PopIf").T("T", idTT.Elt)
 			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTT}
+			if TryCast[types.MutType](sumFnT.Params[0]) {
+				assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+			}
 			sumFnT.Params = sumFnT.Params[1:]
 			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[0], clbT)

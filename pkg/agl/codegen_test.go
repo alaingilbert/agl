@@ -6535,7 +6535,7 @@ func main() {
 func TestCodeGen216(t *testing.T) {
 	src := `package main
 func main() {
-	a := []int{1, 2, 3}
+	mut a := []int{1, 2, 3}
 	a.PopIf(func() bool { true })
 }`
 	expected := `package main
@@ -6552,7 +6552,7 @@ func main() {
 func TestCodeGen217(t *testing.T) {
 	src := `package main
 func main() {
-	a := []int{1, 2, 3}
+	mut a := []int{1, 2, 3}
 	a.PopIf({ true })
 }`
 	expected := `package main
@@ -6569,7 +6569,7 @@ func main() {
 func TestCodeGen218(t *testing.T) {
 	src := `package main
 func main() {
-	a := []int{1, 2, 3}
+	mut a := []int{1, 2, 3}
 	a.Push(4)
 }`
 	expected := `package main
@@ -7074,7 +7074,7 @@ func TestCodeGen244(t *testing.T) {
 	src := `package main
 import "fmt"
 func zip2[T, U any](a []T, b []U) [](T, U) {
-	out := make([](T, U), 0)
+	mut out := make([](T, U), 0)
 	for i := range a {
 		out.Push((a[i], b[i]))
 	}
@@ -7232,7 +7232,7 @@ func TestCodeGen252(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
-	out := make([]R, 0)
+	mut out := make([]R, 0)
 	for _, el := range v {
 		if Some(res) := f(el) {
 			out.Push(res)
@@ -7268,7 +7268,7 @@ func TestCodeGen253(t *testing.T) {
 	src := `package main
 import "fmt"
 func (v agl.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
-	out := make([]R, 0)
+	mut out := make([]R, 0)
 	for _, el := range v {
 		subArr := f(el)
 		for _, el1 := range subArr {
@@ -7279,7 +7279,7 @@ func (v agl.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
 }
 func main() {
 	[]int{1, 2}.FlatMap({
-        out := make([]int, 0)
+        mut out := make([]int, 0)
         for i := 0; i < $0; i++ {
             out.Push($0)
         }
