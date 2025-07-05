@@ -11,5 +11,8 @@ func main() {
     defer res.Body.Close()
     assert(res.StatusCode == 200)
     doc := goquery.NewDocumentFromReader(res.Body)!
-    fmt.Println(doc)
+    doc.Find(".left-content article .post-title").Each(func(i int, s *goquery.Selection) {
+		title := s.Find("a").Text()
+		fmt.Printf("Review %d: %s\n", i, title)
+	})
 }
