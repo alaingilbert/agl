@@ -971,6 +971,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			}
+			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
 		case types.ResultType:
 			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}),

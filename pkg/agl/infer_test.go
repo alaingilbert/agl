@@ -305,6 +305,21 @@ func main() {
 	tassert.Equal(t, "func (set[int]) Contains(int) bool", test.TypeAt(5, 4).String())
 }
 
+func TestInfer18(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]int{1: 1}
+	r1 := m.Get(1).Unwrap()
+	r2 := m.Get(1).UnwrapOr(42)
+	r3 := m.Get(1).UnwrapOrDefault()
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "int", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "func Unwrap() int", test.TypeAt(4, 17).String())
+	tassert.Equal(t, "func UnwrapOr(int) int", test.TypeAt(5, 17).String())
+	tassert.Equal(t, "func UnwrapOrDefault() int", test.TypeAt(6, 17).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }
