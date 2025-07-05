@@ -2294,7 +2294,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case types.ArrayType:
 					lhsWantedT = vv.Elt
 				default:
-					panic(fmt.Sprintf("%v", to(v.X)))
+					panic(fmt.Sprintf("%v", to(lhsIdNameT)))
 				}
 			case *ast.SelectorExpr:
 				lhsIdName := v.X.(*ast.Ident).Name
