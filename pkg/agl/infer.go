@@ -2376,11 +2376,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				panic(fmt.Sprintf("%v", to(lhs)))
 			}
 			var rhsT types.Type
-			if ta, ok := rhs.(*ast.TypeAssertExpr); ok {
+			switch ta := rhs.(type) {
+			case *ast.TypeAssertExpr:
 				tmp := utils.Ternary(ta.Type == nil, ta.X, ta.Type)
 				rhsT = infer.env.GetType2(tmp)
 				rhsT = types.OptionType{W: rhsT}
-			} else if ta, ok := rhs.(*ast.IndexExpr); ok {
+			case *ast.IndexExpr:
 				rhsT = infer.env.GetType2(ta.X)
 				rhsT = types.Unwrap(rhsT)
 				switch v := rhsT.(type) {
@@ -2389,7 +2390,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case types.ArrayType:
 					rhsT = v.Elt
 				}
-			} else {
+			default:
 				rhsT = infer.env.GetType2(rhs)
 			}
 			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
