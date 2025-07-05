@@ -1976,6 +1976,14 @@ func (o Option[T]) UnwrapOr(d T) T {
 	return *o.t
 }
 
+func (o Option[T]) UnwrapOrDefault() T {
+	var zero T
+	if o.IsNone() {
+		return zero
+	}
+	return *o.t
+}
+
 func MakeOptionSome[T any](t T) Option[T] {
 	return Option[T]{t: &t}
 }
@@ -2018,6 +2026,14 @@ func (r Result[T]) NativeUnwrap() (*T, error) {
 func (r Result[T]) UnwrapOr(d T) T {
 	if r.IsErr() {
 		return d
+	}
+	return *r.t
+}
+
+func (r Result[T]) UnwrapOrDefault() T {
+	var zero T
+	if r.IsErr() {
+		return zero
 	}
 	return *r.t
 }

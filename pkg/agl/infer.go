@@ -964,18 +964,18 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr, types.VoidType{})
 			}
 		case types.OptionType:
-			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr"}),
+			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}),
 				"Unresolved reference '%s'", fnName)
 			fnT := infer.env.GetFn("agl.Option." + fnName)
-			if fnName == "Unwrap" || fnName == "UnwrapOr" {
+			if fnName == "Unwrap" || fnName == "UnwrapOr" || fnName == "UnwrapOrDefault" {
 				fnT = fnT.T("T", idTT.W)
 			}
 			infer.SetType(expr, fnT.Return)
 		case types.ResultType:
-			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}),
+			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}),
 				"Unresolved reference '%s'", fnName)
 			fnT := infer.env.GetFn("agl.Result." + fnName)
-			if InArray(fnName, []string{"Unwrap", "UnwrapOr"}) {
+			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			} else if fnName == "Err" {
 				panic("user cannot call Err")
