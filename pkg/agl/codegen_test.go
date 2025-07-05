@@ -7719,6 +7719,22 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen276(t *testing.T) {
+	src := `package main
+pub func test() {}
+func main() {
+	test()
+}`
+	expected := `package main
+func AglPub_test() {
+}
+func main() {
+	AglPub_test()
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

@@ -372,6 +372,12 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if v := g.env.Get(expr.Name); v != nil {
 		if _, ok := v.(types.TypeType); ok {
 			return v.GoStr()
+		} else if vv, ok := v.(types.FuncType); ok {
+			name := expr.Name
+			if vv.Pub {
+				name = "AglPub_" + name
+			}
+			return name
 		} else {
 			return expr.Name
 		}
@@ -1789,6 +1795,9 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 		fnName := decl.Name.Name
 		if newName, ok := overloadMapping[fnName]; ok {
 			fnName = newName
+		}
+		if decl.Pub.IsValid() {
+			fnName = "AglPub_" + fnName
 		}
 		name = " " + fnName
 	}

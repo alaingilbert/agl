@@ -129,6 +129,7 @@ const (
 	RANGE
 	RETURN
 	MUT
+	PUB
 
 	SELECT
 	STRUCT
@@ -247,6 +248,7 @@ var tokens = [...]string{
 
 	INTERFACE: "interface",
 	MUT:       "mut",
+	PUB:       "pub",
 	MAP:       "map",
 	SET:       "set",
 	PACKAGE:   "package",

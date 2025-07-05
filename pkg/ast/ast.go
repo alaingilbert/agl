@@ -1311,6 +1311,7 @@ type (
 
 	// A FuncDecl node represents a function declaration.
 	FuncDecl struct {
+		Pub  token.Pos
 		Doc  *CommentGroup // associated documentation; or nil
 		Recv *FieldList    // receiver (methods); or nil (functions)
 		Name *Ident        // function/method name
@@ -1321,9 +1322,14 @@ type (
 
 // Pos and End implementations for declaration nodes.
 
-func (d *BadDecl) Pos() token.Pos  { return d.From }
-func (d *GenDecl) Pos() token.Pos  { return d.TokPos }
-func (d *FuncDecl) Pos() token.Pos { return d.Type.Pos() }
+func (d *BadDecl) Pos() token.Pos { return d.From }
+func (d *GenDecl) Pos() token.Pos { return d.TokPos }
+func (d *FuncDecl) Pos() token.Pos {
+	if d.Pub.IsValid() {
+		return d.Pub
+	}
+	return d.Type.Pos()
+}
 
 func (d *BadDecl) End() token.Pos { return d.To }
 func (d *GenDecl) End() token.Pos {

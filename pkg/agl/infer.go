@@ -600,6 +600,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 		fnName = newName
 	}
 	ft := types.FuncType{
+		Pub:        decl.Pub.IsValid(),
 		Recv:       recvT,
 		Name:       fnName,
 		TypeParams: typeParamsT,

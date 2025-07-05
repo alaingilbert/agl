@@ -669,6 +669,7 @@ func (t TupleType) StringFull() string {
 }
 
 type FuncType struct {
+	Pub        bool
 	Name       string
 	Recv       []Type
 	TypeParams []Type

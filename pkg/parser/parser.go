@@ -3104,7 +3104,7 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseFuncDecl() *ast.FuncDecl {
+func (p *parser) parseFuncDecl(pubTok token.Pos) *ast.FuncDecl {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3151,6 +3151,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	decl := &ast.FuncDecl{
 		Doc:  doc,
+		Pub:  pubTok,
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
@@ -3169,6 +3170,11 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		defer un(trace(p, "Declaration"))
 	}
 
+	var pubTok token.Pos
+	if p.tok == token.PUB {
+		pubTok = p.expect(token.PUB)
+	}
+
 	var f parseSpecFunction
 	switch p.tok {
 	case token.IMPORT:
@@ -3181,7 +3187,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		f = p.parseTypeSpec
 
 	case token.FUNC:
-		return p.parseFuncDecl()
+		return p.parseFuncDecl(pubTok)
 
 	default:
 		pos := p.pos
