@@ -652,7 +652,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
 	e.DefineFn("agl.Vec.Remove", "func [T any](a []T, i int)")
-	//e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
+	e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
 	e.DefineFn("agl.Vec.Indices", "func [T any](a []T) []int")
 	e.DefineFn("agl.Vec.Contains", "func [T comparable](a []T, e T) bool")
 	e.DefineFn("agl.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
@@ -675,7 +675,6 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Result.IsOk", "func () bool")
 	e.DefineFn("agl.Result.IsErr", "func () bool")
 	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
-	//e.DefineFn("agl.Vec.Enumerated", "func [T any](a []T) [](int, T)")
 }
 
 func CoreFns() string {
