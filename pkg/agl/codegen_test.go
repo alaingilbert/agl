@@ -7695,6 +7695,30 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen274(t *testing.T) {
+	src := `package main
+func main() {
+	s := set[int]{1, 2, 3}
+	s.Insert(4)
+}`
+	tassert.PanicsWithError(t, "4:4: method 'Insert' cannot be called on immutable type 'set'", testCodeGenFn(src))
+}
+
+func TestCodeGen275(t *testing.T) {
+	src := `package main
+func main() {
+	mut s := set[int]{1, 2, 3}
+	s.Insert(4)
+}`
+	expected := `package main
+func main() {
+	s := AglSet[int]{1: {}, 2: {}, 3: {}}
+	AglSetInsert(s, 4)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

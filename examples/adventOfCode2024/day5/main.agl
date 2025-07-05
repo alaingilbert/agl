@@ -28,7 +28,7 @@ func main() {
 func isInvalid(update []int) bool {
     for i, v := range update {
         s1 := rules[v]
-        s2 := set[int]{}
+        mut s2 := set[int]{}
         for _, e := range update[:i] {
             s2.Insert(e)
         }

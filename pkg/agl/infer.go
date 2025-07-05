@@ -1128,6 +1128,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		fnT.Recv = []types.Type{idTT}
+		if TryCast[types.MutType](fnT.Params[0]) {
+			assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
+		}
 		fnT.Params = fnT.Params[1:]
 		infer.SetType(exprT.Sel, fnT)
 		infer.SetType(expr, fnT.Return)
