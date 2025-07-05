@@ -897,11 +897,14 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.StructType:
 			name := idTT.GetFieldName(call.Sel.Name)
 			nameT := infer.env.Get(name)
+
+			// Handle struct composition. If we did not find the method for the struct,
+			// we need to check other structs that are "inherited" (composition).
 			if nameT == nil {
-				for _, f := range idTT.Fields {
-					if f.Name == "" {
-						t := types.Unwrap(f.Typ)
-						if v, ok := t.(types.StructType); ok {
+				for _, field := range idTT.Fields {
+					if field.Name == "" {
+						fieldType := types.Unwrap(field.Typ)
+						if v, ok := fieldType.(types.StructType); ok {
 							name = v.GetFieldName(call.Sel.Name)
 							nameT = infer.env.Get(name)
 							nameT = types.Unwrap(nameT)
@@ -909,6 +912,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					}
 				}
 			}
+			
 			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
