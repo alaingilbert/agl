@@ -967,11 +967,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.OptionType:
 			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}),
 				"Unresolved reference '%s'", fnName)
+			info := infer.env.GetNameInfo("agl.Option." + fnName)
 			fnT := infer.env.GetFn("agl.Option." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			}
-			infer.SetType(call.Sel, fnT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case types.ResultType:
 			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}),
