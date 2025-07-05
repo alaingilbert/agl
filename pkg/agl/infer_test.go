@@ -278,7 +278,7 @@ func main() {
 	fmt.Println(sb.String())
 }`
 	test := NewTest(src)
-	tassert.Equal(t, "func (mut *Builder) WriteString(string) int!", test.TypeAt(6, 5).String())
+	tassert.Equal(t, "func (mut *strings.Builder) WriteString(string) int!", test.TypeAt(6, 5).String())
 }
 
 func TestInfer16(t *testing.T) {

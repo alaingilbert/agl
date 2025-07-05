@@ -1146,7 +1146,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				if tmp.gen == nil {
 					tmp.gen = make(map[string]ExtensionTest)
 				}
-				tmp.gen[rawFnT.StringFull()+"_"+concreteT.StringFull()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
+				tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
 				g.extensions[extName] = tmp
 				var els []string
 				for _, k := range slices.Sorted(maps.Keys(m)) {

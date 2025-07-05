@@ -39,7 +39,7 @@ func Test5(t *testing.T) {
 	env := NewEnv(token.NewFileSet())
 	_ = env.loadPkg("strings")
 	fT := parseFuncDeclFromStringHelper("WriteString", "func (mut r *strings.Builder) WriteString(io.Writer, string) int!", env)
-	tassert.Equal(t, "func (mut *Builder) WriteString(io.Writer, string) int!", fT.String())
+	tassert.Equal(t, "func (mut *strings.Builder) WriteString(io.Writer, string) int!", fT.String())
 }
 
 //func Test5(t *testing.T) {
