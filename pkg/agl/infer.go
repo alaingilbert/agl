@@ -967,7 +967,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}),
 				"Unresolved reference '%s'", fnName)
 			fnT := infer.env.GetFn("agl.Option." + fnName)
-			if fnName == "Unwrap" || fnName == "UnwrapOr" || fnName == "UnwrapOrDefault" {
+			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			}
 			infer.SetType(expr, fnT.Return)
