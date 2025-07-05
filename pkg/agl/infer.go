@@ -962,7 +962,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "Err"}),
 				"Unresolved reference '%s'", fnName)
 			fnT := infer.env.GetFn("agl.Result." + fnName)
-			if fnName == "Unwrap" || fnName == "UnwrapOr" {
+			if InArray(fnName, []string{"Unwrap", "UnwrapOr"}) {
 				fnT = fnT.T("T", idTT.W)
 			} else if fnName == "Err" {
 				panic("user cannot call Err")
