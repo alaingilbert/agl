@@ -593,24 +593,7 @@ func (e *Env) loadPkg(path string) error {
 func (e *Env) loadVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
-	if entries, err := os.ReadDir(vendorPath); err == nil {
-		defineStructsFromGoSrc(entries, e, vendorPath, m)
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
-				continue
-			}
-			fullPath := filepath.Join(vendorPath, entry.Name())
-			if _, ok := m[fullPath]; ok {
-				continue
-			}
-			m[fullPath] = struct{}{}
-			by, err := os.ReadFile(fullPath)
-			if err != nil {
-				continue
-			}
-			defineFromGoSrc(e, fullPath, path, by, m)
-		}
-	}
+	e.loadVendor1(vendorPath, m)
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
@@ -620,87 +603,112 @@ func (e *Env) loadVendor(path string, m map[string]struct{}) {
 	defineFromSrc(e, final, by)
 }
 
+func (e *Env) loadVendor1(path string, m map[string]struct{}) {
+	if entries, err := os.ReadDir(path); err == nil {
+		e.loadVendor2(path, m, entries)
+	}
+}
+
+func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
+	defineStructsFromGoSrc(entries, e, path, m)
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+		fullPath := filepath.Join(path, entry.Name())
+		if _, ok := m[fullPath]; ok {
+			continue
+		}
+		m[fullPath] = struct{}{}
+		by, err := os.ReadFile(fullPath)
+		if err != nil {
+			continue
+		}
+		defineFromGoSrc(e, fullPath, path, by, m)
+	}
+}
+
 func (e *Env) loadPkgAgl() {
-	_ = e.DefinePkg("agl", "agl")
-	e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
-	e.Define(nil, "agl.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
-	e.Define(nil, "agl.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
-	e.DefineFn("agl.Set.Len", "func [T comparable](s agl.Set[T]) int", WithDesc("The number of elements in the set."))
-	e.DefineFn("agl.Set.Insert", "func [T comparable](mut s agl.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))
-	e.DefineFn("agl.Set.Remove", "func [T comparable](mut s agl.Set[T], el T) T?")
-	e.DefineFn("agl.Set.Contains", "func [T comparable](s agl.Set[T], el T) bool")
-	e.DefineFn("agl.Set.Iter", "func [T comparable](s agl.Set[T]) iter.Seq[T]")
-	e.DefineFn("agl.Set.Union", "func [T comparable](s agl.Set[T], other Iterator[T]) agl.Set[T]")
-	e.DefineFn("agl.Set.FormUnion", "func [T comparable](mut s agl.Set[T], other Iterator[T])")
-	e.DefineFn("agl.Set.Subtracting", "func [T comparable](s agl.Set[T], other Iterator[T]) agl.Set[T]")
-	e.DefineFn("agl.Set.Subtract", "func [T comparable](mut s agl.Set[T], other Iterator[T])")
-	e.DefineFn("agl.Set.Intersection", "func [T comparable](s agl.Set[T], other Iterator[T]) agl.Set[T]", WithDesc("Returns a new set with the elements that are common to both this set and the given sequence."))
-	e.DefineFn("agl.Set.FormIntersection", "func [T comparable](mut s agl.Set[T], other Iterator[T])")
-	e.DefineFn("agl.Set.SymmetricDifference", "func [T comparable](s agl.Set[T], other Iterator[T]) agl.Set[T]")
-	e.DefineFn("agl.Set.FormSymmetricDifference", "func [T comparable](mut s agl.Set[T], other Iterator[T])")
-	e.DefineFn("agl.Set.IsSubset", "func [T comparable](s agl.Set[T], other Iterator[T]) bool")
-	e.DefineFn("agl.Set.IsStrictSubset", "func [T comparable](s agl.Set[T], other Iterator[T]) bool")
-	e.DefineFn("agl.Set.IsSuperset", "func [T comparable](s agl.Set[T], other Iterator[T]) bool")
-	e.DefineFn("agl.Set.IsStrictSuperset", "func [T comparable](s agl.Set[T], other Iterator[T]) bool")
-	e.DefineFn("agl.Set.IsDisjoint", "func [T comparable](s agl.Set[T], other Iterator[T]) bool", WithDesc("Returns a Boolean value that indicates whether the set has no members in common with the given sequence."))
-	e.DefineFn("agl.Set.Intersects", "func [T comparable](s agl.Set[T], other Iterator[T]) bool", WithDesc("Returns a Boolean value that indicates whether the set has members in common with the given sequence."))
-	e.DefineFn("agl.Set.Equals", "func [T comparable](s, other agl.Set[T]) bool")
-	e.DefineFn("agl.Set.Min", "func [T comparable](s agl.Set[T]) T?")
-	e.DefineFn("agl.Set.Max", "func [T comparable](s agl.Set[T]) T?")
-	e.DefineFn("agl.String.Split", "func (s, sep string) []string", WithDesc("Split slices s into all substrings separated by sep and returns a slice of\nthe substrings between those separators."))
-	e.DefineFn("agl.String.HasPrefix", "func (s, prefix string) bool")
-	e.DefineFn("agl.String.HasSuffix", "func (s, prefix string) bool")
-	e.DefineFn("agl.String.Lowercased", "func (s string) string")
-	e.DefineFn("agl.String.Uppercased", "func (s string) string")
-	e.DefineFn("agl.String.Int", "func (s) int?", WithDesc("Parse the string into an 'int' value.\nReturns None if the string cannot be parsed as an 'int'."))
-	e.DefineFn("agl.String.I8", "func (s) i8?", WithDesc("Parse the string into an 'i8' value.\nReturns None if the string cannot be parsed as an 'i8'."))
-	e.DefineFn("agl.String.I16", "func (s) i16?", WithDesc("Parse the string into an 'i16' value.\nReturns None if the string cannot be parsed as an 'i16'."))
-	e.DefineFn("agl.String.I32", "func (s) i32?", WithDesc("Parse the string into an 'i32' value.\nReturns None if the string cannot be parsed as an 'i32'."))
-	e.DefineFn("agl.String.I64", "func (s) i64?", WithDesc("Parse the string into an 'i64' value.\nReturns None if the string cannot be parsed as an 'i64'."))
-	e.DefineFn("agl.String.Uint", "func (s) uint?", WithDesc("Parse the string into an 'uint' value.\nReturns None if the string cannot be parsed as an 'uint'."))
-	e.DefineFn("agl.String.U8", "func (s) u8?", WithDesc("Parse the string into an 'u8' value.\nReturns None if the string cannot be parsed as an 'u8'."))
-	e.DefineFn("agl.String.U16", "func (s) u16?", WithDesc("Parse the string into an 'u16' value.\nReturns None if the string cannot be parsed as an 'u16'."))
-	e.DefineFn("agl.String.U32", "func (s) u32?", WithDesc("Parse the string into an 'u32' value.\nReturns None if the string cannot be parsed as an 'u32'."))
-	e.DefineFn("agl.String.U64", "func (s) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
-	e.DefineFn("agl.String.F32", "func (s) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
-	e.DefineFn("agl.String.F64", "func (s) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
-	e.DefineFn("agl.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
-	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T", WithDesc("Returns a new collection of the same type containing, in order, the elements of the original collection that satisfy the given predicate."))
-	e.DefineFn("agl.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool", WithDesc("Returns a Boolean value indicating whether every element of a sequence satisfies a given predicate."))
-	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
-	e.DefineFn("agl.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", WithDesc("Returns the result of combining the elements of the sequence using the given closure."))
-	e.DefineFn("agl.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
-	e.DefineFn("agl.Vec.Sum", "func [T cmp.Ordered](a []T) T")
-	e.DefineFn("agl.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
-	e.DefineFn("agl.Vec.Sorted", "func [E cmp.Ordered](a []E) []E", WithDesc("Returns the elements of the sequence, sorted."))
-	e.DefineFn("agl.Vec.First", "func [T any](a []T) T?")
-	e.DefineFn("agl.Vec.Last", "func [T any](a []T) T?")
-	e.DefineFn("agl.Vec.Remove", "func [T any](a []T, i int)")
-	e.DefineFn("agl.Vec.Clone", "func [T any](a []T) []T")
-	e.DefineFn("agl.Vec.Indices", "func [T any](a []T) []int")
-	e.DefineFn("agl.Vec.Contains", "func [T comparable](a []T, e T) bool")
-	e.DefineFn("agl.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
-	e.DefineFn("agl.Vec.Push", "func [T any](mut a []T, els ...T)")
-	e.DefineFn("agl.Vec.PushFront", "func [T any](mut a []T, el T)")
-	e.DefineFn("agl.Vec.Pop", "func [T any](mut a []T) T?")
-	e.DefineFn("agl.Vec.PopFront", "func [T any](mut a []T) T?")
-	e.DefineFn("agl.Vec.PopIf", "func [T any](mut a []T, pred func() bool) T?")
-	e.DefineFn("agl.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
-	e.DefineFn("agl.Vec.Len", "func [T any](a []T) int")
-	e.DefineFn("agl.Vec.IsEmpty", "func [T any](a []T) bool")
-	e.DefineFn("agl.Map.Get", "func [K comparable, V any](m map[K]V) V?")
-	e.DefineFn("agl.Map.Keys", "func [K comparable, V any](m map[K]V) iter.Seq[K]")
-	e.DefineFn("agl.Map.Values", "func [K comparable, V any](m map[K]V) iter.Seq[V]")
-	e.DefineFn("agl.Option.Unwrap", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or panic if None."))
-	e.DefineFn("agl.Option.UnwrapOr", "func [T any](t T) T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or a default if None."))
-	e.DefineFn("agl.Option.UnwrapOrDefault", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or the default if None."))
-	e.DefineFn("agl.Option.IsSome", "func () bool")
-	e.DefineFn("agl.Option.IsNone", "func () bool")
-	e.DefineFn("agl.Result.Unwrap", "func [T any]() T")
-	e.DefineFn("agl.Result.UnwrapOr", "func [T any](t T) T")
-	e.DefineFn("agl.Result.UnwrapOrDefault", "func [T any]() T")
-	e.DefineFn("agl.Result.IsOk", "func () bool")
-	e.DefineFn("agl.Result.IsErr", "func () bool")
+	_ = e.DefinePkg("agl1", "agl1")
+	e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
+	e.Define(nil, "agl1.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
+	e.Define(nil, "agl1.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
+	e.DefineFn("agl1.Set.Len", "func [T comparable](s agl1.Set[T]) int", WithDesc("The number of elements in the set."))
+	e.DefineFn("agl1.Set.Insert", "func [T comparable](mut s agl1.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))
+	e.DefineFn("agl1.Set.Remove", "func [T comparable](mut s agl1.Set[T], el T) T?")
+	e.DefineFn("agl1.Set.Contains", "func [T comparable](s agl1.Set[T], el T) bool")
+	e.DefineFn("agl1.Set.Iter", "func [T comparable](s agl1.Set[T]) iter.Seq[T]")
+	e.DefineFn("agl1.Set.Union", "func [T comparable](s agl1.Set[T], other Iterator[T]) agl1.Set[T]")
+	e.DefineFn("agl1.Set.FormUnion", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
+	e.DefineFn("agl1.Set.Subtracting", "func [T comparable](s agl1.Set[T], other Iterator[T]) agl1.Set[T]")
+	e.DefineFn("agl1.Set.Subtract", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
+	e.DefineFn("agl1.Set.Intersection", "func [T comparable](s agl1.Set[T], other Iterator[T]) agl1.Set[T]", WithDesc("Returns a new set with the elements that are common to both this set and the given sequence."))
+	e.DefineFn("agl1.Set.FormIntersection", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
+	e.DefineFn("agl1.Set.SymmetricDifference", "func [T comparable](s agl1.Set[T], other Iterator[T]) agl1.Set[T]")
+	e.DefineFn("agl1.Set.FormSymmetricDifference", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
+	e.DefineFn("agl1.Set.IsSubset", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool")
+	e.DefineFn("agl1.Set.IsStrictSubset", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool")
+	e.DefineFn("agl1.Set.IsSuperset", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool")
+	e.DefineFn("agl1.Set.IsStrictSuperset", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool")
+	e.DefineFn("agl1.Set.IsDisjoint", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool", WithDesc("Returns a Boolean value that indicates whether the set has no members in common with the given sequence."))
+	e.DefineFn("agl1.Set.Intersects", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool", WithDesc("Returns a Boolean value that indicates whether the set has members in common with the given sequence."))
+	e.DefineFn("agl1.Set.Equals", "func [T comparable](s, other agl1.Set[T]) bool")
+	e.DefineFn("agl1.Set.Min", "func [T comparable](s agl1.Set[T]) T?")
+	e.DefineFn("agl1.Set.Max", "func [T comparable](s agl1.Set[T]) T?")
+	e.DefineFn("agl1.String.Split", "func (s, sep string) []string", WithDesc("Split slices s into all substrings separated by sep and returns a slice of\nthe substrings between those separators."))
+	e.DefineFn("agl1.String.HasPrefix", "func (s, prefix string) bool")
+	e.DefineFn("agl1.String.HasSuffix", "func (s, prefix string) bool")
+	e.DefineFn("agl1.String.Lowercased", "func (s string) string")
+	e.DefineFn("agl1.String.Uppercased", "func (s string) string")
+	e.DefineFn("agl1.String.Int", "func (s) int?", WithDesc("Parse the string into an 'int' value.\nReturns None if the string cannot be parsed as an 'int'."))
+	e.DefineFn("agl1.String.I8", "func (s) i8?", WithDesc("Parse the string into an 'i8' value.\nReturns None if the string cannot be parsed as an 'i8'."))
+	e.DefineFn("agl1.String.I16", "func (s) i16?", WithDesc("Parse the string into an 'i16' value.\nReturns None if the string cannot be parsed as an 'i16'."))
+	e.DefineFn("agl1.String.I32", "func (s) i32?", WithDesc("Parse the string into an 'i32' value.\nReturns None if the string cannot be parsed as an 'i32'."))
+	e.DefineFn("agl1.String.I64", "func (s) i64?", WithDesc("Parse the string into an 'i64' value.\nReturns None if the string cannot be parsed as an 'i64'."))
+	e.DefineFn("agl1.String.Uint", "func (s) uint?", WithDesc("Parse the string into an 'uint' value.\nReturns None if the string cannot be parsed as an 'uint'."))
+	e.DefineFn("agl1.String.U8", "func (s) u8?", WithDesc("Parse the string into an 'u8' value.\nReturns None if the string cannot be parsed as an 'u8'."))
+	e.DefineFn("agl1.String.U16", "func (s) u16?", WithDesc("Parse the string into an 'u16' value.\nReturns None if the string cannot be parsed as an 'u16'."))
+	e.DefineFn("agl1.String.U32", "func (s) u32?", WithDesc("Parse the string into an 'u32' value.\nReturns None if the string cannot be parsed as an 'u32'."))
+	e.DefineFn("agl1.String.U64", "func (s) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
+	e.DefineFn("agl1.String.F32", "func (s) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
+	e.DefineFn("agl1.String.F64", "func (s) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
+	e.DefineFn("agl1.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
+	e.DefineFn("agl1.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T", WithDesc("Returns a new collection of the same type containing, in order, the elements of the original collection that satisfy the given predicate."))
+	e.DefineFn("agl1.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool", WithDesc("Returns a Boolean value indicating whether every element of a sequence satisfies a given predicate."))
+	e.DefineFn("agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
+	e.DefineFn("agl1.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", WithDesc("Returns the result of combining the elements of the sequence using the given closure."))
+	e.DefineFn("agl1.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
+	e.DefineFn("agl1.Vec.Sum", "func [T cmp.Ordered](a []T) T")
+	e.DefineFn("agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
+	e.DefineFn("agl1.Vec.Sorted", "func [E cmp.Ordered](a []E) []E", WithDesc("Returns the elements of the sequence, sorted."))
+	e.DefineFn("agl1.Vec.First", "func [T any](a []T) T?")
+	e.DefineFn("agl1.Vec.Last", "func [T any](a []T) T?")
+	e.DefineFn("agl1.Vec.Remove", "func [T any](a []T, i int)")
+	e.DefineFn("agl1.Vec.Clone", "func [T any](a []T) []T")
+	e.DefineFn("agl1.Vec.Indices", "func [T any](a []T) []int")
+	e.DefineFn("agl1.Vec.Contains", "func [T comparable](a []T, e T) bool")
+	e.DefineFn("agl1.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
+	e.DefineFn("agl1.Vec.Push", "func [T any](mut a []T, els ...T)")
+	e.DefineFn("agl1.Vec.PushFront", "func [T any](mut a []T, el T)")
+	e.DefineFn("agl1.Vec.Pop", "func [T any](mut a []T) T?")
+	e.DefineFn("agl1.Vec.PopFront", "func [T any](mut a []T) T?")
+	e.DefineFn("agl1.Vec.PopIf", "func [T any](mut a []T, pred func() bool) T?")
+	e.DefineFn("agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
+	e.DefineFn("agl1.Vec.Len", "func [T any](a []T) int")
+	e.DefineFn("agl1.Vec.IsEmpty", "func [T any](a []T) bool")
+	e.DefineFn("agl1.Map.Get", "func [K comparable, V any](m map[K]V) V?")
+	e.DefineFn("agl1.Map.Keys", "func [K comparable, V any](m map[K]V) iter.Seq[K]")
+	e.DefineFn("agl1.Map.Values", "func [K comparable, V any](m map[K]V) iter.Seq[V]")
+	e.DefineFn("agl1.Option.Unwrap", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or panic if None."))
+	e.DefineFn("agl1.Option.UnwrapOr", "func [T any](t T) T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or a default if None."))
+	e.DefineFn("agl1.Option.UnwrapOrDefault", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or the default if None."))
+	e.DefineFn("agl1.Option.IsSome", "func () bool")
+	e.DefineFn("agl1.Option.IsNone", "func () bool")
+	e.DefineFn("agl1.Result.Unwrap", "func [T any]() T")
+	e.DefineFn("agl1.Result.UnwrapOr", "func [T any](t T) T")
+	e.DefineFn("agl1.Result.UnwrapOrDefault", "func [T any]() T")
+	e.DefineFn("agl1.Result.IsOk", "func () bool")
+	e.DefineFn("agl1.Result.IsErr", "func () bool")
 }
 
 func CoreFns() string {
@@ -976,7 +984,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.TypeAssertType:
 			return v.X
 		default:
-			panic(fmt.Sprintf("%v", reflect.TypeOf(base)))
+			panic(fmt.Sprintf("%v %v", xx.X, reflect.TypeOf(base)))
 		}
 		return nil
 	case *ast.IndexExpr:

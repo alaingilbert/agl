@@ -4046,7 +4046,7 @@ func test2() int {
 func TestCodeGen147(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) Even() []T {
+func (v agl1.Vec[T]) Even() []T {
    mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
@@ -4081,7 +4081,7 @@ func AglVecEven_T_int(v AglVec[int]) AglVec[int] {
 func TestCodeGen147_1(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) Even() []T {
+func (v agl1.Vec[T]) Even() []T {
    mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
@@ -4120,7 +4120,7 @@ func AglVecEven_T_int(v AglVec[int]) AglVec[int] {
 func TestCodeGen148(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4155,7 +4155,7 @@ func AglVecMyMap_R_int_T_int(v AglVec[int], clb func(int) int) AglVec[int] {
 func TestCodeGen148_1(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4190,7 +4190,7 @@ func AglVecMyMap_R_int64_T_int64(v AglVec[int64], clb func(int64) int64) AglVec[
 func TestCodeGen148_2(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4224,7 +4224,7 @@ func AglVecMyMap_R_uint8_T_int64(v AglVec[int64], clb func(int64) uint8) AglVec[
 
 func TestCodeGen149(t *testing.T) {
 	src := `package main
-func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4269,13 +4269,13 @@ func AglVecMyMap_R_uint64_T_uint8(v AglVec[uint8], clb func(uint8) uint64) AglVe
 func TestCodeGen150(t *testing.T) {
 	src := `package main
 import "strings"
-func (v agl.Vec[string]) MyJoined(sep string) string {
+func (v agl1.Vec[string]) MyJoined(sep string) string {
 	return strings.Join(v, sep)
 }
-func (v agl.Vec[string]) MyJoined2() string {
+func (v agl1.Vec[string]) MyJoined2() string {
 	return strings.Join(v, ", ")
 }
-func (v agl.Vec[string]) Test() {
+func (v agl1.Vec[string]) Test() {
 }
 func main() {
 	arr := []string{"a", "b", "c"}
@@ -4368,7 +4368,7 @@ func main() {
 func TestCodeGen153(t *testing.T) {
 	src := `package main
 import "strings"
-func (v agl.Vec[string]) MyJoined(sep string) string {
+func (v agl1.Vec[string]) MyJoined(sep string) string {
    return strings.Join(v, sep)
 }
 func main() {
@@ -6605,7 +6605,7 @@ func main() {
 //func TestCodeGen220(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl.NewSet()
+//	s := agl1.NewSet()
 //	fmt.Println(s)
 //}`
 //	expected := `package main
@@ -6620,7 +6620,7 @@ func main() {
 //func TestCodeGen221(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl.NewSet()
+//	s := agl1.NewSet()
 //	fmt.Println(s.Len())
 //}`
 //	expected := `package main
@@ -6635,7 +6635,7 @@ func main() {
 //func TestCodeGen222(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl.NewSet("a")
+//	s := agl1.NewSet("a")
 //	s.Insert("b")
 //}`
 //	expected := `package main
@@ -7209,7 +7209,7 @@ func main() {
 func TestCodeGen251(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyForEach(f func(T)) {
+func (v agl1.Vec[T]) MyForEach(f func(T)) {
 	for i := range v {
 		f(v[i])
 	}
@@ -7237,7 +7237,7 @@ func AglVecMyForEach_T_int(v AglVec[int], f func(int)) {
 func TestCodeGen252(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
+func (v agl1.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		if Some(res) := f(el) {
@@ -7273,7 +7273,7 @@ func AglVecMyCompactMap_R_int_T_string(v AglVec[string], f func(string) Option[i
 func TestCodeGen253(t *testing.T) {
 	src := `package main
 import "fmt"
-func (v agl.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
+func (v agl1.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		subArr := f(el)
@@ -7319,7 +7319,7 @@ func AglVecFlatMap_R_int_T_int(v AglVec[int], f func(int) AglVec[int]) AglVec[in
 
 func TestCodeGen254(t *testing.T) {
 	src := `package main
-func (v agl.Vec[T]) MyMin() T? {
+func (v agl1.Vec[T]) MyMin() T? {
 	if len(v) == 0 {
 		return None
 	}
@@ -7972,7 +7972,7 @@ func main() {
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
 //import "fmt"
-//func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
+//func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 //	mut out := make([]R, len(v))
 //	for _, el := range v {
 //		out = append(out, clb(el))

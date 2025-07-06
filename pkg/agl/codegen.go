@@ -1138,7 +1138,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			} else if fnName == "Iter" {
 				return fmt.Sprintf("AglVecIter(%s)", g.genExpr(e.X))
 			} else {
-				extName := "agl.Vec." + fnName
+				extName := "agl1.Vec." + fnName
 				t := g.env.Get(extName)
 				rawFnT := t
 				concreteT := g.env.GetType(expr.Fun)
@@ -1382,7 +1382,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	op := expr.Op.String()
 	if g.env.GetType(expr.X) != nil && g.env.GetType(expr.Y) != nil {
 		if TryCast[types.SetType](g.env.GetType(expr.X)) && TryCast[types.SetType](g.env.GetType(expr.Y)) {
-			if (op == "==" || op == "!=") && g.env.Get("agl.Set.Equals") != nil {
+			if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
 				out := fmt.Sprintf("AglSetEquals(%s, %s)", content1, content2)
 				if op == "!=" {
 					out = "!" + out
@@ -1804,7 +1804,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 			if tmp1, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
 				if tmp2, ok := tmp1.X.(*ast.SelectorExpr); ok {
 					if tmp2.Sel.Name == "Vec" {
-						fnName := fmt.Sprintf("agl.Vec.%s", decl.Name.Name)
+						fnName := fmt.Sprintf("agl1.Vec.%s", decl.Name.Name)
 						tmp := g.extensions[fnName]
 						tmp.decl = decl
 						g.extensions[fnName] = tmp

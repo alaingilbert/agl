@@ -9,10 +9,6 @@ import (
 	"errors"
 	"fmt"
 	goast "go/ast"
-	goparser "go/parser"
-	gotoken "go/token"
-	gotypes "go/types"
-	"log"
 	"maps"
 	"os"
 	"path"
@@ -294,39 +290,7 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 			}
 		} else {
 			infer.env.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
-		}
-		for _, e := range entries {
-			fName := e.Name()
-			if strings.HasSuffix(e.Name(), "_test.go") {
-				continue
-			}
-			fPath := filepath.Join(pkgFullPath, fName)
-			src, err := os.ReadFile(fPath)
-			if err != nil {
-				log.Printf("failed to load %s\n", fPath)
-				continue
-			}
-			fset := gotoken.NewFileSet()
-			node, err := goparser.ParseFile(fset, fName, src, goparser.AllErrors)
-			if err != nil {
-				log.Printf("failed to parse %s\n", fPath)
-				continue
-			}
-			conf := gotypes.Config{Importer: nil}
-			info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
-			_, _ = conf.Check("", fset, []*goast.File{node}, info)
-			for _, decl := range node.Decls {
-				if fn, ok := decl.(*goast.FuncDecl); ok {
-					if fn.Recv != nil {
-						continue
-					}
-					fnStr := "func " + formatFieldList(fn.Type.Params)
-					if fn.Type.Results != nil {
-						fnStr += " " + formatFieldList(fn.Type.Results)
-					}
-					infer.env.DefineFnNative(pkgName+"."+fn.Name.Name, fnStr, infer.fset)
-				}
-			}
+			infer.env.loadVendor2(pkgFullPath, make(map[string]struct{}), entries)
 		}
 	}
 }
@@ -573,7 +537,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			if tmp, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
 				if sel, ok := tmp.X.(*ast.SelectorExpr); ok {
 					p1 := sel.X.(*ast.Ident).Name
-					if p1 == "agl" && sel.Sel.Name == "Vec" {
+					if p1 == "agl1" && sel.Sel.Name == "Vec" {
 						defaultName := "T" // Should not hardcode "T"
 						vecExt = true
 						id := tmp.Index.(*ast.Ident)
@@ -651,7 +615,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	}
 	if decl.Recv != nil {
 		if vecExt {
-			outEnv.Define(decl.Name, fmt.Sprintf("agl.Vec.%s", fnName), ft)
+			outEnv.Define(decl.Name, fmt.Sprintf("agl1.Vec.%s", fnName), ft)
 		}
 	}
 	return ft
@@ -1019,8 +983,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 				return
 			}
-			info := infer.env.GetNameInfo("agl.Option." + fnName)
-			fnT := infer.env.GetFn("agl.Option." + fnName)
+			info := infer.env.GetNameInfo("agl1.Option." + fnName)
+			fnT := infer.env.GetFn("agl1.Option." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			}
@@ -1032,8 +996,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 				return
 			}
-			info := infer.env.GetNameInfo("agl.Result." + fnName)
-			fnT := infer.env.GetFn("agl.Result." + fnName)
+			info := infer.env.GetNameInfo("agl1.Result." + fnName)
+			fnT := infer.env.GetFn("agl1.Result." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			} else if fnName == "Err" {
@@ -1190,15 +1154,15 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		info := &Info{}
 		switch fnName {
 		case "Split", "HasPrefix", "HasSuffix":
-			info = infer.env.GetNameInfo("agl.String." + fnName)
-			fnT = infer.env.GetFn("agl.String." + fnName)
+			info = infer.env.GetNameInfo("agl1.String." + fnName)
+			fnT = infer.env.GetFn("agl1.String." + fnName)
 			if len(expr.Args) < 1 {
 				return
 			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Uppercased", "Lowercased":
-			info = infer.env.GetNameInfo("agl.String." + fnName)
-			fnT = infer.env.GetFn("agl.String." + fnName)
+			info = infer.env.GetNameInfo("agl1.String." + fnName)
+			fnT = infer.env.GetFn("agl1.String." + fnName)
 		default:
 			infer.errorf(exprT.Sel, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
 			return
@@ -1215,14 +1179,14 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
 			"IsDisjoint", "Intersects", "Equals":
-			info = infer.env.GetNameInfo("agl.Set." + fnName)
-			fnT = infer.env.GetFn("agl.Set."+fnName).T("T", idTT.K)
+			info = infer.env.GetNameInfo("agl1.Set." + fnName)
+			fnT = infer.env.GetFn("agl1.Set."+fnName).T("T", idTT.K)
 			if len(expr.Args) < 1 {
 				return
 			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Len", "Min", "Max", "Iter":
-			fnT = infer.env.GetFn("agl.Set." + fnName)
+			fnT = infer.env.GetFn("agl1.Set." + fnName)
 		}
 		if TryCast[types.MutType](fnT.Params[0]) {
 			if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
@@ -1240,8 +1204,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
-			info := infer.env.GetNameInfo("agl.Vec.Filter")
-			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTT.Elt)
+			info := infer.env.GetNameInfo("agl1.Vec.Filter")
+			filterFnT := infer.env.GetFn("agl1.Vec.Filter").T("T", idTT.Elt)
 			if len(expr.Args) < 1 {
 				return
 			}
@@ -1268,7 +1232,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
 		} else if fnName == "AllSatisfy" {
-			filterFnT := infer.env.GetFn("agl.Vec.AllSatisfy").T("T", idTT.Elt)
+			filterFnT := infer.env.GetFn("agl1.Vec.AllSatisfy").T("T", idTT.Elt)
 			if len(expr.Args) < 1 {
 				return
 			}
@@ -1294,7 +1258,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Contains" {
-			filterFnT := infer.env.GetFn("agl.Vec.Contains").T("T", idTT.Elt)
+			filterFnT := infer.env.GetFn("agl1.Vec.Contains").T("T", idTT.Elt)
 			if len(expr.Args) < 1 {
 				return
 			}
@@ -1304,7 +1268,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Any" {
-			filterFnT := infer.env.GetFn("agl.Vec.Any").T("T", idTT.Elt)
+			filterFnT := infer.env.GetFn("agl1.Vec.Any").T("T", idTT.Elt)
 			if len(expr.Args) < 1 {
 				return
 			}
@@ -1330,8 +1294,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
-			info := infer.env.GetNameInfo("agl.Vec.Map")
-			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTT.Elt)
+			info := infer.env.GetNameInfo("agl1.Vec.Map")
+			mapFnT := infer.env.GetFn("agl1.Vec.Map").T("T", idTT.Elt)
 			clbFnT := mapFnT.GetParam(1).(types.FuncType)
 			if len(expr.Args) < 1 {
 				return
@@ -1368,7 +1332,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		} else if fnName == "Reduce" {
 			infer.inferVecReduce(expr, exprT, idTT)
 		} else if fnName == "Find" {
-			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", idTT.Elt)
+			findFnT := infer.env.GetFn("agl1.Vec.Find").T("T", idTT.Elt)
 			infer.SetType(expr, findFnT.Return)
 			if len(expr.Args) < 1 {
 				return
@@ -1394,7 +1358,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "First", "Push", "Remove", "Clone", "Indices", "PushFront", "Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter"}) {
-			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTT.Elt)
+			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
 				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
@@ -1406,7 +1370,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "PopIf" {
-			sumFnT := infer.env.GetFn("agl.Vec.PopIf").T("T", idTT.Elt)
+			sumFnT := infer.env.GetFn("agl1.Vec.PopIf").T("T", idTT.Elt)
 			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
@@ -1422,7 +1386,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Joined" {
-			joinedFnT := infer.env.GetFn("agl.Vec.Joined")
+			joinedFnT := infer.env.GetFn("agl1.Vec.Joined")
 			param0 := joinedFnT.Params[0]
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
@@ -1433,7 +1397,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			joinedFnT.Params = joinedFnT.Params[1:]
 			infer.SetType(exprT.Sel, joinedFnT)
 		} else if fnName == "Sorted" {
-			fnT := infer.env.GetFn("agl.Vec.Sorted").T("E", idTT.Elt)
+			fnT := infer.env.GetFn("agl1.Vec.Sorted").T("E", idTT.Elt)
 			param0 := fnT.Params[0]
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
@@ -1444,14 +1408,14 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
 		} else {
-			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
+			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
 				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
 				return
 			}
 			fnT := fnTRaw.(types.FuncType)
-			assert(len(fnT.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
+			assert(len(fnT.TypeParams) >= 1, "agl1.Vec should have at least one generic parameter")
 			gen0 := fnT.TypeParams[0].(types.GenericType).W
 			want := types.ArrayType{Elt: gen0}
 			if !cmpTypes(gen0, idTT.Elt) {
@@ -1496,7 +1460,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 	case types.MapType:
 		fnName := exprT.Sel.Name
 		if InArray(fnName, []string{"Get", "Keys", "Values"}) {
-			getFnT := infer.env.GetFn("agl.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
+			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
 			getFnT.Recv = []types.Type{idTT}
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
@@ -1510,7 +1474,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	exprPos := infer.Pos(expr)
 	forceReturnType := infer.forceReturnType
 	forceReturnType = types.Unwrap(forceReturnType)
-	fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", idTArr.Elt)
+	fnT := infer.env.GetFn("agl1.Vec.Reduce").T("T", idTArr.Elt)
 	if len(expr.Args) == 0 {
 		return
 	}
