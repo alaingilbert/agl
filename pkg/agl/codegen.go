@@ -1940,10 +1940,6 @@ func GenCore() string {
 
 func GenContent() string {
 	return `
-type Iterator[T any] interface {
-	Next() Option[T]
-}
-
 func AglWrapNative2[T any](v1 T, err error) Result[T] {
 	if err != nil {
 		return MakeResultErr[T](err)
@@ -2153,7 +2149,11 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 
 type AglSet[T comparable] map[T]struct{}
 
-func AglSetIter[T aglImportCmp.Ordered](s AglSet[T]) aglImportIter.Seq[T] {
+type Iterator[T any] interface {
+	Iter() aglImportIter.Seq[T]
+}
+
+func (s AglSet[T]) Iter() aglImportIter.Seq[T] {
 	return func(yield func(T) bool) {
 		for k := range s {
 			if !yield(k) {
@@ -2161,6 +2161,10 @@ func AglSetIter[T aglImportCmp.Ordered](s AglSet[T]) aglImportIter.Seq[T] {
 			}
 		}
 	}
+}
+
+func AglSetIter[T aglImportCmp.Ordered](s AglSet[T]) aglImportIter.Seq[T] {
+	return s.Iter()
 }
 
 func (s AglSet[T]) String() string {
@@ -2237,12 +2241,12 @@ func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
 }
 
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.
-func AglSetUnion[T comparable](s, other AglSet[T]) AglSet[T] {
+func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
 		newSet[k] = struct{}{}
 	}
-	for k := range other {
+	for k := range other.Iter() {
 		newSet[k] = struct{}{}	
 	}
 	return newSet
