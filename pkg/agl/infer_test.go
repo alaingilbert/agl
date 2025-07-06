@@ -320,6 +320,17 @@ func main() {
 	tassert.Equal(t, "func (int?) UnwrapOrDefault() int", test.TypeAt(6, 17).String())
 }
 
+func TestInfer19(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]set[int]{1: set[int]{2}}
+	if Some(s) := m.Get(1) {
+	}
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "set[int]", test.TypeAt(4, 10).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

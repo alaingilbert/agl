@@ -2422,10 +2422,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
 				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.Pos(lhs))
-				infer.SetTypeForce(lhs, rhsT)
+				infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
 			case types.ErrType, types.OkType:
 				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
-				infer.SetTypeForce(lhs, rhsT)
+				infer.SetTypeForce(lhs, rhsT.(types.ResultType).W)
 			default:
 				tmp := rhsT
 				if v, ok := rhsT.(types.ResultType); ok {
