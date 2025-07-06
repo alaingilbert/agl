@@ -15,9 +15,7 @@ func main() {
     rules = make(map[int]set[int])
     for _, d := range data1 {
         a, b := d[0], d[1]
-        mut s := rules.Get(a).UnwrapOr(set[int]{})
-        s.Insert(b)
-        rules[a] = s
+        rules[a] = rules.Get(a).UnwrapOr(set[int]{}).Union([]int{b})
     }
     part1()
 }
