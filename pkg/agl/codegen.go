@@ -2400,9 +2400,18 @@ func AglSetIsStrictSuperset[T comparable](s, other AglSet[T]) bool {
 
 // AglSetIsDisjoint returns a Boolean value that indicates whether the set has no members in common with the given sequence.
 // Return: true if the set has no elements in common with other; otherwise, false.
-func AglSetIsDisjoint[T comparable](s, other AglSet[T]) bool {
+func AglSetIsDisjoint[T comparable](s AglSet[T], other Iterator[T]) bool {
+	var otherSet AglSet[T]	
+	if v, ok := other.(AglSet[T]); ok {
+		otherSet = v
+	} else {
+		otherSet = make(AglSet[T])
+		for e := range other.Iter() {
+			otherSet[e] = struct{}{}
+		}
+	}
 	for k := range s {
-		if _, ok := other[k]; ok {
+		if _, ok := otherSet[k]; ok {
 			return false
 		}
 	}
@@ -2410,7 +2419,7 @@ func AglSetIsDisjoint[T comparable](s, other AglSet[T]) bool {
 }
 
 // AglSetIntersects ...
-func AglSetIntersects[T comparable](s, other AglSet[T]) bool {
+func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 	return !AglSetIsDisjoint(s, other)
 }
 
