@@ -5,6 +5,12 @@ type FileMode u32
 type FileInfo interface {
 }
 
+type File struct {
+}
+
+var Stdout *os.File
+var Stderr *os.File
+
 func ReadFile(name string) ([]byte)!
 func WriteFile(name string, data []byte, perm os.FileMode) !
 func Chdir(string) ! {}
