@@ -13,11 +13,14 @@ func main() {
     data1 = parts[0].Split("\n").Map({ $0.Split("|").Map({ $0.Int()? }) })
     updates = parts[1].Split("\n").Map({ $0.Split(",").Map({ $0.Int()? }) })
     rules = make(map[int]set[int])
+    okdskdos()
     for _, d := range data1 {
         a, b := d[0], d[1]
         rules[a] = rules.Get(a).UnwrapOr(set[int]{}).Union([]int{b})
     }
     part1()
+
+    dsds()
 }
 
 func isInvalid(update []int) bool {

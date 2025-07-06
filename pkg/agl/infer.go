@@ -6,6 +6,7 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"agl/pkg/utils"
+	"errors"
 	"fmt"
 	goast "go/ast"
 	goparser "go/parser"
@@ -16,6 +17,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -43,9 +45,10 @@ func NewInferrer(env *Env) *Inferrer {
 	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet) {
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet) []error {
 	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset}
 	fileInferrer.Infer()
+	return fileInferrer.Errors
 }
 
 type FileInferrer struct {
@@ -58,6 +61,28 @@ type FileInferrer struct {
 	optType         *OptTypeTmp
 	forceReturnType types.Type
 	mapKT, mapVT    types.Type
+	Errors          []error
+}
+
+type InferError struct {
+	err error
+	N   ast.Node
+}
+
+func (i *InferError) Error() string {
+	return i.err.Error()
+}
+
+func (infer *FileInferrer) errorf(n ast.Node, f string, args ...any) {
+	_, file, line, _ := runtime.Caller(1)
+	file = strings.TrimSuffix(filepath.Base(file), ".go")
+	pos := infer.Pos(n)
+	var msg string
+	msg += fmt.Sprintf("%s:%d ", file, line)
+	msg += fmt.Sprintf("%d:%d: ", pos.Line, pos.Column)
+	msg += fmt.Sprintf(f, args...)
+	err := errors.New(msg)
+	infer.Errors = append(infer.Errors, &InferError{N: n, err: err})
 }
 
 type OptTypeTmp struct {
@@ -120,7 +145,8 @@ func (infer *FileInferrer) GetTypeFn(n ast.Node) types.FuncType {
 func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 	t := infer.env.GetType(n)
 	if t == nil {
-		panic(fmt.Sprintf("%s type not found for %v %v", infer.Pos(n), n, to(n)))
+		infer.errorf(n, "type not found for %v %v", n, to(n))
+		return nil
 	}
 	return t
 }
@@ -345,7 +371,10 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	switch t := spec.Type.(type) {
 	case *ast.Ident:
 		typ := infer.env.GetType2(t, infer.fset)
-		assertf(typ != nil, "%s: type not found '%s'", infer.Pos(spec.Name), t)
+		if typ == nil {
+			infer.errorf(spec.Name, "%s: type not found '%s'", infer.Pos(spec.Name), t)
+			return
+		}
 		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
 	case *ast.StructType:
 		var fields []types.FieldType
@@ -834,7 +863,8 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 	case token.CHAR:
 		infer.SetType(expr, types.CharType{})
 	default:
-		panic(fmt.Sprintf("unknown basic literal %v %v", to(expr), expr.Kind))
+		infer.errorf(expr, "unknown basic literal %v %v", to(expr), expr.Kind)
+		return
 	}
 }
 
@@ -927,10 +957,16 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				}
 			}
 
-			assertf(nameT != nil, "%s: method not found '%s' in struct of type '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
+			if nameT == nil {
+				infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
+				return
+			}
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-				assertf(TryCast[types.MutType](oexprFunT), "%s: method '%s' cannot be called on immutable type '%s'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
+				if !TryCast[types.MutType](oexprFunT) {
+					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
+					return
+				}
 			}
 			toReturn := fnT.Return
 			toReturn = alterResultBubble(infer.returnType, toReturn)
@@ -947,10 +983,16 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
 		case types.PackageType:
 			pkgT := infer.env.Get(idTT.Name)
-			assertf(pkgT != nil, "package not found '%s'", idTT.Name)
+			if pkgT == nil {
+				infer.errorf(call.X, "package not found '%s'", idTT.Name)
+				return
+			}
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			nameT := infer.env.Get(name)
-			assertf(nameT != nil, "%s: not found '%s' in package '%v'", infer.Pos(call.Sel), call.Sel.Name, idTT.Name)
+			if nameT == nil {
+				infer.errorf(call.Sel, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
+				return
+			}
 			fnT := nameT.(types.FuncType)
 			toReturn := fnT.Return
 			if toReturn != nil {
@@ -964,8 +1006,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.SetType(expr, types.VoidType{})
 			}
 		case types.OptionType:
-			assertf(InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}),
-				"Unresolved reference '%s'", fnName)
+			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+				return
+			}
 			info := infer.env.GetNameInfo("agl.Option." + fnName)
 			fnT := infer.env.GetFn("agl.Option." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
@@ -975,8 +1019,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case types.ResultType:
-			assertf(InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}),
-				"Unresolved reference '%s'", fnName)
+			if !InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}) {
+				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+				return
+			}
 			info := infer.env.GetNameInfo("agl.Result." + fnName)
 			fnT := infer.env.GetFn("agl.Result." + fnName)
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
@@ -988,7 +1034,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		default:
-			assertf(false, "%s: Unresolved reference '%s'", infer.Pos(expr.Fun), fnName)
+			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+			return
 		}
 		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
 		infer.inferGoExtensions(expr, exprFunT, call)
@@ -996,7 +1043,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	case *ast.Ident:
 		infer.langFns(expr, call)
 		callT := infer.env.Get(call.Name)
-		assertf(callT != nil, "%s: Unresolved reference '%s'", infer.Pos(call), call.Name)
+		if callT == nil {
+			infer.errorf(call, "Unresolved reference '%s'", call.Name)
+			return
+		}
 		switch callTT := callT.(type) {
 		case types.TypeType:
 			infer.expr(expr.Args[0])
@@ -1016,11 +1066,15 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				if oArgT, ok := oArg.(types.IndexType); ok {
 					oArg = oArgT.X
 				}
-				assertf(cmpTypesLoose(oArg, got), "%s: types not equal, %v %v", infer.Pos(arg), oArg, got)
+				if !cmpTypesLoose(oArg, got) {
+					infer.errorf(call, "%s: types not equal, %v %v", infer.Pos(arg), oArg, got)
+					return
+				}
 				callT = types.ReplGen2(callT, oArg, got)
 			}
 		default:
-			panic(fmt.Sprintf("%v", to(callT)))
+			infer.errorf(call, "%v", to(callT))
+			return
 		}
 		parentInfo := infer.env.GetNameInfo(call.Name)
 		if infer.env.GetType(call) == nil {
@@ -1043,7 +1097,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				for i, pp := range v.Params {
 					if TryCast[types.MutType](pp) {
 						if id, ok := expr.Args[i].(*ast.Ident); ok {
-							assertf(TryCast[types.MutType](infer.env.GetType(id)), "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
+							if !TryCast[types.MutType](infer.env.GetType(id)) {
+								infer.errorf(id, "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
+								return
+							}
 						}
 					}
 				}
@@ -1121,12 +1178,16 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		case "Split", "HasPrefix", "HasSuffix":
 			info = infer.env.GetNameInfo("agl.String." + fnName)
 			fnT = infer.env.GetFn("agl.String." + fnName)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Uppercased", "Lowercased":
 			info = infer.env.GetNameInfo("agl.String." + fnName)
 			fnT = infer.env.GetFn("agl.String." + fnName)
 		default:
-			assertf(false, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+			infer.errorf(exprT.Sel, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+			return
 		}
 		fnT.Recv = []types.Type{idTT}
 		fnT.Params = fnT.Params[1:]
@@ -1142,12 +1203,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			"IsDisjoint", "Intersects", "Equals":
 			info = infer.env.GetNameInfo("agl.Set." + fnName)
 			fnT = infer.env.GetFn("agl.Set."+fnName).T("T", idTT.K)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
 		case "Len", "Min", "Max", "Iter":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		if TryCast[types.MutType](fnT.Params[0]) {
-			assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
+			if !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+				infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
+				return
+			}
 			fnT.Recv = []types.Type{types.MutType{W: idT}}
 		} else {
 			fnT.Recv = []types.Type{idT}
@@ -1161,6 +1228,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		if fnName == "Filter" {
 			info := infer.env.GetNameInfo("agl.Vec.Filter")
 			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTT.Elt)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(1).(types.FuncType)
@@ -1169,9 +1239,15 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			}
 			filterFnT.Recv = []types.Type{idTT}
 			filterFnT.Params = filterFnT.Params[1:]
@@ -1179,6 +1255,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
 		} else if fnName == "AllSatisfy" {
 			filterFnT := infer.env.GetFn("agl.Vec.AllSatisfy").T("T", idTT.Elt)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(1).(types.FuncType)
@@ -1187,15 +1266,24 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			}
 			filterFnT.Recv = []types.Type{idTT}
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Contains" {
 			filterFnT := infer.env.GetFn("agl.Vec.Contains").T("T", idTT.Elt)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
 			filterFnT.Recv = []types.Type{idTT}
@@ -1203,6 +1291,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Any" {
 			filterFnT := infer.env.GetFn("agl.Vec.Any").T("T", idTT.Elt)
+			if len(expr.Args) < 1 {
+				return
+			}
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(1).(types.FuncType)
@@ -1211,9 +1302,15 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			}
 			filterFnT.Recv = []types.Type{idTT}
 			filterFnT.Params = filterFnT.Params[1:]
@@ -1222,6 +1319,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			info := infer.env.GetNameInfo("agl.Vec.Map")
 			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTT.Elt)
 			clbFnT := mapFnT.GetParam(1).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
 			exprArg0 := expr.Args[0]
 			mapFnT.Recv = []types.Type{idTT}
 			mapFnT.Params = mapFnT.Params[1:]
@@ -1234,7 +1334,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 				infer.expr(exprArg0)
 				aT := infer.env.GetType(exprArg0)
@@ -1243,22 +1346,34 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 					infer.SetType(expr, types.ArrayType{Elt: rT})
 					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 				}
-				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
 			}
 		} else if fnName == "Reduce" {
 			infer.inferVecReduce(expr, exprT, idTT)
 		} else if fnName == "Find" {
 			findFnT := infer.env.GetFn("agl.Vec.Find").T("T", idTT.Elt)
 			infer.SetType(expr, findFnT.Return)
+			if len(expr.Args) < 1 {
+				return
+			}
 			ft := findFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
 			}
 			findFnT.Recv = []types.Type{idTT}
 			findFnT.Params = findFnT.Params[1:]
@@ -1268,7 +1383,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
-				assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+				if !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
 			}
 			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
@@ -1278,7 +1396,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
-				assertf(TryCast[types.MutType](infer.env.GetType(exprT.X)), "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+				if !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
 			}
 			sumFnT.Params = sumFnT.Params[1:]
 			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
@@ -1289,7 +1410,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		} else if fnName == "Joined" {
 			joinedFnT := infer.env.GetFn("agl.Vec.Joined")
 			param0 := joinedFnT.Params[0]
-			assertf(cmpTypes(idT, param0), "type mismatch, wants: %s, got: %s", param0, idT)
+			if !cmpTypes(idT, param0) {
+				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
+				return
+			}
 			infer.SetType(expr, joinedFnT.Return)
 			joinedFnT.Recv = []types.Type{param0}
 			joinedFnT.Params = joinedFnT.Params[1:]
@@ -1297,7 +1421,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		} else if fnName == "Sorted" {
 			fnT := infer.env.GetFn("agl.Vec.Sorted").T("E", idTT.Elt)
 			param0 := fnT.Params[0]
-			assertf(cmpTypes(idT, param0), "type mismatch, wants: %s, got: %s", param0, idT)
+			if !cmpTypes(idT, param0) {
+				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
+				return
+			}
 			infer.SetType(expr, fnT.Return)
 			fnT.Recv = []types.Type{param0}
 			fnT.Params = fnT.Params[1:]
@@ -1305,12 +1432,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		} else {
 			fnFullName := fmt.Sprintf("agl.Vec.%s", fnName)
 			fnTRaw := infer.env.Get(fnFullName)
-			assertf(fnTRaw != nil, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
+			if fnTRaw == nil {
+				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
+				return
+			}
 			fnT := fnTRaw.(types.FuncType)
 			assert(len(fnT.TypeParams) >= 1, "agl.Vec should have at least one generic parameter")
 			gen0 := fnT.TypeParams[0].(types.GenericType).W
 			want := types.ArrayType{Elt: gen0}
-			assertf(cmpTypes(gen0, idTT.Elt), "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTT, want, fnName)
+			if !cmpTypes(gen0, idTT.Elt) {
+				infer.errorf(exprT.Sel, "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTT, want, fnName)
+				return
+			}
 			fnT = fnT.T("T", idTT.Elt)
 			retT := Or[types.Type](fnT.Return, types.VoidType{})
 			infer.SetType(exprT.Sel, fnT)
@@ -1329,7 +1462,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 					for _, k := range slices.Sorted(maps.Keys(m)) {
 						v := m[k]
 						if el, ok := genericMapping[k]; ok {
-							assertf(el == v, "generic type parameter type mismatch. want: %v, got: %v", el, v)
+							if el != v {
+								infer.errorf(exprT.Sel, "generic type parameter type mismatch. want: %v, got: %v", el, v)
+								return
+							}
 						}
 						genericMapping[k] = v
 					}
@@ -1361,11 +1497,17 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	forceReturnType := infer.forceReturnType
 	forceReturnType = types.Unwrap(forceReturnType)
 	fnT := infer.env.GetFn("agl.Vec.Reduce").T("T", idTArr.Elt)
+	if len(expr.Args) == 0 {
+		return
+	}
 	if forceReturnType != nil {
 		fnT = fnT.T("R", forceReturnType)
-	} else if r, ok := infer.env.GetType2(expr.Args[0], infer.fset).(types.UntypedNumType); !ok {
-		noop(r) // TODO should add restriction on type R (cmp.Comparable?)
-		//fnT = fnT.T("R", r)
+	} else {
+		arg0T := infer.env.GetType2(expr.Args[0], infer.fset)
+		if r, ok := arg0T.(types.UntypedNumType); !ok {
+			noop(r) // TODO should add restriction on type R (cmp.Comparable?)
+			//fnT = fnT.T("R", r)
+		}
 	}
 	infer.SetType(exprFun.Sel, fnT)
 	infer.SetType(expr.Args[1], fnT.Params[2])
@@ -1381,7 +1523,10 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		arg0T = types.Unwrap(arg0T)
 		ft = ft.T("R", forceReturnType)
 		reduceFnT = reduceFnT.T("R", forceReturnType)
-		assertf(cmpTypes(arg0T, forceReturnType), "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
+		if !cmpTypes(arg0T, forceReturnType) {
+			infer.errorf(expr, "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
+			return
+		}
 	} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 		eltT = types.Unwrap(eltT)
 		ft = ft.T("R", eltT)
@@ -1395,9 +1540,15 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		infer.SetType(expr.Args[1], ft)
 	} else if _, ok := exprArg0.(*ast.FuncType); ok {
 		ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-		assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+		if !compareFunctionSignatures(ftReal, ft) {
+			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			return
+		}
 	} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-		assertf(compareFunctionSignatures(ftReal, ft), "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+		if !compareFunctionSignatures(ftReal, ft) {
+			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			return
+		}
 	}
 	reduceFnT.Recv = []types.Type{idTArr}
 	reduceFnT.Params = reduceFnT.Params[1:]
@@ -1583,9 +1734,9 @@ func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
 
 func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
 	infer.expr(expr.X)
-	// turn `Err("error")` into `Err(errors.New("error"))`
+	// turn `Err("error")` into `Err(Errors.New("error"))`
 	if v, ok := expr.X.(*ast.BasicLit); ok && v.Kind == token.STRING {
-		expr.X = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
+		expr.X = &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "Errors"}, Sel: &ast.Ident{Name: "New"}}, Args: []ast.Expr{v}}
 	}
 	var t types.Type
 	if infer.optType != nil {
@@ -1688,7 +1839,10 @@ func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 				infer.SetType(x, expectedI)
 				elts = append(elts, expectedI)
 			} else {
-				assertf(cmpTypesLoose(xT, expectedI), "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
+				if !cmpTypesLoose(xT, expectedI) {
+					infer.errorf(expr.Values[i], "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
+					return
+				}
 				elts = append(elts, xT)
 			}
 		}
@@ -1835,9 +1989,13 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
+	p("?SEL", expr.X)
 	infer.expr(expr.X)
 	exprXT := infer.env.GetType2(expr.X, infer.fset)
-	assertf(exprXT != nil, "%s: type not found for '%s' %v", infer.Pos(expr.X), expr.X, to(expr.X))
+	if exprXT == nil {
+		infer.errorf(expr.X, "%s: type not found for '%s' %v", infer.Pos(expr.X), expr.X, to(expr.X))
+		return
+	}
 	exprXIdTRaw := exprXT
 	exprXIdTRaw = types.Unwrap(exprXIdTRaw)
 	switch exprXIdT := exprXIdTRaw.(type) {
@@ -1845,8 +2003,8 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		fieldName := expr.Sel.Name
 		name := exprXIdT.GetFieldName(fieldName)
 		if f := infer.env.Get(name); f != nil {
-			infer.SetType(expr.Sel, f)
 			infer.SetType(expr.X, exprXT)
+			infer.SetType(expr.Sel, f)
 			infer.SetType(expr, f)
 		} else {
 			infer.SetType(expr.X, exprXT)
@@ -1855,53 +2013,60 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	case types.InterfaceType:
 		return
 	case types.EnumType:
+		infer.SetType(expr.X, exprXIdT)
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
 		validFields := make([]string, 0, len(exprXIdT.Fields))
 		for _, f := range exprXIdT.Fields {
 			validFields = append(validFields, f.Name)
 		}
-		assertf(InArray(fieldName, validFields), "%d: enum %s has no field %s", expr.Sel.Pos(), enumName, fieldName)
-		infer.SetType(expr.X, exprXIdT)
+		if !InArray(fieldName, validFields) {
+			infer.errorf(expr.Sel, "%d: enum %s has no field %s", expr.Sel.Pos(), enumName, fieldName)
+			return
+		}
 		infer.SetType(expr, exprXIdT)
 	case types.TupleType:
+		infer.SetType(expr.X, exprXIdT)
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
 			panic("tuple arg index must be int")
 		}
-		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.PackageType:
 		pkg := expr.X.(*ast.Ident).Name
 		sel := expr.Sel.Name
 		selT := infer.env.Get(pkg + "." + sel)
-		assertf(selT != nil, "%s: '%s' not found in package '%s'", infer.Pos(expr.Sel), sel, pkg)
+		if selT == nil {
+			infer.errorf(expr.Sel, "%s: '%s' not found in package '%s'", infer.Pos(expr.Sel), sel, pkg)
+			return
+		}
 		infer.SetType(expr.Sel, selT)
 		infer.SetType(expr, selT)
-	case types.OptionType:
-		infer.SetType(expr.Sel, exprXIdT.W)
-		infer.SetType(expr.X, exprXIdT)
-		infer.SetType(expr, exprXIdT.W)
 	case types.TypeAssertType:
 		exprXIdT.Type = types.Unwrap(exprXIdT.Type)
 		if v, ok := exprXIdT.Type.(types.StructType); ok {
 			fieldName := expr.Sel.Name
 			name := v.GetFieldName(fieldName)
 			if f := infer.env.Get(name); f != nil {
-				infer.SetType(expr.Sel, f)
 				infer.SetType(expr.X, v)
+				infer.SetType(expr.Sel, f)
 				infer.SetType(expr, f)
 				return
 			}
 		}
 		infer.SetType(expr.X, exprXIdT.X)
 		infer.SetType(expr, exprXIdT.Type)
-	case types.TypeType:
-		infer.SetType(expr.Sel, exprXIdT.W)
+	case types.OptionType:
 		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.Sel, exprXIdT.W)
+		infer.SetType(expr, exprXIdT.W)
+	case types.TypeType:
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.Sel, exprXIdT.W)
 		infer.SetType(expr, exprXIdT.W)
 	default:
-		panic(fmt.Sprintf("%v", to(exprXIdTRaw)))
+		infer.errorf(expr.X, "%v", to(exprXIdTRaw))
+		return
 	}
 }
 
@@ -1913,6 +2078,9 @@ func (infer *FileInferrer) bubbleResultExpr(expr *ast.BubbleResultExpr) {
 func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	infer.expr(expr.X)
 	tmp := infer.GetType(expr.X)
+	if tmp == nil {
+		return
+	}
 	infer.SetType(expr, tmp.(types.OptionType).W)
 }
 
@@ -2125,7 +2293,10 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 				infer.exprs(spec.Values)
 				value := spec.Values[i]
 				valueT := infer.env.GetType(value)
-				assertf(cmpTypesLoose(tt, valueT), "%s: type mismatch, want: %s, got: %s", infer.Pos(name), tt, valueT)
+				if !cmpTypesLoose(tt, valueT) {
+					infer.errorf(name, "%s: type mismatch, want: %s, got: %s", infer.Pos(name), tt, valueT)
+					return
+				}
 			}
 			infer.SetType(name, tt)
 			infer.env.Define(name, name.Name, tt)
@@ -2208,7 +2379,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		infer.env.DefineForce(n, name, typ)
 	}
 	myAssign := func(parentInfo *Info, n ast.Node, name string, _ types.Type) {
-		infer.env.Assign(parentInfo, n, name, infer.fset)
+		if err := infer.env.Assign(parentInfo, n, name, infer.fset); err != nil {
+			infer.errorf(n, "%s: %s", infer.Pos(n), err)
+			return
+		}
 	}
 	var assigns []AssignStruct
 	assignFn := func(n ast.Node, name string, mutable bool, typ types.Type) {
@@ -2234,7 +2408,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					hasNewVar = true
 				}
 			}
-			assertf(hasNewVar, "%s: No new variables on the left side of ':='", infer.Pos(stmt))
+			if !hasNewVar {
+				infer.errorf(stmt, "%s: No new variables on the left side of ':='", infer.Pos(stmt))
+				return
+			}
 		}
 		for _, ass := range assigns {
 			assignFn(ass.n, ass.name, ass.mutable, ass.typ)
@@ -2289,16 +2466,22 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					infer.SetType(lhs0, rhsId1XTT.V)
 					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
 				default:
-					assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+					infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+					return
 				}
 			default:
-				assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+				infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+				return
 			}
 		} else {
-			assertf(false, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			return
 		}
 	} else {
-		assertf(len(stmt.Lhs) == len(stmt.Rhs), "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+		if len(stmt.Lhs) != len(stmt.Rhs) {
+			infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			return
+		}
 		for i := range stmt.Lhs {
 			lhs := stmt.Lhs[i]
 			rhs := stmt.Rhs[i]
@@ -2306,7 +2489,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			if v1, ok := lhs.(*ast.Ident); ok {
 				if v2, ok := rhs.(*ast.Ident); ok {
 					if v1.Mutable.IsValid() {
-						assertf(TryCast[types.MutType](infer.env.Get(v2.Name)), "%s: cannot make mutable bind of an immutable variable", infer.Pos(lhs))
+						if !TryCast[types.MutType](infer.env.Get(v2.Name)) {
+							infer.errorf(lhs, "%s: cannot make mutable bind of an immutable variable", infer.Pos(lhs))
+							return
+						}
 					}
 				}
 			}
@@ -2317,9 +2503,21 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsIdName := v.Name
 				lhsWantedT = infer.env.Get(lhsIdName)
 			case *ast.IndexExpr:
-				lhsIdName := v.X.(*ast.Ident).Name
+				var lhsIdName string
+				switch vv := v.X.(type) {
+				case *ast.Ident:
+					lhsIdName = vv.Name
+				case *ast.SelectorExpr:
+					infer.expr(vv.X)
+				default:
+					infer.errorf(lhs, "%v", to(v.X))
+					return
+				}
 				lhsIdNameT := infer.env.Get(lhsIdName)
-				assertf(TryCast[types.MutType](lhsIdNameT), "%s: cannot assign to immutable variable '%s'", infer.Pos(v.X), lhsIdName)
+				if !TryCast[types.MutType](lhsIdNameT) {
+					infer.errorf(v.X, "%s: cannot assign to immutable variable '%s'", infer.Pos(v.X), lhsIdName)
+					return
+				}
 				lhsIdNameT = types.Unwrap(lhsIdNameT)
 				switch vv := lhsIdNameT.(type) {
 				case types.MapType:
@@ -2328,10 +2526,18 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsWantedT = vv.Elt
 				case types.SetType:
 				default:
-					panic(fmt.Sprintf("%v", to(lhsIdNameT)))
+					infer.errorf(lhs, "%v", to(lhsIdNameT))
+					return
 				}
 			case *ast.SelectorExpr:
-				lhsIdName := v.X.(*ast.Ident).Name
+				var lhsIdName string
+				switch vv := v.X.(type) {
+				case *ast.Ident:
+					lhsIdName = vv.Name
+				default:
+					infer.errorf(lhs, "%v", to(v.X))
+					return
+				}
 				xT := infer.env.Get(lhsIdName)
 				xT = types.Unwrap(xT)
 				switch vv := xT.(type) {
@@ -2343,10 +2549,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsWantedT = vv.Elts[argIdx]
 				case types.StructType:
 					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
-					assertf(TryCast[types.MutType](selT), "%s: assign to immutable prop '%s'", infer.Pos(v.Sel), v.Sel.Name)
+					if !TryCast[types.MutType](selT) {
+						infer.errorf(v.Sel, "%s: assign to immutable prop '%s'", infer.Pos(v.Sel), v.Sel.Name)
+						return
+					}
 				}
 			default:
-				panic(fmt.Sprintf("%v", to(lhs)))
+				infer.errorf(lhs, "%v", to(lhs))
+				return
 			}
 			if lhsT := lhsWantedT; lhsT != nil {
 				infer.withForceReturn(lhsT, func() {
@@ -2391,15 +2601,22 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					argIdx, _ := strconv.Atoi(v.Sel.Name)
 					infer.SetType(v.X, xT)
 					want, got := xTv.Elts[argIdx], infer.GetType(rhs)
-					assertf(cmpTypesLoose(want, got), "type mismatch, wants: %s, got: %s", want, got)
+					if !cmpTypesLoose(want, got) {
+						infer.errorf(v.Sel, "type mismatch, wants: %s, got: %s", want, got)
+						return
+					}
 					return
 				case types.StructType:
 					infer.SetType(v.X, xT)
+				case types.ArrayType:
+					infer.SetType(v.X, xT)
 				default:
-					panic(fmt.Sprintf("%v", to(xT)))
+					infer.errorf(lhs, "%v", to(xT))
+					return
 				}
 			default:
-				panic(fmt.Sprintf("%v", to(lhs)))
+				infer.errorf(lhs, "%v", to(lhs))
+				return
 			}
 			var rhsT types.Type
 			switch ta := rhs.(type) {
@@ -2423,10 +2640,16 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
-				assertf(TryCast[types.OptionType](rhsT), "%s: try to destructure a non-Option type into an OptionType", infer.Pos(lhs))
+				if !TryCast[types.OptionType](rhsT) {
+					infer.errorf(lhs, "%s: try to destructure a non-Option type into an OptionType", infer.Pos(lhs))
+					return
+				}
 				infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
 			case types.ErrType, types.OkType:
-				assertf(TryCast[types.ResultType](rhsT), "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
+				if !TryCast[types.ResultType](rhsT) {
+					infer.errorf(lhs, "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
+					return
+				}
 				infer.SetTypeForce(lhs, rhsT.(types.ResultType).W)
 			default:
 				tmp := rhsT
@@ -2507,7 +2730,10 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 		return nil
 	}
 	v := infer.env.Get(expr.Name)
-	assertf(v != nil, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
+	if v == nil {
+		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
+		return nil
+	}
 	if expr.Name == "true" || expr.Name == "false" {
 		return types.BoolType{}
 	}
@@ -2651,7 +2877,10 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 			}
 			infer.SetType(clause, branchT)
 			if prevBranchT != nil {
-				assertf(cmpTypesLoose(prevBranchT, branchT), "%s: match branches must have the same type `%s` VS `%s`", infer.Pos(expr), prevBranchT, branchT)
+				if !cmpTypesLoose(prevBranchT, branchT) {
+					infer.errorf(expr, "%s: match branches must have the same type `%s` VS `%s`", infer.Pos(expr), prevBranchT, branchT)
+					return
+				}
 			}
 			prevBranchT = branchT
 		}
@@ -2712,7 +2941,10 @@ func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 		})
 		a := infer.GetType(stmt.Body)
 		b := infer.GetType(stmt.Else)
-		assertf(cmpTypesLoose(a, b), "%s: if branches must have the same type `%s` VS `%s`", infer.Pos(stmt), a, b)
+		if !cmpTypesLoose(a, b) {
+			infer.errorf(stmt, "%s: if branches must have the same type `%s` VS `%s`", infer.Pos(stmt), a, b)
+			return
+		}
 	}
 	if stmt.Body != nil {
 		infer.SetType(stmt, infer.GetType(stmt.Body))

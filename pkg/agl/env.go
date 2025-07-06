@@ -836,14 +836,19 @@ func (e *Env) lspSetNode(n ast.Node, info *Info) {
 	e.lspTable[e.makeKey(n)] = info
 }
 
-func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.FileSet) {
+func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.FileSet) error {
 	if name == "_" {
-		return
+		return nil
 	}
 	t := e.Get(name)
-	assertf(t != nil, "%s: undeclared %s", fset.Position(n.Pos()), name)
-	assertf(TryCast[types.MutType](t), "%s: cannot assign to immutable variable '%s'", fset.Position(n.Pos()), name)
+	if t == nil {
+		return fmt.Errorf("%s: undeclared %s", fset.Position(n.Pos()), name)
+	}
+	if !TryCast[types.MutType](t) {
+		return fmt.Errorf("%s: cannot assign to immutable variable '%s'", fset.Position(n.Pos()), name)
+	}
 	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
+	return nil
 }
 
 func (e *Env) SetType(p *Info, x ast.Node, t types.Type, fset *token.FileSet) {

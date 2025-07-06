@@ -38,19 +38,21 @@ type Test struct {
 	fset *token.FileSet
 	env  *Env
 	file *token.File
+	errs []error
 }
 
 func NewTest(src string) *Test {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
 	i := NewInferrer(env)
-	i.InferFile("", f, fset)
+	errs := i.InferFile("", f, fset)
 	file := fset.File(1)
 	return &Test{
 		f:    f,
 		fset: fset,
 		env:  env,
 		file: file,
+		errs: errs,
 	}
 }
 
@@ -329,6 +331,40 @@ func main() {
 }`
 	test := NewTest(src)
 	tassert.Equal(t, "set[int]", test.TypeAt(4, 10).String())
+}
+
+func TestInfer20(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	arr.
+	arr[1] = 2
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
+}
+
+func TestInfer21(t *testing.T) {
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3}
+	arr.
+	b := make(map[int]int)
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
+}
+
+func TestInfer22(t *testing.T) {
+	src := `package main
+func main() {
+	var b map[int]int
+	arr := []int{1, 2, 3}
+	arr.
+	b = make(map[int]int)
+}`
+	test := NewTest(src)
+	tassert.Equal(t, "[]int", test.TypeAt(5, 5).String())
 }
 
 //func TestInfer1(t *testing.T) {

@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"runtime/debug"
 
 	"agl/pkg/agl"
@@ -47,9 +49,9 @@ func (s *Server) Initialize(ctx context.Context, params lsp.InitializeParams) (l
 			},
 			DefinitionProvider: true,
 			HoverProvider:      true,
-			//CompletionProvider: &lsp.CompletionOptions{
-			//	TriggerCharacters: []string{"."},
-			//},
+			CompletionProvider: &lsp.CompletionOptions{
+				TriggerCharacters: []string{"."},
+			},
 		},
 	}, nil
 }
@@ -128,7 +130,32 @@ func (s *Server) updateDocument(uri string, content string) error {
 	// Create an environment and infer types
 	env := agl.NewEnv()
 	inferrer := agl.NewInferrer(env)
-	inferrer.InferFile(uri, file, s.fset)
+	errs := inferrer.InferFile(uri, file, s.fset)
+	if len(errs) > 0 {
+		diagnostics := make([]lsp.Diagnostic, 0, len(errs))
+		for _, e := range errs {
+			var ee *agl.InferError
+			if errors.As(e, &ee) {
+				pos, endPos := s.fset.Position(ee.N.Pos()), s.fset.Position(ee.N.End())
+				diagnostics = append(diagnostics, lsp.Diagnostic{
+					Range: lsp.Range{
+						Start: lsp.Position{Line: pos.Line - 1, Character: pos.Column - 1},
+						End:   lsp.Position{Line: endPos.Line - 1, Character: endPos.Column - 1},
+					},
+					Severity: lsp.Error,
+					Message:  e.Error(),
+				})
+			}
+		}
+		// Send diagnostic notification
+		if s.conn != nil {
+			_ = s.conn.Notify(context.Background(), "textDocument/publishDiagnostics", lsp.PublishDiagnosticsParams{
+				URI:         lsp.DocumentURI(uri),
+				Diagnostics: diagnostics,
+			})
+		}
+		return fmt.Errorf("failed to infer file: %v", err)
+	}
 
 	// Store the document
 	s.documents[uri] = &Document{
@@ -308,7 +335,7 @@ func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPosition
 	offset := file.LineStart(line) + token.Pos(column-1)
 
 	// Find the node at the current position
-	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset))
+	node := s.findNodeAtPosition(doc.ast, s.fset.Position(offset-1))
 
 	// Get completions based on the current context
 	completions := s.getCompletions(doc, node, offset)
@@ -321,24 +348,106 @@ func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPosition
 
 func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) []lsp.CompletionItem {
 	var completions []lsp.CompletionItem
-	// If we're in a selector expression (e.g., "obj."), add method completions
-	if sel, ok := node.(*ast.SelectorExpr); ok {
-		if info := doc.env.GetInfo(sel.X); info != nil {
-			if typ := info.Type; typ != nil {
-				// Add method completions based on the type
-				// This is a simplified version - you'll want to add more type-specific completions
-				switch typ.(type) {
-				case types.ArrayType:
-					completions = append(completions,
-						lsp.CompletionItem{Label: "filter", Kind: lsp.CIKMethod, Detail: "Filter elements"},
-						lsp.CompletionItem{Label: "map", Kind: lsp.CIKMethod, Detail: "Transform elements"},
-						lsp.CompletionItem{Label: "reduce", Kind: lsp.CIKMethod, Detail: "Reduce elements"},
-					)
-				}
+	if info := doc.env.GetInfo(node); info != nil {
+		if typ := info.Type; typ != nil {
+			typ = types.Unwrap(typ)
+			switch typ.(type) {
+			case types.ArrayType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "AllSatisfy", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Any", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Clone", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Clone", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Contains", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Enumerated", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Filter", Kind: lsp.CIKMethod, Detail: "Filter elements"},
+					lsp.CompletionItem{Label: "Find", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "First", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Indices", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Insert", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsEmpty", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Joined", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Last", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Len", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Map", Kind: lsp.CIKMethod, Detail: "Transform elements"},
+					lsp.CompletionItem{Label: "Pop", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "PopFront", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "PopIf", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Push", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "PushFront", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Reduce", Kind: lsp.CIKMethod, Detail: "Reduce elements"},
+					lsp.CompletionItem{Label: "Remove", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Sum", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			case types.MapType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "Get", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Keys", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Len", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Values", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			case types.SetType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "Contains", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "FormIntersection", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "FormSymmetricDifference", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "FormUnion", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Insert", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Intersection", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Intersects", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsDisjoint", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsStrictSubset", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsStrictSuperset", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsSubset", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsSuperset", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Len", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Max", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Min", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Remove", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Subtract", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Subtracting", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "SymmetricDifference", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Union", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			case types.OptionType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "IsNone", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsSome", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Unwrap", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "UnwrapOr", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "UnwrapOrDefault", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			case types.ResultType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "IsErr", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "IsOk", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Unwrap", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "UnwrapOr", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "UnwrapOrDefault", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			case types.UntypedNumType, types.IntType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "String", Kind: lsp.CIKMethod, Detail: "String"},
+				)
+			case types.UntypedStringType, types.StringType:
+				completions = append(completions,
+					lsp.CompletionItem{Label: "Int", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "I8", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "I16", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "I32", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "I64", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Uint", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "U8", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "U16", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "U32", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "U64", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Split", Kind: lsp.CIKMethod, Detail: ""},
+				)
+			default:
+				log.Printf("Unknown type: %s %v", typ, reflect.TypeOf(typ))
 			}
 		}
 	}
-
 	return completions
 }
 
@@ -411,13 +520,13 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 		}
 		result, err = h.server.Hover(ctx, params)
 
-	//case "textDocument/completion":
-	//	var params lsp.TextDocumentPositionParams
-	//	if err := json.Unmarshal(*req.Params, &params); err != nil {
-	//		conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
-	//		return
-	//	}
-	//	result, err = h.server.Completion(ctx, params)
+	case "textDocument/completion":
+		var params lsp.TextDocumentPositionParams
+		if err := json.Unmarshal(*req.Params, &params); err != nil {
+			conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeParseError, Message: err.Error()})
+			return
+		}
+		result, err = h.server.Completion(ctx, params)
 
 	default:
 		_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)})
