@@ -180,11 +180,11 @@ func main() {
 }
 `
 	expected := `package main
-func mapFn_T_int(a []int, f func(int) int) []int {
-	return make([]int, 0)
+func mapFn_T_int(a AglVec[int], f func(int) int) AglVec[int] {
+	return make(AglVec[int], 0)
 }
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	mapFn_T_int(a, func(aglArg0 int) int {
 		return aglArg0
 	})
@@ -277,7 +277,7 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	a := make([]int, 0)
+	a := make(AglVec[int], 0)
 	fmt.Println(a)
 }
 `
@@ -346,7 +346,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 }
 `
 	testCodeGen(t, src, expected)
@@ -363,7 +363,7 @@ func findEvenNumber(arr []int) int? {
   return None
 }`
 	expected := `package main
-func findEvenNumber(arr []int) Option[int] {
+func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
 			return MakeOptionSome(num)
@@ -392,7 +392,7 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-func findEvenNumber(arr []int) Option[int] {
+func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
 			return MakeOptionSome(num)
@@ -401,7 +401,7 @@ func findEvenNumber(arr []int) Option[int] {
 	return MakeOptionNone[int]()
 }
 func main() {
-	tmp := findEvenNumber([]int{1, 2, 3, 4})
+	tmp := findEvenNumber(AglVec[int]{1, 2, 3, 4})
 	fmt.Println(tmp.Unwrap())
 }
 `
@@ -424,7 +424,7 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-func findEvenNumber(arr []int) Option[int] {
+func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
 			return MakeOptionSome(num)
@@ -433,7 +433,7 @@ func findEvenNumber(arr []int) Option[int] {
 	return MakeOptionNone[int]()
 }
 func main() {
-	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
+	fmt.Println(findEvenNumber(AglVec[int]{1, 2, 3, 4}).Unwrap())
 }
 `
 	testCodeGen(t, src, expected)
@@ -468,7 +468,7 @@ func main() {
 	foundInt := findEvenNumber([]int{1, 2, 3, 4})?
 }`
 	expected := `package main
-func findEvenNumber(arr []int) Option[int] {
+func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
 			return MakeOptionSome(num)
@@ -477,7 +477,7 @@ func findEvenNumber(arr []int) Option[int] {
 	return MakeOptionNone[int]()
 }
 func main() {
-	foundInt := findEvenNumber([]int{1, 2, 3, 4}).Unwrap()
+	foundInt := findEvenNumber(AglVec[int]{1, 2, 3, 4}).Unwrap()
 }
 `
 	testCodeGen(t, src, expected)
@@ -672,7 +672,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1, 2, 3, 4}
+	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int64) bool {
 		return aglArg0 % 2 == 0
 	})
@@ -691,7 +691,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1, 2, 3, 4}
+	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int64) bool {
 		return aglArg0 % 2 == 0
 	})
@@ -712,7 +712,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1}
+	a := AglVec[int64]{1}
 	b := AglReduce(AglVecMap(AglVecFilter(a, func(aglArg0 int64) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int64) int64 {
@@ -736,8 +736,8 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a1 := []int64{1}
-	a2 := []uint8{1}
+	a1 := AglVec[int64]{1}
+	a2 := AglVec[uint8]{1}
 	b := AglReduce(AglVecMap(AglVecFilter(a1, func(aglArg0 int64) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int64) int64 {
@@ -766,7 +766,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1, 2, 3, 4}
+	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecMap(a, func(aglArg0 int64) int64 {
 		return aglArg0 + 1
 	})
@@ -784,7 +784,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1, 2, 3, 4}
+	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecMap(a, func(aglArg0 int64) string {
 		return "a"
 	})
@@ -804,7 +804,7 @@ func main() {
 	expected := `package main
 import "strconv"
 func main() {
-	a := []int{1, 2, 3, 4}
+	a := AglVec[int]{1, 2, 3, 4}
 	b := AglVecMap(a, strconv.Itoa)
 }
 `
@@ -821,7 +821,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int64{1, 2, 3, 4}
+	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
 		return aglArg0 + aglArg1
 	})
@@ -859,7 +859,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3, 4}
+	a := AglVec[int]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int) bool {
 		return aglArg0 % 2 == 0
 	})
@@ -1045,9 +1045,9 @@ type Person struct {
 	name string
 	age int
 	ssn Option[string]
-	nicknames Option[([]string)]
-	testArray []string
-	testArrayOfOpt []Option[string]
+	nicknames Option[(AglVec[string])]
+	testArray AglVec[string]
+	testArrayOfOpt AglVec[Option[string]]
 }
 `
 	testCodeGen(t, src, expected)
@@ -1298,7 +1298,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []uint8{1, 2, 3}
+	a := AglVec[uint8]{1, 2, 3}
 	s := AglVecSum(a)
 	AglAssert(s == 6, "assert failed line 5")
 }
@@ -1901,7 +1901,7 @@ func main() {
 import "os"
 import "fmt"
 func main() {
-	err := os.WriteFile("test.txt", []byte("test"), 0755)
+	err := os.WriteFile("test.txt", AglVec[byte]("test"), 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -2001,7 +2001,7 @@ type Writer interface {
 `
 	expected := `package main
 type Writer interface {
-	write([]byte) Result[int]
+	write(AglVec[byte]) Result[int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -2016,7 +2016,7 @@ type Writer interface {
 `
 	expected := `package main
 type Writer interface {
-	write([]byte) Result[int]
+	write(AglVec[byte]) Result[int]
 	another() bool
 }
 `
@@ -2113,7 +2113,7 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	a := []uint8{1, 2, 3, 4, 5}
+	a := AglVec[uint8]{1, 2, 3, 4, 5}
 	var b uint8 = AglVecFind(a, func(aglArg0 uint8) bool {
 		return aglArg0 == 2
 	}).Unwrap()
@@ -2143,8 +2143,8 @@ func main() {
 }
 `
 	expected := `package main
-func test() []uint8 {
-	return []uint8{1, 2, 3}
+func test() AglVec[uint8] {
+	return AglVec[uint8]{1, 2, 3}
 }
 func main() {
 	AglVecFilter(test(), func(aglArg0 uint8) bool {
@@ -2467,7 +2467,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []uint8{1, 2, 3, 4, 5}
+	a := AglVec[uint8]{1, 2, 3, 4, 5}
 	f := func(e uint8) bool {
 		return e == 2
 	}
@@ -2544,7 +2544,7 @@ type Person struct {
 func main() {
 	p1 := Person{name: "John"}
 	p2 := Person{name: "Jane"}
-	arr := []Person{p1, p2}
+	arr := AglVec[Person]{p1, p2}
 	res := AglJoined(AglVecMap(arr, func(aglArg0 Person) string {
 		return aglArg0.name
 	}), ", ")
@@ -2580,7 +2580,7 @@ func TestCodeGen91(t *testing.T) {
 `
 	expected := `package main
 func main() {
-	var arr []int
+	var arr AglVec[int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -2595,8 +2595,8 @@ func TestCodeGen93(t *testing.T) {
 `
 	expected := `package main
 func main() {
-	var arr1 []int
-	var arr2 []int
+	var arr1 AglVec[int]
+	var arr2 AglVec[int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -2611,8 +2611,8 @@ func TestCodeGen94(t *testing.T) {
 `
 	expected := `package main
 func main() {
-	var arr1, arr3 []int
-	var arr2 []int
+	var arr1, arr3 AglVec[int]
+	var arr2 AglVec[int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -2653,7 +2653,7 @@ type Person struct {
 func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
-	people := []Person{p1, p2}
+	people := AglVec[Person]{p1, p2}
 	names := AglJoined(AglVecMap(people, func(el Person) string {
 		return el.name
 	}), ", ")
@@ -2687,7 +2687,7 @@ func clb(el Person) string {
 func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
-	people := []Person{p1, p2}
+	people := AglVec[Person]{p1, p2}
 	names := AglJoined(AglVecMap(people, clb), ", ")
 }
 `
@@ -2705,7 +2705,7 @@ func main() {
 	expected := `package main
 import "strconv"
 func main() {
-	a := []string{"1", "2"}
+	a := AglVec[string]{"1", "2"}
 	AglVecMap(a, func(aglArg0 string) int {
 		aglTmp1, err := strconv.Atoi(aglArg0)
 		if err != nil {
@@ -2756,7 +2756,7 @@ func main() {
 import "strconv"
 func main() {
 	a := "1 2, 3 4"
-	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
+	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) AglVec[int] {
 		return AglVecMap(AglStringSplit(aglArg0, " "), func(aglArg0 string) int {
 			aglTmp1, err := strconv.Atoi(aglArg0)
 			if err != nil {
@@ -2785,7 +2785,7 @@ func main() {
 import "strconv"
 func main() {
 	a := "1 2, 3 4"
-	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
+	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) AglVec[int] {
 		tmp1 := AglStringSplit(aglArg0, " ")
 		return AglVecMap(tmp1, func(aglArg0 string) int {
 			aglTmp1, err := strconv.Atoi(aglArg0)
@@ -2821,7 +2821,7 @@ type Person struct {
 func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
-	people := []Person{p1, p2}
+	people := AglVec[Person]{p1, p2}
 	names := AglJoined(AglVecMap(people, func(el Person) string {
 		return el.name
 	}), ", ")
@@ -3371,10 +3371,10 @@ func main() {
 }
 `
 	expected := `package main
-func test(a []int) {
+func test(a AglVec[int]) {
 }
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	test(a)
 }
 `
@@ -4056,11 +4056,11 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	fmt.Println(AglVecEven_T_int(arr))
 }
-func AglVecEven_T_int(v []int) []int {
-	out := make([]int, len(v))
+func AglVecEven_T_int(v AglVec[int]) AglVec[int] {
+	out := make(AglVec[int], len(v))
 	for _, el := range v {
 		if el % 2 == 0 {
 			out = append(out, el)
@@ -4093,13 +4093,13 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	fmt.Println(AglVecEven_T_int(arr))
-	arr1 := []int{4, 5, 6}
+	arr1 := AglVec[int]{4, 5, 6}
 	fmt.Println(AglVecEven_T_int(arr1))
 }
-func AglVecEven_T_int(v []int) []int {
-	out := make([]int, len(v))
+func AglVecEven_T_int(v AglVec[int]) AglVec[int] {
+	out := make(AglVec[int], len(v))
 	for _, el := range v {
 		if el % 2 == 0 {
 			out = append(out, el)
@@ -4130,13 +4130,13 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	fmt.Println(AglVecMyMap_R_int_T_int(arr, func(int) int {
 		return 1
 	}))
 }
-func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
-	out := make([]int, len(v))
+func AglVecMyMap_R_int_T_int(v AglVec[int], clb func(int) int) AglVec[int] {
+	out := make(AglVec[int], len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4164,14 +4164,14 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	arr := []int64{1, 2, 3}
+	arr := AglVec[int64]{1, 2, 3}
 	r := AglVecMyMap_R_int64_T_int64(arr, func(aglArg0 int64) int64 {
 		return aglArg0 + 1
 	})
 	fmt.Println(r)
 }
-func AglVecMyMap_R_int64_T_int64(v []int64, clb func(int64) int64) []int64 {
-	out := make([]int64, len(v))
+func AglVecMyMap_R_int64_T_int64(v AglVec[int64], clb func(int64) int64) AglVec[int64] {
+	out := make(AglVec[int64], len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4199,14 +4199,14 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	arr := []int64{1, 2, 3}
+	arr := AglVec[int64]{1, 2, 3}
 	r := AglVecMyMap_R_uint8_T_int64(arr, func(aglArg0 int64) uint8 {
 		return uint8(aglArg0) + 1
 	})
 	fmt.Println(r)
 }
-func AglVecMyMap_R_uint8_T_int64(v []int64, clb func(int64) uint8) []uint8 {
-	out := make([]uint8, len(v))
+func AglVecMyMap_R_uint8_T_int64(v AglVec[int64], clb func(int64) uint8) AglVec[uint8] {
+	out := make(AglVec[uint8], len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4233,8 +4233,8 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr1 := []int{1, 2, 3}
-	arr2 := []uint8{1, 2, 3}
+	arr1 := AglVec[int]{1, 2, 3}
+	arr2 := AglVec[uint8]{1, 2, 3}
 	AglVecMyMap_R_int_T_int(arr1, func(int) int {
 		return 1
 	})
@@ -4242,15 +4242,15 @@ func main() {
 		return 1
 	})
 }
-func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
-	out := make([]int, len(v))
+func AglVecMyMap_R_int_T_int(v AglVec[int], clb func(int) int) AglVec[int] {
+	out := make(AglVec[int], len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
 	return out
 }
-func AglVecMyMap_R_uint64_T_uint8(v []uint8, clb func(uint8) uint64) []uint64 {
-	out := make([]uint64, len(v))
+func AglVecMyMap_R_uint64_T_uint8(v AglVec[uint8], clb func(uint8) uint64) AglVec[uint64] {
+	out := make(AglVec[uint64], len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
 	}
@@ -4280,18 +4280,18 @@ func main() {
 	expected := `package main
 import "strings"
 func main() {
-	arr := []string{"a", "b", "c"}
+	arr := AglVec[string]{"a", "b", "c"}
 	AglVecMyJoined_T_string(arr, ", ")
 	AglVecMyJoined2_T_string(arr)
 	AglVecTest_T_string(arr)
 }
-func AglVecMyJoined_T_string(v []string, sep string) string {
+func AglVecMyJoined_T_string(v AglVec[string], sep string) string {
 	return strings.Join(v, sep)
 }
-func AglVecMyJoined2_T_string(v []string) string {
+func AglVecMyJoined2_T_string(v AglVec[string]) string {
 	return strings.Join(v, ", ")
 }
-func AglVecTest_T_string(v []string) {
+func AglVecTest_T_string(v AglVec[string]) {
 }
 `
 	testCodeGen(t, src, expected)
@@ -4381,7 +4381,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	var a uint8
 	a = AglReduce(arr, 0, func(aglArg0 uint8, aglArg1 int) uint8 {
 		return aglArg0 + uint8(aglArg1)
@@ -4474,7 +4474,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	r := AglReduce(AglVecMap(AglVecFilter(arr, func(aglArg0 int) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int) int {
@@ -4615,7 +4615,7 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 func main() {
-	arr := []AglTupleStruct_int_bool{AglTupleStruct_int_bool{Arg0: 1, Arg1: true}, AglTupleStruct_int_bool{Arg0: 2, Arg1: false}}
+	arr := AglVec[AglTupleStruct_int_bool]{AglTupleStruct_int_bool{Arg0: 1, Arg1: true}, AglTupleStruct_int_bool{Arg0: 2, Arg1: false}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -4687,7 +4687,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr := []int{1, 2, 3}
+	arr := AglVec[int]{1, 2, 3}
 	arr[1] = 42
 }
 `
@@ -4769,7 +4769,7 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 func main() {
-	arr := []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}}
+	arr := AglVec[AglTupleStruct_int_int]{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -5160,7 +5160,7 @@ func main() {
 `
 	expected := `package main
 import "fmt"
-type IPAddr []byte
+type IPAddr AglVec[byte]
 func main() {
 	hosts := map[string]IPAddr{"loopback": IPAddr{127, 0, 0, 1}, "googleDNS": IPAddr{8, 8, 8, 8}}
 	for name, ip := range hosts {
@@ -5187,7 +5187,7 @@ func main() {
 `
 	expected := `package main
 import "fmt"
-type IPAddr []byte
+type IPAddr AglVec[byte]
 func main() {
 	hosts := map[string]IPAddr{"loopback": {127, 0, 0, 1}, "googleDNS": {8, 8, 8, 8}}
 	for name, ip := range hosts {
@@ -5311,7 +5311,7 @@ import "io"
 import "strings"
 func main() {
 	r := strings.NewReader("Hello, Reader!")
-	b := make([]byte, 8)
+	b := make(AglVec[byte], 8)
 	for {
 		aglTmp1 := r.Read(b)
 		if aglTmp1.IsErr() {
@@ -5356,7 +5356,7 @@ import "io"
 import "strings"
 func main() {
 	r := strings.NewReader("Hello, Reader!")
-	b := make([]byte, 8)
+	b := make(AglVec[byte], 8)
 	for {
 		aglTmp1, tmpErr := AglWrapNative2(r.Read(b)).NativeUnwrap()
 		if tmpErr == nil {
@@ -5408,7 +5408,7 @@ import "io"
 import "strings"
 func main() {
 	r := strings.NewReader("Hello, Reader!")
-	b := make([]byte, 8)
+	b := make(AglVec[byte], 8)
 	for {
 		res := AglWrapNative2(r.Read(b))
 		aglTmp1 := res
@@ -5637,7 +5637,7 @@ func main() {
 `
 	expected := `package main
 import "fmt"
-func Index_T_int(s []int, x int) int {
+func Index_T_int(s AglVec[int], x int) int {
 	for i, v := range s {
 		if v == x {
 			return i
@@ -5645,7 +5645,7 @@ func Index_T_int(s []int, x int) int {
 	}
 	return -1
 }
-func Index_T_string(s []string, x string) int {
+func Index_T_string(s AglVec[string], x string) int {
 	for i, v := range s {
 		if v == x {
 			return i
@@ -5654,9 +5654,9 @@ func Index_T_string(s []string, x string) int {
 	return -1
 }
 func main() {
-	si := []int{10, 20, 15, -10}
+	si := AglVec[int]{10, 20, 15, -10}
 	fmt.Println(Index_T_int(si, 15))
-	ss := []string{"foo", "bar", "baz"}
+	ss := AglVec[string]{"foo", "bar", "baz"}
 	fmt.Println(Index_T_string(ss, "hello"))
 }
 `
@@ -5717,7 +5717,7 @@ func main() {
 }`
 	expected := `package main
 import "fmt"
-func sum(s []int, c chan int) {
+func sum(s AglVec[int], c chan int) {
 	sum1 := 0
 	for _, v := range s {
 		sum1 += v
@@ -5725,7 +5725,7 @@ func sum(s []int, c chan int) {
 	c <- sum1
 }
 func main() {
-	s := []int{7, 2, 8, -9, 4, 0}
+	s := AglVec[int]{7, 2, 8, -9, 4, 0}
 	c := make(chan int)
 	go sum(s[:len(s) / 2], c)
 	go sum(s[len(s) / 2:], c)
@@ -6014,12 +6014,12 @@ var fetcher = fakeFetcher{
 }`
 	expected := `package main
 import "fmt"
-type AglTupleStruct_string___string struct {
+type AglTupleStruct_string_AglVec_string_ struct {
 	Arg0 string
-	Arg1 []string
+	Arg1 AglVec[string]
 }
 type Fetcher interface {
-	Fetch(string) Result[AglTupleStruct_string___string]
+	Fetch(string) Result[AglTupleStruct_string_AglVec_string_]
 }
 func Crawl(url string, depth int, fetcher1 Fetcher) {
 	if depth <= 0 {
@@ -6047,16 +6047,16 @@ func main() {
 }
 type fakeResult struct {
 	body string
-	urls []string
+	urls AglVec[string]
 }
 type fakeFetcher map[string]*fakeResult
-func (f fakeFetcher) Fetch(url string) Result[AglTupleStruct_string___string] {
+func (f fakeFetcher) Fetch(url string) Result[AglTupleStruct_string_AglVec_string_] {
 	if res, ok := f[url]; ok {
-		return MakeResultOk(AglTupleStruct_string___string{Arg0: res.body, Arg1: res.urls})
+		return MakeResultOk(AglTupleStruct_string_AglVec_string_{Arg0: res.body, Arg1: res.urls})
 	}
-	return MakeResultErr[AglTupleStruct_string___string](fmt.Errorf("not found: %s", url))
+	return MakeResultErr[AglTupleStruct_string_AglVec_string_](fmt.Errorf("not found: %s", url))
 }
-var fetcher = fakeFetcher{"https://golang.org/": &fakeResult{"The Go Programming Language", []string{"https://golang.org/pkg/", "https://golang.org/cmd/"}}, "https://golang.org/pkg/": &fakeResult{"Packages", []string{"https://golang.org/", "https://golang.org/cmd/", "https://golang.org/pkg/fmt/", "https://golang.org/pkg/os/"}}, "https://golang.org/pkg/fmt/": &fakeResult{"Package fmt", []string{"https://golang.org/", "https://golang.org/pkg/"}}, "https://golang.org/pkg/os/": &fakeResult{"Package os", []string{"https://golang.org/", "https://golang.org/pkg/"}}}
+var fetcher = fakeFetcher{"https://golang.org/": &fakeResult{"The Go Programming Language", AglVec[string]{"https://golang.org/pkg/", "https://golang.org/cmd/"}}, "https://golang.org/pkg/": &fakeResult{"Packages", AglVec[string]{"https://golang.org/", "https://golang.org/cmd/", "https://golang.org/pkg/fmt/", "https://golang.org/pkg/os/"}}, "https://golang.org/pkg/fmt/": &fakeResult{"Package fmt", AglVec[string]{"https://golang.org/", "https://golang.org/pkg/"}}, "https://golang.org/pkg/os/": &fakeResult{"Package os", AglVec[string]{"https://golang.org/", "https://golang.org/pkg/"}}}
 `
 	testCodeGen(t, src, expected)
 }
@@ -6211,7 +6211,7 @@ func main() {
 	node := AglIdentity(aglTmp2)
 	conf := types.Config{Importer: nil}
 	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
-	aglTmp3, err := conf.Check("", fset, []*ast.File{node}, info)
+	aglTmp3, err := conf.Check("", fset, AglVec[*ast.File]{node}, info)
 	if err != nil {
 		panic(err)
 	}
@@ -6253,7 +6253,7 @@ type Test struct {
 func (t Test) Method() {
 }
 func main() {
-	a := []Test{Test{}}
+	a := AglVec[Test]{Test{}}
 	b := a[0]
 	b.Method()
 }
@@ -6276,8 +6276,8 @@ func main() {
 	expected := `package main
 type Test struct {
 }
-func (t Test) Method() []int {
-	return []int{1, 2, 3}
+func (t Test) Method() AglVec[int] {
+	return AglVec[int]{1, 2, 3}
 }
 func main() {
 	a := Test{}
@@ -6302,8 +6302,8 @@ func main() {
 	expected := `package main
 type Test struct {
 }
-func (t Test) Method() []int {
-	return []int{1, 2, 3}
+func (t Test) Method() AglVec[int] {
+	return AglVec[int]{1, 2, 3}
 }
 func main() {
 	a := Test{}
@@ -6328,7 +6328,7 @@ type Test struct {
 func (t Test) Method() {
 }
 func main() {
-	a := []Test{Test{}}
+	a := AglVec[Test]{Test{}}
 	a[0].Method()
 }
 `
@@ -6460,7 +6460,7 @@ func main() {
 	expected := `package main
 import "go/ast"
 func main() {
-	a := []*ast.Ident{&ast.Ident{Name: "foo"}}
+	a := AglVec[*ast.Ident]{&ast.Ident{Name: "foo"}}
 	b := AglJoined(AglVecMap(a, func(aglArg0 *ast.Ident) string {
 		return aglArg0.Name
 	}), ", ")
@@ -6478,7 +6478,7 @@ func main() {
 `
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	b := AglVecLast(a)
 }
 `
@@ -6540,7 +6540,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	AglVecPopIf(&a, func() bool {
 		return true
 	})
@@ -6557,7 +6557,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	AglVecPopIf(&a, func() bool {
 		return true
 	})
@@ -6574,7 +6574,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	a := []int{1, 2, 3}
+	a := AglVec[int]{1, 2, 3}
 	AglVecPush(&a, 4)
 }
 `
@@ -6940,7 +6940,7 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 func main() {
-	a := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}, AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 1}}
+	a := AglVec[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}, AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 1}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -7005,7 +7005,7 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 func main() {
-	arr := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}}
+	arr := AglVec[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}}
 	fmt.Println(AglVecMap(arr, func(aglArg0 AglTupleStruct_uint8_uint8) uint8 {
 		return aglArg0.Arg0
 	}))
@@ -7028,7 +7028,7 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 func main() {
-	arr := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}}
+	arr := AglVec[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}}
 	fmt.Println(AglVecMap(arr, func(t AglTupleStruct_uint8_uint8) uint8 {
 		return t.Arg0
 	}))
@@ -7052,11 +7052,11 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
-func test_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
-	return []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: a[0], Arg1: b[0]}}
+func test_T_int_U_int(a AglVec[int], b AglVec[int]) AglVec[AglTupleStruct_int_int] {
+	return AglVec[AglTupleStruct_int_int]{AglTupleStruct_int_int{Arg0: a[0], Arg1: b[0]}}
 }
 func main() {
-	test_T_int_U_int([]int{1}, []int{2})
+	test_T_int_U_int(AglVec[int]{1}, AglVec[int]{2})
 }
 `
 	testCodeGen(t, src, expected)
@@ -7094,25 +7094,25 @@ type AglTupleStruct_int_uint8 struct {
 	Arg0 int
 	Arg1 uint8
 }
-func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
-	out := make([]AglTupleStruct_int_int, 0)
+func zip2_T_int_U_int(a AglVec[int], b AglVec[int]) AglVec[AglTupleStruct_int_int] {
+	out := make(AglVec[AglTupleStruct_int_int], 0)
 	for i := range a {
 		AglVecPush(&out, AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
 	}
 	return nil
 }
-func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
-	out := make([]AglTupleStruct_int_uint8, 0)
+func zip2_T_int_U_uint8(a AglVec[int], b AglVec[uint8]) AglVec[AglTupleStruct_int_uint8] {
+	out := make(AglVec[AglTupleStruct_int_uint8], 0)
 	for i := range a {
 		AglVecPush(&out, AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
 	}
 	return nil
 }
 func main() {
-	AglVecMap(zip2_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
+	AglVecMap(zip2_T_int_U_int(AglVec[int]{1}, AglVec[int]{2}), func(aglArg0 AglTupleStruct_int_int) int {
 		return aglArg0.Arg0 + aglArg0.Arg1
 	})
-	AglVecMap(zip2_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+	AglVecMap(zip2_T_int_U_uint8(AglVec[int]{1}, AglVec[uint8]{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
 		return aglArg0.Arg0 + int(aglArg0.Arg1)
 	})
 }
@@ -7128,7 +7128,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr := []string{"a", "b"}
+	arr := AglVec[string]{"a", "b"}
 	AglVecContains(arr, "a")
 }
 `
@@ -7142,7 +7142,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	AglVecContains([]string{"a", "b"}, "a")
+	AglVecContains(AglVec[string]{"a", "b"}, "a")
 }
 `
 	testCodeGen(t, src, expected)
@@ -7155,7 +7155,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	arr := make([]AglTupleStruct_int_int, 0)
+	arr := make(AglVec[AglTupleStruct_int_int], 0)
 }
 `
 	testCodeGen(t, src, expected)
@@ -7168,7 +7168,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	var arr []AglTupleStruct_int_int
+	var arr AglVec[AglTupleStruct_int_int]
 }
 `
 	testCodeGen(t, src, expected)
@@ -7214,12 +7214,12 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	AglVecMyForEach_T_int([]int{1, 2}, func(aglArg0 int) AglVoid {
+	AglVecMyForEach_T_int(AglVec[int]{1, 2}, func(aglArg0 int) AglVoid {
 		fmt.Println(aglArg0)
 		return AglVoid{}
 	})
 }
-func AglVecMyForEach_T_int(v []int, f func(int)) {
+func AglVecMyForEach_T_int(v AglVec[int], f func(int)) {
 	for i := range v {
 		f(v[i])
 	}
@@ -7246,12 +7246,12 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	AglVecMyCompactMap_R_int_T_string([]string{"1", "two"}, func(aglArg0 string) Option[int] {
+	AglVecMyCompactMap_R_int_T_string(AglVec[string]{"1", "two"}, func(aglArg0 string) Option[int] {
 		return AglStringInt(aglArg0)
 	})
 }
-func AglVecMyCompactMap_R_int_T_string(v []string, f func(string) Option[int]) []int {
-	out := make([]int, 0)
+func AglVecMyCompactMap_R_int_T_string(v AglVec[string], f func(string) Option[int]) AglVec[int] {
+	out := make(AglVec[int], 0)
 	for _, el := range v {
 		if aglTmp1 := f(el); aglTmp1.IsSome() {
 			res := aglTmp1.Unwrap()
@@ -7289,16 +7289,16 @@ func main() {
 	expected := `package main
 import "fmt"
 func main() {
-	AglVecFlatMap_R_int_T_int([]int{1, 2}, func(aglArg0 int) []int {
-		out := make([]int, 0)
+	AglVecFlatMap_R_int_T_int(AglVec[int]{1, 2}, func(aglArg0 int) AglVec[int] {
+		out := make(AglVec[int], 0)
 		for i := 0; i < aglArg0; i++ {
 			AglVecPush(&out, aglArg0)
 		}
 		return out
 	})
 }
-func AglVecFlatMap_R_int_T_int(v []int, f func(int) []int) []int {
-	out := make([]int, 0)
+func AglVecFlatMap_R_int_T_int(v AglVec[int], f func(int) AglVec[int]) AglVec[int] {
+	out := make(AglVec[int], 0)
 	for _, el := range v {
 		subArr := f(el)
 		for _, el1 := range subArr {
@@ -7325,9 +7325,9 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	AglVecMyMin_T_int([]int{1, 2})
+	AglVecMyMin_T_int(AglVec[int]{1, 2})
 }
-func AglVecMyMin_T_int(v []int) Option[int] {
+func AglVecMyMin_T_int(v AglVec[int]) Option[int] {
 	if len(v) == 0 {
 		return MakeOptionNone[int]()
 	}
@@ -7432,9 +7432,9 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	AglVecMin_T_int([]int{1, 2})
+	AglVecMin_T_int(AglVec[int]{1, 2})
 }
-func AglVecMin_T_int(v []int) Option[int] {
+func AglVecMin_T_int(v AglVec[int]) Option[int] {
 	if len(v) == 0 {
 		return MakeOptionNone[int]()
 	}
@@ -7485,7 +7485,7 @@ func main() {
 }`
 	expected := `package main
 func main() {
-	a := [][]int{{1, 2}, {2, 3}}
+	a := AglVec[AglVec[int]]{{1, 2}, {2, 3}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -7744,6 +7744,25 @@ func TestCodeGen277(t *testing.T) {
 		"type Test struct {\n" +
 		"	SomeProp int `json:\"some_prop\"`\n" +
 		"}\n"
+	testCodeGen(t, src, expected)
+}
+
+func TestCodeGen278(t *testing.T) {
+	src := `package main
+pub func test(a []int) {
+	a.Iter()
+}
+func main() {
+	test([]int{1, 2})
+}`
+	expected := `package main
+func AglPub_test(a AglVec[int]) {
+	AglVecIter(a)
+}
+func main() {
+	AglPub_test(AglVec[int]{1, 2})
+}
+`
 	testCodeGen(t, src, expected)
 }
 

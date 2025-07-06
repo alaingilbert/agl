@@ -641,6 +641,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.String.U64", "func (s) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
 	e.DefineFn("agl.String.F32", "func (s) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
 	e.DefineFn("agl.String.F64", "func (s) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
+	e.DefineFn("agl.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
 	e.DefineFn("agl.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T")
 	e.DefineFn("agl.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool")
 	e.DefineFn("agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R")

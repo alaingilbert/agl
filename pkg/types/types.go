@@ -275,8 +275,8 @@ func (s SetType) String() string    { return fmt.Sprintf("set[%s]", s.K.String()
 
 type ArrayType struct{ Elt Type }
 
-func (a ArrayType) GoStr() string     { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
-func (a ArrayType) GoStrType() string { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
+func (a ArrayType) GoStr() string     { return fmt.Sprintf("AglVec[%s]", a.Elt.GoStr()) }
+func (a ArrayType) GoStrType() string { return fmt.Sprintf("AglVec[%s]", a.Elt.GoStr()) }
 func (a ArrayType) String() string    { return fmt.Sprintf("[]%s", a.Elt.String()) }
 
 type EllipsisType struct{ Elt Type }

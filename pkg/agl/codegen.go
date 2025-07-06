@@ -510,11 +510,6 @@ func (g *Generator) genMapType(expr *ast.MapType) string {
 	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
 
-func (g *Generator) genSetType(expr *ast.SetType) string {
-	content1 := g.genExpr(expr.Key)
-	return fmt.Sprintf("AglSet[%s]", content1)
-}
-
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
 	content1 := g.genExpr(expr.X)
 	return fmt.Sprintf("MakeOptionSome(%s)", content1)
@@ -1140,6 +1135,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglJoined(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			} else if fnName == "Sorted" {
 				return fmt.Sprintf("AglVecSorted(%s)", g.genExpr(e.X))
+			} else if fnName == "Iter" {
+				return fmt.Sprintf("AglVecIter(%s)", g.genExpr(e.X))
 			} else {
 				extName := "agl.Vec." + fnName
 				t := g.env.Get(extName)
@@ -1343,6 +1340,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	return fmt.Sprintf("%s(%s)", content1, content2)
 }
 
+func (g *Generator) genSetType(expr *ast.SetType) string {
+	content1 := g.genExpr(expr.Key)
+	return fmt.Sprintf("AglSet[%s]", content1)
+}
+
 func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	var content string
 	switch v := expr.Elt.(type) {
@@ -1351,7 +1353,7 @@ func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	default:
 		content = g.genExpr(expr.Elt)
 	}
-	return fmt.Sprintf("[]%s", content)
+	return fmt.Sprintf("AglVec[%s]", content)
 }
 
 func (g *Generator) genKeyValueExpr(expr *ast.KeyValueExpr) (out string) {
@@ -2145,6 +2147,22 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 		}
 	}
 	return MakeOptionNone[T]()
+}
+
+type AglVec[T any] []T
+
+func (v AglVec[T]) Iter() aglImportIter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, e := range v {
+			if !yield(e) {
+				return
+			}
+		}
+	}
+}
+
+func AglVecIter[T any](v AglVec[T]) aglImportIter.Seq[T] {
+	return v.Iter()
 }
 
 type AglSet[T comparable] map[T]struct{}
