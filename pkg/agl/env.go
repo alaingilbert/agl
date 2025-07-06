@@ -612,7 +612,7 @@ func (e *Env) loadVendor1(path string, m map[string]struct{}) {
 func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
 	defineStructsFromGoSrc(entries, e, path, m)
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
 			continue
 		}
 		fullPath := filepath.Join(path, entry.Name())
