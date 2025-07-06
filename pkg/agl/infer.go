@@ -2434,24 +2434,16 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	if len(stmt.Rhs) == 1 && len(stmt.Lhs) > 1 { // eg: `e, ok := m[0]`
 		rhs := stmt.Rhs[0]
 		infer.expr(rhs)
-		if rhs1, ok := rhs.(*ast.TupleExpr); ok {
+		switch rhs1 := rhs.(type) {
+		case *ast.TupleExpr:
 			for i, x := range rhs1.Values {
 				lhs := stmt.Lhs[i]
 				lhsID := MustCast[*ast.Ident](lhs)
 				infer.SetType(lhs, infer.GetType(x))
 				assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 			}
-		} else if rhs2, ok := infer.env.GetType(rhs).(types.EnumType); ok {
-			for i, e := range stmt.Lhs {
-				lit := rhs2.SubTyp
-				fields := rhs2.Fields
-				// AGL: fields.Find({ $0.name == lit })
-				f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
-				assert(f != nil)
-				assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable.IsValid(), f.Elts[i]})
-			}
-		} else if rhsId, ok := rhs.(*ast.Ident); ok {
-			rhsIdT := infer.env.Get(rhsId.Name)
+		case *ast.Ident:
+			rhsIdT := infer.env.Get(rhs1.Name)
 			if rhs3, ok := rhsIdT.(types.TupleType); ok {
 				for i, x := range rhs3.Elts {
 					lhs := stmt.Lhs[i]
@@ -2460,8 +2452,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 				}
 			}
-		} else if rhsId1, ok := rhs.(*ast.IndexExpr); ok {
-			rhsId1XT := infer.GetType(rhsId1.X)
+		case *ast.IndexExpr:
+			rhsId1XT := infer.GetType(rhs1.X)
 			if v, ok := rhsId1XT.(types.CustomType); ok {
 				rhsId1XT = v.W
 			}
@@ -2487,9 +2479,21 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 				return
 			}
-		} else {
-			infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
-			return
+		default:
+			if _, ok := rhs.(*ast.TupleExpr); ok {
+				rhs2 := infer.env.GetType(rhs).(types.EnumType)
+				for i, e := range stmt.Lhs {
+					lit := rhs2.SubTyp
+					fields := rhs2.Fields
+					// AGL: fields.Find({ $0.name == lit })
+					f := Find(fields, func(f types.EnumFieldType) bool { return f.Name == lit })
+					assert(f != nil)
+					assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable.IsValid(), f.Elts[i]})
+				}
+			} else {
+				infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
+				return
+			}
 		}
 	} else {
 		if len(stmt.Lhs) != len(stmt.Rhs) {
