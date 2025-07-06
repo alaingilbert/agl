@@ -418,6 +418,15 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					default:
 						panic(fmt.Sprintf("%v", to(spec.Type)))
 					}
+				case *ast.ImportSpec:
+				case *ast.ValueSpec:
+					for _, name := range spec.Names {
+						fieldName := pkgName + "." + name.Name
+						t := env.GetType2(spec.Type, fset)
+						env.Define(nil, fieldName, t)
+					}
+				default:
+					panic(fmt.Sprintf("%v", to(s)))
 				}
 			}
 		}
@@ -510,6 +519,19 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 			}
 			env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 		case *goast.InterfaceType:
+			if v.Methods != nil {
+				for _, m := range v.Methods.List {
+					for _, n := range m.Names {
+						if !n.IsExported() {
+							continue
+						}
+						fullName := pkgName + "." + spec.Name.Name + "." + n.Name
+						t := env.GetGoType2(pkgName, m.Type)
+						env.DefineForce(nil, fullName, t)
+					}
+				}
+			}
+			env.DefineForce(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 		case *goast.IndexListExpr:
 		case *goast.ArrayType:
 		case *goast.Ident:
@@ -530,7 +552,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 	}
 }
 
-func defineFromGoSrc(env *Env, path string, src []byte, m map[string]struct{}) {
+func defineFromGoSrc(env *Env, fullPath, path string, src []byte, m map[string]struct{}) {
 	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
 	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
@@ -586,7 +608,7 @@ func (e *Env) loadVendor(path string, m map[string]struct{}) {
 			if err != nil {
 				continue
 			}
-			defineFromGoSrc(e, path, by, m)
+			defineFromGoSrc(e, fullPath, path, by, m)
 		}
 	}
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
