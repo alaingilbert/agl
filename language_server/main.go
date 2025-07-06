@@ -433,17 +433,21 @@ func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) 
 				)
 			case types.UntypedStringType, types.StringType:
 				completions = append(completions,
-					lsp.CompletionItem{Label: "Int", Kind: lsp.CIKMethod, Detail: "", InsertText: "Int()"},
-					lsp.CompletionItem{Label: "I8", Kind: lsp.CIKMethod, Detail: "", InsertText: "I8()"},
+					lsp.CompletionItem{Label: "HasPrefix", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "HasSuffix", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "I16", Kind: lsp.CIKMethod, Detail: "", InsertText: "I16()"},
 					lsp.CompletionItem{Label: "I32", Kind: lsp.CIKMethod, Detail: "", InsertText: "I32()"},
 					lsp.CompletionItem{Label: "I64", Kind: lsp.CIKMethod, Detail: "", InsertText: "I64()"},
-					lsp.CompletionItem{Label: "Uint", Kind: lsp.CIKMethod, Detail: "", InsertText: "Uint()"},
-					lsp.CompletionItem{Label: "U8", Kind: lsp.CIKMethod, Detail: "", InsertText: "U8()"},
+					lsp.CompletionItem{Label: "I8", Kind: lsp.CIKMethod, Detail: "", InsertText: "I8()"},
+					lsp.CompletionItem{Label: "Int", Kind: lsp.CIKMethod, Detail: "", InsertText: "Int()"},
+					lsp.CompletionItem{Label: "Lowercased", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Split", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "U16", Kind: lsp.CIKMethod, Detail: "", InsertText: "U16()"},
 					lsp.CompletionItem{Label: "U32", Kind: lsp.CIKMethod, Detail: "", InsertText: "U32()"},
 					lsp.CompletionItem{Label: "U64", Kind: lsp.CIKMethod, Detail: "", InsertText: "U64()"},
-					lsp.CompletionItem{Label: "Split", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "U8", Kind: lsp.CIKMethod, Detail: "", InsertText: "U8()"},
+					lsp.CompletionItem{Label: "Uint", Kind: lsp.CIKMethod, Detail: "", InsertText: "Uint()"},
+					lsp.CompletionItem{Label: "Uppercased", Kind: lsp.CIKMethod, Detail: ""},
 				)
 			default:
 				log.Printf("Unknown type: %s %v", typ, reflect.TypeOf(typ))
