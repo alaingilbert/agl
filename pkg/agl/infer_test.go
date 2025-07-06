@@ -52,7 +52,7 @@ func NewTest(src string) *Test {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
 	i := NewInferrer(env)
-	errs := i.InferFile("", f, fset)
+	errs := i.InferFile("", f, fset, true)
 	file := fset.File(1)
 	return &Test{
 		f:    f,

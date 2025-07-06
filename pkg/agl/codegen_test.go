@@ -10,7 +10,7 @@ import (
 func getGenOutput(src string) string {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
-	NewInferrer(env).InferFile("", f, fset)
+	NewInferrer(env).InferFile("", f, fset, true)
 	return NewGenerator(env, f, fset).Generate()
 }
 
@@ -3284,7 +3284,7 @@ func main() {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
 	i := NewInferrer(env)
-	errs := i.InferFile("", f, fset)
+	errs := i.InferFile("", f, fset, true)
 	fmt.Print(errs)
 	tassert.Equal(t, 1, 1)
 }

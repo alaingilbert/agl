@@ -23,8 +23,6 @@ import (
 	"strings"
 )
 
-var mutEnforced = utils.False()
-
 func ParseSrc(src string) (*token.FileSet, *ast.File) {
 	// support "#!/usr/bin/env agl run" as the first line of agl "script"
 	if strings.HasPrefix(src, "#!") {
@@ -44,8 +42,8 @@ func NewInferrer(env *Env) *Inferrer {
 	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet) []error {
-	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset}
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) []error {
+	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced}
 	fileInferrer.Infer()
 	return fileInferrer.Errors
 }
@@ -61,6 +59,7 @@ type FileInferrer struct {
 	forceReturnType types.Type
 	mapKT, mapVT    types.Type
 	Errors          []error
+	mutEnforced     bool
 }
 
 type InferError struct {
@@ -973,7 +972,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-				if mutEnforced && !TryCast[types.MutType](oexprFunT) {
+				if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
 					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
 					return
 				}
@@ -1109,7 +1108,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				for i, pp := range v.Params {
 					if TryCast[types.MutType](pp) {
 						if id, ok := expr.Args[i].(*ast.Ident); ok {
-							if mutEnforced && !TryCast[types.MutType](infer.env.GetType(id)) {
+							if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(id)) {
 								infer.errorf(id, "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
 								return
 							}
@@ -1226,7 +1225,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		if TryCast[types.MutType](fnT.Params[0]) {
-			if mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+			if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 				infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
 				return
 			}
@@ -1398,7 +1397,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			sumFnT := infer.env.GetFn("agl.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
-				if mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
 					return
 				}
@@ -1411,7 +1410,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
-				if mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
 					return
 				}
@@ -2402,7 +2401,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		infer.env.DefineForce(n, name, typ)
 	}
 	myAssign := func(parentInfo *Info, n ast.Node, name string, _ types.Type) {
-		if err := infer.env.Assign(parentInfo, n, name, infer.fset); err != nil {
+		if err := infer.env.Assign(parentInfo, n, name, infer.fset, infer.mutEnforced); err != nil {
 			infer.errorf(n, "%s: %s", infer.Pos(n), err)
 			return
 		}
@@ -2554,7 +2553,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			if v1, ok := lhs.(*ast.Ident); ok {
 				if v2, ok := rhs.(*ast.Ident); ok {
 					if v1.Mutable.IsValid() {
-						if mutEnforced && !TryCast[types.MutType](infer.env.Get(v2.Name)) {
+						if infer.mutEnforced && !TryCast[types.MutType](infer.env.Get(v2.Name)) {
 							infer.errorf(lhs, "cannot make mutable bind of an immutable variable")
 							return
 						}
@@ -2579,7 +2578,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					return
 				}
 				lhsIdNameT := infer.env.Get(lhsIdName)
-				if mutEnforced && !TryCast[types.MutType](lhsIdNameT) {
+				if infer.mutEnforced && !TryCast[types.MutType](lhsIdNameT) {
 					infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
 					return
 				}
@@ -2615,7 +2614,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsWantedT = vv.Elts[argIdx]
 				case types.StructType:
 					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
-					if mutEnforced && !TryCast[types.MutType](selT) {
+					if infer.mutEnforced && !TryCast[types.MutType](selT) {
 						infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
 						return
 					}

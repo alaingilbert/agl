@@ -836,7 +836,7 @@ func (e *Env) lspSetNode(n ast.Node, info *Info) {
 	e.lspTable[e.makeKey(n)] = info
 }
 
-func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.FileSet) error {
+func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.FileSet, mutEnforced bool) error {
 	if name == "_" {
 		return nil
 	}
