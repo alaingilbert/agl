@@ -390,6 +390,15 @@ func defineFromSrc(env *Env, path string, src []byte) {
 						t := env.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
+						if v.Methods != nil {
+							for _, m := range v.Methods.List {
+								for _, n := range m.Names {
+									fullName := pkgName + "." + spec.Name.Name + "." + n.Name
+									t := env.GetType2(m.Type, fset)
+									env.Define(nil, fullName, t)
+								}
+							}
+						}
 						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 					case *ast.StructType:
 						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
