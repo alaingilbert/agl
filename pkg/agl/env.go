@@ -1097,7 +1097,7 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 		if v2 := e.GetNameInfo(pkgName + "." + xx.Name); v2 != nil {
 			return v2.Type
 		}
-		return types.VoidType{}
+		return types.AnyType{}
 		return nil
 	case *goast.FuncType:
 		return goFuncTypeToFuncType("", pkgName, xx, e)

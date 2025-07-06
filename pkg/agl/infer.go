@@ -2141,6 +2141,8 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(v.Sel, selT)
 		infer.SetType(expr, selT)
 		return
+	case *ast.StructType:
+		return
 	default:
 		infer.errorf(expr, "%v", to(expr.Type))
 		return
