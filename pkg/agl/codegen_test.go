@@ -7802,7 +7802,6 @@ func main() {
 	i, f := math.Modf(3.14)
 }`
 	test := NewTest(src)
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	expected := `package main
 import "math"
