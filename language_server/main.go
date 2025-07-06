@@ -370,6 +370,8 @@ func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) 
 					lsp.CompletionItem{Label: "Last", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Len", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Map", Kind: lsp.CIKMethod, Detail: "Transform elements"},
+					lsp.CompletionItem{Label: "Max", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Min", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Pop", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "PopFront", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "PopIf", Kind: lsp.CIKMethod, Detail: ""},
