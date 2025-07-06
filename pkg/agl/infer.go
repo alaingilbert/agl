@@ -2670,7 +2670,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			default:
 				rhsT = infer.env.GetType2(rhs, infer.fset)
 			}
-			assertf(!TryCast[types.VoidType](rhsT), "cannot assign void type to a variable")
+			if TryCast[types.VoidType](rhsT) {
+				infer.errorf(lhs, "cannot assign void type to a variable")
+				return
+			}
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:

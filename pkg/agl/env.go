@@ -362,10 +362,14 @@ func defineFromSrc(env *Env, path string, src []byte) {
 					v.Native = false
 					ft.Return = v
 				}
-				env.DefineFnNative2(fullName, ft)
+				if err := env.DefineFnNative2(fullName, ft); err != nil {
+					assert(false, err.Error())
+				}
 			} else {
 				ft.IsNative = true
-				env.DefineFnNative2(fullName, ft)
+				if err := env.DefineFnNative2(fullName, ft); err != nil {
+					assert(false, err.Error())
+				}
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
@@ -573,7 +577,9 @@ func defineFromGoSrc(env *Env, fullPath, path string, src []byte, m map[string]s
 				fullName = recvName + "." + fullName
 			}
 			fullName = pkgName + "." + fullName
-			env.DefineFnNative2(fullName, fnT)
+			if err := env.DefineFnNative2(fullName, fnT); err != nil {
+				continue // TODO should not skip errors
+			}
 		}
 	}
 }
@@ -799,8 +805,8 @@ func (e *Env) DefineFnNative(name string, fnStr string, fset *token.FileSet) {
 	e.Define(nil, name, fnT)
 }
 
-func (e *Env) DefineFnNative2(name string, fnT types.FuncType) {
-	e.Define(nil, name, fnT)
+func (e *Env) DefineFnNative2(name string, fnT types.FuncType) error {
+	return e.Define1(nil, name, fnT)
 }
 
 func (e *Env) DefinePkg(name, path string) error {
@@ -815,10 +821,17 @@ func (e *Env) DefineForce(n ast.Node, name string, typ types.Type) {
 }
 
 func (e *Env) Define(n ast.Node, name string, typ types.Type, opts ...SetTypeOption) {
-	err := e.defineHelper(n, name, typ, false, opts...)
-	if err != nil {
+	if err := e.Define1(n, name, typ, opts...); err != nil {
 		assert(false, err.Error())
 	}
+}
+
+func (e *Env) Define1(n ast.Node, name string, typ types.Type, opts ...SetTypeOption) error {
+	err := e.defineHelper(n, name, typ, false, opts...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (e *Env) DefineErr(n ast.Node, name string, typ types.Type) error {
