@@ -1159,6 +1159,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
+			info := infer.env.GetNameInfo("agl.Vec.Filter")
 			filterFnT := infer.env.GetFn("agl.Vec.Filter").T("T", idTT.Elt)
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
 			infer.SetType(expr, filterFnT.Return)
@@ -1175,7 +1176,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Recv = []types.Type{idTT}
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
-			infer.SetType(exprT.Sel, filterFnT)
+			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
 		} else if fnName == "AllSatisfy" {
 			filterFnT := infer.env.GetFn("agl.Vec.AllSatisfy").T("T", idTT.Elt)
 			infer.SetType(expr.Args[0], filterFnT.Params[1])
@@ -1218,6 +1219,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
+			info := infer.env.GetNameInfo("agl.Vec.Map")
 			mapFnT := infer.env.GetFn("agl.Vec.Map").T("T", idTT.Elt)
 			clbFnT := mapFnT.GetParam(1).(types.FuncType)
 			exprArg0 := expr.Args[0]
@@ -1229,7 +1231,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				infer.expr(arg0)
 				rT := infer.GetTypeFn(arg0).Return
 				infer.SetType(expr, types.ArrayType{Elt: rT})
-				infer.SetType(exprT.Sel, mapFnT.T("R", rT))
+				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
 				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
@@ -1239,7 +1241,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				if tmp, ok := aT.(types.FuncType); ok {
 					rT := tmp.Return
 					infer.SetType(expr, types.ArrayType{Elt: rT})
-					infer.SetType(exprT.Sel, mapFnT.T("R", rT))
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 				}
 				assertf(compareFunctionSignatures(ftReal, clbFnT), "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
 			}
