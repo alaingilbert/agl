@@ -30,10 +30,7 @@ func ParseSrc(src string) (*token.FileSet, *ast.File) {
 	}
 	src += CoreFns()
 	var fset = token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, 0)
-	if err != nil {
-		panic(err)
-	}
+	f := Must(parser.ParseFile(fset, "", src, 0))
 	return fset, f
 }
 
@@ -342,7 +339,8 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 		case *ast.ValueSpec:
 			infer.valueSpec(spec)
 		default:
-			panic(fmt.Sprintf("%v", to(spec)))
+			infer.errorf(spec, "%s: unsupported spec type", to(spec))
+			return
 		}
 	}
 }
@@ -448,7 +446,8 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		mT := types.MapType{K: kT, V: vT}
 		toDef = types.CustomType{Name: spec.Name.Name, W: mT}
 	default:
-		panic(fmt.Sprintf("%v", to(spec.Type)))
+		infer.errorf(spec.Name, "%v", to(spec.Type))
+		return
 	}
 	infer.env.Define(spec.Name, spec.Name.Name, toDef)
 }
@@ -876,7 +875,8 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 		name := eT.GetFieldName(id.Name)
 		return infer.env.Get(name)
 	default:
-		panic("")
+		infer.errorf(id, "%v", to(eTRaw))
+		return nil
 	}
 }
 
@@ -918,7 +918,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.BasicLit:
 			exprFunT = infer.env.GetType2(callXT, infer.fset)
 		default:
-			panic(fmt.Sprintf("%v %v", call.X, to(call.X)))
+			infer.errorf(call.X, "%v %v", call.X, to(call.X))
+			return
 		}
 
 		fnName := call.Sel.Name
@@ -1028,7 +1029,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			} else if fnName == "Err" {
-				panic("user cannot call Err")
+				infer.errorf(call.X, "cannot call Err on Result")
+				return
 			}
 			fnT.Recv = []types.Type{oexprFunT}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
@@ -1089,7 +1091,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		infer.SetType(call, callT)
 		infer.SetType(expr, callT)
 	default:
-		panic(fmt.Sprintf("%v", to(expr.Fun)))
+		infer.errorf(expr.Fun, "%v", to(expr.Fun))
+		return
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
@@ -1137,7 +1140,8 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 			infer.SetType(expr, fnT.Return)
 			infer.SetType(expr.Args[0], types.TypeType{W: fnT.GetParam(0)})
 		default:
-			panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
+			infer.errorf(arg0, "%v", to(arg0))
+			return
 		}
 	case "min", "max":
 		arg0T := infer.env.GetType2(expr.Args[0], infer.fset)
@@ -1149,14 +1153,16 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 		infer.SetType(expr.Fun, fnT)
 	case "append":
 		fnT := infer.env.Get("append").(types.FuncType)
-		arg0 := infer.env.GetType2(expr.Args[0], infer.fset)
-		arg0 = types.Unwrap(arg0)
-		switch v := arg0.(type) {
+		arg0 := expr.Args[0]
+		arg0T := infer.env.GetType2(arg0, infer.fset)
+		arg0T = types.Unwrap(arg0T)
+		switch v := arg0T.(type) {
 		case types.ArrayType:
 			fnT = fnT.T("T", v.Elt)
 			infer.SetType(expr, fnT.Return)
 		default:
-			panic(fmt.Sprintf("%v %v", arg0, to(arg0)))
+			infer.errorf(arg0, "%v", to(arg0T))
+			return
 		}
 	case "abs":
 		fnT := infer.env.Get("abs").(types.FuncType)
@@ -1783,7 +1789,8 @@ func (infer *FileInferrer) orBreak(expr *ast.OrBreakExpr) {
 	case types.ResultType:
 		t = v.W
 	default:
-		panic("")
+		infer.errorf(expr, "expected Option or Result type, got %v", v)
+		return
 	}
 	infer.SetType(expr, t)
 }
@@ -1797,7 +1804,8 @@ func (infer *FileInferrer) orContinue(expr *ast.OrContinueExpr) {
 	case types.ResultType:
 		t = v.W
 	default:
-		panic("")
+		infer.errorf(expr, "expected Option or Result type, got %v", v)
+		return
 	}
 	infer.SetType(expr, t)
 }
@@ -2029,7 +2037,8 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.X, exprXIdT)
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
-			panic("tuple arg index must be int")
+			infer.errorf(expr.Sel, "tuple arg index must be int")
+			return
 		}
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.PackageType:
@@ -2121,7 +2130,8 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 			case *ast.CallExpr:
 				infer.expr(v1)
 			default:
-				panic(fmt.Sprintf("%v", to(elExpr)))
+				infer.errorf(elExpr, "%v", to(elExpr))
+				return
 			}
 		}
 		return
@@ -2151,7 +2161,8 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 					name := fmt.Sprintf("%s.%s.%s", idName, v.Sel.Name, vv.Key.(*ast.Ident).Name)
 					infer.SetType(vv.Key, infer.env.Get(name))
 				default:
-					panic(fmt.Sprintf("%s, %v", infer.Pos(el), to(el)))
+					infer.errorf(el, "%v", to(el))
+					return
 				}
 			}
 		}
@@ -2160,7 +2171,8 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, selT)
 		return
 	default:
-		panic(fmt.Sprintf("%s: %v", infer.Pos(expr), to(expr.Type)))
+		infer.errorf(expr, "%v", to(expr.Type))
+		return
 	}
 }
 
@@ -2233,7 +2245,8 @@ func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
 	switch v := expr.Value.(type) {
 	case *ast.CompositeLit:
 		if v.Type == nil && infer.mapVT == nil {
-			panic("")
+			infer.errorf(expr.Value, "map key type not specified")
+			return
 		}
 	default:
 		infer.expr(expr.Value)
@@ -2302,7 +2315,8 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 			infer.env.Define(name, name.Name, tt)
 		}
 	default:
-		panic(fmt.Sprintf("%v", to(s)))
+		infer.errorf(s, "%v", to(s))
+		return
 	}
 }
 
@@ -2353,7 +2367,8 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 				infer.env.Define(stmt.Value, name, v.V)
 				infer.SetType(stmt.Value, v.V)
 			default:
-				panic(fmt.Sprintf("%v", to(xT)))
+				infer.errorf(stmt.Value, "%v", to(xT))
+				return
 			}
 		}
 		if stmt.Body != nil {
@@ -2544,7 +2559,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case types.TupleType:
 					argIdx, err := strconv.Atoi(v.Sel.Name)
 					if err != nil {
-						panic(err)
+						infer.errorf(lhs, "%v", err)
+						return
 					}
 					lhsWantedT = vv.Elts[argIdx]
 				case types.StructType:
