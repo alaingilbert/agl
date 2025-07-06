@@ -127,7 +127,7 @@ func main() {
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "func (set[int]) IsDisjoint(set[int]) bool", test.TypeAt(5, 12).String())
+	tassert.Equal(t, "func (set[int]) IsDisjoint(agl.Iterator[int]) bool", test.TypeAt(5, 12).String())
 }
 
 func TestInfer6(t *testing.T) {
