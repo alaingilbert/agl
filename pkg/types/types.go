@@ -110,7 +110,7 @@ func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.Go
 func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
 func (r ResultType) String() string {
 	switch r.W.(type) {
-	case ArrayType, SetType, StarType, StructType, InterfaceType, CustomType:
+	case ArrayType, StarType, StructType, InterfaceType, CustomType:
 		return fmt.Sprintf("(%s)!", r.W.String())
 	default:
 		return fmt.Sprintf("%s!", r.W.String())
@@ -127,7 +127,7 @@ func (o OptionType) GoStr() string     { return fmt.Sprintf("Option[%s]", o.W.Go
 func (o OptionType) GoStrType() string { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
 func (o OptionType) String() string {
 	switch o.W.(type) {
-	case ArrayType, SetType, StarType, StructType, InterfaceType, CustomType:
+	case ArrayType, StarType, StructType, InterfaceType, CustomType:
 		return fmt.Sprintf("(%s)?", o.W.String())
 	default:
 		return fmt.Sprintf("%s?", o.W.String())
