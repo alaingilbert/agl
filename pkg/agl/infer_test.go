@@ -48,11 +48,27 @@ func (t *Test) PrintErrors() {
 	}
 }
 
-func NewTest(src string) *Test {
+type TestConf struct {
+	MutEnforced bool
+}
+
+type TestOption func(*TestConf)
+
+func WithMutEnforced(v bool) func(*TestConf) {
+	return func(c *TestConf) {
+		c.MutEnforced = v
+	}
+}
+
+func NewTest(src string, opts ...TestOption) *Test {
+	c := &TestConf{MutEnforced: true}
+	for _, opt := range opts {
+		opt(c)
+	}
 	fset, f := ParseSrc(src)
 	env := NewEnv()
 	i := NewInferrer(env)
-	errs := i.InferFile("", f, fset, true)
+	errs := i.InferFile("", f, fset, c.MutEnforced)
 	file := fset.File(1)
 	return &Test{
 		f:    f,

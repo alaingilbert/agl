@@ -7816,6 +7816,23 @@ func main() {
 	tassert.Equal(t, expected, test.GenCode())
 }
 
+func TestCodeGen281(t *testing.T) {
+	src := `package main
+func main() {
+	a := 1
+	a = 2
+}`
+	expected := `package main
+func main() {
+	a := 1
+	a = 2
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, expected, test.GenCode())
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
