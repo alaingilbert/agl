@@ -2424,7 +2424,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 			}
 			if !hasNewVar {
-				infer.errorf(stmt, "%s: No new variables on the left side of ':='", infer.Pos(stmt))
+				infer.errorf(stmt, "No new variables on the left side of ':='")
 				return
 			}
 		}
@@ -2481,20 +2481,20 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					infer.SetType(lhs0, rhsId1XTT.V)
 					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
 				default:
-					infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 					return
 				}
 			default:
-				infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+				infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 				return
 			}
 		} else {
-			infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 			return
 		}
 	} else {
 		if len(stmt.Lhs) != len(stmt.Rhs) {
-			infer.errorf(stmt, "%s: Assignment count mismatch: %d = %d", infer.Pos(stmt), len(stmt.Lhs), len(stmt.Rhs))
+			infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 			return
 		}
 		for i := range stmt.Lhs {
@@ -2505,7 +2505,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				if v2, ok := rhs.(*ast.Ident); ok {
 					if v1.Mutable.IsValid() {
 						if !TryCast[types.MutType](infer.env.Get(v2.Name)) {
-							infer.errorf(lhs, "%s: cannot make mutable bind of an immutable variable", infer.Pos(lhs))
+							infer.errorf(lhs, "cannot make mutable bind of an immutable variable")
 							return
 						}
 					}
@@ -2530,7 +2530,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				lhsIdNameT := infer.env.Get(lhsIdName)
 				if !TryCast[types.MutType](lhsIdNameT) {
-					infer.errorf(v.X, "%s: cannot assign to immutable variable '%s'", infer.Pos(v.X), lhsIdName)
+					infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
 					return
 				}
 				lhsIdNameT = types.Unwrap(lhsIdNameT)
@@ -2566,7 +2566,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case types.StructType:
 					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
 					if !TryCast[types.MutType](selT) {
-						infer.errorf(v.Sel, "%s: assign to immutable prop '%s'", infer.Pos(v.Sel), v.Sel.Name)
+						infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
 						return
 					}
 				}
@@ -2578,7 +2578,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.withForceReturn(lhsT, func() {
 					infer.expr(rhs)
 					rhsT := infer.env.GetType2(rhs, infer.fset)
-					assertf(cmpTypesLoose(rhsT, lhsT), "%s: return type %s does not match expected type %s", infer.Pos(lhs), rhsT, lhsT)
+					if !cmpTypesLoose(rhsT, lhsT) {
+						infer.errorf(lhs, "return type %s does not match expected type %s", rhsT, lhsT)
+					}
 				})
 			} else {
 				infer.expr(rhs)
@@ -2657,13 +2659,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
 				if !TryCast[types.OptionType](rhsT) {
-					infer.errorf(lhs, "%s: try to destructure a non-Option type into an OptionType", infer.Pos(lhs))
+					infer.errorf(lhs, "try to destructure a non-Option type into an OptionType")
 					return
 				}
 				infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
 			case types.ErrType, types.OkType:
 				if !TryCast[types.ResultType](rhsT) {
-					infer.errorf(lhs, "%s: try to destructure a non-Result type into an ResultType", infer.Pos(lhs))
+					infer.errorf(lhs, "try to destructure a non-Result type into an ResultType")
 					return
 				}
 				infer.SetTypeForce(lhs, rhsT.(types.ResultType).W)
