@@ -2406,7 +2406,7 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 		op = p.tok
 		p.next()
 		p.expect(token.LPAREN)
-		id := p.parseIdent()
+		id := p.parseIdentOrMutIdent()
 		p.expect(token.RPAREN)
 		p.expect(token.DEFINE)
 		pos := p.pos
