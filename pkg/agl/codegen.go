@@ -2289,8 +2289,8 @@ func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 
 
 // AglSetFormUnion inserts the elements of the given sequence into the set.
-func AglSetFormUnion[T comparable](s, other AglSet[T]) {
-	for k := range other {
+func AglSetFormUnion[T comparable](s AglSet[T], other Iterator[T]) {
+	for k := range other.Iter() {
 		s[k] = struct{}{}	
 	}
 }
