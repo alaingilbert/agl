@@ -971,6 +971,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
 				fnT = fnT.T("T", idTT.W)
 			}
+			fnT.Recv = []types.Type{oexprFunT}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case types.ResultType:
@@ -983,6 +984,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else if fnName == "Err" {
 				panic("user cannot call Err")
 			}
+			fnT.Recv = []types.Type{oexprFunT}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		default:
