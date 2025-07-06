@@ -992,8 +992,16 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	case *ast.InterfaceType:
 		return types.AnyType{}
 	case *ast.CompositeLit:
-		ct := e.GetType2(xx.Type, fset).(types.CustomType)
-		return types.StructType{Pkg: ct.Pkg, Name: ct.Name}
+		switch v := e.GetType2(xx.Type, fset).(type) {
+		case types.CustomType:
+			return types.StructType{Pkg: v.Pkg, Name: v.Name}
+		case types.ArrayType:
+			return types.ArrayType{Elt: e.GetType2(xx.Elts[0], fset)}
+		case types.StructType:
+			return types.StructType{Pkg: v.Pkg, Name: v.Name}
+		default:
+			panic(fmt.Sprintf("%v", reflect.TypeOf(v)))
+		}
 	case *ast.TypeAssertExpr:
 		xT := e.GetType2(xx.X, fset)
 		var typeT types.Type
