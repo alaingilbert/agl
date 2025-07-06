@@ -527,7 +527,8 @@ func Unwrap(t Type) Type {
 }
 
 type TupleType struct {
-	Elts []Type
+	KeepRaw bool
+	Elts    []Type
 }
 
 func (t TupleType) GoStr1() string {

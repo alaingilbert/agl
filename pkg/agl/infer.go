@@ -852,6 +852,13 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 	switch expr.Kind {
 	case token.STRING:
 		infer.SetType(expr, types.StringType{})
+	case token.FLOAT:
+		infer.SetType(expr, types.UntypedNumType{})
+		if infer.optType.IsDefinedFor(expr) {
+			infer.SetType(expr, infer.optType.Type)
+		} else {
+			infer.SetType(expr, types.UntypedNumType{})
+		}
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
 		if infer.optType.IsDefinedFor(expr) {
@@ -2491,6 +2498,16 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable.IsValid(), f.Elts[i]})
 				}
 			} else {
+				var keepRaw bool
+				if vv, ok := rhs.(*ast.CallExpr); ok {
+					if vvv, ok := vv.Fun.(*ast.SelectorExpr); ok {
+						if vvvv, ok := infer.env.GetType(vvv.Sel).(types.FuncType); ok {
+							if vvvv.IsNative {
+								keepRaw = true
+							}
+						}
+					}
+				}
 				switch v := infer.env.GetType(rhs).(type) {
 				case types.ResultType:
 					if v.Native {
@@ -2505,6 +2522,17 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					} else {
 						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 						return
+					}
+				case types.TupleType:
+					if keepRaw {
+						v.KeepRaw = keepRaw
+						infer.SetTypeForce(rhs, v)
+					}
+					for i, x := range v.Elts {
+						lhs := stmt.Lhs[i]
+						lhsID := MustCast[*ast.Ident](lhs)
+						infer.SetType(lhs, x)
+						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 					}
 				default:
 					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))

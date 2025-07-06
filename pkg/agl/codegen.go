@@ -1666,20 +1666,23 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
-			lhs = fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
-			rhs := stmt.Rhs[0]
-			var names []string
-			var exprs []string
-			for i := range g.env.GetType(rhs).(types.TupleType).Elts {
-				name := stmt.Lhs[i].(*ast.Ident).Name
-				names = append(names, name)
-				exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+			if v, ok := t.(types.TupleType); ok && v.KeepRaw {
+				lhs = g.genExprs(stmt.Lhs)
+			} else {
+				lhs = fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
+				rhs := stmt.Rhs[0]
+				var names []string
+				var exprs []string
+				for i := range g.env.GetType(rhs).(types.TupleType).Elts {
+					name := stmt.Lhs[i].(*ast.Ident).Name
+					names = append(names, name)
+					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
+				}
+				after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 			}
-			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
 	} else {
-		content1 := g.genExprs(stmt.Lhs)
-		lhs = content1
+		lhs = g.genExprs(stmt.Lhs)
 	}
 	content2 := g.genExprs(stmt.Rhs)
 	if len(stmt.Rhs) == 1 {

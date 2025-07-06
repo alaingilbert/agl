@@ -7795,6 +7795,24 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen280(t *testing.T) {
+	src := `package main
+import "math"
+func main() {
+	i, f := math.Modf(3.14)
+}`
+	test := NewTest(src)
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	expected := `package main
+import "math"
+func main() {
+	i, f := math.Modf(3.14)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
