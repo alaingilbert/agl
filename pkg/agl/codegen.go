@@ -1699,6 +1699,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 }
 
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
+	gPrefix := g.prefix
 	ass := stmt.Ass
 	lhs := g.genExpr(ass.Lhs[0])
 	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
@@ -1717,10 +1718,24 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	default:
 		panic("")
 	}
-	out += g.prefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
-	out += g.prefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
+	out += gPrefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
+	out += gPrefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
 	out += body
-	out += g.prefix + "}\n"
+	if stmt.Else != nil {
+		if _, ok := stmt.Else.(*ast.IfStmt); ok {
+			content3 := g.genStmt(stmt.Else)
+			out += gPrefix + "} else " + strings.TrimSpace(content3) + "\n"
+		} else {
+			content3 := g.incrPrefix(func() string {
+				return g.genStmt(stmt.Else)
+			})
+			out += gPrefix + "} else {\n"
+			out += content3
+			out += gPrefix + "}\n"
+		}
+	} else {
+		out += gPrefix + "}\n"
+	}
 	return out
 }
 
