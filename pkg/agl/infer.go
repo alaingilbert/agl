@@ -2514,7 +2514,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						v.KeepRaw = true
 						infer.SetType(rhs, v)
 						infer.SetType(stmt.Lhs[0], infer.env.GetType(rhs).(types.ResultType).W)
-						infer.SetType(stmt.Lhs[1], types.ErrType{})
+						infer.SetType(stmt.Lhs[1], types.TypeType{W: types.InterfaceType{Name: "error"}})
 						lhsID0 := MustCast[*ast.Ident](stmt.Lhs[0])
 						lhsID1 := MustCast[*ast.Ident](stmt.Lhs[1])
 						assigns = append(assigns, AssignStruct{lhsID0, lhsID0.Name, lhsID0.Mutable.IsValid(), infer.GetType(lhsID0)})
