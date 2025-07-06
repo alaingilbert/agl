@@ -101,6 +101,7 @@ func (i IndexListType) String() string    { return i.X.String() }
 type ResultType struct {
 	W             Type
 	Native        bool
+	KeepRaw       bool
 	Bubble        bool
 	ConvertToNone bool
 	ToNoneType    Type

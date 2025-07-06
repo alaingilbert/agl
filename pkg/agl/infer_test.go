@@ -4,6 +4,7 @@ import (
 	"agl/pkg/ast"
 	"agl/pkg/token"
 	"agl/pkg/types"
+	"fmt"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
@@ -39,6 +40,12 @@ type Test struct {
 	env  *Env
 	file *token.File
 	errs []error
+}
+
+func (t *Test) PrintErrors() {
+	for _, err := range t.errs {
+		fmt.Println(err)
+	}
 }
 
 func NewTest(src string) *Test {

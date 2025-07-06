@@ -7772,6 +7772,29 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen279(t *testing.T) {
+	src := `package main
+import "os"
+func main() {
+	by, err := os.ReadFile("test.agl")
+	if err != nil {
+		panic(err)
+	}
+}`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	expected := `package main
+import "os"
+func main() {
+	by, err := os.ReadFile("test.agl")
+	if err != nil {
+		panic(err)
+	}
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {

@@ -2491,8 +2491,25 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					assigns = append(assigns, AssignStruct{e, e.(*ast.Ident).Name, e.(*ast.Ident).Mutable.IsValid(), f.Elts[i]})
 				}
 			} else {
-				infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
-				return
+				switch v := infer.env.GetType(rhs).(type) {
+				case types.ResultType:
+					if v.Native {
+						v.KeepRaw = true
+						infer.SetType(rhs, v)
+						infer.SetType(stmt.Lhs[0], infer.env.GetType(rhs).(types.ResultType).W)
+						infer.SetType(stmt.Lhs[1], types.ErrType{})
+						lhsID0 := MustCast[*ast.Ident](stmt.Lhs[0])
+						lhsID1 := MustCast[*ast.Ident](stmt.Lhs[1])
+						assigns = append(assigns, AssignStruct{lhsID0, lhsID0.Name, lhsID0.Mutable.IsValid(), infer.GetType(lhsID0)})
+						assigns = append(assigns, AssignStruct{lhsID1, lhsID1.Name, lhsID1.Mutable.IsValid(), infer.GetType(lhsID1)})
+					} else {
+						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
+						return
+					}
+				default:
+					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
+					return
+				}
 			}
 		}
 	} else {

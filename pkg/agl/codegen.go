@@ -1688,7 +1688,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			case types.TupleType:
 				panic(fmt.Sprintf("need to implement AglWrapNative for tuple len %d", len(tup.Elts)))
 			default:
-				content2 = fmt.Sprintf("AglWrapNative2(%s)", content2)
+				if v.KeepRaw {
+					content2 = fmt.Sprintf("%s", content2)
+				} else {
+					content2 = fmt.Sprintf("AglWrapNative2(%s)", content2)
+				}
 			}
 		}
 	}
