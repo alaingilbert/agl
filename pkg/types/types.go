@@ -328,8 +328,9 @@ func (s StructType) String() string {
 }
 
 type InterfaceType struct {
-	Name string
-	Pkg  string
+	Name       string
+	Pkg        string
+	TypeParams []Type
 }
 
 func (i InterfaceType) GoStr() string     { return i.String() }
@@ -338,6 +339,13 @@ func (i InterfaceType) String() string {
 	out := i.Name
 	if i.Pkg != "" {
 		out = i.Pkg + "." + out
+	}
+	if len(i.TypeParams) > 0 {
+		var tmp []string
+		for _, t := range i.TypeParams {
+			tmp = append(tmp, t.String())
+		}
+		out += fmt.Sprintf("[%s]", strings.Join(tmp, ", "))
 	}
 	return out
 }
@@ -730,6 +738,13 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return t
 	case StructType: // TODO
 		return t
+	case InterfaceType:
+		var params []Type
+		for _, p := range t1.TypeParams {
+			p = ReplGen(p, name, newTyp)
+			params = append(params, p)
+		}
+		return InterfaceType{Name: t1.Name, Pkg: t1.Pkg, TypeParams: params}
 	case TupleType:
 		var params []Type
 		for _, p := range t1.Elts {
