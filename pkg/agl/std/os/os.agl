@@ -1,5 +1,10 @@
 package os
 
+type DirEntry interface {
+	IsDir() bool
+	Name() string
+}
+
 type FileMode u32
 
 type FileInfo interface {
@@ -12,6 +17,7 @@ var Stdout *os.File
 var Stderr *os.File
 
 func ReadFile(name string) ([]byte)!
+func ReadDir(name string) ([]os.DirEntry)!
 func WriteFile(name string, data []byte, perm os.FileMode) !
 func Chdir(string) ! {}
 func Chown(name string, uid, gid int) !
