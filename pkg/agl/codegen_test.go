@@ -2964,7 +2964,7 @@ func main() {
    }
 }
 `
-	tassert.PanicsWithError(t, "7:11: try to destructure a non-Result type into an ResultType", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:11: try to destructure a non-Result type into an ResultType")
 }
 
 func TestCodeGen103(t *testing.T) {
@@ -2979,7 +2979,7 @@ func main() {
    }
 }
 `
-	tassert.PanicsWithError(t, "7:12: try to destructure a non-Option type into an OptionType", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:12: try to destructure a non-Option type into an OptionType")
 }
 
 func TestCodeGen104(t *testing.T) {
@@ -3332,7 +3332,7 @@ func main() {
 	test(m)
 }
 `
-	tassert.PanicsWithError(t, "6:7: types not equal, map[int]int map[string]int", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "6:7: types not equal, map[int]int map[string]int")
 }
 
 func TestCodeGen120(t *testing.T) {
@@ -3364,7 +3364,7 @@ func main() {
 	test(a)
 }
 `
-	tassert.PanicsWithError(t, "6:7: types not equal, []string []int", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "6:7: types not equal, []string []int")
 }
 
 func TestCodeGen122(t *testing.T) {
@@ -4375,7 +4375,7 @@ func main() {
    arr := []int{1, 2, 3}
 	arr.MyJoined(":")
 }`
-	tassert.PanicsWithError(t, "8:6: cannot use []int as []string for MyJoined", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "8:6: cannot use []int as []string for MyJoined")
 }
 
 func TestCodeGen154(t *testing.T) {
@@ -4404,7 +4404,7 @@ func main() {
 	var a u8
 	a = arr.Reduce(u16(0), { $0 + u8($1) })
 }`
-	tassert.PanicsWithError(t, "5:6: type mismatch, want: u8, got: u16", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "5:6: type mismatch, want: u8, got: u16")
 }
 
 func TestCodeGen156(t *testing.T) {
@@ -4500,7 +4500,7 @@ func main() {
 	var r u16
 	r = arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
 }`
-	tassert.PanicsWithError(t, "5:6: type mismatch, want: u16, got: u8", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "5:6: type mismatch, want: u16, got: u8")
 }
 
 func TestCodeGen160_2(t *testing.T) {
@@ -4509,7 +4509,7 @@ func main() {
 	arr := []int{1, 2, 3}
 	var r u16 = arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
 }`
-	tassert.PanicsWithError(t, "4:6: type mismatch, want: u16, got: u8", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:6: type mismatch, want: u16, got: u8")
 }
 
 func TestCodeGen161(t *testing.T) {
@@ -5449,7 +5449,7 @@ func main() {
 	v := Vertex{3, 4}
 	v.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:4: method 'Scale' cannot be called on immutable type 'Vertex'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:4: method 'Scale' cannot be called on immutable type 'Vertex'")
 }
 
 func TestCodeGen189_1(t *testing.T) {
@@ -5466,7 +5466,7 @@ func main() {
 	mut vv := v
 	vv.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:2: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
 }
 
 func TestCodeGen189_2(t *testing.T) {
@@ -5500,7 +5500,7 @@ func main() {
 	mut vv, vvv := v, v
 	vv.Scale(10)
 }`
-	tassert.PanicsWithError(t, "11:2: cannot make mutable bind of an immutable variable", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
 }
 
 func TestCodeGen189_4(t *testing.T) {
@@ -5516,7 +5516,7 @@ func main() {
 	mut v := &Vertex{3, 4}
 	v.Scale(10)
 }`
-	tassert.PanicsWithError(t, "7:4: assign to immutable prop 'Y'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:4: assign to immutable prop 'Y'")
 }
 
 func TestCodeGen189_5(t *testing.T) {
@@ -6684,7 +6684,7 @@ func main() {
 	a, _ := 1, 2
 	_, a := 1, 2
 }`
-	tassert.PanicsWithError(t, "4:2: No new variables on the left side of ':='", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:2: No new variables on the left side of ':='")
 }
 
 func TestCodeGen226(t *testing.T) {
@@ -6692,7 +6692,7 @@ func TestCodeGen226(t *testing.T) {
 func main() {
 	a, b := 1, 2, 3
 }`
-	tassert.PanicsWithError(t, "3:2: Assignment count mismatch: 2 = 3", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:2: Assignment count mismatch: 2 = 3")
 }
 
 func TestCodeGen227(t *testing.T) {
@@ -6700,7 +6700,7 @@ func TestCodeGen227(t *testing.T) {
 func main() {
 	a, b := 1
 }`
-	tassert.PanicsWithError(t, "3:2: Assignment count mismatch: 2 = 1", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:2: Assignment count mismatch: 2 = 1")
 }
 
 func TestCodeGen228(t *testing.T) {
@@ -6709,7 +6709,7 @@ func main() {
 	a := []int{1, 2, 3}
 	b, c := a[1]
 }`
-	tassert.PanicsWithError(t, "4:2: Assignment count mismatch: 2 = 1", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:2: Assignment count mismatch: 2 = 1")
 }
 
 func TestCodeGen229(t *testing.T) {
@@ -6932,7 +6932,7 @@ func main() {
 		2
 	}
 }`
-	tassert.PanicsWithError(t, "4:2: if branches must have the same type `void` VS `UntypedNumType`", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:2: if branches must have the same type `void` VS `UntypedNumType`")
 }
 
 func TestCodeGen235(t *testing.T) {
@@ -6958,7 +6958,7 @@ func test(t (u8, u8)) {}
 func main() {
 	test((u8(1), int(2)))
 }`
-	tassert.PanicsWithError(t, "4:15: type mismatch, want: u8, got: int", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:15: type mismatch, want: u8, got: int")
 }
 
 func TestCodeGen237(t *testing.T) {
@@ -7073,7 +7073,7 @@ func TestCodeGen243(t *testing.T) {
 func main() {
 	"".DoNotExists()
 }`
-	tassert.PanicsWithError(t, "3:5: method 'DoNotExists' of type String does not exists", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:5: method 'DoNotExists' of type String does not exists")
 }
 
 func TestCodeGen244(t *testing.T) {
@@ -7531,7 +7531,7 @@ func main() {
 	a := 42
 	a = 43
 }`
-	tassert.PanicsWithError(t, "4:2: cannot assign to immutable variable 'a'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:2: cannot assign to immutable variable 'a'")
 }
 
 func TestCodeGen264(t *testing.T) {
@@ -7543,7 +7543,7 @@ func main() {
 	a := 42
 	test(a)
 }`
-	tassert.PanicsWithError(t, "3:2: cannot assign to immutable variable 'a'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:2: cannot assign to immutable variable 'a'")
 }
 
 func TestCodeGen265(t *testing.T) {
@@ -7576,7 +7576,7 @@ func main() {
 	a := 42
 	test(a)
 }`
-	tassert.PanicsWithError(t, "7:7: cannot use immutable 'a'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:7: cannot use immutable 'a'")
 }
 
 func TestCodeGen267(t *testing.T) {
@@ -7609,7 +7609,7 @@ func main() {
 	sb.WriteString("hello world")
 	fmt.Println(sb.String())
 }`
-	tassert.PanicsWithError(t, "6:5: method 'WriteString' cannot be called on immutable type 'Builder'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "6:5: method 'WriteString' cannot be called on immutable type 'Builder'")
 }
 
 func TestCodeGen269(t *testing.T) {
@@ -7660,7 +7660,7 @@ func main() {
 	m := make(map[int]set[int])
 	m[1] = set[int]{1, 2, 3}
 }`
-	tassert.PanicsWithError(t, "4:2: cannot assign to immutable variable 'm'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:2: cannot assign to immutable variable 'm'")
 }
 
 func TestCodeGen272(t *testing.T) {
@@ -7707,7 +7707,7 @@ func main() {
 	s := set[int]{1, 2, 3}
 	s.Insert(4)
 }`
-	tassert.PanicsWithError(t, "4:4: method 'Insert' cannot be called on immutable type 'set'", testCodeGenFn(src))
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "4:4: method 'Insert' cannot be called on immutable type 'set'")
 }
 
 func TestCodeGen275(t *testing.T) {

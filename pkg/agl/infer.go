@@ -1997,7 +1997,6 @@ func cmpTypes(a, b types.Type) bool {
 }
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
-	p("?SEL", expr.X)
 	infer.expr(expr.X)
 	exprXT := infer.env.GetType2(expr.X, infer.fset)
 	if exprXT == nil {
