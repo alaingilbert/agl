@@ -1,0 +1,8 @@
+package exec
+
+type Cmd struct {
+}
+
+func Command(name string, arg ...string) *exec.Cmd
+
+func (c *exec.Cmd) Run() !
