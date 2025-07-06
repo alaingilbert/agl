@@ -162,7 +162,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	errs := i.InferFile(fileName, f, fset)
+	errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
@@ -203,7 +203,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(input)
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile("", f, fset)
+	i.InferFile("", f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	coreHeaders := agl.GenHeaders()
 
@@ -228,7 +228,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f, fset)
+	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
@@ -319,7 +319,7 @@ func buildAglFile(fileName string) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f, fset)
+	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
 	return os.WriteFile(path, []byte(src), 0644)
@@ -345,7 +345,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f, fset)
+	i.InferFile(fileName, f, fset, true)
 	g := agl.NewGenerator(i.Env, f, fset)
 	fmt.Println(g.Generate())
 	return nil
