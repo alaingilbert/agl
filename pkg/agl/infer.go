@@ -1143,7 +1143,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			info = infer.env.GetNameInfo("agl.Set." + fnName)
 			fnT = infer.env.GetFn("agl.Set."+fnName).T("T", idTT.K)
 			infer.SetType(expr.Args[0], fnT.Params[1])
-		case "Len", "Min", "Max":
+		case "Len", "Min", "Max", "Iter":
 			fnT = infer.env.GetFn("agl.Set." + fnName)
 		}
 		if TryCast[types.MutType](fnT.Params[0]) {

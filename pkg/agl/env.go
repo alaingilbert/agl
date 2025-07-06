@@ -606,6 +606,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl.Set.Insert", "func [T comparable](mut s agl.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))
 	e.DefineFn("agl.Set.Remove", "func [T comparable](mut s agl.Set[T], el T) T?")
 	e.DefineFn("agl.Set.Contains", "func [T comparable](s agl.Set[T], el T) bool")
+	e.DefineFn("agl.Set.Iter", "func [T comparable](s agl.Set[T]) iter.Seq[T]")
 	e.DefineFn("agl.Set.Union", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")
 	e.DefineFn("agl.Set.FormUnion", "func [T comparable](mut s, other agl.Set[T])")
 	e.DefineFn("agl.Set.Subtracting", "func [T comparable](s, other agl.Set[T]) agl.Set[T]")

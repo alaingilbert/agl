@@ -1208,6 +1208,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSetMin(%s)", g.genExpr(e.X))
 			case "Max":
 				return fmt.Sprintf("AglSetMax(%s)", g.genExpr(e.X))
+			case "Iter":
+				return fmt.Sprintf("AglSetIter(%s)", g.genExpr(e.X))
 			}
 		case types.StringType, types.UntypedStringType:
 			switch e.Sel.Name {
@@ -1938,6 +1940,10 @@ func GenCore() string {
 
 func GenContent() string {
 	return `
+type Iterator[T any] interface {
+	Next() Option[T]
+}
+
 func AglWrapNative2[T any](v1 T, err error) Result[T] {
 	if err != nil {
 		return MakeResultErr[T](err)
@@ -2146,6 +2152,16 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 }
 
 type AglSet[T comparable] map[T]struct{}
+
+func AglSetIter[T aglImportCmp.Ordered](s AglSet[T]) aglImportIter.Seq[T] {
+	return func(yield func(T) bool) {
+		for k := range s {
+			if !yield(k) {
+				return
+			}
+		}
+	}
+}
 
 func (s AglSet[T]) String() string {
 	var tmp []string
