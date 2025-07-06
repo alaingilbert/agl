@@ -136,6 +136,15 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 				_, _ = fmt.Fprintln(os.Stderr, msg)
 				os.Exit(1)
 			}
+			var inferErr *agl.InferError
+			if err, ok := r.(error); ok && errors.As(err, &inferErr) {
+				msg := inferErr.Error()
+				if msg == "" || debugFlag {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
+				os.Exit(1)
+			}
 			panic(r)
 		}
 	}()
@@ -153,7 +162,10 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f, fset)
+	errs := i.InferFile(fileName, f, fset)
+	if len(errs) > 0 {
+		panic(errs[0])
+	}
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 
 	// Get any additional arguments to pass to the program
