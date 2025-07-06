@@ -7781,8 +7781,6 @@ func main() {
 		panic(err)
 	}
 }`
-	test := NewTest(src)
-	tassert.Equal(t, 0, len(test.errs))
 	expected := `package main
 import "os"
 func main() {
@@ -7792,7 +7790,9 @@ func main() {
 	}
 }
 `
-	testCodeGen(t, src, expected)
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, expected, test.GenCode())
 }
 
 func TestCodeGen280(t *testing.T) {
@@ -7801,15 +7801,15 @@ import "math"
 func main() {
 	i, f := math.Modf(3.14)
 }`
-	test := NewTest(src)
-	tassert.Equal(t, 0, len(test.errs))
 	expected := `package main
 import "math"
 func main() {
 	i, f := math.Modf(3.14)
 }
 `
-	testCodeGen(t, src, expected)
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, expected, test.GenCode())
 }
 
 //func TestCodeGen257(t *testing.T) {
