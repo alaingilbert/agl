@@ -2295,20 +2295,20 @@ func AglSetFormUnion[T comparable](s AglSet[T], other Iterator[T]) {
 	}
 }
 
-func AglSetSubtracting[T comparable](s, other AglSet[T]) AglSet[T] {
+func AglSetSubtracting[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
 		newSet[k] = struct{}{}
 	}
-	for k := range other {
+	for k := range other.Iter() {
 		delete(newSet, k)	
 	}
 	return newSet
 }
 
-func AglSetSubtract[T comparable](s, other AglSet[T]) {
-	for k := range other {
-		delete(s, k)	
+func AglSetSubtract[T comparable](s AglSet[T], other Iterator[T]) {
+	for k := range other.Iter() {
+		delete(s, k)
 	}
 }
 
@@ -2349,8 +2349,8 @@ func AglSetSymmetricDifference[T comparable](s, other AglSet[T]) AglSet[T] {
 }
 
 // AglSetFormSymmetricDifference removes the elements of the set that are also in the given sequence and adds the members of the sequence that are not already in the set.
-func AglSetFormSymmetricDifference[T comparable](s, other AglSet[T]) {
-	for k := range other {
+func AglSetFormSymmetricDifference[T comparable](s AglSet[T], other Iterator[T]) {
+	for k := range other.Iter() {
 		if _, ok := s[k]; !ok {
 			s[k] = struct{}{}
 		} else {
@@ -2390,8 +2390,8 @@ func AglSetIsStrictSubset[T comparable](s, other AglSet[T]) bool {
 // AglSetIsSuperset returns a Boolean value that indicates whether this set is a superset of the given set.
 // Return: true if the set is a superset of other; otherwise, false.
 // Set A is a superset of another set B if every member of B is also a member of A.
-func AglSetIsSuperset[T comparable](s, other AglSet[T]) bool {
-	for k := range other {
+func AglSetIsSuperset[T comparable](s AglSet[T], other Iterator[T]) bool {
+	for k := range other.Iter() {
 		if _, ok := s[k]; !ok {
 			return false
 		}
