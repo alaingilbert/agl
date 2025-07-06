@@ -9,6 +9,8 @@ func Noop(...any) {}
 
 func True() bool { return true }
 
+func False() bool { return false }
+
 func Test() string {
 	return "test"
 }
