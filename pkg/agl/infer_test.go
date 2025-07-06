@@ -315,9 +315,9 @@ func main() {
 }`
 	test := NewTest(src)
 	tassert.Equal(t, "int", test.TypeAt(4, 2).String())
-	tassert.Equal(t, "func Unwrap() int", test.TypeAt(4, 17).String())
-	tassert.Equal(t, "func UnwrapOr(int) int", test.TypeAt(5, 17).String())
-	tassert.Equal(t, "func UnwrapOrDefault() int", test.TypeAt(6, 17).String())
+	tassert.Equal(t, "func (int?) Unwrap() int", test.TypeAt(4, 17).String())
+	tassert.Equal(t, "func (int?) UnwrapOr(int) int", test.TypeAt(5, 17).String())
+	tassert.Equal(t, "func (int?) UnwrapOrDefault() int", test.TypeAt(6, 17).String())
 }
 
 //func TestInfer1(t *testing.T) {
