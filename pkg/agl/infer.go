@@ -2681,7 +2681,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case types.ArrayType:
 					infer.SetType(v.X, xT)
 				default:
-					infer.errorf(lhs, "%v", to(xT))
+					infer.errorf(lhs, "%v %v", lhsIdName, to(xT))
 					return
 				}
 			default:
