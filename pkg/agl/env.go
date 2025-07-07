@@ -595,6 +595,20 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 	}
 }
 
+func (e *Env) loadPkg(pkgPath, pkgName string) error {
+	pkgFullPath := trimPrefixPath(pkgPath)
+	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
+		if err := e.loadPkgAglStd(pkgPath); err != nil {
+			if err := e.loadPkgStd(pkgPath); err != nil {
+				if err := e.loadPkgVendor(pkgPath, make(map[string]struct{})); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
 	entries, err := os.ReadDir(pkgFullPath)
 	if err != nil {
@@ -629,7 +643,7 @@ func (e *Env) loadPkgAglStd(path string) error {
 	return nil
 }
 
-func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
+func (e *Env) loadPkgVendor(path string, m map[string]struct{}) error {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
@@ -638,10 +652,11 @@ func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
-		return
+		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
 	defineFromSrc(e, final, by)
+	return nil
 }
 
 func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
@@ -1118,7 +1133,8 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 		if v2 := e.GetNameInfo(pkgName + "." + xx.Name); v2 != nil {
 			return v2.Type
 		}
-		return types.AnyType{}
+		p("?", pkgName, xx.Name)
+		//return types.AnyType{}
 		return nil
 	case *goast.FuncType:
 		return goFuncTypeToFuncType("", pkgName, xx, e, true)
@@ -1160,7 +1176,8 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 		case types.TypeAssertType:
 			return v.X
 		default:
-			return types.VoidType{}
+			p("???")
+			//return types.VoidType{}
 			panic(fmt.Sprintf("%v %v %v", reflect.TypeOf(base), xx, xx.X))
 		}
 		return nil

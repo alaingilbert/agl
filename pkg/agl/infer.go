@@ -283,18 +283,11 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	if pkgT != nil {
 		return
 	}
-	pkgFullPath := trimPrefixPath(pkgPath)
-	infer.loadPkg(pkgFullPath, pkgPath, pkgName)
+	infer.loadPkg(pkgPath, pkgName)
 }
 
-func (infer *FileInferrer) loadPkg(pkgFullPath, pkgPath, pkgName string) {
-	if err := infer.env.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
-		if err := infer.env.loadPkgAglStd(pkgPath); err != nil {
-			if err := infer.env.loadPkgStd(pkgPath); err != nil {
-				infer.env.loadPkgVendor(pkgPath, make(map[string]struct{}))
-			}
-		}
-	}
+func (infer *FileInferrer) loadPkg(pkgPath, pkgName string) {
+	_ = infer.env.loadPkg(pkgPath, pkgName)
 }
 
 func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
