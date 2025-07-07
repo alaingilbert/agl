@@ -228,7 +228,10 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f, fset, true)
+	errs := i.InferFile(fileName, f, fset, true)
+	if len(errs) > 0 {
+		panic(errs[0])
+	}
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
