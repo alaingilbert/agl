@@ -5,6 +5,7 @@
 		{"include": "#comments"},
 		{"include": "#keywords"},
 		{"include": "#strings"},
+		{"include": "#raw_strings"},
 		{"include": "#types" },
 		{"include": "#functions"}
 	],
@@ -53,9 +54,14 @@
 			"patterns": [
 				{
 					"name": "constant.character.escape.agl",
-					"match": "\\\\."
+					"match": "\\."
 				}
 			]
+		},
+		"raw_strings": {
+			"name": "string.quoted.raw.agl",
+			"begin": "`",
+			"end": "`"
 		}
 	},
 	"scopeName": "source.agl"
