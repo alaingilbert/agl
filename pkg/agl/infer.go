@@ -284,14 +284,14 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 		return
 	}
 	pkgFullPath := trimPrefixPath(pkgPath)
-	entries, err := os.ReadDir(pkgFullPath)
-	if err != nil {
-		if err := infer.env.loadPkg(pkgPath); err != nil {
-			infer.env.loadVendor(pkgPath, make(map[string]struct{}))
+	infer.loadPkg(pkgFullPath, pkgPath, pkgName)
+}
+
+func (infer *FileInferrer) loadPkg(pkgFullPath, pkgPath, pkgName string) {
+	if err := infer.env.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
+		if err := infer.env.loadPkgStd(pkgPath); err != nil {
+			infer.env.loadPkgVendor(pkgPath, make(map[string]struct{}))
 		}
-	} else {
-		infer.env.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
-		infer.env.loadVendor2(pkgFullPath, make(map[string]struct{}), entries)
 	}
 }
 

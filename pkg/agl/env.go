@@ -320,7 +320,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 		return
 	}
 	for _, d := range node.Imports {
-		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
+		if err := env.loadPkgStd(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
 			panic(err)
 		}
 	}
@@ -469,7 +469,7 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
 		for _, d := range node.Imports {
-			env.loadVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
+			env.loadPkgVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
 		}
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
@@ -593,7 +593,17 @@ func defineFromGoSrc(env *Env, fullPath, path string, src []byte, m map[string]s
 	}
 }
 
-func (e *Env) loadPkg(path string) error {
+func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
+	entries, err := os.ReadDir(pkgFullPath)
+	if err != nil {
+		return err
+	}
+	e.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
+	e.loadVendor2(pkgFullPath, make(map[string]struct{}), entries)
+	return nil
+}
+
+func (e *Env) loadPkgStd(path string) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("std", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -605,7 +615,7 @@ func (e *Env) loadPkg(path string) error {
 	return nil
 }
 
-func (e *Env) loadVendor(path string, m map[string]struct{}) {
+func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	e.loadVendor1(vendorPath, m)
@@ -732,9 +742,9 @@ func CoreFns() string {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	_ = e.loadPkg("cmp")
+	_ = e.loadPkgStd("cmp")
 	e.loadCoreFunctions()
-	_ = e.loadPkg("iter")
+	_ = e.loadPkgStd("iter")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
