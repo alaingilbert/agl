@@ -312,15 +312,21 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func defineFromSrc(env *Env, path string, src []byte) {
+func defineFromSrc(env *Env, path, pkgName string, src []byte) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
-	pkgName := node.Name.Name
+	if pkgName == "" {
+		pkgName = node.Name.Name
+	}
 	if err := env.DefinePkg(pkgName, path); err != nil {
-		return
+		//return
 	}
 	for _, d := range node.Imports {
-		if err := env.loadPkgAglStd(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
+		importName := ""
+		if d.Name != nil {
+			importName = d.Name.Name
+		}
+		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, make(map[string]struct{})); err != nil {
 			panic(err)
 		}
 	}
@@ -469,7 +475,11 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
 		for _, d := range node.Imports {
-			if err := env.loadPkgVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m); err != nil {
+			importName := ""
+			if d.Name != nil {
+				importName = d.Name.Name
+			}
+			if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
 				panic(err)
 			}
 		}
@@ -506,30 +516,33 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 			var fields []types.FieldType
 			if v.Fields != nil {
 				for _, field := range v.Fields.List {
-					t := env.GetGoType2(pkgName, field.Type, keepRaw)
-					t = types.Unwrap(t)
-					if TryCast[types.VoidType](t) {
-						fT := field.Type
-						if vv, ok := field.Type.(*goast.StarExpr); ok {
-							fT = vv.X
+					tmp := func() types.Type {
+						t := env.GetGoType2(pkgName, field.Type, keepRaw)
+						t = types.Unwrap(t)
+						if TryCast[types.VoidType](t) {
+							fT := field.Type
+							if vv, ok := field.Type.(*goast.StarExpr); ok {
+								fT = vv.X
+							}
+							if vv, ok := fT.(*goast.Ident); ok && vv.Name == spec.Name.Name {
+								t = types.StructType{Pkg: pkgName, Name: spec.Name.Name}
+							} else {
+								*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName})
+								//p("DEFSTRUCT1", pkgName, spec.Name.Name)
+								env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+								return nil
+							}
 						}
-						if vv, ok := fT.(*goast.Ident); ok && vv.Name == spec.Name.Name {
-							t = types.StructType{Pkg: pkgName, Name: spec.Name.Name}
-						} else {
-							*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName})
-							//p("DEFSTRUCT1", pkgName, spec.Name.Name)
-							env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
-							return
-						}
+						return t
 					}
 					if len(field.Names) == 0 {
-						fields = append(fields, types.FieldType{Name: "", Typ: t})
+						fields = append(fields, types.FieldType{Name: "", Typ: tmp()})
 					}
 					for _, name := range field.Names {
 						if !name.IsExported() {
 							continue
 						}
-						fields = append(fields, types.FieldType{Name: name.Name, Typ: t})
+						fields = append(fields, types.FieldType{Name: name.Name, Typ: tmp()})
 					}
 				}
 			}
@@ -551,6 +564,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 			env.DefineForce(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
 		case *goast.IndexListExpr:
 		case *goast.ArrayType:
+		case *goast.MapType:
 		case *goast.Ident:
 			t := env.GetGoType2(pkgName, v, keepRaw)
 			if TryCast[types.VoidType](t) {
@@ -597,12 +611,16 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 	}
 }
 
-func (e *Env) loadPkg(pkgPath, pkgName string) error {
+func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
+	if pkgName == "" {
+		pkgName = filepath.Base(pkgPath)
+	}
+	//p("?LOADPKG", pkgPath, pkgName)
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
-		if err := e.loadPkgAglStd(pkgPath); err != nil {
-			if err := e.loadPkgStd(pkgPath); err != nil {
-				if err := e.loadPkgVendor(pkgPath, make(map[string]struct{})); err != nil {
+		if err := e.loadPkgAglStd(pkgPath, pkgName); err != nil {
+			if err := e.loadPkgStd(pkgPath, pkgName); err != nil {
+				if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
 					return err
 				}
 			}
@@ -616,12 +634,14 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
 	if err != nil {
 		return err
 	}
-	e.Define(nil, pkgName, types.PackageType{Name: pkgName, Path: pkgPath})
+	if err = e.DefinePkg(pkgPath, pkgName); err != nil {
+		return nil
+	}
 	e.loadVendor2(pkgFullPath, make(map[string]struct{}), entries)
 	return nil
 }
 
-func (e *Env) loadPkgStd(path string) error {
+func (e *Env) loadPkgStd(path, pkgName string) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", "std", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -629,11 +649,11 @@ func (e *Env) loadPkgStd(path string) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, final, by)
+	defineFromSrc(e, final, pkgName, by)
 	return nil
 }
 
-func (e *Env) loadPkgAglStd(path string) error {
+func (e *Env) loadPkgAglStd(path, pkgName string) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -641,11 +661,11 @@ func (e *Env) loadPkgAglStd(path string) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
-	defineFromSrc(e, final, by)
+	defineFromSrc(e, final, pkgName, by)
 	return nil
 }
 
-func (e *Env) loadPkgVendor(path string, m map[string]struct{}) error {
+func (e *Env) loadPkgVendor(path, pkgName string, m map[string]struct{}) error {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
@@ -654,10 +674,10 @@ func (e *Env) loadPkgVendor(path string, m map[string]struct{}) error {
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
-		return err
+		return nil
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
-	defineFromSrc(e, final, by)
+	defineFromSrc(e, final, pkgName, by)
 	return nil
 }
 
@@ -770,9 +790,9 @@ func CoreFns() string {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	_ = e.loadPkgAglStd("agl1/cmp")
+	_ = e.loadPkgAglStd("agl1/cmp", "")
 	e.loadCoreFunctions()
-	_ = e.loadPkgAglStd("agl1/iter")
+	_ = e.loadPkgAglStd("agl1/iter", "")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
@@ -889,6 +909,7 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 	if name == "_" {
 		return nil
 	}
+	//p("DEF", name, typ)
 	conf := &SetTypeConf{}
 	for _, opt := range opts {
 		opt(conf)
@@ -896,7 +917,10 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 	if !force {
 		t := e.GetDirect(name)
 		if t != nil {
-			return fmt.Errorf("duplicate declaration of %s", name)
+			if strings.Contains(name, "CompareType") || strings.Contains(name, "ContextDiff") || strings.Contains(name, "yaml.") {
+				return nil
+			}
+			//return fmt.Errorf("duplicate declaration of %s", name)
 		}
 	}
 	info := e.GetOrCreateNameInfo(name)
@@ -1090,7 +1114,8 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.StructType:
 			return types.StructType{Pkg: v.Pkg, Name: v.Name}
 		default:
-			panic(fmt.Sprintf("%v", reflect.TypeOf(v)))
+			//return nil
+			panic(fmt.Sprintf("%v %v", xx.Type, reflect.TypeOf(v)))
 		}
 	case *ast.TypeAssertExpr:
 		xT := e.GetType2(xx.X, fset)
@@ -1135,8 +1160,8 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 		if v2 := e.GetNameInfo(pkgName + "." + xx.Name); v2 != nil {
 			return v2.Type
 		}
-		p("?", pkgName, xx.Name)
-		//return types.AnyType{}
+		//p("?", pkgName, xx.Name)
+		return types.AnyType{}
 		return nil
 	case *goast.FuncType:
 		return goFuncTypeToFuncType("", pkgName, xx, e, true)
@@ -1178,7 +1203,6 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 		case types.TypeAssertType:
 			return v.X
 		default:
-			p("???")
 			//return types.VoidType{}
 			panic(fmt.Sprintf("%v %v %v", reflect.TypeOf(base), xx, xx.X))
 		}

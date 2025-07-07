@@ -7899,6 +7899,26 @@ func test(m map[string]struct{}) {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen285(t *testing.T) {
+	src := `package main
+import (
+	stdFmt "fmt"
+)
+func main() {
+	stdFmt.Println("")
+}`
+	expected := `package main
+import stdFmt "fmt"
+func main() {
+	stdFmt.Println("")
+}
+`
+	test := NewTest(src)
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

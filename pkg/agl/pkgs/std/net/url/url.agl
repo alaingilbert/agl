@@ -1,0 +1,44 @@
+package url
+
+type Values map[string][]string
+
+type URL struct {}
+type Userinfo struct {}
+
+func JoinPath(base string, elem ...string) string!
+func PathEscape(s string) string
+func PathUnescape(s string) string!
+func QueryEscape(s string) string
+func QueryUnescape(s string) string!
+
+func Parse(rawURL string) (*url.URL)!
+func ParseRequestURI(rawURL string) (*url.URL)!
+func (u *url.URL) AppendBinary(b []byte) ([]byte)!
+func (u *url.URL) EscapedFragment() string
+func (u *url.URL) EscapedPath() string
+func (u *url.URL) Hostname() string
+func (u *url.URL) IsAbs() bool
+func (u *url.URL) JoinPath(elem ...string) *url.URL
+func (u *url.URL) MarshalBinary() ([]byte)!
+func (u *url.URL) Parse(ref string) (*url.URL)!
+func (u *url.URL) Port() string
+func (u *url.URL) Query() url.Values
+func (u *url.URL) Redacted() string
+func (u *url.URL) RequestURI() string
+func (u *url.URL) ResolveReference(ref *url.URL) *url.URL
+func (u *url.URL) String() string
+func (u *url.URL) UnmarshalBinary(text []byte) !
+
+func User(username string) *url.Userinfo
+func UserPassword(username, password string) *url.Userinfo
+func (u *url.Userinfo) Password() (string, bool)
+func (u *url.Userinfo) String() string
+func (u *url.Userinfo) Username() string
+
+func ParseQuery(query string) url.Values!
+func (v url.Values) Add(key, value string)
+func (v url.Values) Del(key string)
+func (v url.Values) Encode() string
+func (v url.Values) Get(key string) string
+func (v url.Values) Has(key string) bool
+func (v url.Values) Set(key, value string)

@@ -1,0 +1,16 @@
+package unsafe
+
+type ArbitraryType int
+type Pointer *unsafe.ArbitraryType
+type IntegerType int
+
+func Alignof(x unsafe.ArbitraryType) uintptr
+func Offsetof(x unsafe.ArbitraryType) uintptr
+func Sizeof(x unsafe.ArbitraryType) uintptr
+func String(ptr *byte, len IntegerType) string
+func StringData(str string) *byte
+
+func Slice(ptr *unsafe.ArbitraryType, len IntegerType) []unsafe.ArbitraryType
+func SliceData(slice []unsafe.ArbitraryType) *unsafe.ArbitraryType
+
+func Add(ptr unsafe.Pointer, len unsafe.IntegerType) unsafe.Pointer

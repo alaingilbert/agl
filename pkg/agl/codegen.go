@@ -196,7 +196,7 @@ func (g *Generator) genImports() (out string) {
 	for _, spec := range g.a.Imports {
 		out += "import "
 		if spec.Name != nil {
-			out += spec.Name.Name
+			out += spec.Name.Name + " "
 		}
 		pathValue := spec.Path.Value
 		if strings.HasPrefix(pathValue, `"agl1/`) {
@@ -1529,9 +1529,10 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 			out += g.prefix + "type " + spec.Name.Name + typeParamsStr + " " + content1 + "\n"
 		}
 	case *ast.ImportSpec:
-		if spec.Name != nil {
-			out += "import " + spec.Name.Name + "\n"
-		}
+		//if spec.Name != nil {
+		//	out += "import " + spec.Name.Name + "\n"
+		//}
+		//p("?!", spec.Name)
 	default:
 		panic(fmt.Sprintf("%v", to(s)))
 	}

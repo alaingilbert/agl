@@ -1,0 +1,50 @@
+package bufio
+
+type Reader struct{}
+type ReadWriter struct {}
+type Scanner struct {}
+type Writer struct {}
+
+func ScanBytes(data []byte, atEOF bool) (int, []byte)!
+
+func NewReadWriter(r *Reader, w *Writer) *ReadWriter
+
+func NewReader(rd io.Reader) *Reader
+func NewReaderSize(rd io.Reader, size int) *Reader
+func (b *bufio.Reader) Buffered() int
+func (b *bufio.Reader) Discard(n int) int!
+func (b *bufio.Reader) Peek(n int) ([]byte)!
+func (b *bufio.Reader) Read(p []byte) int!
+func (b *bufio.Reader) ReadByte() byte!
+func (b *bufio.Reader) ReadBytes(delim byte) ([]byte)!
+func (b *bufio.Reader) ReadLine() ([]byte, bool)!
+func (b *bufio.Reader) ReadRune() (rune, int)!
+func (b *bufio.Reader) ReadSlice(delim byte) ([]byte)!
+func (b *bufio.Reader) ReadString(delim byte) string!
+func (b *bufio.Reader) Reset(r io.Reader)
+func (b *bufio.Reader) Size() int
+func (b *bufio.Reader) UnreadByte() error
+func (b *bufio.Reader) UnreadRune() error
+func (b *bufio.Reader) WriteTo(w io.Writer) int64!
+
+func NewScanner(r io.Reader) *Scanner
+func (s *bufio.Scanner) Buffer([]byte, int)
+func (s *bufio.Scanner) Bytes() []byte
+//func (s *Scanner) Err() !
+func (s *bufio.Scanner) Scan() bool
+func (s *bufio.Scanner) Split(split SplitFunc)
+func (s *bufio.Scanner) Text() string
+
+func NewWriter(w io.Writer) *Writer
+func NewWriterSize(w io.Writer, size int) *Writer
+func (b *bufio.Writer) Available() int
+func (b *bufio.Writer) AvailableBuffer() []byte
+func (b *bufio.Writer) Buffered() int
+func (b *bufio.Writer) Flush() !
+func (b *bufio.Writer) ReadFrom(r io.Reader) int64!
+func (b *bufio.Writer) Reset(w io.Writer)
+func (b *bufio.Writer) Size() int
+func (b *bufio.Writer) Write(p []byte) int!
+func (b *bufio.Writer) WriteByte(c byte) !
+func (b *bufio.Writer) WriteRune(r rune) int!
+func (b *bufio.Writer) WriteString(s string) int!

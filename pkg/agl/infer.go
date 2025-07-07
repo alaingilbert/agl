@@ -281,7 +281,7 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	pkgName = strings.ReplaceAll(pkgName, `"`, ``)
 	pkgT := infer.env.Get(pkgName)
 	if pkgT != nil {
-		return
+		//return
 	}
 	infer.loadPkg(pkgPath, pkgName)
 }

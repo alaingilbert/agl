@@ -1,0 +1,103 @@
+package time
+
+type Millisecond i64
+type Second i64
+type Duration i64
+type Time struct {}
+type Timer struct {}
+type Ticker struct {}
+type Location struct {}
+type Month int
+type Weekday int
+
+func Sleep(time.Duration)
+func Tick(d time.Duration) <-chan time.Time
+func After(d time.Duration) <-chan time.Time
+
+func ParseDuration(s string) time.Duration!
+func Since(t time.Time) time.Duration
+func Until(t time.Time) time.Duration
+func (d Duration) Abs() time.Duration
+func (d Duration) Hours() float64
+func (d Duration) Microseconds() int64
+func (d Duration) Milliseconds() int64
+func (d Duration) Minutes() float64
+func (d Duration) Nanoseconds() int64
+func (d Duration) Round(m time.Duration) time.Duration
+func (d Duration) Seconds() float64
+func (d Duration) String() string
+func (d Duration) Truncate(m time.Duration) time.Duration
+
+func FixedZone(name string, offset int) *time.Location
+func LoadLocation(name string) (*time.Location)!
+func LoadLocationFromTZData(name string, data []byte) (*time.Location)!
+func (l *Location) String() string
+
+func Date(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.Location) time.Time
+func Now() time.Time
+func Parse(layout, value string) time.Time!
+func ParseInLocation(layout, value string, loc *time.Location) time.Time!
+func Unix(sec int64, nsec int64) time.Time
+func UnixMicro(usec int64) time.Time
+func UnixMilli(msec int64) time.Time
+
+func (m Month) String() string
+
+func NewTicker(d Duration) *time.Ticker
+func (t *Ticker) Reset(d time.Duration)
+func (t *Ticker) Stop()
+
+func (t Time) Add(d time.Duration) time.Time
+func (t Time) AddDate(years int, months int, days int) time.Time
+func (t Time) After(u time.Time) bool
+func (t Time) AppendBinary(b []byte) ([]byte)!
+func (t Time) AppendFormat(b []byte, layout string) []byte
+func (t Time) AppendText(b []byte) ([]byte)!
+func (t Time) Before(u time.Time) bool
+func (t Time) Clock() (int, int, int)
+func (t Time) Compare(u Time) int
+func (t Time) Date() (int, time.Month, int)
+func (t Time) Day() int
+func (t Time) Equal(u time.Time) bool
+func (t Time) Format(layout string) string
+func (t Time) GoString() string
+func (t *Time) GobDecode(data []byte) !
+func (t Time) GobEncode() ([]byte)!
+func (t Time) Hour() int
+func (t Time) ISOWeek() (int, int)
+func (t Time) In(loc *time.Location) time.Time
+func (t Time) IsDST() bool
+func (t Time) IsZero() bool
+func (t Time) Local() time.Time
+func (t Time) Location() *time.Location
+func (t Time) MarshalBinary() ([]byte)!
+func (t Time) MarshalJSON() ([]byte)!
+func (t Time) MarshalText() ([]byte)!
+func (t Time) Minute() int
+func (t Time) Month() time.Month
+func (t Time) Nanosecond() int
+func (t Time) Round(d time.Duration) time.Time
+func (t Time) Second() int
+func (t Time) String() string
+func (t Time) Sub(u time.Time) time.Duration
+func (t Time) Truncate(d time.Duration) time.Time
+func (t Time) UTC() time.Time
+func (t Time) Unix() int64
+func (t Time) UnixMicro() int64
+func (t Time) UnixMilli() int64
+func (t Time) UnixNano() int64
+func (t *Time) UnmarshalBinary(data []byte) !
+func (t *Time) UnmarshalJSON(data []byte) !
+func (t *Time) UnmarshalText(data []byte) !
+func (t Time) Weekday() time.Weekday
+func (t Time) Year() int
+func (t Time) YearDay() int
+func (t Time) Zone() (string, int)
+func (t Time) ZoneBounds() (time.Time, time.Time)
+
+func AfterFunc(d time.Duration, f func()) *time.Timer
+func NewTimer(d time.Duration) *time.Timer
+func (t *Timer) Reset(d time.Duration) bool
+func (t *Timer) Stop() bool
+
+func (d Weekday) String() string

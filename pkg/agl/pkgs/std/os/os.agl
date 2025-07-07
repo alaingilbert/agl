@@ -15,6 +15,7 @@ type FileMode u32
 
 func ReadFile(name string) ([]byte, error)
 func ReadDir(name string) ([]os.DirEntry, error)
+func Remove(name string) error
 func WriteFile(name string, data []byte, perm os.FileMode) error
 func MkdirTemp(dir, pattern string) (string, error)
 func RemoveAll(path string) error

@@ -1,0 +1,4 @@
+package html
+
+func EscapeString(s string) string
+func UnescapeString(s string) string

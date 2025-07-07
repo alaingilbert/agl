@@ -1,0 +1,3 @@
+package iter
+
+func Seq[V any](yield func(V) bool)
