@@ -25,4 +25,4 @@ if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
 
 Ideally in AGL we'd want to be able to call `os.WriteFile(file, content, perm)!`  
 
-But we keep Go syntax as valid AGL, we wouldn't know if the result value is of type `Result` or `error`.  
+But if we keep Go syntax as valid AGL, we wouldn't know if the result value is of type `Result` or `error`.  
