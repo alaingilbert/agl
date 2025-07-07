@@ -1,4 +1,4 @@
-Here is a list of issue while trying to keep Go code as valid AGL code.
+Here is a list of issues encountered while trying to keep Go code as valid AGL code.
 
 ## Type assert
 ```go
