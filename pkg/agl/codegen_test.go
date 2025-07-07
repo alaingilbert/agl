@@ -7882,6 +7882,19 @@ func main() {
 	testCodeGen(t, test.GenCode(), expected)
 }
 
+func TestCodeGen284(t *testing.T) {
+	src := `package main
+func test(m map[string]struct{}) {
+}`
+	expected := `package main
+func test(m map[string]struct{}) {
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

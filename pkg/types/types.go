@@ -315,6 +315,9 @@ func (s StructType) GetFieldName(field string) (out string) {
 }
 
 func (s StructType) GoStr() string {
+	if s.String() == "" {
+		return "struct{}"
+	}
 	return s.String()
 }
 
