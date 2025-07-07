@@ -1,0 +1,29 @@
+package fmt
+
+import "agl1/io"
+
+type Formatter interface {}
+type GoStringer interface {}
+type Scanner interface {}
+type Stringer interface {}
+type ScanState interface {}
+type State interface {}
+
+func Println(a ...any) int!
+func Printf(format string, a ...any) (int, error)
+func Errorf(format string, a ...any) error
+func Sprintf(format string, a ...any) string
+func Scan(a ...any) int!
+func Scanf(format string, a ...any) (int, error)
+func Scanln(a ...any) int!
+func Sprint(a ...any) string
+func Sprintln(a ...any) string
+func Sscan(str string, a ...any) int!
+func Sscanf(str string, format string, a ...any) (int, error)
+func Sscanln(str string, a ...any) int!
+func Fprint(w io.Writer, a ...any) int!
+func Fprintf(w io.Writer, format string, a ...any) (int, error)
+func Fprintln(w io.Writer, a ...any) int!
+func Fscan(r io.Reader, a ...any) int!
+func Fscanf(r io.Reader, format string, a ...any) (int, error)
+func Fscanln(r io.Reader, a ...any) int!

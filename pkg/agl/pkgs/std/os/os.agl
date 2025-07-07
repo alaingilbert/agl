@@ -5,8 +5,16 @@ type DirEntry interface {
 	Name() string
 }
 
+type File struct {
+}
+
+var Stdout *os.File
+var Stderr *os.File
+
 type FileMode u32
 
+func ReadFile(name string) ([]byte, error)
+func ReadDir(name string) ([]os.DirEntry, error)
 func WriteFile(name string, data []byte, perm os.FileMode) error
 func MkdirTemp(dir, pattern string) (string, error)
 func RemoveAll(path string) error
