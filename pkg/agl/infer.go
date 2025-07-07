@@ -287,7 +287,9 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 }
 
 func (infer *FileInferrer) loadPkg(pkgPath, pkgName string) {
-	_ = infer.env.loadPkg(pkgPath, pkgName)
+	if err := infer.env.loadPkg(pkgPath, pkgName, make(map[string]struct{})); err != nil {
+		panic(err)
+	}
 }
 
 func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {

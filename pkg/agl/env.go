@@ -469,7 +469,9 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
 		for _, d := range node.Imports {
-			env.loadPkgVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m)
+			if err := env.loadPkgVendor(strings.ReplaceAll(d.Path.Value, `"`, ``), m); err != nil {
+				panic(err)
+			}
 		}
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
