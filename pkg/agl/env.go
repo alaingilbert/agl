@@ -622,7 +622,6 @@ func (e *Env) loadPkgAglStd(path string) error {
 	if err != nil {
 		return err
 	}
-	p("???", stdFilePath)
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
 	defineFromSrc(e, final, by)
 	return nil

@@ -1,0 +1,10 @@
+package os
+
+type DirEntry interface {
+	IsDir() bool
+	Name() string
+}
+
+type FileMode u32
+
+func WriteFile(name string, data []byte, perm os.FileMode) error

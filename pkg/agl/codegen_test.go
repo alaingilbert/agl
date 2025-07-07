@@ -7835,30 +7835,24 @@ func main() {
 	tassert.Equal(t, expected, test.GenCode())
 }
 
-//func TestCodeGen282(t *testing.T) {
-//	src := `package main
-//import (
-//	stdOs "os"
-//	aglOs "agl1/os"
-//)
-//func main() {
-//	stdOs.WriteFile("test.txt", []byte("test"), 0644)
-//	aglOs.WriteFile("test.txt", []byte("test"), 0644)!
-//}`
-//	expected := `package main
-//func main() {
-//	stdOs.WriteFile("test.txt", []byte("test"), 0644)
-//	err := AglWrapNative2(os.WriteFile("test.txt", AglVec[byte]("test"), 0644))
-//	if err != nil {
-//		panic(err)
-//	}
-//	AglNoop()
-//}
-//`
-//	test := NewTest(src, WithMutEnforced(false))
-//	tassert.Equal(t, 0, len(test.errs))
-//	testCodeGen(t, test.GenCode(), expected)
-//}
+func TestCodeGen282(t *testing.T) {
+	src := `package main
+import "os"
+func main() {
+	if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
+	}
+}`
+	expected := `package main
+import "os"
+func main() {
+	if err := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); err != nil {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen(t, test.GenCode(), expected)
+}
 
 //func TestCodeGen282(t *testing.T) {
 //	src := `package main
