@@ -1,0 +1,47 @@
+package ast
+
+type Decl interface{}
+type Expr interface{}
+type Ident struct {
+    Name string
+}
+type File struct {
+    Decls []ast.Decl
+}
+type Field struct{
+    Names []*ast.Ident
+    Type ast.Expr
+}
+type FieldList struct {
+    List []*ast.Field
+}
+type FuncType struct {
+    Params *ast.FieldList
+    Results *ast.FieldList
+}
+type FuncDecl struct {
+    Name *ast.Ident
+    Recv *ast.FieldList
+    Type *ast.FuncType
+}
+type Spec interface{}
+type GenDecl struct {
+    Specs []ast.Spec
+}
+type SelectorExpr struct {
+    X ast.Expr
+    Sel *ast.Ident
+}
+type StarExpr struct {
+    X ast.Expr
+}
+type StructType struct {
+    Fields *ast.FieldList
+}
+type TypeSpec struct {
+    Name *ast.Ident
+    Type ast.Expr
+}
+type InterfaceType struct {
+    Methods *ast.FieldList
+}
