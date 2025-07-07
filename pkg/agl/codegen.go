@@ -495,7 +495,8 @@ func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) string {
 	} else {
 		return content2 + ".(type)"
 	}
-	return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
+	return fmt.Sprintf("%s.(%s)", content2, content1)
+	//return fmt.Sprintf("AglTypeAssert[%s](%s)", content1, content2)
 }
 
 func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
