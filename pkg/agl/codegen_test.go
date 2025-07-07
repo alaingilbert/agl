@@ -1854,7 +1854,7 @@ type WriterA struct {}
 type WriterB struct {}
 
 func test(w Writer) {
-   if w.(WriterA).IsSome() {
+   if _, ok := w.(WriterA); ok {
        fmt.Println("A")
    }
 }
@@ -1874,7 +1874,7 @@ type WriterA struct {
 type WriterB struct {
 }
 func test(w Writer) {
-	if AglTypeAssert[WriterA](w).IsSome() {
+	if _, ok := w.(WriterA); ok {
 		fmt.Println("A")
 	}
 }
@@ -5104,9 +5104,9 @@ func main() {
 import "fmt"
 func main() {
 	var i any = "hello"
-	s := AglTypeAssert[string](i)
+	s := i.(string)
 	fmt.Println(s)
-	f := AglTypeAssert[float64](i)
+	f := i.(float64)
 	fmt.Println(f)
 }
 `
@@ -6183,7 +6183,7 @@ func main() {
 				for _, param := range d.Type.Params.List {
 					switch param1 := param.Type.(type) {
 					case *ast.SelectorExpr:
-						name = param1.X.(*ast.Ident)?.Name
+						name = param1.X.(*ast.Ident).Name
 					case *ast.Ident:
 						name = param1.Name
 					}
@@ -6232,7 +6232,7 @@ func main() {
 				for _, param := range d.Type.Params.List {
 					switch param1 := param.Type.(type) {
 					case *ast.SelectorExpr:
-						name = AglTypeAssert[*ast.Ident](param1.X).Unwrap().Name
+						name = param1.X.(*ast.Ident).Name
 					case *ast.Ident:
 						name = param1.Name
 					}
@@ -6350,7 +6350,7 @@ type Test struct {
 }
 func test() int? {
 	var a any = Test{Name: "foo"}
-	tmp := a.(Test)?.Name == "foo"
+	tmp := a.(Test).Name == "foo"
 	if tmp {
 	}
 	return Some(42)
@@ -6362,11 +6362,7 @@ type Test struct {
 }
 func test() Option[int] {
 	var a any = Test{Name: "foo"}
-	aglTmp1 := AglTypeAssert[Test](a)
-	if aglTmp1.IsNone() {
-		return MakeOptionNone[int]()
-	}
-	tmp := aglTmp1.Unwrap().Name == "foo"
+	tmp := a.(Test).Name == "foo"
 	if tmp {
 	}
 	return MakeOptionSome(42)
@@ -6382,7 +6378,7 @@ type Test struct {
 }
 func main() {
 	var a any = Test{Name: "foo"}
-	tmp := a.(Test)?.Name == "foo"
+	tmp := a.(Test).Name == "foo"
 	if tmp {
 	}
 	return Some(42)
@@ -6394,7 +6390,7 @@ type Test struct {
 }
 func main() {
 	var a any = Test{Name: "foo"}
-	tmp := AglTypeAssert[Test](a).Unwrap().Name == "foo"
+	tmp := a.(Test).Name == "foo"
 	if tmp {
 	}
 	return MakeOptionSome(42)
@@ -6410,7 +6406,7 @@ type Test struct {
 }
 func test() int? {
 	var a any = Test{Name: "foo"}
-	if a.(Test)?.Name == "foo" {
+	if a.(Test).Name == "foo" {
 	}
 	return Some(42)
 }
@@ -6421,11 +6417,7 @@ type Test struct {
 }
 func test() Option[int] {
 	var a any = Test{Name: "foo"}
-	aglTmp1 := AglTypeAssert[Test](a)
-	if aglTmp1.IsNone() {
-		return MakeOptionNone[int]()
-	}
-	if aglTmp1.Unwrap().Name == "foo" {
+	if a.(Test).Name == "foo" {
 	}
 	return MakeOptionSome(42)
 }
@@ -6440,7 +6432,7 @@ type Test struct {
 }
 func main() {
 	var a any = Test{Name: "foo"}
-	if a.(Test)?.Name == "foo" {
+	if a.(Test).Name == "foo" {
 	}
 }
 `
@@ -6450,7 +6442,7 @@ type Test struct {
 }
 func main() {
 	var a any = Test{Name: "foo"}
-	if AglTypeAssert[Test](a).Unwrap().Name == "foo" {
+	if a.(Test).Name == "foo" {
 	}
 }
 `
@@ -7833,6 +7825,42 @@ func main() {
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, expected, test.GenCode())
+}
+
+func TestCodeGen282(t *testing.T) {
+	src := `package main
+import "errors"
+type SomeErr struct {}
+func (e *SomeErr) Error() string { return "" } 
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			var someErr *SomeErr
+			if err, ok := r.(error); ok && errors.As(err, &someErr) {
+			}
+		}
+	}()
+}`
+	expected := `package main
+import "errors"
+type SomeErr struct {
+}
+func (e *SomeErr) Error() string {
+	return ""
+}
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			var someErr *SomeErr
+			if err, ok := r.(error); ok && errors.As(err, &someErr) {
+			}
+		}
+	}()
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen(t, test.GenCode(), expected)
 }
 
 //func TestCodeGen257(t *testing.T) {
