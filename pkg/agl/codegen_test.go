@@ -4459,7 +4459,8 @@ func main() {
 	bod := r.Body
 	v := bod.Close()!
 }`
-	tassert.PanicsWithError(t, "cannot assign void type to a variable", testCodeGenFn(src))
+	test := NewTest(src)
+	tassert.Contains(t, test.errs[0].Error(), "cannot assign void type to a variable")
 }
 
 func TestCodeGen159(t *testing.T) {
@@ -4469,7 +4470,8 @@ func main() {
 	r := http.Get("")!
 	v := r.Body.Close()!
 }`
-	tassert.PanicsWithError(t, "cannot assign void type to a variable", testCodeGenFn(src))
+	test := NewTest(src)
+	tassert.Contains(t, test.errs[0].Error(), "cannot assign void type to a variable")
 }
 
 func TestCodeGen160(t *testing.T) {
