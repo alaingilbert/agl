@@ -618,7 +618,9 @@ func (e *Env) loadPkgStd(path string) error {
 func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
-	e.loadVendor1(vendorPath, m)
+	if entries, err := os.ReadDir(vendorPath); err == nil {
+		e.loadVendor2(vendorPath, m, entries)
+	}
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
@@ -626,12 +628,6 @@ func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
 	defineFromSrc(e, final, by)
-}
-
-func (e *Env) loadVendor1(path string, m map[string]struct{}) {
-	if entries, err := os.ReadDir(path); err == nil {
-		e.loadVendor2(path, m, entries)
-	}
 }
 
 func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
