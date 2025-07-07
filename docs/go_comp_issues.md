@@ -33,4 +33,6 @@ Make a `Go2Agl` script that would automatically convert these functions into the
 
 ### Solution #2
 
-Duplicating std/vendor libs signatures. `os.WriteFile(string, []byte, FileMode) error` and `agl.os.WriteFile(string, []byte, FileMode) !`
+Duplicating std/vendor libs signatures.  
+`os.WriteFile(string, []byte, FileMode) error` and  
+`agl.os.WriteFile(string, []byte, FileMode) !`  
