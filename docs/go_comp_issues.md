@@ -14,7 +14,7 @@ res := a.(int)?
 ```
 But the syntax does not allow it. We wouldn't know if `v := a.(int)` is of type Option or int.  
 
-We could introduce an separate operator/function to do safe type assert. eg: `v := a.As(int)?`  
+We could introduce a separate operator/function to do safe type assert. eg: `v := a.As(int)?`  
 
 ## Native functions that return an error
 
