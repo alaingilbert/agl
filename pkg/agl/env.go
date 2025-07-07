@@ -19,7 +19,7 @@ import (
 	"sync/atomic"
 )
 
-//go:embed std/* pkgs/* core/*
+//go:embed pkgs/* core/*
 var contentFs embed.FS
 
 type Env struct {
@@ -605,7 +605,7 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
 
 func (e *Env) loadPkgStd(path string) error {
 	f := filepath.Base(path)
-	stdFilePath := filepath.Join("std", path, f+".agl")
+	stdFilePath := filepath.Join("pkgs", "std", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
