@@ -62,8 +62,8 @@ func getGoRecv(e goast.Expr) string {
 	return ""
 }
 
-func goFuncDeclTypeToFuncType(name, pkgName string, expr *goast.FuncDecl, env *Env) types.FuncType {
-	fT := goFuncTypeToFuncType(name, pkgName, expr.Type, env)
+func goFuncDeclTypeToFuncType(name, pkgName string, expr *goast.FuncDecl, env *Env, keepRaw bool) types.FuncType {
+	fT := goFuncTypeToFuncType(name, pkgName, expr.Type, env, keepRaw)
 	var recvT []types.Type
 	if expr.Recv != nil {
 		for _, recv := range expr.Recv.List {
@@ -74,7 +74,7 @@ func goFuncDeclTypeToFuncType(name, pkgName string, expr *goast.FuncDecl, env *E
 					continue
 				}
 				noop(recvName)
-				t := env.GetGoType2(pkgName, recvTyp)
+				t := env.GetGoType2(pkgName, recvTyp, keepRaw)
 				recvT = append(recvT, t)
 			}
 		}
@@ -84,14 +84,14 @@ func goFuncDeclTypeToFuncType(name, pkgName string, expr *goast.FuncDecl, env *E
 	return fT
 }
 
-func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) types.FuncType {
+func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env, keepRaw bool) types.FuncType {
 	native := utils.True()
 	var paramsT []types.Type
 	if expr.TypeParams != nil {
 		for _, typeParam := range expr.TypeParams.List {
 			for _, typeParamName := range typeParam.Names {
 				typeParamType := typeParam.Type
-				t := env.GetGoType2(pkgName, typeParamType)
+				t := env.GetGoType2(pkgName, typeParamType, keepRaw)
 				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
 				//env.Define(typeParamName, typeParamName.Name, t)
 				paramsT = append(paramsT, t)
@@ -101,7 +101,7 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 	var params []types.Type
 	if expr.Params != nil {
 		for _, param := range expr.Params.List {
-			t := env.GetGoType2(pkgName, param.Type)
+			t := env.GetGoType2(pkgName, param.Type, keepRaw)
 			n := max(len(param.Names), 1)
 			for i := 0; i < n; i++ {
 				params = append(params, t)
@@ -112,7 +112,7 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 	var results []types.Type
 	if expr.Results != nil {
 		for _, resultEl := range expr.Results.List {
-			results = append(results, env.GetGoType2(pkgName, resultEl))
+			results = append(results, env.GetGoType2(pkgName, resultEl, keepRaw))
 		}
 	}
 	if len(results) > 0 {
@@ -120,17 +120,17 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env) 
 		lastResult = types.Unwrap(lastResult)
 		if v, ok := lastResult.(types.InterfaceType); ok && v.Name == "error" {
 			results = results[:len(results)-1]
-			var inner types.Type = types.TupleType{Elts: results}
+			var inner types.Type = types.TupleType{Elts: results, KeepRaw: keepRaw}
 			if len(results) == 0 {
 				inner = types.VoidType{}
 			} else if len(results) == 1 {
 				inner = results[0]
 			}
-			result = types.ResultType{W: inner, Native: native}
+			result = types.ResultType{W: inner, Native: native, KeepRaw: keepRaw}
 		} else if len(results) == 1 {
 			result = results[0]
 		} else {
-			result = types.TupleType{Elts: results}
+			result = types.TupleType{Elts: results, KeepRaw: keepRaw}
 		}
 	} else {
 		result = types.VoidType{}
@@ -451,7 +451,7 @@ type Later struct {
 	s       goast.Spec
 }
 
-func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m map[string]struct{}) {
+func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m map[string]struct{}, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
@@ -475,7 +475,7 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 			switch decl := d.(type) {
 			case *goast.GenDecl:
 				for _, s := range decl.Specs {
-					processSpec(s, env, pkgName, &tryLater)
+					processSpec(s, env, pkgName, &tryLater, keepRaw)
 				}
 			}
 		}
@@ -484,7 +484,7 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 	for len(tryLater) > 0 {
 		var d Later
 		d, tryLater = tryLater[0], tryLater[1:]
-		processSpec(d.s, env, d.pkgName, &tryLater)
+		processSpec(d.s, env, d.pkgName, &tryLater, keepRaw)
 		i++
 		if i > 10 {
 			break
@@ -492,7 +492,7 @@ func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, 
 	}
 }
 
-func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
+func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keepRaw bool) {
 	switch spec := s.(type) {
 	case *goast.TypeSpec:
 		if !spec.Name.IsExported() {
@@ -504,7 +504,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 			var fields []types.FieldType
 			if v.Fields != nil {
 				for _, field := range v.Fields.List {
-					t := env.GetGoType2(pkgName, field.Type)
+					t := env.GetGoType2(pkgName, field.Type, keepRaw)
 					t = types.Unwrap(t)
 					if TryCast[types.VoidType](t) {
 						fT := field.Type
@@ -539,7 +539,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 							continue
 						}
 						fullName := pkgName + "." + spec.Name.Name + "." + n.Name
-						t := env.GetGoType2(pkgName, m.Type)
+						t := env.GetGoType2(pkgName, m.Type, keepRaw)
 						env.DefineForce(nil, fullName, t)
 					}
 				}
@@ -548,7 +548,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 		case *goast.IndexListExpr:
 		case *goast.ArrayType:
 		case *goast.Ident:
-			t := env.GetGoType2(pkgName, v)
+			t := env.GetGoType2(pkgName, v, keepRaw)
 			if TryCast[types.VoidType](t) {
 				if !v.IsExported() {
 					return
@@ -565,7 +565,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 	}
 }
 
-func defineFromGoSrc(env *Env, path string, src []byte) {
+func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
 	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
@@ -575,7 +575,7 @@ func defineFromGoSrc(env *Env, path string, src []byte) {
 			if !decl.Name.IsExported() {
 				continue
 			}
-			fnT := goFuncDeclTypeToFuncType("", pkgName, decl, env)
+			fnT := goFuncDeclTypeToFuncType("", pkgName, decl, env, keepRaw)
 			fullName := decl.Name.Name
 			//p(fnT, "  |  ", fullName)
 			if decl.Recv != nil {
@@ -643,7 +643,8 @@ func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 }
 
 func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
-	defineStructsFromGoSrc(entries, e, path, m)
+	keepRaw := utils.True()
+	defineStructsFromGoSrc(entries, e, path, m, keepRaw)
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
 			continue
@@ -657,7 +658,7 @@ func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEn
 		if err != nil {
 			continue
 		}
-		defineFromGoSrc(e, path, by)
+		defineFromGoSrc(e, path, by, keepRaw)
 	}
 }
 
@@ -1095,15 +1096,15 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	}
 }
 
-func (e *Env) GetGoType2(pkgName string, x goast.Node) types.Type {
-	res := e.getGoType2Helper(pkgName, x)
+func (e *Env) GetGoType2(pkgName string, x goast.Node, keepRaw bool) types.Type {
+	res := e.getGoType2Helper(pkgName, x, keepRaw)
 	if res == nil && e.parent != nil {
-		return e.parent.GetGoType2(pkgName, x)
+		return e.parent.GetGoType2(pkgName, x, keepRaw)
 	}
 	return res
 }
 
-func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
+func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types.Type {
 	//if v := e.lspNode(x); v != nil {
 	//	return v.Type
 	//}
@@ -1118,13 +1119,13 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 		return types.AnyType{}
 		return nil
 	case *goast.FuncType:
-		return goFuncTypeToFuncType("", pkgName, xx, e)
+		return goFuncTypeToFuncType("", pkgName, xx, e, true)
 	case *goast.Ellipsis:
-		t := e.GetGoType2(pkgName, xx.Elt)
+		t := e.GetGoType2(pkgName, xx.Elt, keepRaw)
 		panicIfNil(t, xx.Elt)
 		return types.EllipsisType{Elt: t}
 	case *goast.ArrayType:
-		t := e.GetGoType2(pkgName, xx.Elt)
+		t := e.GetGoType2(pkgName, xx.Elt, keepRaw)
 		panicIfNil(t, xx.Elt)
 		return types.ArrayType{Elt: t}
 	case *goast.CallExpr:
@@ -1139,21 +1140,21 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 			panic(fmt.Sprintf("%v", xx.Kind))
 		}
 	case *goast.SelectorExpr:
-		base := e.GetGoType2(pkgName, xx.X)
+		base := e.GetGoType2(pkgName, xx.X, keepRaw)
 		base = types.Unwrap(base)
 		switch v := base.(type) {
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
-			return e.GetGoType2(pkgName, &goast.Ident{Name: name})
+			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
 		case types.InterfaceType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
 			if v.Pkg != "" {
 				name = v.Pkg + "." + name
 			}
-			return e.GetGoType2(pkgName, &goast.Ident{Name: name})
+			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
-			return e.GetGoType2(pkgName, &goast.Ident{Name: name})
+			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
 		case types.TypeAssertType:
 			return v.X
 		default:
@@ -1162,7 +1163,7 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 		}
 		return nil
 	case *goast.IndexExpr:
-		t := e.GetGoType2(pkgName, xx.X)
+		t := e.GetGoType2(pkgName, xx.X, keepRaw)
 		if !e.NoIdxUnwrap {
 			switch v := t.(type) {
 			case types.ArrayType:
@@ -1171,30 +1172,30 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node) types.Type {
 		}
 		return t
 	case *goast.ParenExpr:
-		return e.GetGoType2(pkgName, xx.X)
+		return e.GetGoType2(pkgName, xx.X, keepRaw)
 	case *goast.StarExpr:
-		return types.StarType{X: e.GetGoType2(pkgName, xx.X)}
+		return types.StarType{X: e.GetGoType2(pkgName, xx.X, keepRaw)}
 	case *goast.MapType:
-		return types.MapType{K: e.GetGoType2(pkgName, xx.Key), V: e.GetGoType2(pkgName, xx.Value)}
+		return types.MapType{K: e.GetGoType2(pkgName, xx.Key, keepRaw), V: e.GetGoType2(pkgName, xx.Value, keepRaw)}
 	case *goast.ChanType:
-		return types.ChanType{W: e.GetGoType2(pkgName, xx.Value)}
+		return types.ChanType{W: e.GetGoType2(pkgName, xx.Value, keepRaw)}
 	case *goast.BinaryExpr:
-		return types.BinaryType{X: e.GetGoType2(pkgName, xx.X), Y: e.GetGoType2(pkgName, xx.Y)}
+		return types.BinaryType{X: e.GetGoType2(pkgName, xx.X, keepRaw), Y: e.GetGoType2(pkgName, xx.Y, keepRaw)}
 	case *goast.UnaryExpr:
-		return types.UnaryType{X: e.GetGoType2(pkgName, xx.X)}
+		return types.UnaryType{X: e.GetGoType2(pkgName, xx.X, keepRaw)}
 	case *goast.InterfaceType:
 		return types.AnyType{}
 	case *goast.CompositeLit:
-		ct := e.GetGoType2(pkgName, xx.Type).(types.CustomType)
+		ct := e.GetGoType2(pkgName, xx.Type, keepRaw).(types.CustomType)
 		return types.StructType{Pkg: ct.Pkg, Name: ct.Name}
 	case *goast.SliceExpr:
-		return e.GetGoType2(pkgName, xx.X) // TODO
+		return e.GetGoType2(pkgName, xx.X, keepRaw) // TODO
 	case *goast.IndexListExpr:
-		return e.GetGoType2(pkgName, xx.X) // TODO
+		return e.GetGoType2(pkgName, xx.X, keepRaw) // TODO
 	case *goast.StructType:
 		return types.StructType{}
 	case *goast.Field:
-		return e.GetGoType2(pkgName, xx.Type)
+		return e.GetGoType2(pkgName, xx.Type, keepRaw)
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
