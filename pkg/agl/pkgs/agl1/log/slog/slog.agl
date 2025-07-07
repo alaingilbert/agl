@@ -1,6 +1,6 @@
 package slog
 
-import "log"
+import "agl1/log"
 
 type Level int
 type Logger struct {}

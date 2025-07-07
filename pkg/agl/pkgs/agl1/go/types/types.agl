@@ -1,7 +1,7 @@
 package types
 
-import "go/ast"
-import "go/token"
+import "agl1/go/ast"
+import "agl1/go/token"
 
 type Importer interface{}
 type Object interface{}

@@ -1,6 +1,6 @@
 package fmt
 
-import "io"
+import "agl1/io"
 
 type Formatter interface {}
 type GoStringer interface {}

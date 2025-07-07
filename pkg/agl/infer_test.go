@@ -91,7 +91,7 @@ func (t *Test) TypeAt(row, col int) types.Type {
 
 func TestInfer1(t *testing.T) {
 	src := `package main
-import "net/http"
+import "agl1/net/http"
 func main() {
 	r := http.Get("")!
 	bod := r.Body
@@ -103,7 +103,7 @@ func main() {
 
 func TestInfer2(t *testing.T) {
 	src := `package main
-import "net/http"
+import "agl1/net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
@@ -114,7 +114,7 @@ func main() {
 
 func TestInfer3(t *testing.T) {
 	src := `package main
-import "net/http"
+import "agl1/net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
@@ -299,8 +299,8 @@ func main() {
 
 func TestInfer15(t *testing.T) {
 	src := `package main
-import "fmt"
-import "strings"
+import "agl1/fmt"
+import "agl1/strings"
 func main() {
 	var mut sb strings.Builder
 	sb.WriteString("hello world")
@@ -456,7 +456,7 @@ func main() {
 
 func TestInferOsArgs(t *testing.T) {
 	src := `package main
-import "os"
+import "agl1/os"
 func main() {
 	args := os.Args
 	firstArg := os.Args[0]

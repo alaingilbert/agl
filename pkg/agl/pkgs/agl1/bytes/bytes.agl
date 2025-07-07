@@ -1,6 +1,6 @@
 package bytes
 
-import "iter"
+import "agl1/iter"
 
 type Buffer struct {}
 type Reader struct {}

@@ -320,7 +320,7 @@ func defineFromSrc(env *Env, path string, src []byte) {
 		return
 	}
 	for _, d := range node.Imports {
-		if err := env.loadPkgStd(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
+		if err := env.loadPkgAglStd(strings.ReplaceAll(d.Path.Value, `"`, ``)); err != nil {
 			panic(err)
 		}
 	}
@@ -615,6 +615,19 @@ func (e *Env) loadPkgStd(path string) error {
 	return nil
 }
 
+func (e *Env) loadPkgAglStd(path string) error {
+	f := filepath.Base(path)
+	stdFilePath := filepath.Join("pkgs", path, f+".agl")
+	by, err := contentFs.ReadFile(stdFilePath)
+	if err != nil {
+		return err
+	}
+	p("???", stdFilePath)
+	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
+	defineFromSrc(e, final, by)
+	return nil
+}
+
 func (e *Env) loadPkgVendor(path string, m map[string]struct{}) {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
@@ -738,9 +751,9 @@ func CoreFns() string {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	_ = e.loadPkgStd("cmp")
+	_ = e.loadPkgAglStd("agl1/cmp")
 	e.loadCoreFunctions()
-	_ = e.loadPkgStd("iter")
+	_ = e.loadPkgAglStd("agl1/iter")
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})

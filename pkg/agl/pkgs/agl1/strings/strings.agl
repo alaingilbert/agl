@@ -1,7 +1,7 @@
 package strings
 
-import "io"
-import "iter"
+import "agl1/io"
+import "agl1/iter"
 
 type Reader struct {}
 type Builder struct {}

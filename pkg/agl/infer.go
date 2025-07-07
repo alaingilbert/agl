@@ -289,8 +289,10 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 
 func (infer *FileInferrer) loadPkg(pkgFullPath, pkgPath, pkgName string) {
 	if err := infer.env.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
-		if err := infer.env.loadPkgStd(pkgPath); err != nil {
-			infer.env.loadPkgVendor(pkgPath, make(map[string]struct{}))
+		if err := infer.env.loadPkgAglStd(pkgPath); err != nil {
+			if err := infer.env.loadPkgStd(pkgPath); err != nil {
+				infer.env.loadPkgVendor(pkgPath, make(map[string]struct{}))
+			}
 		}
 	}
 }

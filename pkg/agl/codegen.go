@@ -198,7 +198,11 @@ func (g *Generator) genImports() (out string) {
 		if spec.Name != nil {
 			out += spec.Name.Name
 		}
-		out += spec.Path.Value + "\n"
+		pathValue := spec.Path.Value
+		if strings.HasPrefix(pathValue, `"agl1/`) {
+			pathValue = `"` + pathValue[6:]
+		}
+		out += pathValue + "\n"
 	}
 	return
 }

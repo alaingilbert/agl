@@ -1,6 +1,6 @@
 package slices
 
-import "iter"
+import "agl1/iter"
 
 //func All[Slice ~[]E, E any](s Slice) iter.Seq2[int, E]
 //func AppendSeq[Slice ~[]E, E any](s Slice, seq iter.Seq[E]) Slice
