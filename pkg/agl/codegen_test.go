@@ -16,6 +16,10 @@ func getGenOutput(src string) string {
 
 func testCodeGen(t *testing.T, src, expected string) {
 	got := getGenOutput(src)
+	testCodeGen1(t, got, expected)
+}
+
+func testCodeGen1(t *testing.T, got, expected string) {
 	if got != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, got)
 	}
@@ -7843,7 +7847,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen(t, test.GenCode(), expected)
+	testCodeGen1(t, test.GenCode(), expected)
 }
 
 func TestCodeGen283(t *testing.T) {
@@ -7879,7 +7883,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen(t, test.GenCode(), expected)
+	testCodeGen1(t, test.GenCode(), expected)
 }
 
 func TestCodeGen284(t *testing.T) {
