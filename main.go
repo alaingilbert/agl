@@ -228,7 +228,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	errs := i.InferFile(fileName, f, fset, true)
+	errs := i.InferFile(fileName, f, fset, false)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
