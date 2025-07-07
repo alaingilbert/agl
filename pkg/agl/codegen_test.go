@@ -7863,6 +7863,24 @@ func main() {
 	testCodeGen(t, test.GenCode(), expected)
 }
 
+//func TestCodeGen283(t *testing.T) {
+//	src := `package main
+//import "os"
+//func main() {
+//	if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
+//	}
+//}`
+//	expected := `package main
+//import "fmt"
+//func main() {
+//	aglTmp1 := AglWrapNative2(os.WriteFile("test.txt", AglVec[byte]("test"), 0644))
+//	if aglTmp1.IsErr() {
+//	}
+//}
+//`
+//	testCodeGen(t, src, expected)
+//}
+
 //func TestCodeGen257(t *testing.T) {
 //	src := `package main
 //type IpAddr enum {
