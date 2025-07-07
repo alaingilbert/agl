@@ -2593,7 +2593,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.errorf(lhs, "%v", to(lhs))
 				return
 			}
-			if lhsT := lhsWantedT; lhsT != nil {
+			if lhsT := lhsWantedT; lhsT != nil && stmt.Tok != token.DEFINE {
 				infer.withForceReturn(lhsT, func() {
 					infer.expr(rhs)
 					rhsT := infer.env.GetType2(rhs, infer.fset)

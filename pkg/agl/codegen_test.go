@@ -7982,6 +7982,25 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen289(t *testing.T) {
+	src := `package main
+import "path"
+func main() {
+	path := "Hello world"
+}`
+	expected := `package main
+import "path"
+func main() {
+	path := "Hello world"
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "string", test.TypeAt(4, 2).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
