@@ -7954,6 +7954,34 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen288(t *testing.T) {
+	src := `package main
+import "os"
+import "os/exec"
+func main() {
+	cmd := exec.Command("go", "mod")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}`
+	expected := `package main
+import "os"
+import "os/exec"
+func main() {
+	cmd := exec.Command("go", "mod")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "*exec.Cmd", test.TypeAt(6, 2).String())
+	tassert.Equal(t, "io.Writer", test.TypeAt(6, 6).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

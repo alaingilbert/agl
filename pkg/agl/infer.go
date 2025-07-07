@@ -2632,6 +2632,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				mutable = lhsID.Mutable.IsValid()
 				lhsIdName := lhsID.Name
 				xT := infer.env.Get(lhsIdName)
+				oxT := xT
 				xT = types.Unwrap(xT)
 				switch xTv := xT.(type) {
 				case types.TupleType:
@@ -2644,7 +2645,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					}
 					return
 				case types.StructType:
-					infer.SetType(v.X, xT)
+					selT := infer.env.Get(xT.String() + "." + v.Sel.Name)
+					infer.SetType(v.X, oxT)
+					infer.SetType(v.Sel, selT)
 				case types.ArrayType:
 					infer.SetType(v.X, xT)
 				default:

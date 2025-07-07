@@ -1,6 +1,8 @@
 package exec
 
 type Cmd struct {
+    Stdout io.Writer
+    Stderr io.Writer
 }
 
 func Command(name string, arg ...string) *exec.Cmd
