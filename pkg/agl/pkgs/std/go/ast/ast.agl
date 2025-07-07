@@ -10,6 +10,7 @@ type BasicLit struct {
 }
 type File struct {
     Decls []ast.Decl
+    Imports []*ast.ImportSpec
 }
 type Field struct{
     Names []*ast.Ident

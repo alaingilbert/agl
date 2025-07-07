@@ -7919,6 +7919,41 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen286(t *testing.T) {
+	src := `package main
+func main() {
+	const test = "Hello world"
+}`
+	expected := `package main
+func main() {
+	const test = "Hello world"
+}
+`
+	test := NewTest(src)
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "string", test.TypeAt(3, 8).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen287(t *testing.T) {
+	src := `package main
+func main() {
+	const test1, test2 = "Hello", 42
+}`
+	expected := `package main
+func main() {
+	const test1, test2 = "Hello", 42
+}
+`
+	test := NewTest(src)
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "string", test.TypeAt(3, 8).String())
+	tassert.Equal(t, "UntypedNumType", test.TypeAt(3, 15).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

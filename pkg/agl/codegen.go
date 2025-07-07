@@ -1487,14 +1487,14 @@ func (g *Generator) genBlockStmt(stmt *ast.BlockStmt) (out string) {
 	return g.genStmts(stmt.List)
 }
 
-func (g *Generator) genSpecs(specs []ast.Spec) (out string) {
+func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) (out string) {
 	for _, spec := range specs {
-		out += g.genSpec(spec)
+		out += g.genSpec(spec, tok)
 	}
 	return
 }
 
-func (g *Generator) genSpec(s ast.Spec) (out string) {
+func (g *Generator) genSpec(s ast.Spec, tok token.Token) (out string) {
 	switch spec := s.(type) {
 	case *ast.ValueSpec:
 		var content1 string
@@ -1507,7 +1507,7 @@ func (g *Generator) genSpec(s ast.Spec) (out string) {
 		for _, name := range spec.Names {
 			namesArr = append(namesArr, name.Name)
 		}
-		out += g.prefix + "var " + strings.Join(namesArr, ", ")
+		out += g.prefix + tok.String() + " " + strings.Join(namesArr, ", ")
 		if content1 != "" {
 			out += " " + content1
 		}
@@ -1560,7 +1560,7 @@ func (g *Generator) genDecl(d ast.Decl, first bool) (out string) {
 }
 
 func (g *Generator) genGenDecl(decl *ast.GenDecl) string {
-	return g.genSpecs(decl.Specs)
+	return g.genSpecs(decl.Specs, decl.Tok)
 }
 
 func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) string {

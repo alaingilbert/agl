@@ -2265,13 +2265,17 @@ func (infer *FileInferrer) specs(s []ast.Spec) {
 func (infer *FileInferrer) spec(s ast.Spec) {
 	switch spec := s.(type) {
 	case *ast.ValueSpec:
-		if spec.Type == nil {
-			return
+		var t types.Type
+		if spec.Type != nil {
+			infer.expr(spec.Type)
+			t = infer.env.GetType2(spec.Type, infer.fset)
 		}
-		infer.expr(spec.Type)
-		t := infer.env.GetType2(spec.Type, infer.fset)
 		for i, name := range spec.Names {
 			tt := t
+			if tt == nil && spec.Values != nil {
+				infer.expr(spec.Values[i])
+				tt = infer.GetType(spec.Values[i])
+			}
 			if name.Mutable.IsValid() {
 				tt = types.MutType{W: t}
 			}
