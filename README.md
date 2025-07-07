@@ -304,7 +304,7 @@ package main
 
 import (
     "fmt"
-    "os"
+    "agl1/os"
 )
 
 func main() {
@@ -324,8 +324,8 @@ package main
 
 import (
     "fmt"
-    "net/http"
-    "io"
+    "agl1/net/http"
+    "agl1/io"
 )
 
 func main() {
