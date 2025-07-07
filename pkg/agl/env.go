@@ -565,7 +565,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later) {
 	}
 }
 
-func defineFromGoSrc(env *Env, fullPath, path string, src []byte, m map[string]struct{}) {
+func defineFromGoSrc(env *Env, path string, src []byte) {
 	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
 	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
@@ -657,7 +657,7 @@ func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEn
 		if err != nil {
 			continue
 		}
-		defineFromGoSrc(e, fullPath, path, by, m)
+		defineFromGoSrc(e, path, by)
 	}
 }
 
