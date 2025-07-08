@@ -385,7 +385,7 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 			by := aglOs.ReadFile(entry.Name())!
 			_, f := agl.ParseSrc(string(by))
 			for _, i := range f.Imports {
-				imports = append(imports, fmt.Sprintf("import _ %s", i.Path.Value))
+				imports.Push(fmt.Sprintf("import _ %s", i.Path.Value))
 			}
 		}
 	}
