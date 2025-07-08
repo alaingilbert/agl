@@ -893,9 +893,9 @@ func main() {
 import "os"
 import "fmt"
 func main() {
-	aglTmp1, err := os.ReadFile("test.txt")
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := os.ReadFile("test.txt")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	by := AglIdentity(aglTmp1)
 	fmt.Println(by)
@@ -1906,9 +1906,9 @@ func main() {
 import "os"
 import "fmt"
 func main() {
-	err := os.WriteFile("test.txt", AglVec[byte]("test"), 0755)
-	if err != nil {
-		panic(err)
+	aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0755)
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	AglNoop()
 }
@@ -2712,9 +2712,9 @@ import "strconv"
 func main() {
 	a := AglVec[string]{"1", "2"}
 	AglVecMap(a, func(aglArg0 string) int {
-		aglTmp1, err := strconv.Atoi(aglArg0)
-		if err != nil {
-			panic(err)
+		aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+		if aglTmpErr1 != nil {
+			panic(aglTmpErr1)
 		}
 		return AglIdentity(aglTmp1)
 	})
@@ -2736,9 +2736,9 @@ import "strconv"
 func main() {
 	a := "1 2"
 	AglVecMap(AglStringSplit(a, " "), func(aglArg0 string) int {
-		aglTmp1, err := strconv.Atoi(aglArg0)
-		if err != nil {
-			panic(err)
+		aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+		if aglTmpErr1 != nil {
+			panic(aglTmpErr1)
 		}
 		return AglIdentity(aglTmp1)
 	})
@@ -2763,9 +2763,9 @@ func main() {
 	a := "1 2, 3 4"
 	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) AglVec[int] {
 		return AglVecMap(AglStringSplit(aglArg0, " "), func(aglArg0 string) int {
-			aglTmp1, err := strconv.Atoi(aglArg0)
-			if err != nil {
-				panic(err)
+			aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+			if aglTmpErr1 != nil {
+				panic(aglTmpErr1)
 			}
 			return AglIdentity(aglTmp1)
 		})
@@ -2793,9 +2793,9 @@ func main() {
 	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) AglVec[int] {
 		tmp1 := AglStringSplit(aglArg0, " ")
 		return AglVecMap(tmp1, func(aglArg0 string) int {
-			aglTmp1, err := strconv.Atoi(aglArg0)
-			if err != nil {
-				panic(err)
+			aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+			if aglTmpErr1 != nil {
+				panic(aglTmpErr1)
 			}
 			return AglIdentity(aglTmp1)
 		})
@@ -3699,9 +3699,9 @@ func main() {
 import "fmt"
 import "net/http"
 func main() {
-	aglTmp1, err := http.Get("https://google.com")
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := http.Get("https://google.com")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	res := AglIdentity(aglTmp1)
 	fmt.Println(res)
@@ -4444,9 +4444,9 @@ func main() {
 	expected := `package main
 import "net/http"
 func main() {
-	aglTmp1, err := http.Get("")
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := http.Get("")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	r := AglIdentity(aglTmp1)
 	r.Body.Close()
@@ -6140,15 +6140,15 @@ import "io"
 func main() {
 	req := AglHttpNewRequest(http.MethodGet, "https://jsonip.com", MakeOptionNone[io.Reader]()).Unwrap()
 	c := http.Client{}
-	aglTmp1, err := c.Do(req)
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := c.Do(req)
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	resp := AglIdentity(aglTmp1)
 	defer resp.Body.Close()
-	aglTmp2, err := io.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
+	aglTmp2, aglTmpErr2 := io.ReadAll(resp.Body)
+	if aglTmpErr2 != nil {
+		panic(aglTmpErr2)
 	}
 	by := AglIdentity(aglTmp2)
 	fmt.Println(string(by))
@@ -6210,22 +6210,22 @@ func main() {
 	fileName := "request.go"
 	fnName := "NewRequest"
 	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
-	aglTmp1, err := os.ReadFile(filePath)
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := os.ReadFile(filePath)
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	src := AglIdentity(aglTmp1)
 	fset := token.NewFileSet()
-	aglTmp2, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
-	if err != nil {
-		panic(err)
+	aglTmp2, aglTmpErr2 := parser.ParseFile(fset, fileName, src, parser.AllErrors)
+	if aglTmpErr2 != nil {
+		panic(aglTmpErr2)
 	}
 	node := AglIdentity(aglTmp2)
 	conf := types.Config{Importer: nil}
 	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
-	aglTmp3, err := conf.Check("", fset, AglVec[*ast.File]{node}, info)
-	if err != nil {
-		panic(err)
+	aglTmp3, aglTmpErr3 := conf.Check("", fset, AglVec[*ast.File]{node}, info)
+	if aglTmpErr3 != nil {
+		panic(aglTmpErr3)
 	}
 	_ = AglIdentity(aglTmp3)
 	for _, decl := range node.Decls {
@@ -6781,14 +6781,14 @@ func findTitle(n *html.Node) string {
 	return ""
 }
 func main() {
-	aglTmp1, err := http.Get("https://news.ycombinator.com")
-	if err != nil {
-		panic(err)
+	aglTmp1, aglTmpErr1 := http.Get("https://news.ycombinator.com")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
 	}
 	resp := AglIdentity(aglTmp1)
-	aglTmp2, err := html.Parse(resp.Body)
-	if err != nil {
-		panic(err)
+	aglTmp2, aglTmpErr2 := html.Parse(resp.Body)
+	if aglTmpErr2 != nil {
+		panic(aglTmpErr2)
 	}
 	doc := AglIdentity(aglTmp2)
 	title := findTitle(doc)
@@ -8018,6 +8018,33 @@ func main() {
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "string", test.TypeAt(4, 3).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen291(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func main() {
+	os.WriteFile("test.txt", []byte("test"), 0644)!
+	os.WriteFile("test.txt", []byte("test"), 0644)!
+}`
+	expected := `package main
+import "os"
+func main() {
+	aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644)
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
+	}
+	AglNoop()
+	aglTmpErr2 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644)
+	if aglTmpErr2 != nil {
+		panic(aglTmpErr2)
+	}
+	AglNoop()
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
 

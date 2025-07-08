@@ -1062,12 +1062,14 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		if exprXT.Native {
 			var tmpl1 string
 			if _, ok := exprXT.W.(types.VoidType); ok {
-				tmpl1 = "err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+				tmpErrVar := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
+				tmpl1 = fmt.Sprintf("%s := %%s\nif %s != nil {\n\tpanic(%s)\n}\n", tmpErrVar, tmpErrVar, tmpErrVar)
 				out = `AglNoop()`
 			} else {
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmp%d", id)
-				tmpl1 = varName + ", err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+				errName := fmt.Sprintf("aglTmpErr%d", id)
+				tmpl1 = fmt.Sprintf("%s, %s := %%s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, errName, errName)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
 			}
 			content1 := g.genExpr(expr.X)
