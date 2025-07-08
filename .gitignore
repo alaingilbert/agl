@@ -2,6 +2,7 @@
 cover.out
 vendor
 /agl_agl
+/cmd/agl/*.go
 node_modules/
 language_server/agl-lsp
 examples/adventOfCode2024/*/data.txt
