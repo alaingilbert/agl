@@ -1024,9 +1024,12 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 	} else {
 		if exprXT.Native {
 			content1 := g.genExpr(expr.X)
-			tmpl1 := "res, err := %s\nif err != nil {\n\tpanic(err)\n}\n"
+			id := g.varCounter.Add(1)
+			varName := fmt.Sprintf("aglTmpVar%d", id)
+			errName := fmt.Sprintf("aglTmpErr%d", id)
+			tmpl1 := fmt.Sprintf("%s, %s := %%s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, errName, errName)
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
-			out := `AglIdentity(res)`
+			out := fmt.Sprintf(`AglIdentity(%s)`, varName)
 			g.beforeStmt = append(g.beforeStmt, before)
 			return out
 		} else {
