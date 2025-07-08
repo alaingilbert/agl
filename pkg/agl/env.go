@@ -299,6 +299,7 @@ func (e *Env) loadCoreTypes() {
 func (e *Env) loadCoreFunctions() {
 	e.DefineFn("assert", "func (pred bool, msg ...string)")
 	e.DefineFn("make", "func[T, U any](t T, size ...U) T")
+	e.DefineFn("recover", "func () any")
 	e.DefineFn("len", "func [T any](v T) int")
 	e.DefineFn("cap", "func [T any](v T) int")
 	e.DefineFn("min", "func [T cmp.Ordered](x T, y ...T) T")
