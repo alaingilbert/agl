@@ -645,6 +645,9 @@ func (e *Env) loadPkgStd(path, pkgName string, m *PkgVisited) error {
 	if err != nil {
 		return err
 	}
+	if m.ContainsAdd(stdFilePath) {
+		return nil
+	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
@@ -658,10 +661,9 @@ func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
-	if m.Contains(stdFilePath) {
+	if m.ContainsAdd(stdFilePath) {
 		return nil
 	}
-	m.Add(stdFilePath)
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
@@ -690,10 +692,9 @@ func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 			continue
 		}
 		fullPath := filepath.Join(path, entry.Name())
-		if m.Contains(fullPath) {
+		if m.ContainsAdd(fullPath) {
 			continue
 		}
-		m.Add(fullPath)
 		by, err := os.ReadFile(fullPath)
 		if err != nil {
 			continue

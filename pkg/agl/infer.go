@@ -287,6 +287,14 @@ func (p *PkgVisited) Contains(pkg string) bool {
 	return ok
 }
 
+func (p *PkgVisited) ContainsAdd(pkg string) bool {
+	if _, ok := p.m[pkg]; ok {
+		return true
+	}
+	p.m[pkg] = struct{}{}
+	return false
+}
+
 func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	var pkgName string
 	if i.Name != nil {
