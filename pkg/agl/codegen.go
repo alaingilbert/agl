@@ -168,6 +168,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 }
 
 func (g *Generator) Generate() (out string) {
+	out += "// agl:generated\n"
 	out1 := g.genPackage()
 	out2 := g.genImports()
 	out3 := g.genDecls()
