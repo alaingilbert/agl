@@ -842,9 +842,9 @@ func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
 	nT := types.ReplGenM(g.env.GetType(expr), g.genMap)
 	switch v := nT.(type) {
 	case types.NoneType:
-		return fmt.Sprintf("MakeOptionNone[%s]()", v.W.GoStr())
+		return fmt.Sprintf("MakeOptionNone[%s]()", v.W.GoStrType())
 	case types.TypeType:
-		return fmt.Sprintf("MakeOptionNone[%s]()", v.GoStr())
+		return fmt.Sprintf("MakeOptionNone[%s]()", v.GoStrType())
 	default:
 		panic("")
 	}
