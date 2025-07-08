@@ -1166,14 +1166,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglString%s(%s)", fnName, g.genExpr(e.X))
 			}
 		case types.MapType:
-			if e.Sel.Name == "Get" {
+			fnName := e.Sel.Name
+			switch fnName {
+			case "Get":
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
-			} else if e.Sel.Name == "Keys" {
+			case "Keys":
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMapKeys(%s))", content1)
-			} else if e.Sel.Name == "Values" {
+			case "Values":
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMapValues(%s))", content1)
 			}
