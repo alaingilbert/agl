@@ -614,7 +614,7 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
 	//p("?LOADPKG", pkgPath, pkgName)
 	pkgFullPath := trimPrefixPath(pkgPath)
-	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
+	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName, m); err != nil {
 		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
 			if err := e.loadPkgStd(pkgPath, pkgName, m); err != nil {
 				if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
@@ -626,7 +626,7 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
 	return nil
 }
 
-func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
+func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m map[string]struct{}) error {
 	entries, err := os.ReadDir(pkgFullPath)
 	if err != nil {
 		return err
@@ -634,7 +634,7 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
 	if err = e.DefinePkg(pkgPath, pkgName); err != nil {
 		return nil
 	}
-	e.loadVendor2(pkgFullPath, make(map[string]struct{}), entries)
+	e.loadVendor2(pkgFullPath, m, entries)
 	return nil
 }
 
