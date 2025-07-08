@@ -490,7 +490,10 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 			return
 		}
 		err = h.server.DidOpen(ctx, params)
-		result = nil
+		if err != nil {
+			log.Print("didOpen error:", err)
+		}
+		return
 
 	case "textDocument/didChange":
 		var params lsp.DidChangeTextDocumentParams
@@ -499,7 +502,10 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 			return
 		}
 		err = h.server.DidChange(ctx, params)
-		result = nil
+		if err != nil {
+			log.Print("didChange error:", err)
+		}
+		return
 
 	case "textDocument/didClose":
 		var params lsp.DidCloseTextDocumentParams
@@ -508,7 +514,10 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 			return
 		}
 		err = h.server.DidClose(ctx, params)
-		result = nil
+		if err != nil {
+			log.Print("didClose error:", err)
+		}
+		return
 
 	case "textDocument/definition":
 		var params lsp.TextDocumentPositionParams
@@ -533,6 +542,9 @@ func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2
 			return
 		}
 		result, err = h.server.Completion(ctx, params)
+
+	case "initialized":
+		return
 
 	default:
 		_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)})
