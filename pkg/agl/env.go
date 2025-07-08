@@ -623,10 +623,8 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName, m); err != nil {
 		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
-			if err := e.loadPkgStd(pkgPath, pkgName, m); err != nil {
-				if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
-					return err
-				}
+			if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
+				return err
 			}
 		}
 	}
@@ -661,16 +659,22 @@ func (e *Env) loadPkgStd(path, pkgName string, m *PkgVisited) error {
 }
 
 func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
-	f := filepath.Base(path)
-	stdFilePath := filepath.Join("pkgs", path, f+".agl")
+	var prefix string
+	if strings.HasPrefix(path, "agl1/") {
+		prefix = "agl1"
+	} else {
+		prefix = "std"
+		path = filepath.Join("std", path)
+	}
+	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
-	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
 	if m.ContainsAdd(stdFilePath) {
 		return nil
 	}
+	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"+prefix+"/"))
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
