@@ -97,7 +97,7 @@ func goFuncTypeToFuncType(name, pkgName string, expr *goast.FuncType, env *Env, 
 				typeParamType := typeParam.Type
 				t := env.GetGoType2(pkgName, typeParamType, keepRaw)
 				t = types.GenericType{W: t, Name: typeParamName.Name, IsType: true}
-				//env.Define(typeParamName, typeParamName.Name, t)
+				env.Define(nil, typeParamName.Name, t)
 				paramsT = append(paramsT, t)
 			}
 		}
@@ -323,7 +323,8 @@ func loadImports(env *Env, node *ast.File, m *PkgVisited) {
 		if d.Name != nil {
 			importName = d.Name.Name
 		}
-		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
+		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
+		if err := env.loadPkg(path, importName, m); err != nil {
 			panic(err)
 		}
 	}
@@ -335,7 +336,8 @@ func loadGoImports(env *Env, node *goast.File, m *PkgVisited) {
 		if d.Name != nil {
 			importName = d.Name.Name
 		}
-		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
+		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
+		if err := env.loadPkg(path, importName, m); err != nil {
 			panic(err)
 		}
 	}
@@ -1170,9 +1172,6 @@ func (e *Env) GetGoType2(pkgName string, x goast.Node, keepRaw bool) types.Type 
 }
 
 func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types.Type {
-	//if v := e.lspNode(x); v != nil {
-	//	return v.Type
-	//}
 	switch xx := x.(type) {
 	case *goast.Ident:
 		if v2 := e.GetNameInfo(xx.Name); v2 != nil {
@@ -1181,18 +1180,20 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 		if v2 := e.GetNameInfo(pkgName + "." + xx.Name); v2 != nil {
 			return v2.Type
 		}
-		//p("?", pkgName, xx.Name)
-		return types.AnyType{}
 		return nil
 	case *goast.FuncType:
 		return goFuncTypeToFuncType("", pkgName, xx, e, true)
 	case *goast.Ellipsis:
 		t := e.GetGoType2(pkgName, xx.Elt, keepRaw)
-		panicIfNil(t, xx.Elt)
+		if t == nil {
+			return nil
+		}
 		return types.EllipsisType{Elt: t}
 	case *goast.ArrayType:
 		t := e.GetGoType2(pkgName, xx.Elt, keepRaw)
-		panicIfNil(t, xx.Elt)
+		if t == nil {
+			return nil
+		}
 		return types.ArrayType{Elt: t}
 	case *goast.CallExpr:
 		return nil
