@@ -44,3 +44,4 @@ func IsPermission(err error) bool
 func IsTimeout(err error) bool
 func LookupEnv(key string) string?
 type Args []string
+func Exit(code int)

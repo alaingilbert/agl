@@ -20,3 +20,4 @@ func WriteFile(name string, data []byte, perm os.FileMode) error
 func MkdirTemp(dir, pattern string) (string, error)
 func RemoveAll(path string) error
 type Args []string
+func Exit(code int)
