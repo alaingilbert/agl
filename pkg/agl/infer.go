@@ -2368,6 +2368,10 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 	infer.withEnv(func() {
 		infer.expr(stmt.X)
 		xT := infer.env.GetType2(stmt.X, infer.fset)
+		if xT == nil {
+			infer.errorf(stmt.Value, "Type not found for: %v", stmt.X)
+			return
+		}
 		if stmt.Key != nil {
 			// TODO find correct type for map
 			name := stmt.Key.(*ast.Ident).Name
@@ -2388,7 +2392,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 				infer.env.Define(stmt.Value, name, v.V)
 				infer.SetType(stmt.Value, v.V)
 			default:
-				infer.errorf(stmt.Value, "%v", to(xT))
+				infer.errorf(stmt.Value, "%v %v", name, to(xT))
 				return
 			}
 		}
