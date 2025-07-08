@@ -526,11 +526,11 @@ func parseInt(s1 string) Result[int] {
 	return MakeResultErr[int](Errors.New("some error"))
 }
 func inter(s2 string) Result[int] {
-	res := parseInt(s2)
-	if res.IsErr() {
-		return res
+	aglTmpVar1 := parseInt(s2)
+	if aglTmpVar1.IsErr() {
+		return aglTmpVar1
 	}
-	a := res.Unwrap()
+	a := aglTmpVar1.Unwrap()
 	return MakeResultOk(a + 1)
 }
 func main() {
@@ -592,11 +592,11 @@ func parseInt(s string) int! {
 	expected := `package main
 import "strconv"
 func parseInt(s string) Result[int] {
-	tmp, aglTmpErr1 := strconv.Atoi(s)
+	aglTmpVar1, aglTmpErr1 := strconv.Atoi(s)
 	if aglTmpErr1 != nil {
 		return MakeResultErr[int](aglTmpErr1)
 	}
-	num := AglIdentity(tmp)
+	num := AglIdentity(aglTmpVar1)
 	return MakeResultOk(num)
 }
 `
@@ -1817,11 +1817,11 @@ func errFn() Result[AglVoid] {
 	return MakeResultErr[AglVoid](Errors.New("some error"))
 }
 func maybeInt() Option[int] {
-	res := errFn()
-	if res.IsErr() {
+	aglTmpVar1 := errFn()
+	if aglTmpVar1.IsErr() {
 		return MakeOptionNone[int]()
 	}
-	res.Unwrap()
+	aglTmpVar1.Unwrap()
 	return MakeOptionSome(42)
 }
 func main() {
@@ -3675,11 +3675,11 @@ func test() string! {
 import "fmt"
 import "net/http"
 func test() Result[string] {
-	tmp, aglTmpErr1 := http.Get("https://google.com")
+	aglTmpVar1, aglTmpErr1 := http.Get("https://google.com")
 	if aglTmpErr1 != nil {
 		return MakeResultErr[string](aglTmpErr1)
 	}
-	res := AglIdentity(tmp)
+	res := AglIdentity(aglTmpVar1)
 	fmt.Println(res)
 	return MakeResultOk("done")
 }
@@ -8062,11 +8062,11 @@ func main() {
 	expected := `package main
 import "os"
 func test() Result[AglVoid] {
-	tmp, aglTmpErr1 := os.ReadFile("test.txt")
+	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
 	if aglTmpErr1 != nil {
 		return MakeResultErr[AglVoid](aglTmpErr1)
 	}
-	by := AglIdentity(tmp)
+	by := AglIdentity(aglTmpVar1)
 	if aglTmpErr2 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); aglTmpErr2 != nil {
 		return MakeResultErr[AglVoid](aglTmpErr2)
 	}
@@ -8404,11 +8404,11 @@ import "fmt"
 import "os"
 import "strings"
 func countLines(filename string) Result[int] {
-	tmp, aglTmpErr1 := os.ReadFile(filename)
+	aglTmpVar1, aglTmpErr1 := os.ReadFile(filename)
 	if aglTmpErr1 != nil {
 		return MakeResultErr[int](aglTmpErr1)
 	}
-	data := AglIdentity(tmp)
+	data := AglIdentity(aglTmpVar1)
 	content := string(data)
 	lines := strings.Split(content, "\n")
 	totalCount := AglVecSum(AglVecMap(lines, func(aglArg0 string) int {
