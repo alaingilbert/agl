@@ -11,6 +11,7 @@ import (
 	"go/types"
 	"log"
 	"os"
+	aglOs "agl1/os"
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
@@ -95,24 +96,15 @@ func main() {
 
 func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 	// Create a temporary directory
-	tmpDir, err := os.MkdirTemp("", "gorun")
-	if err != nil {
-		return err
-	}
+	tmpDir := aglOs.MkdirTemp("", "gorun")!
 	defer os.RemoveAll(tmpDir) // clean up
 
 	// Create a .go file inside it
 	tmpFile := filepath.Join(tmpDir, "main.go")
-	err = os.WriteFile(tmpFile, source, 0644)
-	if err != nil {
-		return err
-	}
+	aglOs.WriteFile(tmpFile, source, 0644)!
 
 	coreFile := filepath.Join(tmpDir, "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
-	if err != nil {
-		return err
-	}
+	aglOs.WriteFile(coreFile, []byte(agl.GenCore()), 0644)!
 
 	// Run `go run` on the file with additional arguments
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
@@ -158,7 +150,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
-	by := agl.Must(os.ReadFile(fileName))
+	by := aglOs.ReadFile(fileName)!
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
@@ -221,25 +213,17 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
-	by, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err)
-	}
+	by := aglOs.ReadFile(fileName)!
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
-	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
-		return err
-	}
+	aglOs.WriteFile(path, []byte(src), 0644)!
 
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
-	if err != nil {
-		return err
-	}
+	aglOs.WriteFile(coreFile, []byte(agl.GenCore()), 0644)!
 
 	return nil
 }
@@ -262,7 +246,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 		return nil
 	}
 	visited[folderPath] = struct{}{}
-	entries, _ := os.ReadDir(folderPath)
+	entries := aglOs.ReadDir(folderPath)!
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -276,10 +260,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 			if fileName.HasSuffix("_test.go") {
 				continue
 			}
-			src, err := os.ReadFile(fileName)
-			if err != nil {
-				return err
-			}
+			src := aglOs.ReadFile(fileName)!
 			fset := token.NewFileSet()
 			node, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
 			if err != nil {
@@ -312,17 +293,15 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 }
 
 func buildAglFile(fileName string) error {
-	by, err := os.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
+	by := aglOs.ReadFile(fileName)
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
-	return os.WriteFile(path, []byte(src), 0644)
+	aglOs.WriteFile(path, []byte(src), 0644)!
+	return nil
 }
 
 func startAction(ctx context.Context, cmd *cli.Command) error {
@@ -338,10 +317,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
-	by, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err)
-	}
+	by := aglOs.ReadFile(fileName)!
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
@@ -395,14 +371,14 @@ func modTidyAction(_ context.Context, c *cli.Command) error {
 }
 
 func modVendorAction(_ context.Context, c *cli.Command) error {
-	entries, _ := os.ReadDir(".")
+	entries := aglOs.ReadDir(".")!
 	var imports []string
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
 		if entry.Name().HasSuffix(".agl") {
-			by, _ := os.ReadFile(entry.Name())
+			by := aglOs.ReadFile(entry.Name())!
 			_, f := agl.ParseSrc(string(by))
 			for _, i := range f.Imports {
 				imports = append(imports, fmt.Sprintf("import _ %s", i.Path.Value))
@@ -411,7 +387,7 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 	}
 	importsStr := imports.Joined("\n")
 	const tmpGoFile = "aglTmp.go"
-	_ = os.WriteFile(tmpGoFile, []byte("package main\n"+importsStr), 0644)
+	aglOs.WriteFile(tmpGoFile, []byte("package main\n"+importsStr), 0644)!
 	defer os.Remove(tmpGoFile)
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Stdout = os.Stdout
