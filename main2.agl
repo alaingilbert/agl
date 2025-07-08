@@ -253,7 +253,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 		}
 		fileName := filepath.Join(folderPath, entry.Name())
 		if fileName.HasSuffix(".agl") {
-			if err := buildAglFile(fileName); err != nil {
+			if buildAglFile(fileName).IsErr() {
 				panic(fmt.Sprintf("failed to build %s", fileName))
 			}
 		} else if fileName.HasSuffix(".go") {
@@ -292,7 +292,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	return nil
 }
 
-func buildAglFile(fileName string) error {
+func buildAglFile(fileName string) ! {
 	by := aglOs.ReadFile(fileName)!
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
@@ -301,7 +301,7 @@ func buildAglFile(fileName string) error {
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
 	aglOs.WriteFile(path, []byte(src), 0644)!
-	return nil
+	return Ok(void)
 }
 
 func startAction(ctx context.Context, cmd *cli.Command) error {
