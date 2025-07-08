@@ -1052,6 +1052,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call, callT, WithDefinition(parentInfo))
 		}
 	case *ast.FuncLit:
+		infer.stmt(call.Body)
 		callT := funcTypeToFuncType("", call.Type, infer.env, infer.fset, false)
 		infer.SetType(call, callT)
 		infer.SetType(expr, callT.Return)
@@ -1741,9 +1742,9 @@ func (infer *FileInferrer) typeAssertExpr(expr *ast.TypeAssertExpr) {
 		infer.expr(expr.Type)
 	}
 	if expr.Type != nil {
-		_, bubble := infer.returnType.(types.OptionType)
-		t := types.OptionType{W: infer.env.GetType2(expr.Type, infer.fset), Bubble: bubble}
-		infer.SetType(expr, t)
+		//_, bubble := infer.returnType.(types.OptionType)
+		//t := types.OptionType{W: infer.env.GetType2(expr.Type, infer.fset), Bubble: bubble}
+		infer.SetType(expr, types.TypeAssertType{X: infer.env.GetType2(expr.X, infer.fset), Type: infer.env.GetType2(expr.Type, infer.fset)})
 	} else if infer.env.GetType(expr) == nil {
 		infer.SetType(expr, types.VoidType{})
 	}
@@ -2400,7 +2401,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					hasNewVar = true
 				}
 			}
-			if !hasNewVar {
+			if !hasNewVar && len(assigns) > 0 {
 				infer.errorf(stmt, "No new variables on the left side of ':='")
 				return
 			}
@@ -2504,6 +2505,15 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						lhsID := MustCast[*ast.Ident](lhs)
 						infer.SetType(lhs, x)
 						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+					}
+				case types.TypeAssertType:
+					if len(stmt.Lhs) > 0 {
+						lhsID0 := MustCast[*ast.Ident](stmt.Lhs[0])
+						assigns = append(assigns, AssignStruct{lhsID0, lhsID0.Name, lhsID0.Mutable.IsValid(), v.Type})
+						if len(stmt.Lhs) == 2 {
+							lhsID1 := MustCast[*ast.Ident](stmt.Lhs[1])
+							assigns = append(assigns, AssignStruct{lhsID1, lhsID1.Name, lhsID1.Mutable.IsValid(), types.BoolType{}})
+						}
 					}
 				default:
 					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))

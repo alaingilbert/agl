@@ -8001,6 +8001,26 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen290(t *testing.T) {
+	src := `package main
+func main() {
+	defer func() {
+		test := "Hello world"
+	}()
+}`
+	expected := `package main
+func main() {
+	defer func() {
+		test := "Hello world"
+	}()
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "string", test.TypeAt(4, 3).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
