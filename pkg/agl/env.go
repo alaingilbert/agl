@@ -463,7 +463,7 @@ type Later struct {
 func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
 			continue
 		}
 		fullPath := filepath.Join(vendorPath, entry.Name())
