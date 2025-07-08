@@ -790,10 +790,11 @@ func CoreFns() string {
 }
 
 func (e *Env) loadBaseValues() {
+	m := make(map[string]struct{})
 	e.loadCoreTypes()
-	_ = e.loadPkgAglStd("agl1/cmp", "", make(map[string]struct{}))
+	_ = e.loadPkgAglStd("agl1/cmp", "", m)
 	e.loadCoreFunctions()
-	_ = e.loadPkgAglStd("agl1/iter", "", make(map[string]struct{}))
+	_ = e.loadPkgAglStd("agl1/iter", "", m)
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})

@@ -283,11 +283,12 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	if pkgT != nil {
 		//return
 	}
-	infer.loadPkg(pkgPath, pkgName)
+	visited := make(map[string]struct{})
+	infer.loadPkg(pkgPath, pkgName, visited)
 }
 
-func (infer *FileInferrer) loadPkg(pkgPath, pkgName string) {
-	if err := infer.env.loadPkg(pkgPath, pkgName, make(map[string]struct{})); err != nil {
+func (infer *FileInferrer) loadPkg(pkgPath, pkgName string, visited map[string]struct{}) {
+	if err := infer.env.loadPkg(pkgPath, pkgName, visited); err != nil {
 		panic(err)
 	}
 }
