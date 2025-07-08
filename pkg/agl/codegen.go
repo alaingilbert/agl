@@ -193,8 +193,7 @@ func (g *Generator) genPackage() string {
 }
 
 func (g *Generator) genImports() (out string) {
-	for _, spec := range g.a.Imports {
-		out += "import "
+	genRow := func(spec *ast.ImportSpec) (out string) {
 		if spec.Name != nil {
 			out += spec.Name.Name + " "
 		}
@@ -203,6 +202,17 @@ func (g *Generator) genImports() (out string) {
 			pathValue = `"` + pathValue[6:]
 		}
 		out += pathValue + "\n"
+		return out
+	}
+	if len(g.a.Imports) == 1 {
+		spec := g.a.Imports[0]
+		out += "import " + genRow(spec)
+	} else if len(g.a.Imports) > 1 {
+		out += "import (\n"
+		for _, spec := range g.a.Imports {
+			out += "\t" + genRow(spec)
+		}
+		out += ")\n"
 	}
 	return
 }

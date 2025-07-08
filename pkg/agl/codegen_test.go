@@ -890,8 +890,10 @@ func main() {
 }
 `
 	expected := `package main
-import "os"
-import "fmt"
+import (
+	"os"
+	"fmt"
+)
 func main() {
 	aglTmp1, aglTmpErr1 := os.ReadFile("test.txt")
 	if aglTmpErr1 != nil {
@@ -1903,8 +1905,10 @@ func main() {
 }
 `
 	expected := `package main
-import "os"
-import "fmt"
+import (
+	"os"
+	"fmt"
+)
 func main() {
 	aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0755)
 	if aglTmpErr1 != nil {
@@ -2506,8 +2510,10 @@ import (
 )
 `
 	expected := `package main
-import "fmt"
-import "errors"
+import (
+	"fmt"
+	"errors"
+)
 `
 	testCodeGen(t, src, expected)
 }
@@ -3626,8 +3632,10 @@ func test() ! {
 	return Ok(void)
 }`
 	expected := `package main
-import "os"
-import "strconv"
+import (
+	"os"
+	"strconv"
+)
 func test() Result[AglVoid] {
 	if aglTmpErr1 := os.Chdir(""); aglTmpErr1 != nil {
 		return MakeResultErr[AglVoid](aglTmpErr1)
@@ -3648,8 +3656,10 @@ func test() string? {
 	return Some(res)
 }`
 	expected := `package main
-import "strconv"
-import "os"
+import (
+	"strconv"
+	"os"
+)
 func test() Option[string] {
 	aglTmp1, ok := os.LookupEnv("")
 	if !ok {
@@ -3672,8 +3682,10 @@ func test() string! {
 	return Ok("done")
 }`
 	expected := `package main
-import "fmt"
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 func test() Result[string] {
 	aglTmpVar1, aglTmpErr1 := http.Get("https://google.com")
 	if aglTmpErr1 != nil {
@@ -3696,8 +3708,10 @@ func main() {
 	fmt.Println(res)
 }`
 	expected := `package main
-import "fmt"
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 func main() {
 	aglTmp1, aglTmpErr1 := http.Get("https://google.com")
 	if aglTmpErr1 != nil {
@@ -3758,8 +3772,10 @@ func main() {
     }
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test() Option[int] {
 	return MakeOptionSome(42)
 }
@@ -3797,8 +3813,10 @@ func main() {
     fmt.Println("done")
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test(i int) Option[int] {
 	if i >= 2 {
 		return MakeOptionNone[int]()
@@ -3846,8 +3864,10 @@ func main() {
     fmt.Println("done")
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test(i int) Result[int] {
 	if i >= 2 {
 		return MakeResultErr[int](Errors.New("error"))
@@ -3895,8 +3915,10 @@ func main() {
     fmt.Println("done")
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test(i int) Result[int] {
 	if i >= 2 {
 		return MakeResultErr[int](Errors.New("error"))
@@ -3944,8 +3966,10 @@ func main() {
     fmt.Println("done")
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test(i int) Option[int] {
 	if i >= 2 {
 		return MakeOptionNone[int]()
@@ -4872,8 +4896,10 @@ func (v *Vertex) Abs() f64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }`
 	expected := `package main
-import "fmt"
-import "math"
+import (
+	"fmt"
+	"math"
+)
 type Abser interface {
 	Abs() float64
 }
@@ -4969,8 +4995,10 @@ func describe(i I) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }`
 	expected := `package main
-import "fmt"
-import "math"
+import (
+	"fmt"
+	"math"
+)
 type I interface {
 	M()
 }
@@ -5232,8 +5260,10 @@ func main() {
 	}
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 type MyError struct {
 	When time.Time
 	What string
@@ -5277,8 +5307,10 @@ func main() {
 	}
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 type MyError struct {
 	When time.Time
 	What string
@@ -5318,9 +5350,11 @@ func main() {
 }
 `
 	expected := `package main
-import "fmt"
-import "io"
-import "strings"
+import (
+	"fmt"
+	"io"
+	"strings"
+)
 func main() {
 	r := strings.NewReader("Hello, Reader!")
 	b := make(AglVec[byte], 8)
@@ -5363,9 +5397,11 @@ func main() {
 }
 `
 	expected := `package main
-import "fmt"
-import "io"
-import "strings"
+import (
+	"fmt"
+	"io"
+	"strings"
+)
 func main() {
 	r := strings.NewReader("Hello, Reader!")
 	b := make(AglVec[byte], 8)
@@ -5415,9 +5451,11 @@ func main() {
 }
 `
 	expected := `package main
-import "fmt"
-import "io"
-import "strings"
+import (
+	"fmt"
+	"io"
+	"strings"
+)
 func main() {
 	r := strings.NewReader("Hello, Reader!")
 	b := make(AglVec[byte], 8)
@@ -5576,8 +5614,10 @@ func main() {
 	fmt.Println(v.Abs())
 }`
 	expected := `package main
-import "fmt"
-import "math"
+import (
+	"fmt"
+	"math"
+)
 type Vertex struct {
 	X, Y float64
 }
@@ -5693,8 +5733,10 @@ func main() {
 }
 `
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func say(s string) {
 	for i := 0; i < 5; i++ {
 		time.Sleep(100 * time.Millisecond)
@@ -5830,8 +5872,10 @@ func main() {
 	}
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func main() {
 	start := time.Now()
 	tick := time.Tick(100 * time.Millisecond)
@@ -5903,9 +5947,11 @@ func main() {
 	fmt.Println(c.Value("somekey"))
 }`
 	expected := `package main
-import "fmt"
-import "sync"
-import "time"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 type SafeCounter struct {
 	mu sync.Mutex
 	v map[string]int
@@ -6134,9 +6180,11 @@ func main() {
    fmt.Println(string(by))
 }`
 	expected := `package main
-import "fmt"
-import "net/http"
-import "io"
+import (
+	"fmt"
+	"net/http"
+	"io"
+)
 func main() {
 	req := AglHttpNewRequest(http.MethodGet, "https://jsonip.com", MakeOptionNone[io.Reader]()).Unwrap()
 	c := http.Client{}
@@ -6198,13 +6246,15 @@ func main() {
 }
 `
 	expected := `package main
-import "go/ast"
-import "go/parser"
-import "go/token"
-import "go/types"
-import "os"
-import "path/filepath"
-import "runtime"
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
+	"os"
+	"path/filepath"
+	"runtime"
+)
 func main() {
 	goroot := runtime.GOROOT()
 	fileName := "request.go"
@@ -6765,10 +6815,12 @@ func main () {
     fmt.Println("Title:", title)
 }`
 	expected := `package main
-import "fmt"
-import "net/http"
-import "golang.org/x/net/html"
-import "io"
+import (
+	"fmt"
+	"net/http"
+	"golang.org/x/net/html"
+	"io"
+)
 func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
 		return n.FirstChild.Data
@@ -6874,8 +6926,10 @@ func main() {
     }
 }`
 	expected := `package main
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 func test(i int) Option[int] {
 	if i >= 2 {
 		return MakeOptionNone[int]()
@@ -7587,8 +7641,10 @@ func main() {
 	fmt.Println(sb.String())
 }`
 	expected := `package main
-import "fmt"
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 func main() {
 	var sb strings.Builder
 	sb.WriteString("hello world")
@@ -7965,8 +8021,10 @@ func main() {
 	return cmd.Run()
 }`
 	expected := `package main
-import "os"
-import "os/exec"
+import (
+	"os"
+	"os/exec"
+)
 func main() {
 	cmd := exec.Command("go", "mod")
 	cmd.Stdout = os.Stdout
@@ -8095,8 +8153,10 @@ func main() {
 	}
 }`
 	expected := `package main
-import "os"
-import "fmt"
+import (
+	"os"
+	"fmt"
+)
 func main() {
 	aglTmp1, aglTmpErr1 := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
 	if aglTmpErr1 == nil {
@@ -8371,8 +8431,10 @@ func main() {
 	}
 }`
 	expected := `package main
-import "fmt"
-import "os"
+import (
+	"fmt"
+	"os"
+)
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Println(os.Args[1])
@@ -8402,8 +8464,10 @@ func main() {
 	fmt.Println(arg)
 }`
 	expected := `package main
-import "os"
-import "fmt"
+import (
+	"os"
+	"fmt"
+)
 func getFirstArg() Result[string] {
 	if len(os.Args) < 2 {
 		return MakeResultErr[string](Errors.New("no arguments provided"))
@@ -8446,9 +8510,11 @@ func main() {
 	}
 }`
 	expected := `package main
-import "fmt"
-import "os"
-import "strings"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 func countLines(filename string) Result[int] {
 	aglTmpVar1, aglTmpErr1 := os.ReadFile(filename)
 	if aglTmpErr1 != nil {
