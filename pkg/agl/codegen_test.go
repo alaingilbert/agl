@@ -8237,6 +8237,31 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen297(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	tuples := [](int, int){(0, 0), (1, 1)}
+	t := tuples.Pop()
+	fmt.Println(t)
+}`
+	expected := `package main
+import "fmt"
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func main() {
+	tuples := AglVec[AglTupleStruct_int_int]{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 1, Arg1: 1}}
+	t := AglVecPop((*[]AglTupleStruct_int_int)(&tuples))
+	fmt.Println(t)
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
