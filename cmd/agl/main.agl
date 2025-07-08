@@ -351,9 +351,9 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 
 	// Insert headers after the package declaration
 	var result []string
-	result = append(result, lines[:packageLineIndex+1]...)
-	result = append(result, headers)
-	result = append(result, lines[packageLineIndex+1:]...)
+	result.Push(lines[:packageLineIndex+1]...)
+	result.Push(headers)
+	result.Push(lines[packageLineIndex+1:]...)
 
 	return result.Joined("\n")
 }
