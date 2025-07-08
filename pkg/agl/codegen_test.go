@@ -3633,7 +3633,7 @@ func test() Result[AglVoid] {
 		return MakeResultErr[AglVoid](err)
 	}
 	AglNoop()
-	return MakeResultOk(AglVoid)
+	return MakeResultOk(AglVoid{})
 }
 `
 	testCodeGen(t, src, expected)
@@ -8041,6 +8041,40 @@ func main() {
 		panic(aglTmpErr2)
 	}
 	AglNoop()
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen292(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func test() ! {
+	by := os.ReadFile("test.txt")!
+	os.WriteFile("test.txt", []byte("test"), 0644)!
+	return Ok(void)
+}
+func main() {
+	test()!
+}`
+	expected := `package main
+import "os"
+func test() Result[AglVoid] {
+	tmp, err := os.ReadFile("test.txt")
+	if err != nil {
+		return MakeResultErr[AglVoid](err)
+	}
+	by := AglIdentity(tmp)
+	if err := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); err != nil {
+		return MakeResultErr[AglVoid](err)
+	}
+	AglNoop()
+	return MakeResultOk(AglVoid{})
+}
+func main() {
+	test().Unwrap()
 }
 `
 	test := NewTest(src, WithMutEnforced(false))

@@ -422,7 +422,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) (out string) {
 	}
 	ret := types.ReplGenM(t.Return, g.genMap)
 	if ret != nil {
-		returnStr = " " + ret.GoStr()
+		returnStr = " " + ret.GoStrType()
 	}
 	out += fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr)
 	out += content1
@@ -527,7 +527,7 @@ func (g *Generator) genOkExpr(expr *ast.OkExpr) string {
 
 func (g *Generator) genErrExpr(expr *ast.ErrExpr) string {
 	content1 := g.genExpr(expr.X)
-	return fmt.Sprintf("MakeResultErr[%s](%s)", g.env.GetType(expr).(types.ErrType).T.GoStr(), content1)
+	return fmt.Sprintf("MakeResultErr[%s](%s)", g.env.GetType(expr).(types.ErrType).T.GoStrType(), content1)
 }
 
 func (g *Generator) genChanType(expr *ast.ChanType) string {
@@ -597,9 +597,9 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 	} else {
 		switch retT := g.returnType.(type) {
 		case types.ResultType:
-			before += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W, varName)
+			before += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName)
 		case types.OptionType:
-			before += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W)
+			before += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W.GoStrType())
 		case types.VoidType:
 			before += g.prefix + fmt.Sprintf("\treturn\n")
 		default:
@@ -1039,17 +1039,17 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		content1 := g.genExpr(expr.X)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			tmpl := "if err := %s; err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStr()), g.prefix))
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStrType()), g.prefix))
 			g.beforeStmt = append(g.beforeStmt, before)
 			return `AglNoop()`
 		} else if exprXT.Native {
 			tmpl := "tmp, err := %s\nif err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W), g.prefix))
+			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W.GoStrType()), g.prefix))
 			g.beforeStmt = append(g.beforeStmt, before)
 			return `AglIdentity(tmp)`
 		} else if exprXT.ConvertToNone {
 			tmpl := "res := %s\nif res.IsErr() {\n\treturn MakeOptionNone[%s]()\n}\n"
-			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStr()), g.prefix))
+			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStrType()), g.prefix))
 			g.beforeStmt = append(g.beforeStmt, before2)
 			out += "res.Unwrap()"
 		} else {
@@ -1427,6 +1427,9 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
 	var content1, content2 string
 	if expr.Type != nil {
 		content1 = g.genExpr(expr.Type)
+	}
+	if content1 == "AglVoid{}" {
+		return content1
 	}
 	if expr.Type != nil && TryCast[types.SetType](g.env.GetType(expr.Type)) {
 		var tmp []string

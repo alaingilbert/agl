@@ -19,7 +19,7 @@ type BaseType struct {
 
 type VoidType struct{}
 
-func (v VoidType) GoStr() string     { return "AglVoid" }
+func (v VoidType) GoStr() string     { return "AglVoid{}" }
 func (v VoidType) GoStrType() string { return "AglVoid" }
 func (v VoidType) String() string    { return "void" }
 
@@ -107,8 +107,8 @@ type ResultType struct {
 	ToNoneType    Type
 }
 
-func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
-func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStr()) }
+func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.GoStrType()) }
+func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStrType()) }
 func (r ResultType) String() string {
 	switch r.W.(type) {
 	case ArrayType, StarType, StructType, InterfaceType, CustomType:
@@ -124,8 +124,8 @@ type OptionType struct {
 	Bubble bool
 }
 
-func (o OptionType) GoStr() string     { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
-func (o OptionType) GoStrType() string { return fmt.Sprintf("Option[%s]", o.W.GoStr()) }
+func (o OptionType) GoStr() string     { return fmt.Sprintf("Option[%s]", o.W.GoStrType()) }
+func (o OptionType) GoStrType() string { return fmt.Sprintf("Option[%s]", o.W.GoStrType()) }
 func (o OptionType) String() string {
 	switch o.W.(type) {
 	case ArrayType, StarType, StructType, InterfaceType, CustomType:
@@ -321,7 +321,12 @@ func (s StructType) GoStr() string {
 	return s.String()
 }
 
-func (s StructType) GoStrType() string { return "struct{}" }
+func (s StructType) GoStrType() string {
+	if s.String() == "" {
+		return "struct{}"
+	}
+	return s.String()
+}
 
 func (s StructType) String() string {
 	out := s.Name
