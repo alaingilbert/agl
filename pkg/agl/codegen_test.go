@@ -8082,6 +8082,38 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen293(t *testing.T) {
+	src := `package main
+import "agl1/os"
+import "agl1/fmt"
+func main() {
+	match os.ReadFile("test.txt") {
+	case Ok(res):
+		fmt.Println(res)
+	case Err(_):
+		fmt.Println("error")
+	}
+}`
+	expected := `package main
+import "os"
+import "fmt"
+func main() {
+	aglTmp1, tmpErr := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
+	if tmpErr == nil {
+		res := *aglTmp1
+		fmt.Println(res)
+	}
+	if tmpErr != nil {
+		_ = tmpErr
+		fmt.Println("error")
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

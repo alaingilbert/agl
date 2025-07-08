@@ -695,7 +695,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					case *ast.OkExpr:
 						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := *%s\n", gPrefix, g.genExpr(v.X), varName)
 					case *ast.ErrExpr:
-						out += gPrefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s := tmpErr\n", gPrefix, g.genExpr(v.X))
+						binding := g.genExpr(v.X)
+						assignOp := utils.Ternary(binding == "_", "=", ":=")
+						out += gPrefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s %s tmpErr\n", gPrefix, binding, assignOp)
 					default:
 						panic("")
 					}
