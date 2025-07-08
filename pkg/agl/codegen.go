@@ -1189,49 +1189,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglSet%s(%s)", fnName, g.genExpr(e.X))
 			}
 		case types.StringType, types.UntypedStringType:
-			switch e.Sel.Name {
-			case "Split":
-				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			fnName := e.Sel.Name
+			switch fnName {
 			case "Replace":
-				return fmt.Sprintf("AglStringReplace(%s, %s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]), g.genExpr(expr.Args[2]))
+				return fmt.Sprintf("AglString%s(%s, %s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]), g.genExpr(expr.Args[2]))
 			case "ReplaceAll":
-				return fmt.Sprintf("AglStringReplaceAll(%s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
-			case "TrimSpace":
-				return fmt.Sprintf("AglStringTrimSpace(%s)", g.genExpr(e.X))
-			case "TrimPrefix":
-				return fmt.Sprintf("AglStringTrimPrefix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "HasPrefix":
-				return fmt.Sprintf("AglStringHasPrefix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "HasSuffix":
-				return fmt.Sprintf("AglStringHasSuffix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Lowercased":
-				return fmt.Sprintf("AglStringLowercased(%s)", g.genExpr(e.X))
-			case "Uppercased":
-				return fmt.Sprintf("AglStringUppercased(%s)", g.genExpr(e.X))
-			case "Int":
-				return fmt.Sprintf("AglStringInt(%s)", g.genExpr(e.X))
-			case "I8":
-				return fmt.Sprintf("AglStringI8(%s)", g.genExpr(e.X))
-			case "I16":
-				return fmt.Sprintf("AglStringI16(%s)", g.genExpr(e.X))
-			case "I32":
-				return fmt.Sprintf("AglStringI32(%s)", g.genExpr(e.X))
-			case "I64":
-				return fmt.Sprintf("AglStringI64(%s)", g.genExpr(e.X))
-			case "Uint":
-				return fmt.Sprintf("AglStringUint(%s)", g.genExpr(e.X))
-			case "U8":
-				return fmt.Sprintf("AglStringU8(%s)", g.genExpr(e.X))
-			case "U16":
-				return fmt.Sprintf("AglStringU16(%s)", g.genExpr(e.X))
-			case "U32":
-				return fmt.Sprintf("AglStringU32(%s)", g.genExpr(e.X))
-			case "U64":
-				return fmt.Sprintf("AglStringU64(%s)", g.genExpr(e.X))
-			case "F32":
-				return fmt.Sprintf("AglStringF32(%s)", g.genExpr(e.X))
-			case "F64":
-				return fmt.Sprintf("AglStringF64(%s)", g.genExpr(e.X))
+				return fmt.Sprintf("AglString%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+			case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
+				return fmt.Sprintf("AglString%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "TrimSpace", "Lowercased", "Uppercased", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
+				return fmt.Sprintf("AglString%s(%s)", fnName, g.genExpr(e.X))
 			}
 		case types.MapType:
 			if e.Sel.Name == "Get" {
