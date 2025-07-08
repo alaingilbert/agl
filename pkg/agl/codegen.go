@@ -1113,10 +1113,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 			fnName := e.Sel.Name
 			switch fnName {
-			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
-				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, g.genExpr(e.X))
+			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
+				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Reduce":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "Insert":
