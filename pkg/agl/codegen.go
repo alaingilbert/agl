@@ -1108,7 +1108,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	case *ast.SelectorExpr:
 		eXT := g.env.GetType(e.X)
 		eXT = types.Unwrap(eXT)
-		switch eXT.(type) {
+		switch eXTT := eXT.(type) {
 		case types.ArrayType:
 			fnName := e.Sel.Name
 			switch fnName {
@@ -1127,10 +1127,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
-				exT := types.Unwrap(g.env.GetType(e.X))
-				eltT := exT.(types.ArrayType).Elt
-				eltT = types.ReplGenM(eltT, g.genMap)
-				eltTStr := eltT.GoStr()
+				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 				var ellipsis string
 				if expr.Ellipsis.IsValid() {
 					ellipsis = "..."
