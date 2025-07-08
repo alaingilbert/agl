@@ -8088,8 +8088,8 @@ import "agl1/os"
 import "agl1/fmt"
 func main() {
 	match os.ReadFile("test.txt") {
-	case Ok(res):
-		fmt.Println(res)
+	case Ok(_):
+		fmt.Println("no error")
 	case Err(_):
 		fmt.Println("error")
 	}
@@ -8100,8 +8100,8 @@ import "fmt"
 func main() {
 	aglTmp1, tmpErr := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
 	if tmpErr == nil {
-		res := *aglTmp1
-		fmt.Println(res)
+		_ = *aglTmp1
+		fmt.Println("no error")
 	}
 	if tmpErr != nil {
 		_ = tmpErr

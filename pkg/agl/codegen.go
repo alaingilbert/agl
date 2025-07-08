@@ -693,7 +693,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 				if v.Native {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s := *%s\n", gPrefix, g.genExpr(v.X), varName)
+						binding := g.genExpr(v.X)
+						assignOp := utils.Ternary(binding == "_", "=", ":=")
+						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s %s *%s\n", gPrefix, binding, assignOp, varName)
 					case *ast.ErrExpr:
 						binding := g.genExpr(v.X)
 						assignOp := utils.Ternary(binding == "_", "=", ":=")
