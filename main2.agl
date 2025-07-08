@@ -4,12 +4,11 @@ import (
 	"agl/pkg/agl"
 	"context"
 	"errors"
-	"fmt"
+	"agl1/fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"go/types"
-	"log"
 	aglOs "agl1/os"
 	"os/exec"
 	"path/filepath"
@@ -30,7 +29,7 @@ func main() {
 				if msg == "" {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				fmt.Fprintln(aglOs.Stderr, msg)
 				aglOs.Exit(1)
 			}
 			panic(r)
@@ -89,7 +88,7 @@ func main() {
 		Action: startAction,
 	}
 	if err := cmd.Run(context.Background(), aglOs.Args); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -127,7 +126,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 				if msg == "" || debugFlag {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				fmt.Fprintln(aglOs.Stderr, msg)!
 				aglOs.Exit(1)
 			}
 			var inferErr *agl.InferError
@@ -136,7 +135,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 				if msg == "" || debugFlag {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				fmt.Fprintln(aglOs.Stderr, msg)!
 				aglOs.Exit(1)
 			}
 			panic(r)
@@ -148,7 +147,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	fileName := cmd.Args().Get(0)
-	if !strings.HasSuffix(fileName, ".agl") {
+	if !fileName.HasSuffix(".agl") {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
@@ -157,7 +156,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
 	errs := i.InferFile(fileName, f, fset, true)
-	if len(errs) > 0 {
+	if !errs.IsEmpty() {
 		panic(errs[0])
 	}
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
@@ -175,14 +174,14 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 func executeAction(ctx context.Context, cmd *cli.Command) error {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("EXIT_CODE:1")
+			fmt.Println("EXIT_CODE:1")!
 			var aglErr *agl.AglError
 			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
 				msg := aglErr.Error()
 				if msg == "" {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				fmt.Fprintln(aglOs.Stderr, msg)!
 				aglOs.Exit(1)
 			}
 			panic(r)
@@ -214,7 +213,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	fileName := cmd.Args().Get(0)
-	if !strings.HasSuffix(fileName, ".agl") {
+	if !fileName.HasSuffix(".agl") {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
@@ -270,7 +269,7 @@ func buildFolder(folderPath string, visited set[string]) ! {
 			fset := token.NewFileSet()
 			node, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
 			if err != nil {
-				log.Printf("failed to parse %s\n", fileName)
+				fmt.Printf("failed to parse %s\n", fileName)
 				continue
 			}
 			conf := types.Config{Importer: nil}
@@ -332,15 +331,15 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func insertHeadersAfterFirstLine(src, headers string) string {
-	lines := strings.Split(src, "\n")
-	if len(lines) == 0 {
+	lines := src.Split("\n")
+	if lines.IsEmpty() {
 		return src
 	}
 
 	// Find the package declaration line
 	packageLineIndex := -1
 	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+		if strings.TrimSpace(line).HasPrefix("package ") {
 			packageLineIndex = i
 			break
 		}
@@ -357,7 +356,7 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 	result = append(result, headers)
 	result = append(result, lines[packageLineIndex+1:]...)
 
-	return strings.Join(result, "\n")
+	return result.Joined("\n")
 }
 
 func modInitAction(_ context.Context, c *cli.Command) error {
