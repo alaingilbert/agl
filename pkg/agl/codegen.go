@@ -1042,7 +1042,8 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
-			tmpl := "if err := %s; err != nil {\n\treturn MakeResultErr[%s](err)\n}\n"
+			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
+			tmpl := fmt.Sprintf("if %s := %%s; %s != nil {\n\treturn MakeResultErr[%%s](%s)\n}\n", errName, errName, errName)
 			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStrType()), g.prefix))
 			g.beforeStmt = append(g.beforeStmt, before)
 			return `AglNoop()`

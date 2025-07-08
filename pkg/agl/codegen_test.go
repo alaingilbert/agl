@@ -3629,8 +3629,8 @@ func test() ! {
 import "os"
 import "strconv"
 func test() Result[AglVoid] {
-	if err := os.Chdir(""); err != nil {
-		return MakeResultErr[AglVoid](err)
+	if aglTmpErr1 := os.Chdir(""); aglTmpErr1 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr1)
 	}
 	AglNoop()
 	return MakeResultOk(AglVoid{})
@@ -8067,8 +8067,8 @@ func test() Result[AglVoid] {
 		return MakeResultErr[AglVoid](err)
 	}
 	by := AglIdentity(tmp)
-	if err := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); err != nil {
-		return MakeResultErr[AglVoid](err)
+	if aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); aglTmpErr1 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr1)
 	}
 	AglNoop()
 	return MakeResultOk(AglVoid{})
