@@ -201,8 +201,7 @@ func (g *Generator) genImports() (out string) {
 		if strings.HasPrefix(pathValue, `"agl1/`) {
 			pathValue = `"` + pathValue[6:]
 		}
-		out += pathValue + "\n"
-		return out
+		return out + pathValue + "\n"
 	}
 	if len(g.a.Imports) == 1 {
 		spec := g.a.Imports[0]
