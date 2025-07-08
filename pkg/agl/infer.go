@@ -278,6 +278,10 @@ func NewPkgVisited() *PkgVisited {
 	return &PkgVisited{m: make(map[string]struct{})}
 }
 
+func (p *PkgVisited) Keys() []string {
+	return slices.Collect(maps.Keys(p.m))
+}
+
 func (p *PkgVisited) Add(pkg string) {
 	p.m[pkg] = struct{}{}
 }
