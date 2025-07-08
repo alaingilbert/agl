@@ -5,8 +5,12 @@ type Expr interface{}
 type Ident struct {
     Name string
 }
+type BasicLit struct {
+    Value string
+}
 type File struct {
     Decls []ast.Decl
+    Imports []*ast.ImportSpec
 }
 type Field struct{
     Names []*ast.Ident
@@ -25,6 +29,10 @@ type FuncDecl struct {
     Type *ast.FuncType
 }
 type Spec interface{}
+type ImportSpec struct {
+    Name    *ast.Ident
+    Path    *ast.BasicLit
+}
 type GenDecl struct {
     Specs []ast.Spec
 }

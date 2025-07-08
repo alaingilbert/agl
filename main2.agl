@@ -2,18 +2,18 @@ package main
 
 import (
 	"agl/pkg/agl"
-	"context"
-	"errors"
+	"agl1/context"
+	"agl1/errors"
 	"agl1/fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"go/types"
+	"agl1/go/ast"
+	"agl1/go/parser"
+	"agl1/go/token"
+	"agl1/go/types"
 	aglOs "agl1/os"
-	"os/exec"
-	"path/filepath"
-	"runtime/debug"
-	"strings"
+	"agl1/os/exec"
+	"agl1/path/filepath"
+	"agl1/runtime/debug"
+	"agl1/strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -109,9 +109,7 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = aglOs.Stdout
 	cmd.Stderr = aglOs.Stderr
-	if err := cmd.Run(); err != nil {
-		return Err(err)
-	}
+	cmd.Run()!
 	return Ok(void)
 }
 
@@ -238,9 +236,7 @@ func buildProject() ! {
 	cmd := exec.Command("go", "build")
 	cmd.Stdout = aglOs.Stdout
 	cmd.Stderr = aglOs.Stderr
-	if err := cmd.Run(); err != nil {
-		return Err(err)
-	}
+	cmd.Run()!
 	return Ok(void)
 }
 
@@ -267,8 +263,11 @@ func buildFolder(folderPath string, visited set[string]) ! {
 			}
 			src := aglOs.ReadFile(fileName)!
 			fset := token.NewFileSet()
-			node, err := parser.ParseFile(fset, fileName, src, parser.AllErrors)
-			if err != nil {
+			var node *ast.File
+			match parser.ParseFile(fset, fileName, src, parser.AllErrors) {
+			case Ok(res):
+				node = res
+			case Err(_):
 				fmt.Printf("failed to parse %s\n", fileName)
 				continue
 			}
@@ -363,14 +362,16 @@ func modInitAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "init", c.Args().First())
 	cmd.Stdout = aglOs.Stdout
 	cmd.Stderr = aglOs.Stderr
-	return cmd.Run()
+	cmd.Run()!
+	return nil
 }
 
 func modTidyAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Stdout = aglOs.Stdout
 	cmd.Stderr = aglOs.Stderr
-	return cmd.Run()
+	cmd.Run()!
+	return nil
 }
 
 func modVendorAction(_ context.Context, c *cli.Command) error {
@@ -395,7 +396,8 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Stdout = aglOs.Stdout
 	cmd.Stderr = aglOs.Stderr
-	return cmd.Run()
+	cmd.Run()!
+	return nil
 }
 
 func versionAction(ctx context.Context, cmd *cli.Command) error {
