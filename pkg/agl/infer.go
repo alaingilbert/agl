@@ -288,11 +288,11 @@ func (p *PkgVisited) Contains(pkg string) bool {
 }
 
 func (p *PkgVisited) ContainsAdd(pkg string) bool {
-	if p.Contains(pkg) {
-		return true
+	res := p.Contains(pkg)
+	if !res {
+		p.Add(pkg)
 	}
-	p.Add(pkg)
-	return false
+	return res
 }
 
 func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
