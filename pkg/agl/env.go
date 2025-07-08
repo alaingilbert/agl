@@ -30,6 +30,10 @@ type Env struct {
 	NoIdxUnwrap   bool
 }
 
+func (e *Env) withEnv(clb func(*Env)) {
+	clb(e.SubEnv())
+}
+
 type Info struct {
 	Message    string
 	Definition token.Pos
