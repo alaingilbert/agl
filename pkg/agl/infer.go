@@ -2510,9 +2510,11 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					if len(stmt.Lhs) > 0 {
 						lhsID0 := MustCast[*ast.Ident](stmt.Lhs[0])
 						assigns = append(assigns, AssignStruct{lhsID0, lhsID0.Name, lhsID0.Mutable.IsValid(), v.Type})
+						infer.SetType(stmt.Lhs[0], v.Type)
 						if len(stmt.Lhs) == 2 {
 							lhsID1 := MustCast[*ast.Ident](stmt.Lhs[1])
 							assigns = append(assigns, AssignStruct{lhsID1, lhsID1.Name, lhsID1.Mutable.IsValid(), types.BoolType{}})
+							infer.SetType(stmt.Lhs[1], types.BoolType{})
 						}
 					}
 				default:
