@@ -1115,7 +1115,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "PopIf", "PushFront", "Remove":
-				return fmt.Sprintf("AglVec%s(&%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, g.genExpr(e.X))
 			case "Pop", "PopFront":

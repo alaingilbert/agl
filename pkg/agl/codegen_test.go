@@ -6595,7 +6595,7 @@ func main() {
 	expected := `package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
-	AglVecPopIf(&a, func() bool {
+	AglVecPopIf((*[]int)(&a), func() bool {
 		return true
 	})
 }
@@ -6612,7 +6612,7 @@ func main() {
 	expected := `package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
-	AglVecPopIf(&a, func() bool {
+	AglVecPopIf((*[]int)(&a), func() bool {
 		return true
 	})
 }
@@ -8255,6 +8255,27 @@ func main() {
 	tuples := AglVec[AglTupleStruct_int_int]{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 1, Arg1: 1}}
 	t := AglVecPop((*[]AglTupleStruct_int_int)(&tuples))
 	fmt.Println(t)
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen298(t *testing.T) {
+	src := `package main
+func main() {
+	tuples := [](int, int){(0, 0), (1, 1)}
+	tuples.Remove(0)
+}`
+	expected := `package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func main() {
+	tuples := AglVec[AglTupleStruct_int_int]{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 1, Arg1: 1}}
+	AglVecRemove((*[]AglTupleStruct_int_int)(&tuples), 0)
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
