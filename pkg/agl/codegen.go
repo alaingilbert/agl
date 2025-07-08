@@ -1179,51 +1179,14 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
 			}
 		case types.SetType:
-			switch e.Sel.Name {
-			case "Insert":
-				return fmt.Sprintf("AglSetInsert(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Remove":
-				return fmt.Sprintf("AglSetRemove(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Contains":
-				return fmt.Sprintf("AglSetContains(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Union":
-				return fmt.Sprintf("AglSetUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "FormUnion":
-				return fmt.Sprintf("AglSetFormUnion(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Subtracting":
-				return fmt.Sprintf("AglSetSubtracting(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Subtract":
-				return fmt.Sprintf("AglSetSubtract(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Intersection":
-				return fmt.Sprintf("AglSetIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "FormIntersection":
-				return fmt.Sprintf("AglSetFormIntersection(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "SymmetricDifference":
-				return fmt.Sprintf("AglSetSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "FormSymmetricDifference":
-				return fmt.Sprintf("AglSetFormSymmetricDifference(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "IsSubset":
-				return fmt.Sprintf("AglSetIsSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "IsStrictSubset":
-				return fmt.Sprintf("AglSetIsStrictSubset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "IsSuperset":
-				return fmt.Sprintf("AglSetIsSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "IsStrictSuperset":
-				return fmt.Sprintf("AglSetIsStrictSuperset(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Equals":
-				return fmt.Sprintf("AglSetEquals(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "IsDisjoint":
-				return fmt.Sprintf("AglSetIsDisjoint(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Intersects":
-				return fmt.Sprintf("AglSetIntersects(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "Len":
-				return fmt.Sprintf("AglSetLen(%s)", g.genExpr(e.X))
-			case "Min":
-				return fmt.Sprintf("AglSetMin(%s)", g.genExpr(e.X))
-			case "Max":
-				return fmt.Sprintf("AglSetMax(%s)", g.genExpr(e.X))
-			case "Iter":
-				return fmt.Sprintf("AglSetIter(%s)", g.genExpr(e.X))
+			fnName := e.Sel.Name
+			switch fnName {
+			case "Insert", "Remove", "Contains", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection",
+				"FormIntersection", "SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset",
+				"IsSuperset", "IsStrictSuperset", "Equals", "IsDisjoint", "Intersects":
+				return fmt.Sprintf("AglSet%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Len", "Min", "Max", "Iter":
+				return fmt.Sprintf("AglSet%s(%s)", fnName, g.genExpr(e.X))
 			}
 		case types.StringType, types.UntypedStringType:
 			switch e.Sel.Name {
