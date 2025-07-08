@@ -592,9 +592,9 @@ func parseInt(s string) int! {
 	expected := `package main
 import "strconv"
 func parseInt(s string) Result[int] {
-	tmp, err := strconv.Atoi(s)
-	if err != nil {
-		return MakeResultErr[int](err)
+	tmp, aglTmpErr1 := strconv.Atoi(s)
+	if aglTmpErr1 != nil {
+		return MakeResultErr[int](aglTmpErr1)
 	}
 	num := AglIdentity(tmp)
 	return MakeResultOk(num)
@@ -3675,9 +3675,9 @@ func test() string! {
 import "fmt"
 import "net/http"
 func test() Result[string] {
-	tmp, err := http.Get("https://google.com")
-	if err != nil {
-		return MakeResultErr[string](err)
+	tmp, aglTmpErr1 := http.Get("https://google.com")
+	if aglTmpErr1 != nil {
+		return MakeResultErr[string](aglTmpErr1)
 	}
 	res := AglIdentity(tmp)
 	fmt.Println(res)
@@ -8062,13 +8062,13 @@ func main() {
 	expected := `package main
 import "os"
 func test() Result[AglVoid] {
-	tmp, err := os.ReadFile("test.txt")
-	if err != nil {
-		return MakeResultErr[AglVoid](err)
+	tmp, aglTmpErr1 := os.ReadFile("test.txt")
+	if aglTmpErr1 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr1)
 	}
 	by := AglIdentity(tmp)
-	if aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); aglTmpErr1 != nil {
-		return MakeResultErr[AglVoid](aglTmpErr1)
+	if aglTmpErr2 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); aglTmpErr2 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr2)
 	}
 	AglNoop()
 	return MakeResultOk(AglVoid{})
@@ -8404,9 +8404,9 @@ import "fmt"
 import "os"
 import "strings"
 func countLines(filename string) Result[int] {
-	tmp, err := os.ReadFile(filename)
-	if err != nil {
-		return MakeResultErr[int](err)
+	tmp, aglTmpErr1 := os.ReadFile(filename)
+	if aglTmpErr1 != nil {
+		return MakeResultErr[int](aglTmpErr1)
 	}
 	data := AglIdentity(tmp)
 	content := string(data)
@@ -8422,13 +8422,13 @@ func main() {
 		return
 	}
 	filename := os.Args[1]
-	aglTmp1 := countLines(filename)
-	if aglTmp1.IsOk() {
-		total := aglTmp1.Unwrap()
+	aglTmp2 := countLines(filename)
+	if aglTmp2.IsOk() {
+		total := aglTmp2.Unwrap()
 		fmt.Printf("%8d %s\n", total, filename)
 	}
-	if aglTmp1.IsErr() {
-		err := aglTmp1.Err()
+	if aglTmp2.IsErr() {
+		err := aglTmp2.Err()
 		fmt.Printf("wc: %s: %s\n", filename, err)
 	}
 }
