@@ -229,7 +229,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func buildProject() error {
-	visited := make(map[string]struct{})
+	visited := set[string]{}
 	if Err(err) := buildFolder(".", visited) {
 		return err
 	}
@@ -241,11 +241,11 @@ func buildProject() error {
 
 const modPrefix = "agl/" // TODO get from go.mod
 
-func buildFolder(folderPath string, visited map[string]struct{}) ! {
-	if _, ok := visited[folderPath]; ok {
+func buildFolder(folderPath string, visited set[string]) ! {
+	if visited.Contains(folderPath) {
 		return Ok(void)
 	}
-	visited[folderPath] = struct{}{}
+	visited.Insert(folderPath)
 	entries := aglOs.ReadDir(folderPath)!
 	for _, entry := range entries {
 		if entry.IsDir() {
