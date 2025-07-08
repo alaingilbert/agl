@@ -460,22 +460,11 @@ type Later struct {
 	s       goast.Spec
 }
 
-func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m *PkgVisited, keepRaw bool) {
+func defineStructsFromGoSrc(files []EntryContent, env *Env, vendorPath string, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
-			continue
-		}
-		fullPath := filepath.Join(vendorPath, entry.Name())
-		if m.Contains(fullPath) {
-			continue
-		}
+	for _, entry := range files {
 		//p("LOADING", fullPath)
-		by, err := os.ReadFile(fullPath)
-		if err != nil {
-			continue
-		}
-		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", by, goparser.AllErrors|goparser.ParseComments))
+		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
 		for _, d := range node.Imports {
 			importName := ""
@@ -688,9 +677,14 @@ func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
 	return nil
 }
 
+type EntryContent struct {
+	Name    string
+	Content []byte
+}
+
 func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 	keepRaw := utils.True()
-	defineStructsFromGoSrc(entries, e, path, m, keepRaw)
+	files := make([]EntryContent, 0)
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
 			continue
@@ -703,7 +697,11 @@ func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 		if err != nil {
 			continue
 		}
-		defineFromGoSrc(e, path, by, keepRaw)
+		files = append(files, EntryContent{Name: entry.Name(), Content: by})
+	}
+	defineStructsFromGoSrc(files, e, path, m, keepRaw)
+	for _, entry := range files {
+		defineFromGoSrc(e, path, entry.Content, keepRaw)
 	}
 }
 
