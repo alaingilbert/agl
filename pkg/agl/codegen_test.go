@@ -8114,6 +8114,52 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen294(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func test() ! {
+	_ = os.ReadFile("test.txt")!
+	return Ok(void)
+}`
+	expected := `package main
+import "os"
+func test() Result[AglVoid] {
+	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
+	if aglTmpErr1 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr1)
+	}
+	_ = AglIdentity(aglTmpVar1)
+	return MakeResultOk(AglVoid{})
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen295(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func test() ! {
+	os.ReadFile("test.txt")!
+	return Ok(void)
+}`
+	expected := `package main
+import "os"
+func test() Result[AglVoid] {
+	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
+	if aglTmpErr1 != nil {
+		return MakeResultErr[AglVoid](aglTmpErr1)
+	}
+	AglIdentity(aglTmpVar1)
+	return MakeResultOk(AglVoid{})
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
