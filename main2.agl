@@ -230,7 +230,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 
 func buildProject() error {
 	visited := make(map[string]struct{})
-	if err := buildFolder(".", visited); err != nil {
+	if Err(err) := buildFolder(".", visited) {
 		return err
 	}
 	cmd := exec.Command("go", "build")
@@ -241,9 +241,9 @@ func buildProject() error {
 
 const modPrefix = "agl/" // TODO get from go.mod
 
-func buildFolder(folderPath string, visited map[string]struct{}) error {
+func buildFolder(folderPath string, visited map[string]struct{}) ! {
 	if _, ok := visited[folderPath]; ok {
-		return nil
+		return Ok(void)
 	}
 	visited[folderPath] = struct{}{}
 	entries := aglOs.ReadDir(folderPath)!
@@ -279,9 +279,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
 							if strings.HasPrefix(pathValue, modPrefix) {
 								newPath := strings.TrimPrefix(pathValue, modPrefix)
-								if err := buildFolder(newPath, visited); err != nil {
-									return err
-								}
+								buildFolder(newPath, visited)!
 							}
 						}
 					}
@@ -289,7 +287,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 			}
 		}
 	}
-	return nil
+	return Ok(void)
 }
 
 func buildAglFile(fileName string) ! {
