@@ -1110,6 +1110,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		eXT = types.Unwrap(eXT)
 		switch eXTT := eXT.(type) {
 		case types.ArrayType:
+			eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 			fnName := e.Sel.Name
 			switch fnName {
 			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
@@ -1119,20 +1120,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Reduce":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "Insert":
-				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s, %s)", fnName, eltTStr, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "PopIf", "PushFront", "Remove":
-				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Pop", "PopFront":
-				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s))", fnName, eltTStr, g.genExpr(e.X))
 			case "Push":
 				var params []string
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
-				eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, g.genExpr(e.X), strings.Join(params, ", "), ellipsis)
 			default:
