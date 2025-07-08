@@ -2,6 +2,7 @@ package main
 
 import (
 	"agl/pkg/agl"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,8 +54,11 @@ func main() {
 			{
 				Name:    "build",
 				Aliases: []string{"b"},
-				Usage:   "build command",
-				Action:  buildAction,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "force", Aliases: []string{"f"}},
+				},
+				Usage:  "build command",
+				Action: buildAction,
 			},
 			{
 				Name:    "execute",
@@ -216,6 +220,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if cmd.NArg() == 0 {
 		return buildProject()
 	}
+	forceFlag := cmd.Bool("force")
 	fileName := cmd.Args().Get(0)
 	if !strings.HasSuffix(fileName, ".agl") {
 		fmt.Println("file must have '.agl' extension")
@@ -234,6 +239,11 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	}
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
+	if by, err := os.ReadFile(path); err == nil {
+		if !bytes.HasPrefix(by, []byte("// agl:generated")) && !forceFlag {
+			panic(fmt.Sprintf("%s would be overwritten, use -f to force", path))
+		}
+	}
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
 	}
