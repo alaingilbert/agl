@@ -643,21 +643,6 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m *PkgVisited) 
 	return nil
 }
 
-func (e *Env) loadPkgStd(path, pkgName string, m *PkgVisited) error {
-	f := filepath.Base(path)
-	stdFilePath := filepath.Join("pkgs", "std", path, f+".agl")
-	by, err := contentFs.ReadFile(stdFilePath)
-	if err != nil {
-		return err
-	}
-	if m.ContainsAdd(stdFilePath) {
-		return nil
-	}
-	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, final, pkgName, by, m)
-	return nil
-}
-
 func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 	var prefix string
 	if strings.HasPrefix(path, "agl1/") {
