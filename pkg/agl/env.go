@@ -316,9 +316,7 @@ func (e *Env) loadCoreFunctions() {
 func defineFromSrc(env *Env, path, pkgName string, src []byte) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
-	if pkgName == "" {
-		pkgName = node.Name.Name
-	}
+	pkgName = Or(pkgName, node.Name.Name)
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		//return
 	}
