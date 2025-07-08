@@ -730,6 +730,7 @@ func (e *Env) loadPkgAgl() {
 	e.DefineFn("agl1.Set.Min", "func [T comparable](s agl1.Set[T]) T?")
 	e.DefineFn("agl1.Set.Max", "func [T comparable](s agl1.Set[T]) T?")
 	e.DefineFn("agl1.String.Split", "func (s, sep string) []string", WithDesc("Split slices s into all substrings separated by sep and returns a slice of\nthe substrings between those separators."))
+	e.DefineFn("agl1.String.Replace", "func (s, old, new string, n int) string")
 	e.DefineFn("agl1.String.ReplaceAll", "func (s, old, new string) string")
 	e.DefineFn("agl1.String.TrimPrefix", "func (s, prefix string) string")
 	e.DefineFn("agl1.String.TrimSpace", "func (s string) string")

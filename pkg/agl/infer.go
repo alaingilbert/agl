@@ -1151,6 +1151,15 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		var fnT types.FuncType
 		info := &Info{}
 		switch fnName {
+		case "Replace":
+			info = infer.env.GetNameInfo("agl1.String." + fnName)
+			fnT = infer.env.GetFn("agl1.String." + fnName)
+			if len(expr.Args) < 3 {
+				return
+			}
+			infer.SetType(expr.Args[0], fnT.Params[1])
+			infer.SetType(expr.Args[1], fnT.Params[2])
+			infer.SetType(expr.Args[2], fnT.Params[3])
 		case "ReplaceAll":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName)

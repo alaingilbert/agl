@@ -13,7 +13,6 @@ import (
 	"agl1/os/exec"
 	"agl1/path/filepath"
 	"agl1/runtime/debug"
-	"agl1/strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -221,7 +220,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	i := agl.NewInferrer(env)
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
-	path := strings.Replace(fileName, ".agl", ".go", 1)
+	path := fileName.Replace(".agl", ".go", 1)
 	aglOs.WriteFile(path, []byte(src), 0644)!
 
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
@@ -301,7 +300,7 @@ func buildAglFile(fileName string) ! {
 	i := agl.NewInferrer(env)
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
-	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
+	path := fileName.Replace(".agl", "_agl.go", 1)
 	aglOs.WriteFile(path, []byte(src), 0644)!
 	return Ok(void)
 }

@@ -1223,6 +1223,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Replace":
+				return fmt.Sprintf("AglStringReplace(%s, %s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]), g.genExpr(expr.Args[2]))
 			case "ReplaceAll":
 				return fmt.Sprintf("AglStringReplaceAll(%s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "TrimSpace":
@@ -2466,6 +2468,10 @@ func AglSetIsDisjoint[T comparable](s AglSet[T], other Iterator[T]) bool {
 // AglSetIntersects ...
 func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 	return !AglSetIsDisjoint(s, other)
+}
+
+func AglStringReplace(s string, old, new string, n int) string {
+	return aglImportStrings.Replace(s, old, new, n)
 }
 
 func AglStringReplaceAll(s string, old, new string) string {
