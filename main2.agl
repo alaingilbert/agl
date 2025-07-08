@@ -282,7 +282,7 @@ func buildFolder(folderPath string, visited set[string]) ! {
 						case *ast.ImportSpec:
 							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
 							if pathValue.HasPrefix(modPrefix) {
-								newPath := strings.TrimPrefix(pathValue, modPrefix)
+								newPath := pathValue.TrimPrefix(modPrefix)
 								buildFolder(newPath, visited)!
 							}
 						}

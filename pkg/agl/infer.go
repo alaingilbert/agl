@@ -1151,7 +1151,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		var fnT types.FuncType
 		info := &Info{}
 		switch fnName {
-		case "Split", "HasPrefix", "HasSuffix":
+		case "Split", "HasPrefix", "HasSuffix", "TrimPrefix":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName)
 			if len(expr.Args) < 1 {
