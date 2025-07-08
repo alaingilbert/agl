@@ -613,9 +613,7 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 }
 
 func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
-	if pkgName == "" {
-		pkgName = filepath.Base(pkgPath)
-	}
+	pkgName = Or(pkgName, filepath.Base(pkgPath))
 	//p("?LOADPKG", pkgPath, pkgName)
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
