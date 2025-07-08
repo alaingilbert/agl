@@ -534,14 +534,20 @@ func (g *Generator) genChanType(expr *ast.ChanType) string {
 	return fmt.Sprintf("chan %s", g.genExpr(expr.Value))
 }
 
+func getCheck(t types.Type) string {
+	switch t.(type) {
+	case types.ResultType:
+		return "IsErr()"
+	case types.OptionType:
+		return "IsNone()"
+	default:
+		panic("")
+	}
+}
+
 func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	content1 := g.genExpr(expr.X)
-	var check string
-	if TryCast[types.ResultType](g.env.GetType(expr.X)) {
-		check = "IsErr()"
-	} else if TryCast[types.OptionType](g.env.GetType(expr.X)) {
-		check = "IsNone()"
-	}
+	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
 	before := ""
@@ -559,12 +565,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 
 func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	content1 := g.genExpr(expr.X)
-	var check string
-	if TryCast[types.ResultType](g.env.GetType(expr.X)) {
-		check = "IsErr()"
-	} else if TryCast[types.OptionType](g.env.GetType(expr.X)) {
-		check = "IsNone()"
-	}
+	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	before := ""
 	gPrefix := g.prefix
@@ -582,12 +583,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 
 func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 	content1 := g.genExpr(expr.X)
-	var check string
-	if TryCast[types.ResultType](g.env.GetType(expr.X)) {
-		check = "IsErr()"
-	} else if TryCast[types.OptionType](g.env.GetType(expr.X)) {
-		check = "IsNone()"
-	}
+	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	before := ""
 	before += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
@@ -807,16 +803,12 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 	var content1 string
 	if expr.Init != nil {
 		content1 = strings.TrimSpace(g.genStmt(expr.Init))
-		if content1 != "" {
-			content1 = content1 + " "
-		}
+		content1 = utils.SuffixIf(content1, " ")
 	}
 	var content2 string
 	if expr.Tag != nil {
 		content2 = g.genExpr(expr.Tag)
-		if content2 != "" {
-			content2 = content2 + " "
-		}
+		content2 = utils.SuffixIf(content2, " ")
 	}
 	content3 := g.genStmt(expr.Body)
 	out += g.prefix + fmt.Sprintf("switch %s%s{\n", content1, content2)
@@ -828,7 +820,7 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
 	var content1, content2 string
 	if expr.Comm != nil {
-		content1 = "case " + strings.TrimSpace(g.genStmt(expr.Comm)) + ":"
+		content1 = fmt.Sprintf("case %s:", strings.TrimSpace(g.genStmt(expr.Comm)))
 	} else {
 		content1 = "default:"
 	}
@@ -842,14 +834,16 @@ func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
 
 func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
 	nT := types.ReplGenM(g.env.GetType(expr), g.genMap)
+	var typeStr string
 	switch v := nT.(type) {
 	case types.NoneType:
-		return fmt.Sprintf("MakeOptionNone[%s]()", v.W.GoStrType())
+		typeStr = v.W.GoStrType()
 	case types.TypeType:
-		return fmt.Sprintf("MakeOptionNone[%s]()", v.GoStrType())
+		typeStr = v.GoStrType()
 	default:
 		panic("")
 	}
+	return fmt.Sprintf("MakeOptionNone[%s]()", typeStr)
 }
 
 func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
@@ -878,7 +872,7 @@ func (g *Generator) genParenExpr(expr *ast.ParenExpr) string {
 	content1 := g.incrPrefix(func() string {
 		return g.genExpr(expr.X)
 	})
-	return "(" + content1 + ")"
+	return fmt.Sprintf("(%s)", content1)
 }
 
 func (g *Generator) genFuncLit(expr *ast.FuncLit) (out string) {
@@ -906,7 +900,8 @@ func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 			content2 = g.genExpr(field.Tag)
 			content2 = utils.PrefixIf(content2, " ")
 		}
-		out += gPrefix + "\t" + strings.Join(namesArr, ", ") + " " + content1 + content2 + "\n"
+		names := strings.Join(namesArr, ", ")
+		out += gPrefix + "\t" + names + " " + content1 + content2 + "\n"
 	}
 	out += gPrefix + "}"
 	return
