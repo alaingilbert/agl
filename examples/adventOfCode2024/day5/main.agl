@@ -1,6 +1,6 @@
 package main
 
-import "os"
+import "agl1/os"
 import "fmt"
 
 var mut data1 [][]int
