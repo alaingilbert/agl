@@ -5370,14 +5370,14 @@ func main() {
 	r := strings.NewReader("Hello, Reader!")
 	b := make(AglVec[byte], 8)
 	for {
-		aglTmp1, tmpErr := AglWrapNative2(r.Read(b)).NativeUnwrap()
-		if tmpErr == nil {
+		aglTmp1, aglTmpErr1 := AglWrapNative2(r.Read(b)).NativeUnwrap()
+		if aglTmpErr1 == nil {
 			n := *aglTmp1
 			_ = AglWrapNative2(fmt.Printf("n = %v b = %v\n", n, b))
 			_ = AglWrapNative2(fmt.Printf("b[:n] = %q\n", b[:n]))
 		}
-		if tmpErr != nil {
-			err := tmpErr
+		if aglTmpErr1 != nil {
+			err := aglTmpErr1
 			fmt.Printf("err = %v", err)
 			if err == io.EOF {
 				break
@@ -8098,13 +8098,13 @@ func main() {
 import "os"
 import "fmt"
 func main() {
-	aglTmp1, tmpErr := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
-	if tmpErr == nil {
+	aglTmp1, aglTmpErr1 := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
+	if aglTmpErr1 == nil {
 		_ = *aglTmp1
 		fmt.Println("no error")
 	}
-	if tmpErr != nil {
-		_ = tmpErr
+	if aglTmpErr1 != nil {
+		_ = aglTmpErr1
 		fmt.Println("error")
 	}
 }

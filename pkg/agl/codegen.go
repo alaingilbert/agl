@@ -678,12 +678,14 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
 func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 	content1 := strings.TrimSpace(g.genExpr(expr.Init))
 	initT := g.env.GetType(expr.Init)
-	varName := fmt.Sprintf(`aglTmp%d`, g.varCounter.Add(1))
+	id := g.varCounter.Add(1)
+	varName := fmt.Sprintf(`aglTmp%d`, id)
+	errName := fmt.Sprintf(`aglTmpErr%d`, id)
 	gPrefix := g.prefix
 	switch v := initT.(type) {
 	case types.ResultType:
 		if v.Native {
-			out += fmt.Sprintf("%s, tmpErr := AglWrapNative2(%s).NativeUnwrap()\n", varName, content1)
+			out += fmt.Sprintf("%s, %s := AglWrapNative2(%s).NativeUnwrap()\n", varName, errName, content1)
 		} else {
 			out += fmt.Sprintf("%s := %s\n", varName, content1)
 		}
@@ -695,11 +697,11 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					case *ast.OkExpr:
 						binding := g.genExpr(v.X)
 						assignOp := utils.Ternary(binding == "_", "=", ":=")
-						out += gPrefix + fmt.Sprintf("if tmpErr == nil {\n%s\t%s %s *%s\n", gPrefix, binding, assignOp, varName)
+						out += gPrefix + fmt.Sprintf("if %s == nil {\n%s\t%s %s *%s\n", errName, gPrefix, binding, assignOp, varName)
 					case *ast.ErrExpr:
 						binding := g.genExpr(v.X)
 						assignOp := utils.Ternary(binding == "_", "=", ":=")
-						out += gPrefix + fmt.Sprintf("if tmpErr != nil {\n%s\t%s %s tmpErr\n", gPrefix, binding, assignOp)
+						out += gPrefix + fmt.Sprintf("if %s != nil {\n%s\t%s %s %s\n", errName, gPrefix, binding, assignOp, errName)
 					default:
 						panic("")
 					}
