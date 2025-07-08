@@ -270,6 +270,23 @@ func (infer *FileInferrer) Infer() {
 	}
 }
 
+type PkgVisited struct {
+	m map[string]struct{}
+}
+
+func NewPkgVisited() *PkgVisited {
+	return &PkgVisited{m: make(map[string]struct{})}
+}
+
+func (p *PkgVisited) Add(pkg string) {
+	p.m[pkg] = struct{}{}
+}
+
+func (p *PkgVisited) Contains(pkg string) bool {
+	_, ok := p.m[pkg]
+	return ok
+}
+
 func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	var pkgName string
 	if i.Name != nil {
@@ -283,11 +300,11 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 	if pkgT != nil {
 		//return
 	}
-	visited := make(map[string]struct{})
+	visited := NewPkgVisited()
 	infer.loadPkg(pkgPath, pkgName, visited)
 }
 
-func (infer *FileInferrer) loadPkg(pkgPath, pkgName string, visited map[string]struct{}) {
+func (infer *FileInferrer) loadPkg(pkgPath, pkgName string, visited *PkgVisited) {
 	if err := infer.env.loadPkg(pkgPath, pkgName, visited); err != nil {
 		panic(err)
 	}

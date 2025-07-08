@@ -313,7 +313,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func defineFromSrc(env *Env, path, pkgName string, src []byte, m map[string]struct{}) {
+func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	pkgName = Or(pkgName, node.Name.Name)
@@ -456,14 +456,14 @@ type Later struct {
 	s       goast.Spec
 }
 
-func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m map[string]struct{}, keepRaw bool) {
+func defineStructsFromGoSrc(entries []os.DirEntry, env *Env, vendorPath string, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
 			continue
 		}
 		fullPath := filepath.Join(vendorPath, entry.Name())
-		if _, ok := m[fullPath]; ok {
+		if m.Contains(fullPath) {
 			continue
 		}
 		//p("LOADING", fullPath)
@@ -610,7 +610,7 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 	}
 }
 
-func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
+func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
 	//p("?LOADPKG", pkgPath, pkgName)
 	pkgFullPath := trimPrefixPath(pkgPath)
@@ -626,7 +626,7 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
 	return nil
 }
 
-func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m map[string]struct{}) error {
+func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m *PkgVisited) error {
 	entries, err := os.ReadDir(pkgFullPath)
 	if err != nil {
 		return err
@@ -638,7 +638,7 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m map[string]st
 	return nil
 }
 
-func (e *Env) loadPkgStd(path, pkgName string, m map[string]struct{}) error {
+func (e *Env) loadPkgStd(path, pkgName string, m *PkgVisited) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", "std", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -650,7 +650,7 @@ func (e *Env) loadPkgStd(path, pkgName string, m map[string]struct{}) error {
 	return nil
 }
 
-func (e *Env) loadPkgAglStd(path, pkgName string, m map[string]struct{}) error {
+func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -658,11 +658,15 @@ func (e *Env) loadPkgAglStd(path, pkgName string, m map[string]struct{}) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
+	if m.Contains(stdFilePath) {
+		return nil
+	}
+	m.Add(stdFilePath)
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
 
-func (e *Env) loadPkgVendor(path, pkgName string, m map[string]struct{}) error {
+func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
 	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
@@ -678,7 +682,7 @@ func (e *Env) loadPkgVendor(path, pkgName string, m map[string]struct{}) error {
 	return nil
 }
 
-func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEntry) {
+func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 	keepRaw := utils.True()
 	defineStructsFromGoSrc(entries, e, path, m, keepRaw)
 	for _, entry := range entries {
@@ -686,10 +690,10 @@ func (e *Env) loadVendor2(path string, m map[string]struct{}, entries []os.DirEn
 			continue
 		}
 		fullPath := filepath.Join(path, entry.Name())
-		if _, ok := m[fullPath]; ok {
+		if m.Contains(fullPath) {
 			continue
 		}
-		m[fullPath] = struct{}{}
+		m.Add(fullPath)
 		by, err := os.ReadFile(fullPath)
 		if err != nil {
 			continue
@@ -790,7 +794,7 @@ func CoreFns() string {
 }
 
 func (e *Env) loadBaseValues() {
-	m := make(map[string]struct{})
+	m := NewPkgVisited()
 	e.loadCoreTypes()
 	_ = e.loadPkgAglStd("agl1/cmp", "", m)
 	e.loadCoreFunctions()
