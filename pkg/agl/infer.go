@@ -288,10 +288,10 @@ func (p *PkgVisited) Contains(pkg string) bool {
 }
 
 func (p *PkgVisited) ContainsAdd(pkg string) bool {
-	if _, ok := p.m[pkg]; ok {
+	if p.Contains(pkg) {
 		return true
 	}
-	p.m[pkg] = struct{}{}
+	p.Add(pkg)
 	return false
 }
 
