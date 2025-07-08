@@ -280,7 +280,7 @@ func buildFolder(folderPath string, visited set[string]) ! {
 					for _, spec := range d.Specs {
 						switch s := spec.(type) {
 						case *ast.ImportSpec:
-							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
+							pathValue := s.Path.Value.ReplaceAll(`"`, ``)
 							if pathValue.HasPrefix(modPrefix) {
 								newPath := pathValue.TrimPrefix(modPrefix)
 								buildFolder(newPath, visited)!

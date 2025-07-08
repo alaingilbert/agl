@@ -1223,6 +1223,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch e.Sel.Name {
 			case "Split":
 				return fmt.Sprintf("AglStringSplit(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "ReplaceAll":
+				return fmt.Sprintf("AglStringReplaceAll(%s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "TrimPrefix":
 				return fmt.Sprintf("AglStringTrimPrefix(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "HasPrefix":
@@ -2462,6 +2464,10 @@ func AglSetIsDisjoint[T comparable](s AglSet[T], other Iterator[T]) bool {
 // AglSetIntersects ...
 func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 	return !AglSetIsDisjoint(s, other)
+}
+
+func AglStringReplaceAll(s string, old, new string) string {
+	return aglImportStrings.ReplaceAll(s, old, new)
 }
 
 func AglStringTrimPrefix(s string, prefix string) string {
