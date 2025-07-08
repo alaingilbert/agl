@@ -313,7 +313,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func defineFromSrc(env *Env, path, pkgName string, src []byte) {
+func defineFromSrc(env *Env, path, pkgName string, src []byte, m map[string]struct{}) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	pkgName = Or(pkgName, node.Name.Name)
@@ -325,7 +325,7 @@ func defineFromSrc(env *Env, path, pkgName string, src []byte) {
 		if d.Name != nil {
 			importName = d.Name.Name
 		}
-		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, make(map[string]struct{})); err != nil {
+		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
 			panic(err)
 		}
 	}
@@ -615,8 +615,8 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m map[string]struct{}) error {
 	//p("?LOADPKG", pkgPath, pkgName)
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName); err != nil {
-		if err := e.loadPkgAglStd(pkgPath, pkgName); err != nil {
-			if err := e.loadPkgStd(pkgPath, pkgName); err != nil {
+		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
+			if err := e.loadPkgStd(pkgPath, pkgName, m); err != nil {
 				if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
 					return err
 				}
@@ -638,7 +638,7 @@ func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string) error {
 	return nil
 }
 
-func (e *Env) loadPkgStd(path, pkgName string) error {
+func (e *Env) loadPkgStd(path, pkgName string, m map[string]struct{}) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", "std", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -646,11 +646,11 @@ func (e *Env) loadPkgStd(path, pkgName string) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "std/"))
-	defineFromSrc(e, final, pkgName, by)
+	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
 
-func (e *Env) loadPkgAglStd(path, pkgName string) error {
+func (e *Env) loadPkgAglStd(path, pkgName string, m map[string]struct{}) error {
 	f := filepath.Base(path)
 	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
@@ -658,7 +658,7 @@ func (e *Env) loadPkgAglStd(path, pkgName string) error {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/agl1/"))
-	defineFromSrc(e, final, pkgName, by)
+	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
 
@@ -674,7 +674,7 @@ func (e *Env) loadPkgVendor(path, pkgName string, m map[string]struct{}) error {
 		return nil
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"))
-	defineFromSrc(e, final, pkgName, by)
+	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
 
@@ -791,9 +791,9 @@ func CoreFns() string {
 
 func (e *Env) loadBaseValues() {
 	e.loadCoreTypes()
-	_ = e.loadPkgAglStd("agl1/cmp", "")
+	_ = e.loadPkgAglStd("agl1/cmp", "", make(map[string]struct{}))
 	e.loadCoreFunctions()
-	_ = e.loadPkgAglStd("agl1/iter", "")
+	_ = e.loadPkgAglStd("agl1/iter", "", make(map[string]struct{}))
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
