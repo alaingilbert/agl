@@ -338,7 +338,7 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 	// Find the package declaration line
 	packageLineIndex := -1
 	for i, line := range lines {
-		if strings.TrimSpace(line).HasPrefix("package ") {
+		if line.TrimSpace().HasPrefix("package ") {
 			packageLineIndex = i
 			break
 		}

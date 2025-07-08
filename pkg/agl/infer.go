@@ -1166,7 +1166,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 				return
 			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
-		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Uppercased", "Lowercased":
+		case "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Uppercased", "Lowercased", "TrimSpace":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName)
 		default:
