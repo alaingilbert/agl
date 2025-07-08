@@ -620,8 +620,7 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
 	//p("?LOADPKG", pkgPath, pkgName)
-	pkgFullPath := trimPrefixPath(pkgPath)
-	if err := e.loadPkgLocal(pkgFullPath, pkgPath, pkgName, m); err != nil {
+	if err := e.loadPkgLocal(pkgPath, pkgName, m); err != nil {
 		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
 			if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
 				return err
@@ -631,7 +630,8 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	return nil
 }
 
-func (e *Env) loadPkgLocal(pkgFullPath, pkgPath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgLocal(pkgPath, pkgName string, m *PkgVisited) error {
+	pkgFullPath := trimPrefixPath(pkgPath)
 	entries, err := os.ReadDir(pkgFullPath)
 	if err != nil {
 		return err
@@ -651,23 +651,21 @@ func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 		prefix = "pkgs/std/"
 		path = filepath.Join("std", path)
 	}
-	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
-	return e.loadAglFile(prefix, stdFilePath, pkgName, m)
+	return e.loadAglFile(prefix, path, pkgName, m)
 }
 
 func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
-	f := filepath.Base(path)
 	vendorPath := filepath.Join("vendor", path)
 	if entries, err := os.ReadDir(vendorPath); err == nil {
 		e.loadVendor2(vendorPath, m, entries)
 	}
-	stdFilePath := filepath.Join("pkgs", path, f+".agl")
 	prefix := "pkgs/"
-	_ = e.loadAglFile(prefix, stdFilePath, pkgName, m)
+	_ = e.loadAglFile(prefix, path, pkgName, m)
 	return nil
 }
 
-func (e *Env) loadAglFile(prefix, stdFilePath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadAglFile(prefix, path, pkgName string, m *PkgVisited) error {
+	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
