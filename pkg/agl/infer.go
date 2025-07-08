@@ -2170,6 +2170,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 			for _, el := range expr.Elts {
 				switch vv := el.(type) {
 				case *ast.KeyValueExpr:
+					infer.expr(vv.Value)
 					name := fmt.Sprintf("%s.%s.%s", idName, v.Sel.Name, vv.Key.(*ast.Ident).Name)
 					infer.SetType(vv.Key, infer.env.Get(name))
 				default:
@@ -2183,6 +2184,14 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		infer.SetType(expr, selT)
 		return
 	case *ast.StructType:
+		if v.Fields != nil {
+			for _, f := range v.Fields.List {
+				infer.expr(f.Type)
+				for _, n := range f.Names {
+					infer.SetType(n, infer.GetType(f.Type))
+				}
+			}
+		}
 		return
 	default:
 		infer.errorf(expr, "%v", to(expr.Type))
