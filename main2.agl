@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"go/types"
 	"log"
-	"os"
 	aglOs "agl1/os"
 	"os/exec"
 	"path/filepath"
@@ -31,8 +30,8 @@ func main() {
 				if msg == "" {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(os.Stderr, msg)
-				os.Exit(1)
+				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				aglOs.Exit(1)
 			}
 			panic(r)
 		}
@@ -89,7 +88,7 @@ func main() {
 		},
 		Action: startAction,
 	}
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
+	if err := cmd.Run(context.Background(), aglOs.Args); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -97,7 +96,7 @@ func main() {
 func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	// Create a temporary directory
 	tmpDir := aglOs.MkdirTemp("", "gorun")!
-	defer os.RemoveAll(tmpDir) // clean up
+	defer aglOs.RemoveAll(tmpDir) // clean up
 
 	// Create a .go file inside it
 	tmpFile := filepath.Join(tmpDir, "main.go")
@@ -109,8 +108,8 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	// Run `go run` on the file with additional arguments
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
 	cmd := exec.Command("go", cmdArgs...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = aglOs.Stdout
+	cmd.Stderr = aglOs.Stderr
 	if err := cmd.Run(); err != nil {
 		return Err(err)
 	}
@@ -128,8 +127,8 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 				if msg == "" || debugFlag {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(os.Stderr, msg)
-				os.Exit(1)
+				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				aglOs.Exit(1)
 			}
 			var inferErr *agl.InferError
 			if err, ok := r.(error); ok && errors.As(err, &inferErr) {
@@ -137,8 +136,8 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 				if msg == "" || debugFlag {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(os.Stderr, msg)
-				os.Exit(1)
+				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				aglOs.Exit(1)
 			}
 			panic(r)
 		}
@@ -183,8 +182,8 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 				if msg == "" {
 					msg += string(debug.Stack())
 				}
-				_, _ = fmt.Fprintln(os.Stderr, msg)
-				os.Exit(1)
+				_, _ = fmt.Fprintln(aglOs.Stderr, msg)
+				aglOs.Exit(1)
 			}
 			panic(r)
 		}
@@ -209,7 +208,10 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 
 func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if cmd.NArg() == 0 {
-		return buildProject()
+		if Err(err) := buildProject() {
+			return err
+		}
+		return nil
 	}
 	fileName := cmd.Args().Get(0)
 	if !strings.HasSuffix(fileName, ".agl") {
@@ -231,15 +233,16 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func buildProject() error {
+func buildProject() ! {
 	visited := set[string]{}
-	if Err(err) := buildFolder(".", visited) {
-		return err
-	}
+	buildFolder(".", visited)!
 	cmd := exec.Command("go", "build")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	cmd.Stdout = aglOs.Stdout
+	cmd.Stderr = aglOs.Stderr
+	if err := cmd.Run(); err != nil {
+		return Err(err)
+	}
+	return Ok(void)
 }
 
 const modPrefix = "agl/" // TODO get from go.mod
@@ -314,7 +317,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if fileName == "run" {
 		return runAction(ctx, cmd)
 	}
-	if !strings.HasSuffix(fileName, ".agl") {
+	if !fileName.HasSuffix(".agl") {
 		fmt.Println("file must have '.agl' extension")
 		return nil
 	}
@@ -359,15 +362,15 @@ func insertHeadersAfterFirstLine(src, headers string) string {
 
 func modInitAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "init", c.Args().First())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = aglOs.Stdout
+	cmd.Stderr = aglOs.Stderr
 	return cmd.Run()
 }
 
 func modTidyAction(_ context.Context, c *cli.Command) error {
 	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = aglOs.Stdout
+	cmd.Stderr = aglOs.Stderr
 	return cmd.Run()
 }
 
@@ -389,10 +392,10 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 	importsStr := imports.Joined("\n")
 	const tmpGoFile = "aglTmp.go"
 	aglOs.WriteFile(tmpGoFile, []byte("package main\n"+importsStr), 0644)!
-	defer os.Remove(tmpGoFile)
+	defer aglOs.Remove(tmpGoFile)
 	cmd := exec.Command("go", "mod", "vendor")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = aglOs.Stdout
+	cmd.Stderr = aglOs.Stderr
 	return cmd.Run()
 }
 
