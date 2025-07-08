@@ -6629,7 +6629,7 @@ func main() {
 	expected := `package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
-	AglVecPush(&a, 4)
+	AglVecPush((*[]int)(&a), 4)
 }
 `
 	testCodeGen(t, src, expected)
@@ -7130,7 +7130,6 @@ func main() {
 
 func TestCodeGen244(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
 func zip2[T, U any](a []T, b []U) [](T, U) {
 	mut out := make([](T, U), 0)
 	for i := range a {
@@ -7143,7 +7142,6 @@ func main() {
 	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
 }`
 	expected := `package main
-import "fmt"
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -7155,14 +7153,14 @@ type AglTupleStruct_int_uint8 struct {
 func zip2_T_int_U_int(a AglVec[int], b AglVec[int]) AglVec[AglTupleStruct_int_int] {
 	out := make(AglVec[AglTupleStruct_int_int], 0)
 	for i := range a {
-		AglVecPush(&out, AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
+		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
 	}
 	return nil
 }
 func zip2_T_int_U_uint8(a AglVec[int], b AglVec[uint8]) AglVec[AglTupleStruct_int_uint8] {
 	out := make(AglVec[AglTupleStruct_int_uint8], 0)
 	for i := range a {
-		AglVecPush(&out, AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
+		AglVecPush((*[]AglTupleStruct_int_uint8)(&out), AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
 	}
 	return nil
 }
@@ -7313,7 +7311,7 @@ func AglVecMyCompactMap_R_int_T_string(v AglVec[string], f func(string) Option[i
 	for _, el := range v {
 		if aglTmp1 := f(el); aglTmp1.IsSome() {
 			res := aglTmp1.Unwrap()
-			AglVecPush(&out, res)
+			AglVecPush((*[]int)(&out), res)
 		}
 	}
 	return out
@@ -7350,7 +7348,7 @@ func main() {
 	AglVecFlatMap_R_int_T_int(AglVec[int]{1, 2}, func(aglArg0 int) AglVec[int] {
 		out := make(AglVec[int], 0)
 		for i := 0; i < aglArg0; i++ {
-			AglVecPush(&out, aglArg0)
+			AglVecPush((*[]int)(&out), aglArg0)
 		}
 		return out
 	})
@@ -7360,7 +7358,7 @@ func AglVecFlatMap_R_int_T_int(v AglVec[int], f func(int) AglVec[int]) AglVec[in
 	for _, el := range v {
 		subArr := f(el)
 		for _, el1 := range subArr {
-			AglVecPush(&out, el1)
+			AglVecPush((*[]int)(&out), el1)
 		}
 	}
 	return out

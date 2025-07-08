@@ -1127,7 +1127,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
-				return fmt.Sprintf("AglVec%s(&%s, %s)", fnName, g.genExpr(e.X), strings.Join(params, ", "))
+				exT := types.Unwrap(g.env.GetType(e.X))
+				eltT := exT.(types.ArrayType).Elt
+				eltT = types.ReplGenM(eltT, g.genMap)
+				eltTStr := eltT.GoStr()
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, g.genExpr(e.X), strings.Join(params, ", "))
 			default:
 				extName := "agl1.Vec." + fnName
 				t := g.env.Get(extName)
