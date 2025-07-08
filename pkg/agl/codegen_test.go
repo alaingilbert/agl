@@ -718,7 +718,7 @@ func main() {
 	expected := `package main
 func main() {
 	a := AglVec[int64]{1}
-	b := AglReduce(AglVecMap(AglVecFilter(a, func(aglArg0 int64) bool {
+	b := AglVecReduce(AglVecMap(AglVecFilter(a, func(aglArg0 int64) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int64) int64 {
 		return aglArg0
@@ -743,14 +743,14 @@ func main() {
 func main() {
 	a1 := AglVec[int64]{1}
 	a2 := AglVec[uint8]{1}
-	b := AglReduce(AglVecMap(AglVecFilter(a1, func(aglArg0 int64) bool {
+	b := AglVecReduce(AglVecMap(AglVecFilter(a1, func(aglArg0 int64) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int64) int64 {
 		return aglArg0
 	}), 0, func(aglArg0 int64, aglArg1 int64) int64 {
 		return aglArg0 + aglArg1
 	})
-	c := AglReduce(AglVecMap(AglVecFilter(a2, func(aglArg0 uint8) bool {
+	c := AglVecReduce(AglVecMap(AglVecFilter(a2, func(aglArg0 uint8) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 uint8) uint8 {
 		return aglArg0
@@ -827,7 +827,7 @@ func main() {
 	expected := `package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
-	b := AglReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
+	b := AglVecReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
 		return aglArg0 + aglArg1
 	})
 	AglAssert(b == 10, "assert failed line 5" + " " + "b should be 10")
@@ -871,7 +871,7 @@ func main() {
 	c := AglVecMap(b, func(aglArg0 int) int {
 		return aglArg0 + 1
 	})
-	d := AglReduce(c, 0, func(aglArg0 int, aglArg1 int) int {
+	d := AglVecReduce(c, 0, func(aglArg0 int, aglArg1 int) int {
 		return aglArg0 + aglArg1
 	})
 	AglAssert(d == 8, "assert failed line 7")
@@ -2550,7 +2550,7 @@ func main() {
 	p1 := Person{name: "John"}
 	p2 := Person{name: "Jane"}
 	arr := AglVec[Person]{p1, p2}
-	res := AglJoined(AglVecMap(arr, func(aglArg0 Person) string {
+	res := AglVecJoined(AglVecMap(arr, func(aglArg0 Person) string {
 		return aglArg0.name
 	}), ", ")
 	fmt.Println(res)
@@ -2659,7 +2659,7 @@ func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
 	people := AglVec[Person]{p1, p2}
-	names := AglJoined(AglVecMap(people, func(el Person) string {
+	names := AglVecJoined(AglVecMap(people, func(el Person) string {
 		return el.name
 	}), ", ")
 }
@@ -2693,7 +2693,7 @@ func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
 	people := AglVec[Person]{p1, p2}
-	names := AglJoined(AglVecMap(people, clb), ", ")
+	names := AglVecJoined(AglVecMap(people, clb), ", ")
 }
 `
 	testCodeGen(t, src, expected)
@@ -2827,7 +2827,7 @@ func main() {
 	p1 := Person{name: "John", age: 10}
 	p2 := Person{name: "Jane", age: 20}
 	people := AglVec[Person]{p1, p2}
-	names := AglJoined(AglVecMap(people, func(el Person) string {
+	names := AglVecJoined(AglVecMap(people, func(el Person) string {
 		return el.name
 	}), ", ")
 }
@@ -4393,7 +4393,7 @@ func main() {
 func main() {
 	arr := AglVec[int]{1, 2, 3}
 	var a uint8
-	a = AglReduce(arr, 0, func(aglArg0 uint8, aglArg1 int) uint8 {
+	a = AglVecReduce(arr, 0, func(aglArg0 uint8, aglArg1 int) uint8 {
 		return aglArg0 + uint8(aglArg1)
 	})
 }
@@ -4487,7 +4487,7 @@ func main() {
 	expected := `package main
 func main() {
 	arr := AglVec[int]{1, 2, 3}
-	r := AglReduce(AglVecMap(AglVecFilter(arr, func(aglArg0 int) bool {
+	r := AglVecReduce(AglVecMap(AglVecFilter(arr, func(aglArg0 int) bool {
 		return aglArg0 == 1
 	}), func(aglArg0 int) int {
 		return aglArg0
@@ -6465,7 +6465,7 @@ func main() {
 import "go/ast"
 func main() {
 	a := AglVec[*ast.Ident]{&ast.Ident{Name: "foo"}}
-	b := AglJoined(AglVecMap(a, func(aglArg0 *ast.Ident) string {
+	b := AglVecJoined(AglVecMap(a, func(aglArg0 *ast.Ident) string {
 		return aglArg0.Name
 	}), ", ")
 }

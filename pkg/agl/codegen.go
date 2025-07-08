@@ -1102,59 +1102,24 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		switch eXT.(type) {
 		case types.ArrayType:
 			fnName := e.Sel.Name
-			if fnName == "Filter" {
-				return fmt.Sprintf("AglVecFilter(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "AllSatisfy" {
-				return fmt.Sprintf("AglVecAllSatisfy(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Contains" {
-				return fmt.Sprintf("AglVecContains(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Any" {
-				return fmt.Sprintf("AglVecAny(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Map" {
-				return fmt.Sprintf("AglVecMap(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Reduce" {
-				return fmt.Sprintf("AglReduce(%s, %s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
-			} else if fnName == "Find" {
-				return fmt.Sprintf("AglVecFind(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Sum" {
-				return fmt.Sprintf("AglVecSum(%s)", g.genExpr(e.X))
-			} else if fnName == "Last" {
-				return fmt.Sprintf("AglVecLast(%s)", g.genExpr(e.X))
-			} else if fnName == "First" {
-				return fmt.Sprintf("AglVecFirst(%s)", g.genExpr(e.X))
-			} else if fnName == "Len" {
-				return fmt.Sprintf("AglVecLen(%s)", g.genExpr(e.X))
-			} else if fnName == "IsEmpty" {
-				return fmt.Sprintf("AglVecIsEmpty(%s)", g.genExpr(e.X))
-			} else if fnName == "Insert" {
-				return fmt.Sprintf("AglVecInsert(%s, %s ,%s)", g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
-			} else if fnName == "Remove" {
-				return fmt.Sprintf("AglVecRemove(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Clone" {
-				return fmt.Sprintf("AglVecClone(%s)", g.genExpr(e.X))
-			} else if fnName == "Indices" {
-				return fmt.Sprintf("AglVecIndices(%s)", g.genExpr(e.X))
-			} else if fnName == "Pop" {
-				return fmt.Sprintf("AglVecPop(&%s)", g.genExpr(e.X))
-			} else if fnName == "PopFront" {
-				return fmt.Sprintf("AglVecPopFront(&%s)", g.genExpr(e.X))
-			} else if fnName == "PopIf" {
-				return fmt.Sprintf("AglVecPopIf(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Push" {
+			switch fnName {
+			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
+				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "PopIf", "PushFront", "Remove":
+				return fmt.Sprintf("AglVec%s(&%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
+				return fmt.Sprintf("AglVec%s(%s)", fnName, g.genExpr(e.X))
+			case "Pop", "PopFront":
+				return fmt.Sprintf("AglVec%s(&%s)", fnName, g.genExpr(e.X))
+			case "Reduce", "Insert":
+				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+			case "Push":
 				var params []string
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
-				return fmt.Sprintf("AglVecPush(&%s, %s)", g.genExpr(e.X), strings.Join(params, ", "))
-			} else if fnName == "PushFront" {
-				return fmt.Sprintf("AglVecPushFront(&%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Joined" {
-				return fmt.Sprintf("AglJoined(%s, %s)", g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			} else if fnName == "Sorted" {
-				return fmt.Sprintf("AglVecSorted(%s)", g.genExpr(e.X))
-			} else if fnName == "Iter" {
-				return fmt.Sprintf("AglVecIter(%s)", g.genExpr(e.X))
-			} else {
+				return fmt.Sprintf("AglVec%s(&%s, %s)", fnName, g.genExpr(e.X), strings.Join(params, ", "))
+			default:
 				extName := "agl1.Vec." + fnName
 				t := g.env.Get(extName)
 				rawFnT := t
@@ -2086,7 +2051,7 @@ func AglVecAny[T any](a []T, f func(T) bool) bool {
 	return false
 }
 
-func AglReduce[T any, R aglImportCmp.Ordered](a []T, acc R, f func(R, T) R) R {
+func AglVecReduce[T any, R aglImportCmp.Ordered](a []T, acc R, f func(R, T) R) R {
 	for _, v := range a {
 		acc = f(acc, v)
 	}
@@ -2570,13 +2535,13 @@ func AglVecSorted[E aglImportCmp.Ordered](a []E) []E {
 	return aglImportSlices.Sorted(aglImportSlices.Values(a))
 }
 
-func AglJoined(a []string, s string) string {
+func AglVecJoined(a []string, s string) string {
 	return aglImportStrings.Join(a, s)
 }
 
 func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
 	var zero T
-	return AglReduce(a, zero, func(acc, el T) T { return acc + el })
+	return AglVecReduce(a, zero, func(acc, el T) T { return acc + el })
 }
 
 type AglNumber interface {
