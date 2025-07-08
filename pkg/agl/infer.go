@@ -184,7 +184,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypes(tt, t) {
-			if !TryCast[types.UntypedNumType](tt) {
+			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](tt) {
 				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
