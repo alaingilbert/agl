@@ -313,10 +313,6 @@ func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
 		//return
 	}
 	visited := NewPkgVisited()
-	infer.loadPkg(pkgPath, pkgName, visited)
-}
-
-func (infer *FileInferrer) loadPkg(pkgPath, pkgName string, visited *PkgVisited) {
 	if err := infer.env.loadPkg(pkgPath, pkgName, visited); err != nil {
 		panic(err)
 	}
