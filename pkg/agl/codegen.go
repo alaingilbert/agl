@@ -1110,28 +1110,30 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		eXT = types.Unwrap(eXT)
 		switch eXTT := eXT.(type) {
 		case types.ArrayType:
+			genEX := g.genExpr(e.X)
+			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]) }
 			eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 			fnName := e.Sel.Name
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
-				return fmt.Sprintf("AglVec%s(%s)", fnName, g.genExpr(e.X))
+				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
 			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined":
-				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
 			case "Reduce":
-				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, genEX, genArgFn(0), genArgFn(1))
 			case "Insert":
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s, %s)", fnName, eltTStr, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s, %s)", fnName, eltTStr, genEX, genArgFn(0), genArgFn(1))
 			case "PopIf", "PushFront", "Remove":
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, g.genExpr(e.X), g.genExpr(expr.Args[0]))
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, genEX, genArgFn(0))
 			case "Pop", "PopFront":
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s))", fnName, eltTStr, g.genExpr(e.X))
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s))", fnName, eltTStr, genEX)
 			case "Push":
 				var params []string
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
 				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, g.genExpr(e.X), strings.Join(params, ", "), ellipsis)
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, strings.Join(params, ", "), ellipsis)
 			default:
 				extName := "agl1.Vec." + fnName
 				t := g.env.Get(extName)
@@ -1154,7 +1156,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 				elsStr := strings.Join(els, "_")
 				content2 := utils.PrefixIf(g.genExprs(expr.Args), ", ")
-				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, g.genExpr(e.X), content2)
+				return fmt.Sprintf("AglVec%s_%s(%s%s)", fnName, elsStr, genEX, content2)
 			}
 		case types.SetType:
 			fnName := e.Sel.Name
