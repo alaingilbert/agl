@@ -94,7 +94,7 @@ func main() {
 	}
 }
 
-func spawnGoRunFromBytes(source []byte, programArgs []string) error {
+func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	// Create a temporary directory
 	tmpDir := aglOs.MkdirTemp("", "gorun")!
 	defer os.RemoveAll(tmpDir) // clean up
@@ -111,7 +111,10 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return Err(err)
+	}
+	return Ok(void)
 }
 
 func runAction(ctx context.Context, cmd *cli.Command) error {
@@ -166,7 +169,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		programArgs = cmd.Args().Slice()[1:] // Skip the .agl filename
 	}
 
-	_ = spawnGoRunFromBytes([]byte(src), programArgs)
+	spawnGoRunFromBytes([]byte(src), programArgs)!
 	return nil
 }
 
