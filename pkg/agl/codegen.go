@@ -1172,12 +1172,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
-			case "Keys":
+			case "Keys", "Values":
 				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglIdentity(AglMapKeys(%s))", content1)
-			case "Values":
-				content1 := g.genExpr(e.X)
-				return fmt.Sprintf("AglIdentity(AglMapValues(%s))", content1)
+				return fmt.Sprintf("AglIdentity(AglMap%s(%s))", fnName, content1)
 			}
 		default:
 			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
