@@ -8218,6 +8218,25 @@ func test() Result[AglVoid] {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen296(t *testing.T) {
+	src := `package main
+func main() {
+	words := []string{"foo", "bar", "baz"}
+	var a []string
+	a.Push(words...)
+}`
+	expected := `package main
+func main() {
+	words := AglVec[string]{"foo", "bar", "baz"}
+	var a AglVec[string]
+	AglVecPush((*[]string)(&a), words...)
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

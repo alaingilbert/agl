@@ -1131,7 +1131,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				eltT := exT.(types.ArrayType).Elt
 				eltT = types.ReplGenM(eltT, g.genMap)
 				eltTStr := eltT.GoStr()
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s)", fnName, eltTStr, g.genExpr(e.X), strings.Join(params, ", "))
+				var ellipsis string
+				if expr.Ellipsis.IsValid() {
+					ellipsis = "..."
+				}
+				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, g.genExpr(e.X), strings.Join(params, ", "), ellipsis)
 			default:
 				extName := "agl1.Vec." + fnName
 				t := g.env.Get(extName)
