@@ -317,13 +317,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
-	fset := token.NewFileSet()
-	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
-	pkgName = Or(pkgName, node.Name.Name)
-	if err := env.DefinePkg(pkgName, path); err != nil {
-		//return
-	}
+func loadImports(env *Env, node *ast.File, m *PkgVisited) {
 	for _, d := range node.Imports {
 		importName := ""
 		if d.Name != nil {
@@ -333,6 +327,28 @@ func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
 			panic(err)
 		}
 	}
+}
+
+func loadGoImports(env *Env, node *goast.File, m *PkgVisited) {
+	for _, d := range node.Imports {
+		importName := ""
+		if d.Name != nil {
+			importName = d.Name.Name
+		}
+		if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
+	fset := token.NewFileSet()
+	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
+	pkgName = Or(pkgName, node.Name.Name)
+	if err := env.DefinePkg(pkgName, path); err != nil {
+		//return
+	}
+	loadImports(env, node, m)
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -466,15 +482,7 @@ func defineStructsFromGoSrc(files []EntryContent, env *Env, vendorPath string, m
 		//p("LOADING", fullPath)
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
-		for _, d := range node.Imports {
-			importName := ""
-			if d.Name != nil {
-				importName = d.Name.Name
-			}
-			if err := env.loadPkg(strings.ReplaceAll(d.Path.Value, `"`, ``), importName, m); err != nil {
-				panic(err)
-			}
-		}
+		loadGoImports(env, node, m)
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
 			case *goast.GenDecl:
