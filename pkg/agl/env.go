@@ -349,6 +349,10 @@ func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
 		//return
 	}
 	loadImports(env, node, m)
+	loadDecls(env, node, pkgName, fset)
+}
+
+func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -476,7 +480,7 @@ type Later struct {
 	s       goast.Spec
 }
 
-func defineStructsFromGoSrc(files []EntryContent, env *Env, vendorPath string, m *PkgVisited, keepRaw bool) {
+func defineStructsFromGoSrc(files []EntryContent, env *Env, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range files {
 		//p("LOADING", fullPath)
@@ -707,7 +711,7 @@ func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 		}
 		files = append(files, EntryContent{Name: entry.Name(), Content: by})
 	}
-	defineStructsFromGoSrc(files, e, path, m, keepRaw)
+	defineStructsFromGoSrc(files, e, m, keepRaw)
 	for _, entry := range files {
 		defineFromGoSrc(e, path, entry.Content, keepRaw)
 	}
