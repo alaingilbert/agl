@@ -8594,7 +8594,8 @@ import (
 	"net/http"
 )
 func main() {
-	f := io.ReadFull
+	f1 := io.ReadFull
+	f2 := http.Get
 }`
 	expected := `// agl:generated
 package main
@@ -8603,12 +8604,14 @@ import (
 	"net/http"
 )
 func main() {
-	f := io.ReadFull
+	f1 := io.ReadFull
+	f2 := http.Get
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func ReadFull(io.Reader, []byte) int!", test.TypeAt(7, 2).String())
+	tassert.Equal(t, "func Get(string) (*http.Response, error)", test.TypeAt(8, 2).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
