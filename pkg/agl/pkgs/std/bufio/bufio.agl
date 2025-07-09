@@ -1,6 +1,6 @@
 package bufio
 
-import "io"
+import "std/io"
 
 type Reader struct{}
 type ReadWriter struct {}
