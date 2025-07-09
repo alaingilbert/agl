@@ -292,12 +292,18 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	isGo := strings.HasSuffix(fileName, ".go")
 	isAGL := strings.HasSuffix(fileName, ".agl")
 	if !isAGL && !isGo {
-		fmt.Println("file must have '.go | .agl' extension")
 		return nil
 	}
+
+	generatedFilePrefix := agl.GeneratedFilePrefix
+	const moduleName = "agl"
+
 	by, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err)
+	}
+	if bytes.Equal(by[:len(generatedFilePrefix)], []byte(generatedFilePrefix)) {
+		return nil
 	}
 
 	if isGo {
@@ -305,7 +311,6 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 		if err != nil {
 			panic(err)
 		}
-		const moduleName = "agl"
 		for _, i := range f.Imports {
 			importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
 			if strings.HasPrefix(importPath, moduleName+"/") {
@@ -328,6 +333,24 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	}
 
 	fset, f := agl.ParseSrc(string(by))
+	for _, i := range f.Imports {
+		importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
+		if strings.HasPrefix(importPath, moduleName+"/") {
+			importPath = strings.TrimPrefix(importPath, moduleName+"/")
+			entries, err := os.ReadDir(importPath)
+			if err != nil {
+				panic(err)
+			}
+			for _, entry := range entries {
+				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
+					continue
+				}
+				//if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
+				//	panic(err)
+				//}
+			}
+		}
+	}
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
 	errs := i.InferFile(fileName, f, fset, false)
@@ -339,7 +362,6 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if file, err := os.Open(path); err == nil {
 		defer file.Close()
-		generatedFilePrefix := agl.GeneratedFilePrefix
 		buf := make([]byte, len(generatedFilePrefix))
 		if _, err := file.Read(buf); err != nil {
 			panic(err)
