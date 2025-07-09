@@ -1892,13 +1892,13 @@ func GenHeaders() string {
 	aglImportCmp "cmp"
 	aglImportFmt "fmt"
 	aglImportIo "io"
-	aglImportHttp "net/http"
-	aglImportStrings "strings"
 	aglImportIter "iter"
 	aglImportMaps "maps"
-	aglImportSlices "slices"
 	aglImportMath "math"
+	aglImportHttp "net/http"
+	aglImportSlices "slices"
 	aglImportStrconv "strconv"
+	aglImportStrings "strings"
 )`
 }
 
