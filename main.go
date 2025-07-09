@@ -10,6 +10,7 @@ import (
 	goparser "go/parser"
 	gotoken "go/token"
 	gotypes "go/types"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -60,6 +61,11 @@ func main() {
 				},
 				Usage:  "build command",
 				Action: buildAction,
+			},
+			{
+				Name:   "clean",
+				Usage:  "cleanup agl generated files",
+				Action: cleanupAction,
 			},
 			{
 				Name:    "execute",
@@ -227,6 +233,31 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 
 	out := insertHeadersAfterFirstLine(src, coreHeaders) + agl.GenContent()
 	fmt.Println(out)
+	return nil
+}
+
+func cleanupAction(ctx context.Context, cmd *cli.Command) error {
+	generatedFilePrefix := agl.GeneratedFilePrefix
+	_ = fs.WalkDir(os.DirFS("."), ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && filepath.Base(path) == "vendor" {
+			return fs.SkipDir
+		}
+		if strings.HasSuffix(path, ".go") {
+			if file, err := os.Open(path); err == nil {
+				defer file.Close()
+				buf := make([]byte, len(generatedFilePrefix))
+				if _, err := file.Read(buf); err == nil {
+					if bytes.Equal(buf, []byte(generatedFilePrefix)) {
+						fmt.Println("removing", path)
+						if err := os.Remove(path); err != nil {
+							panic(err)
+						}
+					}
+				}
+			}
+		}
+		return nil
+	})
 	return nil
 }
 
