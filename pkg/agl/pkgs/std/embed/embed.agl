@@ -1,0 +1,9 @@
+package embed
+
+import "io/fs"
+
+type FS struct {}
+
+func (f FS) Open(name string) (fs.File, error)
+func (f FS) ReadDir(name string) ([]fs.DirEntry, error)
+func (f FS) ReadFile(name string) ([]byte, error)

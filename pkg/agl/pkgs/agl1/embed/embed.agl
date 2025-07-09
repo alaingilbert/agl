@@ -1,5 +1,7 @@
 package embed
 
+import "agl1/io/fs"
+
 type FS struct {}
 
 func (f FS) Open(name string) fs.File!
