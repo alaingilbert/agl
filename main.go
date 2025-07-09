@@ -134,13 +134,18 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 }
 
 func spawnGoBuild(fileName, outputFlag string) error {
+	isAgl := strings.HasSuffix(fileName, ".agl")
 	fileName = strings.Replace(fileName, ".agl", ".go", 1)
 	var cmdArgs []string
 	cmdArgs = append(cmdArgs, "build")
 	if outputFlag != "" {
 		cmdArgs = append(cmdArgs, "-o", outputFlag)
 	}
+	dir := filepath.Dir(fileName)
 	cmdArgs = append(cmdArgs, fileName)
+	if isAgl {
+		cmdArgs = append(cmdArgs, filepath.Join(dir, "aglCore.go"))
+	}
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -327,7 +332,8 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
-	src := agl.NewGenerator(i.Env, f, fset).Generate()
+	g := agl.NewGenerator(i.Env, f, fset)
+	src := g.Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if file, err := os.Open(path); err == nil {
 		defer file.Close()
@@ -344,7 +350,7 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 		return err
 	}
 
-	packageName := filepath.Base(strings.TrimSuffix(fileName, filepath.Base(fileName)))
+	packageName := g.PkgName()
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
 	err = os.WriteFile(coreFile, []byte(agl.GenCore(packageName)), 0644)
 	if err != nil {
