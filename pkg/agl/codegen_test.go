@@ -37,7 +37,8 @@ package main
 func add(a, b int) int {
 	return a + b
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func add(a, b int) int {
 	return a + b
 }
@@ -54,7 +55,8 @@ func add1(a, b int) int {
 func add2(a, b int) int {
 	return a + b
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func add1(a, b int) int {
 	return a + b
 }
@@ -73,7 +75,8 @@ func add(a, b i64) i64? {
 	}
 	return Some(a + b)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func add(a, b int64) Option[int64] {
 	if a == 0 {
 		return MakeOptionNone[int64]()
@@ -92,7 +95,8 @@ func add(a, b int64) Option[int64] {
 //	}
 //	return Some(a + b)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func add(a, b int64) Option[int64] {
 //	if a == 0 {
 //		return MakeOptionNone[int64]()
@@ -112,7 +116,8 @@ func add(a, b i64) i64! {
 	}
 	return Ok(a + b)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "errors"
 func add(a, b int64) Result[int64] {
 	if a == 0 {
@@ -184,7 +189,8 @@ func main() {
 	mapFn(a, { $0 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func mapFn_T_int(a AglVec[int], f func(int) int) AglVec[int] {
 	return make(AglVec[int], 0)
 }
@@ -202,7 +208,8 @@ func TestCodeGen9_optionalReturnKeyword(t *testing.T) {
 	src := `package main
 func add(a, b int) int { a + b }
 func add1(a, b int) int { return a + b }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func add(a, b int) int {
 	return a + b
 }
@@ -220,7 +227,8 @@ func f2() int { 42 }
 func main() {
 	f1(f2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func f1(f func() int) int {
 	return f()
 }
@@ -240,7 +248,8 @@ func f1(f func() i64) i64 { f() }
 func main() {
 	f1({ 42 })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func f1(f func() int64) int64 {
 	return f()
 }
@@ -259,7 +268,8 @@ func f1(f func(i64) i64) i64 { f(1) }
 func main() {
 	f1({ $0 + 1 })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func f1(f func(int64) int64) int64 {
 	return f(1)
 }
@@ -279,7 +289,8 @@ func main() {
 	a := make([]int, 0)
 	fmt.Println(a)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := make(AglVec[int], 0)
@@ -296,7 +307,8 @@ func main() {
 //	a = 43
 //	fmt.Println(a)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	a := 42
 //	a = 43
@@ -314,7 +326,8 @@ func main() {
 		fmt.Println(c)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	for _, c := range "test" {
@@ -333,7 +346,8 @@ func main() {
 		fmt.Println("test")
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	if 2 % 2 == 0 {
@@ -349,7 +363,8 @@ func TestCodeGen18(t *testing.T) {
 func main() {
 	a := []int{1, 2, 3}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
 }
@@ -367,7 +382,8 @@ func findEvenNumber(arr []int) int? {
   }
   return None
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
@@ -395,7 +411,8 @@ func main() {
 	tmp := findEvenNumber([]int{1, 2, 3, 4})
 	fmt.Println(tmp.Unwrap())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
@@ -427,7 +444,8 @@ func findEvenNumber(arr []int) int? {
 func main() {
 	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
@@ -450,7 +468,8 @@ func main() {
 	a := 1
 	a++
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1
 	a++
@@ -472,7 +491,8 @@ func findEvenNumber(arr []int) int? {
 func main() {
 	foundInt := findEvenNumber([]int{1, 2, 3, 4})?
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func findEvenNumber(arr AglVec[int]) Option[int] {
 	for _, num := range arr {
 		if num % 2 == 0 {
@@ -496,7 +516,8 @@ func parseInt(s string) int! {
 func main() {
 	parseInt("42")!
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func parseInt(s string) Result[int] {
 	return MakeResultOk(42)
 }
@@ -520,7 +541,8 @@ func inter(s2 string) int! {
 func main() {
 	inter("hello")!
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "errors"
 func parseInt(s1 string) Result[int] {
 	return MakeResultErr[int](Errors.New("some error"))
@@ -549,7 +571,8 @@ func add(a, b int) int {
 func main() {
 	fmt.Println(add(1, 2))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func add(a, b int) int {
 	return a + b
@@ -570,7 +593,8 @@ func main() {
 	fmt.Println("3")
 	fmt.Println("4")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	fmt.Println("1")
@@ -589,7 +613,8 @@ func parseInt(s string) int! {
 	num := strconv.Atoi(s)!
 	return Ok(num)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func parseInt(s string) Result[int] {
 	aglTmpVar1, aglTmpErr1 := strconv.Atoi(s)
@@ -647,7 +672,8 @@ func main() {
 	a--
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 0
 	a += 1
@@ -675,7 +701,8 @@ func main() {
 	b := a.Filter({ $0 % 2 == 0 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int64) bool {
@@ -694,7 +721,8 @@ func main() {
 	c := b.Map({ $0 + 1 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int64) bool {
@@ -715,7 +743,8 @@ func main() {
 	b := a.Filter({ $0 == 1 }).Map({ $0 }).Reduce(0, { $0 + $1 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1}
 	b := AglVecReduce(AglVecMap(AglVecFilter(a, func(aglArg0 int64) bool {
@@ -739,7 +768,8 @@ func main() {
 	c := a2.Filter({ $0 == 1 }).Map({ $0 }).Reduce(0, { $0 + $1 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a1 := AglVec[int64]{1}
 	a2 := AglVec[uint8]{1}
@@ -769,7 +799,8 @@ func main() {
 	b := a.Map({ $0 + 1 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecMap(a, func(aglArg0 int64) int64 {
@@ -787,7 +818,8 @@ func main() {
 	b := a.Map({ "a" })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecMap(a, func(aglArg0 int64) string {
@@ -806,7 +838,8 @@ func main() {
 	b := a.Map(strconv.Itoa)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func main() {
 	a := AglVec[int]{1, 2, 3, 4}
@@ -824,7 +857,8 @@ func main() {
 	assert(b == 10, "b should be 10")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int64]{1, 2, 3, 4}
 	b := AglVecReduce(a, 0, func(aglArg0 int64, aglArg1 int64) int64 {
@@ -843,7 +877,8 @@ func main() {
 	assert(1 != 2, "1 should not be 2")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	AglAssert(1 != 2, "assert failed line 3")
 	AglAssert(1 != 2, "assert failed line 4" + " " + "1 should not be 2")
@@ -862,7 +897,8 @@ func main() {
 	assert(d == 8)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3, 4}
 	b := AglVecFilter(a, func(aglArg0 int) bool {
@@ -889,7 +925,8 @@ func main() {
 	fmt.Println(by)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"fmt"
@@ -917,7 +954,8 @@ func main() {
 	assert(testOption().IsNone())
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func testOption() Option[int] {
 	return MakeOptionNone[int]()
 }
@@ -939,7 +977,8 @@ func main() {
 	assert(res.2 == true)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
@@ -964,7 +1003,8 @@ func main() {
 	assert(c == true)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
@@ -993,7 +1033,8 @@ func main() {
 	assert(res.2 == true)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_uint8_string_bool struct {
 	Arg0 uint8
 	Arg1 string
@@ -1047,7 +1088,8 @@ type Person struct {
 	testArrayOfOpt []string?
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	name string
 	age int
@@ -1110,7 +1152,8 @@ func main() {
 	variadic(1, 2, "a", "b", "c")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func variadic(a, b uint8, c ...string) int {
 	return 1
 }
@@ -1152,7 +1195,8 @@ func someFn() {
 func main() {
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func someFn() {
 }
 func main() {
@@ -1207,7 +1251,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := 1
@@ -1233,7 +1278,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1
 	if a == 1 {
@@ -1251,7 +1297,8 @@ func main() {
 	a := 1 == 1 || 2 == 2 && 3 == 3
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1 == 1 || 2 == 2 && 3 == 3
 }
@@ -1269,7 +1316,8 @@ func main() {
 	test("a" == "b")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(v bool) {
 }
 func main() {
@@ -1303,7 +1351,8 @@ func main() {
 	assert(s == 6)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[uint8]{1, 2, 3}
 	s := AglVecSum(a)
@@ -1331,7 +1380,8 @@ func (p Person) speak() string {
 func main() {
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 }
 func (p Person) speak() string {
@@ -1351,7 +1401,8 @@ func main() {
 	p := Person{}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	age int
 }
@@ -1374,7 +1425,8 @@ func main() {
 	a := p.method1()!.method1()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 }
 func (p Person) method1() Result[Person] {
@@ -1400,7 +1452,8 @@ func main() {
 	a := p.method1()?.method1()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 }
 func (p Person) method1() Option[Person] {
@@ -1426,7 +1479,8 @@ func main() {
 	a := p.method1()!.method1()!
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 }
 func (p Person) method1() Result[Person] {
@@ -1453,7 +1507,8 @@ func main() {
 	takeColor(color)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type ColorTag int
 const (
 	Color_red ColorTag = iota + 1
@@ -1507,7 +1562,8 @@ func main() {
 	color2 := Color.other(1, "yellow")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type ColorTag int
 const (
 	Color_red ColorTag = iota + 1
@@ -1555,7 +1611,8 @@ func main() {
 	a, b := Color.other(1, "yellow")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type ColorTag int
 const (
 	Color_red ColorTag = iota + 1
@@ -1602,7 +1659,8 @@ func main() {
 	a, b := other
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type ColorTag int
 const (
 	Color_red ColorTag = iota + 1
@@ -1684,7 +1742,8 @@ func main() {
 	assert(p1 == p2)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	name string
 	age int
@@ -1712,7 +1771,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := 2
@@ -1750,7 +1810,8 @@ func main() {
 //	}
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	a := []int{1, 2, 3}
 //	if AglVecIn(a, 2) {
@@ -1770,7 +1831,8 @@ func main() {
    test()!
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Result[int] {
 	return MakeResultErr[int](Errors.New("test"))
 }
@@ -1790,7 +1852,8 @@ func main() {
    test()!
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Result[AglVoid] {
 	return MakeResultErr[AglVoid](Errors.New("test"))
 }
@@ -1814,7 +1877,8 @@ func main() {
    maybeInt()?
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func errFn() Result[AglVoid] {
 	return MakeResultErr[AglVoid](Errors.New("some error"))
 }
@@ -1839,7 +1903,8 @@ type Writer interface {}
 func main() {
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Writer interface{}
 func main() {
 }
@@ -1872,7 +1937,8 @@ func main() {
 }
 
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type Writer interface{}
 type WriterA struct {
@@ -1904,7 +1970,8 @@ func main() {
 	os.WriteFile("test.txt", []byte("test"), 0755)!
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"fmt"
@@ -1933,7 +2000,8 @@ func main() {
 //	}
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func maybeInt() Option[int] {
 //	return MakeOptionSome(42)
 //}
@@ -1991,7 +2059,8 @@ func main() {
 	maybeInt()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func maybeInt() Option[int] {
 	return MakeOptionSome(42)
 }
@@ -2008,7 +2077,8 @@ type Writer interface {
 	write([]byte) int!
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Writer interface {
 	write(AglVec[byte]) Result[int]
 }
@@ -2023,7 +2093,8 @@ type Writer interface {
 	another() bool
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Writer interface {
 	write(AglVec[byte]) Result[int]
 	another() bool
@@ -2038,7 +2109,8 @@ type Writer interface {
 //	var a int? = None
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	var a Option[int] = MakeOptionNone[int]()
 //}
@@ -2052,7 +2124,8 @@ func main() {
 	var a int?
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var a Option[int]
 }
@@ -2072,7 +2145,8 @@ func main() {
 	fmt.Println(a, b)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type ColorTag int
 const (
@@ -2119,7 +2193,8 @@ func main() {
 	fmt.Println(b)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := AglVec[uint8]{1, 2, 3, 4, 5}
@@ -2151,7 +2226,8 @@ func main() {
 	test().Filter({ $0 == 2 })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() AglVec[uint8] {
 	return AglVec[uint8]{1, 2, 3}
 }
@@ -2400,7 +2476,8 @@ func main() {
 	_ = 42
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	_ = 42
 }
@@ -2424,7 +2501,8 @@ func main() {
 //	a.find(fn(e u8) bool { e == 2 })?
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	a := []uint8{1, 2, 3, 4, 5}
 //	AglVecFind(a, func(e uint8) bool {
@@ -2474,7 +2552,8 @@ func main() {
 	a.Find(f)?
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[uint8]{1, 2, 3, 4, 5}
 	f := func(e uint8) bool {
@@ -2493,7 +2572,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	if a := 123; a == 2 || a == 3 {
 	}
@@ -2509,7 +2589,8 @@ import (
 	"agl1/errors"
 )
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"errors"
@@ -2524,7 +2605,8 @@ type Pos struct {
 	Row, Col int
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Pos struct {
 	Row, Col int
 }
@@ -2547,7 +2629,8 @@ func main() {
 	fmt.Println(res)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type Person struct {
 	name string
@@ -2589,7 +2672,8 @@ func TestCodeGen91(t *testing.T) {
 		var arr []int
 	}
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var arr AglVec[int]
 }
@@ -2604,7 +2688,8 @@ func TestCodeGen93(t *testing.T) {
 		var arr2 []int
 	}
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var arr1 AglVec[int]
 	var arr2 AglVec[int]
@@ -2620,7 +2705,8 @@ func TestCodeGen94(t *testing.T) {
 		var arr2 []int
 	}
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var arr1, arr3 AglVec[int]
 	var arr2 AglVec[int]
@@ -2635,7 +2721,8 @@ func TestCodeGen92(t *testing.T) {
 		 row, col := 1, 0
 	}
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	row, col := 1, 0
 }
@@ -2656,7 +2743,8 @@ func main() {
 	names := people.Map(func(el Person) string { return el.name }).Joined(", ")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	name string
 	age int
@@ -2687,7 +2775,8 @@ func main() {
 	names := people.Map(clb).Joined(", ")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	name string
 	age int
@@ -2713,7 +2802,8 @@ func main() {
 	a.Map({ strconv.Atoi($0)! })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func main() {
 	a := AglVec[string]{"1", "2"}
@@ -2737,7 +2827,8 @@ func main() {
 	a.Split(" ").Map({ strconv.Atoi($0)! })
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func main() {
 	a := "1 2"
@@ -2763,7 +2854,8 @@ func main() {
 	})
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func main() {
 	a := "1 2, 3 4"
@@ -2792,7 +2884,8 @@ func main() {
 	})
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strconv"
 func main() {
 	a := "1 2, 3 4"
@@ -2824,7 +2917,8 @@ func main() {
 	names := people.Map(func(el Person) string { el.name }).Joined(", ")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Person struct {
 	name string
 	age int
@@ -2850,7 +2944,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	for i := 0; i < 10; i++ {
@@ -2870,7 +2965,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	for {
@@ -2893,7 +2989,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func testSome() Option[int] {
 	return MakeOptionSome(42)
@@ -2920,7 +3017,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func testOk() Result[int] {
 	return MakeResultOk(42)
@@ -2947,7 +3045,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func testOk() Result[int] {
 	return MakeResultErr[int](Errors.New("error"))
@@ -2999,7 +3098,8 @@ func main() {
 	a++
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1
 	a++
@@ -3015,7 +3115,8 @@ func main() {
 	c <- 1
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	c := make(chan int)
 	c <- 1
@@ -3036,7 +3137,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	c1 := make(chan int)
 	c2 := make(chan int)
@@ -3061,7 +3163,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1
 	switch a {
@@ -3081,7 +3184,8 @@ func main() {
 	a["a"] = 2
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := map[string]int{"a": 1}
 	a["a"] = 2
@@ -3099,7 +3203,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	Loop:
 	for {
@@ -3119,7 +3224,8 @@ func main() {
 	go test()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() {
 }
 func main() {
@@ -3139,7 +3245,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var v any
 	switch v.(type) {
@@ -3169,7 +3276,8 @@ func main() {
 	fmt.Println(a, b, c, d, e, f, g)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_int_string_bool struct {
 	Arg0 int
@@ -3227,7 +3335,8 @@ func main() {
 	fmt.Println(string(a))
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := 'a'
@@ -3245,7 +3354,8 @@ func main() {
 	fmt.Println(u8(a))
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := 1
@@ -3265,7 +3375,8 @@ func main() {
 	fmt.Println(a, b, c)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	a := 1
@@ -3305,7 +3416,8 @@ func main() {
 	m := make(map[string]int)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := make(map[string]int)
 }
@@ -3322,7 +3434,8 @@ func main() {
 	test(m)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(m map[string]int) {
 }
 func main() {
@@ -3354,7 +3467,8 @@ func main() {
 	test(a)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(m map[string]int) {
 }
 func main() {
@@ -3386,7 +3500,8 @@ func main() {
 	test(a)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(a AglVec[int]) {
 }
 func main() {
@@ -3405,7 +3520,8 @@ func main() {
 //	fmt.Println(num)
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func test() Option[int] {
 //	return MakeOptionSome(42)
 //}
@@ -3431,7 +3547,8 @@ func main() {
 //	fmt.Println(num)
 //}
 //`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func test() Option[int] {
 //	return MakeOptionSome(42)
 //}
@@ -3456,7 +3573,8 @@ func main() {
 	fmt.Println(num)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Option[int] {
 	return MakeOptionSome(42)
@@ -3478,7 +3596,8 @@ func main() {
 	fmt.Println(num)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Result[int] {
 	return MakeResultOk(42)
@@ -3500,7 +3619,8 @@ func main() {
 	fmt.Println(isOk)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Result[int] {
 	return MakeResultOk(42)
@@ -3522,7 +3642,8 @@ func main() {
 	fmt.Println(isErr)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Result[int] {
 	return MakeResultOk(42)
@@ -3544,7 +3665,8 @@ func main() {
 	fmt.Println(isSome)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Option[int] {
 	return MakeOptionSome(42)
@@ -3566,7 +3688,8 @@ func main() {
 	fmt.Println(isNone)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Option[int] {
 	return MakeOptionSome(42)
@@ -3588,7 +3711,8 @@ func main() {
 	fmt.Println(num)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Option[int] {
 	return MakeOptionSome(42)
@@ -3610,7 +3734,8 @@ func main() {
 	fmt.Println(num)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func test() Result[int] {
 	return MakeResultOk(42)
@@ -3631,7 +3756,8 @@ func test() ! {
 	os.Chdir("")!
 	return Ok(void)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"strconv"
@@ -3655,7 +3781,8 @@ func test() string? {
 	res := os.LookupEnv("")?
 	return Some(res)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"strconv"
 	"os"
@@ -3681,7 +3808,8 @@ func test() string! {
 	fmt.Println(res)
 	return Ok("done")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"net/http"
@@ -3707,7 +3835,8 @@ func main() {
 	res := http.Get("https://google.com")!
 	fmt.Println(res)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"net/http"
@@ -3736,7 +3865,8 @@ func inter(s2 string) int? {
 func main() {
 	inter("hello")?
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func parseInt(s1 string) Option[int] {
 	return MakeOptionSome(42)
 }
@@ -3771,7 +3901,8 @@ func main() {
         time.Sleep(1000000)
     }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -3812,7 +3943,8 @@ func main() {
     }
     fmt.Println("done")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -3863,7 +3995,8 @@ func main() {
     }
     fmt.Println("done")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -3914,7 +4047,8 @@ func main() {
     }
     fmt.Println("done")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -3965,7 +4099,8 @@ func main() {
     }
     fmt.Println("done")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -4000,7 +4135,8 @@ func test() int? { Some(42) }
 func main() {
     test() or_return
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Option[int] {
 	return MakeOptionSome(42)
 }
@@ -4022,7 +4158,8 @@ func test2() int? {
     num := test() or_return
 	return Some(num)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Option[int] {
 	return MakeOptionSome(42)
 }
@@ -4045,7 +4182,8 @@ func test2() int! {
     num := test() or_return
 	return Ok(num)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Result[int] {
 	return MakeResultOk(42)
 }
@@ -4087,7 +4225,8 @@ func main() {
    arr := []int{1, 2, 3}
    fmt.Println(arr.Even())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	arr := AglVec[int]{1, 2, 3}
@@ -4124,7 +4263,8 @@ func main() {
    arr1 := []int{4, 5, 6}
    fmt.Println(arr1.Even())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	arr := AglVec[int]{1, 2, 3}
@@ -4161,7 +4301,8 @@ func main() {
 		return 1
 	}))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	arr := AglVec[int]{1, 2, 3}
@@ -4195,7 +4336,8 @@ func main() {
 	r := arr.MyMap({ $0 + 1 })
 	fmt.Println(r)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	arr := AglVec[int64]{1, 2, 3}
@@ -4230,7 +4372,8 @@ func main() {
 	r := arr.MyMap({ u8($0) + 1 })
 	fmt.Println(r)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	arr := AglVec[int64]{1, 2, 3}
@@ -4265,7 +4408,8 @@ func main() {
 	arr1.MyMap(func(int) int { return 1 })
 	arr2.MyMap(func(u8) u64 { return 1 })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr1 := AglVec[int]{1, 2, 3}
 	arr2 := AglVec[uint8]{1, 2, 3}
@@ -4311,7 +4455,8 @@ func main() {
 	arr.MyJoined2()
 	arr.Test()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "strings"
 func main() {
 	arr := AglVec[string]{"a", "b", "c"}
@@ -4342,7 +4487,8 @@ func main() {
 		}
     }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Option[int] {
 	return MakeOptionSome(1)
 }
@@ -4373,7 +4519,8 @@ func main() {
 		}
     }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test() Option[int] {
 	return MakeOptionSome(1)
 }
@@ -4413,7 +4560,8 @@ func main() {
 	var mut a u8
 	a = arr.Reduce(0, { $0 + u8($1) })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr := AglVec[int]{1, 2, 3}
 	var a uint8
@@ -4440,7 +4588,8 @@ func TestCodeGen156(t *testing.T) {
 func main() {
 	defer func() {}()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	defer func() {
 	}()
@@ -4465,7 +4614,8 @@ func main() {
 	r := http.Get("")!
 	r.Body.Close()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "net/http"
 func main() {
 	aglTmp1, aglTmpErr1 := http.Get("")
@@ -4508,7 +4658,8 @@ func main() {
 	arr := []int{1, 2, 3}
 	r := arr.Filter({ $0 == 1 }).Map({ $0 }).Reduce(u8(0), { $0 + u8($1) })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr := AglVec[int]{1, 2, 3}
 	r := AglVecReduce(AglVecMap(AglVecFilter(arr, func(aglArg0 int) bool {
@@ -4550,7 +4701,8 @@ type TestStruct[T any] struct {
 func main() {
 	i := TestStruct[string]{a: "foo"}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type TestStruct[T any] struct {
 	a T
 }
@@ -4572,7 +4724,8 @@ func main() {
 //	i := &TestStruct[string]{a: "foo"}
 //	testFn(i)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //type TestStruct_T_string struct {
 //	a string
 //}
@@ -4598,7 +4751,8 @@ func main() {
 //	i := &TestStruct[string, int]{a: "foo", b: 42}
 //	testFn(i)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //type TestStruct[T, U any] struct {
 //	a T
 //	b U
@@ -4622,7 +4776,8 @@ func main() {
 	test(t1)
 	test(t2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
@@ -4645,7 +4800,8 @@ func TestCodeGen165(t *testing.T) {
 func main() {
 	arr := [](int, bool){ (1, true), (2, false) }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
@@ -4666,7 +4822,8 @@ func main() {
 	test(t1)
 	test(t2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
@@ -4696,7 +4853,8 @@ func main() {
     t2 := test(t1)
     fmt.Println(t2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_int_bool struct {
 	Arg0 int
@@ -4721,7 +4879,8 @@ func main() {
 	mut arr := []int{1, 2, 3}
 	arr[1] = 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr := AglVec[int]{1, 2, 3}
 	arr[1] = 42
@@ -4736,7 +4895,8 @@ func main() {
 	mut m := map[string]int{"a": 1, "b": 2, "c": 3}
 	m["a"] = 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := map[string]int{"a": 1, "b": 2, "c": 3}
 	m["a"] = 42
@@ -4750,7 +4910,8 @@ func TestCodeGen170(t *testing.T) {
 func main() {
 	m := make(map[string](int, int))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := make(map[string]AglTupleStruct_int_int)
 }
@@ -4764,7 +4925,8 @@ func main() {
 	t := (1, 2)
 	m := map[string](int, int){"a": t}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -4782,7 +4944,8 @@ func TestCodeGen172(t *testing.T) {
 func main() {
 	m := map[string](int, int){"a": (1, 2)}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -4799,7 +4962,8 @@ func TestCodeGen173(t *testing.T) {
 func main() {
 	arr := [](int, int){(0, 0), (0, 1)}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -4825,7 +4989,8 @@ func main() {
     t2 = (false, 3)
     fmt.Println(t2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_bool_int struct {
 	Arg0 bool
@@ -4856,7 +5021,8 @@ type MyFloat64 f64
 func main() {
 	a := MyFloat64(1)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type MyFloat64 float64
 func main() {
 	a := MyFloat64(1)
@@ -4895,7 +5061,8 @@ type Vertex struct {
 func (v *Vertex) Abs() f64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"math"
@@ -4944,7 +5111,8 @@ func main() {
 	var i I = T{"hello"}
 	i.M()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type I interface {
 	M()
@@ -4994,7 +5162,8 @@ func main() {
 func describe(i I) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"math"
@@ -5057,7 +5226,8 @@ func main() {
 func describe(i I) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type I interface {
 	M()
@@ -5104,7 +5274,8 @@ func describe(i any) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	var i any
@@ -5132,7 +5303,8 @@ func main() {
 	fmt.Println(f)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	var i any = "hello"
@@ -5163,7 +5335,8 @@ func main() {
 	do("hello")
 	do(true)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func do(i any) {
 	switch v := i.(type) {
@@ -5198,7 +5371,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type IPAddr AglVec[byte]
 func main() {
@@ -5225,7 +5399,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type IPAddr AglVec[byte]
 func main() {
@@ -5259,7 +5434,8 @@ func main() {
 		fmt.Println(err)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -5306,7 +5482,8 @@ func main() {
 		fmt.Println(err)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -5349,7 +5526,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"io"
@@ -5396,7 +5574,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"io"
@@ -5450,7 +5629,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"io"
@@ -5576,7 +5756,8 @@ func main() {
 	mut v := &Vertex{3, 4}
 	v.Scale(10)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Vertex struct {
 	X, Y float64
 }
@@ -5613,7 +5794,8 @@ func main() {
 	v.Scale(10)
 	fmt.Println(v.Abs())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"math"
@@ -5652,7 +5834,8 @@ func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	var i interface{}
@@ -5687,7 +5870,8 @@ func main() {
 	fmt.Println(Index(ss, "hello"))
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func Index_T_int(s AglVec[int], x int) int {
 	for i, v := range s {
@@ -5732,7 +5916,8 @@ func main() {
 	say("hello")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -5769,7 +5954,8 @@ func main() {
 	x, y := <-c, <-c // receive from c
 	fmt.Println(x, y, x+y)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func sum(s AglVec[int], c chan int) {
 	sum1 := 0
@@ -5816,7 +6002,8 @@ func main() {
 	}()
 	fibonacci(c, quit)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func fibonacci(c, quit chan int) {
 	x, y := 0, 1
@@ -5871,7 +6058,8 @@ func main() {
 		}
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -5907,7 +6095,8 @@ func main() {
 	var a time.Duration
 	a.Round(time.Millisecond)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "time"
 func main() {
 	var a time.Duration
@@ -5946,7 +6135,8 @@ func main() {
 	time.Sleep(time.Second)
 	fmt.Println(c.Value("somekey"))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"sync"
@@ -5987,7 +6177,8 @@ func main() {
 	v2 := m["a"]
 	m["a"]++
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := map[string]int{"a": 1}
 	if el, ok := m["a"]; ok {
@@ -6070,7 +6261,8 @@ var fetcher = fakeFetcher{
 		},
 	},
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_string_AglVec_string_ struct {
 	Arg0 string
@@ -6125,7 +6317,8 @@ func main() {
 	m := map[string]int{"a": 1}
 	mv := m.Get("a")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := map[string]int{"a": 1}
 	mv := AglIdentity(AglMapIndex(m, "a"))
@@ -6139,7 +6332,8 @@ func TestCodeGen200(t *testing.T) {
 func main() {
 	a := func() int { return 42 }()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := func() int {
 		return 42
@@ -6155,7 +6349,8 @@ var a = 42
 func main() {
 	a := 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 var a = 42
 func main() {
 	a := 42
@@ -6179,7 +6374,8 @@ func main() {
    by := io.ReadAll(resp.Body)!
    fmt.Println(string(by))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"net/http"
@@ -6225,7 +6421,7 @@ func main() {
 	fset := token.NewFileSet()
 	node := parser.ParseFile(fset, fileName, src, parser.AllErrors)!
 	conf := types.Config{Importer: nil}
-	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
+	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
 	_ = conf.Check("", fset, []*ast.File{node}, info)!
 	for _, decl := range node.Decls {
 		switch d := decl.(type) {
@@ -6245,7 +6441,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"go/ast"
 	"go/parser"
@@ -6272,7 +6469,7 @@ func main() {
 	}
 	node := AglIdentity(aglTmp2)
 	conf := types.Config{Importer: nil}
-	info := &types.Info{Defs: make(map[*goast.Ident]types.Object)}
+	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
 	aglTmp3, aglTmpErr3 := conf.Check("", fset, AglVec[*ast.File]{node}, info)
 	if aglTmpErr3 != nil {
 		panic(aglTmpErr3)
@@ -6309,7 +6506,8 @@ func main() {
 	b.Method()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 }
 func (t Test) Method() {
@@ -6335,7 +6533,8 @@ func main() {
 	c := b[0]
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 }
 func (t Test) Method() AglVec[int] {
@@ -6361,7 +6560,8 @@ func main() {
 	b := a.Method()[0]
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 }
 func (t Test) Method() AglVec[int] {
@@ -6384,7 +6584,8 @@ func main() {
 	a[0].Method()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 }
 func (t Test) Method() {
@@ -6410,7 +6611,8 @@ func test() int? {
 	return Some(42)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 	Name string
 }
@@ -6438,7 +6640,8 @@ func main() {
 	return Some(42)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 	Name string
 }
@@ -6465,7 +6668,8 @@ func test() int? {
 	return Some(42)
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 	Name string
 }
@@ -6490,7 +6694,8 @@ func main() {
 	}
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 	Name string
 }
@@ -6511,7 +6716,8 @@ func main() {
 	b := a.Map({ $0.Name }).Joined(", ")
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "go/ast"
 func main() {
 	a := AglVec[*ast.Ident]{&ast.Ident{Name: "foo"}}
@@ -6530,7 +6736,8 @@ func main() {
 	b := a.Last()
 }
 `
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
 	b := AglVecLast(a)
@@ -6550,7 +6757,8 @@ func main() {
 			fmt.Println(a)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type Test struct {
 }
@@ -6573,7 +6781,8 @@ func main() {
 		fmt.Println("test")
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	aglTmp1 := 1 == 1
@@ -6592,7 +6801,8 @@ func main() {
 	mut a := []int{1, 2, 3}
 	a.PopIf(func() bool { true })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
 	AglVecPopIf((*[]int)(&a), func() bool {
@@ -6609,7 +6819,8 @@ func main() {
 	mut a := []int{1, 2, 3}
 	a.PopIf({ true })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
 	AglVecPopIf((*[]int)(&a), func() bool {
@@ -6626,7 +6837,8 @@ func main() {
 	mut a := []int{1, 2, 3}
 	a.Push(4)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[int]{1, 2, 3}
 	AglVecPush((*[]int)(&a), 4)
@@ -6641,7 +6853,8 @@ import "agl1/fmt"
 func main() {
 	fmt.Println(@LINE)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	fmt.Println("4")
@@ -6656,7 +6869,8 @@ func main() {
 //	s := agl1.NewSet()
 //	fmt.Println(s)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	s := AglNewSet()
 //	fmt.Println(s)
@@ -6671,7 +6885,8 @@ func main() {
 //	s := agl1.NewSet()
 //	fmt.Println(s.Len())
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	s := AglNewSet()
 //	fmt.Println(s.Len())
@@ -6686,7 +6901,8 @@ func main() {
 //	s := agl1.NewSet("a")
 //	s.Insert("b")
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	s := AglNewSet("a")
 //	s.Insert("b")
@@ -6701,7 +6917,8 @@ type Test struct {}
 func main() {
 	s := new(Test)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type Test struct {
 }
 func main() {
@@ -6717,7 +6934,8 @@ func main() {
 	a, _ := 1, 2
 	_, a, b := 1, 2, 3
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a, _ := 1, 2
 	_, a, b := 1, 2, 3
@@ -6773,7 +6991,8 @@ func main() {
 	var t ITest = Test{}
 	t.Test()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type ITest interface {
 	Test()
 }
@@ -6814,7 +7033,8 @@ func main () {
     title := findTitle(doc)
     fmt.Println("Title:", title)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"net/http"
@@ -6874,7 +7094,8 @@ func main() {
         fmt.Println("No value")
     }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func getInt() Result[int] {
 	return MakeResultOk(42)
@@ -6925,7 +7146,8 @@ func main() {
         time.Sleep(time.Second)
     }
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"time"
@@ -6961,7 +7183,8 @@ func main() {
 		a = 2
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var a int
 	if true {
@@ -6992,7 +7215,8 @@ func TestCodeGen235(t *testing.T) {
 func main() {
 	a := [](u8, u8){(0, 0), (0, 1)}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
@@ -7019,7 +7243,8 @@ func test(t (u8, u8)) {}
 func main() {
 	test((u8(1), u8(2)))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
@@ -7040,7 +7265,8 @@ import "agl1/fmt"
 func main() {
 	fmt.Println("Hello world!")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	fmt.Println("Hello world!")
@@ -7056,7 +7282,8 @@ func main() {
 	arr := [](u8, u8){(0, 0)}
     fmt.Println(arr.Map({ $0.0 }))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
@@ -7079,7 +7306,8 @@ func main() {
 	arr := [](u8, u8){(0, 0)}
     fmt.Println(arr.Map(func(t (u8, u8)) u8 { t.0 }))
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
@@ -7104,7 +7332,8 @@ func test[T, U any](a []T, b []U) [](T, U) {
 func main() {
 	test([]int{1}, []int{2})
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_int_int struct {
 	Arg0 int
@@ -7141,7 +7370,8 @@ func main() {
 	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
 	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -7182,7 +7412,8 @@ func main() {
 	arr := []string{"a", "b"}
 	arr.Contains("a")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr := AglVec[string]{"a", "b"}
 	AglVecContains(arr, "a")
@@ -7196,7 +7427,8 @@ func TestCodeGen246(t *testing.T) {
 func main() {
 	[]string{"a", "b"}.Contains("a")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	AglVecContains(AglVec[string]{"a", "b"}, "a")
 }
@@ -7209,7 +7441,8 @@ func TestCodeGen247(t *testing.T) {
 func main() {
 	arr := make([](int, int), 0)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	arr := make(AglVec[AglTupleStruct_int_int], 0)
 }
@@ -7222,7 +7455,8 @@ func TestCodeGen248(t *testing.T) {
 func main() {
 	var arr [](int, int)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	var arr AglVec[AglTupleStruct_int_int]
 }
@@ -7235,7 +7469,8 @@ func TestCodeGen249(t *testing.T) {
 func main() {
 	make(map[int]struct{})
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	make(map[int]struct{})
 }
@@ -7248,7 +7483,8 @@ func TestCodeGen250(t *testing.T) {
 func main() {
 	make(map[int]map[int]struct{})
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	make(map[int]map[int]struct{})
 }
@@ -7267,7 +7503,8 @@ func (v agl1.Vec[T]) MyForEach(f func(T)) {
 func main() {
 	[]int{1, 2}.MyForEach({ fmt.Println($0) })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	AglVecMyForEach_T_int(AglVec[int]{1, 2}, func(aglArg0 int) AglVoid {
@@ -7299,7 +7536,8 @@ func (v agl1.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
 func main() {
 	[]string{"1", "two"}.MyCompactMap({ $0.Int() })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	AglVecMyCompactMap_R_int_T_string(AglVec[string]{"1", "two"}, func(aglArg0 string) Option[int] {
@@ -7342,7 +7580,8 @@ func main() {
         return out
     })
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	AglVecFlatMap_R_int_T_int(AglVec[int]{1, 2}, func(aglArg0 int) AglVec[int] {
@@ -7379,7 +7618,8 @@ func (v agl1.Vec[T]) MyMin() T? {
 func main() {
 	[]int{1, 2}.MyMin()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	AglVecMyMin_T_int(AglVec[int]{1, 2})
 }
@@ -7400,7 +7640,8 @@ import "agl1/fmt"
 func main() {
 	_ = fmt.Printf("")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 func main() {
 	_ = AglWrapNative2(fmt.Printf(""))
@@ -7428,7 +7669,8 @@ func main() {
 	home := IpAddr.V4(127, 0, 0, 1)
 	isPrivate(home)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type IpAddrTag int
 const (
 	IpAddr_V4 IpAddrTag = iota + 1
@@ -7486,7 +7728,8 @@ func TestCodeGen257(t *testing.T) {
 func main() {
 	[]int{1, 2}.Min()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	AglVecMin_T_int(AglVec[int]{1, 2})
 }
@@ -7509,7 +7752,8 @@ func TestCodeGen258(t *testing.T) {
 func main() {
 	s := set[int]{1, 2, 3}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	s := AglSet[int]{1: {}, 2: {}, 3: {}}
 }
@@ -7524,7 +7768,8 @@ func main() {
 	s2 := set[int]{3, 4, 5}
 	s3 := s1.Union(s2)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	s1 := AglSet[int]{1: {}, 2: {}, 3: {}}
 	s2 := AglSet[int]{3: {}, 4: {}, 5: {}}
@@ -7539,7 +7784,8 @@ func TestCodeGen260(t *testing.T) {
 func main() {
 	a := [][]int{{1, 2}, {2, 3}}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := AglVec[AglVec[int]]{{1, 2}, {2, 3}}
 }
@@ -7552,7 +7798,8 @@ func TestCodeGen261(t *testing.T) {
 func main() {
 	mut a := 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 42
 }
@@ -7566,7 +7813,8 @@ func main() {
 	mut a := 42
 	a = 43
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 42
 	a = 43
@@ -7605,7 +7853,8 @@ func main() {
 	mut a := 42
 	test(a)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(a int) {
 	a = 43
 }
@@ -7638,7 +7887,8 @@ func main() {
 	sb.WriteString("hello world")
 	fmt.Println(sb.String())
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"strings"
@@ -7675,7 +7925,8 @@ func main() {
 	b := B{}
 	b.AMethod()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type A struct {
 }
 type B struct {
@@ -7697,7 +7948,8 @@ var mut a int
 func main() {
 	a = 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 var a int
 func main() {
 	a = 42
@@ -7721,7 +7973,8 @@ func main() {
 	mut m := make(map[int]set[int])
 	m[1] = set[int]{1, 2, 3}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := make(map[int]AglSet[int])
 	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
@@ -7740,7 +7993,8 @@ func main() {
 		s = make(set[int])
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	m := make(map[int]AglSet[int])
 	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
@@ -7768,7 +8022,8 @@ func main() {
 	mut s := set[int]{1, 2, 3}
 	s.Insert(4)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	s := AglSet[int]{1: {}, 2: {}, 3: {}}
 	AglSetInsert(s, 4)
@@ -7783,7 +8038,8 @@ pub func test() {}
 func main() {
 	test()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func AglPub_test() {
 }
 func main() {
@@ -7798,7 +8054,8 @@ func TestCodeGen277(t *testing.T) {
 		"type Test struct {\n" +
 		"	SomeProp int `json:\"some_prop\"`\n" +
 		"}\n"
-	expected := "package main\n" +
+	expected := "// agl:generated\n" +
+		"package main\n" +
 		"type Test struct {\n" +
 		"	SomeProp int `json:\"some_prop\"`\n" +
 		"}\n"
@@ -7813,7 +8070,8 @@ pub func test(a []int) {
 func main() {
 	test([]int{1, 2})
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func AglPub_test(a AglVec[int]) {
 	AglVecIter(a)
 }
@@ -7833,7 +8091,8 @@ func main() {
 		panic(err)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func main() {
 	by, err := os.ReadFile("test.agl")
@@ -7855,7 +8114,8 @@ import "agl1/math"
 func main() {
 	i, f := math.Modf(3.14)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "math"
 func main() {
 	i, f := math.Modf(3.14)
@@ -7874,7 +8134,8 @@ func main() {
 	a := 1
 	a = 2
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	a := 1
 	a = 2
@@ -7892,7 +8153,8 @@ func main() {
 	if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func main() {
 	if err := os.WriteFile("test.txt", AglVec[byte]("test"), 0644); err != nil {
@@ -7918,7 +8180,8 @@ func main() {
 		}
 	}()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "errors"
 type SomeErr struct {
 }
@@ -7944,7 +8207,8 @@ func TestCodeGen284(t *testing.T) {
 	src := `package main
 func test(m map[string]struct{}) {
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func test(m map[string]struct{}) {
 }
 `
@@ -7961,7 +8225,8 @@ import (
 func main() {
 	stdFmt.Println("")
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import stdFmt "fmt"
 func main() {
 	stdFmt.Println("")
@@ -7978,7 +8243,8 @@ func TestCodeGen286(t *testing.T) {
 func main() {
 	const test = "Hello world"
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	const test = "Hello world"
 }
@@ -7995,7 +8261,8 @@ func TestCodeGen287(t *testing.T) {
 func main() {
 	const test1, test2 = "Hello", 42
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	const test1, test2 = "Hello", 42
 }
@@ -8018,7 +8285,8 @@ func main() {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"os/exec"
@@ -8044,7 +8312,8 @@ import "path"
 func main() {
 	path := "Hello world"
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "path"
 func main() {
 	path := "Hello world"
@@ -8064,7 +8333,8 @@ func main() {
 		test := "Hello world"
 	}()
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	defer func() {
 		test := "Hello world"
@@ -8084,7 +8354,8 @@ func main() {
 	os.WriteFile("test.txt", []byte("test"), 0644)!
 	os.WriteFile("test.txt", []byte("test"), 0644)!
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func main() {
 	aglTmpErr1 := os.WriteFile("test.txt", AglVec[byte]("test"), 0644)
@@ -8115,7 +8386,8 @@ func test() ! {
 func main() {
 	test()!
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func test() Result[AglVoid] {
 	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
@@ -8150,7 +8422,8 @@ func main() {
 		fmt.Println("error")
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"fmt"
@@ -8179,7 +8452,8 @@ func test() ! {
 	_ = os.ReadFile("test.txt")!
 	return Ok(void)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func test() Result[AglVoid] {
 	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
@@ -8202,7 +8476,8 @@ func test() ! {
 	os.ReadFile("test.txt")!
 	return Ok(void)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "os"
 func test() Result[AglVoid] {
 	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
@@ -8225,7 +8500,8 @@ func main() {
 	var a []string
 	a.Push(words...)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 func main() {
 	words := AglVec[string]{"foo", "bar", "baz"}
 	var a AglVec[string]
@@ -8245,7 +8521,8 @@ func main() {
 	t := tuples.Pop()
 	fmt.Println(t)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import "fmt"
 type AglTupleStruct_int_int struct {
 	Arg0 int
@@ -8268,7 +8545,8 @@ func main() {
 	tuples := [](int, int){(0, 0), (1, 1)}
 	tuples.Remove(0)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
@@ -8290,7 +8568,8 @@ func main() {
 //	if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
 //	}
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //import "fmt"
 //func main() {
 //	aglTmp1 := AglWrapNative2(os.WriteFile("test.txt", AglVec[byte]("test"), 0644))
@@ -8316,7 +8595,8 @@ func main() {
 //        false
 //    }
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //type IpAddrTag int
 //const (
 //	IpAddr_V4 IpAddrTag = iota + 1
@@ -8371,7 +8651,8 @@ func main() {
 //func main() {
 //	a := map[int]struct{}{1: {}, 2: {}, 3: {}}
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func main() {
 //	a := map[int]struct{}{1: {}, 2: {}, 3: {}}
 //}
@@ -8393,7 +8674,8 @@ func main() {
 //	return Err(fmt.Errorf("not found"))
 //}
 //var fetcher = fakeFetcher{}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //import "fmt"
 //type fakeFetcher map[string]*fakeResult
 //type fakeResult struct {
@@ -8419,7 +8701,8 @@ func main() {
 //	test(t1)
 //	test(t2)
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //func test(t AglTupleStruct_uint8_bool) AglTupleStruct_uint8_bool {
 //	return t
 //}
@@ -8451,7 +8734,8 @@ func main() {
 //	arr := []int{1, 2, 3}
 //	fmt.Println(arr.MyMap({ $0 + 1 }))
 //}`
-//	expected := `package main
+//	expected := `// agl:generated
+//package main
 //import "fmt"
 //func main() {
 //	arr := []int{1, 2, 3}
@@ -8493,7 +8777,8 @@ func main() {
 		fmt.Printf("Arg %d: %s\n", i, arg)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"os"
@@ -8526,7 +8811,8 @@ func main() {
 	arg := getFirstArg()!
 	fmt.Println(arg)
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"os"
 	"fmt"
@@ -8572,7 +8858,8 @@ func main() {
 		fmt.Printf("wc: %s: %s\n", filename, err)
 	}
 }`
-	expected := `package main
+	expected := `// agl:generated
+package main
 import (
 	"fmt"
 	"os"
