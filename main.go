@@ -239,8 +239,14 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	}
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
-	if by, err := os.ReadFile(path); err == nil {
-		if !bytes.HasPrefix(by, []byte(agl.GeneratedFilePrefix)) && !forceFlag {
+	if file, err := os.Open(path); err == nil {
+		defer file.Close()
+		generatedFilePrefix := agl.GeneratedFilePrefix
+		buf := make([]byte, len(generatedFilePrefix))
+		if _, err := file.Read(buf); err != nil {
+			panic(err)
+		}
+		if !bytes.Equal(buf, []byte(generatedFilePrefix)) && !forceFlag {
 			panic(fmt.Sprintf("%s would be overwritten, use -f to force", path))
 		}
 	}
