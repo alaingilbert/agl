@@ -1,5 +1,15 @@
 Here is a list of issues encountered while trying to keep Go code as valid AGL code.
 
+## Functions that return multiple values
+
+Conflict between parsing the return value as a native function vs a tuple.
+
+```go
+func test() (int, int) {
+	return 1, 2
+}
+```
+
 ## Type assert
 ```go
 // Both valid in Go
