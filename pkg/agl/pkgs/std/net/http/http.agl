@@ -1,8 +1,8 @@
 package http
 
-import "agl1/net/url"
-import "agl1/io"
-import "agl1/bufio"
+import "std/net/url"
+import "std/io"
+import "std/bufio"
 
 type MethodGet string
 

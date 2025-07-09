@@ -1,5 +1,7 @@
 package bufio
 
+import "io"
+
 type Reader struct{}
 type ReadWriter struct {}
 type Scanner struct {}
@@ -7,10 +9,10 @@ type Writer struct {}
 
 func ScanBytes(data []byte, atEOF bool) (int, []byte)!
 
-func NewReadWriter(r *io.Reader, w *io.Writer) *io.ReadWriter
+func NewReadWriter(r *bufio.Reader, w *bufio.Writer) *bufio.ReadWriter
 
-func NewReader(rd io.Reader) *io.Reader
-func NewReaderSize(rd io.io.Reader, size int) *bufio.Reader
+func NewReader(rd io.Reader) *bufio.Reader
+func NewReaderSize(rd io.Reader, size int) *bufio.Reader
 func (b *bufio.Reader) Buffered() int
 func (b *bufio.Reader) Discard(n int) int!
 func (b *bufio.Reader) Peek(n int) ([]byte)!
