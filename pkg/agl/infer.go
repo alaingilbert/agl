@@ -11,7 +11,6 @@ import (
 	goast "go/ast"
 	"maps"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -246,9 +245,7 @@ func exprToString(expr goast.Expr) string {
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
 	infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
-	for _, i := range infer.f.Imports {
-		infer.inferImport(i)
-	}
+	loadImports(infer.env, infer.f, NewPkgVisited())
 	// TODO do a second pass for types that used before their declaration
 	for _, d := range infer.f.Decls {
 		switch decl := d.(type) {
@@ -297,25 +294,6 @@ func (p *PkgVisited) ContainsAdd(pkg string) bool {
 		p.Add(pkg)
 	}
 	return res
-}
-
-func (infer *FileInferrer) inferImport(i *ast.ImportSpec) {
-	var pkgName string
-	if i.Name != nil {
-		pkgName = i.Name.Name
-	} else {
-		pkgName = path.Base(i.Path.Value)
-	}
-	pkgPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
-	pkgName = strings.ReplaceAll(pkgName, `"`, ``)
-	pkgT := infer.env.Get(pkgName)
-	if pkgT != nil {
-		//return
-	}
-	visited := NewPkgVisited()
-	if err := infer.env.loadPkg(pkgPath, pkgName, visited); err != nil {
-		panic(err)
-	}
 }
 
 func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {

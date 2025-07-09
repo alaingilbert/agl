@@ -616,6 +616,9 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 
 func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
+	if m.ContainsAdd(pkgPath + "_" + pkgName) {
+		return nil
+	}
 	//p("?LOADPKG", pkgPath, pkgName)
 	if err := e.loadPkgLocal(pkgPath, pkgName, m); err != nil {
 		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
@@ -629,23 +632,21 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 
 func (e *Env) loadPkgLocal(pkgPath, pkgName string, m *PkgVisited) error {
 	pkgFullPath := trimPrefixPath(pkgPath)
-	entries, err := os.ReadDir(pkgFullPath)
-	if err != nil {
-		return err
-	}
-	if err = e.DefinePkg(pkgPath, pkgName); err != nil {
+	if err := e.DefinePkg(pkgPath, pkgName); err != nil {
 		return nil
 	}
-	e.loadVendor2(pkgFullPath, m, entries)
+	if err := e.loadVendor2(pkgFullPath, m); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 	var prefix string
 	if strings.HasPrefix(path, "agl1/") {
-		prefix = "pkgs/agl1/"
+		prefix = "agl1/"
 	} else {
-		prefix = "pkgs/std/"
+		prefix = "std/"
 		path = filepath.Join("std", path)
 	}
 	return e.loadAglFile(prefix, path, pkgName, m)
@@ -653,35 +654,36 @@ func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 
 func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
 	vendorPath := filepath.Join("vendor", path)
-	if entries, err := os.ReadDir(vendorPath); err == nil {
-		e.loadVendor2(vendorPath, m, entries)
+	if err := e.loadVendor2(vendorPath, m); err != nil {
+		if err := e.loadAglFile("", path, pkgName, m); err != nil {
+			return err
+		}
 	}
-	prefix := "pkgs/"
-	_ = e.loadAglFile(prefix, path, pkgName, m)
 	return nil
 }
 
 func (e *Env) loadAglFile(prefix, path, pkgName string, m *PkgVisited) error {
 	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
-	if m.ContainsAdd(stdFilePath) {
-		return nil
-	}
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
-	final := filepath.Dir(strings.TrimPrefix(stdFilePath, prefix))
+	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"+prefix))
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
 }
 
-func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
+func (e *Env) loadVendor2(path string, m *PkgVisited) error {
 	keepRaw := utils.True()
-	files := readDir(path, m, entries)
+	files, err := readDir(path, m)
+	if err != nil {
+		return err
+	}
 	defineStructsFromGoSrc(files, e, m, keepRaw)
 	for _, entry := range files {
 		defineFromGoSrc(e, path, entry.Content, keepRaw)
 	}
+	return nil
 }
 
 type EntryContent struct {
@@ -690,7 +692,11 @@ type EntryContent struct {
 }
 
 // Read `*.go` files from a given directory
-func readDir(path string, m *PkgVisited, entries []os.DirEntry) []EntryContent {
+func readDir(path string, m *PkgVisited) ([]EntryContent, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
 	files := make([]EntryContent, 0)
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
@@ -706,7 +712,7 @@ func readDir(path string, m *PkgVisited, entries []os.DirEntry) []EntryContent {
 		}
 		files = append(files, EntryContent{Name: entry.Name(), Content: by})
 	}
-	return files
+	return files, nil
 }
 
 func (e *Env) loadPkgAgl() {
