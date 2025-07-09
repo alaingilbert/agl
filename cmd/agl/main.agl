@@ -102,7 +102,7 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	aglOs.WriteFile(tmpFile, source, 0644)!
 
 	coreFile := filepath.Join(tmpDir, "aglCore.go")
-	aglOs.WriteFile(coreFile, []byte(agl.GenCore()), 0644)!
+	aglOs.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)!
 
 	// Run `go run` on the file with additional arguments
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
@@ -225,7 +225,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	aglOs.WriteFile(path, []byte(src), 0644)!
 
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
-	aglOs.WriteFile(coreFile, []byte(agl.GenCore()), 0644)!
+	aglOs.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)!
 
 	return nil
 }
