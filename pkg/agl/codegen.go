@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 )
 
+const GeneratedFilePrefix = "// agl:generated\n"
+
 type Generator struct {
 	fset          *token.FileSet
 	env           *Env
@@ -168,7 +170,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 }
 
 func (g *Generator) Generate() (out string) {
-	out += "// agl:generated\n"
+	out += GeneratedFilePrefix
 	out1 := g.genPackage()
 	out2 := g.genImports()
 	out3 := g.genDecls()

@@ -240,7 +240,7 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if by, err := os.ReadFile(path); err == nil {
-		if !bytes.HasPrefix(by, []byte("// agl:generated")) && !forceFlag {
+		if !bytes.HasPrefix(by, []byte(agl.GeneratedFilePrefix)) && !forceFlag {
 			panic(fmt.Sprintf("%s would be overwritten, use -f to force", path))
 		}
 	}
