@@ -663,16 +663,25 @@ func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
 
 func (e *Env) loadAglFile(prefix, path, pkgName string, m *PkgVisited) error {
 	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
+	if m.ContainsAdd(stdFilePath) {
+		return nil
+	}
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
-	if m.ContainsAdd(stdFilePath) {
-		return nil
-	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, prefix))
 	defineFromSrc(e, final, pkgName, by, m)
 	return nil
+}
+
+func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
+	keepRaw := utils.True()
+	files := readDir(path, m, entries)
+	defineStructsFromGoSrc(files, e, m, keepRaw)
+	for _, entry := range files {
+		defineFromGoSrc(e, path, entry.Content, keepRaw)
+	}
 }
 
 type EntryContent struct {
@@ -680,8 +689,8 @@ type EntryContent struct {
 	Content []byte
 }
 
-func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
-	keepRaw := utils.True()
+// Read `*.go` files from a given directory
+func readDir(path string, m *PkgVisited, entries []os.DirEntry) []EntryContent {
 	files := make([]EntryContent, 0)
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
@@ -697,10 +706,7 @@ func (e *Env) loadVendor2(path string, m *PkgVisited, entries []os.DirEntry) {
 		}
 		files = append(files, EntryContent{Name: entry.Name(), Content: by})
 	}
-	defineStructsFromGoSrc(files, e, m, keepRaw)
-	for _, entry := range files {
-		defineFromGoSrc(e, path, entry.Content, keepRaw)
-	}
+	return files
 }
 
 func (e *Env) loadPkgAgl() {
