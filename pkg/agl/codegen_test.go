@@ -8951,3 +8951,14 @@ func main() {
 `
 	testCodeGen(t, src, expected)
 }
+
+//func TestCodeGen_native_multi_values(t *testing.T) {
+//	src := `package agl
+//func test() (int, int) {
+//	return 1, 2
+//}
+//`
+//	expected := `// agl:generated
+//`
+//	testCodeGen(t, src, expected)
+//}
