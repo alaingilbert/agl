@@ -334,8 +334,8 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	fset, f := agl.ParseSrc(string(by))
 	for _, i := range f.Imports {
 		importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
-		if strings.HasPrefix(importPath, modPrefix+"/") {
-			importPath = strings.TrimPrefix(importPath, modPrefix+"/")
+		if strings.HasPrefix(importPath, modPrefix) {
+			importPath = strings.TrimPrefix(importPath, modPrefix)
 			entries, err := os.ReadDir(importPath)
 			if err != nil {
 				panic(err)
