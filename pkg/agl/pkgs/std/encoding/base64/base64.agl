@@ -1,5 +1,7 @@
 package base64
 
+import "std/io"
+
 type CorruptInputError int64
 type Encoding struct {}
 

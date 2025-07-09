@@ -1,6 +1,7 @@
 package bytes
 
 import "agl1/iter"
+import "agl1/io"
 
 type Buffer struct {}
 type Reader struct {}

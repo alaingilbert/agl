@@ -1,5 +1,7 @@
 package binary
 
+import "std/io"
+
 type MaxVarintLen16 int
 type MaxVarintLen32 int
 type MaxVarintLen64 int

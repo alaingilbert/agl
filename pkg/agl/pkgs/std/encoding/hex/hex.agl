@@ -1,5 +1,7 @@
 package hex
 
+import "std/io"
+
 type InvalidByteError byte
 
 func AppendDecode(dst, src []byte) ([]byte)!
