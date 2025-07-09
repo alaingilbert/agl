@@ -1899,7 +1899,8 @@ func GenHeaders() string {
 }
 
 func GenCore() string {
-	out := "package main\n"
+	out := GeneratedFilePrefix
+	out += "package main\n"
 	out += GenHeaders()
 	out += GenContent()
 	return out
