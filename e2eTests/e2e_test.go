@@ -26,7 +26,7 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ([]byte, error) {
 	}
 
 	coreFile := filepath.Join(tmpDir, "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
+	err = os.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)
 	if err != nil {
 		return nil, err
 	}

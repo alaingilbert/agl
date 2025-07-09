@@ -1898,9 +1898,9 @@ func GenHeaders() string {
 )`
 }
 
-func GenCore() string {
+func GenCore(packageName string) string {
 	out := GeneratedFilePrefix
-	out += "package main\n"
+	out += fmt.Sprintf("package %s\n", packageName)
 	out += GenHeaders()
 	out += GenContent()
 	return out

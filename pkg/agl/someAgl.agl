@@ -1,0 +1,4 @@
+package agl
+
+func Something(s set[int]) {
+}

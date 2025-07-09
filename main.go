@@ -56,6 +56,7 @@ func main() {
 				Aliases: []string{"b"},
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "force", Aliases: []string{"f"}},
+					&cli.StringFlag{Name: "output", Aliases: []string{"o"}},
 				},
 				Usage:  "build command",
 				Action: buildAction,
@@ -113,13 +114,26 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 	}
 
 	coreFile := filepath.Join(tmpDir, "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
+	err = os.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)
 	if err != nil {
 		return err
 	}
 
 	// Run `go run` on the file with additional arguments
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
+	cmd := exec.Command("go", cmdArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func spawnGoBuild(fileName, outputFlag string) error {
+	var cmdArgs []string
+	cmdArgs = append(cmdArgs, "build")
+	if outputFlag != "" {
+		cmdArgs = append(cmdArgs, "-o", outputFlag)
+	}
+	cmdArgs = append(cmdArgs, fileName)
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -220,16 +234,60 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	if cmd.NArg() == 0 {
 		return buildProject()
 	}
+	outputFlag := cmd.String("output")
 	forceFlag := cmd.Bool("force")
 	fileName := cmd.Args().Get(0)
-	if !strings.HasSuffix(fileName, ".agl") {
-		fmt.Println("file must have '.agl' extension")
+	m := agl.NewPkgVisited()
+	err := buildFile(fileName, forceFlag, m)
+	if err != nil {
+		panic(err)
+	}
+	return spawnGoBuild(fileName, outputFlag)
+}
+
+func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
+	if m.ContainsAdd(fileName) {
+		return nil
+	}
+	fmt.Println("build", fileName)
+	isGo := strings.HasSuffix(fileName, ".go")
+	isAGL := strings.HasSuffix(fileName, ".agl")
+	if !isAGL && !isGo {
+		fmt.Println("file must have '.go | .agl' extension")
 		return nil
 	}
 	by, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err)
 	}
+
+	if isGo {
+		f, err := goparser.ParseFile(gotoken.NewFileSet(), fileName, by, 0)
+		if err != nil {
+			panic(err)
+		}
+		const moduleName = "agl"
+		for _, i := range f.Imports {
+			importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
+			if strings.HasPrefix(importPath, moduleName+"/") {
+				importPath = strings.TrimPrefix(importPath, moduleName+"/")
+				entries, err := os.ReadDir(importPath)
+				if err != nil {
+					panic(err)
+				}
+				for _, entry := range entries {
+					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
+						continue
+					}
+					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
+						panic(err)
+					}
+				}
+			}
+		}
+		return nil
+	}
+
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
@@ -254,12 +312,12 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
+	packageName := filepath.Base(strings.TrimSuffix(fileName, filepath.Base(fileName)))
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore()), 0644)
+	err = os.WriteFile(coreFile, []byte(agl.GenCore(packageName)), 0644)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
