@@ -3853,6 +3853,32 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen136_1(t *testing.T) {
+	src := `package main
+import "agl1/fmt"
+import myHttp "agl1/net/http"
+func main() {
+	res := myHttp.Get("https://google.com")!
+	fmt.Println(res)
+}`
+	expected := `// agl:generated
+package main
+import (
+	"fmt"
+	myHttp "net/http"
+)
+func main() {
+	aglTmp1, aglTmpErr1 := myHttp.Get("https://google.com")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
+	}
+	res := AglIdentity(aglTmp1)
+	fmt.Println(res)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen137(t *testing.T) {
 	src := `package main
 func parseInt(s1 string) int? {
@@ -8558,6 +8584,31 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen299(t *testing.T) {
+	src := `package main
+import (
+	"agl1/io"
+	"net/http"
+)
+func main() {
+	f := io.ReadFull
+}`
+	expected := `// agl:generated
+package main
+import (
+	"io"
+	"net/http"
+)
+func main() {
+	f := io.ReadFull
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ReadFull(io.Reader, []byte) int!", test.TypeAt(7, 2).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
