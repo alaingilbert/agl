@@ -245,7 +245,8 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 	generatedFilePrefix := agl.GeneratedFilePrefix
 	_ = fs.WalkDir(os.DirFS("."), ".", func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() && (filepath.Base(path) == "vendor" || filepath.Base(path) == "node_modules") {
+		base := filepath.Base(path)
+		if d.IsDir() && (base == "vendor" || base == "node_modules") {
 			return fs.SkipDir
 		}
 		if strings.HasSuffix(path, ".go") {
