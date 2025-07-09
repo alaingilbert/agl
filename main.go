@@ -242,6 +242,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+// Walk the current directory and subdirectories and delete all `*.go` files that start with `// agl:generated`
 func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 	generatedFilePrefix := agl.GeneratedFilePrefix
 	_ = fs.WalkDir(os.DirFS("."), ".", func(path string, d fs.DirEntry, err error) error {
