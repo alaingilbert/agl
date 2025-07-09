@@ -134,6 +134,7 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 }
 
 func spawnGoBuild(fileName, outputFlag string) error {
+	fileName = strings.Replace(fileName, ".agl", ".go", 1)
 	var cmdArgs []string
 	cmdArgs = append(cmdArgs, "build")
 	if outputFlag != "" {
