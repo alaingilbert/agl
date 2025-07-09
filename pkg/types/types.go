@@ -336,10 +336,28 @@ func (s StructType) String() string {
 	return out
 }
 
+type InterfaceMethod struct {
+	Name string
+	Typ  Type
+}
+
 type InterfaceType struct {
 	Name       string
 	Pkg        string
 	TypeParams []Type
+	Methods    []InterfaceMethod
+}
+
+func (i InterfaceType) GetMethodByName(name string) Type {
+	for _, m := range i.Methods {
+		if m.Name == name {
+			tmp := m.Typ.(FuncType)
+			tmp.Name = m.Name
+			return tmp
+		}
+	}
+	panic("")
+	return nil
 }
 
 func (i InterfaceType) GoStr() string     { return i.String() }

@@ -392,6 +392,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		}
 		toDef = types.EnumType{Name: spec.Name.Name, Fields: fields}
 	case *ast.InterfaceType:
+		var methodsT []types.InterfaceMethod
 		if t.Methods.List != nil {
 			for _, f := range t.Methods.List {
 				if f.Type != nil {
@@ -400,10 +401,11 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 				for _, n := range f.Names {
 					fnT := funcTypeToFuncType("", f.Type.(*ast.FuncType), infer.env, infer.fset, false)
 					infer.env.Define(spec.Name, spec.Name.Name+"."+n.Name, fnT)
+					methodsT = append(methodsT, types.InterfaceMethod{Name: n.Name, Typ: fnT})
 				}
 			}
 		}
-		toDef = types.InterfaceType{Name: spec.Name.Name}
+		toDef = types.InterfaceType{Name: spec.Name.Name, Methods: methodsT}
 	case *ast.ArrayType:
 		toDef = types.CustomType{Name: spec.Name.Name, W: types.ArrayType{Elt: infer.env.GetType2(t.Elt, infer.fset)}}
 	case *ast.MapType:
@@ -947,8 +949,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call.Sel, fnT)
 			infer.SetType(expr, toReturn)
 		case types.InterfaceType:
-			name := fmt.Sprintf("%s.%s", idTT, fnName)
-			t := infer.env.Get(name)
+			t := idTT.GetMethodByName(call.Sel.Name)
+			//name := fmt.Sprintf("%s.%s", idTT, fnName)
+			//t := infer.env.Get(name)
 			tr := t.(types.FuncType).Return
 			infer.SetType(call.Sel, t)
 			infer.SetType(call, tr)

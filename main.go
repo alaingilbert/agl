@@ -344,9 +344,9 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 					continue
 				}
-				//if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
-				//	panic(err)
-				//}
+				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
+					panic(err)
+				}
 			}
 		}
 	}

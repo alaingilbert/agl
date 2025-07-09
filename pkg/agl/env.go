@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -22,7 +23,10 @@ import (
 //go:embed pkgs/* core/*
 var contentFs embed.FS
 
+var envIDCounter atomic.Int64
+
 type Env struct {
+	ID            int64
 	structCounter atomic.Int64
 	lookupTable   map[string]*Info  // Store constants/variables/functions
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
@@ -318,43 +322,49 @@ func (e *Env) loadCoreFunctions() {
 }
 
 func loadImports(env *Env, node *ast.File, m *PkgVisited) {
+	env.withEnv(func(nenv *Env) {
+		for _, d := range node.Imports {
+			importName := ""
+			if d.Name != nil {
+				importName = d.Name.Name
+			}
+			path := strings.ReplaceAll(d.Path.Value, `"`, ``)
+			if err := env.loadPkg(nenv, path, importName, m); err != nil {
+				panic(err)
+			}
+		}
+	})
+}
+
+func loadGoImports(env, nenv *Env, node *goast.File, m *PkgVisited) {
 	for _, d := range node.Imports {
 		importName := ""
 		if d.Name != nil {
 			importName = d.Name.Name
 		}
 		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
-		if err := env.loadPkg(path, importName, m); err != nil {
+		if err := env.loadPkg(nenv, path, importName, m); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func loadGoImports(env *Env, node *goast.File, m *PkgVisited) {
-	for _, d := range node.Imports {
-		importName := ""
-		if d.Name != nil {
-			importName = d.Name.Name
-		}
-		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
-		if err := env.loadPkg(path, importName, m); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func defineFromSrc(env *Env, path, pkgName string, src []byte, m *PkgVisited) {
+func defineFromSrc(env, nenv *Env, path, pkgName string, src []byte, m *PkgVisited) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
+	origPkgName := filepath.Base(path)
 	pkgName = Or(pkgName, node.Name.Name)
+	if err := env.DefinePkg(origPkgName, path); err != nil {
+		//return
+	}
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		//return
 	}
-	loadImports(env, node, m)
-	loadDecls(env, node, pkgName, fset)
+	loadImports(nenv, node, m)
+	loadDecls(env, nenv, node, pkgName, fset)
 }
 
-func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
+func loadDecls(env, nenv *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -382,7 +392,7 @@ func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 				fullName = recvName + "." + fullName
 			}
 			fullName = pkgName + "." + fullName
-			ft := funcDeclTypeToFuncType("", decl, env, fset, true)
+			ft := funcDeclTypeToFuncType("", decl, nenv, fset, true)
 			if decl.Doc != nil && decl.Doc.List[0].Text == "// agl:wrapped" {
 				ft.IsNative = false
 				switch v := ft.Return.(type) {
@@ -399,6 +409,7 @@ func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 			if err := env.DefineFnNative2(fullName, ft); err != nil {
 				assert(false, err.Error())
 			}
+			//p("?1", fullName, ft, env.ID)
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
 				switch spec := s.(type) {
@@ -406,38 +417,42 @@ func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 					specName := pkgName + "." + spec.Name.Name
 					switch v := spec.Type.(type) {
 					case *ast.Ident:
-						t := env.GetType2(v, fset)
+						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, types.CustomType{Pkg: pkgName, Name: spec.Name.Name, W: t})
 					case *ast.MapType:
-						t := env.GetType2(v, fset)
+						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.StarExpr:
-						t := env.GetType2(v, fset)
+						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.ArrayType:
-						t := env.GetType2(v, fset)
+						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
+						var methodsT []types.InterfaceMethod
 						if v.Methods != nil {
 							for _, m := range v.Methods.List {
 								for _, n := range m.Names {
 									fullName := pkgName + "." + spec.Name.Name + "." + n.Name
-									t := env.GetType2(m.Type, fset)
-									env.Define(nil, fullName, t)
+									t := nenv.GetType2(m.Type, fset)
+									tmp := t.(types.FuncType)
+									tmp.Name = n.Name
+									env.Define(nil, fullName, tmp)
+									methodsT = append(methodsT, types.InterfaceMethod{Name: n.Name, Typ: tmp})
 								}
 							}
 						}
-						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
+						env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name, Methods: methodsT})
 					case *ast.StructType:
 						env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name})
 						if v.Fields != nil {
 							for _, field := range v.Fields.List {
-								t := env.GetType2(field.Type, fset)
+								t := nenv.GetType2(field.Type, fset)
 								for _, name := range field.Names {
 									fieldName := pkgName + "." + spec.Name.Name + "." + name.Name
 									switch vv := t.(type) {
 									case types.InterfaceType:
-										env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name})
+										env.Define(nil, fieldName, types.InterfaceType{Pkg: vv.Pkg, Name: vv.Name, Methods: vv.Methods})
 									case types.StructType:
 										env.Define(nil, fieldName, types.StructType{Pkg: vv.Pkg, Name: vv.Name})
 									case types.TypeType:
@@ -463,7 +478,7 @@ func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 				case *ast.ValueSpec:
 					for _, name := range spec.Names {
 						fieldName := pkgName + "." + name.Name
-						t := env.GetType2(spec.Type, fset)
+						t := nenv.GetType2(spec.Type, fset)
 						env.Define(nil, fieldName, t)
 					}
 				default:
@@ -479,13 +494,13 @@ type Later struct {
 	s       goast.Spec
 }
 
-func defineStructsFromGoSrc(files []EntryContent, env *Env, m *PkgVisited, keepRaw bool) {
+func defineStructsFromGoSrc(files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range files {
 		//p("LOADING", fullPath)
 		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
-		loadGoImports(env, node, m)
+		loadGoImports(env, nenv, node, m)
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
 			case *goast.GenDecl:
@@ -552,6 +567,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 			//p("DEFSTRUCT2", pkgName, spec.Name.Name)
 			env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 		case *goast.InterfaceType:
+			var methodsT []types.InterfaceMethod
 			if v.Methods != nil {
 				for _, m := range v.Methods.List {
 					for _, n := range m.Names {
@@ -561,10 +577,11 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 						fullName := pkgName + "." + spec.Name.Name + "." + n.Name
 						t := env.GetGoType2(pkgName, m.Type, keepRaw)
 						env.DefineForce(nil, fullName, t)
+						methodsT = append(methodsT, types.InterfaceMethod{Name: n.Name, Typ: t})
 					}
 				}
 			}
-			env.DefineForce(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name})
+			env.DefineForce(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name, Methods: methodsT})
 		case *goast.IndexListExpr:
 		case *goast.ArrayType:
 		case *goast.MapType:
@@ -586,7 +603,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 	}
 }
 
-func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
+func defineFromGoSrc(env, nenv *Env, path string, src []byte, keepRaw bool) {
 	node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", src, goparser.AllErrors|goparser.ParseComments))
 	pkgName := node.Name.Name
 	_ = env.DefinePkg(pkgName, path) // Many files have the same "package"
@@ -614,15 +631,15 @@ func defineFromGoSrc(env *Env, path string, src []byte, keepRaw bool) {
 	}
 }
 
-func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkg(nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
-	if m.ContainsAdd(pkgPath + "_" + pkgName) {
+	if m.ContainsAdd(pkgPath + "_" + pkgName + "_" + strconv.FormatInt(e.ID, 10)) {
 		return nil
 	}
 	//p("?LOADPKG", pkgPath, pkgName)
-	if err := e.loadPkgLocal(pkgPath, pkgName, m); err != nil {
-		if err := e.loadPkgAglStd(pkgPath, pkgName, m); err != nil {
-			if err := e.loadPkgVendor(pkgPath, pkgName, m); err != nil {
+	if err := e.loadPkgLocal(nenv, pkgPath, pkgName, m); err != nil {
+		if err := e.loadPkgAglStd(nenv, pkgPath, pkgName, m); err != nil {
+			if err := e.loadPkgVendor(nenv, pkgPath, pkgName, m); err != nil {
 				return err
 			}
 		}
@@ -630,18 +647,18 @@ func (e *Env) loadPkg(pkgPath, pkgName string, m *PkgVisited) error {
 	return nil
 }
 
-func (e *Env) loadPkgLocal(pkgPath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgLocal(nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.DefinePkg(pkgPath, pkgName); err != nil {
 		return nil
 	}
-	if err := e.loadVendor2(pkgFullPath, m); err != nil {
+	if err := e.loadVendor2(nenv, pkgFullPath, m); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgAglStd(nenv *Env, path, pkgName string, m *PkgVisited) error {
 	var prefix string
 	if strings.HasPrefix(path, "agl1/") {
 		prefix = "agl1/"
@@ -649,39 +666,39 @@ func (e *Env) loadPkgAglStd(path, pkgName string, m *PkgVisited) error {
 		prefix = "std/"
 		path = filepath.Join("std", path)
 	}
-	return e.loadAglFile(prefix, path, pkgName, m)
+	return e.loadAglFile(nenv, prefix, path, pkgName, m)
 }
 
-func (e *Env) loadPkgVendor(path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgVendor(nenv *Env, path, pkgName string, m *PkgVisited) error {
 	vendorPath := filepath.Join("vendor", path)
-	if err := e.loadVendor2(vendorPath, m); err != nil {
-		if err := e.loadAglFile("", path, pkgName, m); err != nil {
+	if err := e.loadVendor2(nenv, vendorPath, m); err != nil {
+		if err := e.loadAglFile(nenv, "", path, pkgName, m); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *Env) loadAglFile(prefix, path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadAglFile(nenv *Env, prefix, path, pkgName string, m *PkgVisited) error {
 	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"+prefix))
-	defineFromSrc(e, final, pkgName, by, m)
+	defineFromSrc(e, nenv, final, pkgName, by, m)
 	return nil
 }
 
-func (e *Env) loadVendor2(path string, m *PkgVisited) error {
+func (e *Env) loadVendor2(nenv *Env, path string, m *PkgVisited) error {
 	keepRaw := utils.True()
 	files, err := readDir(path, m)
 	if err != nil {
 		return err
 	}
-	defineStructsFromGoSrc(files, e, m, keepRaw)
+	defineStructsFromGoSrc(files, e, nenv, m, keepRaw)
 	for _, entry := range files {
-		defineFromGoSrc(e, path, entry.Content, keepRaw)
+		defineFromGoSrc(e, nenv, path, entry.Content, keepRaw)
 	}
 	return nil
 }
@@ -809,9 +826,9 @@ func CoreFns() string {
 func (e *Env) loadBaseValues() {
 	m := NewPkgVisited()
 	e.loadCoreTypes()
-	_ = e.loadPkgAglStd("agl1/cmp", "", m)
+	_ = e.loadPkgAglStd(e, "agl1/cmp", "", m)
 	e.loadCoreFunctions()
-	_ = e.loadPkgAglStd("agl1/iter", "", m)
+	_ = e.loadPkgAglStd(e, "agl1/iter", "", m)
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
@@ -819,6 +836,7 @@ func (e *Env) loadBaseValues() {
 
 func NewEnv() *Env {
 	env := &Env{
+		ID:          envIDCounter.Add(1),
 		lookupTable: make(map[string]*Info),
 		lspTable:    make(map[NodeKey]*Info),
 	}
@@ -828,11 +846,13 @@ func NewEnv() *Env {
 
 func (e *Env) SubEnv() *Env {
 	env := &Env{
+		ID:          envIDCounter.Add(1),
 		lookupTable: make(map[string]*Info),
 		lspTable:    e.lspTable,
 		parent:      e,
 		NoIdxUnwrap: e.NoIdxUnwrap,
 	}
+	//p("SubEnv", e.ID, env.ID)
 	return env
 }
 
@@ -936,9 +956,7 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 	if !force {
 		t := e.GetDirect(name)
 		if t != nil {
-			if strings.Contains(name, "CompareType") || strings.Contains(name, "ContextDiff") || strings.Contains(name, "yaml.") {
-				return nil
-			}
+			//p("?", name, t, e.ID)
 			//return fmt.Errorf("duplicate declaration of %s", name)
 		}
 	}
