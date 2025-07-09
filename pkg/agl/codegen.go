@@ -191,6 +191,10 @@ func (g *Generator) Generate() (out string) {
 	return out + out1 + out2 + tupleStr + genFuncDeclStr + out3 + extStr
 }
 
+func (g *Generator) PkgName() string {
+	return g.a.Name.Name
+}
+
 func (g *Generator) genPackage() string {
 	return fmt.Sprintf("package %s\n", g.a.Name.Name)
 }
