@@ -7,10 +7,10 @@ type Writer struct {}
 
 func ScanBytes(data []byte, atEOF bool) (int, []byte)!
 
-func NewReadWriter(r *Reader, w *Writer) *ReadWriter
+func NewReadWriter(r *io.Reader, w *io.Writer) *io.ReadWriter
 
-func NewReader(rd io.Reader) *Reader
-func NewReaderSize(rd io.Reader, size int) *Reader
+func NewReader(rd io.Reader) *io.Reader
+func NewReaderSize(rd io.io.Reader, size int) *bufio.Reader
 func (b *bufio.Reader) Buffered() int
 func (b *bufio.Reader) Discard(n int) int!
 func (b *bufio.Reader) Peek(n int) ([]byte)!
@@ -27,7 +27,7 @@ func (b *bufio.Reader) UnreadByte() error
 func (b *bufio.Reader) UnreadRune() error
 func (b *bufio.Reader) WriteTo(w io.Writer) int64!
 
-func NewScanner(r io.Reader) *Scanner
+func NewScanner(r io.Reader) *bufio.Scanner
 func (s *bufio.Scanner) Buffer([]byte, int)
 func (s *bufio.Scanner) Bytes() []byte
 //func (s *Scanner) Err() !
@@ -35,8 +35,8 @@ func (s *bufio.Scanner) Scan() bool
 func (s *bufio.Scanner) Split(split SplitFunc)
 func (s *bufio.Scanner) Text() string
 
-func NewWriter(w io.Writer) *Writer
-func NewWriterSize(w io.Writer, size int) *Writer
+func NewWriter(w io.Writer) *io.Writer
+func NewWriterSize(w io.Writer, size int) *io.Writer
 func (b *bufio.Writer) Available() int
 func (b *bufio.Writer) AvailableBuffer() []byte
 func (b *bufio.Writer) Buffered() int
