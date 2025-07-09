@@ -296,7 +296,6 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	}
 
 	generatedFilePrefix := agl.GeneratedFilePrefix
-	const moduleName = "agl"
 
 	by, err := os.ReadFile(fileName)
 	if err != nil {
@@ -313,8 +312,8 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 		}
 		for _, i := range f.Imports {
 			importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
-			if strings.HasPrefix(importPath, moduleName+"/") {
-				importPath = strings.TrimPrefix(importPath, moduleName+"/")
+			if strings.HasPrefix(importPath, modPrefix+"/") {
+				importPath = strings.TrimPrefix(importPath, modPrefix+"/")
 				entries, err := os.ReadDir(importPath)
 				if err != nil {
 					panic(err)
@@ -335,8 +334,8 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	fset, f := agl.ParseSrc(string(by))
 	for _, i := range f.Imports {
 		importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
-		if strings.HasPrefix(importPath, moduleName+"/") {
-			importPath = strings.TrimPrefix(importPath, moduleName+"/")
+		if strings.HasPrefix(importPath, modPrefix+"/") {
+			importPath = strings.TrimPrefix(importPath, modPrefix+"/")
 			entries, err := os.ReadDir(importPath)
 			if err != nil {
 				panic(err)
