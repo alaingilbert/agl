@@ -393,14 +393,11 @@ func loadDecls(env *Env, node *ast.File, pkgName string, fset *token.FileSet) {
 					v.Native = false
 					ft.Return = v
 				}
-				if err := env.DefineFnNative2(fullName, ft); err != nil {
-					assert(false, err.Error())
-				}
 			} else {
 				ft.IsNative = true
-				if err := env.DefineFnNative2(fullName, ft); err != nil {
-					assert(false, err.Error())
-				}
+			}
+			if err := env.DefineFnNative2(fullName, ft); err != nil {
+				assert(false, err.Error())
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
