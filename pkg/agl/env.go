@@ -385,10 +385,10 @@ func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName strin
 	origPkgName := filepath.Base(path)
 	pkgName = Or(pkgName, node.Name.Name)
 	if err := env.DefinePkg(origPkgName, path); err != nil {
-		//return
+		return
 	}
 	if err := env.DefinePkg(pkgName, path); err != nil {
-		//return
+		return
 	}
 	loadAglImports(path, depth, t, nenv, node, m)
 	loadDecls(env, nenv, node, path, pkgName, fset)
