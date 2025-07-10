@@ -575,7 +575,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 				}
 			}
 			//p("DEFSTRUCT2", pkgName, spec.Name.Name)
-			env.DefineForce(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+			env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 		case *goast.InterfaceType:
 			var methodsT []types.InterfaceMethod
 			if v.Methods != nil {
