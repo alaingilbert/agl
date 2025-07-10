@@ -8615,6 +8615,32 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen300(t *testing.T) {
+	src := `package main
+import (
+	"agl1/os"
+)
+func main() {
+	os.Remove()!
+	_ = os.Remove()
+}`
+	expected := `// agl:generated
+package main
+import "os"
+func main() {
+	aglTmpErr1 := os.Remove()
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
+	}
+	AglNoop()
+	_ = AglWrapNative1(os.Remove())
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

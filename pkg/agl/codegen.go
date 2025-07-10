@@ -1639,7 +1639,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 				if v.KeepRaw {
 					content2 = fmt.Sprintf("%s", content2)
 				} else {
-					content2 = fmt.Sprintf("AglWrapNative2(%s)", content2)
+					if _, ok := v.W.(types.VoidType); ok {
+						content2 = fmt.Sprintf("AglWrapNative1(%s)", content2)
+					} else {
+						content2 = fmt.Sprintf("AglWrapNative2(%s)", content2)
+					}
 				}
 			}
 		}
@@ -1912,6 +1916,13 @@ func GenCore(packageName string) string {
 
 func GenContent() string {
 	return `
+func AglWrapNative1(err error) Result[AglVoid] {
+	if err != nil {
+		return MakeResultErr[T](err)
+	}
+	return MakeResultOk(AglVoid{})
+}
+
 func AglWrapNative2[T any](v1 T, err error) Result[T] {
 	if err != nil {
 		return MakeResultErr[T](err)
