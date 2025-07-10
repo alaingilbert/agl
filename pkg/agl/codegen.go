@@ -1230,7 +1230,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 					var outFnDecl string
 					g.WithGenMapping(m, func() {
 						outFnDecl = g.decrPrefix(func() string {
-							return g.genFuncDecl(fnDecl, false) + "\n"
+							return g.genFuncDecl(fnDecl) + "\n"
 						})
 					})
 					for _, k := range slices.Sorted(maps.Keys(m)) {
@@ -1460,12 +1460,12 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) (out string) {
 	return
 }
 
-func (g *Generator) genDecl(d ast.Decl, first bool) (out string) {
+func (g *Generator) genDecl(d ast.Decl) (out string) {
 	switch decl := d.(type) {
 	case *ast.GenDecl:
 		return g.genGenDecl(decl)
 	case *ast.FuncDecl:
-		out1 := g.genFuncDecl(decl, first)
+		out1 := g.genFuncDecl(decl)
 		for _, b := range g.before {
 			if b != nil {
 				out += b.Content()
@@ -1485,7 +1485,7 @@ func (g *Generator) genGenDecl(decl *ast.GenDecl) string {
 }
 
 func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) string {
-	return g.genDecl(stmt.Decl, false)
+	return g.genDecl(stmt.Decl)
 }
 
 func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
@@ -1717,17 +1717,12 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 
 func (g *Generator) genDecls() (out string) {
 	for _, decl := range g.a.Decls {
-		g.genDecl(decl, true)
-	}
-	for _, decl := range g.a.Decls {
-		g.prefix = ""
-		content1 := g.genDecl(decl, false)
-		out += content1
+		out += g.genDecl(decl)
 	}
 	return
 }
 
-func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
+func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var name, recv, typeParamsStr, paramsStr, resultStr, bodyStr string
 	if decl.Recv != nil {
@@ -1752,9 +1747,6 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl, first bool) (out string) {
 	fnT := g.env.GetType(decl)
 	if g.genMap == nil && fnT.(types.FuncType).IsGeneric() {
 		g.genFuncDecls[fnT.String()] = decl
-		return ""
-	}
-	if first {
 		return ""
 	}
 	if decl.Name != nil {
