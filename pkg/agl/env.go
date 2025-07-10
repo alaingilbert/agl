@@ -324,7 +324,7 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func loadAglImports(fileName string, depth int, env *Env, node *ast.File, m *PkgVisited) {
+func loadAglImports(fileName string, depth int, t *TreeDrawer, env *Env, node *ast.File, m *PkgVisited) {
 	env.withEnv(func(nenv *Env) {
 		var imports [][]string
 		for _, d := range node.Imports {
@@ -335,11 +335,11 @@ func loadAglImports(fileName string, depth int, env *Env, node *ast.File, m *Pkg
 			path := strings.ReplaceAll(d.Path.Value, `"`, ``)
 			imports = append(imports, []string{path, importName})
 		}
-		loadImports(fileName, depth, env, nenv, imports, m)
+		loadImports(fileName, depth, t, env, nenv, imports, m)
 	})
 }
 
-func loadGoImports(fileName string, depth int, env, nenv *Env, node *goast.File, m *PkgVisited) {
+func loadGoImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, node *goast.File, m *PkgVisited) {
 	var imports [][]string
 	for _, d := range node.Imports {
 		importName := ""
@@ -349,27 +349,39 @@ func loadGoImports(fileName string, depth int, env, nenv *Env, node *goast.File,
 		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
 		imports = append(imports, []string{path, importName})
 	}
-	loadImports(fileName, depth, env, nenv, imports, m)
+	loadImports(fileName, depth, t, env, nenv, imports, m)
 }
 
-var drawImports = utils.False()
+type TreeDrawer struct {
+	rows []string
+}
 
-func loadImports(fileName string, depth int, env, nenv *Env, imports [][]string, m *PkgVisited) {
-	if drawImports {
-		fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth), fileName)
+func (t *TreeDrawer) Add(depth int, lbl string) {
+	t.rows = append(t.rows, fmt.Sprintf("%s├─ %s\n", strings.Repeat("│ ", depth), lbl))
+}
+
+func (t *TreeDrawer) Draw() {
+	for _, r := range t.rows {
+		fmt.Print(r)
+	}
+}
+
+func loadImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, imports [][]string, m *PkgVisited) {
+	if t != nil {
+		t.Add(depth, fileName)
 	}
 	for _, d := range imports {
 		path, importName := d[0], d[1]
-		if drawImports {
-			fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth+1), path)
+		if t != nil {
+			t.Add(depth+1, path)
 		}
-		if err := env.loadPkg(depth+2, nenv, path, importName, m); err != nil {
+		if err := env.loadPkg(depth+2, t, nenv, path, importName, m); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func defineFromSrc(depth int, env, nenv *Env, path, pkgName string, src []byte, m *PkgVisited) {
+func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName string, src []byte, m *PkgVisited) {
 	fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	origPkgName := filepath.Base(path)
@@ -380,7 +392,7 @@ func defineFromSrc(depth int, env, nenv *Env, path, pkgName string, src []byte, 
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		//return
 	}
-	loadAglImports(path, depth, nenv, node, m)
+	loadAglImports(path, depth, t, nenv, node, m)
 	loadDecls(env, nenv, node, path, pkgName, fset)
 }
 
@@ -534,7 +546,7 @@ type Later struct {
 	entryName string
 }
 
-func defineStructsFromGoSrc(path string, depth int, files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
+func defineStructsFromGoSrc(path string, depth int, t *TreeDrawer, files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range files {
 		env.withEnv(func(nenv *Env) {
@@ -542,7 +554,7 @@ func defineStructsFromGoSrc(path string, depth int, files []EntryContent, env, n
 			fset := gotoken.NewFileSet()
 			node := Must(goparser.ParseFile(fset, "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 			pkgName := node.Name.Name
-			loadGoImports(filepath.Join(path, entry.Name), depth, env, nenv, node, m)
+			loadGoImports(filepath.Join(path, entry.Name), depth, t, env, nenv, node, m)
 			for _, d := range node.Decls {
 				switch decl := d.(type) {
 				case *goast.GenDecl:
@@ -685,15 +697,15 @@ func defineFromGoSrc(env, nenv *Env, path string, src []byte, keepRaw bool) {
 	}
 }
 
-func (e *Env) loadPkg(depth int, nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkg(depth int, t *TreeDrawer, nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
 	pkgName = Or(pkgName, filepath.Base(pkgPath))
 	if m.ContainsAdd(pkgPath + "_" + pkgName + "_" + strconv.FormatInt(e.ID, 10)) {
 		return nil
 	}
 	//p("?LOADPKG", pkgPath, pkgName)
-	if err := e.loadPkgLocal(depth, nenv, pkgPath, pkgName, m); err != nil {
-		if err := e.loadPkgAglStd(depth, nenv, pkgPath, pkgName, m); err != nil {
-			if err := e.loadPkgVendor(depth, nenv, pkgPath, pkgName, m); err != nil {
+	if err := e.loadPkgLocal(depth, t, nenv, pkgPath, pkgName, m); err != nil {
+		if err := e.loadPkgAglStd(depth, t, nenv, pkgPath, pkgName, m); err != nil {
+			if err := e.loadPkgVendor(depth, t, nenv, pkgPath, pkgName, m); err != nil {
 				return err
 			}
 		}
@@ -701,18 +713,18 @@ func (e *Env) loadPkg(depth int, nenv *Env, pkgPath, pkgName string, m *PkgVisit
 	return nil
 }
 
-func (e *Env) loadPkgLocal(depth int, nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgLocal(depth int, t *TreeDrawer, nenv *Env, pkgPath, pkgName string, m *PkgVisited) error {
 	pkgFullPath := trimPrefixPath(pkgPath)
 	if err := e.DefinePkg(pkgPath, pkgName); err != nil {
 		return nil
 	}
-	if err := e.loadVendor2(depth, nenv, pkgFullPath, m); err != nil {
+	if err := e.loadVendor2(depth, t, nenv, pkgFullPath, m); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Env) loadPkgAglStd(depth int, nenv *Env, path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgAglStd(depth int, t *TreeDrawer, nenv *Env, path, pkgName string, m *PkgVisited) error {
 	var prefix string
 	if strings.HasPrefix(path, "agl1/") {
 		prefix = "agl1/"
@@ -729,37 +741,37 @@ func (e *Env) loadPkgAglStd(depth int, nenv *Env, path, pkgName string, m *PkgVi
 	//		return err
 	//	}
 	//}
-	return e.loadAglFile(depth, nenv, prefix, path, pkgName, m)
+	return e.loadAglFile(depth, t, nenv, prefix, path, pkgName, m)
 }
 
-func (e *Env) loadPkgVendor(depth int, nenv *Env, path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadPkgVendor(depth int, t *TreeDrawer, nenv *Env, path, pkgName string, m *PkgVisited) error {
 	vendorPath := filepath.Join("vendor", path)
-	if err := e.loadVendor2(depth, nenv, vendorPath, m); err != nil {
-		if err := e.loadAglFile(depth, nenv, "", path, pkgName, m); err != nil {
+	if err := e.loadVendor2(depth, t, nenv, vendorPath, m); err != nil {
+		if err := e.loadAglFile(depth, t, nenv, "", path, pkgName, m); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *Env) loadAglFile(depth int, nenv *Env, prefix, path, pkgName string, m *PkgVisited) error {
+func (e *Env) loadAglFile(depth int, t *TreeDrawer, nenv *Env, prefix, path, pkgName string, m *PkgVisited) error {
 	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
 	by, err := contentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"+prefix))
-	defineFromSrc(depth, e, nenv, final, pkgName, by, m)
+	defineFromSrc(depth, t, e, nenv, final, pkgName, by, m)
 	return nil
 }
 
-func (e *Env) loadVendor2(depth int, nenv *Env, path string, m *PkgVisited) error {
+func (e *Env) loadVendor2(depth int, t *TreeDrawer, nenv *Env, path string, m *PkgVisited) error {
 	keepRaw := utils.True()
 	files, err := readDir(path, m)
 	if err != nil {
 		return err
 	}
-	defineStructsFromGoSrc(path, depth, files, e, nenv, m, keepRaw)
+	defineStructsFromGoSrc(path, depth, t, files, e, nenv, m, keepRaw)
 	for _, entry := range files {
 		defineFromGoSrc(e, nenv, path, entry.Content, keepRaw)
 	}
@@ -889,9 +901,9 @@ func CoreFns() string {
 func (e *Env) loadBaseValues() {
 	m := NewPkgVisited()
 	e.loadCoreTypes()
-	_ = e.loadPkgAglStd(0, e, "agl1/cmp", "", m)
+	_ = e.loadPkgAglStd(0, nil, e, "agl1/cmp", "", m)
 	e.loadCoreFunctions()
-	_ = e.loadPkgAglStd(0, e, "agl1/iter", "", m)
+	_ = e.loadPkgAglStd(0, nil, e, "agl1/iter", "", m)
 	e.loadPkgAgl()
 	e.Define(nil, "Option", types.OptionType{})
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
