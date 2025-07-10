@@ -254,7 +254,7 @@ func (infer *FileInferrer) Infer() {
 	infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
 	t := &TreeDrawer{}
 	loadAglImports("main", 0, t, infer.env, infer.f, NewPkgVisited())
-	if utils.True() {
+	if utils.False() {
 		t.Draw()
 	}
 	// TODO do a second pass for types that used before their declaration

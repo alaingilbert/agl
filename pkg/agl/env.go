@@ -361,9 +361,7 @@ func (t *TreeDrawer) Add(depth int, lbl string) {
 }
 
 func (t *TreeDrawer) Draw() {
-	for _, r := range t.rows {
-		fmt.Print(r)
-	}
+	fmt.Print(strings.Join(t.rows, ""))
 }
 
 func loadImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, imports [][]string, m *PkgVisited) {
