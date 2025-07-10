@@ -238,6 +238,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
 		return g.genBlockStmt(stmt)
+	case *ast.GuardStmt:
+		return g.genGuardStmt(stmt)
 	case *ast.IfStmt:
 		return g.genIfStmt(stmt)
 	case *ast.AssignStmt:
@@ -1732,6 +1734,18 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 	} else {
 		out += gPrefix + "}\n"
 	}
+	return out
+}
+
+func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) (out string) {
+	cond := g.genExpr(stmt.Cond)
+	body := g.incrPrefix(func() string {
+		return g.genStmt(stmt.Body)
+	})
+	gPrefix := g.prefix
+	out += gPrefix + "if !(" + cond + ") {\n"
+	out += body
+	out += gPrefix + "}\n"
 	return out
 }
 

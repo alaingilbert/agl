@@ -130,6 +130,7 @@ const (
 	RETURN
 	MUT
 	PUB
+	GUARD
 
 	SELECT
 	STRUCT
@@ -254,6 +255,7 @@ var tokens = [...]string{
 	PACKAGE:   "package",
 	RANGE:     "range",
 	RETURN:    "return",
+	GUARD:     "guard",
 
 	SELECT: "select",
 	STRUCT: "struct",

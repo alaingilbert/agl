@@ -8642,6 +8642,26 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen301(t *testing.T) {
+	src := `package main
+func main() {
+	a := 42
+	guard a < 100 else { return }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := 42
+	if !(a < 100) {
+		return
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

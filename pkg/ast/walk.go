@@ -215,6 +215,10 @@ func Walk(v Visitor, node Node) {
 	case *BlockStmt:
 		walkList(v, n.List)
 
+	case *GuardStmt:
+		Walk(v, n.Cond)
+		Walk(v, n.Body)
+
 	case *IfStmt:
 		if n.Init != nil {
 			Walk(v, n.Init)

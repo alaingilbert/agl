@@ -781,6 +781,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
 		infer.blockStmt(stmt)
+	case *ast.GuardStmt:
+		infer.guardStmt(stmt)
 	case *ast.IfStmt:
 		infer.ifStmt(stmt)
 	case *ast.ReturnStmt:
@@ -3053,6 +3055,20 @@ func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 			return
 		}
 	}
+	if stmt.Body != nil {
+		infer.SetType(stmt, infer.GetType(stmt.Body))
+	} else {
+		infer.SetType(stmt, types.VoidType{})
+	}
+}
+
+func (infer *FileInferrer) guardStmt(stmt *ast.GuardStmt) {
+	infer.withEnv(func() {
+		infer.expr(stmt.Cond)
+		if stmt.Body != nil {
+			infer.stmt(stmt.Body)
+		}
+	})
 	if stmt.Body != nil {
 		infer.SetType(stmt, infer.GetType(stmt.Body))
 	} else {

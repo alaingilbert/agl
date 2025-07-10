@@ -2438,6 +2438,19 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 	return &ast.IfLetStmt{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
 }
 
+func (p *parser) parseGuardStmt() ast.Stmt {
+	defer decNestLev(incNestLev(p))
+	if p.trace {
+		defer un(trace(p, "GuardStmt"))
+	}
+	pos := p.expect(token.GUARD)
+	condStmt, _ := p.parseSimpleStmt(basic)
+	cond := p.makeExpr(condStmt, "boolean expression")
+	elsePos := p.expect(token.ELSE)
+	body := p.parseBlockStmt()
+	return &ast.GuardStmt{Guard: pos, Else: elsePos, Cond: cond, Body: body}
+}
+
 func (p *parser) parseIfStmt() ast.Stmt {
 	defer decNestLev(incNestLev(p))
 
@@ -2798,6 +2811,8 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	case token.LBRACE:
 		s = p.parseBlockStmt()
 		p.expectSemi()
+	case token.GUARD:
+		s = p.parseGuardStmt()
 	case token.IF:
 		s = p.parseIfStmt()
 	case token.SWITCH:

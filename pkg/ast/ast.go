@@ -985,6 +985,14 @@ type (
 		Else Stmt // else branch; or nil
 	}
 
+	// An GuardStmt node represents an guard statement.
+	GuardStmt struct {
+		Guard token.Pos // position of "if" keyword
+		Else  token.Pos // position of "else" keyword
+		Cond  Expr      // condition
+		Body  *BlockStmt
+	}
+
 	// A CaseClause represents a case of an expression or type switch statement.
 	CaseClause struct {
 		Case  token.Pos // position of "case" or "default" keyword
@@ -1056,6 +1064,10 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (g GuardStmt) Pos() token.Pos { return g.Guard }
+func (g GuardStmt) End() token.Pos { return g.Body.End() }
+func (g GuardStmt) stmtNode()      {}
 
 func (a AtLineExpr) Pos() token.Pos { return a.AtLine }
 func (a AtLineExpr) End() token.Pos { return a.AtLine + 1 }
