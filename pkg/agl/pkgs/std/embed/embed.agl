@@ -1,6 +1,6 @@
 package embed
 
-import "io/fs"
+import "std/io/fs"
 
 type FS struct {}
 
