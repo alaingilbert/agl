@@ -266,8 +266,7 @@ func buildProject() ! {
 	cmd := exec.Command("go", "build")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()!
-	return Ok(void)
+	return cmd.Run()!
 }
 
 const modPrefix = "agl/" // TODO get from go.mod

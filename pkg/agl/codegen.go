@@ -2110,7 +2110,7 @@ func AglVecIn[T aglImportCmp.Ordered](a []T, v T) bool {
 	return false
 }
 
-func AglNoop(_ ...any) {}
+func AglNoop(_ ...any) Result[AglVoid] { return MakeResultOk(AglVoid{}) }
 
 func AglTypeAssert[T any](v any) Option[T] {
 	if v, ok := v.(T); ok {
