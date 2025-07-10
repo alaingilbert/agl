@@ -111,7 +111,8 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	os.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)!
 
 	// Run `go run` on the file with additional arguments
-	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
+	cmdArgs := []string{"run", tmpFile, coreFile}
+	cmdArgs.Push(programArgs...)
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
