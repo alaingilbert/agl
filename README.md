@@ -108,6 +108,8 @@ func main() {
 This pattern works with any of `Ok`|`Err`|`Some`  
 
 ```go
+package main
+
 func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
 
 func main() {
@@ -122,6 +124,8 @@ func main() {
 This pattern works with any of `Ok`|`Err`|`Some`  
 
 ```go
+package main
+
 func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
 
 func main() {
