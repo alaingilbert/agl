@@ -326,39 +326,42 @@ func (e *Env) loadCoreFunctions() {
 
 var drawImports = utils.False()
 
-func loadImports(fileName string, depth int, env *Env, node *ast.File, m *PkgVisited) {
-	if drawImports {
-		fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth), fileName)
-	}
+func loadAglImports(fileName string, depth int, env *Env, node *ast.File, m *PkgVisited) {
 	env.withEnv(func(nenv *Env) {
+		var imports [][]string
 		for _, d := range node.Imports {
 			importName := ""
 			if d.Name != nil {
 				importName = d.Name.Name
 			}
 			path := strings.ReplaceAll(d.Path.Value, `"`, ``)
-			if drawImports {
-				fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth+1), path)
-			}
-			if err := env.loadPkg(depth+2, nenv, path, importName, m); err != nil {
-				panic(err)
-			}
+			imports = append(imports, []string{path, importName})
 		}
+		loadImports(fileName, depth, env, nenv, imports, m)
 	})
 }
 
 func loadGoImports(fileName string, depth int, env, nenv *Env, node *goast.File, m *PkgVisited) {
-	if drawImports {
-		fmt.Printf("%s├─ %s (go)\n", strings.Repeat("│ ", depth), fileName)
-	}
+	var imports [][]string
 	for _, d := range node.Imports {
 		importName := ""
 		if d.Name != nil {
 			importName = d.Name.Name
 		}
 		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
+		imports = append(imports, []string{path, importName})
+	}
+	loadImports(fileName, depth, env, nenv, imports, m)
+}
+
+func loadImports(fileName string, depth int, env, nenv *Env, imports [][]string, m *PkgVisited) {
+	if drawImports {
+		fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth), fileName)
+	}
+	for _, d := range imports {
+		path, importName := d[0], d[1]
 		if drawImports {
-			fmt.Printf("%s├─ %s (go)\n", strings.Repeat("│ ", depth+1), path)
+			fmt.Printf("%s├─ %s\n", strings.Repeat("│ ", depth+1), path)
 		}
 		if err := env.loadPkg(depth+2, nenv, path, importName, m); err != nil {
 			panic(err)
@@ -377,7 +380,7 @@ func defineFromSrc(depth int, env, nenv *Env, path, pkgName string, src []byte, 
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		//return
 	}
-	loadImports(path, depth, nenv, node, m)
+	loadAglImports(path, depth, nenv, node, m)
 	loadDecls(env, nenv, node, path, pkgName, fset)
 }
 

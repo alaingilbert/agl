@@ -252,7 +252,7 @@ func exprToString(expr goast.Expr) string {
 func (infer *FileInferrer) Infer() {
 	infer.PackageName = infer.f.Name.Name
 	infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
-	loadImports("main", 0, infer.env, infer.f, NewPkgVisited())
+	loadAglImports("main", 0, infer.env, infer.f, NewPkgVisited())
 	// TODO do a second pass for types that used before their declaration
 	for _, d := range infer.f.Decls {
 		switch decl := d.(type) {
