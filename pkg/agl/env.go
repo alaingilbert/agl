@@ -701,6 +701,13 @@ func (e *Env) loadPkgAglStd(nenv *Env, path, pkgName string, m *PkgVisited) erro
 		prefix = "std/"
 		path = filepath.Join("std", path)
 	}
+	//if path == "std/fmt" {
+	//	goroot := runtime.GOROOT()
+	//	absPath, _ := filepath.Abs(filepath.Join(goroot, "src", "fmt"))
+	//	if err := e.loadVendor2(nenv, absPath, m); err != nil {
+	//		return err
+	//	}
+	//}
 	return e.loadAglFile(nenv, prefix, path, pkgName, m)
 }
 
