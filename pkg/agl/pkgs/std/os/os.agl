@@ -1,5 +1,7 @@
 package os
 
+import "std/io/fs"
+
 type DirEntry interface {
 	IsDir() bool
 	Name() string
@@ -8,11 +10,16 @@ type DirEntry interface {
 type File struct {
 }
 
+func (*os.File) Close() error
+func (*os.File) Read(b []byte) (int, error)
+
 var Stdout *os.File
 var Stderr *os.File
 
 type FileMode u32
 
+func DirFS(dir string) fs.FS
+func Open(name string) (*os.File, error)
 func ReadFile(name string) ([]byte, error)
 func ReadDir(name string) ([]os.DirEntry, error)
 func Remove(name string) error

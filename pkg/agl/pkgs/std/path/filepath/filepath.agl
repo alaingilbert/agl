@@ -2,3 +2,4 @@ package filepath
 
 func Join(elem ...string) string
 func Dir(path string) string
+func Base(path string) string

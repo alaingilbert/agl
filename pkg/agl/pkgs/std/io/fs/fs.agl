@@ -2,7 +2,9 @@ package fs
 
 type FS interface {}
 type File interface {}
-type DirEntry interface {}
+type DirEntry interface {
+    IsDir() bool
+}
 type FileInfo interface {}
 type FileMode uint32
 type GlobFS interface {}
@@ -12,14 +14,16 @@ type ReadDirFile interface {}
 type ReadFileFS interface {}
 type StatFS interface {}
 type SubFS interface {}
-//type WalkDirFunc func(path string, d DirEntry, err error) error
+type WalkDirFunc func(path string, d fs.DirEntry, err error) error
+
+var SkipDir error
 
 func FormatDirEntry(dir fs.DirEntry) string
 func FormatFileInfo(info fs.FileInfo) string
 func Glob(fsys fs.FS, pattern string) ([]string)!
 func ReadFile(fsys fs.FS, name string) ([]byte)!
 func ValidPath(name string) bool
-//func WalkDir(fsys fs.FS, root string, fn fs.WalkDirFunc) error
+func WalkDir(fsys fs.FS, root string, fn fs.WalkDirFunc) error
 
 func FileInfoToDirEntry(info fs.FileInfo) fs.DirEntry
 func ReadDir(fsys fs.FS, name string) ([]fs.DirEntry)!

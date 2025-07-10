@@ -1,5 +1,7 @@
 package os
 
+import "agl1/io/fs"
+
 type DirEntry interface {
 	IsDir() bool
 	Name() string
@@ -12,6 +14,12 @@ type FileInfo interface {
 
 type File struct {
 }
+
+func (*os.File) Close() error
+func (*os.File) Read(b []byte) int!
+
+func DirFS(dir string) fs.FS
+func Open(name string) (*os.File)!
 
 var Stdout *os.File
 var Stderr *os.File
