@@ -31,14 +31,6 @@ type Generator struct {
 	swapGen       bool
 	genMap        map[string]types.Type
 	parent        *Generator
-	isType        bool
-}
-
-func (g *Generator) withType(clb func()) {
-	prev := g.isType
-	g.isType = true
-	clb()
-	g.isType = prev
 }
 
 func (g *Generator) WithSub(clb func()) {
@@ -522,12 +514,7 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
 
 func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
-	var content2 string
-	if g.isType {
-		content2 = g.env.GetType2(expr.Value, g.fset).GoStrType()
-	} else {
-		content2 = g.env.GetType2(expr.Value, g.fset).GoStr()
-	}
+	content2 := g.env.GetType2(expr.Value, g.fset).GoStr()
 	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
 
@@ -1256,9 +1243,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				} else if content1 == "make" {
 					content1 = g.genExpr(expr.Fun)
 					if g.genMap != nil {
-						g.withType(func() { content2 = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr() })
+						content2 = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
 					} else {
-						g.withType(func() { content2 = g.genExpr(expr.Args[0]) })
+						content2 = g.genExpr(expr.Args[0])
 					}
 					if len(expr.Args) > 1 {
 						content2 += ", " + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
@@ -1390,9 +1377,6 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 	structStr += strings.Join(args, "")
 	structStr += fmt.Sprintf("}\n")
 	g.tupleStructs[structName] = structStr
-	if g.isType {
-		return fmt.Sprintf("%s", structName)
-	}
 	var fields []string
 	for i, x := range expr.Values {
 		content1 := g.genExpr(x)
@@ -1438,9 +1422,7 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) (out string) {
 	case *ast.ValueSpec:
 		var content1 string
 		if spec.Type != nil {
-			g.withType(func() {
-				content1 = g.genExpr(spec.Type)
-			})
+			content1 = g.genExpr(spec.Type)
 		}
 		var namesArr []string
 		for _, name := range spec.Names {
