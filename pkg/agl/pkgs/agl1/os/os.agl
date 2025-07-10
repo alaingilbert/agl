@@ -24,14 +24,18 @@ func Open(name string) (*os.File)!
 var Stdout *os.File
 var Stderr *os.File
 
+// file.go:799:6
 func ReadFile(name string) ([]byte)!
+// dir.go:118:6
 func ReadDir(name string) ([]os.DirEntry)!
+// file.go:849:6
 func WriteFile(name string, data []byte, perm os.FileMode) !
 func Chdir(string) ! {}
 func Chown(name string, uid, gid int) !
 func Mkdir(name string, perm os.FileMode) !
 func MkdirAll(path string, perm os.FileMode) !
 func MkdirTemp(dir, pattern string) string!
+// file_unix.go:375:6
 func Remove(name string) !
 // path.go:73:6
 func RemoveAll(path string) !
@@ -53,4 +57,5 @@ func IsPermission(err error) bool
 func IsTimeout(err error) bool
 func LookupEnv(key string) string?
 type Args []string
+// proc.go:62:6
 func Exit(code int)
