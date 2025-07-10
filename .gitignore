@@ -1,6 +1,9 @@
 /agl
+/main
 cover.out
 vendor
+/pkg/agl/aglCore.go
+/pkg/agl/someAgl.go
 /agl_agl
 /cmd/agl/*.go
 node_modules/
