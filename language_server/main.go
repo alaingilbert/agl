@@ -203,7 +203,6 @@ func (s *Server) Definition(ctx context.Context, params lsp.TextDocumentPosition
 	if ident, ok := node.(*ast.Ident); ok {
 		// Look up the symbol in the environment
 		if tmp := doc.env.GetInfo(ident); tmp != nil {
-			log.Printf("Definition: %v | %v", tmp.Definition1, uri)
 			if tmp.Definition1.URI != "" {
 				return []lsp.Location{
 					{
