@@ -324,8 +324,6 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-var drawImports = utils.False()
-
 func loadAglImports(fileName string, depth int, env *Env, node *ast.File, m *PkgVisited) {
 	env.withEnv(func(nenv *Env) {
 		var imports [][]string
@@ -353,6 +351,8 @@ func loadGoImports(fileName string, depth int, env, nenv *Env, node *goast.File,
 	}
 	loadImports(fileName, depth, env, nenv, imports, m)
 }
+
+var drawImports = utils.False()
 
 func loadImports(fileName string, depth int, env, nenv *Env, imports [][]string, m *PkgVisited) {
 	if drawImports {
