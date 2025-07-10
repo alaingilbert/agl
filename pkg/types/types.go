@@ -356,7 +356,7 @@ func (i InterfaceType) GetMethodByName(name string) Type {
 			return tmp
 		}
 	}
-	panic("")
+	panic(fmt.Sprintf("%s", name))
 	return nil
 }
 
