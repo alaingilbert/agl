@@ -117,6 +117,20 @@ func main() {
 }
 ```
 
+### Guard
+
+This pattern works with any of `Ok`|`Err`|`Some`  
+
+```go
+func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
+
+func main() {
+    guard Some(num) := maybeInt() else { return } // can use guard to unwrap a value
+	guard num < 100 else { return } // can use guard as a reverse if
+	assert(num == 42) 
+}
+```
+
 ### Match
 
 ```go
