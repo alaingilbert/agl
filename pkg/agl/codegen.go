@@ -31,6 +31,7 @@ type Generator struct {
 	swapGen       bool
 	genMap        map[string]types.Type
 	parent        *Generator
+	allowUnused   bool
 }
 
 func (g *Generator) WithSub(clb func()) {
@@ -60,7 +61,23 @@ type ExtensionTest struct {
 	concrete types.Type
 }
 
-func NewGenerator(env *Env, a *ast.File, fset *token.FileSet) *Generator {
+type GeneratorConf struct {
+	AllowUnused bool
+}
+
+type GeneratorOption func(*GeneratorConf)
+
+func AllowUnused() GeneratorOption {
+	return func(c *GeneratorConf) {
+		c.AllowUnused = true
+	}
+}
+
+func NewGenerator(env *Env, a *ast.File, fset *token.FileSet, opts ...GeneratorOption) *Generator {
+	conf := &GeneratorConf{}
+	for _, opt := range opts {
+		opt(conf)
+	}
 	genFns := make(map[string]*ast.FuncDecl)
 	return &Generator{
 		fset:          fset,
@@ -69,7 +86,8 @@ func NewGenerator(env *Env, a *ast.File, fset *token.FileSet) *Generator {
 		extensions:    make(map[string]Extension),
 		tupleStructs:  make(map[string]string),
 		genFuncDecls2: make(map[string]string),
-		genFuncDecls:  genFns}
+		genFuncDecls:  genFns,
+		allowUnused:   conf.AllowUnused}
 }
 
 func (g *Generator) genExtension(e Extension) (out string) {
@@ -1631,7 +1649,9 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		}
 	}
 	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
-	//out += g.prefix + fmt.Sprintf("AglNoop(%s)\n", lhs) // Allow to have "declared and not used" variables
+	if g.allowUnused {
+		out += g.prefix + fmt.Sprintf("AglNoop(%s)\n", lhs) // Allow to have "declared and not used" variables
+	}
 	out += after
 	return out
 }
