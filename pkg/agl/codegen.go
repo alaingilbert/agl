@@ -1918,7 +1918,7 @@ func GenContent() string {
 	return `
 func AglWrapNative1(err error) Result[AglVoid] {
 	if err != nil {
-		return MakeResultErr[T](err)
+		return MakeResultErr[AglVoid](err)
 	}
 	return MakeResultOk(AglVoid{})
 }
