@@ -493,22 +493,27 @@ func loadDecls(env, nenv *Env, node *ast.File, pkgName string, fset *token.FileS
 }
 
 type Later struct {
-	pkgName string
-	s       goast.Spec
+	pkgName   string
+	s         goast.Spec
+	node      *goast.File
+	fset      *gotoken.FileSet
+	path      string
+	entryName string
 }
 
-func defineStructsFromGoSrc(files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
+func defineStructsFromGoSrc(path string, files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range files {
 		//p("LOADING", fullPath)
-		node := Must(goparser.ParseFile(gotoken.NewFileSet(), "", entry.Content, goparser.AllErrors|goparser.ParseComments))
+		fset := gotoken.NewFileSet()
+		node := Must(goparser.ParseFile(fset, "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 		pkgName := node.Name.Name
 		loadGoImports(env, nenv, node, m)
 		for _, d := range node.Decls {
 			switch decl := d.(type) {
 			case *goast.GenDecl:
 				for _, s := range decl.Specs {
-					processSpec(s, env, pkgName, &tryLater, keepRaw)
+					processSpec(path, entry.Name, node, fset, s, env, pkgName, &tryLater, keepRaw)
 				}
 			}
 		}
@@ -517,7 +522,7 @@ func defineStructsFromGoSrc(files []EntryContent, env, nenv *Env, m *PkgVisited,
 	for len(tryLater) > 0 {
 		var d Later
 		d, tryLater = tryLater[0], tryLater[1:]
-		processSpec(d.s, env, d.pkgName, &tryLater, keepRaw)
+		processSpec(d.path, d.entryName, d.node, d.fset, d.s, env, d.pkgName, &tryLater, keepRaw)
 		i++
 		if i > 10 {
 			break
@@ -525,7 +530,7 @@ func defineStructsFromGoSrc(files []EntryContent, env, nenv *Env, m *PkgVisited,
 	}
 }
 
-func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keepRaw bool) {
+func processSpec(path, entryName string, node *goast.File, fset *gotoken.FileSet, s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keepRaw bool) {
 	switch spec := s.(type) {
 	//case *goast.ValueSpec:
 	//	for _, name := range spec.Names {
@@ -555,7 +560,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 							if vv, ok := fT.(*goast.Ident); ok && vv.Name == spec.Name.Name {
 								t = types.StructType{Pkg: pkgName, Name: spec.Name.Name}
 							} else {
-								*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName})
+								*tryLater = append(*tryLater, Later{s: s, pkgName: pkgName, node: node, fset: fset, path: path, entryName: entryName})
 								//p("DEFSTRUCT1", pkgName, spec.Name.Name)
 								env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 								return nil
@@ -575,6 +580,7 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 				}
 			}
 			//p("DEFSTRUCT2", pkgName, spec.Name.Name)
+			//p(path, entryName, node, fset)
 			env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
 		case *goast.InterfaceType:
 			var methodsT []types.InterfaceMethod
@@ -706,7 +712,7 @@ func (e *Env) loadVendor2(nenv *Env, path string, m *PkgVisited) error {
 	if err != nil {
 		return err
 	}
-	defineStructsFromGoSrc(files, e, nenv, m, keepRaw)
+	defineStructsFromGoSrc(path, files, e, nenv, m, keepRaw)
 	for _, entry := range files {
 		defineFromGoSrc(e, nenv, path, entry.Content, keepRaw)
 	}
@@ -952,6 +958,11 @@ func (e *Env) Define1(n ast.Node, name string, typ types.Type, opts ...SetTypeOp
 
 func (e *Env) DefineErr(n ast.Node, name string, typ types.Type) error {
 	return e.defineHelper(n, name, typ, false)
+}
+
+type DefinitionProvider struct {
+	URI             string
+	Line, Character int
 }
 
 func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, opts ...SetTypeOption) error {
