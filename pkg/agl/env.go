@@ -527,6 +527,13 @@ func defineStructsFromGoSrc(files []EntryContent, env, nenv *Env, m *PkgVisited,
 
 func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keepRaw bool) {
 	switch spec := s.(type) {
+	//case *goast.ValueSpec:
+	//	for _, name := range spec.Names {
+	//		fieldName := pkgName + "." + name.Name
+	//		t := env.GetGoType2(pkgName, spec.Type, keepRaw)
+	//		p(fieldName, spec.Type, t)
+	//		env.DefineForce(nil, fieldName, t)
+	//	}
 	case *goast.TypeSpec:
 		if !spec.Name.IsExported() {
 			return
