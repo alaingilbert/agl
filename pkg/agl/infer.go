@@ -801,6 +801,8 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.forStmt(stmt)
 	case *ast.IfLetStmt:
 		infer.ifLetStmt(stmt)
+	case *ast.GuardLetStmt:
+		infer.guardLetStmt(stmt)
 	case *ast.SendStmt:
 		infer.sendStmt(stmt)
 	case *ast.SelectStmt:
@@ -3030,6 +3032,29 @@ func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetStmt) {
 		infer.withEnv(func() {
 			infer.stmt(stmt.Else)
 		})
+	}
+	infer.SetType(stmt, types.VoidType{})
+}
+
+func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
+	lhs := stmt.Ass.Lhs[0]
+	var lhsT types.Type
+	switch stmt.Op {
+	case token.NONE:
+		lhsT = types.NoneType{}
+	case token.OK:
+		lhsT = types.OkType{}
+	case token.ERR:
+		lhsT = types.ErrType{}
+	case token.SOME:
+		lhsT = types.SomeType{}
+	default:
+		panic("unreachable")
+	}
+	infer.SetType(lhs, lhsT)
+	infer.stmt(stmt.Ass)
+	if stmt.Body != nil {
+		infer.stmt(stmt.Body)
 	}
 	infer.SetType(stmt, types.VoidType{})
 }

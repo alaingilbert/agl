@@ -2438,12 +2438,39 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 	return &ast.IfLetStmt{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
 }
 
+func (p *parser) parseGuardLetStmt(pos token.Pos) *ast.GuardLetStmt {
+	var op token.Token
+	var ass *ast.AssignStmt
+	switch p.tok {
+	case token.OK, token.ERR, token.SOME:
+		op = p.tok
+		p.next()
+		p.expect(token.LPAREN)
+		id := p.parseIdentOrMutIdent()
+		p.expect(token.RPAREN)
+		p.expect(token.DEFINE)
+		pos := p.pos
+		//p.next()
+		y := p.parsePrimaryExpr2()
+		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
+	default:
+		p.error(pos, "unexpected token")
+	}
+	elsePos := p.expect(token.ELSE)
+	body := p.parseBlockStmt()
+	p.expectSemi()
+	return &ast.GuardLetStmt{Guard: pos, Else: elsePos, Op: op, Ass: ass, Body: body}
+}
+
 func (p *parser) parseGuardStmt() ast.Stmt {
 	defer decNestLev(incNestLev(p))
 	if p.trace {
 		defer un(trace(p, "GuardStmt"))
 	}
 	pos := p.expect(token.GUARD)
+	if p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME {
+		return p.parseGuardLetStmt(pos)
+	}
 	condStmt, _ := p.parseSimpleStmt(basic)
 	cond := p.makeExpr(condStmt, "boolean expression")
 	elsePos := p.expect(token.ELSE)

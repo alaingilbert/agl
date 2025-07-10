@@ -420,6 +420,12 @@ func Walk(v Visitor, node Node) {
 			Walk(v, n.Else)
 		}
 
+	case *GuardLetStmt:
+		Walk(v, n.Ass)
+		if n.Body != nil {
+			Walk(v, n.Body)
+		}
+
 	case *SetType:
 		Walk(v, n.Key)
 

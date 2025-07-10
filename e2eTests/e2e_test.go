@@ -55,3 +55,14 @@ func main() {
 }`
 	tassert.Equal(t, "1\n", testGenOutput(src))
 }
+
+func Test2(t *testing.T) {
+	src := `package main
+import "fmt"
+func test() int? { Some(42) }
+func main() {
+	guard Some(a) := test() else { return }
+	fmt.Println(a)
+}`
+	tassert.Equal(t, "42\n", testGenOutput(src))
+}

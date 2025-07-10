@@ -258,6 +258,8 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genDeclStmt(stmt)
 	case *ast.IfLetStmt:
 		return g.genIfLetStmt(stmt)
+	case *ast.GuardLetStmt:
+		return g.genGuardLetStmt(stmt)
 	case *ast.SendStmt:
 		return g.genSendStmt(stmt)
 	case *ast.SelectStmt:
@@ -1697,6 +1699,34 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	} else {
 		out += gPrefix + "}\n"
 	}
+	return out
+}
+
+func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
+	gPrefix := g.prefix
+	ass := stmt.Ass
+	lhs := g.genExpr(ass.Lhs[0])
+	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	var cond string
+	unwrapFn := "Unwrap"
+	switch stmt.Op {
+	case token.SOME:
+		cond = fmt.Sprintf("%s.IsNone()", varName)
+	case token.OK:
+		cond = fmt.Sprintf("%s.IsErr()", varName)
+	case token.ERR:
+		cond = fmt.Sprintf("%s.IsOk()", varName)
+		unwrapFn = "Err"
+	default:
+		panic("")
+	}
+	out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
+	out += gPrefix + fmt.Sprintf("if %s {\n", cond)
+	out += body
+	out += gPrefix + "}\n"
+	out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
 	return out
 }
 

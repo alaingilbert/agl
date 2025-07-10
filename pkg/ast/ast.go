@@ -976,6 +976,14 @@ type (
 		Else Stmt // else branch; or nil
 	}
 
+	GuardLetStmt struct {
+		Guard token.Pos // position of "guard" keyword
+		Else  token.Pos // position of "else" keyword
+		Op    token.Token
+		Ass   *AssignStmt
+		Body  *BlockStmt
+	}
+
 	// An IfStmt node represents an if statement.
 	IfStmt struct {
 		If   token.Pos // position of "if" keyword
@@ -1064,6 +1072,10 @@ type (
 		Body       *BlockStmt
 	}
 )
+
+func (g GuardLetStmt) Pos() token.Pos { return g.Guard }
+func (g GuardLetStmt) End() token.Pos { return g.Body.End() }
+func (g GuardLetStmt) stmtNode()      {}
 
 func (g GuardStmt) Pos() token.Pos { return g.Guard }
 func (g GuardStmt) End() token.Pos { return g.Body.End() }
