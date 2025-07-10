@@ -973,6 +973,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			}
 			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
 			nameT := infer.env.Get(name)
+			nameTInfo := infer.env.GetNameInfo(name)
 			if nameT == nil {
 				infer.errorf(call.Sel, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
 				return
@@ -982,7 +983,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if toReturn != nil {
 				toReturn = alterResultBubble(infer.returnType, toReturn)
 			}
-			infer.SetType(call.Sel, fnT)
+			infer.SetType(call.Sel, fnT, WithDefinition1(nameTInfo.Definition1))
 			infer.SetType(expr.Fun, fnT)
 			if toReturn != nil {
 				infer.SetType(expr, toReturn)

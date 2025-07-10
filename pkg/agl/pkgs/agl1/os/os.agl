@@ -33,6 +33,7 @@ func Mkdir(name string, perm os.FileMode) !
 func MkdirAll(path string, perm os.FileMode) !
 func MkdirTemp(dir, pattern string) string!
 func Remove(name string) !
+// path.go:73:6
 func RemoveAll(path string) !
 func Rename(oldpath, newpath string) !
 func SameFile(fi1, fi2 os.FileInfo) bool

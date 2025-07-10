@@ -15,6 +15,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -362,10 +364,10 @@ func defineFromSrc(env, nenv *Env, path, pkgName string, src []byte, m *PkgVisit
 		//return
 	}
 	loadImports(nenv, node, m)
-	loadDecls(env, nenv, node, pkgName, fset)
+	loadDecls(env, nenv, node, path, pkgName, fset)
 }
 
-func loadDecls(env, nenv *Env, node *ast.File, pkgName string, fset *token.FileSet) {
+func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token.FileSet) {
 	for _, d := range node.Decls {
 		switch decl := d.(type) {
 		case *ast.FuncDecl:
@@ -407,10 +409,23 @@ func loadDecls(env, nenv *Env, node *ast.File, pkgName string, fset *token.FileS
 			} else {
 				ft.IsNative = true
 			}
-			if err := env.DefineFnNative2(fullName, ft); err != nil {
+			var opts []SetTypeOption
+			if decl.Doc != nil {
+				goroot := runtime.GOROOT()
+				doc := decl.Doc.List[0].Text
+				r := regexp.MustCompile(`[^:]+:\d+:\d+`)
+				if r.MatchString(doc) {
+					parts := strings.Split(doc, ":")
+					absPath, _ := filepath.Abs(filepath.Join(goroot, "src", path))
+					absPath = filepath.Join(absPath, strings.TrimPrefix(parts[0], "// "))
+					line, _ := strconv.Atoi(parts[1])
+					character, _ := strconv.Atoi(parts[2])
+					opts = append(opts, WithDefinition1(DefinitionProvider{URI: absPath, Line: line, Character: character}))
+				}
+			}
+			if err := env.DefineFnNative2(fullName, ft, opts...); err != nil {
 				assert(false, err.Error())
 			}
-			//p("?1", fullName, ft, env.ID)
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
 				switch spec := s.(type) {
@@ -931,8 +946,8 @@ func (e *Env) DefineFnNative(name string, fnStr string, fset *token.FileSet) {
 	e.Define(nil, name, fnT)
 }
 
-func (e *Env) DefineFnNative2(name string, fnT types.FuncType) error {
-	return e.Define1(nil, name, fnT)
+func (e *Env) DefineFnNative2(name string, fnT types.FuncType, opts ...SetTypeOption) error {
+	return e.Define1(nil, name, fnT, opts...)
 }
 
 func (e *Env) DefinePkg(name, path string) error {
