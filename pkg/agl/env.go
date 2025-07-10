@@ -542,7 +542,7 @@ func defineStructsFromGoSrc(path string, depth int, files []EntryContent, env, n
 			fset := gotoken.NewFileSet()
 			node := Must(goparser.ParseFile(fset, "", entry.Content, goparser.AllErrors|goparser.ParseComments))
 			pkgName := node.Name.Name
-			loadGoImports(path, depth, env, nenv, node, m)
+			loadGoImports(filepath.Join(path, entry.Name), depth, env, nenv, node, m)
 			for _, d := range node.Decls {
 				switch decl := d.(type) {
 				case *goast.GenDecl:
