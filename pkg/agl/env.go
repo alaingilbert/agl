@@ -586,12 +586,12 @@ func processSpec(s goast.Spec, env *Env, pkgName string, tryLater *[]Later, keep
 						}
 						fullName := pkgName + "." + spec.Name.Name + "." + n.Name
 						t := env.GetGoType2(pkgName, m.Type, keepRaw)
-						env.DefineForce(nil, fullName, t)
+						env.Define(nil, fullName, t)
 						methodsT = append(methodsT, types.InterfaceMethod{Name: n.Name, Typ: t})
 					}
 				}
 			}
-			env.DefineForce(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name, Methods: methodsT})
+			env.Define(nil, specName, types.InterfaceType{Pkg: pkgName, Name: spec.Name.Name, Methods: methodsT})
 		case *goast.IndexListExpr:
 		case *goast.ArrayType:
 		case *goast.MapType:
