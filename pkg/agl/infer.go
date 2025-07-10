@@ -250,32 +250,34 @@ func exprToString(expr goast.Expr) string {
 }
 
 func (infer *FileInferrer) Infer() {
-	infer.PackageName = infer.f.Name.Name
-	infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
-	t := &TreeDrawer{}
-	loadAglImports("main", 0, t, infer.env, infer.f, NewPkgVisited())
-	if utils.False() {
-		t.Draw()
-	}
-	// TODO do a second pass for types that used before their declaration
-	for _, d := range infer.f.Decls {
-		switch decl := d.(type) {
-		case *ast.GenDecl:
-			infer.genDecl(decl)
+	infer.env.withEnv(func(nenv *Env) {
+		infer.PackageName = infer.f.Name.Name
+		infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
+		t := &TreeDrawer{}
+		loadAglImports("main", 0, t, infer.env, nenv, infer.f, NewPkgVisited())
+		if utils.False() {
+			t.Draw()
 		}
-	}
-	for _, d := range infer.f.Decls {
-		switch decl := d.(type) {
-		case *ast.FuncDecl:
-			infer.funcDecl(decl)
+		// TODO do a second pass for types that used before their declaration
+		for _, d := range infer.f.Decls {
+			switch decl := d.(type) {
+			case *ast.GenDecl:
+				infer.genDecl(decl)
+			}
 		}
-	}
-	for _, d := range infer.f.Decls {
-		switch decl := d.(type) {
-		case *ast.FuncDecl:
-			infer.funcDecl2(decl)
+		for _, d := range infer.f.Decls {
+			switch decl := d.(type) {
+			case *ast.FuncDecl:
+				infer.funcDecl(decl)
+			}
 		}
-	}
+		for _, d := range infer.f.Decls {
+			switch decl := d.(type) {
+			case *ast.FuncDecl:
+				infer.funcDecl2(decl)
+			}
+		}
+	})
 }
 
 type PkgVisited struct {

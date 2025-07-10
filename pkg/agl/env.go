@@ -324,19 +324,17 @@ func (e *Env) loadCoreFunctions() {
 	e.DefineFn("new", "func [T any](T) *T")
 }
 
-func loadAglImports(fileName string, depth int, t *TreeDrawer, env *Env, node *ast.File, m *PkgVisited) {
-	env.withEnv(func(nenv *Env) {
-		var imports [][]string
-		for _, d := range node.Imports {
-			importName := ""
-			if d.Name != nil {
-				importName = d.Name.Name
-			}
-			path := strings.ReplaceAll(d.Path.Value, `"`, ``)
-			imports = append(imports, []string{path, importName})
+func loadAglImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, node *ast.File, m *PkgVisited) {
+	var imports [][]string
+	for _, d := range node.Imports {
+		importName := ""
+		if d.Name != nil {
+			importName = d.Name.Name
 		}
-		loadImports(fileName, depth, t, env, nenv, imports, m)
-	})
+		path := strings.ReplaceAll(d.Path.Value, `"`, ``)
+		imports = append(imports, []string{path, importName})
+	}
+	loadImports(fileName, depth, t, env, nenv, imports, m)
 }
 
 func loadGoImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, node *goast.File, m *PkgVisited) {
@@ -390,7 +388,7 @@ func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName strin
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		panic(err)
 	}
-	loadAglImports(path, depth, t, nenv, node, m)
+	loadAglImports(path, depth, t, nenv, nenv, node, m)
 	loadDecls(env, nenv, node, path, pkgName, fset)
 }
 
