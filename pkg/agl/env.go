@@ -411,10 +411,10 @@ func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token
 			}
 			var opts []SetTypeOption
 			if decl.Doc != nil {
-				goroot := runtime.GOROOT()
 				doc := decl.Doc.List[0].Text
 				r := regexp.MustCompile(`[^:]+:\d+:\d+`)
 				if r.MatchString(doc) {
+					goroot := runtime.GOROOT()
 					parts := strings.Split(doc, ":")
 					absPath, _ := filepath.Abs(filepath.Join(goroot, "src", path))
 					absPath = filepath.Join(absPath, strings.TrimPrefix(parts[0], "// "))
