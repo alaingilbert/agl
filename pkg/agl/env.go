@@ -428,6 +428,9 @@ func loadDecls(env, nenv *Env, node *ast.File, pkgName string, fset *token.FileS
 					case *ast.ArrayType:
 						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
+					case *ast.FuncType:
+						t := nenv.GetType2(v, fset)
+						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
 						var methodsT []types.InterfaceMethod
 						if v.Methods != nil {
