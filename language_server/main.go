@@ -203,6 +203,24 @@ func (s *Server) Definition(ctx context.Context, params lsp.TextDocumentPosition
 	if ident, ok := node.(*ast.Ident); ok {
 		// Look up the symbol in the environment
 		if tmp := doc.env.GetInfo(ident); tmp != nil {
+			log.Printf("Definition: %v | %v", tmp.Definition1, uri)
+			if tmp.Definition1.URI != "" {
+				return []lsp.Location{
+					{
+						URI: lsp.DocumentURI("file://" + tmp.Definition1.URI),
+						Range: lsp.Range{
+							Start: lsp.Position{
+								Line:      tmp.Definition1.Line - 1,
+								Character: tmp.Definition1.Character - 1,
+							},
+							End: lsp.Position{
+								Line:      tmp.Definition1.Line - 1,
+								Character: tmp.Definition1.Character - 1,
+							},
+						},
+					},
+				}, nil
+			}
 			pos := s.fset.Position(tmp.Definition)
 			return []lsp.Location{
 				{

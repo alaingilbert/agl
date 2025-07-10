@@ -39,9 +39,10 @@ func (e *Env) withEnv(clb func(*Env)) {
 }
 
 type Info struct {
-	Message    string
-	Definition token.Pos
-	Type       types.Type
+	Message     string
+	Definition  token.Pos
+	Definition1 DefinitionProvider
+	Type        types.Type
 }
 
 func (i *Info) GetType() types.Type {
@@ -581,7 +582,10 @@ func processSpec(path, entryName string, node *goast.File, fset *gotoken.FileSet
 			}
 			//p("DEFSTRUCT2", pkgName, spec.Name.Name)
 			//p(path, entryName, node, fset)
-			env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields})
+			absPath, _ := filepath.Abs(filepath.Join(path, entryName))
+			pos := fset.Position(spec.Pos())
+			env.Define(nil, specName, types.StructType{Pkg: pkgName, Name: spec.Name.Name, Fields: fields},
+				WithDefinition1(DefinitionProvider{URI: absPath, Line: pos.Line, Character: pos.Column}))
 		case *goast.InterfaceType:
 			var methodsT []types.InterfaceMethod
 			if v.Methods != nil {
@@ -983,6 +987,9 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 	}
 	info := e.GetOrCreateNameInfo(name)
 	info.Type = typ
+	if conf.definition1 != nil {
+		info.Definition1 = *conf.definition1
+	}
 	if conf.description != "" {
 		info.Message = conf.description
 	}
@@ -1023,10 +1030,13 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.File
 	return nil
 }
 
-func (e *Env) SetType(p *Info, x ast.Node, t types.Type, fset *token.FileSet) {
+func (e *Env) SetType(p *Info, def1 *DefinitionProvider, x ast.Node, t types.Type, fset *token.FileSet) {
 	assertf(t != nil, "%s: try to set type nil, %v %v", fset.Position(x.Pos()), x, to(x))
 	info := e.lspNodeOrCreate(x)
 	info.Type = t
+	if def1 != nil {
+		info.Definition1 = *def1
+	}
 	if p != nil {
 		info.Message = p.Message
 		info.Definition = p.Definition

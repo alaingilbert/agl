@@ -145,11 +145,12 @@ func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 }
 
 func (infer *FileInferrer) SetTypeForce(a ast.Node, t types.Type) {
-	infer.env.SetType(nil, a, t, infer.fset)
+	infer.env.SetType(nil, nil, a, t, infer.fset)
 }
 
 type SetTypeConf struct {
 	definition  *Info
+	definition1 *DefinitionProvider
 	description string
 }
 
@@ -158,6 +159,12 @@ type SetTypeOption func(*SetTypeConf)
 func WithDefinition(i *Info) SetTypeOption {
 	return func(o *SetTypeConf) {
 		o.definition = i
+	}
+}
+
+func WithDefinition1(i DefinitionProvider) SetTypeOption {
+	return func(o *SetTypeConf) {
+		o.definition1 = &i
 	}
 }
 
@@ -188,7 +195,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 			}
 		}
 	}
-	infer.env.SetType(conf.definition, a, t, infer.fset)
+	infer.env.SetType(conf.definition, conf.definition1, a, t, infer.fset)
 }
 
 func trimPrefixPath(s string) string {
@@ -479,7 +486,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					if name.Mutable.IsValid() {
 						t = types.MutType{W: t}
 					}
-					infer.env.SetType(nil, name, t, infer.fset)
+					infer.env.SetType(nil, nil, name, t, infer.fset)
 					infer.env.Define(name, name.Name, t)
 				}
 			}
@@ -489,7 +496,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				infer.expr(param.Type)
 				t := infer.env.GetType2(param.Type, infer.fset)
 				for _, name := range param.Names {
-					infer.env.SetType(nil, name, t, infer.fset)
+					infer.env.SetType(nil, nil, name, t, infer.fset)
 					infer.env.Define(name, name.Name, types.GenericType{Name: name.Name, W: t, IsType: true})
 				}
 			}
@@ -506,7 +513,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 						t = types.MutType{W: t}
 					}
 					infer.env.Define(name, name.Name, t)
-					infer.env.SetType(nil, name, t, infer.fset)
+					infer.env.SetType(nil, nil, name, t, infer.fset)
 				}
 			}
 		}
@@ -2038,11 +2045,12 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		pkg := expr.X.(*ast.Ident).Name
 		sel := expr.Sel.Name
 		selT := infer.env.Get(pkg + "." + sel)
+		selTInfo := infer.env.GetNameInfo(pkg + "." + sel)
 		if selT == nil {
 			infer.errorf(expr.Sel, "%s: '%s' not found in package '%s'", infer.Pos(expr.Sel), sel, pkg)
 			return
 		}
-		infer.SetType(expr.Sel, selT)
+		infer.SetType(expr.Sel, selT, WithDefinition1(selTInfo.Definition1))
 		infer.SetType(expr, selT)
 	case types.TypeAssertType:
 		exprXIdT.Type = types.Unwrap(exprXIdT.Type)

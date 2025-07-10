@@ -373,7 +373,7 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	if strings.HasPrefix(expr.Name, "$") {
 		beforeT := g.env.GetType(expr)
 		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
-		g.env.SetType(nil, expr, beforeT, g.fset)
+		g.env.SetType(nil, nil, expr, beforeT, g.fset)
 	}
 	if strings.HasPrefix(expr.Name, "@") {
 		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Line), 1)
