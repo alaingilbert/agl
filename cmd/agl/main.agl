@@ -5,6 +5,8 @@ import (
 	"agl1/context"
 	"agl1/errors"
 	"agl1/fmt"
+	"agl1/io/fs"
+	"agl1/bytes"
 	"agl1/go/ast"
 	"agl1/go/parser"
 	"agl1/go/token"
@@ -53,6 +55,11 @@ func main() {
 				Aliases: []string{"b"},
 				Usage:   "build command",
 				Action:  buildAction,
+			},
+			{
+				Name:   "clean",
+				Usage:  "cleanup agl generated files",
+				Action: cleanupAction,
 			},
 			{
 				Name:    "execute",
@@ -199,6 +206,30 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 
 	out := insertHeadersAfterFirstLine(src, coreHeaders) + agl.GenContent()
 	fmt.Println(out)
+	return nil
+}
+
+
+// Walk the current directory and subdirectories and delete all `*.go` files that start with `// agl:generated`
+func cleanupAction(ctx context.Context, cmd *cli.Command) error {
+	generatedFilePrefix := "// agl:generated\n"
+	_ = fs.WalkDir(os.DirFS("."), ".", func(path string, d fs.DirEntry, err error) error {
+		base := filepath.Base(path)
+		if d.IsDir() && (base == "vendor" || base == "node_modules") {
+			return fs.SkipDir
+		}
+		if path.HasSuffix(".go") {
+			file := os.Open(path)!
+			defer file.Close()
+			buf := make([]byte, len(generatedFilePrefix))
+			file.Read(buf)!
+			if bytes.Equal(buf, []byte(generatedFilePrefix)) {
+				fmt.Println("removing", path)
+				os.Remove(path)!
+			}
+		}
+		return nil
+	})
 	return nil
 }
 
