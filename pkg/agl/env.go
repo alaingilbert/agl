@@ -520,19 +520,21 @@ type Later struct {
 func defineStructsFromGoSrc(path string, files []EntryContent, env, nenv *Env, m *PkgVisited, keepRaw bool) {
 	var tryLater []Later
 	for _, entry := range files {
-		//p("LOADING", fullPath)
-		fset := gotoken.NewFileSet()
-		node := Must(goparser.ParseFile(fset, "", entry.Content, goparser.AllErrors|goparser.ParseComments))
-		pkgName := node.Name.Name
-		loadGoImports(env, nenv, node, m)
-		for _, d := range node.Decls {
-			switch decl := d.(type) {
-			case *goast.GenDecl:
-				for _, s := range decl.Specs {
-					processSpec(path, entry.Name, node, fset, s, env, pkgName, &tryLater, keepRaw)
+		env.withEnv(func(nenv *Env) {
+			//p("LOADING", fullPath)
+			fset := gotoken.NewFileSet()
+			node := Must(goparser.ParseFile(fset, "", entry.Content, goparser.AllErrors|goparser.ParseComments))
+			pkgName := node.Name.Name
+			loadGoImports(env, nenv, node, m)
+			for _, d := range node.Decls {
+				switch decl := d.(type) {
+				case *goast.GenDecl:
+					for _, s := range decl.Specs {
+						processSpec(path, entry.Name, node, fset, s, env, pkgName, &tryLater, keepRaw)
+					}
 				}
 			}
-		}
+		})
 	}
 	i := 0
 	for len(tryLater) > 0 {
@@ -699,7 +701,9 @@ func (e *Env) loadPkgAglStd(nenv *Env, path, pkgName string, m *PkgVisited) erro
 		prefix = "agl1/"
 	} else {
 		prefix = "std/"
-		path = filepath.Join("std", path)
+		if !strings.HasPrefix(path, "std/") {
+			path = filepath.Join("std", path)
+		}
 	}
 	//if path == "std/fmt" {
 	//	goroot := runtime.GOROOT()

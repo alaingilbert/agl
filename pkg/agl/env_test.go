@@ -37,9 +37,11 @@ func Test4(t *testing.T) {
 
 func Test5(t *testing.T) {
 	env := NewEnv()
-	_ = env.loadPkgAglStd(env, "agl1/strings", "", NewPkgVisited())
-	fT := parseFuncDeclFromStringHelper("WriteString", "func (mut r *strings.Builder) WriteString(io.Writer, string) int!", env, token.NewFileSet())
-	tassert.Equal(t, "func (mut *strings.Builder) WriteString(io.Writer, string) int!", fT.String())
+	env.withEnv(func(env *Env) {
+		_ = env.loadPkgAglStd(env, "agl1/strings", "", NewPkgVisited())
+		fT := parseFuncDeclFromStringHelper("WriteString", "func (mut r *strings.Builder) WriteString(io.Writer, string) int!", env, token.NewFileSet())
+		tassert.Equal(t, "func (mut *strings.Builder) WriteString(io.Writer, string) int!", fT.String())
+	})
 }
 
 //func Test5(t *testing.T) {
