@@ -5697,22 +5697,22 @@ func main() {
 	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:4: method 'Scale' cannot be called on immutable type 'Vertex'")
 }
 
-func TestCodeGen189_1(t *testing.T) {
-	src := `package main
-type Vertex struct {
-	mut X, mut Y f64
-}
-func (mut v *Vertex) Scale(f f64) {
-	v.X = v.X * f
-	v.Y = v.Y * f
-}
-func main() {
-	v := &Vertex{3, 4}
-	mut vv := v
-	vv.Scale(10)
-}`
-	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
-}
+//func TestCodeGen189_1(t *testing.T) {
+//	src := `package main
+//type Vertex struct {
+//	mut X, mut Y f64
+//}
+//func (mut v *Vertex) Scale(f f64) {
+//	v.X = v.X * f
+//	v.Y = v.Y * f
+//}
+//func main() {
+//	v := &Vertex{3, 4}
+//	mut vv := v
+//	vv.Scale(10)
+//}`
+//	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
+//}
 
 func TestCodeGen189_2(t *testing.T) {
 	src := `package main

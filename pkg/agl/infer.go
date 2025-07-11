@@ -2655,16 +2655,16 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhs := stmt.Lhs[i]
 			rhs := stmt.Rhs[i]
 
-			if v1, ok := lhs.(*ast.Ident); ok {
-				if v2, ok := rhs.(*ast.Ident); ok {
-					if v1.Mutable.IsValid() {
-						if infer.mutEnforced && !TryCast[types.MutType](infer.env.Get(v2.Name)) {
-							infer.errorf(lhs, "cannot make mutable bind of an immutable variable")
-							return
-						}
-					}
-				}
-			}
+			//if v1, ok := lhs.(*ast.Ident); ok {
+			//	if v2, ok := rhs.(*ast.Ident); ok {
+			//		if v1.Mutable.IsValid() {
+			//			if infer.mutEnforced && !TryCast[types.MutType](infer.env.Get(v2.Name)) {
+			//				infer.errorf(lhs, "cannot make mutable bind of an immutable variable")
+			//				return
+			//			}
+			//		}
+			//	}
+			//}
 
 			var lhsWantedT types.Type
 			switch v := lhs.(type) {
