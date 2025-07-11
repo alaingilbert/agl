@@ -8724,6 +8724,17 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen305(t *testing.T) {
+	src := `package main
+func main() {
+	mut m := map[int]set[int]{1: set[int]{1, 2}}
+	m[1].Intersects([]int{1})
+}`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (set[int]) Intersects(agl1.Iterator[int]) bool", test.TypeAt(4, 7).String())
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
