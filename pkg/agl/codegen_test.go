@@ -8698,6 +8698,26 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen304(t *testing.T) {
+	src := `package main
+func main() {
+	for i, c := range "test" {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for i, c := range "test" {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "int", test.TypeAt(4, 6).String())
+	tassert.Equal(t, "i32", test.TypeAt(4, 9).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

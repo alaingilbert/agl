@@ -2397,7 +2397,9 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			xT = types.Unwrap(xT)
 			switch v := xT.(type) {
 			case types.StringType:
-				infer.env.Define(stmt.Value, name, types.I32Type{})
+				t := types.I32Type{}
+				infer.env.Define(stmt.Value, name, t)
+				infer.SetType(stmt.Value, t)
 			case types.ArrayType:
 				infer.env.Define(stmt.Value, name, v.Elt)
 				infer.SetType(stmt.Value, v.Elt)
