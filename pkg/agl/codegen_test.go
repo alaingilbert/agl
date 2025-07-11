@@ -8245,7 +8245,6 @@ func main() {
 }
 `
 	test := NewTest(src)
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -8262,7 +8261,6 @@ func main() {
 }
 `
 	test := NewTest(src)
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "string", test.TypeAt(3, 8).String())
 	testCodeGen1(t, test.GenCode(), expected)
@@ -8280,7 +8278,6 @@ func main() {
 }
 `
 	test := NewTest(src)
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "string", test.TypeAt(3, 8).String())
 	tassert.Equal(t, "UntypedNumType", test.TypeAt(3, 15).String())
@@ -8311,7 +8308,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "*exec.Cmd", test.TypeAt(6, 2).String())
 	tassert.Equal(t, "io.Writer", test.TypeAt(6, 6).String())
@@ -8332,7 +8328,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "string", test.TypeAt(4, 2).String())
 	testCodeGen1(t, test.GenCode(), expected)
@@ -8697,7 +8692,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "int", test.TypeAt(5, 4).String())
 	tassert.Equal(t, "int", test.TypeAt(6, 4).String())
