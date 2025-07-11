@@ -95,3 +95,12 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test6(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	assert(m.Len() == 3)
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

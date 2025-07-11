@@ -1199,6 +1199,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		case types.MapType:
 			fnName := e.Sel.Name
 			switch fnName {
+			case "Len":
+				content1 := g.genExpr(e.X)
+				return fmt.Sprintf("AglIdentity(AglMapLen(%s))", content1)
 			case "Get":
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
@@ -2739,6 +2742,10 @@ func AglVecPopIf[T any](a *[]T, pred func() bool) Option[T] {
 	var el T
 	el, *a = (*a)[len(*a)-1], (*a)[:len(*a)-1]
 	return MakeOptionSome(el)
+}
+
+func AglMapLen[K comparable, V any](m map[K]V) int {
+	return len(m)
 }
 
 func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {

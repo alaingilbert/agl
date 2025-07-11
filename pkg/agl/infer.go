@@ -1506,7 +1506,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 		}
 	case types.MapType:
 		fnName := exprT.Sel.Name
-		if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey"}) {
+		if InArray(fnName, []string{"Len"}) {
+			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
+			getFnT.Recv = []types.Type{idTT}
+			infer.SetType(expr, getFnT.Return)
+			infer.SetType(exprT.Sel, getFnT)
+		} else if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
 			getFnT.Recv = []types.Type{idTT}
 			getFnT.Params = getFnT.Params[1:]
