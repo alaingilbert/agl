@@ -237,7 +237,7 @@ func main() {
 	test := NewTest(src)
 	tassert.Equal(t, "mut []int", test.TypeAt(5, 2).String())
 	tassert.Equal(t, "u8", test.TypeAt(5, 6).String())
-	tassert.Nil(t, test.TypeAt(6, 6))
+	tassert.Equal(t, "UntypedNumType", test.TypeAt(6, 6).String())
 }
 
 func TestInfer12(t *testing.T) {

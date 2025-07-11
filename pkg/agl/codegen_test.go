@@ -8677,6 +8677,31 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen303(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	mut m := make(map[int]map[int]struct{})
+	m[1] = make(map[int]struct{})
+	m[1][1] = struct{}{}
+	fmt.Println(m)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := make(AglMap[int, map[int]struct{}])
+	m[1] = make(AglMap[int, struct{}])
+	m[1][1] = struct{}{}
+	fmt.Println(m)
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

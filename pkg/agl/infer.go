@@ -2618,16 +2618,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsWantedT = infer.env.Get(lhsIdName)
 			case *ast.IndexExpr:
 				var lhsIdName string
+				infer.expr(v.X)
+				infer.expr(v.Index)
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
-				case *ast.SelectorExpr:
-					infer.expr(vv.X)
-				default:
-					infer.errorf(lhs, "%v", to(v.X))
-					return
 				}
-				lhsIdNameT := infer.env.Get(lhsIdName)
+				lhsIdNameT := infer.env.GetType(v.X)
 				if infer.mutEnforced && !TryCast[types.MutType](lhsIdNameT) {
 					infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
 					return
@@ -2640,7 +2637,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsWantedT = vv.Elt
 				case types.SetType:
 				default:
-					infer.errorf(lhs, "%v", to(lhsIdNameT))
+					infer.errorf(lhs, "%v %v", lhsIdName, to(lhsIdNameT))
 					return
 				}
 			case *ast.SelectorExpr:
@@ -2691,8 +2688,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				lhsID = v
 				mutable = v.Mutable.IsValid()
 			case *ast.IndexExpr:
-				lhsID = v.X.(*ast.Ident)
-				mutable = lhsID.Mutable.IsValid()
+				if v, ok := v.X.(*ast.Ident); ok {
+					lhsID = v
+					mutable = v.Mutable.IsValid()
+				} else {
+					return
+				}
 				lhsIDT := infer.env.Get(lhsID.Name)
 				infer.SetType(lhsID, lhsIDT)
 				lhsIDT = types.Unwrap(lhsIDT)
