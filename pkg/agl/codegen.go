@@ -2268,6 +2268,10 @@ func (s AglSet[T]) String() string {
 	return aglImportFmt.Sprintf("set(%s)", aglImportStrings.Join(tmp, " "))
 }
 
+func (s AglSet[T]) Intersects(other Iterator[T]) bool {
+	return AglSetIntersects(s, other)
+}
+
 func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
