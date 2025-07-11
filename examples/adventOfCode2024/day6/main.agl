@@ -23,16 +23,6 @@ func FindGuardPosition(data [][]string) (int, int) {
     return (0, 0)
 }
 
-func RawValue(direction Direction) int {
-    switch direction {
-    case Direction.Up:    return 0
-    case Direction.Right: return 1
-    case Direction.Down:  return 2
-    case Direction.Left:  return 3
-    }
-    return 0
-}
-
 func Rotate(direction Direction) Direction {
     switch direction {
     case Direction.Up:    return Direction.Right
