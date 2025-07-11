@@ -2274,7 +2274,7 @@ func (s AglSet[T]) Iter() aglImportIter.Seq[T] {
 	}
 }
 
-func AglSetIter[T aglImportCmp.Ordered](s AglSet[T]) aglImportIter.Seq[T] {
+func AglSetIter[T comparable](s AglSet[T]) aglImportIter.Seq[T] {
 	return s.Iter()
 }
 
