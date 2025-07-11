@@ -116,7 +116,7 @@ func main() {
     fmt.Println("part1:", origin.Len())
 
     mut originArr := [](int, int){}
-    for e := range origin.Iter() {
+    for e := range origin {
         originArr.Push(e)
     }
     count := 0
