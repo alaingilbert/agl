@@ -2342,7 +2342,7 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 		infer.SetType(expr.Index, types.IntType{})
 	}
 	exprXT := infer.env.GetType2(expr.X, infer.fset)
-	switch v := exprXT.(type) {
+	switch v := types.Unwrap(exprXT).(type) {
 	case types.MapType:
 		infer.SetType(expr, v.V) // TODO should return an Option[T] ?
 	case types.ArrayType:
