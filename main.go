@@ -192,7 +192,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	fset, f := agl.ParseSrc(string(by))
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	errs := i.InferFile(fileName, f, fset, false)
+	errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
@@ -352,7 +352,7 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	}
 	env := agl.NewEnv()
 	i := agl.NewInferrer(env)
-	errs := i.InferFile(fileName, f, fset, false)
+	errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}

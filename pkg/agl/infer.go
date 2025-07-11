@@ -25,7 +25,7 @@ func ParseSrc(src string) (*token.FileSet, *ast.File) {
 	}
 	src += CoreFns()
 	var fset = token.NewFileSet()
-	f := Must(parser.ParseFile(fset, "", src, 0))
+	f := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	return fset, f
 }
 
@@ -38,6 +38,13 @@ func NewInferrer(env *Env) *Inferrer {
 }
 
 func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) []error {
+	if f.Doc != nil {
+		for _, r := range f.Doc.List {
+			if r.Text == "// agl:disable(mut_check)" {
+				mutEnforced = false
+			}
+		}
+	}
 	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced}
 	fileInferrer.Infer()
 	return fileInferrer.Errors

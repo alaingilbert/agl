@@ -1,3 +1,4 @@
+// agl:disable(mut_check)
 package main
 
 import (
