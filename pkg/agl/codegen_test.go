@@ -8746,6 +8746,26 @@ func main() {
 	tassert.Equal(t, "func (mut []int) Insert(int, int)", test.TypeAt(4, 4).String())
 }
 
+func TestCodeGen307(t *testing.T) {
+	src := `package main
+func main() {
+	a := set[(int, int)]{}
+}`
+	expected := `// agl:generated
+package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func main() {
+	a := AglSet[AglTupleStruct_int_int]{}
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

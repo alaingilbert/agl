@@ -2218,6 +2218,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		keyT := infer.env.GetType2(v.Key, infer.fset)
 		infer.exprs(expr.Elts)
 		t := types.SetType{K: keyT}
+		infer.SetType(v.Key, types.TypeType{W: keyT})
 		infer.SetType(expr.Type, t)
 		infer.SetType(expr, t)
 		return
