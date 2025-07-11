@@ -1416,7 +1416,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "PopIf" {
+		} else if InArray(fnName, []string{"PopIf"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec.PopIf").T("T", idTT.Elt)
 			clbT := sumFnT.GetParam(1).(types.FuncType)
 			sumFnT.Recv = []types.Type{idTT}
@@ -1432,17 +1432,17 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			}
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
-		} else if fnName == "Joined" {
-			joinedFnT := infer.env.GetFn("agl1.Vec.Joined")
-			param0 := joinedFnT.Params[0]
+		} else if InArray(fnName, []string{"Get", "Joined"}) {
+			fnT := infer.env.GetFn("agl1.Vec." + fnName)
+			param0 := fnT.Params[0]
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
 				return
 			}
-			infer.SetType(expr, joinedFnT.Return)
-			joinedFnT.Recv = []types.Type{param0}
-			joinedFnT.Params = joinedFnT.Params[1:]
-			infer.SetType(exprT.Sel, joinedFnT)
+			infer.SetType(expr, fnT.Return)
+			fnT.Recv = []types.Type{param0}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
 		} else if fnName == "Sorted" {
 			fnT := infer.env.GetFn("agl1.Vec.Sorted").T("E", idTT.Elt)
 			param0 := fnT.Params[0]

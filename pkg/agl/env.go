@@ -867,6 +867,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Sum", "func [T cmp.Ordered](a []T) T")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl1.Vec.Sorted", "func [E cmp.Ordered](a []E) []E", WithDesc("Returns the elements of the sequence, sorted."))
+		e.DefineFn(nenv, "agl1.Vec.Get", "func [T any](a []T, i int) T?")
 		e.DefineFn(nenv, "agl1.Vec.First", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.Last", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.Remove", "func [T any](a []T, i int)")
