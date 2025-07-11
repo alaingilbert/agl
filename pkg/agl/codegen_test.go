@@ -6867,13 +6867,13 @@ func TestCodeGen219(t *testing.T) {
 	src := `package main
 import "agl1/fmt"
 func main() {
-	fmt.Println(@LINE)
+	fmt.Println(@LINE, @COLUMN)
 }`
 	expected := `// agl:generated
 package main
 import "fmt"
 func main() {
-	fmt.Println("4")
+	fmt.Println("4", "21")
 }
 `
 	testCodeGen(t, src, expected)

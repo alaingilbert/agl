@@ -910,6 +910,10 @@ type (
 		AtLine token.Pos
 	}
 
+	AtColumnExpr struct {
+		AtColumn token.Pos
+	}
+
 	// A SendStmt node represents a send statement.
 	SendStmt struct {
 		Chan  Expr
@@ -1084,6 +1088,10 @@ func (g GuardStmt) stmtNode()      {}
 func (a AtLineExpr) Pos() token.Pos { return a.AtLine }
 func (a AtLineExpr) End() token.Pos { return a.AtLine + 1 }
 func (a AtLineExpr) exprNode()      {}
+
+func (a AtColumnExpr) Pos() token.Pos { return a.AtColumn }
+func (a AtColumnExpr) End() token.Pos { return a.AtColumn + 1 }
+func (a AtColumnExpr) exprNode()      {}
 
 func (d DumpExpr) Pos() token.Pos { return d.Dump }
 func (d DumpExpr) End() token.Pos { return d.Lparen }

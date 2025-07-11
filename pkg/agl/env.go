@@ -305,6 +305,7 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "false", types.BoolValue{V: false})
 
 	e.Define(nil, "@LINE", types.StringType{})
+	e.Define(nil, "@COLUMN", types.StringType{})
 }
 
 func (e *Env) loadCoreFunctions(m *PkgVisited) {

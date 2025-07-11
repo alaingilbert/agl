@@ -1654,6 +1654,10 @@ func (p *parser) parseOperand() ast.Expr {
 		pos := p.expect(token.AT_LINE)
 		return &ast.AtLineExpr{AtLine: pos}
 
+	case token.AT_COLUMN:
+		pos := p.expect(token.AT_COLUMN)
+		return &ast.AtColumnExpr{AtColumn: pos}
+
 	case token.DUMP:
 		dump := p.expect(token.DUMP)
 		lparen := p.expect(token.LPAREN)

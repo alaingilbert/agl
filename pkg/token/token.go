@@ -139,6 +139,7 @@ const (
 	MATCH
 	DUMP
 	AT_LINE
+	AT_COLUMN
 	TYPE
 	VAR
 	LET
@@ -266,7 +267,8 @@ var tokens = [...]string{
 	TYPE:   "type",
 	VAR:    "var",
 
-	AT_LINE: "@LINE",
+	AT_LINE:   "@LINE",
+	AT_COLUMN: "@COLUMN",
 
 	TILDE: "~",
 }

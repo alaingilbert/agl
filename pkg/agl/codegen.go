@@ -381,6 +381,7 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 	}
 	if strings.HasPrefix(expr.Name, "@") {
 		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Line), 1)
+		expr.Name = strings.Replace(expr.Name, "@COLUMN", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Column), 1)
 	}
 	t := g.env.GetType(expr)
 	if v, ok := t.(types.TypeType); ok {
