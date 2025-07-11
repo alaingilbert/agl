@@ -8642,6 +8642,26 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen301(t *testing.T) {
+	src := `package main
+func main() {
+	a := []byte("test")
+	b := []byte("test")
+	assert(a == b)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := AglVec[byte]("test")
+	b := AglVec[byte]("test")
+	AglAssert(AglBytesEqual(a, b), "assert failed line 5")
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

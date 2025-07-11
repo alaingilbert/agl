@@ -66,3 +66,23 @@ func main() {
 }`
 	tassert.Equal(t, "42\n", testGenOutput(src))
 }
+
+func Test3(t *testing.T) {
+	src := `package main
+func main() {
+	a := []byte("test")
+	b := []byte("test")
+	assert(a == b)
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
+
+func Test4(t *testing.T) {
+	src := `package main
+func main() {
+	a := []byte("hello")
+	b := []byte("world")
+	assert(a != b)
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

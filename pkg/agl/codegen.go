@@ -1330,8 +1330,10 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	content1 := g.genExpr(expr.X)
 	content2 := g.genExpr(expr.Y)
 	op := expr.Op.String()
-	if g.env.GetType(expr.X) != nil && g.env.GetType(expr.Y) != nil {
-		if TryCast[types.SetType](g.env.GetType(expr.X)) && TryCast[types.SetType](g.env.GetType(expr.Y)) {
+	xT := g.env.GetType(expr.X)
+	yT := g.env.GetType(expr.Y)
+	if xT != nil && yT != nil {
+		if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
 			if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
 				out := fmt.Sprintf("AglSetEquals(%s, %s)", content1, content2)
 				if op == "!=" {
@@ -1339,9 +1341,21 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 				}
 				return out
 			}
-		} else if TryCast[types.StructType](g.env.GetType(expr.X)) && TryCast[types.StructType](g.env.GetType(expr.Y)) {
-			lhsName := g.env.GetType(expr.X).(types.StructType).Name
-			rhsName := g.env.GetType(expr.Y).(types.StructType).Name
+		} else if TryCast[types.ArrayType](xT) && TryCast[types.ArrayType](yT) {
+			lhsT := types.Unwrap(xT.(types.ArrayType).Elt)
+			rhsT := types.Unwrap(yT.(types.ArrayType).Elt)
+			if TryCast[types.ByteType](lhsT) && TryCast[types.ByteType](rhsT) {
+				if op == "==" || op == "!=" {
+					out := fmt.Sprintf("AglBytesEqual(%s, %s)", content1, content2)
+					if op == "!=" {
+						out = "!" + out
+					}
+					return out
+				}
+			}
+		} else if TryCast[types.StructType](xT) && TryCast[types.StructType](yT) {
+			lhsName := xT.(types.StructType).Name
+			rhsName := yT.(types.StructType).Name
 			if lhsName == rhsName {
 				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
 					out := fmt.Sprintf("%s.__EQL(%s)", content1, content2)
@@ -1931,6 +1945,7 @@ func addPrefix(s, prefix string) string {
 
 func GenHeaders() string {
 	return `import (
+	aglImportBytes "bytes"
 	aglImportCmp "cmp"
 	aglImportFmt "fmt"
 	aglImportIo "io"
@@ -1954,6 +1969,10 @@ func GenCore(packageName string) string {
 
 func GenContent() string {
 	return `
+func AglBytesEqual(a, b []byte) bool {
+	return aglImportBytes.Equal(a, b)
+}
+
 func AglWrapNative1(err error) Result[AglVoid] {
 	if err != nil {
 		return MakeResultErr[AglVoid](err)
