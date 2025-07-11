@@ -3062,8 +3062,7 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 	switch v := lastStmt.(type) {
 	case *ast.ReturnStmt:
 	case *ast.BranchStmt:
-		if v.Tok == token.BREAK || v.Tok == token.CONTINUE {
-		} else {
+		if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
 			infer.errorf(v, "guard must return/break/continue")
 			return
 		}
@@ -3114,8 +3113,7 @@ func (infer *FileInferrer) guardStmt(stmt *ast.GuardStmt) {
 		switch v := lastStmt.(type) {
 		case *ast.ReturnStmt:
 		case *ast.BranchStmt:
-			if v.Tok == token.BREAK || v.Tok == token.CONTINUE {
-			} else {
+			if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
 				infer.errorf(v, "guard must return/break/continue")
 				return
 			}

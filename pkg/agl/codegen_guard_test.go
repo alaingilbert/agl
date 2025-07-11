@@ -75,9 +75,9 @@ func test() int? { Some(42) }
 func main() {
 	a := 42
 	for i := 0; i < 10; i++ {
-		guard a < 1 else { return }
-		guard a < 2 else { break }
-		guard a < 3 else { continue }
+		guard a > 1 else { return }
+		guard a > 2 else { break }
+		guard a > 3 else { continue }
 		fmt.Println("something")
 	}
 }`
@@ -90,13 +90,13 @@ func test() Option[int] {
 func main() {
 	a := 42
 	for i := 0; i < 10; i++ {
-		if !(a < 1) {
+		if !(a > 1) {
 			return
 		}
-		if !(a < 2) {
+		if !(a > 2) {
 			break
 		}
-		if !(a < 3) {
+		if !(a > 3) {
 			continue
 		}
 		fmt.Println("something")
