@@ -8713,8 +8713,8 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "int", test.TypeAt(4, 6).String())
-	tassert.Equal(t, "i32", test.TypeAt(4, 9).String())
+	tassert.Equal(t, "int", test.TypeAt(3, 6).String())
+	tassert.Equal(t, "i32", test.TypeAt(3, 9).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
