@@ -196,7 +196,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 		conf.definition.Message = conf.description
 	}
 	if tt := infer.env.GetType(a); tt != nil {
-		if !cmpTypes(tt, t) {
+		if !cmpTypesLoose(tt, t) {
 			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) {
 				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
@@ -2620,6 +2620,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				var lhsIdName string
 				infer.expr(v.X)
 				infer.expr(v.Index)
+				if TryCast[types.UntypedNumType](infer.GetType(v.Index)) {
+					infer.SetType(v.Index, types.IntType{})
+				}
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
