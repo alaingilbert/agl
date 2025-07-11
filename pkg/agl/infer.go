@@ -2344,11 +2344,20 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 		infer.SetType(expr.Index, types.IntType{})
 	}
 	exprXT := infer.env.GetType2(expr.X, infer.fset)
+	isMut := TryCast[types.MutType](exprXT)
 	switch v := types.Unwrap(exprXT).(type) {
 	case types.MapType:
-		infer.SetType(expr, v.V) // TODO should return an Option[T] ?
+		t := v.V
+		if isMut {
+			t = types.MutType{W: t}
+		}
+		infer.SetType(expr, t) // TODO should return an Option[T] ?
 	case types.ArrayType:
-		infer.SetType(expr, v.Elt)
+		t := v.Elt
+		if isMut {
+			t = types.MutType{W: t}
+		}
+		infer.SetType(expr, t)
 	default:
 		infer.SetType(expr, infer.GetType(expr.X))
 	}
