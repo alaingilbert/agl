@@ -7,7 +7,6 @@ import (
 	"agl1/errors"
 	"agl1/fmt"
 	"agl1/io/fs"
-	"agl1/bytes"
 	"agl1/go/ast"
 	"agl1/go/parser"
 	"agl1/go/token"
@@ -224,7 +223,7 @@ func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 			defer file.Close()
 			buf := make([]byte, len(generatedFilePrefix))
 			file.Read(buf)!
-			if bytes.Equal(buf, generatedFilePrefix.AsBytes()) {
+			if buf == generatedFilePrefix.AsBytes() {
 				fmt.Println("removing", path)
 				os.Remove(path)!
 			}
