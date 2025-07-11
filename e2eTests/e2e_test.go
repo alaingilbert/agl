@@ -86,3 +86,12 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test5(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 42}
+	assert(m.ContainsKey("a"))
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

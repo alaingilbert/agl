@@ -1203,6 +1203,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapIndex(%s, %s))", content1, content2)
+			case "ContainsKey":
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglIdentity(AglMapContainsKey(%s, %s))", content1, content2)
 			case "Keys", "Values":
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMap%s(%s))", fnName, content1)
@@ -2742,6 +2746,11 @@ func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
 		return MakeOptionSome(el)
 	}
 	return MakeOptionNone[V]()
+}
+
+func AglMapContainsKey[K comparable, V any](m map[K]V, k K) bool {
+	_, ok := m[k]
+	return ok
 }
 
 func AglMapKeys[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[K] {
