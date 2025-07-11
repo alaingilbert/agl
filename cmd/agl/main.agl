@@ -218,16 +218,14 @@ func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 		if d.IsDir() && (base == "vendor" || base == "node_modules") {
 			return fs.SkipDir
 		}
-		if path.HasSuffix(".go") {
-			file := os.Open(path)!
-			defer file.Close()
-			buf := make([]byte, len(generatedFilePrefix))
-			file.Read(buf)!
-			if buf == generatedFilePrefix.AsBytes() {
-				fmt.Println("removing", path)
-				os.Remove(path)!
-			}
-		}
+		guard path.HasSuffix(".go") else { return nil }
+		file := os.Open(path)!
+		defer file.Close()
+		buf := make([]byte, len(generatedFilePrefix))
+		file.Read(buf)!
+		guard buf == generatedFilePrefix.AsBytes() else { return nil }
+		fmt.Println("removing", path)
+		os.Remove(path)!
 		return nil
 	})
 	return nil
