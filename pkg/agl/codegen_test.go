@@ -8766,6 +8766,24 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen308(t *testing.T) {
+	src := `package main
+func main() {
+	mut a := [][]int{{1, 2}, {3, 4}}
+	a[0][0] = 42
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := AglVec[AglVec[int]]{{1, 2}, {3, 4}}
+	a[0][0] = 42
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
