@@ -17,8 +17,8 @@ func main() {
         a, b := d[0], d[1]
         rules[a] = rules.Get(a).UnwrapOr(set[int]{}).Union([]int{b})
     }
-    part1()
-    part2()
+    fmt.Println("part1:", updates.Filter(isValid).Map(middlePage).Sum())
+    fmt.Println("part2:", updates.Filter(isInvalid).Map(fixUpdate).Map(middlePage).Sum())
 }
 
 func isInvalid(update []int) bool {
@@ -26,22 +26,13 @@ func isInvalid(update []int) bool {
 }
 
 func fixUpdate(update []int) []int {
-    var mut newUpdate []int
-    for _, page := range update {
-        idx := newUpdate.FirstIndexWhere({ rules[page].Contains($0) }).UnwrapOr(newUpdate.Len())
-        newUpdate.Insert(idx, page)
-    }
-    return newUpdate
+    update.Reduce([]int{}, func(mut acc []int, page int) []int {
+        idx := acc.FirstIndexWhere({ rules[page].Contains($0) }).UnwrapOr(acc.Len())
+        acc.Insert(idx, page)
+        return acc
+    })
 }
 
 func isValid(update []int) bool { !isInvalid(update) }
 
 func middlePage(update []int) int { update[update.Len() / 2] }
-
-func part1() {
-    fmt.Println("part1:", updates.Filter(isValid).Map(middlePage).Sum())
-}
-
-func part2() {
-    fmt.Println("part2:", updates.Filter(isInvalid).Map(fixUpdate).Map(middlePage).Sum())
-}
