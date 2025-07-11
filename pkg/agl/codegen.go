@@ -1137,7 +1137,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
-			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndexWhere":
+			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
 			case "Reduce":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, genEX, genArgFn(0), genArgFn(1))
@@ -2123,6 +2123,15 @@ func AglVecFilter[T any](a []T, f func(T) bool) []T {
 		}
 	}
 	return out
+}
+
+func AglVecFirstIndex[T comparable](a []T, e T) Option[int] {
+	for i, v := range a {
+		if v == e {
+			return MakeOptionSome(i)
+		}
+	}
+	return MakeOptionNone[int]()
 }
 
 func AglVecFirstIndexWhere[T any](a []T, p func(T) bool) Option[int] {
