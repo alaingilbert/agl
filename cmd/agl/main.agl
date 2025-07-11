@@ -194,8 +194,6 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	var input string
 	if cmd.NArg() > 0 {
 		input = cmd.Args().Get(0)
-	} else {
-		input = ""
 	}
 	fset, f := agl.ParseSrc(input)
 	env := agl.NewEnv()
