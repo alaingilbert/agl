@@ -28,7 +28,7 @@ func isInvalid(update []int) bool {
 func fixUpdate(update []int) []int {
     var mut newUpdate []int
     for _, page := range update {
-        idx := newUpdate.FirstIndexWhere({ rules.Get(page)?.Contains($0) }).UnwrapOr(newUpdate.Len())
+        idx := newUpdate.FirstIndexWhere({ rules[page].Contains($0) }).UnwrapOr(newUpdate.Len())
         newUpdate.Insert(idx, page)
     }
     return newUpdate

@@ -2272,6 +2272,10 @@ func (s AglSet[T]) Intersects(other Iterator[T]) bool {
 	return AglSetIntersects(s, other)
 }
 
+func (s AglSet[T]) Contains(el T) bool {
+	return AglSetContains(s, el)
+}
+
 func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
