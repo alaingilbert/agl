@@ -1383,8 +1383,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Person struct {
-}
+type Person struct{}
 func (p Person) speak() string {
 }
 func main() {
@@ -1428,8 +1427,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Person struct {
-}
+type Person struct{}
 func (p Person) method1() Result[Person] {
 	return MakeResultOk(p)
 }
@@ -1455,8 +1453,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Person struct {
-}
+type Person struct{}
 func (p Person) method1() Option[Person] {
 	return MakeOptionSome(p)
 }
@@ -1482,8 +1479,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Person struct {
-}
+type Person struct{}
 func (p Person) method1() Result[Person] {
 	return MakeResultOk(p)
 }
@@ -1942,10 +1938,8 @@ func main() {
 package main
 import "fmt"
 type Writer interface{}
-type WriterA struct {
-}
-type WriterB struct {
-}
+type WriterA struct{}
+type WriterB struct{}
 func test(w Writer) {
 	if _, ok := w.(WriterA); ok {
 		fmt.Println("A")
@@ -6535,8 +6529,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Test struct {
-}
+type Test struct{}
 func (t Test) Method() {
 }
 func main() {
@@ -6562,8 +6555,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Test struct {
-}
+type Test struct{}
 func (t Test) Method() AglVec[int] {
 	return AglVec[int]{1, 2, 3}
 }
@@ -6589,8 +6581,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Test struct {
-}
+type Test struct{}
 func (t Test) Method() AglVec[int] {
 	return AglVec[int]{1, 2, 3}
 }
@@ -6613,8 +6604,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
-type Test struct {
-}
+type Test struct{}
 func (t Test) Method() {
 }
 func main() {
@@ -6787,8 +6777,7 @@ func main() {
 	expected := `// agl:generated
 package main
 import "fmt"
-type Test struct {
-}
+type Test struct{}
 func main() {
 	var a any = Test{}
 	switch a := a.(type) {
@@ -6946,8 +6935,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-type Test struct {
-}
+type Test struct{}
 func main() {
 	s := new(Test)
 }
@@ -7023,8 +7011,7 @@ package main
 type ITest interface {
 	Test()
 }
-type Test struct {
-}
+type Test struct{}
 func (t *Test) Test() {
 }
 func main() {
@@ -7954,8 +7941,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-type A struct {
-}
+type A struct{}
 type B struct {
 	 *A
 }
@@ -8210,8 +8196,7 @@ func main() {
 	expected := `// agl:generated
 package main
 import "errors"
-type SomeErr struct {
-}
+type SomeErr struct{}
 func (e *SomeErr) Error() string {
 	return ""
 }
