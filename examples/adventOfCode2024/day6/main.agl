@@ -36,9 +36,9 @@ func Rotate(direction Direction) Direction {
 func MoveIn(coord (int, int), direction Direction) (int, int) {
     switch direction {
     case Direction.Up:    coord.1 -= 1
-    case Direction.Down: coord.1 += 1
+    case Direction.Down:  coord.1 += 1
     case Direction.Left:  coord.0 -= 1
-    case Direction.Right:  coord.0 += 1
+    case Direction.Right: coord.0 += 1
     }
     return coord
 }
