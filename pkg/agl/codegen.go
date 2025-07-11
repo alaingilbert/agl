@@ -1716,9 +1716,9 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 		cond = fmt.Sprintf("%s.IsNone()", varName)
 	case token.OK:
 		cond = fmt.Sprintf("%s.IsErr()", varName)
+		unwrapFn = "Err"
 	case token.ERR:
 		cond = fmt.Sprintf("%s.IsOk()", varName)
-		unwrapFn = "Err"
 	default:
 		panic("")
 	}
