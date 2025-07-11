@@ -537,7 +537,7 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
 func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
 	content2 := g.env.GetType2(expr.Value, g.fset).GoStr()
-	return fmt.Sprintf("map[%s]%s", content1, content2)
+	return fmt.Sprintf("AglMap[%s, %s]", content1, content2)
 }
 
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
@@ -2196,6 +2196,8 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 
 type AglVec[T any] []T
 
+func (a AglVec[T]) Len() int { return len(a) }
+
 func (v AglVec[T]) Iter() aglImportIter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, e := range v {
@@ -2210,7 +2212,13 @@ func AglVecIter[T any](v AglVec[T]) aglImportIter.Seq[T] {
 	return v.Iter()
 }
 
+type AglMap[K comparable, V any] map[K]V
+
+func (m AglMap[K, V]) Len() int { return len(m) }
+
 type AglSet[T comparable] map[T]struct{}
+
+func (s AglSet[T]) Len() int { return len(s) }
 
 type Iterator[T any] interface {
 	Iter() aglImportIter.Seq[T]

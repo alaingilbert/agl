@@ -3188,7 +3188,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	a := map[string]int{"a": 1}
+	a := AglMap[string, int]{"a": 1}
 	a["a"] = 2
 }
 `
@@ -3420,7 +3420,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := make(map[string]int)
+	m := make(AglMap[string, int])
 }
 `
 	testCodeGen(t, src, expected)
@@ -3440,7 +3440,7 @@ package main
 func test(m map[string]int) {
 }
 func main() {
-	m := make(map[string]int)
+	m := make(AglMap[string, int])
 	test(m)
 }
 `
@@ -3473,7 +3473,7 @@ package main
 func test(m map[string]int) {
 }
 func main() {
-	a := map[string]int{"a": 1}
+	a := AglMap[string, int]{"a": 1}
 	test(a)
 }
 `
@@ -4925,7 +4925,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	m := AglMap[string, int]{"a": 1, "b": 2, "c": 3}
 	m["a"] = 42
 }
 `
@@ -4940,7 +4940,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := make(map[string]AglTupleStruct_int_int)
+	m := make(AglMap[string, AglTupleStruct_int_int])
 }
 `
 	testCodeGen(t, src, expected)
@@ -4960,7 +4960,7 @@ type AglTupleStruct_int_int struct {
 }
 func main() {
 	t := AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
-	m := map[string]AglTupleStruct_int_int{"a": t}
+	m := AglMap[string, AglTupleStruct_int_int]{"a": t}
 }
 `
 	testCodeGen(t, src, expected)
@@ -4978,7 +4978,7 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 func main() {
-	m := map[string]AglTupleStruct_int_int{"a": AglTupleStruct_int_int{Arg0: 1, Arg1: 2}}
+	m := AglMap[string, AglTupleStruct_int_int]{"a": AglTupleStruct_int_int{Arg0: 1, Arg1: 2}}
 }
 `
 	testCodeGen(t, src, expected)
@@ -5403,7 +5403,7 @@ package main
 import "fmt"
 type IPAddr AglVec[byte]
 func main() {
-	hosts := map[string]IPAddr{"loopback": IPAddr{127, 0, 0, 1}, "googleDNS": IPAddr{8, 8, 8, 8}}
+	hosts := AglMap[string, IPAddr]{"loopback": IPAddr{127, 0, 0, 1}, "googleDNS": IPAddr{8, 8, 8, 8}}
 	for name, ip := range hosts {
 		fmt.Printf("%v: %v\n", name, ip)
 	}
@@ -5431,7 +5431,7 @@ package main
 import "fmt"
 type IPAddr AglVec[byte]
 func main() {
-	hosts := map[string]IPAddr{"loopback": {127, 0, 0, 1}, "googleDNS": {8, 8, 8, 8}}
+	hosts := AglMap[string, IPAddr]{"loopback": {127, 0, 0, 1}, "googleDNS": {8, 8, 8, 8}}
 	for name, ip := range hosts {
 		fmt.Printf("%v: %v\n", name, ip)
 	}
@@ -6171,7 +6171,7 @@ import (
 )
 type SafeCounter struct {
 	mu sync.Mutex
-	v map[string]int
+	v AglMap[string, int]
 }
 func (c *SafeCounter) Inc(key string) {
 	c.mu.Lock()
@@ -6184,7 +6184,7 @@ func (c *SafeCounter) Value(key string) int {
 	return c.v[key]
 }
 func main() {
-	c := SafeCounter{v: make(map[string]int)}
+	c := SafeCounter{v: make(AglMap[string, int])}
 	for i := 0; i < 1000; i++ {
 		go c.Inc("somekey")
 	}
@@ -6207,7 +6207,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := map[string]int{"a": 1}
+	m := AglMap[string, int]{"a": 1}
 	if el, ok := m["a"]; ok {
 	}
 	v2 := m["a"]
@@ -6326,7 +6326,7 @@ type fakeResult struct {
 	body string
 	urls AglVec[string]
 }
-type fakeFetcher map[string]*fakeResult
+type fakeFetcher AglMap[string, *fakeResult]
 func (f fakeFetcher) Fetch(url string) Result[AglTupleStruct_string_AglVec_string_] {
 	if res, ok := f[url]; ok {
 		return MakeResultOk(AglTupleStruct_string_AglVec_string_{Arg0: res.body, Arg1: res.urls})
@@ -6347,7 +6347,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := map[string]int{"a": 1}
+	m := AglMap[string, int]{"a": 1}
 	mv := AglIdentity(AglMapIndex(m, "a"))
 }
 `
@@ -6496,7 +6496,7 @@ func main() {
 	}
 	node := AglIdentity(aglTmp2)
 	conf := types.Config{Importer: nil}
-	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
+	info := &types.Info{Defs: make(AglMap[*ast.Ident, types.Object])}
 	aglTmp3, aglTmpErr3 := conf.Check("", fset, AglVec[*ast.File]{node}, info)
 	if aglTmpErr3 != nil {
 		panic(aglTmpErr3)
@@ -7499,7 +7499,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	make(map[int]struct{})
+	make(AglMap[int, struct{}])
 }
 `
 	testCodeGen(t, src, expected)
@@ -7513,7 +7513,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	make(map[int]map[int]struct{})
+	make(AglMap[int, map[int]struct{}])
 }
 `
 	testCodeGen(t, src, expected)
@@ -8003,7 +8003,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := make(map[int]AglSet[int])
+	m := make(AglMap[int, AglSet[int]])
 	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
 }
 `
@@ -8023,7 +8023,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	m := make(map[int]AglSet[int])
+	m := make(AglMap[int, AglSet[int]])
 	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
 	s := m[1]
 	if s == nil {
@@ -8655,6 +8655,36 @@ func main() {
 	a := AglVec[byte]("test")
 	b := AglVec[byte]("test")
 	AglAssert(AglBytesEqual(a, b), "assert failed line 5")
+}
+`
+	test := NewTest(src, WithMutEnforced(false))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen302(t *testing.T) {
+	src := `package main
+type HasLen interface {
+	Len() int
+}
+func main() {
+	a := []int{1, 2, 3}
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	s := set[int]{1, 2, 3}
+	res := []HasLen{a, m, s}
+	assert(res.Len() == 3)
+}`
+	expected := `// agl:generated
+package main
+type HasLen interface {
+	Len() int
+}
+func main() {
+	a := AglVec[int]{1, 2, 3}
+	m := AglMap[string, int]{"a": 1, "b": 2, "c": 3}
+	s := AglSet[int]{1: {}, 2: {}, 3: {}}
+	res := AglVec[HasLen]{a, m, s}
+	AglAssert(AglVecLen(res) == 3, "assert failed line 10")
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
