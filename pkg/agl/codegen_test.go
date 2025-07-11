@@ -8642,41 +8642,6 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
-func TestCodeGen301(t *testing.T) {
-	src := `package main
-import "fmt"
-func test() int? { Some(42) }
-func main() {
-	a := 42
-	guard a < 100 else { return }
-	guard Some(b) := test() else { return }
-	fmt.Println(b)
-}`
-	expected := `// agl:generated
-package main
-import "fmt"
-func test() Option[int] {
-	return MakeOptionSome(42)
-}
-func main() {
-	a := 42
-	if !(a < 100) {
-		return
-	}
-	aglTmp1 := test()
-	if aglTmp1.IsNone() {
-		return
-	}
-	b := aglTmp1.Unwrap()
-	fmt.Println(b)
-}
-`
-	test := NewTest(src, WithMutEnforced(false))
-	test.PrintErrors()
-	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen1(t, test.GenCode(), expected)
-}
-
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

@@ -3053,8 +3053,23 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 	}
 	infer.SetType(lhs, lhsT)
 	infer.stmt(stmt.Ass)
-	if stmt.Body != nil {
-		infer.stmt(stmt.Body)
+	if stmt.Body == nil || len(stmt.Body.List) == 0 {
+		infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
+		return
+	}
+	infer.stmt(stmt.Body)
+	lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
+	switch v := lastStmt.(type) {
+	case *ast.ReturnStmt:
+	case *ast.BranchStmt:
+		if v.Tok == token.BREAK || v.Tok == token.CONTINUE {
+		} else {
+			infer.errorf(v, "guard must return/break/continue")
+			return
+		}
+	default:
+		infer.errorf(v, "guard must return/break/continue")
+		return
 	}
 	infer.SetType(stmt, types.VoidType{})
 }
@@ -3090,13 +3105,24 @@ func (infer *FileInferrer) ifStmt(stmt *ast.IfStmt) {
 func (infer *FileInferrer) guardStmt(stmt *ast.GuardStmt) {
 	infer.withEnv(func() {
 		infer.expr(stmt.Cond)
-		if stmt.Body != nil {
-			infer.stmt(stmt.Body)
+		if stmt.Body == nil || len(stmt.Body.List) == 0 {
+			infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
+			return
+		}
+		infer.stmt(stmt.Body)
+		lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
+		switch v := lastStmt.(type) {
+		case *ast.ReturnStmt:
+		case *ast.BranchStmt:
+			if v.Tok == token.BREAK || v.Tok == token.CONTINUE {
+			} else {
+				infer.errorf(v, "guard must return/break/continue")
+				return
+			}
+		default:
+			infer.errorf(v, "guard must return/break/continue")
+			return
 		}
 	})
-	if stmt.Body != nil {
-		infer.SetType(stmt, infer.GetType(stmt.Body))
-	} else {
-		infer.SetType(stmt, types.VoidType{})
-	}
+	infer.SetType(stmt, types.VoidType{})
 }
