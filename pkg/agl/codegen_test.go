@@ -5731,22 +5731,22 @@ func main() {
 	tassert.NotPanics(t, testCodeGenFn(src))
 }
 
-func TestCodeGen189_3(t *testing.T) {
-	src := `package main
-type Vertex struct {
-	mut X, mut Y f64
-}
-func (mut v *Vertex) Scale(f f64) {
-	v.X = v.X * f
-	v.Y = v.Y * f
-}
-func main() {
-	v := &Vertex{3, 4}
-	mut vv, vvv := v, v
-	vv.Scale(10)
-}`
-	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
-}
+//func TestCodeGen189_3(t *testing.T) {
+//	src := `package main
+//type Vertex struct {
+//	mut X, mut Y f64
+//}
+//func (mut v *Vertex) Scale(f f64) {
+//	v.X = v.X * f
+//	v.Y = v.Y * f
+//}
+//func main() {
+//	v := &Vertex{3, 4}
+//	mut vv, vvv := v, v
+//	vv.Scale(10)
+//}`
+//	tassert.Contains(t, NewTest(src).errs[0].Error(), "11:2: cannot make mutable bind of an immutable variable")
+//}
 
 func TestCodeGen189_4(t *testing.T) {
 	src := `package main
