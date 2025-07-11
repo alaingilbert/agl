@@ -1193,7 +1193,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglString%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
 				return fmt.Sprintf("AglString%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "TrimSpace", "Lowercased", "Uppercased", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
+			case "TrimSpace", "Lowercased", "Uppercased", "AsBytes", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
 				return fmt.Sprintf("AglString%s(%s)", fnName, g.genExpr(e.X))
 			}
 		case types.MapType:
@@ -2476,6 +2476,10 @@ func AglStringLowercased(s string) string {
 
 func AglStringUppercased(s string) string {
 	return aglImportStrings.ToUpper(s)
+}
+
+func AglStringAsBytes(s string) []byte {
+	return []byte(s)
 }
 
 func AglCleanupIntString(s string) (string, int) {

@@ -109,7 +109,7 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ! {
 	os.WriteFile(tmpFile, source, 0644)!
 
 	coreFile := filepath.Join(tmpDir, "aglCore.go")
-	os.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)!
+	os.WriteFile(coreFile, agl.GenCore("main").AsBytes(), 0644)!
 
 	// Run `go run` on the file with additional arguments
 	cmdArgs := []string{"run", tmpFile, coreFile}
@@ -172,7 +172,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		programArgs = cmd.Args().Slice()[1:] // Skip the .agl filename
 	}
 
-	spawnGoRunFromBytes([]byte(src), programArgs)!
+	spawnGoRunFromBytes(src.AsBytes(), programArgs)!
 	return nil
 }
 
@@ -224,7 +224,7 @@ func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 			defer file.Close()
 			buf := make([]byte, len(generatedFilePrefix))
 			file.Read(buf)!
-			if bytes.Equal(buf, []byte(generatedFilePrefix)) {
+			if bytes.Equal(buf, generatedFilePrefix.AsBytes()) {
 				fmt.Println("removing", path)
 				os.Remove(path)!
 			}
@@ -253,10 +253,10 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := fileName.Replace(".agl", ".go", 1)
-	os.WriteFile(path, []byte(src), 0644)!
+	os.WriteFile(path, src.AsBytes(), 0644)!
 
 	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
-	os.WriteFile(coreFile, []byte(agl.GenCore("main")), 0644)!
+	os.WriteFile(coreFile, agl.GenCore("main").AsBytes(), 0644)!
 
 	return nil
 }
