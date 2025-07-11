@@ -134,3 +134,15 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test9(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{3, 1, 2}
+	b := a.Sorted()
+	assert(b[0] == 1)
+	assert(b[1] == 2)
+	assert(b[2] == 3)
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
