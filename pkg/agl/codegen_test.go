@@ -8703,11 +8703,15 @@ func TestCodeGen304(t *testing.T) {
 func main() {
 	for i, c := range "test" {
 	}
+	for k, v := range map[string]int{"a": 1, "b": 2, "c": 3} {
+	}
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	for i, c := range "test" {
+	}
+	for k, v := range AglMap[string, int]{"a": 1, "b": 2, "c": 3} {
 	}
 }
 `
@@ -8715,6 +8719,8 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "int", test.TypeAt(3, 6).String())
 	tassert.Equal(t, "i32", test.TypeAt(3, 9).String())
+	tassert.Equal(t, "string", test.TypeAt(5, 6).String())
+	tassert.Equal(t, "int", test.TypeAt(5, 9).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 

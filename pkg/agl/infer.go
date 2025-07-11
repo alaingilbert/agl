@@ -2386,9 +2386,11 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			return
 		}
 		if stmt.Key != nil {
-			// TODO find correct type for map
+			var t types.Type = types.IntType{}
+			if v, ok := xT.(types.MapType); ok {
+				t = v.K
+			}
 			name := stmt.Key.(*ast.Ident).Name
-			t := types.IntType{}
 			infer.env.Define(stmt.Key, name, t)
 			infer.SetType(stmt.Key, t)
 		}
