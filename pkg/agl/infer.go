@@ -1686,6 +1686,9 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 				infer.expr(field.Type)
 				t := infer.env.GetType2(field.Type, infer.fset)
 				for _, name := range field.Names {
+					if name.Mutable.IsValid() {
+						t = types.MutType{W: t}
+					}
 					infer.env.Define(nil, name.Name, t)
 					infer.SetType(name, t)
 				}
