@@ -1041,7 +1041,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			return
 		}
 		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
-		infer.inferGoExtensions(expr, exprFunT, call)
+		infer.inferGoExtensions(expr, exprFunT, oexprFunT, call)
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		infer.langFns(expr, call)
@@ -1176,7 +1176,7 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 	}
 }
 
-func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type, exprT *ast.SelectorExpr) {
+func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types.Type, exprT *ast.SelectorExpr) {
 	switch idTT := idT.(type) {
 	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
@@ -1460,7 +1460,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "First", "Push", "Remove", "Clone", "Indices", "PushFront", "Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
-			sumFnT.Recv = []types.Type{idTT}
+			sumFnT.Recv = []types.Type{oidT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {
 				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
