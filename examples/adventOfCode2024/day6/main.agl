@@ -23,6 +23,16 @@ func FindGuardPosition(data [][]string) (int, int) {
     return (0, 0)
 }
 
+func RawValue(direction Direction) int {
+    switch direction {
+    case Direction.Up:    return 0
+    case Direction.Right: return 1
+    case Direction.Down:  return 2
+    case Direction.Left:  return 3
+    }
+    return 0
+}
+
 func Rotate(direction Direction) Direction {
     switch direction {
     case Direction.Up:    return Direction.Right
@@ -53,7 +63,7 @@ func ObstacleInFront(pos (int, int), direction Direction, data [][]string) bool 
     return false
 }
 
-func GetOrigPathPosition1(data [][]string, guardPosition (int, int)) set[(int, int)] {
+func GetOrigPathPositions1(data [][]string, guardPosition (int, int)) set[(int, int)] {
     mut pos := guardPosition
     mut seen := set[(int, int)]{}
     mut facing := Direction.Up
@@ -68,11 +78,56 @@ func GetOrigPathPosition1(data [][]string, guardPosition (int, int)) set[(int, i
     return seen
 }
 
+func GetOrigPathPositions2(data [][]string, guardPosition (int, int)) bool {
+    mut seen := make([]bool, width * height * 4)
+    mut pos := guardPosition
+    mut facing := Direction.Up
+
+    for pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
+        h := int(pos.0 * width + pos.1) * 4 + RawValue(facing)
+        if seen[h] {
+            return true
+        }
+        seen[h] = true
+        if ObstacleInFront(pos, facing, data) {
+            facing = Rotate(facing)
+        } else {
+            pos = MoveIn(pos, facing)
+        }
+    }
+    return false
+}
+
+func CloneData(in [][]string) [][]string {
+    mut out := make([][]string, len(in))
+    for y := range in {
+        out[y] = in[y].Clone()
+    }
+    return out
+}
+
 func main() {
     fileData := os.ReadFile("examples/adventOfCode2024/day6/data.txt")!
     data := string(fileData).Split("\n").Map({ $0.Split("") })
     width = data[0].Len()
     height = data.Len()
     guardPosition := FindGuardPosition(data)
-    fmt.Println("part1:", GetOrigPathPosition1(data, guardPosition).Len())
+    origin := GetOrigPathPositions1(data, guardPosition)
+    fmt.Println("part1:", origin.Len())
+
+    mut originArr := [](int, int){}
+    for e := range origin.Iter() {
+        originArr.Push(e)
+    }
+    count := 0
+    for _, pos := range originArr {
+        if pos != guardPosition {
+            mut localData := CloneData(data)
+            localData[pos.1][pos.0] = "#"
+            if GetOrigPathPositions2(localData, guardPosition) {
+                count++
+            }
+        }
+    }
+    fmt.Println("part2:", count)
 }
