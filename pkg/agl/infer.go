@@ -1278,6 +1278,33 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT types.Type,
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
+		} else if fnName == "FirstIndexWhere" {
+			info := infer.env.GetNameInfo("agl1.Vec.FirstIndexWhere")
+			fnT := infer.env.GetFn("agl1.Vec.FirstIndexWhere").T("T", idTT.Elt)
+			if len(expr.Args) < 1 {
+				return
+			}
+			infer.SetType(expr.Args[0], fnT.Params[1])
+			infer.SetType(expr, fnT.Return)
+			ft := fnT.GetParam(1).(types.FuncType)
+			exprArg0 := expr.Args[0]
+			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.SetType(exprArg0, ft)
+			} else if _, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
+			}
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		} else if fnName == "AllSatisfy" {
 			filterFnT := infer.env.GetFn("agl1.Vec.AllSatisfy").T("T", idTT.Elt)
 			if len(expr.Args) < 1 {
