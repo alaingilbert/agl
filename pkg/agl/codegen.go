@@ -2170,7 +2170,7 @@ func AglVecAny[T any](a []T, f func(T) bool) bool {
 	return false
 }
 
-func AglVecReduce[T any, R aglImportCmp.Ordered](a []T, acc R, f func(R, T) R) R {
+func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
 	for _, v := range a {
 		acc = f(acc, v)
 	}
