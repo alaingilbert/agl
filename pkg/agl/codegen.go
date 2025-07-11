@@ -913,7 +913,7 @@ func (g *Generator) genFuncLit(expr *ast.FuncLit) (out string) {
 
 func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 	gPrefix := g.prefix
-	out += gPrefix + "struct {\n"
+	out += "struct {\n"
 	for _, field := range expr.Fields.List {
 		content1 := g.genExpr(field.Type)
 		var namesArr []string
