@@ -781,10 +781,14 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
 		infer.blockStmt(stmt)
-	case *ast.GuardStmt:
-		infer.guardStmt(stmt)
 	case *ast.IfStmt:
 		infer.ifStmt(stmt)
+	case *ast.IfLetStmt:
+		infer.ifLetStmt(stmt)
+	case *ast.GuardStmt:
+		infer.guardStmt(stmt)
+	case *ast.GuardLetStmt:
+		infer.guardLetStmt(stmt)
 	case *ast.ReturnStmt:
 		infer.returnStmt(stmt)
 	case *ast.ExprStmt:
@@ -799,10 +803,6 @@ func (infer *FileInferrer) stmt(s ast.Stmt) {
 		infer.declStmt(stmt)
 	case *ast.ForStmt:
 		infer.forStmt(stmt)
-	case *ast.IfLetStmt:
-		infer.ifLetStmt(stmt)
-	case *ast.GuardLetStmt:
-		infer.guardLetStmt(stmt)
 	case *ast.SendStmt:
 		infer.sendStmt(stmt)
 	case *ast.SelectStmt:
