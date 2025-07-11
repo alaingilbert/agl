@@ -1508,7 +1508,7 @@ func main() {
 package main
 type ColorTag int
 const (
-	Color_red ColorTag = iota + 1
+	Color_red ColorTag = iota
 	Color_green
 	Color_blue
 )
@@ -1526,6 +1526,9 @@ func (v Color) String() string {
 	default:
 		panic("")
 	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
 }
 func Make_Color_red() Color {
 	return Color{tag: Color_red}
@@ -1563,7 +1566,7 @@ func main() {
 package main
 type ColorTag int
 const (
-	Color_red ColorTag = iota + 1
+	Color_red ColorTag = iota
 	Color_other
 )
 type Color struct {
@@ -1580,6 +1583,9 @@ func (v Color) String() string {
 	default:
 		panic("")
 	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
 }
 func Make_Color_red() Color {
 	return Color{tag: Color_red}
@@ -1612,7 +1618,7 @@ func main() {
 package main
 type ColorTag int
 const (
-	Color_red ColorTag = iota + 1
+	Color_red ColorTag = iota
 	Color_other
 )
 type Color struct {
@@ -1629,6 +1635,9 @@ func (v Color) String() string {
 	default:
 		panic("")
 	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
 }
 func Make_Color_red() Color {
 	return Color{tag: Color_red}
@@ -1660,7 +1669,7 @@ func main() {
 package main
 type ColorTag int
 const (
-	Color_red ColorTag = iota + 1
+	Color_red ColorTag = iota
 	Color_other
 )
 type Color struct {
@@ -1677,6 +1686,9 @@ func (v Color) String() string {
 	default:
 		panic("")
 	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
 }
 func Make_Color_red() Color {
 	return Color{tag: Color_red}
@@ -2145,7 +2157,7 @@ package main
 import "fmt"
 type ColorTag int
 const (
-	Color_red ColorTag = iota + 1
+	Color_red ColorTag = iota
 	Color_other
 )
 type Color struct {
@@ -2162,6 +2174,9 @@ func (v Color) String() string {
 	default:
 		panic("")
 	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
 }
 func Make_Color_red() Color {
 	return Color{tag: Color_red}
@@ -3281,7 +3296,7 @@ type AglTupleStruct_int_string_bool struct {
 }
 type IpAddrTag int
 const (
-	IpAddr_v4 IpAddrTag = iota + 1
+	IpAddr_v4 IpAddrTag = iota
 	IpAddr_v6
 )
 type IpAddr struct {
@@ -3301,6 +3316,9 @@ func (v IpAddr) String() string {
 	default:
 		panic("")
 	}
+}
+func (v IpAddr) RawValue() int {
+	return int(v.tag)
 }
 func Make_IpAddr_v4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
 	return IpAddr{tag: IpAddr_v4, v4_0: arg0, v4_1: arg1, v4_2: arg2, v4_3: arg3}
@@ -7687,7 +7705,7 @@ func main() {
 package main
 type IpAddrTag int
 const (
-	IpAddr_V4 IpAddrTag = iota + 1
+	IpAddr_V4 IpAddrTag = iota
 	IpAddr_V6
 )
 type IpAddr struct {
@@ -7707,6 +7725,9 @@ func (v IpAddr) String() string {
 	default:
 		panic("")
 	}
+}
+func (v IpAddr) RawValue() int {
+	return int(v.tag)
 }
 func Make_IpAddr_V4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
 	return IpAddr{tag: IpAddr_V4, V4_0: arg0, V4_1: arg1, V4_2: arg2, V4_3: arg3}

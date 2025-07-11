@@ -84,7 +84,7 @@ func GetOrigPathPositions2(data [][]string, guardPosition (int, int)) bool {
     mut facing := Direction.Up
 
     for pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
-        h := int(pos.0 * width + pos.1) * 4 + RawValue(facing)
+        h := int(pos.0 * width + pos.1) * 4 + facing.RawValue()
         if seen[h] {
             return true
         }
@@ -119,7 +119,7 @@ func main() {
     for e := range origin {
         originArr.Push(e)
     }
-    count := 0
+    var count int
     for _, pos := range originArr {
         if pos != guardPosition {
             mut localData := CloneData(data)

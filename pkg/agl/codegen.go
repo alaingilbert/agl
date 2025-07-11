@@ -466,7 +466,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	out += fmt.Sprintf("const (\n")
 	for i, v := range expr.Values.List {
 		if i == 0 {
-			out += fmt.Sprintf("\t%s_%s %sTag = iota + 1\n", enumName, v.Name.Name, enumName)
+			out += fmt.Sprintf("\t%s_%s %sTag = iota\n", enumName, v.Name.Name, enumName)
 		} else {
 			out += fmt.Sprintf("\t%s_%s\n", enumName, v.Name.Name)
 		}
@@ -499,6 +499,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn %s\n", enumName, field.Name.Name, tmp)
 	}
 	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
+	out += fmt.Sprintf("func (v %s) RawValue() int {\n\treturn int(v.tag)\n}\n", enumName)
 	for _, field := range expr.Values.List {
 		var tmp []string
 		var tmp1 []string
