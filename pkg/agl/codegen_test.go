@@ -8699,6 +8699,8 @@ func main() {
 	test := NewTest(src, WithMutEnforced(false))
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "int", test.TypeAt(5, 4).String())
+	tassert.Equal(t, "int", test.TypeAt(6, 4).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 

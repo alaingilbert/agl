@@ -2292,6 +2292,9 @@ func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
 func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 	infer.expr(expr.X)
 	infer.expr(expr.Index)
+	if TryCast[types.UntypedNumType](infer.GetType(expr.Index)) {
+		infer.SetType(expr.Index, types.IntType{})
+	}
 	exprXT := infer.env.GetType2(expr.X, infer.fset)
 	switch v := exprXT.(type) {
 	case types.MapType:
