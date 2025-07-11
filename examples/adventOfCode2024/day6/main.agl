@@ -1,0 +1,78 @@
+package main
+
+import (
+    "fmt"
+    "agl1/os"
+)
+
+var mut width, mut height int
+
+type Direction enum {
+    Up
+    Down
+    Left
+    Right
+}
+
+func FindGuardPosition(data [][]string) (int, int) {
+    for y := range data {
+        if Some(x) := data[y].FirstIndex("^") {
+            return (x, y)
+        }
+    }
+    return (0, 0)
+}
+
+func Rotate(direction Direction) Direction {
+    switch direction {
+    case Direction.Up:    return Direction.Right
+    case Direction.Right: return Direction.Down
+    case Direction.Down:  return Direction.Left
+    case Direction.Left:  return Direction.Up
+    }
+    return Direction.Up
+}
+
+func MoveIn(coord (int, int), direction Direction) (int, int) {
+    switch direction {
+    case Direction.Up:    coord.1 -= 1
+    case Direction.Down: coord.1 += 1
+    case Direction.Left:  coord.0 -= 1
+    case Direction.Right:  coord.0 += 1
+    }
+    return coord
+}
+
+func ObstacleInFront(pos (int, int), direction Direction, data [][]string) bool {
+    switch direction {
+    case Direction.Up:    return pos.1 > 0          && data[pos.1-1][pos.0  ] == "#"
+    case Direction.Right: return pos.0 < width  - 1 && data[pos.1  ][pos.0+1] == "#"
+    case Direction.Down:  return pos.1 < height - 1 && data[pos.1+1][pos.0  ] == "#"
+    case Direction.Left:  return pos.0 > 0          && data[pos.1  ][pos.0-1] == "#"
+    }
+    return false
+}
+
+func GetOrigPathPosition1(data [][]string, guardPosition (int, int)) set[(int, int)] {
+    mut pos := guardPosition
+    mut seen := set[(int, int)]{}
+    mut facing := Direction.Up
+    for pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
+        seen.Insert(pos)
+        if ObstacleInFront(pos, facing, data) {
+            facing = Rotate(facing)
+        } else {
+            pos = MoveIn(pos, facing)
+        }
+    }
+    return seen
+}
+
+func main() {
+    fileData := os.ReadFile("examples/adventOfCode2024/day6/data.txt")!
+    data := string(fileData).Split("\n").Map({ $0.Split("") })
+    width = data[0].Len()
+    height = data.Len()
+    guardPosition := FindGuardPosition(data)
+    fmt.Println("part1:", GetOrigPathPosition1(data, guardPosition).Len())
+}
