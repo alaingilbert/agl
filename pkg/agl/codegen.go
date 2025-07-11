@@ -1137,7 +1137,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
-			case "Filter", "AllSatisfy", "Contains", "Any", "Map", "Find", "Joined", "Get", "FirstIndexWhere":
+			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndexWhere":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
 			case "Reduce":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, genEX, genArgFn(0), genArgFn(1))
@@ -2146,6 +2146,15 @@ func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
 func AglVecContains[T comparable](a []T, e T) bool {
 	for _, v := range a {
 		if v == e {
+			return true
+		}
+	}
+	return false
+}
+
+func AglVecContainsWhere[T comparable](a []T, p func(T) bool) bool {
+	for _, v := range a {
+		if p(v) {
 			return true
 		}
 	}

@@ -875,6 +875,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Clone", "func [T any](a []T) []T")
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Contains", "func [T comparable](a []T, e T) bool")
+		e.DefineFn(nenv, "agl1.Vec.ContainsWhere", "func [T comparable](a []T, p func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Vec.Push", "func [T any](mut a []T, els ...T)")
 		e.DefineFn(nenv, "agl1.Vec.PushFront", "func [T any](mut a []T, el T)")
