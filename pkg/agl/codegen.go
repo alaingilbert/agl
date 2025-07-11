@@ -238,10 +238,14 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
 		return g.genBlockStmt(stmt)
-	case *ast.GuardStmt:
-		return g.genGuardStmt(stmt)
 	case *ast.IfStmt:
 		return g.genIfStmt(stmt)
+	case *ast.IfLetStmt:
+		return g.genIfLetStmt(stmt)
+	case *ast.GuardStmt:
+		return g.genGuardStmt(stmt)
+	case *ast.GuardLetStmt:
+		return g.genGuardLetStmt(stmt)
 	case *ast.AssignStmt:
 		return g.genAssignStmt(stmt)
 	case *ast.ExprStmt:
@@ -256,10 +260,6 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 		return g.genIncDecStmt(stmt)
 	case *ast.DeclStmt:
 		return g.genDeclStmt(stmt)
-	case *ast.IfLetStmt:
-		return g.genIfLetStmt(stmt)
-	case *ast.GuardLetStmt:
-		return g.genGuardLetStmt(stmt)
 	case *ast.SendStmt:
 		return g.genSendStmt(stmt)
 	case *ast.SelectStmt:
