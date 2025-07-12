@@ -8876,6 +8876,9 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]string) FirstIndex(string) int?", test.TypeAt(5, 6).String())
+	tassert.Equal(t, "func ([]string) FirstIndex(func(string) bool) int?", test.TypeAt(6, 6).String())
+	tassert.Equal(t, "func ([]string) FirstIndex(func(string) bool) int?", test.TypeAt(7, 6).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 

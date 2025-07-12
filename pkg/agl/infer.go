@@ -1319,6 +1319,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				envFnName := "agl1.Vec.FirstIndexWhere"
 				info := infer.env.GetNameInfo(envFnName)
 				fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
+				fnT.Name = "FirstIndex"
 				infer.SetType(exprArg0, fnT.Params[1])
 				infer.SetType(expr, fnT.Return)
 				ft := fnT.GetParam(1).(types.FuncType)
