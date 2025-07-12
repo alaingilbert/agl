@@ -3169,12 +3169,45 @@ func (infer *FileInferrer) emptyStmt(stmt *ast.EmptyStmt) {
 	infer.SetType(stmt, types.VoidType{})
 }
 
+func IsExhaustive(enumT types.EnumType, clauses []*ast.MatchClause) bool {
+	names := make(map[string]struct{})
+	for _, f := range enumT.Fields {
+		names[f.Name] = struct{}{}
+	}
+	for _, clause := range clauses {
+		if clause.Expr == nil {
+			return true
+		}
+		switch v := clause.Expr.(type) {
+		case *ast.CallExpr:
+			name := v.Fun.(*ast.SelectorExpr).Sel.Name
+			delete(names, name)
+		case *ast.SelectorExpr:
+			delete(names, v.Sel.Name)
+		default:
+			panic(fmt.Sprintf("%v", to(clause.Expr)))
+		}
+	}
+	return len(names) == 0
+}
+
 func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 	infer.expr(expr.Init)
-	infer.withOptType(expr.Init, infer.env.GetType2(expr.Init, infer.fset), func() {
-		var prevBranchT types.Type
-		for _, stmtEl := range expr.Body.List {
-			clause := stmtEl.(*ast.MatchClause)
+	initT := infer.env.GetType2(expr.Init, infer.fset)
+	var enumT types.EnumType
+	var isEnum bool
+	enumT, isEnum = initT.(types.EnumType)
+	var prevBranchT types.Type
+	var matchClauses []*ast.MatchClause
+	for _, stmtEl := range expr.Body.List {
+		matchClauses = append(matchClauses, stmtEl.(*ast.MatchClause))
+	}
+	if isEnum && !IsExhaustive(enumT, matchClauses) {
+		infer.errorf(expr, "match expression is not exhaustive")
+		return
+	}
+	infer.withOptType(expr.Init, initT, func() {
+		for _, clause := range matchClauses {
 			switch v := clause.Expr.(type) {
 			case *ast.OkExpr:
 				t := infer.optType.Type.(types.ResultType).W
@@ -3215,8 +3248,8 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 			}
 			prevBranchT = branchT
 		}
-		infer.SetType(expr.Body, infer.GetType(Must(Last(expr.Body.List))))
 	})
+	infer.SetType(expr.Body, infer.GetType(Must(Last(expr.Body.List))))
 	infer.SetType(expr, infer.GetType(expr.Body))
 }
 
