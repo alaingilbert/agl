@@ -3054,7 +3054,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
 		return
 	}
-	if expr.Name == "true" || expr.Name == "false" {
+	if InArray(expr.Name, []string{"true", "false"}) {
 		v = types.BoolType{}
 	}
 	infer.SetType(expr, v)
