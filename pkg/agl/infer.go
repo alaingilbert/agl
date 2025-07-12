@@ -675,8 +675,7 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 	case *ast.MatchExpr:
 		infer.matchExpr(expr)
 	case *ast.Ident:
-		t := infer.identExpr(expr)
-		infer.SetType(expr, t)
+		infer.identExpr(expr)
 	case *ast.CallExpr:
 		infer.callExpr(expr)
 	case *ast.BinaryExpr:
@@ -3041,9 +3040,9 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	}
 }
 
-func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
+func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 	if expr.Name == "_" {
-		return nil
+		return
 	}
 	if infer.optType != nil && expr.Name == "" {
 		if v, ok := infer.optType.Type.(types.EnumType); ok {
@@ -3053,12 +3052,12 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 	v := infer.env.Get(expr.Name)
 	if v == nil {
 		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
-		return nil
+		return
 	}
 	if expr.Name == "true" || expr.Name == "false" {
-		return types.BoolType{}
+		v = types.BoolType{}
 	}
-	return v
+	infer.SetType(expr, v)
 }
 
 func (infer *FileInferrer) sendStmt(stmt *ast.SendStmt) {
