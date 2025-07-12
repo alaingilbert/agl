@@ -7754,6 +7754,8 @@ func isPrivate(ip IpAddr) bool {
 	} else if ip.Tag == IpAddr_V6 {
 		s := ip.V6_0
 		return AglStringHasPrefix(s, "fc00::")
+	} else {
+		panic("match on enum should be exhaustive")
 	}
 	return true
 }
