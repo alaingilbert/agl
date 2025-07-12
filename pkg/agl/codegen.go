@@ -1873,6 +1873,15 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) (out string) {
 
 func (g *Generator) genDecls() (out string) {
 	for _, decl := range g.a.Decls {
+		switch declT := decl.(type) {
+		case *ast.FuncDecl:
+			fnT := g.env.GetType(declT)
+			if fnT.(types.FuncType).IsGeneric() {
+				g.genFuncDecls[fnT.String()] = declT
+			}
+		}
+	}
+	for _, decl := range g.a.Decls {
 		out += g.genDecl(decl)
 	}
 	return

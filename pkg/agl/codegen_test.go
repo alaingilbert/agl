@@ -9109,6 +9109,54 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen315(t *testing.T) {
+	src := `package main
+func main() {
+	zip([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
+	zip([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
+}`
+	expected := `// agl:generated
+package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+type AglTupleStruct_int_uint8 struct {
+	Arg0 int
+	Arg1 uint8
+}
+func zip_T_int_U_int(a AglVec[int], b AglVec[int]) AglVec[AglTupleStruct_int_int] {
+	out := make(AglVec[AglTupleStruct_int_int], 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i {
+			break
+		}
+		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
+	}
+	return out
+}
+func zip_T_int_U_uint8(a AglVec[int], b AglVec[uint8]) AglVec[AglTupleStruct_int_uint8] {
+	out := make(AglVec[AglTupleStruct_int_uint8], 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i {
+			break
+		}
+		AglVecPush((*[]AglTupleStruct_int_uint8)(&out), AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
+	}
+	return out
+}
+func main() {
+	AglVecMap(zip_T_int_U_int(AglVec[int]{1}, AglVec[int]{2}), func(aglArg0 AglTupleStruct_int_int) int {
+		return aglArg0.Arg0 + aglArg0.Arg1
+	})
+	AglVecMap(zip_T_int_U_uint8(AglVec[int]{1}, AglVec[uint8]{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+		return aglArg0.Arg0 + int(aglArg0.Arg1)
+	})
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 //func TestCodeGen311(t *testing.T) {
 //	src := `package main
 //func FirstIndex(arr []string, of: el string) string? {
