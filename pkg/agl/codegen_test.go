@@ -8834,6 +8834,21 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "4:18: label name does not match wrongLabel vs labelB")
 }
 
+//func TestCodeGen311(t *testing.T) {
+//	src := `package main
+//func FirstIndex(arr []string, of: el string) string? {
+//}
+//func FirstIndex(arr []string, where: pred func (string) bool) string? {
+//}
+//func main() {
+//	arr := []string{"foo", "bar", "baz"}
+//	FirstIndex(arr, of: "foo")
+//	FirstIndex(arr, where: { $0 == "bar" })
+//}`
+//	test := NewTest(src, WithMutEnforced(true))
+//	tassert.Contains(t, test.errs[0].Error(), "4:18: label name does not match wrongLabel vs labelB")
+//}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"
