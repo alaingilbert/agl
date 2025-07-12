@@ -816,6 +816,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.Define(nil, "agl1.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 		e.Define(nil, "agl1.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 		e.Define(nil, "agl1.Enum", types.EnumType{})
+		e.Define(nil, "agl1.String", types.StringType{})
 		e.DefineFn(nenv, "agl1.Enum.RawValue", "func [T any](e agl1.Enum[T]) int")
 		e.DefineFn(nenv, "agl1.Set.Len", "func [T comparable](s agl1.Set[T]) int", WithDesc("The number of elements in the set."))
 		e.DefineFn(nenv, "agl1.Set.Insert", "func [T comparable](mut s agl1.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))

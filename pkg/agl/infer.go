@@ -560,16 +560,17 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) types.FuncType {
 	var returnT types.Type
 	var recvT, paramsT, typeParamsT []types.Type
-	var vecExt bool
+	var vecExt, strExt bool
 	if decl.Recv != nil {
 		if len(decl.Recv.List) == 1 {
-			if tmp, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
-				if sel, ok := tmp.X.(*ast.SelectorExpr); ok {
-					p1 := sel.X.(*ast.Ident).Name
-					if p1 == "agl1" && sel.Sel.Name == "Vec" {
+			switch v := decl.Recv.List[0].Type.(type) {
+			case *ast.IndexExpr:
+				if sel, ok := v.X.(*ast.SelectorExpr); ok {
+					xName := sel.X.(*ast.Ident).Name
+					if xName == "agl1" && sel.Sel.Name == "Vec" {
 						defaultName := "T" // Should not hardcode "T"
 						vecExt = true
-						id := tmp.Index.(*ast.Ident)
+						id := v.Index.(*ast.Ident)
 						typeName := utils.Ternary(id.Name == defaultName, "any", id.Name)
 						t := &ast.Field{Names: []*ast.LabelledIdent{{&ast.Ident{Name: defaultName}, nil}}, Type: &ast.Ident{Name: typeName}}
 						if decl.Type.TypeParams == nil {
@@ -578,6 +579,11 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 							decl.Type.TypeParams.List = append([]*ast.Field{t}, decl.Type.TypeParams.List...)
 						}
 					}
+				}
+			case *ast.SelectorExpr:
+				xName := v.X.(*ast.Ident).Name
+				if xName == "agl1" && v.Sel.Name == "String" {
+					strExt = true
 				}
 			}
 		}
@@ -650,6 +656,8 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	if decl.Recv != nil {
 		if vecExt {
 			outEnv.Define(decl.Name, fmt.Sprintf("agl1.Vec.%s", fnName), ft)
+		} else if strExt {
+			outEnv.Define(decl.Name, fmt.Sprintf("agl1.String.%s", fnName), ft)
 		}
 	}
 	return ft
@@ -1246,7 +1254,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName)
 		default:
-			infer.errorf(exprT.Sel, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+			fnFullName := fmt.Sprintf("agl1.String.%s", fnName)
+			fnTRaw := infer.env.Get(fnFullName)
+			if fnTRaw == nil {
+				infer.errorf(exprT.Sel, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+				return
+			}
 			return
 		}
 		fnT.Recv = []types.Type{idTT}

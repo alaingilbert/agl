@@ -9157,6 +9157,31 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen316(t *testing.T) {
+	src := `package main
+import "strings"
+func main() {
+	"Test".MyLowercased()
+}
+func (s agl1.String) MyLowercased() string {
+	return strings.ToLower(s)
+}`
+	expected := `// agl:generated
+package main
+import "strings"
+func main() {
+	AglStringMyLowercased("Test")
+}
+func AglStringMyLowercased(s String) string {
+	return strings.ToLower(s)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen311(t *testing.T) {
 //	src := `package main
 //func FirstIndex(arr []string, of: el string) string? {
