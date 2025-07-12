@@ -2208,7 +2208,9 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	case types.InterfaceType:
 		return
 	case types.EnumType:
+		info := infer.env.GetInfo(expr.X)
 		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.Sel, exprXIdT, WithDefinition(info))
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
 		validFields := make([]string, 0, len(exprXIdT.Fields))
