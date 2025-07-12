@@ -2612,7 +2612,7 @@ func (p *parser) parseMatchExpr() ast.Expr {
 	e1 = p.parsePrimaryExpr2()
 	lbrace := p.expect(token.LBRACE)
 	var list []ast.Stmt
-	for p.tok == token.CASE {
+	for p.tok == token.CASE || p.tok == token.DEFAULT {
 		list = append(list, p.parseMatchClause())
 	}
 	rbrace := p.expect(token.RBRACE)

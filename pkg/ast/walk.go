@@ -239,7 +239,9 @@ func Walk(v Visitor, node Node) {
 		walkList(v, n.Body)
 
 	case *MatchClause:
-		Walk(v, n.Expr)
+		if n.Expr != nil {
+			Walk(v, n.Expr)
+		}
 		walkList(v, n.Body)
 
 	case *SwitchStmt:

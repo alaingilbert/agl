@@ -3196,7 +3196,9 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 					}
 				}
 			}
-			infer.expr(clause.Expr)
+			if clause.Expr != nil {
+				infer.expr(clause.Expr)
+			}
 			infer.stmts(clause.Body)
 			var branchT types.Type
 			if len(clause.Body) == 0 {
