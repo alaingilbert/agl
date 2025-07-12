@@ -772,12 +772,12 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 			for i, cc := range expr.Body.List {
 				c := cc.(*ast.MatchClause)
 				out += gPrefix
+				if i > 0 {
+					out += "} else "
+				}
 				switch cv := c.Expr.(type) {
 				case *ast.CallExpr:
 					sel := cv.Fun.(*ast.SelectorExpr)
-					if i > 0 {
-						out += "} else "
-					}
 					out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, sel.Sel.Name)
 					for j, id := range cv.Args {
 						rhs := fmt.Sprintf("%s.%s_%d", expr.Init, v.Fields[i].Name, j)
@@ -789,9 +789,6 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					}
 					out += gPrefix + g.genStmts(c.Body)
 				case *ast.SelectorExpr:
-					if i > 0 {
-						out += "} else "
-					}
 					out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, cv.Sel.Name)
 					out += gPrefix + g.genStmts(c.Body)
 				default:
