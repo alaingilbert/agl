@@ -22,7 +22,7 @@ func main() {
 }
 
 func isInvalid(update []int) bool {
-    update.Enumerated().ContainsWhere({ rules[$0.1].Intersects(update[:$0.0]) })
+    update.Enumerated().Contains({ rules[$0.1].Intersects(update[:$0.0]) })
 }
 
 func fixUpdate(update []int) []int {
