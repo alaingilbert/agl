@@ -1311,10 +1311,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			if len(expr.Args) < 1 {
 				return
 			}
-			infer.SetType(expr.Args[0], fnT.Params[1])
+			exprArg0 := expr.Args[0]
+			if v, ok := exprArg0.(*ast.LabelledArg); ok {
+				exprArg0 = v.X
+			}
+			infer.SetType(exprArg0, fnT.Params[1])
 			infer.SetType(expr, fnT.Return)
 			ft := fnT.GetParam(1).(types.FuncType)
-			exprArg0 := expr.Args[0]
 			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.SetType(exprArg0, ft)
 			} else if _, ok := exprArg0.(*ast.FuncType); ok {
