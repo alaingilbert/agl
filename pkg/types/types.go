@@ -396,7 +396,7 @@ type EnumType struct {
 
 func (e EnumType) GoStr() string     { return e.Name }
 func (e EnumType) GoStrType() string { return e.Name }
-func (e EnumType) String() string    { return e.Name }
+func (e EnumType) String() string    { return fmt.Sprintf("enum %s", e.Name) }
 
 type EnumFieldType struct {
 	Name string

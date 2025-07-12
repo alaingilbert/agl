@@ -8965,6 +8965,74 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen313(t *testing.T) {
+	src := `package main
+import "fmt"
+type Color enum {
+	Red
+	Green
+	Blue
+}
+func main() {
+	c1 := Color.Red
+	mut c2 := Color.Red
+	c1.RawValue()
+	c2.RawValue()
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+type ColorTag int
+const (
+	Color_Red ColorTag = iota
+	Color_Green
+	Color_Blue
+)
+type Color struct {
+	tag ColorTag
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_Red:
+		return "Red"
+	case Color_Green:
+		return "Green"
+	case Color_Blue:
+		return "Blue"
+	default:
+		panic("")
+	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
+}
+func Make_Color_Red() Color {
+	return Color{tag: Color_Red}
+}
+func Make_Color_Green() Color {
+	return Color{tag: Color_Green}
+}
+func Make_Color_Blue() Color {
+	return Color{tag: Color_Blue}
+}
+
+func main() {
+	c1 := Make_Color_Red()
+	c2 := Make_Color_Red()
+	c1.RawValue()
+	c2.RawValue()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "enum Color", test.TypeAt(9, 2).String())
+	tassert.Equal(t, "mut enum Color", test.TypeAt(10, 2).String())
+	tassert.Equal(t, "func (enum Color) RawValue() int", test.TypeAt(11, 5).String())
+	tassert.Equal(t, "func (enum Color) RawValue() int", test.TypeAt(12, 5).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen311(t *testing.T) {
 //	src := `package main
 //func FirstIndex(arr []string, of: el string) string? {

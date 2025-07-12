@@ -992,7 +992,14 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
 		case types.EnumType:
-			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: call.Sel.Name, Fields: idTT.Fields})
+			sub := call.Sel.Name
+			if sub == "RawValue" {
+				eT := infer.env.GetFn("agl1.Enum.RawValue").T("T", idTT)
+				eT.Recv = []types.Type{idTT}
+				eT.Params = eT.Params[1:]
+				infer.SetType(call.Sel, eT)
+			}
+			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: sub, Fields: idTT.Fields})
 		case types.PackageType:
 			pkgT := infer.env.Get(idTT.Name)
 			if pkgT == nil {

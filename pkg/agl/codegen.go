@@ -1024,14 +1024,20 @@ func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
 func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) (out string) {
 	content1 := g.genExpr(expr.X)
 	name := expr.Sel.Name
-	switch g.env.GetType(expr.X).(type) {
+	t := types.Unwrap(g.env.GetType(expr.X))
+	switch t.(type) {
 	case types.TupleType:
 		name = fmt.Sprintf("Arg%s", name)
 	case types.EnumType:
 		content2 := g.genExpr(expr.Sel)
-		out := fmt.Sprintf("Make_%s_%s", content1, content2)
-		if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
-			out += "()"
+		var out string
+		if content2 == "RawValue" {
+			out = fmt.Sprintf("%s.%s", content1, content2)
+		} else {
+			out = fmt.Sprintf("Make_%s_%s", content1, content2)
+			if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
+				out += "()"
+			}
 		}
 		return out
 	}
