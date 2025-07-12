@@ -9034,6 +9034,81 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen314(t *testing.T) {
+	src := `package main
+import "fmt"
+type Color enum {
+	Red
+	Green
+	Blue
+}
+func test(c Color) Color {
+	match c {
+	case .Red:   return .Green
+	case .Green: return .Blue
+	case .Blue:  return .Red
+	}
+}
+func main() {
+	test(Color.Red)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+type ColorTag int
+const (
+	Color_Red ColorTag = iota
+	Color_Green
+	Color_Blue
+)
+type Color struct {
+	Tag ColorTag
+}
+func (v Color) String() string {
+	switch v.Tag {
+	case Color_Red:
+		return "Red"
+	case Color_Green:
+		return "Green"
+	case Color_Blue:
+		return "Blue"
+	default:
+		panic("")
+	}
+}
+func (v Color) RawValue() int {
+	return int(v.Tag)
+}
+func Make_Color_Red() Color {
+	return Color{Tag: Color_Red}
+}
+func Make_Color_Green() Color {
+	return Color{Tag: Color_Green}
+}
+func Make_Color_Blue() Color {
+	return Color{Tag: Color_Blue}
+}
+
+func test(c Color) Color {
+	if c.Tag == Color_Red {
+		return Make_Color_Green()
+	} else if c.Tag == Color_Green {
+		return Make_Color_Blue()
+	} else if c.Tag == Color_Blue {
+		return Make_Color_Red()
+	} else {
+		panic("match on enum should be exhaustive")
+	}
+}
+func main() {
+	test(Make_Color_Red())
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen311(t *testing.T) {
 //	src := `package main
 //func FirstIndex(arr []string, of: el string) string? {
