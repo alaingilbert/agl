@@ -7751,8 +7751,7 @@ func isPrivate(ip IpAddr) bool {
 		_ = ip.V4_2
 		_ = ip.V4_3
 		return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
-	}
-	if ip.tag == IpAddr_V6 {
+	} else if ip.tag == IpAddr_V6 {
 		s := ip.V6_0
 		return AglStringHasPrefix(s, "fc00::")
 	}
@@ -8949,12 +8948,12 @@ func test1() Color {
 }
 func main() {
 	c := Make_Color_Red()
-	switch c {
-	case Make_Color_Red():
+	switch c.tag {
+	case Color_Red:
 		fmt.Println("red")
-	case Make_Color_Green():
+	case Color_Green:
 		fmt.Println("green")
-	case Make_Color_Blue():
+	case Color_Blue:
 		fmt.Println("blue")
 	}
 }

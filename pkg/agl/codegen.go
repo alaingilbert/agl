@@ -770,7 +770,11 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 	case types.EnumType:
 		if expr.Body != nil {
 			for i, cc := range expr.Body.List {
-				out += gPrefix + fmt.Sprintf("if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+				if i == 0 {
+					out += gPrefix + fmt.Sprintf("if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+				} else {
+					out += gPrefix + fmt.Sprintf("} else if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+				}
 				c := cc.(*ast.MatchClause)
 				switch cv := c.Expr.(type) {
 				case *ast.CallExpr:
@@ -783,10 +787,14 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 						}
 					}
 					out += gPrefix + g.genStmts(c.Body)
+				case *ast.SelectorExpr:
+					out += gPrefix + g.genStmts(c.Body)
 				default:
-					panic("")
+					panic(fmt.Sprintf("%v", to(c.Expr)))
 				}
-				out += gPrefix + fmt.Sprintf("}\n")
+				if i == len(expr.Body.List)-1 {
+					out += gPrefix + fmt.Sprintf("}\n")
+				}
 			}
 		}
 	default:
@@ -834,14 +842,49 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 		content1 = strings.TrimSpace(g.genStmt(expr.Init))
 		content1 = utils.SuffixIf(content1, " ")
 	}
+	var tagIsEnum bool
 	var content2 string
 	if expr.Tag != nil {
-		content2 = g.genExpr(expr.Tag)
-		content2 = utils.SuffixIf(content2, " ")
+		tagT := g.env.GetType(expr.Tag)
+		switch tagT.(type) {
+		case types.EnumType:
+			tagIsEnum = true
+			content2 = utils.SuffixIf(g.genExpr(expr.Tag)+".tag", " ")
+		default:
+			content2 = utils.SuffixIf(g.genExpr(expr.Tag), " ")
+		}
 	}
-	content3 := g.genStmt(expr.Body)
 	out += g.prefix + fmt.Sprintf("switch %s%s{\n", content1, content2)
-	out += content3
+	for _, cc := range expr.Body.List {
+		expr1 := cc.(*ast.CaseClause)
+		var listStr string
+		if expr1.List != nil {
+			var tmp string
+			if tagIsEnum {
+				tagT := g.env.GetType(expr.Tag).(types.EnumType)
+				tmp = utils.MapJoin(expr1.List, func(el ast.Expr) string {
+					if sel, ok := el.(*ast.SelectorExpr); ok {
+						return fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name) // TODO: validate Sel.Name is an actual field
+					} else {
+						return g.genExpr(el)
+					}
+				}, ", ")
+			} else {
+				tmp = utils.MapJoin(expr1.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+			}
+			listStr = "case " + tmp + ":\n"
+		} else {
+			listStr = "default:\n"
+		}
+		var content3 string
+		if expr1.Body != nil {
+			content3 = g.incrPrefix(func() string {
+				return g.genStmts(expr1.Body)
+			})
+		}
+		out += g.prefix + listStr
+		out += content3
+	}
 	out += g.prefix + "}\n"
 	return
 }
