@@ -1513,10 +1513,10 @@ const (
 	Color_blue
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_red:
 		return "red"
 	case Color_green:
@@ -1528,16 +1528,16 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_red() Color {
-	return Color{tag: Color_red}
+	return Color{Tag: Color_red}
 }
 func Make_Color_green() Color {
-	return Color{tag: Color_green}
+	return Color{Tag: Color_green}
 }
 func Make_Color_blue() Color {
-	return Color{tag: Color_blue}
+	return Color{Tag: Color_blue}
 }
 
 func takeColor(c Color) {
@@ -1570,12 +1570,12 @@ const (
 	Color_other
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 	other_0 uint8
 	other_1 string
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_red:
 		return "red"
 	case Color_other:
@@ -1585,13 +1585,13 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_red() Color {
-	return Color{tag: Color_red}
+	return Color{Tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
+	return Color{Tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func takeColor(c Color) {
@@ -1622,12 +1622,12 @@ const (
 	Color_other
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 	other_0 uint8
 	other_1 string
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_red:
 		return "red"
 	case Color_other:
@@ -1637,13 +1637,13 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_red() Color {
-	return Color{tag: Color_red}
+	return Color{Tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
+	return Color{Tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
@@ -1673,12 +1673,12 @@ const (
 	Color_other
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 	other_0 uint8
 	other_1 string
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_red:
 		return "red"
 	case Color_other:
@@ -1688,13 +1688,13 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_red() Color {
-	return Color{tag: Color_red}
+	return Color{Tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
+	return Color{Tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
@@ -2161,12 +2161,12 @@ const (
 	Color_other
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 	other_0 uint8
 	other_1 string
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_red:
 		return "red"
 	case Color_other:
@@ -2176,13 +2176,13 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_red() Color {
-	return Color{tag: Color_red}
+	return Color{Tag: Color_red}
 }
 func Make_Color_other(arg0 uint8, arg1 string) Color {
-	return Color{tag: Color_other, other_0: arg0, other_1: arg1}
+	return Color{Tag: Color_other, other_0: arg0, other_1: arg1}
 }
 
 func main() {
@@ -3300,7 +3300,7 @@ const (
 	IpAddr_v6
 )
 type IpAddr struct {
-	tag IpAddrTag
+	Tag IpAddrTag
 	v4_0 uint8
 	v4_1 uint8
 	v4_2 uint8
@@ -3308,7 +3308,7 @@ type IpAddr struct {
 	v6_0 string
 }
 func (v IpAddr) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case IpAddr_v4:
 		return fmt.Sprintf("v4(%v, %v, %v, %v)", v.v4_0, v.v4_1, v.v4_2, v.v4_3)
 	case IpAddr_v6:
@@ -3318,13 +3318,13 @@ func (v IpAddr) String() string {
 	}
 }
 func (v IpAddr) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_IpAddr_v4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
-	return IpAddr{tag: IpAddr_v4, v4_0: arg0, v4_1: arg1, v4_2: arg2, v4_3: arg3}
+	return IpAddr{Tag: IpAddr_v4, v4_0: arg0, v4_1: arg1, v4_2: arg2, v4_3: arg3}
 }
 func Make_IpAddr_v6(arg0 string) IpAddr {
-	return IpAddr{tag: IpAddr_v6, v6_0: arg0}
+	return IpAddr{Tag: IpAddr_v6, v6_0: arg0}
 }
 
 func main() {
@@ -7717,7 +7717,7 @@ const (
 	IpAddr_V6
 )
 type IpAddr struct {
-	tag IpAddrTag
+	Tag IpAddrTag
 	V4_0 uint8
 	V4_1 uint8
 	V4_2 uint8
@@ -7725,7 +7725,7 @@ type IpAddr struct {
 	V6_0 string
 }
 func (v IpAddr) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case IpAddr_V4:
 		return fmt.Sprintf("V4(%v, %v, %v, %v)", v.V4_0, v.V4_1, v.V4_2, v.V4_3)
 	case IpAddr_V6:
@@ -7735,23 +7735,23 @@ func (v IpAddr) String() string {
 	}
 }
 func (v IpAddr) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_IpAddr_V4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
-	return IpAddr{tag: IpAddr_V4, V4_0: arg0, V4_1: arg1, V4_2: arg2, V4_3: arg3}
+	return IpAddr{Tag: IpAddr_V4, V4_0: arg0, V4_1: arg1, V4_2: arg2, V4_3: arg3}
 }
 func Make_IpAddr_V6(arg0 string) IpAddr {
-	return IpAddr{tag: IpAddr_V6, V6_0: arg0}
+	return IpAddr{Tag: IpAddr_V6, V6_0: arg0}
 }
 
 func isPrivate(ip IpAddr) bool {
-	if ip.tag == IpAddr_V4 {
+	if ip.Tag == IpAddr_V4 {
 		a := ip.V4_0
 		b := ip.V4_1
 		_ = ip.V4_2
 		_ = ip.V4_3
 		return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168)
-	} else if ip.tag == IpAddr_V6 {
+	} else if ip.Tag == IpAddr_V6 {
 		s := ip.V6_0
 		return AglStringHasPrefix(s, "fc00::")
 	}
@@ -8913,10 +8913,10 @@ const (
 	Color_Blue
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_Red:
 		return "Red"
 	case Color_Green:
@@ -8928,16 +8928,16 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_Red() Color {
-	return Color{tag: Color_Red}
+	return Color{Tag: Color_Red}
 }
 func Make_Color_Green() Color {
-	return Color{tag: Color_Green}
+	return Color{Tag: Color_Green}
 }
 func Make_Color_Blue() Color {
-	return Color{tag: Color_Blue}
+	return Color{Tag: Color_Blue}
 }
 
 func test() Color {
@@ -8948,7 +8948,7 @@ func test1() Color {
 }
 func main() {
 	c := Make_Color_Red()
-	switch c.tag {
+	switch c.Tag {
 	case Color_Red:
 		fmt.Println("red")
 	case Color_Green:
@@ -8988,10 +8988,10 @@ const (
 	Color_Blue
 )
 type Color struct {
-	tag ColorTag
+	Tag ColorTag
 }
 func (v Color) String() string {
-	switch v.tag {
+	switch v.Tag {
 	case Color_Red:
 		return "Red"
 	case Color_Green:
@@ -9003,16 +9003,16 @@ func (v Color) String() string {
 	}
 }
 func (v Color) RawValue() int {
-	return int(v.tag)
+	return int(v.Tag)
 }
 func Make_Color_Red() Color {
-	return Color{tag: Color_Red}
+	return Color{Tag: Color_Red}
 }
 func Make_Color_Green() Color {
-	return Color{tag: Color_Green}
+	return Color{Tag: Color_Green}
 }
 func Make_Color_Blue() Color {
-	return Color{tag: Color_Blue}
+	return Color{Tag: Color_Blue}
 }
 
 func main() {

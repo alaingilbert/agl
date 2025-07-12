@@ -475,7 +475,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	}
 	out += fmt.Sprintf(")\n")
 	out += fmt.Sprintf("type %s struct {\n", enumName)
-	out += fmt.Sprintf("\ttag %sTag\n", enumName)
+	out += fmt.Sprintf("\tTag %sTag\n", enumName)
 	for _, field := range expr.Values.List {
 		if field.Params != nil {
 			for i, el := range field.Params.List {
@@ -484,7 +484,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		}
 	}
 	out += "}\n"
-	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.tag {\n", enumName)
+	out += fmt.Sprintf("func (v %s) String() string {\n\tswitch v.Tag {\n", enumName)
 	for _, field := range expr.Values.List {
 		tmp := fmt.Sprintf("%s", field.Name.Name)
 		if field.Params != nil {
@@ -501,7 +501,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		out += fmt.Sprintf("\tcase %s_%s:\n\t\treturn %s\n", enumName, field.Name.Name, tmp)
 	}
 	out += "\tdefault:\n\t\tpanic(\"\")\n\t}\n}\n"
-	out += fmt.Sprintf("func (v %s) RawValue() int {\n\treturn int(v.tag)\n}\n", enumName)
+	out += fmt.Sprintf("func (v %s) RawValue() int {\n\treturn int(v.Tag)\n}\n", enumName)
 	for _, field := range expr.Values.List {
 		var tmp []string
 		var tmp1 []string
@@ -515,7 +515,7 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 		if len(tmp1) > 0 {
 			tmp1Out = ", " + strings.Join(tmp1, ", ")
 		}
-		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{tag: %s_%s%s}\n}\n",
+		out += fmt.Sprintf("func Make_%s_%s(%s) %s {\n\treturn %s{Tag: %s_%s%s}\n}\n",
 			enumName, field.Name.Name, strings.Join(tmp, ", "), enumName, enumName, enumName, field.Name.Name, tmp1Out)
 	}
 	return out
@@ -771,9 +771,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 		if expr.Body != nil {
 			for i, cc := range expr.Body.List {
 				if i == 0 {
-					out += gPrefix + fmt.Sprintf("if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+					out += gPrefix + fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
 				} else {
-					out += gPrefix + fmt.Sprintf("} else if %s.tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
+					out += gPrefix + fmt.Sprintf("} else if %s.Tag == %s_%s {\n", expr.Init, v.Name, v.Fields[i].Name)
 				}
 				c := cc.(*ast.MatchClause)
 				switch cv := c.Expr.(type) {
@@ -849,7 +849,7 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 		switch tagT.(type) {
 		case types.EnumType:
 			tagIsEnum = true
-			content2 = utils.SuffixIf(g.genExpr(expr.Tag)+".tag", " ")
+			content2 = utils.SuffixIf(g.genExpr(expr.Tag)+".Tag", " ")
 		default:
 			content2 = utils.SuffixIf(g.genExpr(expr.Tag), " ")
 		}
