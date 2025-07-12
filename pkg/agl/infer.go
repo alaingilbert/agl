@@ -1391,9 +1391,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			switch exprArg0.(type) {
 			case *ast.FuncLit, *ast.ShortFuncLit:
 				exprT.Sel.Name = "ContainsWhere"
-				info := infer.env.GetNameInfo("agl1.Vec.ContainsWhere")
-				fnT := infer.env.GetFn("agl1.Vec.ContainsWhere").T("T", idTT.Elt)
-				fnT.Name = "ContainsWhere"
+				envFnName := "agl1.Vec.ContainsWhere"
+				info := infer.env.GetNameInfo(envFnName)
+				fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
+				fnT.Name = "Contains"
 				infer.SetType(exprArg0, fnT.Params[1])
 				infer.SetType(expr, fnT.Return)
 				ft := fnT.GetParam(1).(types.FuncType)
