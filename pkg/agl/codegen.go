@@ -794,10 +794,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 				default:
 					panic(fmt.Sprintf("%v", to(c.Expr)))
 				}
-				if i == len(expr.Body.List)-1 {
-					out += gPrefix + fmt.Sprintf("}\n")
-				}
 			}
+			out += gPrefix + fmt.Sprintf("}\n")
 		}
 	default:
 		panic(fmt.Sprintf("%v", to(initT)))
