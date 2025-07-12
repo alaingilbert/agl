@@ -25,10 +25,10 @@ func FindGuardPosition(data [][]string) (int, int) {
 
 func Rotate(direction Direction) Direction {
     switch direction {
-    case .Up:    return Direction.Right
-    case .Right: return Direction.Down
-    case .Down:  return Direction.Left
-    case .Left:  return Direction.Up
+    case .Up:    return .Right
+    case .Right: return .Down
+    case .Down:  return .Left
+    case .Left:  return .Up
     }
     return .Up
 }
