@@ -68,7 +68,9 @@ func Walk(v Visitor, node Node) {
 	case *BadExpr, *Ident, *BasicLit:
 
 	case *LabelledIdent:
-		Walk(v, n.Label)
+		if n.Label != nil {
+			Walk(v, n.Label)
+		}
 		Walk(v, n.Ident)
 
 	case *Ellipsis:
