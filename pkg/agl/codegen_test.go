@@ -9161,7 +9161,7 @@ func TestCodeGen316(t *testing.T) {
 	src := `package main
 import "strings"
 func main() {
-	"Test".MyLowercased()
+	assert("Test".MyLowercased() == "test")
 }
 func (s agl1.String) MyLowercased() string {
 	return strings.ToLower(s)
@@ -9170,9 +9170,9 @@ func (s agl1.String) MyLowercased() string {
 package main
 import "strings"
 func main() {
-	AglStringMyLowercased("Test")
+	AglAssert(AglStringMyLowercased("Test") == "test", "assert failed line 4")
 }
-func AglStringMyLowercased(s String) string {
+func AglStringMyLowercased(s string) string {
 	return strings.ToLower(s)
 }
 `

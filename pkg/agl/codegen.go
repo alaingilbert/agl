@@ -122,7 +122,7 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
 		if params := paramsClone; params != nil {
 			var fieldsItems []string
-			for _, field := range params {
+			for i, field := range params {
 				var content string
 				if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 					if _, ok := v.W.(types.FuncType); ok {
@@ -137,6 +137,12 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 					default:
 						content = g.genExpr(field.Type)
 					}
+				}
+				if i == 0 {
+					if content != "String" {
+						panic("")
+					}
+					content = "string"
 				}
 				namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
 				namesStr = utils.SuffixIf(namesStr, " ")
