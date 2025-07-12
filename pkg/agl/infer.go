@@ -546,8 +546,10 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				// implicit return
 				cond1 := len(decl.Body.List) == 1 ||
 					(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
-				if cond1 && decl.Type.Result != nil && TryCast[*ast.ExprStmt](decl.Body.List[0]) {
-					decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: decl.Body.List[0].(*ast.ExprStmt).X}}
+				if cond1 && decl.Type.Result != nil {
+					if v, ok := decl.Body.List[0].(*ast.ExprStmt); ok && !TryCast[*ast.MatchExpr](v.X) {
+						decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
+					}
 				}
 				infer.stmt(decl.Body)
 			}
