@@ -24,17 +24,16 @@ func FindGuardPosition(data [][]string) (int, int) {
 }
 
 func Rotate(direction Direction) Direction {
-    switch direction {
+    match direction {
     case .Up:    return .Right
     case .Right: return .Down
     case .Down:  return .Left
     case .Left:  return .Up
     }
-    return .Up
 }
 
 func MoveIn(coord (int, int), direction Direction) (int, int) {
-    switch direction {
+    match direction {
     case .Up:    coord.1 -= 1
     case .Down:  coord.1 += 1
     case .Left:  coord.0 -= 1
@@ -44,13 +43,12 @@ func MoveIn(coord (int, int), direction Direction) (int, int) {
 }
 
 func ObstacleInFront(pos (int, int), direction Direction, data [][]string) bool {
-    switch direction {
+    match direction {
     case .Up:    return pos.1 > 0          && data[pos.1-1][pos.0  ] == "#"
     case .Right: return pos.0 < width  - 1 && data[pos.1  ][pos.0+1] == "#"
     case .Down:  return pos.1 < height - 1 && data[pos.1+1][pos.0  ] == "#"
     case .Left:  return pos.0 > 0          && data[pos.1  ][pos.0-1] == "#"
     }
-    return false
 }
 
 func GetOrigPathPositions1(data [][]string, guardPosition (int, int)) set[(int, int)] {
