@@ -2,7 +2,7 @@ package main
 
 import (
     "fmt"
-    "os"
+    "agl1/os"
 )
 
 func isSafe(report []int) bool {
