@@ -74,7 +74,7 @@ func GetOrigPathPositions2(data [][]string, guardPosition (int, int)) bool {
     mut facing := Direction.Up
 
     for pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
-        h := int(pos.0 * width + pos.1) * 4 + facing.RawValue()
+        h := (pos.0 * width + pos.1) * 4 + facing.RawValue()
         if seen[h] {
             return true
         }

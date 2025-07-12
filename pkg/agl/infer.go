@@ -2164,6 +2164,9 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
 		return true // TODO
 	}
+	if TryCast[types.BinaryType](a) || TryCast[types.BinaryType](b) {
+		return true // TODO
+	}
 	if TryCast[types.StarType](a) && TryCast[types.StarType](b) {
 		return cmpTypes(a.(types.StarType).X, b.(types.StarType).X)
 	}
@@ -2396,6 +2399,7 @@ func (infer *FileInferrer) indexListExpr(expr *ast.IndexListExpr) {
 
 func (infer *FileInferrer) parenExpr(expr *ast.ParenExpr) {
 	infer.expr(expr.X)
+	infer.SetType(expr, infer.GetType(expr.X))
 }
 
 func (infer *FileInferrer) structTypeExpr(expr *ast.StructType) {
