@@ -1164,8 +1164,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, strings.Join(params, ", "), ellipsis)
 			default:
 				extName := "agl1.Vec." + fnName
-				t := g.env.Get(extName)
-				rawFnT := t
+				rawFnT := g.env.Get(extName)
 				concreteT := g.env.GetType(expr.Fun)
 				m := types.FindGen(rawFnT, concreteT)
 				tmp := g.extensions[extName]
