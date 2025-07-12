@@ -40,8 +40,7 @@ func main() {
 	}
 }`
 	test := NewTest(src, WithMutEnforced(false))
-	test.PrintErrors()
-	tassert.Contains(t, NewTest(src).errs[0].Error(), "9:2: match expression is not exhaustive")
+	tassert.Contains(t, test.errs[0].Error(), "9:2: match expression is not exhaustive")
 }
 
 func TestCodeGenMatch_3(t *testing.T) {
