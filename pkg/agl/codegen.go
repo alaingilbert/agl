@@ -771,14 +771,14 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 		if expr.Body != nil {
 			for i, cc := range expr.Body.List {
 				c := cc.(*ast.MatchClause)
+				out += gPrefix
 				switch cv := c.Expr.(type) {
 				case *ast.CallExpr:
 					sel := cv.Fun.(*ast.SelectorExpr)
-					if i == 0 {
-						out += gPrefix + fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, sel.Sel.Name)
-					} else {
-						out += gPrefix + fmt.Sprintf("} else if %s.Tag == %s_%s {\n", expr.Init, v.Name, sel.Sel.Name)
+					if i > 0 {
+						out += "} else "
 					}
+					out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, sel.Sel.Name)
 					for j, id := range cv.Args {
 						rhs := fmt.Sprintf("%s.%s_%d", expr.Init, v.Fields[i].Name, j)
 						if id.(*ast.Ident).Name == "_" {
@@ -789,11 +789,10 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					}
 					out += gPrefix + g.genStmts(c.Body)
 				case *ast.SelectorExpr:
-					if i == 0 {
-						out += gPrefix + fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, cv.Sel.Name)
-					} else {
-						out += gPrefix + fmt.Sprintf("} else if %s.Tag == %s_%s {\n", expr.Init, v.Name, cv.Sel.Name)
+					if i > 0 {
+						out += "} else "
 					}
+					out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, cv.Sel.Name)
 					out += gPrefix + g.genStmts(c.Body)
 				default:
 					panic(fmt.Sprintf("%v", to(c.Expr)))
