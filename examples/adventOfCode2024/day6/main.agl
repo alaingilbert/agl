@@ -25,30 +25,30 @@ func FindGuardPosition(data [][]string) (int, int) {
 
 func Rotate(direction Direction) Direction {
     switch direction {
-    case Direction.Up:    return Direction.Right
-    case Direction.Right: return Direction.Down
-    case Direction.Down:  return Direction.Left
-    case Direction.Left:  return Direction.Up
+    case .Up:    return Direction.Right
+    case .Right: return Direction.Down
+    case .Down:  return Direction.Left
+    case .Left:  return Direction.Up
     }
-    return Direction.Up
+    return .Up
 }
 
 func MoveIn(coord (int, int), direction Direction) (int, int) {
     switch direction {
-    case Direction.Up:    coord.1 -= 1
-    case Direction.Down:  coord.1 += 1
-    case Direction.Left:  coord.0 -= 1
-    case Direction.Right: coord.0 += 1
+    case .Up:    coord.1 -= 1
+    case .Down:  coord.1 += 1
+    case .Left:  coord.0 -= 1
+    case .Right: coord.0 += 1
     }
     return coord
 }
 
 func ObstacleInFront(pos (int, int), direction Direction, data [][]string) bool {
     switch direction {
-    case Direction.Up:    return pos.1 > 0          && data[pos.1-1][pos.0  ] == "#"
-    case Direction.Right: return pos.0 < width  - 1 && data[pos.1  ][pos.0+1] == "#"
-    case Direction.Down:  return pos.1 < height - 1 && data[pos.1+1][pos.0  ] == "#"
-    case Direction.Left:  return pos.0 > 0          && data[pos.1  ][pos.0-1] == "#"
+    case .Up:    return pos.1 > 0          && data[pos.1-1][pos.0  ] == "#"
+    case .Right: return pos.0 < width  - 1 && data[pos.1  ][pos.0+1] == "#"
+    case .Down:  return pos.1 < height - 1 && data[pos.1+1][pos.0  ] == "#"
+    case .Left:  return pos.0 > 0          && data[pos.1  ][pos.0-1] == "#"
     }
     return false
 }
