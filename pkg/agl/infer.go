@@ -3034,6 +3034,11 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) types.Type {
 	if expr.Name == "_" {
 		return nil
 	}
+	if infer.optType != nil && expr.Name == "" {
+		if v, ok := infer.optType.Type.(types.EnumType); ok {
+			expr.Name = v.Name
+		}
+	}
 	v := infer.env.Get(expr.Name)
 	if v == nil {
 		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
@@ -3103,13 +3108,19 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 
 func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
 	infer.withEnv(func() {
+		var tagT types.Type
 		if stmt.Tag != nil {
 			infer.expr(stmt.Tag)
+			tagT = infer.env.GetType(stmt.Tag)
 		}
 		for _, el := range stmt.Body.List {
 			c := el.(*ast.CaseClause)
 			if c.List != nil {
-				infer.exprs(c.List)
+				for _, expr := range c.List {
+					infer.withOptType(expr, tagT, func() {
+						infer.expr(expr)
+					})
+				}
 			}
 			if c.Body != nil {
 				infer.stmts(c.Body)

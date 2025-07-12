@@ -896,7 +896,7 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 	if p.trace {
 		defer un(trace(p, "ParamDecl"))
 	}
-	
+
 BEGIN:
 	var mutable token.Pos
 	if p.tok == token.MUT {
@@ -1654,6 +1654,11 @@ func (p *parser) parseOperand() ast.Expr {
 	}
 
 	switch p.tok {
+	case token.PERIOD:
+		p.next()
+		x := p.parseIdent()
+		return &ast.SelectorExpr{X: &ast.Ident{}, Sel: x}
+
 	case token.MUT:
 		mutPos := p.expect(token.MUT)
 		return p.parseMutIdent(mutPos)
@@ -2835,7 +2840,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.MUT, token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.PERIOD, token.MUT, token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
 		token.LBRACK, token.STRUCT, token.MAP, token.SET, token.CHAN, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)

@@ -8882,6 +8882,89 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen312(t *testing.T) {
+	src := `package main
+import "fmt"
+type Color enum {
+	Red
+	Green
+	Blue
+}
+func test() Color {
+	return .Blue
+}
+func test1() Color {
+	.Blue
+}
+func main() {
+	c := Color.Red
+	switch c {
+	case .Red: fmt.Println("red")
+	case .Green: fmt.Println("green")
+	case .Blue: fmt.Println("blue")
+	}
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+type ColorTag int
+const (
+	Color_Red ColorTag = iota
+	Color_Green
+	Color_Blue
+)
+type Color struct {
+	tag ColorTag
+}
+func (v Color) String() string {
+	switch v.tag {
+	case Color_Red:
+		return "Red"
+	case Color_Green:
+		return "Green"
+	case Color_Blue:
+		return "Blue"
+	default:
+		panic("")
+	}
+}
+func (v Color) RawValue() int {
+	return int(v.tag)
+}
+func Make_Color_Red() Color {
+	return Color{tag: Color_Red}
+}
+func Make_Color_Green() Color {
+	return Color{tag: Color_Green}
+}
+func Make_Color_Blue() Color {
+	return Color{tag: Color_Blue}
+}
+
+func test() Color {
+	return Make_Color_Blue()
+}
+func test1() Color {
+	return Make_Color_Blue()
+}
+func main() {
+	c := Make_Color_Red()
+	switch c {
+	case Make_Color_Red():
+		fmt.Println("red")
+	case Make_Color_Green():
+		fmt.Println("green")
+	case Make_Color_Blue():
+		fmt.Println("blue")
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen311(t *testing.T) {
 //	src := `package main
 //func FirstIndex(arr []string, of: el string) string? {
