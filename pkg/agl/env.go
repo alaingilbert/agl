@@ -879,6 +879,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Last", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.Len", "func [T any](a []T) int")
 		e.DefineFn(nenv, "agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
+		e.DefineFn(nenv, "agl1.Vec.Max", "func [T cmp.Ordered](a []T) T?", WithDesc("Returns the maximum element in the sequence."))
+		e.DefineFn(nenv, "agl1.Vec.Min", "func [T cmp.Ordered](a []T) T?", WithDesc("Returns the minimum element in the sequence."))
 		e.DefineFn(nenv, "agl1.Vec.Pop", "func [T any](mut a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.PopFront", "func [T any](mut a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.PopIf", "func [T any](mut a []T, pred func() bool) T?")

@@ -1143,7 +1143,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
 			fnName := e.Sel.Name
 			switch fnName {
-			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
+			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter", "Min", "Max":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
 			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
@@ -2706,6 +2706,28 @@ func AglVecJoined(a []string, s string) string {
 func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
 	var zero T
 	return AglVecReduce(a, zero, func(acc, el T) T { return acc + el })
+}
+
+func AglVecMin[T aglImportCmp.Ordered](a []T) Option[T] {
+	if len(a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	v := a[0]
+	for _, el := range a {
+		v = min(v, el)
+	}
+	return MakeOptionSome(v)
+}
+
+func AglVecMax[T aglImportCmp.Ordered](a []T) Option[T] {
+	if len(a) == 0 {
+		return MakeOptionNone[T]()
+	}
+	v := a[0]
+	for _, el := range a {
+		v = max(v, el)
+	}
+	return MakeOptionSome(v)
 }
 
 type AglNumber interface {

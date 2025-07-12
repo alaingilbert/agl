@@ -1565,16 +1565,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "Push", "Remove", "Clone", "Indices", "PushFront",
-			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter"}) {
+			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter", "Min", "Max"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{oidT}
-			if TryCast[types.MutType](sumFnT.Params[0]) {
-				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
-					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
-					return
+			if len(sumFnT.Params) > 0 {
+				if TryCast[types.MutType](sumFnT.Params[0]) {
+					if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+						infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+						return
+					}
 				}
+				sumFnT.Params = sumFnT.Params[1:]
 			}
-			sumFnT.Params = sumFnT.Params[1:]
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
 		} else if InArray(fnName, []string{"PopIf"}) {

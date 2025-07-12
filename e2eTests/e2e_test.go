@@ -154,6 +154,8 @@ func main() {
 	assert(a.First().Unwrap() == 1)
 	assert(a.First({ $0 == 3 }).Unwrap() == 3)
 	assert(a.First({ $0 == 4 }).IsNone())
+	assert(a.Min().Unwrap() == 1)
+	assert(a.Max().Unwrap() == 3)
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
