@@ -8847,16 +8847,22 @@ func TestCodeGen311(t *testing.T) {
 	src := `package main
 func main() {
 	arr := []string{"foo", "bar", "baz"}
+	arr.FirstIndex("foo")
 	arr.FirstIndex(of: "foo")
-	arr.FirstIndexWhere(where: func(el string) bool { el == "bar" })
-	arr.FirstIndexWhere({ $0 == "bar" })
-	arr.FirstIndexWhere(where: { $0 == "bar" })
+	arr.FirstIndex(func(el string) bool { el == "bar" })
+	arr.FirstIndex(where: func(el string) bool { el == "bar" })
+	arr.FirstIndex({ $0 == "bar" })
+	arr.FirstIndex(where: { $0 == "bar" })
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	arr := AglVec[string]{"foo", "bar", "baz"}
 	AglVecFirstIndex(arr, "foo")
+	AglVecFirstIndex(arr, "foo")
+	AglVecFirstIndexWhere(arr, func(el string) bool {
+		return el == "bar"
+	})
 	AglVecFirstIndexWhere(arr, func(el string) bool {
 		return el == "bar"
 	})

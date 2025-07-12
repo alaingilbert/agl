@@ -1267,6 +1267,8 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		return e.GetType2(xx.X, fset) // TODO
 	case *ast.StructType:
 		return types.StructType{}
+	case *ast.LabelledArg:
+		return e.GetType2(xx.X, fset)
 	default:
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}

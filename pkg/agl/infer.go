@@ -1305,9 +1305,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			filterFnT.Params = filterFnT.Params[1:]
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
-		} else if fnName == "FirstIndexWhere" {
-			info := infer.env.GetNameInfo("agl1.Vec.FirstIndexWhere")
-			fnT := infer.env.GetFn("agl1.Vec.FirstIndexWhere").T("T", idTT.Elt)
+		} else if fnName == "FirstIndex" {
 			if len(expr.Args) < 1 {
 				return
 			}
@@ -1315,26 +1313,46 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			if v, ok := exprArg0.(*ast.LabelledArg); ok {
 				exprArg0 = v.X
 			}
-			infer.SetType(exprArg0, fnT.Params[1])
-			infer.SetType(expr, fnT.Return)
-			ft := fnT.GetParam(1).(types.FuncType)
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
+			switch exprArg0.(type) {
+			case *ast.FuncLit, *ast.ShortFuncLit:
+				exprT.Sel.Name = "FirstIndexWhere"
+				envFnName := "agl1.Vec.FirstIndexWhere"
+				info := infer.env.GetNameInfo(envFnName)
+				fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
+				infer.SetType(exprArg0, fnT.Params[1])
+				infer.SetType(expr, fnT.Return)
+				ft := fnT.GetParam(1).(types.FuncType)
+				if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
+					infer.SetType(exprArg0, ft)
+				} else if _, ok := exprArg0.(*ast.FuncType); ok {
+					ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+					if !compareFunctionSignatures(ftReal, ft) {
+						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+						return
+					}
+				} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+					if !compareFunctionSignatures(ftReal, ft) {
+						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+						return
+					}
 				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
+				fnT.Recv = []types.Type{idTT}
+				fnT.Params = fnT.Params[1:]
+				infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+			default:
+				envFnName := "agl1.Vec.FirstIndex"
+				sumFnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
+				sumFnT.Recv = []types.Type{oidT}
+				if TryCast[types.MutType](sumFnT.Params[0]) {
+					if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+						infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+						return
+					}
 				}
+				sumFnT.Params = sumFnT.Params[1:]
+				infer.SetType(expr, sumFnT.Return)
+				infer.SetType(exprT.Sel, sumFnT)
 			}
-			fnT.Recv = []types.Type{idTT}
-			fnT.Params = fnT.Params[1:]
-			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		} else if fnName == "ContainsWhere" {
 			info := infer.env.GetNameInfo("agl1.Vec.ContainsWhere")
 			fnT := infer.env.GetFn("agl1.Vec.ContainsWhere").T("T", idTT.Elt)
@@ -1489,7 +1507,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "First", "Push", "Remove", "Clone", "Indices", "PushFront",
-			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter", "FirstIndex"}) {
+			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{oidT}
 			if TryCast[types.MutType](sumFnT.Params[0]) {

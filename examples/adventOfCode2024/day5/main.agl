@@ -27,7 +27,7 @@ func isInvalid(update []int) bool {
 
 func fixUpdate(update []int) []int {
     update.Reduce([]int{}, func(mut acc []int, page int) []int {
-        idx := acc.FirstIndexWhere({ rules[page].Contains($0) }).UnwrapOr(acc.Len())
+        idx := acc.FirstIndex({ rules[page].Contains($0) }).UnwrapOr(acc.Len())
         acc.Insert(idx, page)
         return acc
     })
