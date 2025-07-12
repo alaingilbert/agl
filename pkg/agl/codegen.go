@@ -795,6 +795,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					panic(fmt.Sprintf("%v", to(c.Expr)))
 				}
 			}
+			out += gPrefix + fmt.Sprintf("} else {\n")
+			out += gPrefix + fmt.Sprintf("\tpanic(\"match on enum should be exhaustive\")\n")
 			out += gPrefix + fmt.Sprintf("}\n")
 		}
 	default:
