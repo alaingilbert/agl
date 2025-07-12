@@ -151,6 +151,15 @@ func (c CustomType) GoStr() string {
 func (c CustomType) GoStrType() string { return c.GoStr() }
 func (c CustomType) String() string    { return c.GoStr() }
 
+type LabelledType struct {
+	Label string
+	W     Type
+}
+
+func (l LabelledType) GoStr() string     { return "LabelledType" }
+func (l LabelledType) GoStrType() string { return "LabelledType" }
+func (l LabelledType) String() string    { return "LabelledType" }
+
 type TypeType struct{ W Type }
 
 func (t TypeType) GoStr() string     { return t.W.GoStr() }
@@ -540,8 +549,14 @@ func (m MutType) GoStrType() string { return m.W.GoStrType() }
 func (m MutType) String() string    { return "mut " + m.W.String() }
 
 func Unwrap(t Type) Type {
+	if v, ok := t.(LabelledType); ok {
+		t = v.W
+	}
 	if v, ok := t.(MutType); ok {
 		t = v.Unwrap()
+	}
+	if v, ok := t.(LabelledType); ok {
+		t = v.W
 	}
 	if starT, ok := t.(StarType); ok {
 		t = starT.X

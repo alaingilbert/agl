@@ -719,7 +719,7 @@ func (p *parser) parseFieldDecl() *ast.Field {
 		mutable = true
 	}
 
-	var names []*ast.Ident
+	var names []*ast.LabelledIdent
 	var typ ast.Expr
 	switch p.tok {
 	case token.IDENT:
@@ -737,10 +737,10 @@ func (p *parser) parseFieldDecl() *ast.Field {
 			}
 		} else {
 			// name1, name2, ... T
-			names = []*ast.Ident{name}
+			names = []*ast.LabelledIdent{{name, nil}}
 			for p.tok == token.COMMA {
 				p.next()
-				names = append(names, p.parseIdentOrMutIdent())
+				names = append(names, &ast.LabelledIdent{p.parseIdentOrMutIdent(), nil})
 			}
 			// Careful dance: We don't know if we have an embedded instantiated
 			// type T[P1, P2, ...] or a field T of array type []E or [P]E.
@@ -885,8 +885,9 @@ func (p *parser) parseDotsType() *ast.Ellipsis {
 }
 
 type field struct {
-	name *ast.Ident
-	typ  ast.Expr
+	label *ast.Ident
+	name  *ast.Ident
+	typ   ast.Expr
 }
 
 func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
@@ -895,7 +896,8 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 	if p.trace {
 		defer un(trace(p, "ParamDecl"))
 	}
-
+	
+BEGIN:
 	var mutable token.Pos
 	if p.tok == token.MUT {
 		mutable = p.expect(token.MUT)
@@ -906,7 +908,7 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 		p.tok = token.IDENT // force token.IDENT case in switch below
 	} else if typeSetsOK && p.tok == token.TILDE {
 		// "~" ...
-		return field{nil, p.embeddedElem(nil)}
+		return field{nil, nil, p.embeddedElem(nil)}
 	}
 
 	switch p.tok {
@@ -919,7 +921,13 @@ func (p *parser) parseParamDecl(name *ast.Ident, typeSetsOK bool) (f field) {
 			if mutable.IsValid() {
 				f.name = p.parseMutIdent(mutable)
 			} else {
-				f.name = p.parseIdent()
+				id := p.parseIdent()
+				if p.tok == token.COLON {
+					p.next()
+					f.label = id
+					goto BEGIN
+				}
+				f.name = id
 			}
 		}
 		switch p.tok {
@@ -1012,7 +1020,7 @@ func (p *parser) parseParameterList(name0 *ast.Ident, typ0 ast.Expr, closing tok
 			if tparams {
 				typ0 = p.embeddedElem(typ0)
 			}
-			par = field{name0, typ0}
+			par = field{nil, name0, typ0}
 		} else {
 			par = p.parseParamDecl(name0, tparams)
 		}
@@ -1148,7 +1156,7 @@ func (p *parser) parseParameterList(name0 *ast.Ident, typ0 ast.Expr, closing tok
 
 	// If the parameter list consists of named parameters with types,
 	// collect all names with the same types into a single ast.Field.
-	var names []*ast.Ident
+	var names []*ast.LabelledIdent
 	var typ ast.Expr
 	addParams := func() {
 		assert(typ != nil, "nil type in named parameter list")
@@ -1163,7 +1171,7 @@ func (p *parser) parseParameterList(name0 *ast.Ident, typ0 ast.Expr, closing tok
 			}
 			typ = par.typ
 		}
-		names = append(names, par.name)
+		names = append(names, &ast.LabelledIdent{Ident: par.name, Label: par.label})
 	}
 	if len(names) > 0 {
 		addParams()
@@ -1252,7 +1260,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 	}
 
 	doc := p.leadComment
-	var idents []*ast.Ident
+	var idents []*ast.LabelledIdent
 	var typ ast.Expr
 	x := p.parseTypeName(nil)
 	if ident, _ := x.(*ast.Ident); ident != nil {
@@ -1276,7 +1284,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
 				result := p.tryIdentOrTypeNoShortFn()
-				idents = []*ast.Ident{ident}
+				idents = []*ast.LabelledIdent{{ident, nil}}
 				typ = &ast.FuncType{
 					Func:   token.NoPos,
 					Params: params,
@@ -1306,7 +1314,7 @@ func (p *parser) parseMethodSpec() *ast.Field {
 			// TODO(rfindley) refactor to share code with parseFuncType.
 			params := p.parseParameters(false)
 			result := p.tryIdentOrTypeNoShortFn()
-			idents = []*ast.Ident{ident}
+			idents = []*ast.LabelledIdent{{ident, nil}}
 			typ = &ast.FuncType{Func: token.NoPos, Params: params, Result: result}
 		default:
 			// embedded type
@@ -1848,7 +1856,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != token.RPAREN && p.tok != token.EOF && !ellipsis.IsValid() {
-		list = append(list, p.parseRhs()) // builtins may expect a type: make(some type, ...)
+		x := p.parseRhs()
+		// Handle optional arg labels
+		if lbl, ok := x.(*ast.Ident); ok && p.tok == token.COLON {
+			p.next()
+			x = &ast.LabelledArg{Label: lbl, X: p.parseRhs()}
+		}
+		list = append(list, x) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()

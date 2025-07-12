@@ -525,6 +525,9 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					if name.Mutable.IsValid() {
 						t = types.MutType{W: t}
 					}
+					if name.Label != nil && name.Label.Name != "" {
+						t = types.LabelledType{Label: name.Label.Name, W: t}
+					}
 					infer.env.Define(name, name.Name, t)
 					infer.env.SetType(nil, nil, name, t, infer.fset)
 				}
@@ -565,7 +568,7 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 						vecExt = true
 						id := tmp.Index.(*ast.Ident)
 						typeName := utils.Ternary(id.Name == defaultName, "any", id.Name)
-						t := &ast.Field{Names: []*ast.Ident{{Name: defaultName}}, Type: &ast.Ident{Name: typeName}}
+						t := &ast.Field{Names: []*ast.LabelledIdent{{&ast.Ident{Name: defaultName}, nil}}, Type: &ast.Ident{Name: typeName}}
 						if decl.Type.TypeParams == nil {
 							decl.Type.TypeParams = &ast.FieldList{List: []*ast.Field{t}}
 						} else {
@@ -604,6 +607,9 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			for i := range param.Names {
 				if param.Names[i].Mutable.IsValid() {
 					t = types.MutType{W: t}
+				}
+				if param.Names[i].Label != nil && param.Names[i].Label.Name != "" {
+					t = types.LabelledType{Label: param.Names[i].Label.Name, W: t}
 				}
 				paramsT = append(paramsT, t)
 			}
@@ -742,6 +748,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.structTypeExpr(expr)
 	case *ast.SetType:
 		infer.setTypeExpr(expr)
+	case *ast.LabelledArg:
+		infer.labelledArg(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -1068,6 +1076,22 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				got := infer.GetType(arg)
 				if oArgT, ok := oArg.(types.IndexType); ok {
 					oArg = oArgT.X
+				}
+				if v, ok := arg.(*ast.LabelledArg); ok {
+					ooArg := oArg
+					if vv, ok := oArg.(types.MutType); ok {
+						ooArg = vv.W
+					}
+					if vv, ok := ooArg.(types.LabelledType); ok {
+						if v.Label.Name != "" && v.Label.Name != vv.Label {
+							infer.errorf(call, "%s: label name does not match %s vs %s", infer.Pos(arg), v.Label.Name, vv.Label)
+							return
+						}
+					} else {
+						infer.errorf(call, "%s: label does not exists", infer.Pos(arg))
+						return
+					}
+					arg = v.X
 				}
 				if !cmpTypesLoose(oArg, got) {
 					infer.errorf(call, "%s: types not equal, %v %v", infer.Pos(arg), oArg, got)
@@ -2297,6 +2321,12 @@ func (infer *FileInferrer) setTypeExpr(expr *ast.SetType) {
 	infer.expr(expr.Key)
 	kT := infer.env.GetType2(expr.Key, infer.fset)
 	infer.SetType(expr, types.SetType{K: kT})
+}
+
+func (infer *FileInferrer) labelledArg(expr *ast.LabelledArg) {
+	infer.expr(expr.X)
+	t := infer.env.GetType2(expr.X, infer.fset)
+	infer.SetType(expr, t)
 }
 
 func (infer *FileInferrer) dumpExpr(expr *ast.DumpExpr) {

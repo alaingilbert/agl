@@ -536,7 +536,11 @@ func (r *resolver) declareList(list *ast.FieldList, kind ast.ObjKind) {
 		return
 	}
 	for _, f := range list.List {
-		r.declare(f, nil, r.topScope, kind, f.Names...)
+		var idents []*ast.Ident
+		for _, el := range f.Names {
+			idents = append(idents, el.Ident)
+		}
+		r.declare(f, nil, r.topScope, kind, idents...)
 	}
 }
 

@@ -8805,6 +8805,35 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen309(t *testing.T) {
+	src := `package main
+func test(labelA: a, labelB: mut b, LabelC: c, d int) {}
+func main() {
+	test(labelA: 1, labelB: 2, 3, 4)
+}`
+	expected := `// agl:generated
+package main
+func test(a, b, c, d int) {
+}
+func main() {
+	test(1, 2, 3, 4)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen310(t *testing.T) {
+	src := `package main
+func test(labelA: a, labelB: mut b, LabelC: c, d int) {}
+func main() {
+	test(labelA: 1, wrongLabel: 2, 3, 4)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "4:18: label name does not match wrongLabel vs labelB")
+}
+
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
 //import "agl1/os"

@@ -66,7 +66,10 @@ func Walk(v Visitor, node Node) {
 
 	// Expressions
 	case *BadExpr, *Ident, *BasicLit:
-		// nothing to do
+
+	case *LabelledIdent:
+		Walk(v, n.Label)
+		Walk(v, n.Ident)
 
 	case *Ellipsis:
 		if n.Elt != nil {
@@ -428,6 +431,10 @@ func Walk(v Visitor, node Node) {
 
 	case *SetType:
 		Walk(v, n.Key)
+
+	case *LabelledArg:
+		Walk(v, n.Label)
+		Walk(v, n.X)
 
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))

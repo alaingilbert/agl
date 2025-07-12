@@ -200,11 +200,11 @@ func isDirective(c string) bool {
 // [Field.Names] is nil for unnamed parameters (parameter lists which only contain types)
 // and embedded struct fields. In the latter case, the field name is the type name.
 type Field struct {
-	Doc     *CommentGroup // associated documentation; or nil
-	Names   []*Ident      // field/method/(type) parameter names; or nil
-	Type    Expr          // field/method/parameter type; or nil
-	Tag     *BasicLit     // field tag; or nil
-	Comment *CommentGroup // line comments; or nil
+	Doc     *CommentGroup    // associated documentation; or nil
+	Names   []*LabelledIdent // field/method/(type) parameter names; or nil
+	Type    Expr             // field/method/parameter type; or nil
+	Tag     *BasicLit        // field tag; or nil
+	Comment *CommentGroup    // line comments; or nil
 }
 
 func (f *Field) Pos() token.Pos {
@@ -294,6 +294,16 @@ type (
 		Name    string    // identifier name
 		Mutable token.Pos
 		Obj     *Object // denoted object, or nil. Deprecated: see Object.
+	}
+
+	LabelledIdent struct {
+		*Ident
+		Label *Ident
+	}
+
+	LabelledArg struct {
+		Label *Ident
+		X     Expr
 	}
 
 	// An Ellipsis node stands for the "..." type in a
@@ -506,6 +516,10 @@ type (
 		Value Expr
 	}
 )
+
+func (l LabelledArg) Pos() token.Pos { return l.Label.Pos() }
+func (l LabelledArg) End() token.Pos { return l.X.End() }
+func (l LabelledArg) exprNode()      {}
 
 func (o OrReturnExpr) Pos() token.Pos { return o.OrReturn }
 

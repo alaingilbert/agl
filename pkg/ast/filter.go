@@ -46,6 +46,17 @@ func PackageExports(pkg *Package) bool {
 
 type Filter func(string) bool
 
+func filterLabelledIdentList(list []*LabelledIdent, f Filter) []*LabelledIdent {
+	j := 0
+	for _, x := range list {
+		if f(x.Name) {
+			list[j] = x
+			j++
+		}
+	}
+	return list[0:j]
+}
+
 func filterIdentList(list []*Ident, f Filter) []*Ident {
 	j := 0
 	for _, x := range list {
@@ -88,7 +99,7 @@ func filterFieldList(fields *FieldList, filter Filter, export bool) (removedFiel
 			keepField = name != nil && filter(name.Name)
 		} else {
 			n := len(f.Names)
-			f.Names = filterIdentList(f.Names, filter)
+			f.Names = filterLabelledIdentList(f.Names, filter)
 			if len(f.Names) < n {
 				removedFields = true
 			}

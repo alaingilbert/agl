@@ -124,7 +124,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			elts = append(elts, fmt.Sprintf("%s_%s", "T", recvTName))
 		}
 
-		firstArg := ast.Field{Names: []*ast.Ident{{Name: recvName}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
+		firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
 			for _, param := range decl.Type.Params.List {
@@ -152,7 +152,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 							content = g.genExpr(field.Type)
 						}
 					}
-					namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+					namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
 					namesStr = utils.SuffixIf(namesStr, " ")
 					fieldsItems = append(fieldsItems, namesStr+content)
 				}
@@ -368,6 +368,8 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 		return g.genSliceExpr(expr)
 	case *ast.DumpExpr:
 		return g.genDumpExpr(expr)
+	case *ast.LabelledArg:
+		return g.genLabelledArg(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -959,7 +961,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) string {
 			} else {
 				content = g.genExpr(field.Type)
 			}
-			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+			namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
 			namesStr = utils.SuffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
@@ -977,6 +979,11 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) string {
 	//	return fmt.Sprintf("AglMapIndex(%s, %s)", content1, content2)
 	//}
 	return fmt.Sprintf("%s[%s]", content1, content2)
+}
+
+func (g *Generator) genLabelledArg(expr *ast.LabelledArg) string {
+	content1 := g.genExpr(expr.X)
+	return content1
 }
 
 func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
@@ -1880,7 +1887,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 					content = g.genExpr(field.Type)
 				}
 			}
-			namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string { return n.Name }, ", ")
+			namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
 			namesStr = utils.SuffixIf(namesStr, " ")
 			fieldsItems = append(fieldsItems, namesStr+content)
 		}
@@ -1914,8 +1921,8 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 	var fieldsItems []string
 	for _, field := range l.List {
 		content := g.genExpr(field.Type)
-		namesStr := utils.MapJoin(field.Names, func(n *ast.Ident) string {
-			return g.genIdent(n)
+		namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string {
+			return g.genIdent(n.Ident)
 		}, ", ")
 		namesStr = utils.SuffixIf(namesStr, " ")
 		fieldsItems = append(fieldsItems, namesStr+content)
