@@ -7389,6 +7389,14 @@ func main() {
 	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:5: method 'DoNotExists' of type String does not exists")
 }
 
+func TestCodeGen243_1(t *testing.T) {
+	src := `package main
+func main() {
+	[]int{}.DoNotExists()
+}`
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "3:10: method 'DoNotExists' of type Vec does not exists")
+}
+
 func TestCodeGen244(t *testing.T) {
 	src := `package main
 func zip2[T, U any](a []T, b []U) [](T, U) {
