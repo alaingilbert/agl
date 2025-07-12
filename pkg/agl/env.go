@@ -867,6 +867,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T", WithDesc("Returns a new collection of the same type containing, in order, the elements of the original collection that satisfy the given predicate."))
 		e.DefineFn(nenv, "agl1.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
 		e.DefineFn(nenv, "agl1.Vec.First", "func [T any](a []T) T?")
+		e.DefineFn(nenv, "agl1.Vec.FirstWhere", "func [T any](a []T, where: predicate func(T) bool) T?")
 		e.DefineFn(nenv, "agl1.Vec.FirstIndex", "func [T any](a []T, of: e T) int?")
 		e.DefineFn(nenv, "agl1.Vec.FirstIndexWhere", "func [T any](a []T, where: p func(T) bool) int?")
 		e.DefineFn(nenv, "agl1.Vec.Get", "func [T any](a []T, i int) T?")

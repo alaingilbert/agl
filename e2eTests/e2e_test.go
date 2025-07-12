@@ -146,3 +146,14 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test10(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	assert(a.First().Unwrap() == 1)
+	assert(a.First({ $0 == 3 }).Unwrap() == 3)
+	assert(a.First({ $0 == 4 }).IsNone())
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
