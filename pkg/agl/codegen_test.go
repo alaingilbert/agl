@@ -8821,6 +8821,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func test(labelA: int, labelB: mut int, LabelC: int, int)", test.TypeAt(4, 2).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 

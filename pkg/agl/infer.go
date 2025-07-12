@@ -522,14 +522,15 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					infer.SetType(param.Type, types.TypeType{W: t})
 				}
 				for _, name := range param.Names {
+					tt := t
 					if name.Mutable.IsValid() {
-						t = types.MutType{W: t}
+						tt = types.MutType{W: tt}
 					}
 					if name.Label != nil && name.Label.Name != "" {
-						t = types.LabelledType{Label: name.Label.Name, W: t}
+						tt = types.LabelledType{Label: name.Label.Name, W: tt}
 					}
-					infer.env.Define(name, name.Name, t)
-					infer.env.SetType(nil, nil, name, t, infer.fset)
+					infer.env.Define(name, name.Name, tt)
+					infer.env.SetType(nil, nil, name, tt, infer.fset)
 				}
 			}
 		}
@@ -605,13 +606,15 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			infer.expr(param.Type)
 			t := infer.env.GetType2(param.Type, infer.fset)
 			for i := range param.Names {
-				if param.Names[i].Mutable.IsValid() {
-					t = types.MutType{W: t}
+				name := param.Names[i]
+				tt := t
+				if name.Mutable.IsValid() {
+					tt = types.MutType{W: tt}
 				}
-				if param.Names[i].Label != nil && param.Names[i].Label.Name != "" {
-					t = types.LabelledType{Label: param.Names[i].Label.Name, W: t}
+				if name.Label != nil && name.Label.Name != "" {
+					tt = types.LabelledType{Label: name.Label.Name, W: tt}
 				}
-				paramsT = append(paramsT, t)
+				paramsT = append(paramsT, tt)
 			}
 		}
 	}

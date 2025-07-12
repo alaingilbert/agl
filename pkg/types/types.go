@@ -156,9 +156,11 @@ type LabelledType struct {
 	W     Type
 }
 
-func (l LabelledType) GoStr() string     { return "LabelledType" }
-func (l LabelledType) GoStrType() string { return "LabelledType" }
-func (l LabelledType) String() string    { return "LabelledType" }
+func (l LabelledType) GoStr() string     { return l.W.GoStr() }
+func (l LabelledType) GoStrType() string { return l.W.GoStrType() }
+func (l LabelledType) String() string {
+	return fmt.Sprintf("%s: %s", l.Label, l.W.String())
+}
 
 type TypeType struct{ W Type }
 
@@ -554,9 +556,6 @@ func Unwrap(t Type) Type {
 	}
 	if v, ok := t.(MutType); ok {
 		t = v.Unwrap()
-	}
-	if v, ok := t.(LabelledType); ok {
-		t = v.W
 	}
 	if starT, ok := t.(StarType); ok {
 		t = starT.X
