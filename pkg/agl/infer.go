@@ -3050,6 +3050,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 		}
 	}
 	v := infer.env.Get(expr.Name)
+	info := infer.env.GetNameInfo(expr.Name)
 	if v == nil {
 		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
 		return
@@ -3057,7 +3058,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 	if InArray(expr.Name, []string{"true", "false"}) {
 		v = types.BoolType{}
 	}
-	infer.SetType(expr, v)
+	infer.SetType(expr, v, WithDefinition(info))
 }
 
 func (infer *FileInferrer) sendStmt(stmt *ast.SendStmt) {
