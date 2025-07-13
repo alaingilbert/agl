@@ -941,6 +941,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			exprFunT = types.OptionType{W: infer.env.GetType2(callXT, infer.fset)}
 		case *ast.BasicLit:
 			exprFunT = infer.env.GetType2(callXT, infer.fset)
+		case *ast.ParenExpr:
+			infer.expr(callXT)
+			exprFunT = infer.env.GetType2(callXT, infer.fset)
 		default:
 			infer.errorf(call.X, "%v %v", call.X, to(call.X))
 			return
