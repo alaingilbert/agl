@@ -14,7 +14,6 @@ func main() {
         a := parts[0].I64()?
         b := parts[1].Split(" ").Map({ $0.I64()? })
         (*$0)[a] = b
-        return void
     })
     part1()
 }
