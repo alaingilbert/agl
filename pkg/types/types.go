@@ -747,6 +747,10 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	case SetType:
 		t1.K = ReplGen(t1.K, name, newTyp)
 		return t1
+	case MapType:
+		t1.K = ReplGen(t1.K, name, newTyp)
+		t1.V = ReplGen(t1.V, name, newTyp)
+		return t1
 	case AnyType:
 		return t
 	case GenericType:
