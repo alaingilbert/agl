@@ -9354,6 +9354,32 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen324(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := []int{4, 5, 6}
+	c := a + b
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	b := []int{4, 5, 6}
+	c := AglVec__ADD(a, b)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "[]int", test.TypeAt(5, 7).String())
+	tassert.Equal(t, "[]int", test.TypeAt(5, 11).String())
+	tassert.Equal(t, "[]int", test.TypeAt(5, 2).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

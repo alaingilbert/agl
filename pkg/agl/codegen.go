@@ -1305,7 +1305,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
-			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere":
+			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
 			case "Reduce", "ReduceInto":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, genEX, genArgFn(0), genArgFn(1))
@@ -1554,6 +1554,9 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 		} else if TryCast[types.ArrayType](xT) && TryCast[types.ArrayType](yT) {
 			lhsT := types.Unwrap(xT.(types.ArrayType).Elt)
 			rhsT := types.Unwrap(yT.(types.ArrayType).Elt)
+			if op == "+" && g.env.Get("agl1.Vec.__ADD") != nil {
+				return fmt.Sprintf("AglVec__ADD(%s, %s)", content1, content2)
+			}
 			if TryCast[types.ByteType](lhsT) && TryCast[types.ByteType](rhsT) {
 				if op == "==" || op == "!=" {
 					out := fmt.Sprintf("AglBytesEqual(%s, %s)", content1, content2)
@@ -2356,6 +2359,13 @@ func AglVecMap[T, R any](a []T, f func(T) R) []R {
 	for _, v := range a {
 		out = append(out, f(v))
 	}
+	return out
+}
+
+func AglVec__ADD[T any](a, b []T) []T {
+	out := make([]T, 0, len(a)+len(b))
+	out = append(out, a...)
+	out = append(out, b...)
 	return out
 }
 

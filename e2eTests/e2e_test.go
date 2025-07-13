@@ -174,3 +174,15 @@ func main() {
 }`
 	tassert.Equal(t, "42\n", testGenOutput(src))
 }
+
+func Test12(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	a := []int{1, 2, 3}
+	b := []int{4, 5, 6}
+	c := a + b
+	fmt.Println(c)
+}`
+	tassert.Equal(t, "[1 2 3 4 5 6]\n", testGenOutput(src))
+}
