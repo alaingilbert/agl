@@ -16,6 +16,7 @@ func main() {
         (*$0)[a] = b
     })
     part1()
+    part2()
 }
 
 // concat
@@ -63,5 +64,10 @@ func solve(expected i64, vals []i64, ops []Op) bool {
 
 func part1() {
     res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul}) }).Map({ $0 }).Sum()
+    fmt.Println(res)
+}
+
+func part2() {
+    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul, Op.cat}) }).Map({ $0 }).Sum()
     fmt.Println(res)
 }
