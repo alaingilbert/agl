@@ -1403,6 +1403,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapFilter(%s, %s))", content1, content2)
+			case "Map":
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglIdentity(AglMapMap(%s, %s))", content1, content2)
 			}
 		default:
 			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
@@ -3068,6 +3072,14 @@ func AglMapFilter[K comparable, V any](m map[K]V, f func(K, V) bool) map[K]V {
 		if f(k, v) {
 			out[k] = v
 		}
+	}
+	return out
+}
+
+func AglMapMap[K comparable, V, R any](m map[K]V, f func(K, V) R) []R {
+	var out []R
+	for k, v := range m {
+		out = append(out, f(k, v))
 	}
 	return out
 }

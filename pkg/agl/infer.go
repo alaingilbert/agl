@@ -1733,6 +1733,43 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(expr, fnT.Return)
 			infer.SetType(exprT.Sel, fnT)
+		} else if fnName == "Map" {
+			info := infer.env.GetNameInfo("agl1.Map.Map")
+			mapFnT := infer.env.GetFn("agl1.Map.Map").T("K", idTT.K).T("V", idTT.V)
+			clbFnT := mapFnT.GetParam(1).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
+			exprArg0 := expr.Args[0]
+			mapFnT.Recv = []types.Type{idTT}
+			mapFnT.Params = mapFnT.Params[1:]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
+			exprPos := infer.Pos(expr)
+			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.expr(arg0)
+				rT := infer.GetTypeFn(arg0).Return
+				infer.SetType(expr, types.ArrayType{Elt: rT})
+				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					rT := tmp.Return
+					infer.SetType(expr, types.ArrayType{Elt: rT})
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+				}
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			}
 		}
 	}
 }
