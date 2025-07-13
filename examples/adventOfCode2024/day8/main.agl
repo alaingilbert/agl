@@ -1,0 +1,47 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]string
+var mut width, mut height int
+var mut antenasDict = map[string][](int, int){}
+
+func main () {
+    fileContent := os.ReadFile("examples/adventOfCode2024/day8/data.txt")!
+    data = string(fileContent).Lines().Map({ $0.Split("") })
+    width = data.Len()
+    height = data.First()?.Len()
+    for y, row := range data {
+        for x, col := range row {
+            if col != "." && col != "#" {
+                mut a := antenasDict[col]
+                a.Push((x, y))
+                antenasDict[col] = a
+            }
+        }
+    }
+    part1()
+}
+
+func part1() {
+    mut antinodes := set[(int, int)]{}
+    for _, antenas := range antenasDict {
+        for _, a1 := range antenas {
+            for _, a2 := range antenas {
+                if a2 == a1 {
+                    continue
+                }
+                dx := a2.0 - a1.0
+                dy := a2.1 - a1.1
+                pos := (a2.0 + dx, a2.1 + dy)
+                if pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
+                    antinodes.Insert(pos)
+                }
+            }
+        }
+    }
+    fmt.Println(antinodes.Len())
+}
