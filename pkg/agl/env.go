@@ -1190,6 +1190,11 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		panicIfNil(t, xx.X)
 		return types.OptionType{W: t}
 	case *ast.CallExpr:
+		if v, ok := xx.Fun.(*ast.Ident); ok {
+			if v.Name == "make" {
+				return e.GetType2(xx.Args[0], fset)
+			}
+		}
 		return nil
 	case *ast.BasicLit:
 		switch xx.Kind {

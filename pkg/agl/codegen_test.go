@@ -9380,6 +9380,19 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen325(t *testing.T) {
+	src := `package main
+var m = make(map[int]int)`
+	expected := `// agl:generated
+package main
+var m = make(map[int]int)
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "map[int]int", test.TypeAt(2, 5).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
