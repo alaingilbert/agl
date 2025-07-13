@@ -38,7 +38,7 @@ func combination(ops []Op, n int) [][]Op {
     combs := combination(ops, n-1)
     for _, comb := range combs {
         for _, op := range ops {
-            res.Push(append([]Op{}, append(comb, op)...))
+            res.Push(comb + []Op{op})
         }
     }
     return res
