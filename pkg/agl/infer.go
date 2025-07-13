@@ -1779,7 +1779,17 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	exprPos := infer.Pos(expr)
 	forceReturnType := infer.forceReturnType
 	forceReturnType = types.Unwrap(forceReturnType)
-	fnT := infer.env.GetFn("agl1.Vec.Reduce").T("T", idTArr.Elt)
+	fnName := "Reduce"
+	if v, ok := expr.Args[0].(*ast.LabelledArg); ok {
+		if v.Label != nil && v.Label.Name == "into" {
+			exprFun.Sel.Name = "ReduceInto"
+			fnName = "ReduceInto"
+		}
+	}
+	fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTArr.Elt)
+	if fnName == "ReduceInto" {
+		fnT.Name = "Reduce"
+	}
 	if len(expr.Args) == 0 {
 		return
 	}
