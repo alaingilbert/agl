@@ -19,6 +19,7 @@ type Generator struct {
 	fset             *token.FileSet
 	env              *Env
 	a                *ast.File
+	b                *ast.File
 	prefix           string
 	before           []IBefore
 	beforeStmt       []IBefore
@@ -79,7 +80,7 @@ func AllowUnused() GeneratorOption {
 	}
 }
 
-func NewGenerator(env *Env, a *ast.File, fset *token.FileSet, opts ...GeneratorOption) *Generator {
+func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...GeneratorOption) *Generator {
 	conf := &GeneratorConf{}
 	for _, opt := range opts {
 		opt(conf)
@@ -89,6 +90,7 @@ func NewGenerator(env *Env, a *ast.File, fset *token.FileSet, opts ...GeneratorO
 		fset:             fset,
 		env:              env,
 		a:                a,
+		b:                b,
 		extensions:       make(map[string]Extension),
 		extensionsString: make(map[string]ExtensionString),
 		tupleStructs:     make(map[string]string),
@@ -259,7 +261,8 @@ func (g *Generator) Generate() (out string) {
 	out += GeneratedFilePrefix
 	out1 := g.genPackage()
 	out2 := g.genImports()
-	out3 := g.genDecls()
+	out3 := g.genDeclsB()
+	out4 := g.genDecls()
 	var extStringStr string
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
 		extStringStr += g.genExtensionString(g.extensionsString[extKey])
@@ -278,7 +281,7 @@ func (g *Generator) Generate() (out string) {
 		genFuncDeclStr += g.genFuncDecls2[k]
 	}
 	clear(g.genFuncDecls2)
-	return out + out1 + out2 + tupleStr + genFuncDeclStr + out3 + extStr + extStringStr
+	return out + out1 + out2 + tupleStr + genFuncDeclStr + out3 + out4 + extStr + extStringStr
 }
 
 func (g *Generator) PkgName() string {
@@ -1972,6 +1975,22 @@ func (g *Generator) genDecls() (out string) {
 		}
 	}
 	for _, decl := range g.a.Decls {
+		out += g.genDecl(decl)
+	}
+	return
+}
+
+func (g *Generator) genDeclsB() (out string) {
+	for _, decl := range g.b.Decls {
+		switch declT := decl.(type) {
+		case *ast.FuncDecl:
+			fnT := g.env.GetType(declT)
+			if fnT.(types.FuncType).IsGeneric() {
+				g.genFuncDecls[fnT.String()] = declT
+			}
+		}
+	}
+	for _, decl := range g.b.Decls {
 		out += g.genDecl(decl)
 	}
 	return

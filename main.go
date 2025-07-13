@@ -189,9 +189,10 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	by := agl.Must(os.ReadFile(fileName))
-	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv()
+	fset, f, f2 := agl.ParseSrc(string(by))
+	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
+	_ = i.InferFile(fileName, f2, fset, true)
 	errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
@@ -230,9 +231,10 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		input = ""
 	}
-	fset, f := agl.ParseSrc(input)
-	env := agl.NewEnv()
+	fset, f, f2 := agl.ParseSrc(input)
+	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
+	i.InferFile("", f2, fset, true)
 	i.InferFile("", f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	coreHeaders := agl.GenHeaders()
@@ -331,7 +333,7 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 		return nil
 	}
 
-	fset, f := agl.ParseSrc(string(by))
+	fset, f, f2 := agl.ParseSrc(string(by))
 	for _, i := range f.Imports {
 		importPath := strings.ReplaceAll(i.Path.Value, `"`, ``)
 		if strings.HasPrefix(importPath, modPrefix) {
@@ -350,8 +352,9 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 			}
 		}
 	}
-	env := agl.NewEnv()
+	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
+	_ = i.InferFile(fileName, f2, fset, true)
 	errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
@@ -454,9 +457,10 @@ func buildAglFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv()
+	fset, f, f2 := agl.ParseSrc(string(by))
+	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
+	i.InferFile(fileName, f2, fset, true)
 	i.InferFile(fileName, f, fset, true)
 	src := agl.NewGenerator(i.Env, f, fset).Generate()
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
@@ -480,9 +484,10 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f := agl.ParseSrc(string(by))
-	env := agl.NewEnv()
+	fset, f, f2 := agl.ParseSrc(string(by))
+	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
+	i.InferFile(fileName, f2, fset, true)
 	i.InferFile(fileName, f, fset, true)
 	g := agl.NewGenerator(i.Env, f, fset)
 	fmt.Println(g.Generate())
@@ -541,7 +546,7 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 		}
 		if strings.HasSuffix(entry.Name(), ".agl") {
 			by, _ := os.ReadFile(entry.Name())
-			_, f := agl.ParseSrc(string(by))
+			_, f, _ := agl.ParseSrc(string(by))
 			for _, i := range f.Imports {
 				imports = append(imports, fmt.Sprintf("import _ %s", i.Path.Value))
 			}

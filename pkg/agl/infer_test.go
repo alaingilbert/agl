@@ -35,11 +35,11 @@ func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position)
 }
 
 type Test struct {
-	f    *ast.File
-	fset *token.FileSet
-	env  *Env
-	file *token.File
-	errs []error
+	f, f2 *ast.File
+	fset  *token.FileSet
+	env   *Env
+	file  *token.File
+	errs  []error
 }
 
 func (t *Test) PrintErrors() {
@@ -65,13 +65,16 @@ func NewTest(src string, opts ...TestOption) *Test {
 	for _, opt := range opts {
 		opt(c)
 	}
-	fset, f := ParseSrc(src)
-	env := NewEnv()
+	fset, f, f2 := ParseSrc(src)
+	noop(f2)
+	env := NewEnv(fset)
 	i := NewInferrer(env)
+	_ = i.InferFile("core.agl", f2, fset, c.MutEnforced)
 	errs := i.InferFile("", f, fset, c.MutEnforced)
 	file := fset.File(1)
 	return &Test{
 		f:    f,
+		f2:   f2,
 		fset: fset,
 		env:  env,
 		file: file,
@@ -80,7 +83,7 @@ func NewTest(src string, opts ...TestOption) *Test {
 }
 
 func (t *Test) GenCode() string {
-	return NewGenerator(t.env, t.f, t.fset).Generate()
+	return NewGenerator(t.env, t.f, t.f2, t.fset).Generate()
 }
 
 func (t *Test) TypeAt(row, col int) types.Type {

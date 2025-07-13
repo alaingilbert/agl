@@ -1,3 +1,4 @@
+package main
 
 func zip[T, U any](a []T, b []U) [](T, U) {
 	mut out := make([](T, U), 0)

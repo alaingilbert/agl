@@ -34,6 +34,7 @@ type Env struct {
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
 	parent        *Env
 	NoIdxUnwrap   bool
+	fset          *token.FileSet
 }
 
 func (e *Env) withEnv(clb func(*Env)) {
@@ -328,7 +329,7 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 	})
 }
 
-func loadAglImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, node *ast.File, m *PkgVisited) {
+func loadAglImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, node *ast.File, m *PkgVisited, fset *token.FileSet) {
 	var imports [][]string
 	for _, d := range node.Imports {
 		importName := ""
@@ -381,8 +382,8 @@ func loadImports(fileName string, depth int, t *TreeDrawer, env, nenv *Env, impo
 	}
 }
 
-func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName string, src []byte, m *PkgVisited) {
-	fset := token.NewFileSet()
+func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName string, src []byte, m *PkgVisited, fset *token.FileSet) {
+	//fset := token.NewFileSet()
 	node := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
 	origPkgName := filepath.Base(path)
 	pkgName = Or(pkgName, node.Name.Name)
@@ -392,7 +393,7 @@ func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName strin
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		panic(err)
 	}
-	loadAglImports(path, depth, t, nenv, nenv, node, m)
+	loadAglImports(path, depth, t, nenv, nenv, node, m, fset)
 	loadDecls(env, nenv, node, path, pkgName, fset)
 }
 
@@ -761,7 +762,7 @@ func (e *Env) loadAglFile(depth int, t *TreeDrawer, nenv *Env, prefix, path, pkg
 		return err
 	}
 	final := filepath.Dir(strings.TrimPrefix(stdFilePath, "pkgs/"+prefix))
-	defineFromSrc(depth, t, e, nenv, final, pkgName, by, m)
+	defineFromSrc(depth, t, e, nenv, final, pkgName, by, m, e.fset)
 	return nil
 }
 
@@ -922,11 +923,12 @@ func (e *Env) loadBaseValues() {
 	e.Define(nil, "comparable", types.TypeType{W: types.CustomType{Name: "comparable", W: types.AnyType{}}})
 }
 
-func NewEnv() *Env {
+func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{
 		ID:          envIDCounter.Add(1),
 		lookupTable: make(map[string]*Info),
 		lspTable:    make(map[NodeKey]*Info),
+		fset:        fset,
 	}
 	env.loadBaseValues()
 	return env
@@ -939,6 +941,7 @@ func (e *Env) SubEnv() *Env {
 		lspTable:    e.lspTable,
 		parent:      e,
 		NoIdxUnwrap: e.NoIdxUnwrap,
+		fset:        e.fset,
 	}
 	//p("SubEnv", e.ID, env.ID)
 	return env

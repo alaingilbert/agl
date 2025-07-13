@@ -18,15 +18,15 @@ import (
 	"strings"
 )
 
-func ParseSrc(src string) (*token.FileSet, *ast.File) {
+func ParseSrc(src string) (*token.FileSet, *ast.File, *ast.File) {
 	// support "#!/usr/bin/env agl run" as the first line of agl "script"
 	if strings.HasPrefix(src, "#!") {
 		src = "//" + src
 	}
-	src += CoreFns()
 	var fset = token.NewFileSet()
 	f := Must(parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments))
-	return fset, f
+	f2 := Must(parser.ParseFile(fset, "core.agl", CoreFns(), parser.AllErrors|parser.ParseComments))
+	return fset, f, f2
 }
 
 type Inferrer struct {
@@ -261,7 +261,7 @@ func (infer *FileInferrer) Infer() {
 		infer.PackageName = infer.f.Name.Name
 		infer.SetType(infer.f.Name, types.PackageType{Name: infer.f.Name.Name})
 		t := &TreeDrawer{}
-		loadAglImports("main", 0, t, infer.env, nenv, infer.f, NewPkgVisited())
+		loadAglImports("main", 0, t, infer.env, nenv, infer.f, NewPkgVisited(), infer.fset)
 		if utils.False() {
 			t.Draw()
 		}

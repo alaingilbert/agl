@@ -8,35 +8,35 @@ import (
 )
 
 func Test1(t *testing.T) {
-	env := NewEnv()
+	env := NewEnv(token.NewFileSet())
 	_ = env.loadPkgAglStd(0, nil, env, "agl1/net/http", "", NewPkgVisited())
 	tt := env.Get("http.NewRequest")
 	tassert.Equal(t, "func NewRequest(string, string, (io.Reader)?) (*http.Request)!", tt.String())
 }
 
 func Test2(t *testing.T) {
-	env := NewEnv()
+	env := NewEnv(token.NewFileSet())
 	_ = env.loadPkgAglStd(0, nil, env, "agl1/fmt", "", NewPkgVisited())
 	tt := env.Get("fmt.Println")
 	tassert.Equal(t, "func Println(...any) int!", tt.String())
 }
 
 func Test3(t *testing.T) {
-	env := NewEnv()
+	env := NewEnv(token.NewFileSet())
 	_ = env.loadPkgAglStd(0, nil, env, "agl1/net/http", "", NewPkgVisited())
 	tt := env.Get("http.Get")
 	tassert.Equal(t, "func Get(string) (*http.Response)!", tt.String())
 }
 
 func Test4(t *testing.T) {
-	env := NewEnv()
+	env := NewEnv(token.NewFileSet())
 	_ = env.loadPkgAglStd(0, nil, env, "agl1/io", "", NewPkgVisited())
 	tt := env.Get("io.ReadCloser.Close")
 	tassert.Equal(t, "func Close() !", tt.String())
 }
 
 func Test5(t *testing.T) {
-	env := NewEnv()
+	env := NewEnv(token.NewFileSet())
 	env.withEnv(func(env *Env) {
 		_ = env.loadPkgAglStd(0, nil, env, "agl1/strings", "", NewPkgVisited())
 		fT := parseFuncDeclFromStringHelper("WriteString", "func (mut r *strings.Builder) WriteString(io.Writer, string) int!", env, token.NewFileSet())

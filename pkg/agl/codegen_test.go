@@ -8,15 +8,17 @@ import (
 )
 
 func getGenOutput(src string) string {
-	fset, f := ParseSrc(src)
-	env := NewEnv()
+	fset, f, f2 := ParseSrc(src)
+	noop(f2)
+	env := NewEnv(fset)
 	i := NewInferrer(env)
+	_ = i.InferFile("core.agl", f2, fset, true)
 	errs := i.InferFile("", f, fset, true)
 	if len(errs) > 0 {
 		fmt.Println(errs)
 		return ""
 	}
-	g := NewGenerator(env, f, fset)
+	g := NewGenerator(env, f, f2, fset)
 	return g.Generate()
 }
 
@@ -3420,9 +3422,10 @@ func main() {
 	bob.MaybeSelf().MaybeSelf()?
 }
 `
-	fset, f := ParseSrc(src)
-	env := NewEnv()
+	fset, f, f2 := ParseSrc(src)
+	env := NewEnv(fset)
 	i := NewInferrer(env)
+	_ = i.InferFile("core.agl", f2, fset, true)
 	errs := i.InferFile("", f, fset, true)
 	fmt.Print(errs)
 	tassert.Equal(t, 1, 1)
