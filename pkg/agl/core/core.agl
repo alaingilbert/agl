@@ -2,6 +2,7 @@ package main
 
 //import "math/rand"
 
+// Creates a sequence of pairs built out of two underlying sequences.
 func zip[T, U any](a []T, b []U) [](T, U) {
 	mut out := make([](T, U), 0)
 	for i := range a {
