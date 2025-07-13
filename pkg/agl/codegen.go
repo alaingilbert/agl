@@ -261,8 +261,9 @@ func (g *Generator) Generate() (out string) {
 	out += GeneratedFilePrefix
 	out1 := g.genPackage()
 	out2 := g.genImports()
-	out3 := g.genDeclsB()
-	out4 := g.genDecls()
+	out3 := g.genImportsB()
+	out4 := g.genDeclsB()
+	out5 := g.genDecls()
 	var extStringStr string
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
 		extStringStr += g.genExtensionString(g.extensionsString[extKey])
@@ -281,7 +282,7 @@ func (g *Generator) Generate() (out string) {
 		genFuncDeclStr += g.genFuncDecls2[k]
 	}
 	clear(g.genFuncDecls2)
-	return out + out1 + out2 + tupleStr + genFuncDeclStr + out3 + out4 + extStr + extStringStr
+	return out + out1 + out2 + out3 + tupleStr + genFuncDeclStr + out4 + out5 + extStr + extStringStr
 }
 
 func (g *Generator) PkgName() string {
@@ -309,6 +310,30 @@ func (g *Generator) genImports() (out string) {
 	} else if len(g.a.Imports) > 1 {
 		out += "import (\n"
 		for _, spec := range g.a.Imports {
+			out += "\t" + genRow(spec)
+		}
+		out += ")\n"
+	}
+	return
+}
+
+func (g *Generator) genImportsB() (out string) {
+	genRow := func(spec *ast.ImportSpec) (out string) {
+		if spec.Name != nil {
+			out += spec.Name.Name + " "
+		}
+		pathValue := spec.Path.Value
+		if strings.HasPrefix(pathValue, `"agl1/`) {
+			pathValue = `"` + pathValue[6:]
+		}
+		return out + pathValue + "\n"
+	}
+	if len(g.b.Imports) == 1 {
+		spec := g.b.Imports[0]
+		out += "import " + genRow(spec)
+	} else if len(g.b.Imports) > 1 {
+		out += "import (\n"
+		for _, spec := range g.b.Imports {
 			out += "\t" + genRow(spec)
 		}
 		out += ")\n"

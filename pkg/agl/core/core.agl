@@ -1,5 +1,7 @@
 package main
 
+//import "math/rand"
+
 func zip[T, U any](a []T, b []U) [](T, U) {
 	mut out := make([](T, U), 0)
 	for i := range a {
@@ -81,7 +83,7 @@ func (v agl1.Vec[T]) Reversed() []T {
 //	for i := 0; i < len(v); i++ {
 //		out[i] = v[i]
 //	}
-//	rand.Shuffle(len(s), func(i, j int) {
+//	rand.Shuffle(len(v), func(i, j int) {
 //		out[i], out[j] = out[j], out[i]
 //	})
 //	return out
