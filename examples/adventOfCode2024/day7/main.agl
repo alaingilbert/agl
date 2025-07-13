@@ -17,7 +17,6 @@ func main() {
         acc[a] = b
         return acc
     })
-    //fmt.Println(data)
     part1()
 }
 
@@ -34,17 +33,13 @@ type Op enum {
 
 func combination(ops []Op, n int) [][]Op {
     if n == 1 {
-        return ops.Reduce([][]Op{}, {
-            mut acc := $0
-            acc.Push([]Op{$1})
-            return acc
-        })
+        return ops.Reduce(into: [][]Op{}, { $0.Push([]Op{$1}) })
     }
     mut res := [][]Op{}
     combs := combination(ops, n-1)
     for _, comb := range combs {
         for _, op := range ops {
-            res.Push(append(comb, op))
+            res.Push(append([]Op{}, append(comb, op)...))
         }
     }
     return res
@@ -69,8 +64,6 @@ func solve(expected i64, vals []i64, ops []Op) bool {
 }
 
 func part1() {
-    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul}) })
+    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul}) }).Map({ $0 }).Sum()
     fmt.Println(res)
-    //data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul}) }).Map({ $0.Key }).Sum()
-    //print(data.filter { solve($0.key, $0.value, [Op.add, Op.mul]) }.map(\.key).reduce(0, +))
 }
