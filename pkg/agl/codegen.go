@@ -1490,7 +1490,7 @@ func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
 	default:
 		content = g.genExpr(expr.Elt)
 	}
-	return fmt.Sprintf("AglVec[%s]", content)
+	return fmt.Sprintf("[]%s", content)
 }
 
 func (g *Generator) genKeyValueExpr(expr *ast.KeyValueExpr) (out string) {
