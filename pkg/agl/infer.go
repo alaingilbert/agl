@@ -2768,6 +2768,13 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
 						return
 					}
+				case types.EnumType:
+					for i, f := range v.Fields {
+						lhs := stmt.Lhs[i]
+						lhsID := MustCast[*ast.Ident](lhs)
+						infer.SetType(lhs, f)
+						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+					}
 				case types.TupleType:
 					if keepRaw {
 						v.KeepRaw = keepRaw
