@@ -1,5 +1,7 @@
 package regexp
 
+import "io"
+
 type Regexp struct {}
 
 func Compile(expr string) (*regexp.Regexp)!
