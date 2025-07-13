@@ -1363,7 +1363,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglString%s(%s, %s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]), g.genExpr(expr.Args[1]))
 			case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
 				return fmt.Sprintf("AglString%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
-			case "TrimSpace", "Uppercased", "AsBytes", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
+			case "TrimSpace", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
 				return fmt.Sprintf("AglString%s(%s)", fnName, g.genExpr(e.X))
 			default:
 				extName := "agl1.String." + fnName
@@ -2731,6 +2731,11 @@ func AglSetIsDisjoint[T comparable](s AglSet[T], other Iterator[T]) bool {
 // AglSetIntersects ...
 func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 	return !AglSetIsDisjoint(s, other)
+}
+
+func AglStringLines(s string) []string {
+	s = aglImportStrings.ReplaceAll(s, "\r\n", "\n")
+	return aglImportStrings.Split(s, "\n")
 }
 
 func AglStringReplace(s string, old, new string, n int) string {
