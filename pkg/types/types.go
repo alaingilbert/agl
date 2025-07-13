@@ -316,9 +316,10 @@ func (t TypeAssertType) GoStrType() string { return "TypeAssertType" }
 func (t TypeAssertType) String() string    { return "TypeAssertType" }
 
 type StructType struct {
-	Name   string
-	Pkg    string
-	Fields []FieldType
+	Name       string
+	Pkg        string
+	TypeParams []Type
+	Fields     []FieldType
 }
 
 func (s StructType) GetFieldName(field string) (out string) {
@@ -343,6 +344,10 @@ func (s StructType) String() string {
 	out := s.Name
 	if s.Pkg != "" {
 		out = s.Pkg + "." + out
+	}
+	if len(s.TypeParams) > 0 {
+		tmp := utils.MapJoin(s.TypeParams, func(t Type) string { return t.String() }, ", ")
+		out += fmt.Sprintf("[%s]", tmp)
 	}
 	return out
 }
@@ -789,11 +794,15 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
 		return t
 	case StructType:
+		var typeParams []Type
+		for _, p := range t1.TypeParams {
+			typeParams = append(typeParams, ReplGen(p, name, newTyp))
+		}
 		var fields []FieldType
 		for _, f := range t1.Fields {
-			fields = append(fields, FieldType{Name: f.Name, Typ: ReplGen(f, name, newTyp)})
+			fields = append(fields, FieldType{Name: f.Name, Typ: ReplGen(f.Typ, name, newTyp)})
 		}
-		return StructType{Pkg: t1.Pkg, Name: t1.Name, Fields: fields}
+		return StructType{Pkg: t1.Pkg, Name: t1.Name, TypeParams: typeParams, Fields: fields}
 	case InterfaceType:
 		var params []Type
 		for _, p := range t1.TypeParams {
