@@ -2,12 +2,12 @@ package main
 
 import (
     "fmt"
-    "os"
+    "agl1/os"
 )
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day4/data.txt")!
-    lines := string(data).Split("\n").Map({ $0.Split("") })
+    lines := string(data).Lines().Map({ $0.Split("") })
     height := lines.Len()
     width := lines.First()?.Len()
     fmt.Printf("part1: %d\n", part1(lines, width, height))
@@ -19,7 +19,7 @@ func isValidPosition(x, y, width, height int) bool {
 }
 
 func part1(lines [][]string, width, height int) int {
-    var directions [](int, int)
+    var mut directions [](int, int)
     for _, e1 := range []int{-1, 0, 1} {
         for _, e2 := range []int{-1, 0, 1} {
             if e1 != 0 || e2 != 0 {
