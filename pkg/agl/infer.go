@@ -2303,7 +2303,13 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	case types.StructType:
 		fieldName := expr.Sel.Name
 		name := exprXIdT.GetFieldName(fieldName)
-		if f := infer.env.Get(name); f != nil {
+		t := infer.env.Get(name)
+		m := make(map[string]types.Type)
+		for _, pp := range exprXIdT.TypeParams {
+			m[pp.Name] = pp.W
+		}
+		t = types.ReplGenM(t, m)
+		if f := t; f != nil {
 			infer.SetType(expr.X, exprXT)
 			infer.SetType(expr.Sel, f)
 			infer.SetType(expr, f)

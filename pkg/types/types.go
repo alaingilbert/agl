@@ -318,12 +318,12 @@ func (t TypeAssertType) String() string    { return "TypeAssertType" }
 type StructType struct {
 	Name       string
 	Pkg        string
-	TypeParams []Type
+	TypeParams []GenericType
 	Fields     []FieldType
 }
 
 func (s StructType) GetFieldName(field string) (out string) {
-	return s.String() + "." + field
+	return s.String1() + "." + field
 }
 
 func (s StructType) GoStr() string {
@@ -341,13 +341,18 @@ func (s StructType) GoStrType() string {
 }
 
 func (s StructType) String() string {
+	out := s.String1()
+	if len(s.TypeParams) > 0 {
+		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.String() }, ", ")
+		out += fmt.Sprintf("[%s]", tmp)
+	}
+	return out
+}
+
+func (s StructType) String1() string {
 	out := s.Name
 	if s.Pkg != "" {
 		out = s.Pkg + "." + out
-	}
-	if len(s.TypeParams) > 0 {
-		tmp := utils.MapJoin(s.TypeParams, func(t Type) string { return t.String() }, ", ")
-		out += fmt.Sprintf("[%s]", tmp)
 	}
 	return out
 }
@@ -794,9 +799,12 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
 		return t
 	case StructType:
-		var typeParams []Type
+		var typeParams []GenericType
 		for _, p := range t1.TypeParams {
-			typeParams = append(typeParams, ReplGen(p, name, newTyp))
+			if p.Name == name {
+				p.W = newTyp
+			}
+			typeParams = append(typeParams, p)
 		}
 		var fields []FieldType
 		for _, f := range t1.Fields {
