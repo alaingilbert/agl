@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "regexp"
-    "os"
+    "agl1/os"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func part1(data []byte) int {
 func part2(data []byte) int {
     rgx := regexp.MustCompile(`mul\((\d+),(\d+)\)|do\(\)|don't\(\)`)
 	matches := rgx.FindAllStringSubmatch(string(data), -1)
-	enabled := true
+	mut enabled := true
     return matches.Map({
         if $0[0] == "do()" {
 			enabled = true
