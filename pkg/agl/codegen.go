@@ -1354,6 +1354,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Len", "Min", "Max", "Iter":
 				return fmt.Sprintf("AglSet%s(%s)", fnName, g.genExpr(e.X))
 			}
+		case types.I64Type:
+			fnName := e.Sel.Name
+			switch fnName {
+			case "String":
+				return fmt.Sprintf("AglI64String(%s)", g.genExpr(e.X))
+			}
 		case types.StringType, types.UntypedStringType:
 			fnName := e.Sel.Name
 			switch fnName {
@@ -3109,5 +3115,11 @@ func AglNewSet[T comparable](els ...T) *Set[T] {
 	}
 	return s
 }
+
+func AglIntString(v int) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+func AglI8String(v int8) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+func AglI16String(v int16) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+func AglI32String(v int32) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+func AglI64String(v int64) string { return aglImportStrconv.FormatInt(int64(v), 10) }
 `
 }

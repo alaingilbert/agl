@@ -956,6 +956,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.TypeType:
 		case types.UntypedStringType:
 		case types.StringType:
+		case types.I64Type:
 		case types.SetType:
 		case types.ArrayType:
 		case types.MapType:
@@ -1230,6 +1231,19 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types.Type, exprT *ast.SelectorExpr) {
 	switch idTT := idT.(type) {
+	case types.I64Type:
+		fnName := exprT.Sel.Name
+		var fnT types.FuncType
+		info := &Info{}
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.I64.String")
+			fnT = infer.env.GetFn("agl1.I64.String")
+		}
+		fnT.Recv = []types.Type{idTT}
+		fnT.Params = fnT.Params[1:]
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
 	case types.StringType, types.UntypedStringType:
 		fnName := exprT.Sel.Name
 		var fnT types.FuncType
