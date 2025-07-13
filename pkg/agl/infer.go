@@ -2247,6 +2247,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 			infer.errorf(expr.Sel, "tuple arg index must be int")
 			return
 		}
+		infer.SetType(expr.Sel, exprXIdT.Elts[argIdx])
 		infer.SetType(expr, exprXIdT.Elts[argIdx])
 	case types.PackageType:
 		pkg := expr.X.(*ast.Ident).Name

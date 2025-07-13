@@ -999,7 +999,12 @@ func main() {
 	AglAssert(res.Arg2 == true, "assert failed line 6")
 }
 `
-	testCodeGen(t, src, expected)
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "UntypedNumType", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "string", test.TypeAt(5, 13).String())
+	tassert.Equal(t, "bool", test.TypeAt(6, 13).String())
+	testCodeGen1(t, test.GenCode(), expected)
 }
 
 func TestCodeGen_TupleDestructuring1(t *testing.T) {
