@@ -814,7 +814,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/cmp", "", m)
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/iter", "", m)
 		e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
-		e.Define(nil, "agl1.DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.GenericType{
+		e.Define(nil, "DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.GenericType{
 			{Name: "K", W: types.AnyType{}},
 			{Name: "V", W: types.AnyType{}},
 		}})
@@ -906,8 +906,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Map.Get", "func [K comparable, V any](m map[K]V) V?")
 		e.DefineFn(nenv, "agl1.Map.Keys", "func [K comparable, V any](m map[K]V) iter.Seq[K]")
 		e.DefineFn(nenv, "agl1.Map.Values", "func [K comparable, V any](m map[K]V) iter.Seq[V]")
-		e.DefineFn(nenv, "agl1.Map.Filter", "func [K comparable, V any](m map[K]V, f func(agl1.DictEntry[K, V]) bool) map[K]V")
-		e.DefineFn(nenv, "agl1.Map.Map", "func [K comparable, V, R any](m map[K]V, f func(agl1.DictEntry[K, V]) R) []R")
+		e.DefineFn(nenv, "agl1.Map.Filter", "func [K comparable, V any](m map[K]V, f func(DictEntry[K, V]) bool) map[K]V")
+		e.DefineFn(nenv, "agl1.Map.Map", "func [K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R")
 		e.DefineFn(nenv, "agl1.Option.Unwrap", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or panic if None."))
 		e.DefineFn(nenv, "agl1.Option.UnwrapOr", "func [T any](t T) T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or a default if None."))
 		e.DefineFn(nenv, "agl1.Option.UnwrapOrDefault", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or the default if None."))
