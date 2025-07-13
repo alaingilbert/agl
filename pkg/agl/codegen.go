@@ -1306,7 +1306,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				return fmt.Sprintf("AglVec%s(%s)", fnName, genEX)
 			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere":
 				return fmt.Sprintf("AglVec%s(%s, %s)", fnName, genEX, genArgFn(0))
-			case "Reduce":
+			case "Reduce", "ReduceInto":
 				return fmt.Sprintf("AglVec%s(%s, %s, %s)", fnName, genEX, genArgFn(0), genArgFn(1))
 			case "Insert":
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s, %s)", fnName, eltTStr, genEX, genArgFn(0), genArgFn(1))
@@ -2417,6 +2417,13 @@ func AglVecAny[T any](a []T, f func(T) bool) bool {
 func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
 	for _, v := range a {
 		acc = f(acc, v)
+	}
+	return acc
+}
+
+func AglVecReduceInto[T, R any](a []T, acc R, f func(R, T)) R {
+	for _, v := range a {
+		f(acc, v)
 	}
 	return acc
 }
