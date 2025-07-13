@@ -5,9 +5,11 @@ import (
     "fmt"
 )
 
+var mut data map[i64][]i64
+
 func main() {
     fileContent := os.ReadFile("examples/adventOfCode2024/day7/data.txt")!
-    data := string(fileContent).Lines().Reduce(map[i64][]i64{}, {
+    data = string(fileContent).Lines().Reduce(map[i64][]i64{}, {
         mut acc := $0
         parts := $1.Split(": ")
         a := parts[0].I64()?
@@ -22,4 +24,52 @@ func main() {
 // concat
 func cc(a i64, b i64) i64 {
     (a.String() + b.String()).I64()?
+}
+
+type Op enum {
+    add
+    mul
+    cat
+}
+
+func combination(ops []Op, n int) [][]Op {
+    if n == 1 {
+        return ops.Reduce([][]Op{}, {
+            mut acc := $0
+            acc.Push([]Op{$1})
+            return acc
+        })
+    }
+    mut res := [][]Op{}
+    combs := combination(ops, n-1)
+    for _, comb := range combs {
+        for _, op := range ops {
+            res.Push(append(comb, op))
+        }
+    }
+    return res
+}
+
+func solve(expected i64, vals []i64, ops []Op) bool {
+    combs := combination(ops, vals.Len())
+    for _, comb := range combs {
+        mut res := i64(0)
+        for i, el := range vals {
+            switch comb[i] {
+                case .add: res += el
+                case .mul: res *= el
+                case .cat: res = cc(res, el)
+            }
+        }
+        if res == expected {
+            return true
+        }
+    }
+    return false
+}
+
+func part1() {
+    //data.Filter({ 1 == 1 })
+    //data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul}) }).Map({ $0.Key }).Sum()
+    //print(data.filter { solve($0.key, $0.value, [Op.add, Op.mul]) }.map(\.key).reduce(0, +))
 }
