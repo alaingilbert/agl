@@ -1306,16 +1306,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "Len", "Min", "Max", "Iter":
 			fnT = infer.env.GetFn("agl1.Set." + fnName)
 		}
-		if TryCast[types.MutType](fnT.Params[0]) {
-			if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
-				infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
-				return
+		if len(fnT.Params) > 0 {
+			if TryCast[types.MutType](fnT.Params[0]) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'set'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
+				fnT.Recv = []types.Type{types.MutType{W: idT}}
+			} else {
+				fnT.Recv = []types.Type{idT}
 			}
-			fnT.Recv = []types.Type{types.MutType{W: idT}}
-		} else {
-			fnT.Recv = []types.Type{idT}
+			fnT.Params = fnT.Params[1:]
 		}
-		fnT.Params = fnT.Params[1:]
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.ArrayType:
