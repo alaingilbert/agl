@@ -94,7 +94,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 		}
 	}()
 	// Parse the file
-	content += agl.CoreFns()
+	f2, _ := parser.ParseFile(s.fset, uri, agl.CoreFns(), 0)
 	file, err := parser.ParseFile(s.fset, uri, content, 0)
 	if err != nil {
 		// Convert parser errors to LSP diagnostics
@@ -128,8 +128,9 @@ func (s *Server) updateDocument(uri string, content string) error {
 	}
 
 	// Create an environment and infer types
-	env := agl.NewEnv()
+	env := agl.NewEnv(s.fset)
 	inferrer := agl.NewInferrer(env)
+	_ = inferrer.InferFile("core.agl", f2, s.fset, false)
 	errs := inferrer.InferFile(uri, file, s.fset, false)
 	if len(errs) > 0 {
 		diagnostics := make([]lsp.Diagnostic, 0, len(errs))
