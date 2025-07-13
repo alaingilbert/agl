@@ -1452,41 +1452,40 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				infer.SetType(exprT.Sel, filterFnT)
 			}
 		} else if fnName == "First" {
-			if len(expr.Args) < 1 {
-				return
-			}
-			exprArg0 := expr.Args[0]
-			if v, ok := exprArg0.(*ast.LabelledArg); ok {
-				exprArg0 = v.X
-			}
-			switch exprArg0.(type) {
-			case *ast.FuncLit, *ast.ShortFuncLit:
-				exprT.Sel.Name = "FirstWhere"
-				envFnName := "agl1.Vec.FirstWhere"
-				info := infer.env.GetNameInfo(envFnName)
-				fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
-				fnT.Name = "First"
-				infer.SetType(exprArg0, fnT.Params[1])
-				infer.SetType(expr, fnT.Return)
-				ft := fnT.GetParam(1).(types.FuncType)
-				if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-					infer.SetType(exprArg0, ft)
-				} else if _, ok := exprArg0.(*ast.FuncType); ok {
-					ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
-				} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
+			if len(expr.Args) > 0 {
+				exprArg0 := expr.Args[0]
+				if v, ok := exprArg0.(*ast.LabelledArg); ok {
+					exprArg0 = v.X
 				}
-				fnT.Recv = []types.Type{idTT}
-				fnT.Params = fnT.Params[1:]
-				infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
-			default:
+				switch exprArg0.(type) {
+				case *ast.FuncLit, *ast.ShortFuncLit:
+					exprT.Sel.Name = "FirstWhere"
+					envFnName := "agl1.Vec.FirstWhere"
+					info := infer.env.GetNameInfo(envFnName)
+					fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt)
+					fnT.Name = "First"
+					infer.SetType(exprArg0, fnT.Params[1])
+					infer.SetType(expr, fnT.Return)
+					ft := fnT.GetParam(1).(types.FuncType)
+					if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
+						infer.SetType(exprArg0, ft)
+					} else if _, ok := exprArg0.(*ast.FuncType); ok {
+						ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+						if !compareFunctionSignatures(ftReal, ft) {
+							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+							return
+						}
+					} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+						if !compareFunctionSignatures(ftReal, ft) {
+							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+							return
+						}
+					}
+					fnT.Recv = []types.Type{idTT}
+					fnT.Params = fnT.Params[1:]
+					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+				}
+			} else {
 				sumFnT := infer.env.GetFn("agl1.Vec.First").T("T", idTT.Elt)
 				sumFnT.Recv = []types.Type{oidT}
 				if TryCast[types.MutType](sumFnT.Params[0]) {
