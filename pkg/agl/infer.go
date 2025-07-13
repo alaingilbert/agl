@@ -2696,13 +2696,27 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 		case *ast.Ident:
 			rhsIdT := infer.env.Get(rhs1.Name)
-			if rhs3, ok := rhsIdT.(types.TupleType); ok {
-				for i, x := range rhs3.Elts {
+			switch v := rhsIdT.(type) {
+			case types.TupleType:
+				for i, x := range v.Elts {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
 					infer.SetType(lhs, x)
 					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 				}
+			case types.EnumType:
+				f := Find(v.Fields, func(f types.EnumFieldType) bool { return f.Name == v.SubTyp })
+				if f == nil {
+					panic(fmt.Sprintf("Field not found: %s", v.SubTyp))
+				}
+				for i, x := range f.Elts {
+					lhs := stmt.Lhs[i]
+					lhsID := MustCast[*ast.Ident](lhs)
+					infer.SetType(lhs, x)
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+				}
+			default:
+				panic("")
 			}
 		case *ast.IndexExpr:
 			rhsId1XT := infer.GetType(rhs1.X)
