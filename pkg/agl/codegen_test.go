@@ -9330,6 +9330,20 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen323(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]u8{}
+	m.Filter({ $0.Key < 10 && $0.Value < 10 })
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (map[int]u8) Filter(func(agl1.DictEntry[int, u8]) bool) map[int]u8", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "int", test.TypeAt(4, 16).String())
+	tassert.Equal(t, "u8", test.TypeAt(4, 31).String())
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

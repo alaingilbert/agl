@@ -2494,6 +2494,11 @@ func AglVecIter[T any](v AglVec[T]) aglImportIter.Seq[T] {
 	return v.Iter()
 }
 
+type DictEntry[K comparable, V any] struct {
+	Key K
+	Value V
+}
+
 type AglMap[K comparable, V any] map[K]V
 
 func (m AglMap[K, V]) Len() int { return len(m) }
@@ -3080,20 +3085,20 @@ func AglMapContainsKey[K comparable, V any](m map[K]V, k K) bool {
 	return ok
 }
 
-func AglMapFilter[K comparable, V any](m map[K]V, f func(K, V) bool) map[K]V {
+func AglMapFilter[K comparable, V any](m map[K]V, f func(DictEntry[K, V]) bool) map[K]V {
 	out := make(map[K]V)
 	for k, v := range m {
-		if f(k, v) {
+		if f(DictEntry[K, V]{Key: k, Value: v}) {
 			out[k] = v
 		}
 	}
 	return out
 }
 
-func AglMapMap[K comparable, V, R any](m map[K]V, f func(K, V) R) []R {
+func AglMapMap[K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R {
 	var out []R
 	for k, v := range m {
-		out = append(out, f(k, v))
+		out = append(out, f(DictEntry[K, V]{Key: k, Value: v}))
 	}
 	return out
 }
