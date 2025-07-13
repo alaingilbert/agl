@@ -20,7 +20,7 @@ func main() {
 }
 
 // concat
-func cc(a i64, b i64) i64 {
+func cc(a, b i64) i64 {
     (a.String() + b.String()).I64()?
 }
 
