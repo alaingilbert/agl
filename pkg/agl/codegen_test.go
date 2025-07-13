@@ -9040,10 +9040,10 @@ func main() {
 	test := NewTest(src, WithMutEnforced(true))
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "enum Color", test.TypeAt(9, 2).String())
-	tassert.Equal(t, "mut enum Color", test.TypeAt(10, 2).String())
-	tassert.Equal(t, "func (enum Color) RawValue() int", test.TypeAt(11, 5).String())
-	tassert.Equal(t, "func (enum Color) RawValue() int", test.TypeAt(12, 5).String())
+	tassert.Equal(t, "Color", test.TypeAt(9, 2).String())
+	tassert.Equal(t, "mut Color", test.TypeAt(10, 2).String())
+	tassert.Equal(t, "func (Color) RawValue() int", test.TypeAt(11, 5).String())
+	tassert.Equal(t, "func (Color) RawValue() int", test.TypeAt(12, 5).String())
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
