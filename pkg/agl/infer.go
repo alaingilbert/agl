@@ -2289,7 +2289,12 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 
 func (infer *FileInferrer) bubbleResultExpr(expr *ast.BubbleResultExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, infer.GetType(expr.X).(types.ResultType).W)
+	if v, ok := infer.GetType(expr.X).(types.ResultType); ok {
+		infer.SetType(expr, v.W)
+	} else {
+		infer.errorf(expr, "expected Result type, got %v", infer.GetType(expr.X))
+		return
+	}
 }
 
 func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
@@ -2298,7 +2303,12 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	if tmp == nil {
 		return
 	}
-	infer.SetType(expr, tmp.(types.OptionType).W)
+	if v, ok := tmp.(types.OptionType); ok {
+		infer.SetType(expr, v.W)
+	} else {
+		infer.errorf(expr, "expected Option type, got %v", infer.GetType(expr.X))
+		return
+	}
 }
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
@@ -2912,6 +2922,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				})
 			} else {
 				infer.expr(rhs)
+				if len(infer.Errors) > 0 {
+					return
+				}
 			}
 			var mutable bool
 			var lhsID *ast.Ident
