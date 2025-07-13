@@ -815,8 +815,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/iter", "", m)
 		e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "agl1.DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.GenericType{
-			types.GenericType{Name: "K", W: types.AnyType{}},
-			types.GenericType{Name: "V", W: types.AnyType{}},
+			{Name: "K", W: types.AnyType{}},
+			{Name: "V", W: types.AnyType{}},
 		}})
 		e.Define(nil, "DictEntry.Key", types.GenericType{Name: "K", W: types.AnyType{}})
 		e.Define(nil, "DictEntry.Value", types.GenericType{Name: "V", W: types.AnyType{}})
