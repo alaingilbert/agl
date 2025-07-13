@@ -2956,6 +2956,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsIdName = vv.Name
 				}
 				lhsIdNameT := infer.env.GetType(v.X)
+				if v, ok := lhsIdNameT.(types.StarType); ok {
+					lhsIdNameT = v.X
+				}
 				if infer.mutEnforced && !TryCast[types.MutType](lhsIdNameT) {
 					infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
 					return
