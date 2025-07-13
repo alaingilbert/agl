@@ -15,5 +15,11 @@ func main() {
         acc[a] = b
         return acc
     })
-    fmt.Println(data)
+    a := i64(123)
+    fmt.Println(data, a.String() + a.String())
+}
+
+// concat
+func cc(a i64, b i64) i64 {
+    (a.String() + b.String()).I64()?
 }
