@@ -909,6 +909,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.Ident:
 			exprFunT = infer.env.Get(callXT.Name)
 			callXParent = infer.env.GetNameInfo(callXT.Name)
+			if exprFunT == nil {
+				infer.errorf(call.X, "Unresolved reference '%s'", callXT.Name)
+				return
+			}
 		case *ast.CompositeLit:
 			infer.expr(callXT)
 			exprFunT = infer.env.GetType2(callXT, infer.fset)
