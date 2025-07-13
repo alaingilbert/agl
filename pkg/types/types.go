@@ -788,8 +788,12 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return ReplGen(t1.Elt, name, newTyp)
 	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
 		return t
-	case StructType: // TODO
-		return t
+	case StructType:
+		var fields []FieldType
+		for _, f := range t1.Fields {
+			fields = append(fields, FieldType{Name: f.Name, Typ: ReplGen(f, name, newTyp)})
+		}
+		return StructType{Pkg: t1.Pkg, Name: t1.Name, Fields: fields}
 	case InterfaceType:
 		var params []Type
 		for _, p := range t1.TypeParams {
