@@ -538,7 +538,7 @@ func TestCodeGen25(t *testing.T) {
 	src := `package main
 import "agl1/errors"
 func parseInt(s1 string) int! {
-	return Err(Errors.New("some error"))
+	return Err(errors.New("some error"))
 }
 func inter(s2 string) int! {
 	a := parseInt(s2)!
@@ -551,7 +551,7 @@ func main() {
 package main
 import "errors"
 func parseInt(s1 string) Result[int] {
-	return MakeResultErr[int](Errors.New("some error"))
+	return MakeResultErr[int](errors.New("some error"))
 }
 func inter(s2 string) Result[int] {
 	aglTmpVar1 := parseInt(s2)
