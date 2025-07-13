@@ -330,14 +330,24 @@ func (s StructType) GoStr() string {
 	if s.String() == "" {
 		return "struct{}"
 	}
-	return s.String()
+	out := s.String1()
+	if len(s.TypeParams) > 0 {
+		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.GoStrType() }, ", ")
+		out += fmt.Sprintf("[%s]", tmp)
+	}
+	return out
 }
 
 func (s StructType) GoStrType() string {
 	if s.String() == "" {
 		return "struct{}"
 	}
-	return s.String()
+	out := s.String1()
+	if len(s.TypeParams) > 0 {
+		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.GoStrType() }, ", ")
+		out += fmt.Sprintf("[%s]", tmp)
+	}
+	return out
 }
 
 func (s StructType) String() string {
