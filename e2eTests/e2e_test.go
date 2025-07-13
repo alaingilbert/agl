@@ -38,10 +38,12 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ([]byte, error) {
 }
 
 func testGenOutput(src string) string {
-	fset, f := agl.ParseSrc(src)
-	env := agl.NewEnv()
-	agl.NewInferrer(env).InferFile("", f, fset, true)
-	outSrc := agl.NewGenerator(env, f, fset).Generate()
+	fset, f, f2 := agl.ParseSrc(src)
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(env)
+	i.InferFile("", f2, fset, true)
+	i.InferFile("", f, fset, true)
+	outSrc := agl.NewGenerator(env, f, f2, fset).Generate()
 	out := agl.Must(spawnGoRunFromBytes([]byte(outSrc), nil))
 	return string(out)
 }
