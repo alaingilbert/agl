@@ -9268,15 +9268,18 @@ func TestCodeGen320(t *testing.T) {
 	src := `package main
 func main() {
 	a := []int{1, 2, 3}.Sorted()
+	b := []string{"a", "b", "c"}.Sorted()
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	a := AglVecSorted([]int{1, 2, 3})
+	b := AglVecSorted([]string{"a", "b", "c"})
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "[]string", test.TypeAt(4, 2).String())
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
