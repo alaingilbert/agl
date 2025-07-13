@@ -8749,7 +8749,7 @@ package main
 func main() {
 	for i, c := range "test" {
 	}
-	for k, v := range AglMap[string, int]{"a": 1, "b": 2, "c": 3} {
+	for k, v := range (AglMap[string, int]{"a": 1, "b": 2, "c": 3}) {
 	}
 }
 `
@@ -9182,6 +9182,25 @@ func main() {
 }
 func AglStringMyLowercased(s string) string {
 	return strings.ToLower(s)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen317(t *testing.T) {
+	src := `package main
+func main() {
+	for _, e := range []int{1, 2, 3} {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for _, e := range (AglVec[int]{1, 2, 3}) {
+	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

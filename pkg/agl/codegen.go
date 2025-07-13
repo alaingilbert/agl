@@ -1769,6 +1769,9 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
 		content2 = g.genExpr(stmt.Value)
 	}
 	content3 := g.genExpr(stmt.X)
+	if TryCast[*ast.CompositeLit](stmt.X) {
+		content3 = fmt.Sprintf("(%s)", content3)
+	}
 	content4 := g.incrPrefix(func() string {
 		return g.genStmt(stmt.Body)
 	})
