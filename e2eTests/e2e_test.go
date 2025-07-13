@@ -161,3 +161,16 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test11(t *testing.T) {
+	src := `package main
+import "regexp"
+import "fmt"
+func main() {
+	data := "mul(42,43)"
+	rgxMul := regexp.MustCompile("mul\\((\\d+),(\\d+)\\)")
+	matches := rgxMul.FindAllStringSubmatch(data, -1)
+	fmt.Println(matches.Map({ $0[1].Int()? }).Sum())
+}`
+	tassert.Equal(t, "42\n", testGenOutput(src))
+}
