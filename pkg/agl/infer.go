@@ -1619,8 +1619,19 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
-		} else if InArray(fnName, []string{"Get", "Joined", "Sorted"}) {
+		} else if InArray(fnName, []string{"Get", "Joined"}) {
 			fnT := infer.env.GetFn("agl1.Vec." + fnName)
+			param0 := fnT.Params[0]
+			if !cmpTypes(idT, param0) {
+				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
+				return
+			}
+			infer.SetType(expr, fnT.Return)
+			fnT.Recv = []types.Type{param0}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(exprT.Sel, fnT)
+		} else if fnName == "Sorted" {
+			fnT := infer.env.GetFn("agl1.Vec.Sorted").T("E", idTT.Elt)
 			param0 := fnT.Params[0]
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
