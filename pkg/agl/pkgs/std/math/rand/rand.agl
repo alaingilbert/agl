@@ -17,7 +17,7 @@ func (r *Rand) NormFloat64() float64
 func (r *Rand) Perm(n int) []int
 func (r *Rand) Read(p []byte) int!
 func (r *Rand) Seed(seed int64)
-//func (r *Rand) Shuffle(n int, swap func(i, j int))
+func (r *Rand) Shuffle(n int, swap func(i, j int))
 func (r *Rand) Uint32() uint32
 func (r *Rand) Uint64() uint64
 
@@ -34,6 +34,6 @@ func NormFloat64() float64
 func Perm(n int) []int
 func Read(p []byte) int!
 func Seed(seed int64)
-//func Shuffle(n int, swap func(i, j int))
+func Shuffle(n int, swap func(i, j int))
 func Uint32() uint32
 func Uint64() uint64
