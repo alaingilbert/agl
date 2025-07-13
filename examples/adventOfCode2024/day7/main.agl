@@ -1,0 +1,18 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+func main() {
+    fileContent := os.ReadFile("examples/adventOfCode2024/day7/data.txt")!
+    data := string(fileContent).Lines().Reduce(map[i64][]i64{}, func(mut acc map[i64][]i64, el string) map[i64][]i64 {
+        parts := el.Split(": ")
+        a := parts[0].I64()?
+        b := parts[1].Split(" ").Map({ $0.I64()? })
+        acc[a] = b
+        return acc
+    })
+    fmt.Println(data)
+}
