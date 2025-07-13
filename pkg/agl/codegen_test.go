@@ -9348,7 +9348,7 @@ func main() {
 	test := NewTest(src, WithMutEnforced(true))
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[int]u8) Filter(func(agl1.DictEntry[int, u8]) bool) map[int]u8", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (map[int]u8) Filter(func(DictEntry[int, u8]) bool) map[int]u8", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "int", test.TypeAt(4, 16).String())
 	tassert.Equal(t, "u8", test.TypeAt(4, 31).String())
 	testCodeGen1(t, test.GenCode(), expected)
