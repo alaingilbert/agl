@@ -1215,11 +1215,12 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 			return
 		}
 	case "abs":
+		info := infer.env.GetNameInfo("abs")
 		fnT := infer.env.Get("abs").(types.FuncType)
 		infer.expr(expr.Args[0])
 		arg0 := infer.env.GetType(expr.Args[0])
 		fnT = fnT.T("T", arg0)
-		infer.SetType(expr.Fun, fnT)
+		infer.SetType(expr.Fun, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	}
 }
