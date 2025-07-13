@@ -1723,6 +1723,16 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
+		} else if fnName == "Filter" {
+			fnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
+			if len(expr.Args) < 1 {
+				return
+			}
+			infer.SetType(expr.Args[0], fnT.Params[1])
+			fnT.Recv = []types.Type{idTT}
+			fnT.Params = fnT.Params[1:]
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
 		}
 	}
 }

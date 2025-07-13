@@ -17,8 +17,8 @@ func main() {
         acc[a] = b
         return acc
     })
-    a := i64(123)
-    fmt.Println(data, a.String() + a.String())
+    //fmt.Println(data)
+    part1()
 }
 
 // concat
@@ -69,7 +69,8 @@ func solve(expected i64, vals []i64, ops []Op) bool {
 }
 
 func part1() {
-    //data.Filter({ 1 == 1 })
+    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul}) })
+    fmt.Println(res)
     //data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul}) }).Map({ $0.Key }).Sum()
     //print(data.filter { solve($0.key, $0.value, [Op.add, Op.mul]) }.map(\.key).reduce(0, +))
 }

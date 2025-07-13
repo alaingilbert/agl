@@ -1399,6 +1399,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Keys", "Values":
 				content1 := g.genExpr(e.X)
 				return fmt.Sprintf("AglIdentity(AglMap%s(%s))", fnName, content1)
+			case "Filter":
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				return fmt.Sprintf("AglIdentity(AglMapFilter(%s, %s))", content1, content2)
 			}
 		default:
 			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
@@ -3056,6 +3060,16 @@ func AglMapIndex[K comparable, V any](m map[K]V, index K) Option[V] {
 func AglMapContainsKey[K comparable, V any](m map[K]V, k K) bool {
 	_, ok := m[k]
 	return ok
+}
+
+func AglMapFilter[K comparable, V any](m map[K]V, f func(K, V) bool) map[K]V {
+	out := make(map[K]V)
+	for k, v := range m {
+		if f(k, v) {
+			out[k] = v
+		}
+	}
+	return out
 }
 
 func AglMapKeys[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[K] {
