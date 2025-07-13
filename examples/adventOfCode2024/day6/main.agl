@@ -96,7 +96,7 @@ func CloneData(in [][]string) [][]string {
 
 func main() {
     fileData := os.ReadFile("examples/adventOfCode2024/day6/data.txt")!
-    data := string(fileData).Split("\n").Map({ $0.Split("") })
+    data := string(fileData).Lines().Map({ $0.Split("") })
     width = data[0].Len()
     height = data.Len()
     guardPosition := FindGuardPosition(data)
