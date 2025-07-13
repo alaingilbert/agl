@@ -10,7 +10,12 @@ import (
 func getGenOutput(src string) string {
 	fset, f := ParseSrc(src)
 	env := NewEnv()
-	NewInferrer(env).InferFile("", f, fset, true)
+	i := NewInferrer(env)
+	errs := i.InferFile("", f, fset, true)
+	if len(errs) > 0 {
+		fmt.Println(errs)
+		return ""
+	}
 	g := NewGenerator(env, f, fset)
 	return g.Generate()
 }
