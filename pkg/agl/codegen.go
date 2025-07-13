@@ -649,7 +649,7 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
 func (g *Generator) genMapType(expr *ast.MapType) string {
 	content1 := g.genExpr(expr.Key)
 	content2 := g.env.GetType2(expr.Value, g.fset).GoStr()
-	return fmt.Sprintf("AglMap[%s, %s]", content1, content2)
+	return fmt.Sprintf("map[%s]%s", content1, content2)
 }
 
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
