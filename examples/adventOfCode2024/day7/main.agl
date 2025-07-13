@@ -47,7 +47,7 @@ func combination(ops []Op, n int) [][]Op {
 func solve(expected i64, vals []i64, ops []Op) bool {
     combs := combination(ops, vals.Len())
     for _, comb := range combs {
-        mut res := i64(0)
+        var mut res i64
         for i, el := range vals {
             switch comb[i] {
                 case .add: res += el
@@ -63,11 +63,11 @@ func solve(expected i64, vals []i64, ops []Op) bool {
 }
 
 func part1() {
-    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul}) }).Map({ $0 }).Sum()
+    res := data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul}) }).Map({ $0.Key }).Sum()
     fmt.Println(res)
 }
 
 func part2() {
-    res := data.Filter({ solve($0, $1, []Op{Op.add, Op.mul, Op.cat}) }).Map({ $0 }).Sum()
+    res := data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul, Op.cat}) }).Map({ $0.Key }).Sum()
     fmt.Println(res)
 }
