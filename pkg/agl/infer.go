@@ -2289,24 +2289,25 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 
 func (infer *FileInferrer) bubbleResultExpr(expr *ast.BubbleResultExpr) {
 	infer.expr(expr.X)
-	if v, ok := infer.GetType(expr.X).(types.ResultType); ok {
+	exprXT := infer.GetType(expr.X)
+	if v, ok := exprXT.(types.ResultType); ok {
 		infer.SetType(expr, v.W)
 	} else {
-		infer.errorf(expr, "expected Result type, got %v", infer.GetType(expr.X))
+		infer.errorf(expr, "expected Result type, got %v", exprXT)
 		return
 	}
 }
 
 func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	infer.expr(expr.X)
-	tmp := infer.GetType(expr.X)
-	if tmp == nil {
+	exprXT := infer.GetType(expr.X)
+	if exprXT == nil {
 		return
 	}
-	if v, ok := tmp.(types.OptionType); ok {
+	if v, ok := exprXT.(types.OptionType); ok {
 		infer.SetType(expr, v.W)
 	} else {
-		infer.errorf(expr, "expected Option type, got %v", infer.GetType(expr.X))
+		infer.errorf(expr, "expected Option type, got %v", exprXT)
 		return
 	}
 }
