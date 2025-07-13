@@ -1293,13 +1293,14 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 	switch e := expr.Fun.(type) {
 	case *ast.SelectorExpr:
-		eXT := g.env.GetType(e.X)
-		eXT = types.Unwrap(eXT)
+		oeXT := g.env.GetType(e.X)
+		eXT := types.Unwrap(oeXT)
 		switch eXTT := eXT.(type) {
 		case types.ArrayType:
 			genEX := g.genExpr(e.X)
 			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]) }
-			eltTStr := types.ReplGenM(eXTT.Elt, g.genMap).GoStr()
+			eltT := types.ReplGenM(eXTT.Elt, g.genMap)
+			eltTStr := eltT.GoStr()
 			fnName := e.Sel.Name
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
@@ -1320,7 +1321,15 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 					params = append(params, g.genExpr(el))
 				}
 				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
-				return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, strings.Join(params, ", "), ellipsis)
+				tmpoeXT := oeXT
+				if v, ok := tmpoeXT.(types.MutType); ok {
+					tmpoeXT = v.W
+				}
+				if _, ok := tmpoeXT.(types.StarType); ok {
+					return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX, strings.Join(params, ", "), ellipsis)
+				} else {
+					return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, strings.Join(params, ", "), ellipsis)
+				}
 			default:
 				extName := "agl1.Vec." + fnName
 				rawFnT := g.env.Get(extName)
@@ -2421,9 +2430,9 @@ func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
 	return acc
 }
 
-func AglVecReduceInto[T, R any](a []T, acc R, f func(R, T)) R {
+func AglVecReduceInto[T, R any](a []T, acc R, f func(*R, T) AglVoid) R {
 	for _, v := range a {
-		f(acc, v)
+		f(&acc, v)
 	}
 	return acc
 }

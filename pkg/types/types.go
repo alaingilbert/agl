@@ -741,6 +741,9 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 
 func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	switch t1 := t.(type) {
+	case StarType:
+		t1.X = ReplGen(t1.X, name, newTyp)
+		return t1
 	case MutType:
 		t1.W = ReplGen(t1.W, name, newTyp)
 		return t1

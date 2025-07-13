@@ -9284,6 +9284,27 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen321(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := a.Reduce(into: [][]int{}, { $0.Push([]int{$1}) })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	b := AglVecReduceInto(a, [][]int{}, func(aglArg0 *[][]int, aglArg1 int) AglVoid {
+		AglVecPush(aglArg0, []int{aglArg1})
+		return AglVoid{}
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
