@@ -2821,8 +2821,6 @@ func AglCleanupIntString(s string) (string, int) {
 		s, base = s[2:], 8
 	case aglImportStrings.HasPrefix(s, "0x"):
 		s, base = s[2:], 16
-	case aglImportStrings.HasPrefix(s, "0") && len(s) > 1:
-		base = 8 // legacy octal (e.g., 0755)
 	default:
 		base = 10
 	}
