@@ -189,15 +189,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	by := agl.Must(os.ReadFile(fileName))
-	fset, f, f2 := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
-	i := agl.NewInferrer(env)
-	_ = i.InferFile(fileName, f2, fset, true)
-	errs := i.InferFile(fileName, f, fset, true)
-	if len(errs) > 0 {
-		panic(errs[0])
-	}
-	src := agl.NewGenerator(i.Env, f, f2, fset).Generate()
+	src := genCode(fileName, by)
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -231,12 +223,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		input = ""
 	}
-	fset, f, f2 := agl.ParseSrc(input)
-	env := agl.NewEnv(fset)
-	i := agl.NewInferrer(env)
-	i.InferFile("", f2, fset, true)
-	i.InferFile("", f, fset, true)
-	src := agl.NewGenerator(i.Env, f, f2, fset).Generate()
+	src := genCode("", []byte(input))
 	coreHeaders := agl.GenHeaders()
 
 	out := insertHeadersAfterFirstLine(src, coreHeaders) + agl.GenContent()
@@ -452,17 +439,24 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	return nil
 }
 
+func genCode(fileName string, src []byte) string {
+	fset, f, f2 := agl.ParseSrc(string(src))
+	env := agl.NewEnv(fset)
+	i := agl.NewInferrer(env)
+	i.InferFile("core.agl", f2, fset, true)
+	errs := i.InferFile(fileName, f, fset, true)
+	if len(errs) > 0 {
+		panic(errs[0])
+	}
+	return agl.NewGenerator(i.Env, f, f2, fset).Generate()
+}
+
 func buildAglFile(fileName string) error {
 	by, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	fset, f, f2 := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
-	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f2, fset, true)
-	i.InferFile(fileName, f, fset, true)
-	src := agl.NewGenerator(i.Env, f, f2, fset).Generate()
+	src := genCode(fileName, by)
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
 	return os.WriteFile(path, []byte(src), 0644)
 }
@@ -484,13 +478,8 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	fset, f, f2 := agl.ParseSrc(string(by))
-	env := agl.NewEnv(fset)
-	i := agl.NewInferrer(env)
-	i.InferFile(fileName, f2, fset, true)
-	i.InferFile(fileName, f, fset, true)
-	g := agl.NewGenerator(i.Env, f, f2, fset)
-	fmt.Println(g.Generate())
+	src := genCode(fileName, by)
+	fmt.Println(src)
 	return nil
 }
 
