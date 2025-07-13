@@ -17,16 +17,16 @@ func After(d time.Duration) <-chan time.Time
 func ParseDuration(s string) time.Duration!
 func Since(t time.Time) time.Duration
 func Until(t time.Time) time.Duration
-func (d Duration) Abs() time.Duration
-func (d Duration) Hours() float64
-func (d Duration) Microseconds() int64
-func (d Duration) Milliseconds() int64
-func (d Duration) Minutes() float64
-func (d Duration) Nanoseconds() int64
-func (d Duration) Round(m time.Duration) time.Duration
-func (d Duration) Seconds() float64
-func (d Duration) String() string
-func (d Duration) Truncate(m time.Duration) time.Duration
+func (d time.Duration) Abs() time.Duration
+func (d time.Duration) Hours() float64
+func (d time.Duration) Microseconds() int64
+func (d time.Duration) Milliseconds() int64
+func (d time.Duration) Minutes() float64
+func (d time.Duration) Nanoseconds() int64
+func (d time.Duration) Round(m time.Duration) time.Duration
+func (d time.Duration) Seconds() float64
+func (d time.Duration) String() string
+func (d time.Duration) Truncate(m time.Duration) time.Duration
 
 func FixedZone(name string, offset int) *time.Location
 func LoadLocation(name string) (*time.Location)!
@@ -43,7 +43,7 @@ func UnixMilli(msec int64) time.Time
 
 func (m Month) String() string
 
-func NewTicker(d Duration) *time.Ticker
+func NewTicker(d time.Duration) *time.Ticker
 func (t *Ticker) Reset(d time.Duration)
 func (t *Ticker) Stop()
 
