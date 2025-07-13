@@ -523,6 +523,7 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 				}
 				for _, name := range param.Names {
 					tt := t
+					infer.SetType(name.Ident, tt)
 					if name.Mutable.IsValid() {
 						tt = types.MutType{W: tt}
 					}
