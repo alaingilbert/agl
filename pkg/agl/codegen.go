@@ -1833,8 +1833,9 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 				case types.SetType:
 					out += g.prefix + fmt.Sprintf("for %s := range (%s).Iter() {\n", g.genExpr(v.X), g.genExpr(v.Y))
 				case types.MapType:
-					key := g.genExpr(v.X.(*ast.TupleExpr).Values[0])
-					val := g.genExpr(v.X.(*ast.TupleExpr).Values[1])
+					xTup := v.X.(*ast.TupleExpr)
+					key := g.genExpr(xTup.Values[0])
+					val := g.genExpr(xTup.Values[1])
 					out += g.prefix + fmt.Sprintf("for %s, %s := range %s {\n", key, val, g.genExpr(v.Y))
 				default:
 					out += g.prefix + fmt.Sprintf("for _, %s := range %s {\n", g.genExpr(v.X), g.genExpr(v.Y))

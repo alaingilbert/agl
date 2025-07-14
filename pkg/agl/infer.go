@@ -2783,8 +2783,9 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				infer.SetType(cond.X, t)
 			case types.MapType:
 				t = types.TupleType{Elts: []types.Type{v.K, v.V}}
-				infer.SetType(cond.X.(*ast.TupleExpr).Values[0], v.K)
-				infer.SetType(cond.X.(*ast.TupleExpr).Values[1], v.V)
+				xTup := cond.X.(*ast.TupleExpr)
+				infer.SetType(xTup.Values[0], v.K)
+				infer.SetType(xTup.Values[1], v.V)
 				infer.SetType(cond.X, t)
 			default:
 				panic("")
