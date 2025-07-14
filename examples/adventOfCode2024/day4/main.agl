@@ -22,9 +22,8 @@ func part1(lines [][]string, width, height int) int {
     var mut directions [](int, int)
     for _, e1 := range []int{-1, 0, 1} {
         for _, e2 := range []int{-1, 0, 1} {
-            if e1 != 0 || e2 != 0 {
-                directions.Push((e1, e2))
-            }
+            guard e1 != 0 || e2 != 0 else { continue }
+            directions.Push((e1, e2))
         }
     }
     target := "XMAS".Split("")
@@ -56,7 +55,7 @@ func part2(lines [][]string, width, height int) int {
             if lines[y][x] == "A" {
                 d1 := lines[y-1][x-1] + lines[y+1][x+1]
                 d2 := lines[y-1][x+1] + lines[y+1][x-1]
-                if arr.Contains(d1) && arr.Contains(d2) {
+                if d1 in arr && d2 in arr {
                     found++
                 }
             }
