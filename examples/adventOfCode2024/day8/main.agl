@@ -17,9 +17,7 @@ func main () {
     for y, row := range data {
         for x, col := range row {
             if col != "." && col != "#" {
-                mut a := antenasDict[col]
-                a.Push((x, y))
-                antenasDict[col] = a
+                antenasDict[col].Push((x, y))
             }
         }
     }
