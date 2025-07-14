@@ -24,6 +24,7 @@ func main () {
         }
     }
     part1()
+    part2()
 }
 
 func part1() {
@@ -39,6 +40,28 @@ func part1() {
                 pos := (a2.0 + dx, a2.1 + dy)
                 if pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
                     antinodes.Insert(pos)
+                }
+            }
+        }
+    }
+    fmt.Println(antinodes.Len())
+}
+
+func part2() {
+    mut antinodes := set[(int, int)]{}
+    for _, antenas := range antenasDict {
+        for _, a1 := range antenas {
+            for _, a2 := range antenas {
+                if a2 == a1 {
+                    continue
+                }
+                dx := a2.0 - a1.0
+                dy := a2.1 - a1.1
+                pos := (a2.0, a2.1)
+                for pos.0 >= 0 && pos.0 < width && pos.1 >= 0 && pos.1 < height {
+                    antinodes.Insert(pos)
+                    pos.0 += dx
+                    pos.1 += dy
                 }
             }
         }
