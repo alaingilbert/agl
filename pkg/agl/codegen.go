@@ -1581,23 +1581,18 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	yT := g.env.GetType(expr.Y)
 	if xT != nil && yT != nil {
 		if op == "in" {
-			switch v := expr.Y.(type) {
-			case *ast.CompositeLit:
-				t := g.env.GetType(v)
-				switch v.Type.(type) {
-				case *ast.ArrayType:
-					t = t.(types.ArrayType).Elt
-					content2 = fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), content2)
-				case *ast.MapType:
-					kT := t.(types.MapType).K
-					vT := t.(types.MapType).V
-					content2 = fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), content2)
-				case *ast.SetType:
-				default:
-					panic(fmt.Sprintf("%v", to(v.Type)))
-				}
+			t := g.env.GetType(expr.Y)
+			switch t.(type) {
+			case types.ArrayType:
+				t = t.(types.ArrayType).Elt
+				content2 = fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), content2)
+			case types.MapType:
+				kT := t.(types.MapType).K
+				vT := t.(types.MapType).V
+				content2 = fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), content2)
+			case types.SetType:
 			default:
-				panic(fmt.Sprintf("%v", to(expr.Y)))
+				panic(fmt.Sprintf("%v", to(t)))
 			}
 			return fmt.Sprintf("AglIn(%s, %s)", content1, content2)
 		}
