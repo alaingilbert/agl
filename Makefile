@@ -10,6 +10,9 @@ wasm:
 e2e:
 	go test agl/e2eTests
 
+test:
+	go test agl/pkg/agl
+
 count:
 	@find \
 		./pkg/agl \
