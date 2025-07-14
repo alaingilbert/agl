@@ -1887,8 +1887,29 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 				after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 			}
 		}
-	} else {
+	} else if len(stmt.Lhs) == 1 && TryCast[*ast.IndexExpr](stmt.Lhs[0]) && TryCast[*ast.MapType](stmt.Lhs[0].(*ast.IndexExpr).X) {
 		lhs = g.genExprs(stmt.Lhs)
+	} else {
+		isMutStarMap := func() bool {
+			if v, ok := stmt.Lhs[0].(*ast.IndexExpr); ok {
+				if vv, ok := g.env.GetType(v.X).(types.MutType); ok {
+					if vvv, ok := vv.W.(types.StarType); ok {
+						if _, ok := vvv.X.(types.MapType); ok {
+							return true
+						}
+					}
+				}
+			}
+			return false
+		}
+		if isMutStarMap() {
+			v := stmt.Lhs[0].(*ast.IndexExpr)
+			content1 := g.genExpr(v.X)
+			content2 := g.genExpr(v.Index)
+			lhs = fmt.Sprintf("(*%s)[%s]", content1, content2)
+		} else {
+			lhs = g.genExprs(stmt.Lhs)
+		}
 	}
 	content2 := g.genExprs(stmt.Rhs)
 	if len(stmt.Rhs) == 1 {
