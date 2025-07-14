@@ -1891,11 +1891,12 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		lhs = g.genExprs(stmt.Lhs)
 	} else {
 		isMutStarMap := func() bool {
-			if v, ok := stmt.Lhs[0].(*ast.IndexExpr); ok {
-				if vv, ok := g.env.GetType(v.X).(types.MutType); ok {
-					if vvv, ok := vv.W.(types.StarType); ok {
-						if _, ok := vvv.X.(types.MapType); ok {
-							return true
+			if len(stmt.Lhs) == 1 {
+				if v, ok := stmt.Lhs[0].(*ast.IndexExpr); ok {
+					if vv, ok := g.env.GetType(v.X).(types.MutType); ok {
+						if vvv, ok := vv.W.(types.StarType); ok {
+							_, ok := vvv.X.(types.MapType)
+							return ok
 						}
 					}
 				}
