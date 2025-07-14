@@ -3271,9 +3271,9 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 		}
 	}
 	switch expr.Op {
-	case token.EQL, token.NEQ, token.LOR, token.LAND, token.LEQ, token.LSS, token.GEQ, token.GTR:
+	case token.EQL, token.NEQ, token.LOR, token.LAND, token.LEQ, token.LSS, token.GEQ, token.GTR, token.IN:
 		infer.SetType(expr, types.BoolType{})
-	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM, token.IN:
+	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM:
 		infer.SetType(expr, infer.GetType(expr.X))
 	default:
 	}
