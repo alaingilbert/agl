@@ -1198,39 +1198,58 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) (out string) {
 }
 
 func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string) {
-	exprXT := MustCast[types.OptionType](g.env.GetInfo(expr.X).Type)
-	if exprXT.Bubble {
+	switch exprXT := g.env.GetInfo(expr.X).Type.(type) {
+	case types.OptionType:
+		if exprXT.Bubble {
+			content1 := g.genExpr(expr.X)
+			if exprXT.Native {
+				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+				tmpl := fmt.Sprintf("%s, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, exprXT.W.GoStr())
+				before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
+				g.beforeStmt = append(g.beforeStmt, before)
+				return fmt.Sprintf(`AglIdentity(%s)`, varName)
+			} else {
+				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+				tmpl := fmt.Sprintf("%s := %s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, varName, g.returnType.(types.OptionType).W)
+				before2 := NewBeforeStmt(addPrefix(tmpl, g.prefix))
+				g.beforeStmt = append(g.beforeStmt, before2)
+				out += fmt.Sprintf("%s.Unwrap()", varName)
+			}
+		} else {
+			if exprXT.Native {
+				content1 := g.genExpr(expr.X)
+				id := g.varCounter.Add(1)
+				varName := fmt.Sprintf("aglTmpVar%d", id)
+				errName := fmt.Sprintf("aglTmpErr%d", id)
+				tmpl := fmt.Sprintf("%s, %s := %s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, content1, errName, errName)
+				before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
+				out := fmt.Sprintf(`AglIdentity(%s)`, varName)
+				g.beforeStmt = append(g.beforeStmt, before)
+				return out
+			} else {
+				content1 := g.genExpr(expr.X)
+				out += fmt.Sprintf("%s.Unwrap()", content1)
+			}
+		}
+		return
+	case types.TypeAssertType:
 		content1 := g.genExpr(expr.X)
-		if exprXT.Native {
-			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("%s, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, exprXT.W.GoStr())
-			before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before)
-			return fmt.Sprintf(`AglIdentity(%s)`, varName)
+		id := g.varCounter.Add(1)
+		varName := fmt.Sprintf("aglTmpVar%d", id)
+		okName := fmt.Sprintf("aglTmpOk%d", id)
+		tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1)
+		tmp += g.prefix + fmt.Sprintf("if !%s {\n", okName)
+		if v, ok := g.returnType.(types.OptionType); ok {
+			tmp += g.prefix + fmt.Sprintf("\tMakeOptionNone[%s]()\n", v.W.GoStrType())
 		} else {
-			varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("%s := %s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, varName, g.returnType.(types.OptionType).W)
-			before2 := NewBeforeStmt(addPrefix(tmpl, g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before2)
-			out += fmt.Sprintf("%s.Unwrap()", varName)
+			tmp += g.prefix + fmt.Sprintf("\tpanic(\"type assert failed\")\n")
 		}
-	} else {
-		if exprXT.Native {
-			content1 := g.genExpr(expr.X)
-			id := g.varCounter.Add(1)
-			varName := fmt.Sprintf("aglTmpVar%d", id)
-			errName := fmt.Sprintf("aglTmpErr%d", id)
-			tmpl := fmt.Sprintf("%s, %s := %s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, content1, errName, errName)
-			before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
-			out := fmt.Sprintf(`AglIdentity(%s)`, varName)
-			g.beforeStmt = append(g.beforeStmt, before)
-			return out
-		} else {
-			content1 := g.genExpr(expr.X)
-			out += fmt.Sprintf("%s.Unwrap()", content1)
-		}
+		tmp += g.prefix + fmt.Sprintf("}\n")
+		g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(tmp))
+		return varName
+	default:
+		panic("")
 	}
-	return
 }
 
 func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string) {

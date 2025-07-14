@@ -5369,6 +5369,51 @@ func main() {
 	testCodeGen(t, src, expected)
 }
 
+func TestCodeGen181_1(t *testing.T) {
+	src := `package main
+import "agl1/fmt"
+func test(i any) int? {
+	tmp := i.(int)?
+	return Some(tmp + 1)
+}
+func main() {
+	var i any = "hello"
+	s := i.(string)?
+	fmt.Println(s)
+	f := i.(f64)?
+	fmt.Println(f)
+}
+`
+	expected := `// agl:generated
+package main
+import "fmt"
+func test(i any) Option[int] {
+	aglTmpVar1, aglTmpOk1 := i.(int)
+	if !aglTmpOk1 {
+		MakeOptionNone[int]()
+	}
+	tmp := aglTmpVar1
+	return MakeOptionSome(tmp + 1)
+}
+func main() {
+	var i any = "hello"
+	aglTmpVar2, aglTmpOk2 := i.(string)
+	if !aglTmpOk2 {
+		panic("type assert failed")
+	}
+	s := aglTmpVar2
+	fmt.Println(s)
+	aglTmpVar3, aglTmpOk3 := i.(float64)
+	if !aglTmpOk3 {
+		panic("type assert failed")
+	}
+	f := aglTmpVar3
+	fmt.Println(f)
+}
+`
+	testCodeGen(t, src, expected)
+}
+
 func TestCodeGen182(t *testing.T) {
 	src := `package main
 import "agl1/fmt"

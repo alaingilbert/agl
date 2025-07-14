@@ -2482,9 +2482,12 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	if exprXT == nil {
 		return
 	}
-	if v, ok := exprXT.(types.OptionType); ok {
+	switch v := exprXT.(type) {
+	case types.OptionType:
 		infer.SetType(expr, v.W)
-	} else {
+	case types.TypeAssertType:
+		infer.SetType(expr, v.X)
+	default:
 		infer.errorf(expr, "expected Option type, got %v", exprXT)
 		return
 	}
