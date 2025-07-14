@@ -249,6 +249,23 @@ func main() {
 }
 ```
 
+## For-in
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	for el in []int{1, 2, 3} {
+		fmt.Println(el)
+    }
+	for el in set[int]{1, 2, 3} {
+		fmt.Println(el)
+	}
+}
+```
+
 ## Operator overloading
 
 ```go
