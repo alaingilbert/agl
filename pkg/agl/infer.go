@@ -2782,13 +2782,18 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				t = v.K
 				infer.SetType(cond.X, t)
 			case types.MapType:
-				t = types.TupleType{Elts: []types.Type{v.K, v.V}}
-				xTup := cond.X.(*ast.TupleExpr)
-				infer.SetType(xTup.Values[0], v.K)
-				infer.SetType(xTup.Values[1], v.V)
-				infer.SetType(cond.X, t)
+				if xTup, ok := cond.X.(*ast.TupleExpr); ok {
+					t = types.TupleType{Elts: []types.Type{v.K, v.V}}
+					infer.SetType(xTup.Values[0], v.K)
+					infer.SetType(xTup.Values[1], v.V)
+					infer.SetType(cond.X, t)
+				} else {
+					infer.errorf(cond.X, "expected tuple, got %v", to(cond.X))
+					return
+				}
 			default:
-				panic("")
+				infer.errorf(cond.Y, "unsupported type %v", to(yT))
+				return
 			}
 			switch v := cond.X.(type) {
 			case *ast.Ident:
@@ -2798,7 +2803,8 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					infer.env.Define(cond.X, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
 				}
 			default:
-				panic("")
+				infer.errorf(cond.X, "unsupported type %v", to(cond.X))
+				return
 			}
 		} else {
 			if stmt.Init != nil {
