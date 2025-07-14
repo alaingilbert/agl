@@ -9574,14 +9574,11 @@ type MyType struct {
 }
 func (m MyType) Iter() iter.Seq[int] {
 	return func(yield func(int) bool) {
-		if !yield(m.a) {
-			return
-		}
-		if !yield(m.b) {
-			return
-		}
-		if !yield(m.c) {
-			return
+		vals := []int{m.a, m.b, m.c}
+		for _, el := range vals {
+			if !yield(el) {
+				return
+			}	
 		}
 	}
 }`
@@ -9593,14 +9590,11 @@ type MyType struct {
 }
 func (m MyType) Iter() iter.Seq[int] {
 	return func(yield func(int) bool) {
-		if !yield(m.a) {
-			return
-		}
-		if !yield(m.b) {
-			return
-		}
-		if !yield(m.c) {
-			return
+		vals := []int{m.a, m.b, m.c}
+		for _, el := range vals {
+			if !yield(el) {
+				return
+			}
 		}
 	}
 }
