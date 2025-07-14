@@ -260,8 +260,8 @@ func (g *Generator) genExtension(e Extension) (out string) {
 func (g *Generator) Generate() (out string) {
 	out += GeneratedFilePrefix
 	out1 := g.genPackage()
-	out2 := g.genImports()
-	out3 := g.genImportsB()
+	out2 := g.genImports(g.a)
+	out3 := g.genImports(g.b)
 	out4 := g.genDeclsB()
 	out5 := g.genDecls()
 	var extStringStr string
@@ -293,7 +293,7 @@ func (g *Generator) genPackage() string {
 	return fmt.Sprintf("package %s\n", g.a.Name.Name)
 }
 
-func (g *Generator) genImports() (out string) {
+func (g *Generator) genImports(f *ast.File) (out string) {
 	genRow := func(spec *ast.ImportSpec) (out string) {
 		if spec.Name != nil {
 			out += spec.Name.Name + " "
@@ -304,36 +304,12 @@ func (g *Generator) genImports() (out string) {
 		}
 		return out + pathValue + "\n"
 	}
-	if len(g.a.Imports) == 1 {
-		spec := g.a.Imports[0]
+	if len(f.Imports) == 1 {
+		spec := f.Imports[0]
 		out += "import " + genRow(spec)
-	} else if len(g.a.Imports) > 1 {
+	} else if len(f.Imports) > 1 {
 		out += "import (\n"
-		for _, spec := range g.a.Imports {
-			out += "\t" + genRow(spec)
-		}
-		out += ")\n"
-	}
-	return
-}
-
-func (g *Generator) genImportsB() (out string) {
-	genRow := func(spec *ast.ImportSpec) (out string) {
-		if spec.Name != nil {
-			out += spec.Name.Name + " "
-		}
-		pathValue := spec.Path.Value
-		if strings.HasPrefix(pathValue, `"agl1/`) {
-			pathValue = `"` + pathValue[6:]
-		}
-		return out + pathValue + "\n"
-	}
-	if len(g.b.Imports) == 1 {
-		spec := g.b.Imports[0]
-		out += "import " + genRow(spec)
-	} else if len(g.b.Imports) > 1 {
-		out += "import (\n"
-		for _, spec := range g.b.Imports {
+		for _, spec := range f.Imports {
 			out += "\t" + genRow(spec)
 		}
 		out += ")\n"
