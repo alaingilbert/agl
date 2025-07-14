@@ -9,6 +9,7 @@ type Stringer interface {}
 type ScanState interface {}
 type State interface {}
 
+func Print(a ...any) int!
 func Println(a ...any) int!
 func Printf(format string, a ...any) (int, error)
 func Errorf(format string, a ...any) error
