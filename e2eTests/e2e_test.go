@@ -258,6 +258,9 @@ func main() {
 		tmp.Push(el)
 	}
 	fmt.Print(tmp.Sorted())
+    for (a, b, c) in [](int, string, bool){(1, "foo", true), (2, "bar", false)} {
+        fmt.Print(a, b, c)
+    }
 }`
-	tassert.Equal(t, "123[1 2 3]", testGenOutput(src))
+	tassert.Equal(t, "123[1 2 3]1footrue2barfalse", testGenOutput(src))
 }
