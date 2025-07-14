@@ -9566,6 +9566,51 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen331(t *testing.T) {
+	src := `package main
+import "iter"
+type MyType struct {
+	a, b, c int
+}
+func (m MyType) Iter() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		if !yield(m.a) {
+			return
+		}
+		if !yield(m.b) {
+			return
+		}
+		if !yield(m.c) {
+			return
+		}
+	}
+}`
+	expected := `// agl:generated
+package main
+import "iter"
+type MyType struct {
+	a, b, c int
+}
+func (m MyType) Iter() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		if !yield(m.a) {
+			return
+		}
+		if !yield(m.b) {
+			return
+		}
+		if !yield(m.c) {
+			return
+		}
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

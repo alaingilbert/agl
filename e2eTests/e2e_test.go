@@ -213,3 +213,37 @@ func main() {
 }`
 	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
 }
+
+func Test14(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+import "iter"
+type MyType struct {
+	a, b, c int
+}
+func (m MyType) Iter() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		if !yield(m.a) {
+			return
+		}
+		if !yield(m.b) {
+			return
+		}
+		if !yield(m.c) {
+			return
+		}
+	}
+}
+func main() {
+	s := set[int]{1, 2, 3}
+	t := MyType{a: 3, b: 4, c: 5}
+	u := s.Union(t)
+	var mut out []int
+	for el := range u {
+		out.Push(el)
+	}
+	fmt.Println(out.Sorted())
+}`
+	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
+}
