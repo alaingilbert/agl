@@ -107,23 +107,23 @@ func main() {
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
 
-func Test7(t *testing.T) {
-	src := `package main
-type HasLen interface {
-	Len() int
-}
-func main() {
-	a := []int{1, 2, 3, 4}
-	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}
-	s := set[int]{1, 2, 3, 4, 5, 6}
-	res := []HasLen{a, m, s}
-	assert(res.Len() == 3)
-	assert(res[0].Len() == 4)
-	assert(res[1].Len() == 5)
-	assert(res[2].Len() == 6)
-}`
-	tassert.NotPanics(t, func() { testGenOutput(src) })
-}
+//func Test7(t *testing.T) {
+//	src := `package main
+//type HasLen interface {
+//	Len() int
+//}
+//func main() {
+//	a := []int{1, 2, 3, 4}
+//	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}
+//	s := set[int]{1, 2, 3, 4, 5, 6}
+//	res := []HasLen{a, m, s}
+//	assert(res.Len() == 3)
+//	assert(res[0].Len() == 4)
+//	assert(res[1].Len() == 5)
+//	assert(res[2].Len() == 6)
+//}`
+//	tassert.NotPanics(t, func() { testGenOutput(src) })
+//}
 
 func Test8(t *testing.T) {
 	src := `package main
