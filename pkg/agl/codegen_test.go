@@ -9613,9 +9613,15 @@ func main() {
 	}
 	for (k, v) in map[int]int{1: 1, 2: 2, 3: 3} {
 	}
+	for (i, e) in []int{1, 2, 3}.Enumerated() {
+	}
 }`
 	expected := `// agl:generated
 package main
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
 func main() {
 	for _, el := range []int{1, 2, 3} {
 	}
@@ -9623,6 +9629,16 @@ func main() {
 	}
 	for k, v := range map[int]int{1: 1, 2: 2, 3: 3} {
 	}
+	for _, aglTmp1 := range AglVecEnumerated_T_int([]int{1, 2, 3}) {
+		i, e := aglTmp1.Arg0, aglTmp1.Arg1
+	}
+}
+func AglVecEnumerated_T_int(v []int) []AglTupleStruct_int_int {
+	out := make([]AglTupleStruct_int_int, 0)
+	for i := range v {
+		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: i, Arg1: v[i]})
+	}
+	return out
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

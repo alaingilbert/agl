@@ -1828,17 +1828,33 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
+				xT := g.env.GetType(v.X)
 				yT := g.env.GetType(v.Y)
-				switch yT.(type) {
-				case types.SetType:
-					out += g.prefix + fmt.Sprintf("for %s := range (%s).Iter() {\n", g.genExpr(v.X), g.genExpr(v.Y))
-				case types.MapType:
+				if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
+					varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+					out += g.prefix + fmt.Sprintf("for _, %s := range %s {\n", varName, g.genExpr(v.Y))
 					xTup := v.X.(*ast.TupleExpr)
-					key := g.genExpr(xTup.Values[0])
-					val := g.genExpr(xTup.Values[1])
-					out += g.prefix + fmt.Sprintf("for %s, %s := range %s {\n", key, val, g.genExpr(v.Y))
-				default:
-					out += g.prefix + fmt.Sprintf("for _, %s := range %s {\n", g.genExpr(v.X), g.genExpr(v.Y))
+					var lhsVars []string
+					var rhsVars []string
+					for i := range tup.Elts {
+						lhsVars = append(lhsVars, fmt.Sprintf("%s", g.genExpr(xTup.Values[i])))
+						rhsVars = append(rhsVars, fmt.Sprintf("%s.Arg%d", varName, i))
+					}
+					out += g.prefix + fmt.Sprintf("\t%s := %s\n", strings.Join(lhsVars, ", "), strings.Join(rhsVars, ", "))
+				} else {
+					switch yT.(type) {
+					case types.ArrayType:
+						out += g.prefix + fmt.Sprintf("for _, %s := range %s {\n", g.genExpr(v.X), g.genExpr(v.Y))
+					case types.SetType:
+						out += g.prefix + fmt.Sprintf("for %s := range (%s).Iter() {\n", g.genExpr(v.X), g.genExpr(v.Y))
+					case types.MapType:
+						xTup := v.X.(*ast.TupleExpr)
+						key := g.genExpr(xTup.Values[0])
+						val := g.genExpr(xTup.Values[1])
+						out += g.prefix + fmt.Sprintf("for %s, %s := range %s {\n", key, val, g.genExpr(v.Y))
+					default:
+						panic("")
+					}
 				}
 				out += body
 				out += g.prefix + "}\n"

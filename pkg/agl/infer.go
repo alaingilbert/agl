@@ -2776,8 +2776,17 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			var t types.Type
 			switch v := yT.(type) {
 			case types.ArrayType:
-				t = v.Elt
-				infer.SetType(cond.X, t)
+				if xTup, ok := cond.X.(*ast.TupleExpr); ok {
+					yTupT := v.Elt.(types.TupleType)
+					t = yTupT
+					for i := range xTup.Values {
+						infer.SetType(xTup.Values[i], yTupT.Elts[i])
+					}
+					infer.SetType(cond.X, t)
+				} else {
+					t = v.Elt
+					infer.SetType(cond.X, t)
+				}
 			case types.SetType:
 				t = v.K
 				infer.SetType(cond.X, t)
@@ -2800,7 +2809,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				infer.env.Define(cond.X, v.Name, t)
 			case *ast.TupleExpr:
 				for i, e := range v.Values {
-					infer.env.Define(cond.X, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
+					infer.env.Define(nil, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
 				}
 			default:
 				infer.errorf(cond.X, "unsupported type %v", to(cond.X))
