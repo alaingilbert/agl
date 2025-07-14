@@ -1598,8 +1598,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 			default:
 				panic(fmt.Sprintf("%v", to(expr.Y)))
 			}
-			out := fmt.Sprintf("AglIn(%s, %s)", content1, content2)
-			return out
+			return fmt.Sprintf("AglIn(%s, %s)", content1, content2)
 		}
 		if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
 			if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
