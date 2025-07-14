@@ -2472,6 +2472,13 @@ func AglMapReduce[K comparable, V, R any](m map[K]V, acc R, f func(R, DictEntry[
 	return acc
 }
 
+func AglMapReduceInto[K comparable, V, R any](m map[K]V, acc R, f func(*R, DictEntry[K, V]) AglVoid) R {
+	for k, v := range m {
+		f(&acc, DictEntry[K, V]{Key: k, Value: v})
+	}
+	return acc
+}
+
 func AglAssert(pred bool, msg ...string) {
 	if !pred {
 		m := ""
