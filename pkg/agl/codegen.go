@@ -1335,7 +1335,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 							out += fmt.Sprintf("%s := %s\n", varName, genEX) // temp variable to store the map value
 							out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, strings.Join(params, ", "), ellipsis)
-							out += g.prefix + fmt.Sprintf("%s = %s", genEX, varName) // put back the temp value in the map
+							out += g.prefix + fmt.Sprintf("%s = %s", genEX, varName) // put the temp value back in the map
 							return out
 						}
 					}
