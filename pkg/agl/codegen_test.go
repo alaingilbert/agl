@@ -9604,6 +9604,28 @@ func (m MyType) Iter() iter.Seq[int] {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen332(t *testing.T) {
+	src := `package main
+func main() {
+	for el in []int{1, 2, 3} {
+	}
+	for el in set[int]{1, 2, 3} {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for _, el := range []int{1, 2, 3} {
+	}
+	for el := range (AglSet[int]{1: {}, 2: {}, 3: {}}).Iter() {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

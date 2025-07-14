@@ -244,3 +244,20 @@ func main() {
 }`
 	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
 }
+
+func Test15(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	for el in []int{1, 2, 3} {
+		fmt.Print(el)
+	}
+	var mut tmp []int
+	for el in set[int]{1, 2, 3} {
+		tmp.Push(el)
+	}
+	fmt.Print(tmp.Sorted())
+}`
+	tassert.Equal(t, "123[1 2 3]", testGenOutput(src))
+}

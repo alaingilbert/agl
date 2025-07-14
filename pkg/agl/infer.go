@@ -2769,14 +2769,31 @@ func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 	infer.withEnv(func() {
-		if stmt.Init != nil {
-			infer.stmt(stmt.Init)
-		}
-		if stmt.Cond != nil {
-			infer.expr(stmt.Cond)
-		}
-		if stmt.Post != nil {
-			infer.stmt(stmt.Post)
+		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil && TryCast[*ast.BinaryExpr](stmt.Cond) {
+			cond := stmt.Cond.(*ast.BinaryExpr)
+			infer.expr(cond.Y)
+			yT := infer.GetType(cond.Y)
+			xName := cond.X.(*ast.Ident).Name
+			switch v := yT.(type) {
+			case types.ArrayType:
+				infer.SetType(cond.X, v.Elt)
+				infer.env.Define(cond.X, xName, v.Elt)
+			case types.SetType:
+				infer.SetType(cond.X, v.K)
+				infer.env.Define(cond.X, xName, v.K)
+			default:
+				panic("")
+			}
+		} else {
+			if stmt.Init != nil {
+				infer.stmt(stmt.Init)
+			}
+			if stmt.Cond != nil {
+				infer.expr(stmt.Cond)
+			}
+			if stmt.Post != nil {
+				infer.stmt(stmt.Post)
+			}
 		}
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)

@@ -1838,9 +1838,25 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 		post = strings.TrimSpace(g.genStmt(stmt.Post))
 		els = append(els, post)
 	}
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
+		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
+			if v.Op == token.IN {
+				yT := g.env.GetType(v.Y)
+				switch yT.(type) {
+				case types.SetType:
+					out += g.prefix + fmt.Sprintf("for %s := range (%s).Iter() {\n", g.genExpr(v.X), g.genExpr(v.Y))
+				default:
+					out += g.prefix + fmt.Sprintf("for _, %s := range %s {\n", g.genExpr(v.X), g.genExpr(v.Y))
+				}
+				out += body
+				out += g.prefix + "}\n"
+				return
+			}
+		}
+	}
 	tmp := strings.Join(els, "; ")
 	tmp = utils.SuffixIf(tmp, " ")
-	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	out += g.prefix + fmt.Sprintf("for %s{\n", tmp)
 	out += body
 	out += g.prefix + "}\n"
