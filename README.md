@@ -264,6 +264,7 @@ func main() {
         fmt.Println(el)
     }
     for (k, v) in map[string]u8{"a": 1, "b": 2, "b": 3} {
+        fmt.Println(k, v)
     }
 }
 ```
