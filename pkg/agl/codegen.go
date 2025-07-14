@@ -1316,11 +1316,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			case "Pop", "PopFront":
 				return fmt.Sprintf("AglVec%s((*[]%s)(&%s))", fnName, eltTStr, genEX)
 			case "Push":
-				var params []string
-				for _, el := range expr.Args {
-					params = append(params, g.genExpr(el))
-				}
-				paramsStr := strings.Join(params, ", ")
+				paramsStr := utils.MapJoin(expr.Args, func(arg ast.Expr) string { return g.genExpr(arg) }, ", ")
 				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
 				tmpoeXT := oeXT
 				if v, ok := tmpoeXT.(types.MutType); ok {
