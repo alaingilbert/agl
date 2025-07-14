@@ -9,7 +9,7 @@ var mut data [][]string
 var mut width, mut height int
 var mut antenasDict = map[string][](int, int){}
 
-func main () {
+func main() {
     fileContent := os.ReadFile("examples/adventOfCode2024/day8/data.txt")!
     data = string(fileContent).Lines().Map({ $0.Split("") })
     width = data.Len()
