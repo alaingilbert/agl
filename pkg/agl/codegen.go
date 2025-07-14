@@ -1848,12 +1848,12 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) (out string) {
 
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	var lhs, after string
-	t := g.env.GetType(stmt.Rhs[0])
-	if v, ok := t.(types.CustomType); ok {
-		t = v.W
+	rhsT := g.env.GetType(stmt.Rhs[0])
+	if v, ok := rhsT.(types.CustomType); ok {
+		rhsT = v.W
 	}
-	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](t) {
-		rhsT := t.(types.EnumType)
+	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](rhsT) {
+		enumT := rhsT.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
@@ -1863,16 +1863,16 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			var exprs []string
 			for i, x := range stmt.Lhs {
 				names = append(names, x.(*ast.Ident).Name)
-				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, rhsT.SubTyp, i))
+				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, enumT.SubTyp, i))
 			}
 			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
-	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](t) {
+	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
 		if len(stmt.Lhs) == 1 {
 			content1 := g.genExprs(stmt.Lhs)
 			lhs = content1
 		} else {
-			if v, ok := t.(types.TupleType); ok && v.KeepRaw {
+			if v, ok := rhsT.(types.TupleType); ok && v.KeepRaw {
 				lhs = g.genExprs(stmt.Lhs)
 			} else {
 				lhs = fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
