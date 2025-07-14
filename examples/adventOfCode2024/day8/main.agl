@@ -16,9 +16,8 @@ func main () {
     height = data.First()?.Len()
     for y, row := range data {
         for x, col := range row {
-            if col != "." && col != "#" {
-                antenasDict[col].Push((x, y))
-            }
+            guard col != "." && col != "#" else { continue }
+            antenasDict[col].Push((x, y))
         }
     }
     part1()
@@ -30,9 +29,7 @@ func part1() {
     for _, antenas := range antenasDict {
         for _, a1 := range antenas {
             for _, a2 := range antenas {
-                if a2 == a1 {
-                    continue
-                }
+                guard a2 != a1 else { continue }
                 dx := a2.0 - a1.0
                 dy := a2.1 - a1.1
                 pos := (a2.0 + dx, a2.1 + dy)
@@ -50,9 +47,7 @@ func part2() {
     for _, antenas := range antenasDict {
         for _, a1 := range antenas {
             for _, a2 := range antenas {
-                if a2 == a1 {
-                    continue
-                }
+                guard a2 != a1 else { continue }
                 dx := a2.0 - a1.0
                 dy := a2.1 - a1.1
                 pos := (a2.0, a2.1)
