@@ -1388,9 +1388,19 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 		case types.SetType:
 			fnName := e.Sel.Name
 			switch fnName {
-			case "Insert", "Remove", "Contains", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection",
+			case "Union", "Intersects":
+				arg0 := expr.Args[0]
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(arg0)
+				t := g.env.GetType(arg0)
+				switch v := t.(type) {
+				case types.ArrayType:
+					content2 = fmt.Sprintf("AglVec[%s](%s)", v.Elt.GoStrType(), content2)
+				}
+				return fmt.Sprintf("AglSet%s(%s, %s)", fnName, content1, content2)
+			case "Insert", "Remove", "Contains", "FormUnion", "Subtracting", "Subtract", "Intersection",
 				"FormIntersection", "SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset",
-				"IsSuperset", "IsStrictSuperset", "Equals", "IsDisjoint", "Intersects":
+				"IsSuperset", "IsStrictSuperset", "Equals", "IsDisjoint":
 				return fmt.Sprintf("AglSet%s(%s, %s)", fnName, g.genExpr(e.X), g.genExpr(expr.Args[0]))
 			case "Len", "Min", "Max", "Iter":
 				return fmt.Sprintf("AglSet%s(%s)", fnName, g.genExpr(e.X))
