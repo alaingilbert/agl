@@ -8974,7 +8974,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9038,7 +9037,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "Color", test.TypeAt(9, 2).String())
 	tassert.Equal(t, "mut Color", test.TypeAt(10, 2).String())
@@ -9190,7 +9188,6 @@ func AglStringMyLowercased(s string) string {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9209,7 +9206,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9236,7 +9232,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9259,7 +9254,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9346,7 +9340,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func (map[int]u8) Filter(func(DictEntry[int, u8]) bool) map[int]u8", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "int", test.TypeAt(4, 16).String())
@@ -9370,7 +9363,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
 	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
@@ -9465,7 +9457,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "[]int", test.TypeAt(7, 23).String())
 	testCodeGen1(t, test.GenCode(), expected)
@@ -9492,7 +9483,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
@@ -9521,7 +9511,6 @@ func main() {
 //}
 //`
 //	test := NewTest(src, WithMutEnforced(true))
-//	test.PrintErrors()
 //	tassert.Equal(t, 0, len(test.errs))
 //	testCodeGen1(t, test.GenCode(), expected)
 //}
