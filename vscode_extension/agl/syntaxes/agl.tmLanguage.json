@@ -44,7 +44,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.agl",
-				"match": "\\b(if|else|import|for|return|package|func|case|switch|match|default|mut|var|pub|continue|break|or_continue|or_break|or_return|guard|defer|range|enum|type)\\b"
+				"match": "\\b(if|else|import|for|return|package|func|case|switch|match|default|mut|var|pub|continue|break|or_continue|or_break|or_return|guard|defer|range|enum|type|in)\\b"
 			}]
 		},
 		"strings": {

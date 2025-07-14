@@ -1580,6 +1580,20 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 	xT := g.env.GetType(expr.X)
 	yT := g.env.GetType(expr.Y)
 	if xT != nil && yT != nil {
+		if op == "in" {
+			switch v := expr.Y.(type) {
+			case *ast.CompositeLit:
+				t := g.env.GetType(v)
+				switch v.Type.(type) {
+				case *ast.ArrayType:
+					t = t.(types.ArrayType).Elt
+					content2 = fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), content2)
+				}
+				p("?", v.Type, to(v.Type))
+			}
+			out := fmt.Sprintf("AglIn(%s, %s)", content1, content2)
+			return out
+		}
 		if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
 			if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
 				out := fmt.Sprintf("AglSetEquals(%s, %s)", content1, content2)
@@ -2701,7 +2715,6 @@ func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	return newSet
 }
 
-
 // AglSetFormUnion inserts the elements of the given sequence into the set.
 func AglSetFormUnion[T comparable](s AglSet[T], other Iterator[T]) {
 	for k := range other.Iter() {
@@ -3249,5 +3262,14 @@ func AglI8String(v int8) string { return aglImportStrconv.FormatInt(int64(v), 10
 func AglI16String(v int16) string { return aglImportStrconv.FormatInt(int64(v), 10) }
 func AglI32String(v int32) string { return aglImportStrconv.FormatInt(int64(v), 10) }
 func AglI64String(v int64) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+
+func AglIn[T comparable](e T, it Iterator[T]) bool {
+	for el := range it.Iter() {
+		if el == e {
+			return true
+		}
+	}
+	return false
+}
 `
 }

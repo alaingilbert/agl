@@ -129,6 +129,7 @@ const (
 	RANGE
 	RETURN
 	MUT
+	IN
 	PUB
 	GUARD
 
@@ -250,6 +251,7 @@ var tokens = [...]string{
 
 	INTERFACE: "interface",
 	MUT:       "mut",
+	IN:        "in",
 	PUB:       "pub",
 	MAP:       "map",
 	SET:       "set",
@@ -309,7 +311,7 @@ func (op Token) Precedence() int {
 		return 1
 	case LAND:
 		return 2
-	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
+	case EQL, NEQ, LSS, LEQ, GTR, GEQ, IN:
 		return 3
 	case ADD, SUB, OR, XOR:
 		return 4

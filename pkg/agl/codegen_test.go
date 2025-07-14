@@ -9532,6 +9532,40 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen330(t *testing.T) {
+	src := `package main
+func main() {
+	b1 := "c" in []string{"a", "b", "c", "d"}
+	b2 := "c" in set[string]{"a", "b", "c", "d"}
+	//b3 := "c" in ("a", "b", "c", "d")
+	//b4 := "c" in map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+	assert(b1 && b2)
+	if 4 in []int{1, 2, 3} {
+		assert(false)
+	}
+	if !(2 in []int{1, 2, 3}) {
+		assert(false)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	b1 := AglIn("c", AglVec[string]([]string{"a", "b", "c", "d"}))
+	b2 := AglIn("c", AglSet[string]{"a": {}, "b": {}, "c": {}, "d": {}})
+	AglAssert(b1 && b2, "assert failed line 7")
+	if AglIn(4, AglVec[int]([]int{1, 2, 3})) {
+		AglAssert(false, "assert failed line 9")
+	}
+	if !(AglIn(2, AglVec[int]([]int{1, 2, 3}))) {
+		AglAssert(false, "assert failed line 12")
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
