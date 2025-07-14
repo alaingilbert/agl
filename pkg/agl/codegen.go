@@ -1325,6 +1325,22 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				if v, ok := tmpoeXT.(types.MutType); ok {
 					tmpoeXT = v.W
 				}
+
+				// Push into a value of a mut map
+				if v, ok := e.X.(*ast.IndexExpr); ok {
+					ot := g.env.GetType(v.X)
+					t := types.Unwrap(ot)
+					if vv, ok := t.(types.MapType); ok {
+						if _, ok := vv.V.(types.MutType); !ok {
+							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+							out += fmt.Sprintf("%s := %s\n", varName, genEX)
+							out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, strings.Join(params, ", "), ellipsis)
+							out += g.prefix + fmt.Sprintf("%s = %s", genEX, varName)
+							return out
+						}
+					}
+				}
+
 				if _, ok := tmpoeXT.(types.StarType); ok {
 					return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX, strings.Join(params, ", "), ellipsis)
 				} else {

@@ -9393,6 +9393,26 @@ var m = make(map[int]int)
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen326(t *testing.T) {
+	src := `package main
+func main() {
+	mut m := map[int][]int{}
+	m[1].Push(1)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int][]int{}
+	aglTmp1 := m[1]
+	AglVecPush(&aglTmp1, 1)
+	m[1] = aglTmp1
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
