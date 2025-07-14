@@ -2812,6 +2812,9 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			case types.MapType:
 				infer.env.Define(stmt.Value, name, v.V)
 				infer.SetType(stmt.Value, v.V)
+			case types.SetType:
+				infer.env.Define(stmt.Value, name, v.K)
+				infer.SetType(stmt.Value, v.K)
 			default:
 				infer.errorf(stmt.Value, "%v %v", name, to(xT))
 				return
