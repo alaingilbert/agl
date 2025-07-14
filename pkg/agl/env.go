@@ -909,6 +909,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Map.Values", "func [K comparable, V any](m map[K]V) iter.Seq[V]")
 		e.DefineFn(nenv, "agl1.Map.Filter", "func [K comparable, V any](m map[K]V, f func(DictEntry[K, V]) bool) map[K]V")
 		e.DefineFn(nenv, "agl1.Map.Map", "func [K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R")
+		e.DefineFn(nenv, "agl1.Map.Reduce", "func [K comparable, V, R any](m map[K]V, R, f func(R, DictEntry[K, V]) R) R")
 		e.DefineFn(nenv, "agl1.Option.Unwrap", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or panic if None."))
 		e.DefineFn(nenv, "agl1.Option.UnwrapOr", "func [T any](t T) T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or a default if None."))
 		e.DefineFn(nenv, "agl1.Option.UnwrapOrDefault", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or the default if None."))

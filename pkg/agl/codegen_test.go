@@ -9439,6 +9439,38 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen328(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	mut m := map[int][]int{1: {1, 2}, 2: {3, 4}}
+	res := m.Reduce(map[int]u8{}, {
+	    mut acc := $0
+		acc[$1.Key] = u8($1.Value.Sum())
+	    return acc
+	})
+	fmt.Println(res)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int][]int{1: {1, 2}, 2: {3, 4}}
+	res := AglMapReduce(m, map[int]uint8{}, func(aglArg0 map[int]uint8, aglArg1 DictEntry[int, []int]) map[int]uint8 {
+		acc := aglArg0
+		acc[aglArg1.Key] = uint8(AglVecSum(aglArg1.Value))
+		return acc
+	})
+	fmt.Println(res)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[]int", test.TypeAt(7, 23).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

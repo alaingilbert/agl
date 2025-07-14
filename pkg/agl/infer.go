@@ -927,6 +927,13 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				if v, ok := callXTXT.(types.StructType); ok {
 					name := v.GetFieldName(callXT.Sel.Name)
 					t := infer.env.Get(name)
+
+					m := make(map[string]types.Type)
+					for _, pp := range v.TypeParams {
+						m[pp.Name] = pp.W
+					}
+					t = types.ReplGenM(t, m)
+
 					infer.SetType(callXT.Sel, t)
 					exprFunT = t
 				}
@@ -1725,6 +1732,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			getFnT.Params = getFnT.Params[1:]
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
+		} else if fnName == "Reduce" {
+			infer.inferMapReduce(expr, exprT, idTT)
 		} else if fnName == "Filter" {
 			fnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
 			if len(expr.Args) < 1 {
@@ -1788,7 +1797,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 			fnName = "ReduceInto"
 		}
 	}
-	fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTArr.Elt)
+	fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", eltT)
 	if fnName == "ReduceInto" {
 		fnT.Name = "Reduce"
 	}
@@ -1846,6 +1855,81 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		}
 	}
 	reduceFnT.Recv = []types.Type{idTArr}
+	reduceFnT.Params = reduceFnT.Params[1:]
+	infer.SetTypeForce(exprFun.Sel, reduceFnT)
+	infer.SetType(expr.Fun, reduceFnT)
+	infer.SetType(expr, reduceFnT.Return)
+}
+
+func (infer *FileInferrer) inferMapReduce(expr *ast.CallExpr, exprFun *ast.SelectorExpr, idTMap types.MapType) {
+	exprPos := infer.Pos(expr)
+	forceReturnType := infer.forceReturnType
+	forceReturnType = types.Unwrap(forceReturnType)
+	fnName := "Reduce"
+	if v, ok := expr.Args[0].(*ast.LabelledArg); ok {
+		if v.Label != nil && v.Label.Name == "into" {
+			exprFun.Sel.Name = "ReduceInto"
+			fnName = "ReduceInto"
+		}
+	}
+	fnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTMap.K).T("V", idTMap.V)
+	if fnName == "ReduceInto" {
+		fnT.Name = "Reduce"
+	}
+	if len(expr.Args) == 0 {
+		return
+	}
+	if forceReturnType != nil {
+		fnT = fnT.T("R", forceReturnType)
+	} else {
+		arg0T := infer.env.GetType2(expr.Args[0], infer.fset)
+		if r, ok := arg0T.(types.UntypedNumType); !ok {
+			noop(r) // TODO should add restriction on type R (cmp.Comparable?)
+			//fnT = fnT.T("R", r)
+		}
+	}
+	infer.SetType(exprFun.Sel, fnT)
+	infer.SetType(expr.Args[1], fnT.Params[2])
+	infer.SetType(expr, fnT.Return)
+	exprArg0 := expr.Args[0]
+	infer.withOptType(exprArg0, forceReturnType, func() {
+		infer.expr(exprArg0)
+	})
+	arg0T := infer.GetType(exprArg0)
+	reduceFnT := infer.env.GetType(exprFun.Sel).(types.FuncType)
+	ft := reduceFnT.GetParam(2).(types.FuncType)
+	if forceReturnType != nil {
+		arg0T = types.Unwrap(arg0T)
+		ft = ft.T("R", forceReturnType)
+		reduceFnT = reduceFnT.T("R", forceReturnType)
+		if !cmpTypes(arg0T, forceReturnType) {
+			infer.errorf(expr, "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
+			return
+		}
+		//} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
+		//	eltT = types.Unwrap(eltT)
+		//	ft = ft.T("R", eltT)
+		//	reduceFnT = reduceFnT.T("R", eltT)
+	} else {
+		arg0T = types.Unwrap(arg0T)
+		ft = ft.T("R", arg0T)
+		reduceFnT = reduceFnT.T("R", arg0T)
+	}
+	if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
+		infer.SetType(expr.Args[1], ft)
+	} else if _, ok := exprArg0.(*ast.FuncType); ok {
+		ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+		if !compareFunctionSignatures(ftReal, ft) {
+			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			return
+		}
+	} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+		if !compareFunctionSignatures(ftReal, ft) {
+			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			return
+		}
+	}
+	reduceFnT.Recv = []types.Type{idTMap}
 	reduceFnT.Params = reduceFnT.Params[1:]
 	infer.SetTypeForce(exprFun.Sel, reduceFnT)
 	infer.SetType(expr.Fun, reduceFnT)

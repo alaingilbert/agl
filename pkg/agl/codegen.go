@@ -1429,6 +1429,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(expr.Args[0])
 				return fmt.Sprintf("AglIdentity(AglMapMap(%s, %s))", content1, content2)
+			case "Reduce", "ReduceInto":
+				content1 := g.genExpr(e.X)
+				content2 := g.genExpr(expr.Args[0])
+				content3 := g.genExpr(expr.Args[1])
+				return fmt.Sprintf("AglMap%s(%s, %s, %s)", fnName, content1, content2, content3)
 			}
 		default:
 			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
@@ -2456,6 +2461,13 @@ func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
 func AglVecReduceInto[T, R any](a []T, acc R, f func(*R, T) AglVoid) R {
 	for _, v := range a {
 		f(&acc, v)
+	}
+	return acc
+}
+
+func AglMapReduce[K comparable, V, R any](m map[K]V, acc R, f func(R, DictEntry[K, V]) R) R {
+	for k, v := range m {
+		acc = f(acc, DictEntry[K, V]{Key: k, Value: v})
 	}
 	return acc
 }
