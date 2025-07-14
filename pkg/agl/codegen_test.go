@@ -9476,9 +9476,7 @@ func TestCodeGen329(t *testing.T) {
 import "fmt"
 func main() {
 	mut m := map[int][]int{1: {1, 2}, 2: {3, 4}}
-	res := m.Reduce(into: map[int]u8{}, {
-		$0[$1.Key] = u8($1.Value.Sum())
-	})
+	res := m.Reduce(into: map[int]u8{}, { $0[$1.Key] = u8($1.Value.Sum()) })
 	fmt.Println(res)
 }`
 	expected := `// agl:generated
