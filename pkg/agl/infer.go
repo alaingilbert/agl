@@ -2769,18 +2769,33 @@ func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 	infer.withEnv(func() {
-		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil && TryCast[*ast.BinaryExpr](stmt.Cond) && TryCast[*ast.Ident](stmt.Cond.(*ast.BinaryExpr).X) {
+		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil && TryCast[*ast.BinaryExpr](stmt.Cond) {
 			cond := stmt.Cond.(*ast.BinaryExpr)
 			infer.expr(cond.Y)
 			yT := infer.GetType(cond.Y)
-			xName := cond.X.(*ast.Ident).Name
+			var t types.Type
 			switch v := yT.(type) {
 			case types.ArrayType:
-				infer.SetType(cond.X, v.Elt)
-				infer.env.Define(cond.X, xName, v.Elt)
+				t = v.Elt
+				infer.SetType(cond.X, t)
 			case types.SetType:
-				infer.SetType(cond.X, v.K)
-				infer.env.Define(cond.X, xName, v.K)
+				t = v.K
+				infer.SetType(cond.X, t)
+			case types.MapType:
+				t = types.TupleType{Elts: []types.Type{v.K, v.V}}
+				infer.SetType(cond.X.(*ast.TupleExpr).Values[0], v.K)
+				infer.SetType(cond.X.(*ast.TupleExpr).Values[1], v.V)
+				infer.SetType(cond.X, t)
+			default:
+				panic("")
+			}
+			switch v := cond.X.(type) {
+			case *ast.Ident:
+				infer.env.Define(cond.X, v.Name, t)
+			case *ast.TupleExpr:
+				for i, e := range v.Values {
+					infer.env.Define(cond.X, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
+				}
 			default:
 				panic("")
 			}

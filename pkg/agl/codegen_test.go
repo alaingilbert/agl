@@ -9611,6 +9611,8 @@ func main() {
 	}
 	for el in set[int]{1, 2, 3} {
 	}
+	for (k, v) in map[int]int{1: 1, 2: 2, 3: 3} {
+	}
 }`
 	expected := `// agl:generated
 package main
@@ -9618,6 +9620,8 @@ func main() {
 	for _, el := range []int{1, 2, 3} {
 	}
 	for el := range (AglSet[int]{1: {}, 2: {}, 3: {}}).Iter() {
+	}
+	for k, v := range map[int]int{1: 1, 2: 2, 3: 3} {
 	}
 }
 `
