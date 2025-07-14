@@ -900,6 +900,27 @@ func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type
 	}
 }
 
+func (infer *FileInferrer) inferStructType(sT types.StructType, expr *ast.SelectorExpr) types.Type {
+	fieldName := expr.Sel.Name
+	name := sT.GetFieldName(fieldName)
+	t := infer.env.Get(name)
+
+	m := make(map[string]types.Type)
+	for _, pp := range sT.TypeParams {
+		m[pp.Name] = pp.W
+	}
+	t = types.ReplGenM(t, m)
+
+	if t != nil {
+		infer.SetType(expr.X, sT)
+		infer.SetType(expr.Sel, t)
+		infer.SetType(expr, t)
+	} else {
+		infer.SetType(expr.X, sT)
+	}
+	return t
+}
+
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	switch call := expr.Fun.(type) {
 	case *ast.SelectorExpr:
@@ -925,17 +946,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
 				callXTXT = types.Unwrap(callXTXT)
 				if v, ok := callXTXT.(types.StructType); ok {
-					name := v.GetFieldName(callXT.Sel.Name)
-					t := infer.env.Get(name)
-
-					m := make(map[string]types.Type)
-					for _, pp := range v.TypeParams {
-						m[pp.Name] = pp.W
-					}
-					t = types.ReplGenM(t, m)
-
-					infer.SetType(callXT.Sel, t)
-					exprFunT = t
+					exprFunT = infer.inferStructType(v, callXT)
 				}
 			} else {
 				//infer.SetType(callXT.X, )
@@ -2387,21 +2398,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	exprXIdTRaw = types.Unwrap(exprXIdTRaw)
 	switch exprXIdT := exprXIdTRaw.(type) {
 	case types.StructType:
-		fieldName := expr.Sel.Name
-		name := exprXIdT.GetFieldName(fieldName)
-		t := infer.env.Get(name)
-		m := make(map[string]types.Type)
-		for _, pp := range exprXIdT.TypeParams {
-			m[pp.Name] = pp.W
-		}
-		t = types.ReplGenM(t, m)
-		if f := t; f != nil {
-			infer.SetType(expr.X, exprXT)
-			infer.SetType(expr.Sel, f)
-			infer.SetType(expr, f)
-		} else {
-			infer.SetType(expr.X, exprXT)
-		}
+		infer.inferStructType(exprXIdT, expr)
 		return
 	case types.InterfaceType:
 		return
