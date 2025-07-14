@@ -266,6 +266,9 @@ func main() {
     for (k, v) in map[string]u8{"a": 1, "b": 2, "c": 3} {
         fmt.Println(k, v)
     }
+    for (a, b, c) in [](int, string, bool){(1, "foo", true), (2, "bar", false)} {
+        fmt.Println(a, b, c)
+    }
 }
 ```
 
