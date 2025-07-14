@@ -1592,7 +1592,11 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 					kT := t.(types.MapType).K
 					vT := t.(types.MapType).V
 					content2 = fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), content2)
+				default:
+					panic(fmt.Sprintf("%v", to(v.Type)))
 				}
+			default:
+				panic(fmt.Sprintf("%v", to(expr.Y)))
 			}
 			out := fmt.Sprintf("AglIn(%s, %s)", content1, content2)
 			return out
