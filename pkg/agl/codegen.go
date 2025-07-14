@@ -262,8 +262,8 @@ func (g *Generator) Generate() (out string) {
 	out1 := g.genPackage()
 	out2 := g.genImports(g.a)
 	out3 := g.genImports(g.b)
-	out4 := g.genDeclsB()
-	out5 := g.genDecls()
+	out4 := g.genDecls(g.b)
+	out5 := g.genDecls(g.a)
 	var extStringStr string
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
 		extStringStr += g.genExtensionString(g.extensionsString[extKey])
@@ -2114,8 +2114,8 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) (out string) {
 	return out
 }
 
-func (g *Generator) genDecls() (out string) {
-	for _, decl := range g.a.Decls {
+func (g *Generator) genDecls(f *ast.File) (out string) {
+	for _, decl := range f.Decls {
 		switch declT := decl.(type) {
 		case *ast.FuncDecl:
 			fnT := g.env.GetType(declT)
@@ -2124,23 +2124,7 @@ func (g *Generator) genDecls() (out string) {
 			}
 		}
 	}
-	for _, decl := range g.a.Decls {
-		out += g.genDecl(decl)
-	}
-	return
-}
-
-func (g *Generator) genDeclsB() (out string) {
-	for _, decl := range g.b.Decls {
-		switch declT := decl.(type) {
-		case *ast.FuncDecl:
-			fnT := g.env.GetType(declT)
-			if fnT.(types.FuncType).IsGeneric() {
-				g.genFuncDecls[fnT.String()] = declT
-			}
-		}
-	}
-	for _, decl := range g.b.Decls {
+	for _, decl := range f.Decls {
 		out += g.genDecl(decl)
 	}
 	return
