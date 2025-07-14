@@ -1588,8 +1588,11 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
 				case *ast.ArrayType:
 					t = t.(types.ArrayType).Elt
 					content2 = fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), content2)
+				case *ast.MapType:
+					kT := t.(types.MapType).K
+					vT := t.(types.MapType).V
+					content2 = fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), content2)
 				}
-				p("?", v.Type, to(v.Type))
 			}
 			out := fmt.Sprintf("AglIn(%s, %s)", content1, content2)
 			return out
@@ -2598,6 +2601,8 @@ type DictEntry[K comparable, V any] struct {
 
 type AglMap[K comparable, V any] map[K]V
 
+func (m AglMap[K, V]) Iter() aglImportIter.Seq[K] { return AglMapKeys(m) }
+
 func (m AglMap[K, V]) Len() int { return len(m) }
 
 type AglSet[T comparable] map[T]struct{}
@@ -3199,11 +3204,11 @@ func AglMapMap[K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R
 	return out
 }
 
-func AglMapKeys[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[K] {
+func AglMapKeys[K comparable, V any](m map[K]V) aglImportIter.Seq[K] {
 	return aglImportMaps.Keys(m)
 }
 
-func AglMapValues[K comparable, V any](m map[K]V, index K) aglImportIter.Seq[V] {
+func AglMapValues[K comparable, V any](m map[K]V) aglImportIter.Seq[V] {
 	return aglImportMaps.Values(m)
 }
 
