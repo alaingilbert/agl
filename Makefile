@@ -7,6 +7,9 @@ cover:
 wasm:
 	GOOS=js GOARCH=wasm go build -o docs/main.wasm main.go
 
+e2e:
+	go test agl/e2eTests
+
 count:
 	@find \
 		./pkg/agl \
