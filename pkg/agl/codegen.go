@@ -1320,6 +1320,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				for _, el := range expr.Args {
 					params = append(params, g.genExpr(el))
 				}
+				paramsStr := strings.Join(params, ", ")
 				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
 				tmpoeXT := oeXT
 				if v, ok := tmpoeXT.(types.MutType); ok {
@@ -1334,7 +1335,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 						if _, ok := vv.V.(types.StarType); !ok {
 							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 							out += fmt.Sprintf("%s := %s\n", varName, genEX) // temp variable to store the map value
-							out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, strings.Join(params, ", "), ellipsis)
+							out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, paramsStr, ellipsis)
 							out += g.prefix + fmt.Sprintf("%s = %s", genEX, varName) // put the temp value back in the map
 							return out
 						}
@@ -1342,9 +1343,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				}
 
 				if _, ok := tmpoeXT.(types.StarType); ok {
-					return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX, strings.Join(params, ", "), ellipsis)
+					return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX, paramsStr, ellipsis)
 				} else {
-					return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, strings.Join(params, ", "), ellipsis)
+					return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX, paramsStr, ellipsis)
 				}
 			default:
 				extName := "agl1.Vec." + fnName
