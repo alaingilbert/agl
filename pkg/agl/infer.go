@@ -2769,7 +2769,7 @@ func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 	infer.withEnv(func() {
-		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil && TryCast[*ast.BinaryExpr](stmt.Cond) {
+		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil && TryCast[*ast.BinaryExpr](stmt.Cond) && TryCast[*ast.Ident](stmt.Cond.(*ast.BinaryExpr).X) {
 			cond := stmt.Cond.(*ast.BinaryExpr)
 			infer.expr(cond.Y)
 			yT := infer.GetType(cond.Y)
