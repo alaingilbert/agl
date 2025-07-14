@@ -1393,8 +1393,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 				arg0 := expr.Args[0]
 				content1 := g.genExpr(e.X)
 				content2 := g.genExpr(arg0)
-				t := g.env.GetType(arg0)
-				switch v := t.(type) {
+				switch v := g.env.GetType(arg0).(type) {
 				case types.ArrayType:
 					content2 = fmt.Sprintf("AglVec[%s](%s)", v.Elt.GoStrType(), content2)
 				}
