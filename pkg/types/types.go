@@ -695,6 +695,17 @@ func (f FuncType) T(name string, typ Type) FuncType {
 	return f.ReplaceGenericParameter(name, typ)
 }
 
+func (f FuncType) Concrete(typs []Type) FuncType {
+	var newParams []Type
+	for i, p := range f.TypeParams {
+		if _, ok := p.(GenericType); ok {
+			newParams = append(newParams, typs[i])
+		}
+	}
+	f.TypeParams = newParams
+	return f
+}
+
 func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	ff := f
 	newParams := make([]Type, 0)
@@ -886,8 +897,36 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	}
 }
 
-func (f FuncType) GoStr() string     { return f.Name }
-func (f FuncType) GoStrType() string { return f.Name }
+func (f FuncType) GoStr() string {
+	var typeParamsStr string
+	if f.TypeParams != nil {
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
+			switch v := t.(type) {
+			case GenericType:
+				return v.TypeParamGoStr()
+			default:
+				return t.GoStrType()
+			}
+		}, ", ")
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
+	}
+	return f.Name + typeParamsStr
+}
+func (f FuncType) GoStrType() string {
+	var typeParamsStr string
+	if f.TypeParams != nil {
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
+			switch v := t.(type) {
+			case GenericType:
+				return v.TypeParamGoStr()
+			default:
+				return t.GoStrType()
+			}
+		}, ", ")
+		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
+	}
+	return f.Name + typeParamsStr
+}
 
 func (f FuncType) GoStr1() string { // TODO
 	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string

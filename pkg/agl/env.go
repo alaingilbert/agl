@@ -475,7 +475,16 @@ func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token
 						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.FuncType:
-						t := nenv.GetType2(v, fset)
+						t := nenv.GetType2(v, fset).(types.FuncType)
+						t.Name = specName
+						if spec.TypeParams != nil {
+							for _, tp := range spec.TypeParams.List {
+								tpT := nenv.GetType2(tp.Type, fset)
+								for _, n := range tp.Names {
+									t.TypeParams = append(t.TypeParams, types.GenericType{Name: n.Name, W: tpT})
+								}
+							}
+						}
 						env.Define(nil, specName, t)
 					case *ast.InterfaceType:
 						var methodsT []types.InterfaceMethod

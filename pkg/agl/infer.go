@@ -540,6 +540,10 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 		if decl.Type.Result != nil {
 			infer.expr(decl.Type.Result)
 			returnTyp = infer.env.GetType2(decl.Type.Result, infer.fset)
+			if v, ok := decl.Type.Result.(*ast.IndexExpr); ok {
+				iT := infer.env.GetType2(v.Index, infer.fset)
+				returnTyp = returnTyp.(types.FuncType).Concrete([]types.Type{iT})
+			}
 			infer.SetType(decl.Type.Result, returnTyp)
 		}
 		infer.withReturnType(returnTyp, func() {
