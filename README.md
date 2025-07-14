@@ -263,6 +263,8 @@ func main() {
     for el in set[int]{1, 2, 3} {
         fmt.Println(el)
     }
+    for (k, v) in map[string]u8{"a": 1, "b": 2, "b": 3} {
+    }
 }
 ```
 
