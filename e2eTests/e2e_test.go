@@ -49,6 +49,7 @@ func testGenOutput(src string) string {
 }
 
 func Test1(t *testing.T) {
+	t.Parallel()
 	src := `package main
 import "fmt"
 func main() {
@@ -59,6 +60,7 @@ func main() {
 }
 
 func Test2(t *testing.T) {
+	t.Parallel()
 	src := `package main
 import "fmt"
 func test() int? { Some(42) }
@@ -70,6 +72,7 @@ func main() {
 }
 
 func Test3(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	a := []byte("test")
@@ -80,6 +83,7 @@ func main() {
 }
 
 func Test4(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	a := []byte("hello")
@@ -90,6 +94,7 @@ func main() {
 }
 
 func Test5(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	m := map[string]int{"a": 42}
@@ -99,6 +104,7 @@ func main() {
 }
 
 func Test6(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	m := map[string]int{"a": 1, "b": 2, "c": 3}
@@ -126,6 +132,7 @@ func main() {
 //}
 
 func Test8(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	a := []int{1, 2, 3}
@@ -138,6 +145,7 @@ func main() {
 }
 
 func Test9(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	a := []u8{3, 1, 2}
@@ -150,6 +158,7 @@ func main() {
 }
 
 func Test10(t *testing.T) {
+	t.Parallel()
 	src := `package main
 func main() {
 	a := []u8{1, 2, 3}
@@ -163,6 +172,7 @@ func main() {
 }
 
 func Test11(t *testing.T) {
+	t.Parallel()
 	src := `package main
 import "regexp"
 import "fmt"
@@ -176,6 +186,7 @@ func main() {
 }
 
 func Test12(t *testing.T) {
+	t.Parallel()
 	src := `package main
 import "fmt"
 func main() {
