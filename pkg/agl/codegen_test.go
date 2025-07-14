@@ -9413,6 +9413,32 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen327(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	mut m := map[int]*[]int{}
+	tmp := make([]int, 0)
+	m[1] = &tmp
+	m[1].Push(1)
+	fmt.Println(m[1])
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int]*[]int{}
+	tmp := make([]int, 0)
+	m[1] = &tmp
+	AglVecPush(m[1], 1)
+	fmt.Println(m[1])
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
