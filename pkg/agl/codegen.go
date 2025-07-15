@@ -2071,8 +2071,10 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 	gPrefix := g.prefix
 	ass := stmt.Ass
-	lhs := g.genExpr(ass.Lhs[0])
-	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
+	lhs0 := ass.Lhs[0]
+	rhs0 := ass.Rhs[0]
+	lhs := g.genExpr(lhs0)
+	rhs := g.incrPrefix(func() string { return g.genExpr(rhs0) })
 	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	var cond string
@@ -2088,7 +2090,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 	default:
 		panic("")
 	}
-	if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
+	if _, ok := rhs0.(*ast.TypeAssertExpr); ok {
 		out += gPrefix + fmt.Sprintf("%s, %s := %s\n", lhs, varName, rhs)
 		out += gPrefix + fmt.Sprintf("if !%s {\n", varName)
 		out += body
