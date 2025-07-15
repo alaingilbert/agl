@@ -894,7 +894,10 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 }
 
 func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
-	content1 := strings.TrimSpace(g.genStmt(expr.Assign))
+	var content1 string
+	g.WithInlineStmt(func() {
+		content1 = strings.TrimSpace(g.genStmt(expr.Assign))
+	})
 	var content2 string
 	if expr.Init != nil {
 		content2 = strings.TrimSpace(g.genStmt(expr.Init))
