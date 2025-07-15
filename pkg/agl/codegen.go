@@ -29,9 +29,7 @@ type Generator struct {
 	returnType       types.Type
 	extensions       map[string]Extension
 	extensionsString map[string]ExtensionString
-	swapGen          bool
 	genMap           map[string]types.Type
-	parent           *Generator
 	allowUnused      bool
 }
 
@@ -47,12 +45,9 @@ func (g *Generator) WithSub(clb func()) {
 }
 
 func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
-	prevSwapGen := g.swapGen
 	prev := g.genMap
-	g.swapGen = true
 	g.genMap = m
 	clb()
-	g.swapGen = prevSwapGen
 	g.genMap = prev
 }
 
@@ -213,7 +208,6 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			}
 		}
 		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
-		g.swapGen = true
 		g.WithGenMapping(m, func() {
 			if params := paramsClone; params != nil {
 				var fieldsItems []string
@@ -252,7 +246,6 @@ func (g *Generator) genExtension(e Extension) (out string) {
 				})
 				bodyStr = content
 			}
-			g.swapGen = false
 			out += fmt.Sprintf("func AglVec%s_%s%s(%s)%s {\n%s}", name, strings.Join(elts, "_"), typeParamsStr, paramsStr, resultStr, bodyStr)
 			out += "\n"
 		})
@@ -477,7 +470,7 @@ func (g *Generator) genIdent(expr *ast.Ident) (out string) {
 		t = v.W
 		switch typ := t.(type) {
 		case types.GenericType:
-			if g.swapGen && typ.IsType {
+			if typ.IsType {
 				for k, v := range g.genMap {
 					if typ.Name == k {
 						typ.Name = v.GoStr()
