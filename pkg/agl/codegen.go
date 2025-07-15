@@ -809,7 +809,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 			out += fmt.Sprintf("%s := %s\n", varName, content1)
 		}
 		if expr.Body != nil {
-			for _, c := range expr.Body.List {
+			for i, c := range expr.Body.List {
 				c := c.(*ast.MatchClause)
 				if v.Native {
 					switch v := c.Expr.(type) {
@@ -838,13 +838,16 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					return g.genStmts(c.Body)
 				})
 				out += content3
-				out += gPrefix + "}\n"
+				out += gPrefix + "}"
+				if i < len(expr.Body.List)-1 {
+					out += "\n"
+				}
 			}
 		}
 	case types.OptionType:
-		out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
+		out += fmt.Sprintf("%s := %s\n", varName, content1)
 		if expr.Body != nil {
-			for _, c := range expr.Body.List {
+			for i, c := range expr.Body.List {
 				c := c.(*ast.MatchClause)
 				switch v := c.Expr.(type) {
 				case *ast.SomeExpr:
@@ -858,7 +861,10 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 					return g.genStmts(c.Body)
 				})
 				out += content3
-				out += gPrefix + "}\n"
+				out += gPrefix + "}"
+				if i < len(expr.Body.List)-1 {
+					out += "\n"
+				}
 			}
 		}
 	case types.EnumType:
@@ -896,7 +902,6 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 	default:
 		panic(fmt.Sprintf("%v", to(initT)))
 	}
-	out = strings.TrimSpace(out)
 	return
 }
 
