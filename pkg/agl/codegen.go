@@ -727,10 +727,17 @@ func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {
 	return fmt.Sprintf("%s%s", expr.Op.String(), g.genExpr(expr.X))
 }
 
-func (g *Generator) genSendStmt(expr *ast.SendStmt) string {
+func (g *Generator) genSendStmt(expr *ast.SendStmt) (out string) {
 	content1 := g.genExpr(expr.Chan)
 	content2 := g.genExpr(expr.Value)
-	return g.prefix + fmt.Sprintf("%s <- %s\n", content1, content2)
+	if !g.inlineStmt {
+		out += g.prefix
+	}
+	out += fmt.Sprintf("%s <- %s", content1, content2)
+	if !g.inlineStmt {
+		out += "\n"
+	}
+	return
 }
 
 func (g *Generator) genSelectStmt(expr *ast.SelectStmt) (out string) {
@@ -906,7 +913,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 	})
 	var content2 string
 	if expr.Init != nil {
-		content2 = strings.TrimSpace(g.genStmt(expr.Init))
+		content2 = g.genStmt(expr.Init)
 	}
 	out += g.prefix + fmt.Sprintf("switch %s%s {\n", content2, content1)
 
@@ -958,7 +965,7 @@ func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 	var content1 string
 	if expr.Init != nil {
-		content1 = utils.SuffixIf(strings.TrimSpace(g.genStmt(expr.Init)), " ")
+		content1 = utils.SuffixIf(g.genStmt(expr.Init), " ")
 	}
 	var tagIsEnum bool
 	var content2 string
@@ -1010,7 +1017,9 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
 	var content1, content2 string
 	if expr.Comm != nil {
-		content1 = fmt.Sprintf("case %s:", strings.TrimSpace(g.genStmt(expr.Comm)))
+		g.WithInlineStmt(func() {
+			content1 = fmt.Sprintf("case %s:", g.genStmt(expr.Comm))
+		})
 	} else {
 		content1 = "default:"
 	}
