@@ -1945,7 +1945,10 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 				names = append(names, x.(*ast.Ident).Name)
 				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs, enumT.SubTyp, i))
 			}
-			after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+			if !g.inlineStmt {
+				after += g.prefix
+			}
+			after += fmt.Sprintf("%s := %s", strings.Join(names, ", "), strings.Join(exprs, ", "))
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
 		if len(stmt.Lhs) == 1 {
@@ -1964,7 +1967,10 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 					names = append(names, name)
 					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs, i))
 				}
-				after = g.prefix + fmt.Sprintf("%s := %s\n", strings.Join(names, ", "), strings.Join(exprs, ", "))
+				if !g.inlineStmt {
+					after += g.prefix
+				}
+				after += fmt.Sprintf("%s := %s", strings.Join(names, ", "), strings.Join(exprs, ", "))
 			}
 		}
 	} else if len(stmt.Lhs) == 1 && TryCast[*ast.IndexExpr](stmt.Lhs[0]) && TryCast[*ast.MapType](stmt.Lhs[0].(*ast.IndexExpr).X) {
@@ -2011,11 +2017,20 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 			}
 		}
 	}
-	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
+	if !g.inlineStmt {
+		out += g.prefix
+	}
+	out += fmt.Sprintf("%s %s %s", lhs, stmt.Tok.String(), content2)
+	if after != "" {
+		out += "\n"
+	}
 	if !g.inlineStmt && g.allowUnused {
-		out += g.prefix + fmt.Sprintf("AglNoop(%s)\n", lhs) // Allow to have "declared and not used" variables
+		out += "\n" + g.prefix + fmt.Sprintf("AglNoop(%s)", lhs) // Allow to have "declared and not used" variables
 	}
 	out += after
+	if !g.inlineStmt {
+		out += "\n"
+	}
 	return out
 }
 
@@ -2116,17 +2131,23 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 	var init string
 	if stmt.Init != nil {
 		g.WithInlineStmt(func() {
-			init = strings.TrimSpace(g.genStmt(stmt.Init)) + "; "
+			init = g.genStmt(stmt.Init) + "; "
 		})
 	}
 	gPrefix := g.prefix
-	out += gPrefix + "if " + init + cond + " {\n"
+	if !g.inlineStmt {
+		out += gPrefix
+	}
+	out += "if " + init + cond + " {\n"
 	out += body
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
 		case *ast.IfStmt, *ast.IfLetStmt:
-			content3 := g.genStmt(stmt.Else)
-			out += gPrefix + "} else " + strings.TrimSpace(content3) + "\n"
+			var content3 string
+			g.WithInlineStmt(func() {
+				content3 = g.genStmt(stmt.Else)
+			})
+			out += gPrefix + "} else " + content3
 		default:
 			content3 := g.incrPrefix(func() string {
 				return g.genStmt(stmt.Else)
