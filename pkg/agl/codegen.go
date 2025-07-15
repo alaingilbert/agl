@@ -1818,7 +1818,6 @@ func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) string {
 
 func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
 	content1 := g.genExpr(stmt.X)
-
 	var op string
 	switch stmt.Tok {
 	case token.INC:
@@ -1828,7 +1827,13 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
 	default:
 		panic("")
 	}
-	out += g.prefix + content1 + op + "\n"
+	if !g.inlineStmt {
+		out += g.prefix
+	}
+	out += content1 + op
+	if !g.inlineStmt {
+		out += "\n"
+	}
 	return
 }
 
@@ -1874,7 +1879,9 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 	var init, cond, post string
 	var els []string
 	if stmt.Init != nil {
-		init = strings.TrimSpace(g.genStmt(stmt.Init))
+		g.WithInlineStmt(func() {
+			init = g.genStmt(stmt.Init)
+		})
 		els = append(els, init)
 	}
 	if stmt.Cond != nil {
@@ -1882,7 +1889,9 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 		els = append(els, cond)
 	}
 	if stmt.Post != nil {
-		post = strings.TrimSpace(g.genStmt(stmt.Post))
+		g.WithInlineStmt(func() {
+			post = g.genStmt(stmt.Post)
+		})
 		els = append(els, post)
 	}
 	tmp := strings.Join(els, "; ")
