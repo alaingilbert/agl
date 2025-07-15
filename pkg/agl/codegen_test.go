@@ -9669,6 +9669,8 @@ func main() {
 	case int:
 	default:
 	}
+	b := 42
+	c, d := 1, 2
 }`
 	expected := `// agl:generated
 package main
@@ -9686,6 +9688,10 @@ func main() {
 	case int:
 	default:
 	}
+	b := 42
+	AglNoop(b)
+	c, d := 1, 2
+	AglNoop(c, d)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
