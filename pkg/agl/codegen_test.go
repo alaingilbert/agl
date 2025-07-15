@@ -3008,6 +3008,10 @@ func testSome() int? {
 func main() {
 	if Some(a) := testSome() {
 		fmt.Println(a)
+	} else if Some(b) := testSome() {
+		fmt.Println(b)
+	} else {
+		fmt.Println("else")
 	}
 }
 `
@@ -3021,6 +3025,11 @@ func main() {
 	if aglTmp1 := testSome(); aglTmp1.IsSome() {
 		a := aglTmp1.Unwrap()
 		fmt.Println(a)
+	} else if aglTmp2 := testSome(); aglTmp2.IsSome() {
+		b := aglTmp2.Unwrap()
+		fmt.Println(b)
+	} else {
+		fmt.Println("else")
 	}
 }
 `
