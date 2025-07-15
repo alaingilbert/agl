@@ -2060,15 +2060,10 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 
 	var init string
 	if stmt.Init != nil {
-		init = g.genStmt(stmt.Init)
-	}
-	var initStr string
-	init = strings.TrimSpace(init)
-	if init != "" {
-		initStr = init + "; "
+		init = strings.TrimSpace(g.genStmt(stmt.Init)) + "; "
 	}
 	gPrefix := g.prefix
-	out += gPrefix + "if " + initStr + cond + " {\n"
+	out += gPrefix + "if " + init + cond + " {\n"
 	out += body
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
