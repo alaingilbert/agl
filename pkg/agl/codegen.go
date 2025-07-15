@@ -21,7 +21,6 @@ type Generator struct {
 	a                *ast.File
 	b                *ast.File
 	prefix           string
-	before           []IBefore
 	beforeStmt       []IBefore
 	genFuncDecls2    map[string]string
 	tupleStructs     map[string]string
@@ -1770,10 +1769,6 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 		return g.genGenDecl(decl)
 	case *ast.FuncDecl:
 		out1 := g.genFuncDecl(decl)
-		for _, b := range g.before {
-			out += b.Content()
-		}
-		clear(g.before)
 		out += utils.SuffixIf(out1, "\n")
 		return
 	default:
