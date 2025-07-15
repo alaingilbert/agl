@@ -788,7 +788,7 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
 }
 
 func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
-	content1 := strings.TrimSpace(g.genExpr(expr.Init))
+	content1 := g.genExpr(expr.Init)
 	initT := g.env.GetType(expr.Init)
 	id := g.varCounter.Add(1)
 	varName := fmt.Sprintf(`aglTmp%d`, id)
@@ -902,7 +902,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 				n = vv.Name
 			}
 		}
-		content1 = strings.TrimSpace(g.genStmt(expr.Assign))
+		content1 = g.genStmt(expr.Assign)
 	})
 	var content2 string
 	if expr.Init != nil {
@@ -1922,7 +1922,13 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) (out string) {
 
 func (g *Generator) genExprStmt(stmt *ast.ExprStmt) (out string) {
 	content := g.genExpr(stmt.X)
-	out += g.prefix + content + "\n"
+	if !g.inlineStmt {
+		out += g.prefix
+	}
+	out += content
+	if !g.inlineStmt {
+		out += "\n"
+	}
 	return out
 }
 
@@ -2124,9 +2130,6 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 
 func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 	cond := g.genExpr(stmt.Cond)
-	body := g.incrPrefix(func() string {
-		return g.genStmt(stmt.Body)
-	})
 
 	var init string
 	if stmt.Init != nil {
@@ -2139,6 +2142,10 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 		out += gPrefix
 	}
 	out += "if " + init + cond + " {\n"
+	g.inlineStmt = false
+	body := g.incrPrefix(func() string {
+		return g.genStmt(stmt.Body)
+	})
 	out += body
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
