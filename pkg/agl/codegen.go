@@ -871,8 +871,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 		if expr.Body != nil {
 			for i, cc := range expr.Body.List {
 				c := cc.(*ast.MatchClause)
-				out += gPrefix
 				if i > 0 {
+					out += gPrefix
 					out += "} else "
 				}
 				switch cv := c.Expr.(type) {
@@ -897,7 +897,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 			}
 			out += gPrefix + fmt.Sprintf("} else {\n")
 			out += gPrefix + fmt.Sprintf("\tpanic(\"match on enum should be exhaustive\")\n")
-			out += gPrefix + fmt.Sprintf("}\n")
+			out += gPrefix + fmt.Sprintf("}")
 		}
 	default:
 		panic(fmt.Sprintf("%v", to(initT)))
