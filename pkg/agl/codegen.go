@@ -1108,7 +1108,7 @@ func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 			content2 = utils.PrefixIf(content2, " ")
 		}
 		names := strings.Join(namesArr, ", ")
-		out += gPrefix + "\t" + names + " " + content1 + content2 + "\n"
+		out += gPrefix + fmt.Sprintf("\t%s %s%s\n", names, content1, content2)
 	}
 	out += gPrefix + "}"
 	return
