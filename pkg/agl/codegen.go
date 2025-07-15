@@ -2039,8 +2039,15 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	default:
 		panic("")
 	}
-	out += gPrefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
-	out += gPrefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
+	if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
+		out += gPrefix + fmt.Sprintf("if %s, ok := %s; ok {\n", lhs, rhs)
+	} else {
+		out += gPrefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
+		out += gPrefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
+	}
+	if g.allowUnused {
+		out += gPrefix + fmt.Sprintf("\tAglNoop(%s)\n", lhs)
+	}
 	out += body
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
@@ -2081,11 +2088,21 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 	default:
 		panic("")
 	}
-	out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
-	out += gPrefix + fmt.Sprintf("if %s {\n", cond)
-	out += body
-	out += gPrefix + "}\n"
-	out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
+	if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
+		out += gPrefix + fmt.Sprintf("%s, %s := %s\n", lhs, varName, rhs)
+		out += gPrefix + fmt.Sprintf("if !%s {\n", varName)
+		out += body
+		out += gPrefix + "}\n"
+	} else {
+		out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
+		out += gPrefix + fmt.Sprintf("if %s {\n", cond)
+		out += body
+		out += gPrefix + "}\n"
+		out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
+	}
+	if g.allowUnused {
+		out += gPrefix + fmt.Sprintf("AglNoop(%s)\n", lhs)
+	}
 	return out
 }
 

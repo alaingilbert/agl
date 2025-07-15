@@ -9671,6 +9671,9 @@ func main() {
 	}
 	b := 42
 	c, d := 1, 2
+	if Some(e) := a.(int) {
+	}
+	guard Some(f) := a.(int) else { return }
 }`
 	expected := `// agl:generated
 package main
@@ -9692,6 +9695,14 @@ func main() {
 	AglNoop(b)
 	c, d := 1, 2
 	AglNoop(c, d)
+	if e, ok := a.(int); ok {
+		AglNoop(e)
+	}
+	f, aglTmp2 := a.(int)
+	if !aglTmp2 {
+		return
+	}
+	AglNoop(f)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
