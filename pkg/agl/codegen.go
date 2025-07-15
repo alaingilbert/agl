@@ -1767,9 +1767,7 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 	case *ast.FuncDecl:
 		out1 := g.genFuncDecl(decl)
 		for _, b := range g.before {
-			if b != nil {
-				out += b.Content()
-			}
+			out += b.Content()
 		}
 		clear(g.before)
 		out += utils.SuffixIf(out1, "\n")
