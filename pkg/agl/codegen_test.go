@@ -9655,6 +9655,24 @@ func AglVecEnumerated_T_int(v []int) []AglTupleStruct_int_int {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen333(t *testing.T) {
+	src := `package main
+func main() {
+	if a := 1; a > 0 {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	if a := 1; a > 0 {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

@@ -30,6 +30,7 @@ type Generator struct {
 	extensionsString map[string]ExtensionString
 	genMap           map[string]types.Type
 	allowUnused      bool
+	inlineStmt       bool
 }
 
 func (g *Generator) addBeforeStmt(s string) {
@@ -48,6 +49,13 @@ func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
 	g.genMap = m
 	clb()
 	g.genMap = prev
+}
+
+func (g *Generator) WithInlineStmt(clb func()) {
+	prev := g.inlineStmt
+	g.inlineStmt = true
+	clb()
+	g.inlineStmt = prev
 }
 
 type Extension struct {
@@ -1975,7 +1983,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		}
 	}
 	out = g.prefix + fmt.Sprintf("%s %s %s\n", lhs, stmt.Tok.String(), content2)
-	if g.allowUnused {
+	if !g.inlineStmt && g.allowUnused {
 		out += g.prefix + fmt.Sprintf("AglNoop(%s)\n", lhs) // Allow to have "declared and not used" variables
 	}
 	out += after
@@ -2060,7 +2068,9 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 
 	var init string
 	if stmt.Init != nil {
-		init = strings.TrimSpace(g.genStmt(stmt.Init)) + "; "
+		g.WithInlineStmt(func() {
+			init = strings.TrimSpace(g.genStmt(stmt.Init)) + "; "
+		})
 	}
 	gPrefix := g.prefix
 	out += gPrefix + "if " + init + cond + " {\n"
