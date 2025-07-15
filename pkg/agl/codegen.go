@@ -1768,9 +1768,7 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 	case *ast.GenDecl:
 		return g.genGenDecl(decl)
 	case *ast.FuncDecl:
-		out1 := g.genFuncDecl(decl)
-		out += utils.SuffixIf(out1, "\n")
-		return
+		return utils.SuffixIf(g.genFuncDecl(decl), "\n")
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
 	}
