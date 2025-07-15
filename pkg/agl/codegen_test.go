@@ -1,13 +1,14 @@
 package agl
 
 import (
+	"agl/pkg/utils"
 	"fmt"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
 )
 
-func getGenOutput(src string, opts ...GeneratorOption) string {
+func getGenOutput(src string, opts ...GeneratorOption) (string, string) {
 	fset, f, f2 := ParseSrc(src)
 	noop(f2)
 	env := NewEnv(fset)
@@ -16,15 +17,18 @@ func getGenOutput(src string, opts ...GeneratorOption) string {
 	errs := i.InferFile("", f, fset, true)
 	if len(errs) > 0 {
 		fmt.Println(errs)
-		return ""
+		return "", ""
 	}
 	g := NewGenerator(env, f, f2, fset, opts...)
-	return g.Generate()
+	return g.Generate2()
 }
 
 func testCodeGen(t *testing.T, src, expected string, opts ...GeneratorOption) {
-	got := getGenOutput(src, opts...)
-	testCodeGen1(t, got, expected)
+	got1, got2 := getGenOutput(src, opts...)
+	testCodeGen1(t, got1, expected)
+	if utils.False() {
+		testCodeGen1(t, got2, expected)
+	}
 }
 
 func testCodeGen1(t *testing.T, got, expected string) {
@@ -35,7 +39,7 @@ func testCodeGen1(t *testing.T, got, expected string) {
 
 func testCodeGenFn(src string) func() {
 	return func() {
-		_ = getGenOutput(src)
+		_, _ = getGenOutput(src)
 	}
 }
 
