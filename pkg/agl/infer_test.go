@@ -82,8 +82,8 @@ func NewTest(src string, opts ...TestOption) *Test {
 	}
 }
 
-func (t *Test) GenCode() string {
-	return NewGenerator(t.env, t.f, t.f2, t.fset).Generate()
+func (t *Test) GenCode(opts ...GeneratorOption) string {
+	return NewGenerator(t.env, t.f, t.f2, t.fset, opts...).Generate()
 }
 
 func (t *Test) TypeAt(row, col int) types.Type {

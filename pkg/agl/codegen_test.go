@@ -7,7 +7,7 @@ import (
 	tassert "github.com/stretchr/testify/assert"
 )
 
-func getGenOutput(src string) string {
+func getGenOutput(src string, opts ...GeneratorOption) string {
 	fset, f, f2 := ParseSrc(src)
 	noop(f2)
 	env := NewEnv(fset)
@@ -18,12 +18,12 @@ func getGenOutput(src string) string {
 		fmt.Println(errs)
 		return ""
 	}
-	g := NewGenerator(env, f, f2, fset)
+	g := NewGenerator(env, f, f2, fset, opts...)
 	return g.Generate()
 }
 
-func testCodeGen(t *testing.T, src, expected string) {
-	got := getGenOutput(src)
+func testCodeGen(t *testing.T, src, expected string, opts ...GeneratorOption) {
+	got := getGenOutput(src, opts...)
 	testCodeGen1(t, got, expected)
 }
 
