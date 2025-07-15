@@ -2071,8 +2071,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 	gPrefix := g.prefix
 	ass := stmt.Ass
-	lhs0 := ass.Lhs[0]
-	rhs0 := ass.Rhs[0]
+	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
 	lhs := g.genExpr(lhs0)
 	rhs := g.incrPrefix(func() string { return g.genExpr(rhs0) })
 	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
