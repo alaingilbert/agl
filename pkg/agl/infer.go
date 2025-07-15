@@ -1103,6 +1103,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		infer.langFns(expr, call)
+		if call.Name == "panic" && len(expr.Args) > 0 {
+			call.Name = "panicWith"
+		}
 		callT := infer.env.Get(call.Name)
 		if callT == nil {
 			infer.errorf(call, "Unresolved reference '%s'", call.Name)

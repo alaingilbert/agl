@@ -324,7 +324,8 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 		//e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 		e.DefineFn(nenv, "append", "func [T any](slice []T, elems ...T) []T")
 		e.DefineFn(nenv, "close", "func (c chan<- Type)")
-		e.DefineFn(nenv, "panic", "func (v any)")
+		e.DefineFn(nenv, "panic", "func ()")
+		e.DefineFn(nenv, "panicWith", "func (v any)")
 		e.DefineFn(nenv, "new", "func [T any](T) *T")
 	})
 }

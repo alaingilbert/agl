@@ -1463,6 +1463,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
 			}
 			out := strings.Join(contents, ", ")
 			return fmt.Sprintf("AglAssert(%s)", out)
+		} else if e.Name == "panic" {
+			return fmt.Sprintf("panic(nil)")
+		} else if e.Name == "panicWith" {
+			content1 := g.genExpr(expr.Args[0])
+			return fmt.Sprintf("panic(%s)", content1)
 		}
 	}
 	var content1, content2 string
