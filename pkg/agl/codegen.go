@@ -18,8 +18,7 @@ const GeneratedFilePrefix = "// agl:generated\n"
 type Generator struct {
 	fset             *token.FileSet
 	env              *Env
-	a                *ast.File
-	b                *ast.File
+	a, b             *ast.File
 	prefix           string
 	beforeStmt       []*BeforeStmt
 	genFuncDecls2    map[string]string
