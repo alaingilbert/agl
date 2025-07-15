@@ -2045,7 +2045,6 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	ass := stmt.Ass
 	lhs := g.genExpr(ass.Lhs[0])
 	rhs := g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) })
-	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	var cond string
 	unwrapFn := "Unwrap"
@@ -2061,20 +2060,32 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 		panic("")
 	}
 	if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
-		out += gPrefix + fmt.Sprintf("if %s, ok := %s; ok {\n", lhs, rhs)
+		if !g.inlineStmt {
+			out += gPrefix
+		}
+		out += fmt.Sprintf("if %s, ok := %s; ok {\n", lhs, rhs)
+		g.inlineStmt = false
 	} else {
-		out += gPrefix + fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
+		if !g.inlineStmt {
+			out += gPrefix
+		}
+		out += fmt.Sprintf("if %s := %s; %s {\n", varName, rhs, cond)
+		g.inlineStmt = false
 		out += gPrefix + fmt.Sprintf("\t%s := %s.%s()\n", lhs, varName, unwrapFn)
 	}
 	if g.allowUnused {
 		out += gPrefix + fmt.Sprintf("\tAglNoop(%s)\n", lhs)
 	}
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
 	out += body
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
 		case *ast.IfStmt, *ast.IfLetStmt:
-			content3 := g.genStmt(stmt.Else)
-			out += gPrefix + "} else " + strings.TrimSpace(content3) + "\n"
+			var content3 string
+			g.WithInlineStmt(func() {
+				content3 = g.genStmt(stmt.Else)
+			})
+			out += gPrefix + "} else " + content3
 		default:
 			content3 := g.incrPrefix(func() string {
 				return g.genStmt(stmt.Else)
