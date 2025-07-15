@@ -895,16 +895,43 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 
 func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 	var content1 string
+	var n string
 	g.WithInlineStmt(func() {
+		if v, ok := expr.Assign.(*ast.AssignStmt); ok && len(v.Lhs) == 1 {
+			if vv, ok := v.Lhs[0].(*ast.Ident); ok {
+				n = vv.Name
+			}
+		}
 		content1 = strings.TrimSpace(g.genStmt(expr.Assign))
 	})
 	var content2 string
 	if expr.Init != nil {
 		content2 = strings.TrimSpace(g.genStmt(expr.Init))
 	}
-	content3 := g.genStmt(expr.Body)
 	out += g.prefix + fmt.Sprintf("switch %s%s {\n", content2, content1)
-	out += content3
+
+	for _, ccr := range expr.Body.List {
+		cc := ccr.(*ast.CaseClause)
+		var listStr string
+		if cc.List != nil {
+			tmp := utils.MapJoin(cc.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+			listStr = "case " + tmp + ":\n"
+		} else {
+			listStr = "default:\n"
+		}
+		if g.allowUnused && n != "" {
+			listStr += g.prefix + fmt.Sprintf("\tAglNoop(%s)\n", n)
+		}
+		var content3 string
+		if cc.Body != nil {
+			content3 = g.incrPrefix(func() string {
+				return g.genStmts(cc.Body)
+			})
+		}
+		out += g.prefix + listStr
+		out += content3
+	}
+
 	out += g.prefix + "}\n"
 	return
 }

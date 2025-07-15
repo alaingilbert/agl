@@ -9660,11 +9660,31 @@ func TestCodeGen333(t *testing.T) {
 func main() {
 	if a := 1; a > 0 {
 	}
+	var a any
+	switch b := a.(type) {
+	case int:
+	default:
+	}
+	switch a.(type) {
+	case int:
+	default:
+	}
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	if a := 1; a > 0 {
+	}
+	var a any
+	switch b := a.(type) {
+	case int:
+		AglNoop(b)
+	default:
+		AglNoop(b)
+	}
+	switch a.(type) {
+	case int:
+	default:
 	}
 }
 `
