@@ -36,6 +36,10 @@ type Generator struct {
 	allowUnused      bool
 }
 
+func (g *Generator) addBeforeStmt(s string) {
+	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(s))
+}
+
 func (g *Generator) WithSub(clb func()) {
 	prev := g.beforeStmt
 	g.beforeStmt = make([]IBefore, 0)
@@ -672,7 +676,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	}
 	before += "\n"
 	before += gPrefix + "}\n"
-	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
+	g.addBeforeStmt(before)
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -690,7 +694,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	}
 	before += "\n"
 	before += gPrefix + "}\n"
-	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
+	g.addBeforeStmt(before)
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -716,7 +720,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 		}
 	}
 	before += g.prefix + "}\n"
-	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
+	g.addBeforeStmt(before)
 	return fmt.Sprintf("AglIdentity(%s)", varName)
 }
 
@@ -1121,7 +1125,7 @@ func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 	before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
-	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(before))
+	g.addBeforeStmt(before)
 	return content1
 }
 
@@ -1181,14 +1185,14 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				tmpl := fmt.Sprintf("%s, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, exprXT.W.GoStr())
-				before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
-				g.beforeStmt = append(g.beforeStmt, before)
+				before := addPrefix(tmpl, g.prefix)
+				g.addBeforeStmt(before)
 				return fmt.Sprintf(`AglIdentity(%s)`, varName)
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				tmpl := fmt.Sprintf("%s := %s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, varName, g.returnType.(types.OptionType).W)
-				before2 := NewBeforeStmt(addPrefix(tmpl, g.prefix))
-				g.beforeStmt = append(g.beforeStmt, before2)
+				before2 := addPrefix(tmpl, g.prefix)
+				g.addBeforeStmt(before2)
 				out += fmt.Sprintf("%s.Unwrap()", varName)
 			}
 		} else {
@@ -1198,9 +1202,9 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 				varName := fmt.Sprintf("aglTmpVar%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
 				tmpl := fmt.Sprintf("%s, %s := %s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, content1, errName, errName)
-				before := NewBeforeStmt(addPrefix(tmpl, g.prefix))
+				before := addPrefix(tmpl, g.prefix)
 				out := fmt.Sprintf(`AglIdentity(%s)`, varName)
-				g.beforeStmt = append(g.beforeStmt, before)
+				g.addBeforeStmt(before)
 				return out
 			} else {
 				content1 := g.genExpr(expr.X)
@@ -1221,7 +1225,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			tmp += g.prefix + fmt.Sprintf("\tpanic(\"type assert failed\")\n")
 		}
 		tmp += g.prefix + fmt.Sprintf("}\n")
-		g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(tmp))
+		g.addBeforeStmt(tmp)
 		return varName
 	default:
 		panic("")
@@ -1235,28 +1239,28 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
 			tmpl := fmt.Sprintf("if %s := %%s; %s != nil {\n\treturn MakeResultErr[%%s](%s)\n}\n", errName, errName, errName)
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStrType()), g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before)
+			before := addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStrType()), g.prefix)
+			g.addBeforeStmt(before)
 			return `AglNoop()`
 		} else if exprXT.Native {
 			id := g.varCounter.Add(1)
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
 			tmpl := fmt.Sprintf("%s, %s := %%s\nif %s != nil {\n\treturn MakeResultErr[%%s](%s)\n}\n", varName, errName, errName, errName)
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W.GoStrType()), g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before)
+			before := addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W.GoStrType()), g.prefix)
+			g.addBeforeStmt(before)
 			return fmt.Sprintf(`AglIdentity(%s)`, varName)
 		} else if exprXT.ConvertToNone {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsErr() {\n\treturn MakeOptionNone[%%s]()\n}\n", varName, varName)
-			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStrType()), g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before2)
+			before2 := addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStrType()), g.prefix)
+			g.addBeforeStmt(before2)
 			out += varName + ".Unwrap()"
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsErr() {\n\treturn %s\n}\n", varName, varName, varName)
-			before2 := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl, content1), g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before2)
+			before2 := addPrefix(fmt.Sprintf(tmpl, content1), g.prefix)
+			g.addBeforeStmt(before2)
 			out += varName + ".Unwrap()"
 		}
 	} else {
@@ -1274,8 +1278,8 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
 			}
 			content1 := g.genExpr(expr.X)
-			before := NewBeforeStmt(addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix))
-			g.beforeStmt = append(g.beforeStmt, before)
+			before := addPrefix(fmt.Sprintf(tmpl1, content1), g.prefix)
+			g.addBeforeStmt(before)
 			return out
 		} else {
 			content1 := g.genExpr(expr.X)
