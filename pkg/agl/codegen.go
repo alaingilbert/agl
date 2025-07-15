@@ -928,8 +928,7 @@ func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 	var content1 string
 	if expr.Init != nil {
-		content1 = strings.TrimSpace(g.genStmt(expr.Init))
-		content1 = utils.SuffixIf(content1, " ")
+		content1 = utils.SuffixIf(strings.TrimSpace(g.genStmt(expr.Init)), " ")
 	}
 	var tagIsEnum bool
 	var content2 string
