@@ -21,7 +21,7 @@ type Generator struct {
 	a                *ast.File
 	b                *ast.File
 	prefix           string
-	beforeStmt       []IBefore
+	beforeStmt       []*BeforeStmt
 	genFuncDecls2    map[string]string
 	tupleStructs     map[string]string
 	genFuncDecls     map[string]*ast.FuncDecl
@@ -41,7 +41,7 @@ func (g *Generator) addBeforeStmt(s string) {
 
 func (g *Generator) WithSub(clb func()) {
 	prev := g.beforeStmt
-	g.beforeStmt = make([]IBefore, 0)
+	g.beforeStmt = make([]*BeforeStmt, 0)
 	clb()
 	g.beforeStmt = prev
 }
@@ -1698,10 +1698,7 @@ func (g *Generator) genStmts(s []ast.Stmt) (out string) {
 			content1 := g.genStmt(stmt)
 			var beforeStmtStr string
 			for _, b := range g.beforeStmt {
-				switch v := b.(type) {
-				case *BeforeStmt:
-					beforeStmtStr += v.Content()
-				}
+				beforeStmtStr += b.Content()
 			}
 			out += beforeStmtStr + content1
 		})
@@ -2240,32 +2237,16 @@ func (g *Generator) joinList(l *ast.FieldList) string {
 	return strings.Join(fieldsItems, ", ")
 }
 
-type IBefore interface {
-	Content() string
-}
-
-type BaseBefore struct {
+type BeforeStmt struct {
 	w string
 }
 
-func (b *BaseBefore) Content() string {
+func (b *BeforeStmt) Content() string {
 	return b.w
 }
 
-type BeforeStmt struct {
-	BaseBefore
-}
-
 func NewBeforeStmt(content string) *BeforeStmt {
-	return &BeforeStmt{BaseBefore{w: content}}
-}
-
-type BeforeFn struct {
-	BaseBefore
-}
-
-func NewBeforeFn(content string) *BeforeFn {
-	return &BeforeFn{BaseBefore{w: content}}
+	return &BeforeStmt{w: content}
 }
 
 func addPrefix(s, prefix string) string {
