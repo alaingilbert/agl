@@ -1658,8 +1658,9 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) (out string) {
 		isType = true
 		t = v.W
 	}
-	structName := types.ReplGenM(t, g.genMap).(types.TupleType).GoStr()
-	structName1 := types.ReplGenM(t, g.genMap).(types.TupleType).GoStr2()
+	tup := types.ReplGenM(t, g.genMap).(types.TupleType)
+	structName := tup.GoStr()
+	structName1 := tup.GoStr2()
 	var args []string
 	for i, x := range expr.Values {
 		xT := g.env.GetType2(x, g.fset)
@@ -1688,10 +1689,7 @@ func (g *Generator) genStmts(s []ast.Stmt) (out string) {
 	for _, stmt := range s {
 		g.WithSub(func() {
 			content1 := g.genStmt(stmt)
-			var beforeStmtStr string
-			for _, b := range g.beforeStmt {
-				beforeStmtStr += b.Content()
-			}
+			beforeStmtStr := utils.MapJoin(g.beforeStmt, func(b *BeforeStmt) string { return b.Content() }, "")
 			out += beforeStmtStr + content1
 		})
 	}
