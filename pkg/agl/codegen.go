@@ -212,7 +212,9 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			return ""
 		}
 		typeParamsStr := func() string { return "" }
-		var bodyStr, paramsStr, resultStr func() string
+		paramsStr := func() string { return "" }
+		resultStr := func() string { return "" }
+		bodyStr := func() string { return "" }
 		var name string
 		if decl.Name != nil {
 			name = decl.Name.Name
@@ -261,9 +263,6 @@ func (g *Generator) genExtension(e Extension) (out string) {
 						if len(field.Names) > 0 {
 							out += g.Emit(" ")
 						}
-						if i < len(params)-1 {
-							out += ", "
-						}
 						if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 							if _, ok := v.W.(types.FuncType); ok {
 								out += g.Emit(types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1())
@@ -277,6 +276,9 @@ func (g *Generator) genExtension(e Extension) (out string) {
 							default:
 								out += g.genExpr(field.Type)()
 							}
+						}
+						if i < len(params)-1 {
+							out += ", "
 						}
 					}
 					return out
