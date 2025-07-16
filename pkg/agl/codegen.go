@@ -165,14 +165,14 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 					if _, ok := v.W.(types.FuncType); ok {
 						content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
 					} else {
-						content = g.genExpr(field.Type)
+						content = g.genExpr(field.Type)()
 					}
 				} else {
 					switch field.Type.(type) {
 					case *ast.TupleExpr:
 						content = g.env.GetType(field.Type).GoStr()
 					default:
-						content = g.genExpr(field.Type)
+						content = g.genExpr(field.Type)()
 					}
 				}
 				if i == 0 {
@@ -193,7 +193,7 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 		}
 		if decl.Body != nil {
 			content := g.incrPrefix(func() string {
-				return g.genStmt(decl.Body)
+				return g.genStmt(decl.Body)()
 			})
 			bodyStr = content
 		}
@@ -254,14 +254,14 @@ func (g *Generator) genExtension(e Extension) (out string) {
 						if _, ok := v.W.(types.FuncType); ok {
 							content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
 						} else {
-							content = g.genExpr(field.Type)
+							content = g.genExpr(field.Type)()
 						}
 					} else {
 						switch field.Type.(type) {
 						case *ast.TupleExpr:
 							content = g.env.GetType(field.Type).GoStr()
 						default:
-							content = g.genExpr(field.Type)
+							content = g.genExpr(field.Type)()
 						}
 					}
 					namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
@@ -279,7 +279,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 			}
 			if decl.Body != nil {
 				content := g.incrPrefix(func() string {
-					return g.genStmt(decl.Body)
+					return g.genStmt(decl.Body)()
 				})
 				bodyStr = content
 			}
@@ -321,7 +321,7 @@ func (g *Generator) Generate() (out string) {
 	for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls2)) {
 		genFuncDeclStr += g.genFuncDecls2[k]
 	}
-	return out + tupleStr + genFuncDeclStr + out4 + out5 + extStr + extStringStr
+	return out + tupleStr + genFuncDeclStr + out4() + out5() + extStr + extStringStr
 }
 
 func (g *Generator) PkgName() string {
@@ -356,7 +356,7 @@ func (g *Generator) genImports(f *ast.File) (out string) {
 	return
 }
 
-func (g *Generator) genStmt(s ast.Stmt) (out string) {
+func (g *Generator) genStmt(s ast.Stmt) (out SomethingTest) {
 	//p("genStmt", to(s))
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
@@ -412,7 +412,7 @@ func (g *Generator) genStmt(s ast.Stmt) (out string) {
 	}
 }
 
-func (g *Generator) genExpr(e ast.Expr) (out string) {
+func (g *Generator) genExpr(e ast.Expr) (out SomethingTest) {
 	//p("genExpr", to(e))
 	switch expr := e.(type) {
 	case *ast.MatchExpr:
@@ -498,53 +498,55 @@ func (g *Generator) genExpr(e ast.Expr) (out string) {
 	}
 }
 
-func (g *Generator) genIdent(expr *ast.Ident) (out string) {
-	if strings.HasPrefix(expr.Name, "$") {
-		beforeT := g.env.GetType(expr)
-		expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
-		g.env.SetType(nil, nil, expr, beforeT, g.fset)
-	}
-	if strings.HasPrefix(expr.Name, "@") {
-		expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Line), 1)
-		expr.Name = strings.Replace(expr.Name, "@COLUMN", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Column), 1)
-	}
-	t := g.env.GetType(expr)
-	if v, ok := t.(types.TypeType); ok {
-		t = v.W
-		switch typ := t.(type) {
-		case types.GenericType:
-			if typ.IsType {
-				for k, v := range g.genMap {
-					if typ.Name == k {
-						typ.Name = v.GoStr()
-						typ.W = v
+func (g *Generator) genIdent(expr *ast.Ident) (out SomethingTest) {
+	return func() string {
+		if strings.HasPrefix(expr.Name, "$") {
+			beforeT := g.env.GetType(expr)
+			expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
+			g.env.SetType(nil, nil, expr, beforeT, g.fset)
+		}
+		if strings.HasPrefix(expr.Name, "@") {
+			expr.Name = strings.Replace(expr.Name, "@LINE", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Line), 1)
+			expr.Name = strings.Replace(expr.Name, "@COLUMN", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Column), 1)
+		}
+		t := g.env.GetType(expr)
+		if v, ok := t.(types.TypeType); ok {
+			t = v.W
+			switch typ := t.(type) {
+			case types.GenericType:
+				if typ.IsType {
+					for k, v := range g.genMap {
+						if typ.Name == k {
+							typ.Name = v.GoStr()
+							typ.W = v
+						}
 					}
+					return g.Emit(typ.GoStr())
 				}
-				return g.Emit(typ.GoStr())
 			}
 		}
-	}
-	switch expr.Name {
-	case "make":
-		return g.Emit("make")
-	case "abs":
-		return g.Emit("AglAbs")
-	}
-	if v := g.env.Get(expr.Name); v != nil {
-		switch vv := v.(type) {
-		case types.TypeType:
-			return g.Emit(v.GoStr())
-		case types.FuncType:
-			name := expr.Name
-			if vv.Pub {
-				name = "AglPub_" + name
-			}
-			return g.Emit(name)
-		default:
-			return g.Emit(expr.Name)
+		switch expr.Name {
+		case "make":
+			return g.Emit("make")
+		case "abs":
+			return g.Emit("AglAbs")
 		}
+		if v := g.env.Get(expr.Name); v != nil {
+			switch vv := v.(type) {
+			case types.TypeType:
+				return g.Emit(v.GoStr())
+			case types.FuncType:
+				name := expr.Name
+				if vv.Pub {
+					name = "AglPub_" + name
+				}
+				return g.Emit(name)
+			default:
+				return g.Emit(expr.Name)
+			}
+		}
+		return g.Emit(expr.Name)
 	}
-	return g.Emit(expr.Name)
 }
 
 func (g *Generator) incrPrefix(clb func() string) string {
@@ -563,26 +565,30 @@ func (g *Generator) decrPrefix(clb func() string) string {
 	return out
 }
 
-func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) (out string) {
-	t := g.env.GetType(expr).(types.FuncType)
-	var returnStr, argsStr string
-	if len(t.Params) > 0 {
-		var tmp []string
-		for i, arg := range t.Params {
-			tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, types.ReplGenM(arg, g.genMap).GoStr()))
+func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) SomethingTest {
+	c1 := g.genStmt(expr.Body)
+	return func() string {
+		var out string
+		t := g.env.GetType(expr).(types.FuncType)
+		var returnStr, argsStr string
+		if len(t.Params) > 0 {
+			var tmp []string
+			for i, arg := range t.Params {
+				tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, types.ReplGenM(arg, g.genMap).GoStr()))
+			}
+			argsStr = strings.Join(tmp, ", ")
 		}
-		argsStr = strings.Join(tmp, ", ")
+		ret := types.ReplGenM(t.Return, g.genMap)
+		if ret != nil {
+			returnStr = " " + ret.GoStrType()
+		}
+		out = g.Emit(fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr))
+		out += g.incrPrefix(func() string {
+			return c1()
+		})
+		out += g.Emit(g.prefix + "}")
+		return out
 	}
-	ret := types.ReplGenM(t.Return, g.genMap)
-	if ret != nil {
-		returnStr = " " + ret.GoStrType()
-	}
-	out = g.Emit(fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr))
-	out += g.incrPrefix(func() string {
-		return g.genStmt(expr.Body)
-	})
-	out += g.Emit(g.prefix + "}")
-	return out
 }
 
 func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
@@ -643,38 +649,47 @@ func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
 	return out
 }
 
-func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) string {
+func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) SomethingTest {
 	if expr.Type != nil {
-		return g.genExpr(expr.X) + g.Emit(".(") + g.genExpr(expr.Type) + g.Emit(")")
+		c1 := g.genExpr(expr.X)
+		c2 := g.genExpr(expr.Type)
+		return func() string { return c1() + g.Emit(".(") + c2() + g.Emit(")") }
 	} else {
-		return g.genExpr(expr.X) + g.Emit(".(type)")
+		c1 := g.genExpr(expr.X)
+		return func() string { return c1() + g.Emit(".(type)") }
 	}
 }
 
-func (g *Generator) genStarExpr(expr *ast.StarExpr) string {
-	return g.Emit("*") + g.genExpr(expr.X)
+func (g *Generator) genStarExpr(expr *ast.StarExpr) func() string {
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("*") + c1() }
 }
 
-func (g *Generator) genMapType(expr *ast.MapType) string {
+func (g *Generator) genMapType(expr *ast.MapType) func() string {
 	t := g.env.GetType2(expr.Value, g.fset).GoStr()
-	return g.Emit("map[") + g.genExpr(expr.Key) + g.Emit("]"+t)
+	c1 := g.genExpr(expr.Key)
+	return func() string { return g.Emit("map[") + c1() + g.Emit("]"+t) }
 }
 
-func (g *Generator) genSomeExpr(expr *ast.SomeExpr) string {
-	return g.Emit("MakeOptionSome(") + g.genExpr(expr.X) + g.Emit(")")
+func (g *Generator) genSomeExpr(expr *ast.SomeExpr) func() string {
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("MakeOptionSome(") + c1() + g.Emit(")") }
 }
 
-func (g *Generator) genOkExpr(expr *ast.OkExpr) string {
-	return g.Emit("MakeResultOk(") + g.genExpr(expr.X) + g.Emit(")")
+func (g *Generator) genOkExpr(expr *ast.OkExpr) func() string {
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("MakeResultOk(") + c1() + g.Emit(")") }
 }
 
-func (g *Generator) genErrExpr(expr *ast.ErrExpr) string {
+func (g *Generator) genErrExpr(expr *ast.ErrExpr) func() string {
 	t := g.env.GetType(expr).(types.ErrType).T.GoStrType()
-	return g.Emit("MakeResultErr["+t+"](") + g.genExpr(expr.X) + g.Emit(")")
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("MakeResultErr["+t+"](") + c1() + g.Emit(")") }
 }
 
-func (g *Generator) genChanType(expr *ast.ChanType) string {
-	return g.Emit("chan ") + g.genExpr(expr.Value)
+func (g *Generator) genChanType(expr *ast.ChanType) func() string {
+	c1 := g.genExpr(expr.Value)
+	return func() string { return g.Emit("chan ") + c1() }
 }
 
 func getCheck(t types.Type) string {
@@ -688,144 +703,157 @@ func getCheck(t types.Type) string {
 	}
 }
 
-func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
-	content1 := g.genExpr(expr.X)
-	check := getCheck(g.env.GetType(expr.X))
+func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) SomethingTest {
+	c1 := g.genExpr(expr.X)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
 	g.addBeforeStmt(func() string {
-		out := ""
-		out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
-		out += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-		out += gPrefix + "\tbreak"
+		check := getCheck(g.env.GetType(expr.X))
+		out := g.Emit(gPrefix+varName+" := ") + c1() + g.Emit("\n")
+		out += g.Emit(gPrefix + "if " + varName + "." + check + " {\n")
+		out += g.Emit(gPrefix + "\tbreak")
 		if expr.Label != nil {
-			out += " " + expr.Label.String()
+			out += g.Emit(" " + expr.Label.String())
 		}
-		out += "\n"
-		out += gPrefix + "}\n"
+		out += g.Emit("\n")
+		out += g.Emit(gPrefix + "}\n")
 		return out
 	})
-	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
+	return func() string {
+		return g.Emit("AglIdentity(" + varName + ").Unwrap()")
+	}
 }
 
-func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
-	content1 := g.genExpr(expr.X)
-	check := getCheck(g.env.GetType(expr.X))
-	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	gPrefix := g.prefix
-	g.addBeforeStmt(func() string {
-		before := ""
-		before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
-		before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-		before += gPrefix + "\tcontinue"
-		if expr.Label != nil {
-			before += " " + expr.Label.String()
-		}
-		before += "\n"
-		before += gPrefix + "}\n"
-		return before
-	})
-	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
-}
-
-func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
-	content1 := g.genExpr(expr.X)
-	check := getCheck(g.env.GetType(expr.X))
-	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	g.addBeforeStmt(func() string {
-		out := ""
-		out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
-		out += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-		if g.returnType == nil {
-			out += g.prefix + "\treturn\n"
-		} else {
-			switch retT := g.returnType.(type) {
-			case types.ResultType:
-				out += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName)
-			case types.OptionType:
-				out += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W.GoStrType())
-			case types.VoidType:
-				out += g.prefix + fmt.Sprintf("\treturn\n")
-			default:
-				assert(false, "cannot use or_return in a function that does not return void/Option/Result")
+func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTest) {
+	return func() string {
+		content1 := g.genExpr(expr.X)()
+		check := getCheck(g.env.GetType(expr.X))
+		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+		gPrefix := g.prefix
+		g.addBeforeStmt(func() string {
+			before := ""
+			before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
+			before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+			before += gPrefix + "\tcontinue"
+			if expr.Label != nil {
+				before += " " + expr.Label.String()
 			}
-		}
-		out += g.prefix + "}\n"
-		return out
-	})
-	return fmt.Sprintf("AglIdentity(%s)", varName)
+			before += "\n"
+			before += gPrefix + "}\n"
+			return before
+		})
+		return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
+	}
 }
 
-func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) string {
-	return g.Emit(expr.Op.String()) + g.genExpr(expr.X)
+func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out SomethingTest) {
+	return func() string {
+		content1 := g.genExpr(expr.X)()
+		check := getCheck(g.env.GetType(expr.X))
+		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+		g.addBeforeStmt(func() string {
+			out := ""
+			out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
+			out += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+			if g.returnType == nil {
+				out += g.prefix + "\treturn\n"
+			} else {
+				switch retT := g.returnType.(type) {
+				case types.ResultType:
+					out += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName)
+				case types.OptionType:
+					out += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W.GoStrType())
+				case types.VoidType:
+					out += g.prefix + fmt.Sprintf("\treturn\n")
+				default:
+					assert(false, "cannot use or_return in a function that does not return void/Option/Result")
+				}
+			}
+			out += g.prefix + "}\n"
+			return out
+		})
+		return fmt.Sprintf("AglIdentity(%s)", varName)
+	}
 }
 
-func (g *Generator) genSendStmt(expr *ast.SendStmt) (out string) {
+func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) SomethingTest {
+	return NewTest1(g.Emit(expr.Op.String()) + g.genExpr(expr.X)())
+}
+
+func (g *Generator) genSendStmt(expr *ast.SendStmt) SomethingTest {
+	var out string
 	if !g.inlineStmt {
 		out += g.Emit(g.prefix)
 	}
-	out += g.genExpr(expr.Chan) + g.Emit(" <- ") + g.genExpr(expr.Value)
+	out += g.genExpr(expr.Chan)() + g.Emit(" <- ") + g.genExpr(expr.Value)()
 	if !g.inlineStmt {
 		out += g.Emit("\n")
 	}
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genSelectStmt(expr *ast.SelectStmt) (out string) {
+func (g *Generator) genSelectStmt(expr *ast.SelectStmt) SomethingTest {
+	var out string
 	out += g.Emit(g.prefix + "select {\n")
-	out += g.genStmt(expr.Body)
+	out += g.genStmt(expr.Body)()
 	out += g.Emit(g.prefix + "}\n")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) (out string) {
+func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) SomethingTest {
+	var out string
 	out += g.Emit(g.prefix + expr.Label.Name + ":\n")
-	out += g.genStmt(expr.Stmt)
-	return
+	out += g.genStmt(expr.Stmt)()
+	return NewTest1(out)
 }
 
-func (g *Generator) genBranchStmt(expr *ast.BranchStmt) (out string) {
+func (g *Generator) genBranchStmt(expr *ast.BranchStmt) SomethingTest {
+	var out string
 	out += g.Emit(g.prefix + expr.Tok.String())
 	if expr.Label != nil {
-		out += g.Emit(" ") + g.genExpr(expr.Label)
+		out += g.Emit(" ") + g.genExpr(expr.Label)()
 	}
 	out += g.Emit("\n")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genDeferStmt(expr *ast.DeferStmt) (out string) {
-	out += g.Emit(g.prefix+"defer ") + g.genExpr(expr.Call) + g.Emit("\n")
-	return
+func (g *Generator) genDeferStmt(expr *ast.DeferStmt) SomethingTest {
+	var out string
+	out += g.Emit(g.prefix+"defer ") + g.genExpr(expr.Call)() + g.Emit("\n")
+	return NewTest1(out)
 }
 
-func (g *Generator) genGoStmt(expr *ast.GoStmt) (out string) {
-	out += g.Emit(g.prefix+"go ") + g.genExpr(expr.Call) + g.Emit("\n")
-	return
+func (g *Generator) genGoStmt(expr *ast.GoStmt) SomethingTest {
+	var out string
+	out += g.Emit(g.prefix+"go ") + g.genExpr(expr.Call)() + g.Emit("\n")
+	return NewTest1(out)
 }
 
-func (g *Generator) genEmptyStmt(expr *ast.EmptyStmt) (out string) {
-	return
+func (g *Generator) genEmptyStmt(expr *ast.EmptyStmt) (out SomethingTest) {
+	return NewTest1("")
 }
 
-func (g *Generator) genMatchClause(expr *ast.MatchClause) (out string) {
+func (g *Generator) genMatchClause(expr *ast.MatchClause) SomethingTest {
+	var out string
 	switch v := expr.Expr.(type) {
 	case *ast.ErrExpr:
-		out += g.Emit(g.prefix+"case Err(") + g.genExpr(v.X) + g.Emit("):\n")
+		out += g.Emit(g.prefix+"case Err(") + g.genExpr(v.X)() + g.Emit("):\n")
 	case *ast.OkExpr:
-		out += g.Emit(g.prefix+"case Ok(") + g.genExpr(v.X) + g.Emit("):\n")
+		out += g.Emit(g.prefix+"case Ok(") + g.genExpr(v.X)() + g.Emit("):\n")
 	case *ast.SomeExpr:
-		out += g.Emit(g.prefix+"case Some(") + g.genExpr(v.X) + g.Emit("):\n")
+		out += g.Emit(g.prefix+"case Some(") + g.genExpr(v.X)() + g.Emit("):\n")
 	default:
 		panic("")
 	}
 	out += g.incrPrefix(func() string {
 		return g.genStmts(expr.Body)
 	})
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
-	content1 := g.genExpr(expr.Init)
+func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
+	var out string
+	content1 := g.genExpr(expr.Init)()
 	initT := g.env.GetType(expr.Init)
 	id := g.varCounter.Add(1)
 	varName := fmt.Sprintf(`aglTmp%d`, id)
@@ -844,11 +872,11 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 				if v.Native {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						binding := g.genExpr(v.X)
+						binding := g.genExpr(v.X)()
 						assignOp := utils.Ternary(binding == "_", "=", ":=")
 						out += gPrefix + fmt.Sprintf("if %s == nil {\n%s\t%s %s *%s\n", errName, gPrefix, binding, assignOp, varName)
 					case *ast.ErrExpr:
-						binding := g.genExpr(v.X)
+						binding := g.genExpr(v.X)()
 						assignOp := utils.Ternary(binding == "_", "=", ":=")
 						out += gPrefix + fmt.Sprintf("if %s != nil {\n%s\t%s %s %s\n", errName, gPrefix, binding, assignOp, errName)
 					default:
@@ -857,9 +885,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 				} else {
 					switch v := c.Expr.(type) {
 					case *ast.OkExpr:
-						out += gPrefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X)(), varName)
 					case *ast.ErrExpr:
-						out += gPrefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, gPrefix, g.genExpr(v.X), varName)
+						out += gPrefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, gPrefix, g.genExpr(v.X)(), varName)
 					default:
 						panic("")
 					}
@@ -881,7 +909,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 				c := c.(*ast.MatchClause)
 				switch v := c.Expr.(type) {
 				case *ast.SomeExpr:
-					out += gPrefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X), varName)
+					out += gPrefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X)(), varName)
 				case *ast.NoneExpr:
 					out += gPrefix + fmt.Sprintf("if %s.IsNone() {\n", varName)
 				default:
@@ -914,7 +942,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 						if id.(*ast.Ident).Name == "_" {
 							out += gPrefix + fmt.Sprintf("\t_ = %s\n", rhs)
 						} else {
-							out += gPrefix + fmt.Sprintf("\t%s := %s\n", g.genExpr(id), rhs)
+							out += gPrefix + fmt.Sprintf("\t%s := %s\n", g.genExpr(id)(), rhs)
 						}
 					}
 					out += gPrefix + g.genStmts(c.Body)
@@ -932,14 +960,15 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) (out string) {
 	default:
 		panic(fmt.Sprintf("%v", to(initT)))
 	}
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
+func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) SomethingTest {
+	var out string
 	e := func(s string) string { return g.Emit(s, WithNode(expr)) }
 	out += e(g.prefix + "switch ")
 	if expr.Init != nil {
-		out += g.genStmt(expr.Init)
+		out += g.genStmt(expr.Init)()
 	}
 	var n string
 	g.WithInlineStmt(func() {
@@ -948,7 +977,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 				n = vv.Name
 			}
 		}
-		out += g.genStmt(expr.Assign)
+		out += g.genStmt(expr.Assign)()
 	})
 	out += e(" {\n")
 
@@ -958,7 +987,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 		if cc.List != nil {
 			out += e("case ")
 			for i, el := range cc.List {
-				out += g.genExpr(el)
+				out += g.genExpr(el)()
 				if i < len(cc.List)-1 {
 					out += e(", ")
 				}
@@ -978,13 +1007,14 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) (out string) {
 	}
 
 	out += e(g.prefix + "}\n")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
+func (g *Generator) genCaseClause(expr *ast.CaseClause) SomethingTest {
+	var out string
 	var listStr string
 	if expr.List != nil {
-		tmp := utils.MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+		tmp := utils.MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el)() }, ", ")
 		listStr = "case " + tmp + ":\n"
 	} else {
 		listStr = "default:\n"
@@ -997,13 +1027,14 @@ func (g *Generator) genCaseClause(expr *ast.CaseClause) (out string) {
 	}
 	out += g.prefix + listStr
 	out += content1
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
+func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) SomethingTest {
+	var out string
 	var content1 string
 	if expr.Init != nil {
-		content1 = utils.SuffixIf(g.genStmt(expr.Init), " ")
+		content1 = utils.SuffixIf(g.genStmt(expr.Init)(), " ")
 	}
 	var tagIsEnum bool
 	var content2 string
@@ -1012,9 +1043,9 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 		switch tagT.(type) {
 		case types.EnumType:
 			tagIsEnum = true
-			content2 = utils.SuffixIf(g.genExpr(expr.Tag)+".Tag", " ")
+			content2 = utils.SuffixIf(g.genExpr(expr.Tag)()+".Tag", " ")
 		default:
-			content2 = utils.SuffixIf(g.genExpr(expr.Tag), " ")
+			content2 = utils.SuffixIf(g.genExpr(expr.Tag)(), " ")
 		}
 	}
 	out += g.prefix + fmt.Sprintf("switch %s%s{\n", content1, content2)
@@ -1029,11 +1060,11 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 					if sel, ok := el.(*ast.SelectorExpr); ok {
 						return fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name) // TODO: validate Sel.Name is an actual field
 					} else {
-						return g.genExpr(el)
+						return g.genExpr(el)()
 					}
 				}, ", ")
 			} else {
-				tmp = utils.MapJoin(expr1.List, func(el ast.Expr) string { return g.genExpr(el) }, ", ")
+				tmp = utils.MapJoin(expr1.List, func(el ast.Expr) string { return g.genExpr(el)() }, ", ")
 			}
 			listStr = "case " + tmp + ":\n"
 		} else {
@@ -1049,14 +1080,15 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) (out string) {
 		out += content3
 	}
 	out += g.prefix + "}\n"
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
+func (g *Generator) genCommClause(expr *ast.CommClause) SomethingTest {
+	var out string
 	out += g.Emit(g.prefix)
 	if expr.Comm != nil {
 		g.WithInlineStmt(func() {
-			out += g.Emit("case ") + g.genStmt(expr.Comm) + g.Emit(":")
+			out += g.Emit("case ") + g.genStmt(expr.Comm)() + g.Emit(":")
 		})
 	} else {
 		out += g.Emit("default:")
@@ -1065,10 +1097,10 @@ func (g *Generator) genCommClause(expr *ast.CommClause) (out string) {
 	if expr.Body != nil {
 		out += g.genStmts(expr.Body)
 	}
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
+func (g *Generator) genNoneExpr(expr *ast.NoneExpr) SomethingTest {
 	nT := types.ReplGenM(g.env.GetType(expr), g.genMap)
 	var typeStr string
 	switch v := nT.(type) {
@@ -1079,12 +1111,13 @@ func (g *Generator) genNoneExpr(expr *ast.NoneExpr) string {
 	default:
 		panic("")
 	}
-	return g.Emit("MakeOptionNone[" + typeStr + "]()")
+	return NewTest1(g.Emit("MakeOptionNone[" + typeStr + "]()"))
 }
 
-func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
+func (g *Generator) genInterfaceType(expr *ast.InterfaceType) SomethingTest {
+	var out string
 	if expr.Methods == nil || len(expr.Methods.List) == 0 {
-		return g.Emit("interface{}")
+		return NewTest1(g.Emit("interface{}"))
 	}
 	out += g.Emit("interface {\n")
 	if expr.Methods != nil {
@@ -1094,39 +1127,42 @@ func (g *Generator) genInterfaceType(expr *ast.InterfaceType) (out string) {
 		}
 	}
 	out += g.Emit("}")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genEllipsis(expr *ast.Ellipsis) string {
+func (g *Generator) genEllipsis(expr *ast.Ellipsis) SomethingTest {
 	content1 := g.incrPrefix(func() string {
-		return g.genExpr(expr.Elt)
+		return g.genExpr(expr.Elt)()
 	})
-	return "..." + content1
+	return NewTest1("..." + content1)
 }
 
-func (g *Generator) genParenExpr(expr *ast.ParenExpr) (out string) {
+func (g *Generator) genParenExpr(expr *ast.ParenExpr) SomethingTest {
+	var out string
 	out += g.Emit("(")
 	out += g.incrPrefix(func() string {
-		return g.genExpr(expr.X)
+		return g.genExpr(expr.X)()
 	})
 	out += g.Emit(")")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genFuncLit(expr *ast.FuncLit) (out string) {
-	out += g.genFuncType(expr.Type) + g.Emit(" {\n")
+func (g *Generator) genFuncLit(expr *ast.FuncLit) SomethingTest {
+	var out string
+	out += g.genFuncType(expr.Type)() + g.Emit(" {\n")
 	out += g.incrPrefix(func() string {
-		return g.genStmt(expr.Body)
+		return g.genStmt(expr.Body)()
 	})
 	out += g.Emit(g.prefix + "}")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genStructType(expr *ast.StructType) (out string) {
+func (g *Generator) genStructType(expr *ast.StructType) SomethingTest {
+	var out string
 	e := func(s string) string { return g.Emit(s, WithNode(expr)) }
 	gPrefix := g.prefix
 	if expr.Fields == nil || len(expr.Fields.List) == 0 {
-		return e("struct{}")
+		return NewTest1(e("struct{}"))
 	}
 	out += e("struct {\n")
 	for _, field := range expr.Fields.List {
@@ -1138,17 +1174,18 @@ func (g *Generator) genStructType(expr *ast.StructType) (out string) {
 			}
 		}
 		out += e(" ")
-		out += g.genExpr(field.Type)
+		out += g.genExpr(field.Type)()
 		if field.Tag != nil {
-			out += utils.PrefixIf(g.genExpr(field.Tag), " ")
+			out += utils.PrefixIf(g.genExpr(field.Tag)(), " ")
 		}
 		out += e("\n")
 	}
 	out += e(gPrefix + "}")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genFuncType(expr *ast.FuncType) (out string) {
+func (g *Generator) genFuncType(expr *ast.FuncType) SomethingTest {
+	var out string
 	out = g.Emit("func")
 	var typeParamsStr string
 	if typeParams := expr.TypeParams; typeParams != nil {
@@ -1172,7 +1209,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) (out string) {
 			if _, ok := field.Type.(*ast.TupleExpr); ok {
 				paramsStr += g.Emit(g.env.GetType(field.Type).GoStr())
 			} else {
-				paramsStr += g.genExpr(field.Type)
+				paramsStr += g.genExpr(field.Type)()
 			}
 			if i < len(params.List)-1 {
 				paramsStr += g.Emit(", ")
@@ -1183,29 +1220,30 @@ func (g *Generator) genFuncType(expr *ast.FuncType) (out string) {
 	out += g.Emit(")")
 	content1 := g.incrPrefix(func() string {
 		if expr.Result != nil {
-			return g.Emit(" ") + g.genExpr(expr.Result)
+			return g.Emit(" ") + g.genExpr(expr.Result)()
 		} else {
 			return ""
 		}
 	})
 	out += content1
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genIndexExpr(expr *ast.IndexExpr) (out string) {
-	out += g.genExpr(expr.X)
+func (g *Generator) genIndexExpr(expr *ast.IndexExpr) SomethingTest {
+	var out string
+	out += g.genExpr(expr.X)()
 	out += g.Emit("[")
-	out += g.genExpr(expr.Index)
+	out += g.genExpr(expr.Index)()
 	out += g.Emit("]")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genLabelledArg(expr *ast.LabelledArg) string {
+func (g *Generator) genLabelledArg(expr *ast.LabelledArg) SomethingTest {
 	return g.genExpr(expr.X)
 }
 
-func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
-	content1 := g.genExpr(expr.X)
+func (g *Generator) genDumpExpr(expr *ast.DumpExpr) SomethingTest {
+	content1 := g.genExpr(expr.X)()
 	safeContent1 := strconv.Quote(content1)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	g.addBeforeStmt(func() string {
@@ -1213,56 +1251,65 @@ func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
 		before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
 		return before
 	})
-	return content1
+	return NewTest1(content1)
 }
 
-func (g *Generator) genSliceExpr(expr *ast.SliceExpr) (out string) {
-	out += g.genExpr(expr.X)
-	out += g.Emit("[")
-	if expr.Low != nil {
-		out += g.genExpr(expr.Low)
-	}
-	out += g.Emit(":")
-	if expr.High != nil {
-		out += g.genExpr(expr.High)
-	}
-	if expr.Max != nil {
-		out += g.Emit(":")
-		out += g.genExpr(expr.Max)
-	}
-	out += g.Emit("]")
-	return
-}
-
-func (g *Generator) genIndexListType(expr *ast.IndexListExpr) string {
-	return g.genExpr(expr.X) + g.Emit("[") + g.genExprs(expr.Indices) + g.Emit("]")
-}
-
-func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) (out string) {
-	content1 := func() string { return g.genExpr(expr.X) }
-	name := expr.Sel.Name
-	t := types.Unwrap(g.env.GetType(expr.X))
-	switch t.(type) {
-	case types.TupleType:
-		name = "Arg" + name
-	case types.EnumType:
-		content2 := func() string { return g.genExpr(expr.Sel) }
+func (g *Generator) genSliceExpr(expr *ast.SliceExpr) SomethingTest {
+	return func() string {
 		var out string
-		if expr.Sel.Name == "RawValue" {
-			out = content1() + g.Emit(".") + content2()
-		} else {
-			out = g.Emit("Make_") + content1() + g.Emit("_") + content2()
-			if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
-				out += "()"
-			}
+		out += g.genExpr(expr.X)()
+		out += g.Emit("[")
+		if expr.Low != nil {
+			out += g.genExpr(expr.Low)()
 		}
+		out += g.Emit(":")
+		if expr.High != nil {
+			out += g.genExpr(expr.High)()
+		}
+		if expr.Max != nil {
+			out += g.Emit(":")
+			out += g.genExpr(expr.Max)()
+		}
+		out += g.Emit("]")
 		return out
 	}
-	out = content1() + g.Emit("."+name)
-	return
 }
 
-func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string) {
+func (g *Generator) genIndexListType(expr *ast.IndexListExpr) SomethingTest {
+	return func() string {
+		return g.genExpr(expr.X)() + g.Emit("[") + g.genExprs(expr.Indices) + g.Emit("]")
+	}
+}
+
+func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) SomethingTest {
+	return func() string {
+		var out string
+		content1 := func() string { return g.genExpr(expr.X)() }
+		name := expr.Sel.Name
+		t := types.Unwrap(g.env.GetType(expr.X))
+		switch t.(type) {
+		case types.TupleType:
+			name = "Arg" + name
+		case types.EnumType:
+			content2 := func() string { return g.genExpr(expr.Sel)() }
+			var out string
+			if expr.Sel.Name == "RawValue" {
+				out = content1() + g.Emit(".") + content2()
+			} else {
+				out = g.Emit("Make_") + content1() + g.Emit("_") + content2()
+				if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
+					out += "()"
+				}
+			}
+			return out
+		}
+		out = content1() + g.Emit("."+name)
+		return out
+	}
+}
+
+func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTest {
+	var out string
 	switch exprXT := g.env.GetInfo(expr.X).Type.(type) {
 	case types.OptionType:
 		if exprXT.Bubble {
@@ -1270,23 +1317,23 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + ", ok := " + content1 + "\n"
+					out := g.prefix + varName + ", ok := " + content1() + "\n"
 					out += g.prefix + "if !ok {\n"
 					out += g.prefix + "\treturn MakeOptionNone[" + exprXT.W.GoStr() + "]()\n"
 					out += g.prefix + "}\n"
 					return out
 				})
-				return g.Emit("AglIdentity(") + varName + g.Emit(")")
+				return func() string { return (g.Emit("AglIdentity(") + varName + g.Emit(")")) }
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + " := " + content1 + "\n"
+					out := g.prefix + varName + " := " + content1() + "\n"
 					out += g.prefix + "if " + varName + ".IsNone() {\n"
 					out += g.prefix + "\treturn MakeOptionNone[" + g.returnType.(types.OptionType).W.String() + "]()\n"
 					out += g.prefix + "}\n"
 					return out
 				})
-				out += varName + g.Emit(".Unwrap()")
+				return func() string { return varName + g.Emit(".Unwrap()") }
 			}
 		} else {
 			if exprXT.Native {
@@ -1296,21 +1343,19 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + ", " + errName + " := " + content1 + "\n"
+					out := g.prefix + varName + ", " + errName + " := " + content1() + "\n"
 					out += g.prefix + "if " + errName + " != nil {\n"
 					out += g.prefix + "\tpanic(" + errName + ")\n"
 					out += g.prefix + "}\n"
 					return out
 				})
-				return
+				return func() string { return (out) }
 			} else {
-				content1 := g.genExpr(expr.X)
-				out += content1 + g.Emit(".Unwrap()")
+				return func() string { return g.genExpr(expr.X)() + g.Emit(".Unwrap()") }
 			}
 		}
-		return
 	case types.TypeAssertType:
-		content1 := g.genExpr(expr.X)
+		content1 := g.genExpr(expr.X)()
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmpVar%d", id)
 		okName := fmt.Sprintf("aglTmpOk%d", id)
@@ -1325,464 +1370,478 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			tmp += g.prefix + fmt.Sprintf("}\n")
 			return tmp
 		})
-		return varName
+		return func() string { return (varName) }
 	default:
 		panic("")
 	}
 }
 
-func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string) {
+func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out SomethingTest) {
 	exprXT := MustCast[types.ResultType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
 		content1 := g.genExpr(expr.X)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.prefix + "if " + errName + " := " + content1 + "; " + errName + " != nil {\n"
+				out := g.prefix + "if " + errName + " := " + content1() + "; " + errName + " != nil {\n"
 				out += g.prefix + "\treturn MakeResultErr[" + exprXT.W.GoStrType() + "](" + errName + ")\n"
 				out += g.prefix + "}\n"
 				return out
 			})
-			return g.Emit(`AglNoop()`)
+			return func() string { return (g.Emit(`AglNoop()`)) }
 		} else if exprXT.Native {
 			id := g.varCounter.Add(1)
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
 			g.addBeforeStmt(func() string {
-				out := g.prefix + varName + ", " + errName + " := " + content1 + "\n"
+				out := g.prefix + varName + ", " + errName + " := " + content1() + "\n"
 				out += g.prefix + "if " + errName + " != nil {\n"
 				out += g.prefix + "\treturn MakeResultErr[" + g.returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n"
 				out += g.prefix + "}\n"
 				return out
 			})
-			return g.Emit("AglIdentity(") + varName + g.Emit(")")
+			return func() string { return (g.Emit("AglIdentity(") + varName + g.Emit(")")) }
 		} else if exprXT.ConvertToNone {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.prefix + varName + " := " + content1 + "\n"
+				out := g.prefix + varName + " := " + content1() + "\n"
 				out += g.prefix + "if " + varName + ".IsErr() {\n"
 				out += g.prefix + "\treturn MakeOptionNone[" + exprXT.ToNoneType.GoStrType() + "]()\n"
 				out += g.prefix + "}\n"
 				return out
 			})
-			out += varName + g.Emit(".Unwrap()")
+			return func() string { return (varName + g.Emit(".Unwrap()")) }
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.prefix + varName + " := " + content1 + "\n"
+				out := g.prefix + varName + " := " + content1() + "\n"
 				out += g.prefix + "if " + varName + ".IsErr() {\n"
 				out += g.prefix + "\treturn " + varName + "\n"
 				out += g.prefix + "}\n"
 				return out
 			})
-			out += varName + g.Emit(".Unwrap()")
+			return func() string { return (varName + g.Emit(".Unwrap()")) }
 		}
 	} else {
 		if exprXT.Native {
 			if _, ok := exprXT.W.(types.VoidType); ok {
 				tmpErrVar := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.prefix + tmpErrVar + " := " + g.genExpr(expr.X) + "\n"
+					out := g.prefix + tmpErrVar + " := " + g.genExpr(expr.X)() + "\n"
 					out += g.prefix + "if " + tmpErrVar + " != nil {\n"
 					out += g.prefix + "\tpanic(" + tmpErrVar + ")\n"
 					out += g.prefix + "}\n"
 					return out
 				})
-				out = g.Emit(`AglNoop()`)
+				return func() string { return (g.Emit(`AglNoop()`)) }
 			} else {
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmp%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
 				g.addBeforeStmt(func() string {
-					out := g.Emit(g.prefix+varName+", "+errName+" := ") + g.genExpr(expr.X) + g.Emit("\n")
+					out := g.Emit(g.prefix+varName+", "+errName+" := ") + g.genExpr(expr.X)() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + errName + ")\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
-				out = g.Emit("AglIdentity(" + varName + ")")
+				return func() string { return g.Emit("AglIdentity(" + varName + ")") }
 			}
-			return
 		} else {
-			out += g.genExpr(expr.X) + g.Emit(".Unwrap()")
+			return func() string { return (g.genExpr(expr.X)() + g.Emit(".Unwrap()")) }
 		}
 	}
-	return
 }
 
-func (g *Generator) genCallExpr(expr *ast.CallExpr) (out string) {
-	switch e := expr.Fun.(type) {
-	case *ast.SelectorExpr:
-		oeXT := g.env.GetType(e.X)
-		eXT := types.Unwrap(oeXT)
-		switch eXTT := eXT.(type) {
-		case types.ArrayType:
-			genEX := func() string { return g.genExpr(e.X) }
-			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]) }
-			eltT := types.ReplGenM(eXTT.Elt, g.genMap)
-			eltTStr := eltT.GoStr()
-			fnName := e.Sel.Name
-			switch fnName {
-			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
-				return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(")")
-			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
-				return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(", ") + genArgFn(0) + g.Emit(")")
-			case "Reduce", "ReduceInto":
-				return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(", ") + genArgFn(0) + g.Emit(", ") + genArgFn(1) + g.Emit(")")
-			case "Insert":
-				return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit("), ") + genArgFn(0) + g.Emit(", ") + genArgFn(1) + g.Emit(")")
-			case "PopIf", "PushFront", "Remove":
-				return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit("), ") + genArgFn(0) + g.Emit(")")
-			case "Pop", "PopFront":
-				return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit(")") + g.Emit(")")
-			case "Push":
-				paramsStr := utils.MapJoin(expr.Args, func(arg ast.Expr) string { return g.genExpr(arg) }, ", ")
-				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
-				tmpoeXT := oeXT
-				if v, ok := tmpoeXT.(types.MutType); ok {
-					tmpoeXT = v.W
-				}
-
-				// Push into a value of a mut map
-				if v, ok := e.X.(*ast.IndexExpr); ok {
-					ot := g.env.GetType(v.X)
-					t := types.Unwrap(ot)
-					if vv, ok := t.(types.MapType); ok {
-						if _, ok := vv.V.(types.StarType); !ok {
-							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-							out += fmt.Sprintf("%s := %s\n", varName, genEX()) // temp variable to store the map value
-							out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, paramsStr, ellipsis)
-							out += g.prefix + fmt.Sprintf("%s = %s", genEX(), varName) // put the temp value back in the map
-							return out
-						}
-					}
-				}
-
-				if _, ok := tmpoeXT.(types.StarType); ok {
-					return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX(), paramsStr, ellipsis)
-				} else {
-					return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX(), paramsStr, ellipsis)
-				}
-			default:
-				extName := "agl1.Vec." + fnName
-				rawFnT := g.env.Get(extName)
-				concreteT := g.env.GetType(expr.Fun)
-				m := types.FindGen(rawFnT, concreteT)
-				tmp := g.extensions[extName]
-				if tmp.gen == nil {
-					tmp.gen = make(map[string]ExtensionTest)
-				}
-				tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
-				g.extensions[extName] = tmp
-				var els []string
-				for _, k := range slices.Sorted(maps.Keys(m)) {
-					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
-				}
-				if _, ok := m["T"]; !ok {
-					recvTName := rawFnT.(types.FuncType).TypeParams[0].(types.GenericType).W.GoStr()
-					els = append(els, fmt.Sprintf("%s_%s", "T", recvTName))
-				}
-				elsStr := strings.Join(els, "_")
-				content2 := utils.PrefixIf(g.genExprs(expr.Args), ", ")
-				return g.Emit("AglVec"+fnName+"_") + elsStr + g.Emit("(") + genEX() + content2 + g.Emit(")")
-			}
-		case types.SetType:
-			fnName := e.Sel.Name
-			switch fnName {
-			case "Union", "FormUnion", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
-				"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint":
-				arg0 := expr.Args[0]
-				content2 := func() string {
-					switch v := g.env.GetType(arg0).(type) {
-					case types.ArrayType:
-						return g.Emit("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0) + g.Emit(")")
-					default:
-						return g.genExpr(arg0)
-					}
-				}
-				return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + content2() + g.Emit(")")
-			case "Insert", "Remove", "Contains", "Equals":
-				return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit(")")
-			case "Len", "Min", "Max", "Iter":
-				return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X) + g.Emit(")")
-			}
-		case types.I64Type:
-			fnName := e.Sel.Name
-			switch fnName {
-			case "String":
-				return g.Emit("AglI64String(") + g.genExpr(e.X) + g.Emit(")")
-			}
-		case types.StringType, types.UntypedStringType:
-			fnName := e.Sel.Name
-			switch fnName {
-			case "Replace":
-				return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit(", ") + g.genExpr(expr.Args[1]) + g.Emit(", ") + g.genExpr(expr.Args[2]) + g.Emit(")")
-			case "ReplaceAll":
-				return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit(", ") + g.genExpr(expr.Args[1]) + g.Emit(")")
-			case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
-				return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit(")")
-			case "TrimSpace", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
-				return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X) + g.Emit(")")
-			default:
-				extName := "agl1.String." + fnName
-				rawFnT := g.env.Get(extName)
-				tmp := g.extensionsString[extName]
-				if tmp.gen == nil {
-					tmp.gen = make(map[string]ExtensionTest)
-				}
-				tmp.gen[rawFnT.String()] = ExtensionTest{raw: rawFnT}
-				g.extensionsString[extName] = tmp
-				return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X) + g.Emit(")")
-			}
-		case types.MapType:
-			fnName := e.Sel.Name
-			switch fnName {
-			case "Len":
-				return g.Emit("AglIdentity(AglMapLen(") + g.genExpr(e.X) + "))"
-			case "Get":
-				return g.Emit("AglIdentity(AglMapIndex(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit("))")
-			case "ContainsKey":
-				return g.Emit("AglIdentity(AglMapContainsKey(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit("))")
-			case "Keys", "Values":
-				return g.Emit("AglIdentity(AglMap"+fnName+"(") + g.genExpr(e.X) + g.Emit("))")
-			case "Filter":
-				return g.Emit("AglIdentity(AglMapFilter(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit("))")
-			case "Map":
-				return g.Emit("AglIdentity(AglMapMap(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit("))")
-			case "Reduce", "ReduceInto":
-				return g.Emit("AglMap"+fnName+"(") + g.genExpr(e.X) + g.Emit(", ") + g.genExpr(expr.Args[0]) + g.Emit(", ") + g.genExpr(expr.Args[1]) + g.Emit(")")
-			}
-		default:
-			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
-				return g.Emit("AglNewSet(") + g.genExprs(expr.Args) + g.Emit(")")
-			} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
-				return g.Emit("AglHttpNewRequest(") + g.genExprs(expr.Args) + g.Emit(")")
-			}
-		}
-	case *ast.Ident:
-		if e.Name == "assert" {
-			out = g.Emit("AglAssert(")
-			var contents []func() string
-			for _, arg := range expr.Args {
-				contents = append(contents, func() string { return g.genExpr(arg) })
-			}
-			line := g.fset.Position(expr.Pos()).Line
-			msg := fmt.Sprintf(`"assert failed line %d"`, line)
-			if len(contents) == 1 {
-				contents = append(contents, func() string { return g.Emit(msg) })
-			} else {
-				tmp := contents[1]
-				contents[1] = func() string { return g.Emit(msg+` + " " + `) + tmp() }
-			}
-			for i, c := range contents {
-				out += c()
-				if i < len(contents)-1 {
-					out += g.Emit(", ")
-				}
-			}
-			out += g.Emit(")")
-			return
-		} else if e.Name == "panic" {
-			return g.Emit("panic(nil)")
-		} else if e.Name == "panicWith" {
-			return g.Emit("panic(") + g.genExpr(expr.Args[0]) + g.Emit(")")
-		}
-	}
-	content1 := func() string { return "" }
-	content2 := func() string { return "" }
-	switch v := expr.Fun.(type) {
-	case *ast.Ident:
-		t1 := g.env.Get(v.Name)
-		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
-			content1 = func() string { return v.Name }
-			content2 = func() string { return g.genExprs(expr.Args) }
-		} else {
-			if fnT, ok := t1.(types.FuncType); ok {
-				if !InArray(v.Name, []string{"make", "append", "len", "new", "AglAbs", "min", "max"}) && fnT.IsGeneric() {
-					oFnT := g.env.Get(v.Name)
-					newFnT := g.env.GetType(v)
-					fnDecl := g.genFuncDecls[oFnT.String()]
-					m := types.FindGen(oFnT, newFnT)
-					var outFnDecl string
-					g.WithGenMapping(m, func() {
-						outFnDecl = g.decrPrefix(func() string {
-							return g.genFuncDecl(fnDecl)
-						})
-					})
-					content1 = func() string {
-						out := g.genExpr(v)
-						for _, k := range slices.Sorted(maps.Keys(m)) {
-							out += fmt.Sprintf("_%s_%s", k, m[k].GoStr())
-						}
-						g.genFuncDecls2[out] = outFnDecl
-						return out
-					}
-					content2 = func() string {
-						var out string
-						g.WithGenMapping(m, func() {
-							out += g.genExprs(expr.Args)
-						})
-						return out
-					}
-				} else if v.Name == "make" {
-					content1 = func() string { return g.genExpr(v) }
-					content2 = func() string {
-						var out string
-						if g.genMap != nil {
-							out = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
-						} else {
-							out = g.genExpr(expr.Args[0])
-						}
-						if len(expr.Args) > 1 {
-							out += g.Emit(", ") + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr) }, ", ")
-						}
-						return out
-					}
-				} else {
-					content1 = func() string { return g.genExpr(expr.Fun) }
-					content2 = func() string { return g.genExprs(expr.Args) }
-				}
-			} else {
-				content1 = func() string { return g.genExpr(expr.Fun) }
-				content2 = func() string { return g.genExprs(expr.Args) }
-			}
-		}
-	default:
-		content1 = func() string { return g.genExpr(expr.Fun) }
-		content2 = func() string { return g.genExprs(expr.Args) }
-	}
-	out = content1() + g.Emit("(")
-	out += content2()
-	if expr.Ellipsis != 0 {
-		out += g.Emit("...")
-	}
-	out += g.Emit(")")
-	return
-}
-
-func (g *Generator) genSetType(expr *ast.SetType) string {
-	return g.Emit("AglSet[") + g.genExpr(expr.Key) + g.Emit("]")
-}
-
-func (g *Generator) genArrayType(expr *ast.ArrayType) (out string) {
-	out += g.Emit("[]")
-	switch v := expr.Elt.(type) {
-	case *ast.TupleExpr:
-		out += g.Emit(types.ReplGenM(g.env.GetType(v), g.genMap).GoStr())
-	default:
-		out += g.genExpr(expr.Elt)
-	}
-	return
-}
-
-func (g *Generator) genKeyValueExpr(expr *ast.KeyValueExpr) (out string) {
-	out += g.genExpr(expr.Key)
-	out += g.Emit(": ")
-	out += g.genExpr(expr.Value)
-	return
-}
-
-func (g *Generator) genResultExpr(expr *ast.ResultExpr) string {
-	return g.Emit("Result[") + g.genExpr(expr.X) + g.Emit("]")
-}
-
-func (g *Generator) genOptionExpr(expr *ast.OptionExpr) string {
-	return g.Emit("Option[") + g.genExpr(expr.X) + g.Emit("]")
-}
-
-func (g *Generator) genBasicLit(expr *ast.BasicLit) string {
-	return g.Emit(expr.Value)
-}
-
-func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) string {
-	content1 := func() string { return g.genExpr(expr.X) }
-	content2 := func() string { return g.genExpr(expr.Y) }
-	op := expr.Op.String()
-	xT := g.env.GetType(expr.X)
-	yT := g.env.GetType(expr.Y)
-	if xT != nil && yT != nil {
-		if op == "in" {
-			t := g.env.GetType(expr.Y)
-			switch t.(type) {
+func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
+	return func() string {
+		var out string
+		switch e := expr.Fun.(type) {
+		case *ast.SelectorExpr:
+			oeXT := g.env.GetType(e.X)
+			eXT := types.Unwrap(oeXT)
+			switch eXTT := eXT.(type) {
 			case types.ArrayType:
-				t = t.(types.ArrayType).Elt
-				content2 = func() string { return fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), g.genExpr(expr.Y)) }
-			case types.MapType:
-				kT := t.(types.MapType).K
-				vT := t.(types.MapType).V
-				content2 = func() string {
-					return fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), g.genExpr(expr.Y))
+				genEX := func() string { return g.genExpr(e.X)() }
+				genArgFn := func(i int) string { return g.genExpr(expr.Args[i])() }
+				eltT := types.ReplGenM(eXTT.Elt, g.genMap)
+				eltTStr := eltT.GoStr()
+				fnName := e.Sel.Name
+				switch fnName {
+				case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
+					return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(")")
+				case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
+					return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(", ") + genArgFn(0) + g.Emit(")")
+				case "Reduce", "ReduceInto":
+					return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(", ") + genArgFn(0) + g.Emit(", ") + genArgFn(1) + g.Emit(")")
+				case "Insert":
+					return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit("), ") + genArgFn(0) + g.Emit(", ") + genArgFn(1) + g.Emit(")")
+				case "PopIf", "PushFront", "Remove":
+					return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit("), ") + genArgFn(0) + g.Emit(")")
+				case "Pop", "PopFront":
+					return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit(")") + g.Emit(")")
+				case "Push":
+					paramsStr := utils.MapJoin(expr.Args, func(arg ast.Expr) string { return g.genExpr(arg)() }, ", ")
+					ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
+					tmpoeXT := oeXT
+					if v, ok := tmpoeXT.(types.MutType); ok {
+						tmpoeXT = v.W
+					}
+
+					// Push into a value of a mut map
+					if v, ok := e.X.(*ast.IndexExpr); ok {
+						ot := g.env.GetType(v.X)
+						t := types.Unwrap(ot)
+						if vv, ok := t.(types.MapType); ok {
+							if _, ok := vv.V.(types.StarType); !ok {
+								varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+								out += fmt.Sprintf("%s := %s\n", varName, genEX()) // temp variable to store the map value
+								out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, paramsStr, ellipsis)
+								out += g.prefix + fmt.Sprintf("%s = %s", genEX(), varName) // put the temp value back in the map
+								return out
+							}
+						}
+					}
+
+					if _, ok := tmpoeXT.(types.StarType); ok {
+						return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX(), paramsStr, ellipsis)
+					} else {
+						return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX(), paramsStr, ellipsis)
+					}
+				default:
+					extName := "agl1.Vec." + fnName
+					rawFnT := g.env.Get(extName)
+					concreteT := g.env.GetType(expr.Fun)
+					m := types.FindGen(rawFnT, concreteT)
+					tmp := g.extensions[extName]
+					if tmp.gen == nil {
+						tmp.gen = make(map[string]ExtensionTest)
+					}
+					tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
+					g.extensions[extName] = tmp
+					var els []string
+					for _, k := range slices.Sorted(maps.Keys(m)) {
+						els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+					}
+					if _, ok := m["T"]; !ok {
+						recvTName := rawFnT.(types.FuncType).TypeParams[0].(types.GenericType).W.GoStr()
+						els = append(els, fmt.Sprintf("%s_%s", "T", recvTName))
+					}
+					elsStr := strings.Join(els, "_")
+					content2 := utils.PrefixIf(g.genExprs(expr.Args), ", ")
+					return g.Emit("AglVec"+fnName+"_") + elsStr + g.Emit("(") + genEX() + content2 + g.Emit(")")
 				}
 			case types.SetType:
+				fnName := e.Sel.Name
+				switch fnName {
+				case "Union", "FormUnion", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
+					"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint":
+					arg0 := expr.Args[0]
+					content2 := func() string {
+						switch v := g.env.GetType(arg0).(type) {
+						case types.ArrayType:
+							return g.Emit("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0)() + g.Emit(")")
+						default:
+							return g.genExpr(arg0)()
+						}
+					}
+					return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + content2() + g.Emit(")")
+				case "Insert", "Remove", "Contains", "Equals":
+					return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit(")")
+				case "Len", "Min", "Max", "Iter":
+					return g.Emit("AglSet"+fnName+"(") + g.genExpr(e.X)() + g.Emit(")")
+				}
+			case types.I64Type:
+				fnName := e.Sel.Name
+				switch fnName {
+				case "String":
+					return g.Emit("AglI64String(") + g.genExpr(e.X)() + g.Emit(")")
+				}
+			case types.StringType, types.UntypedStringType:
+				fnName := e.Sel.Name
+				switch fnName {
+				case "Replace":
+					return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit(", ") + g.genExpr(expr.Args[1])() + g.Emit(", ") + g.genExpr(expr.Args[2])() + g.Emit(")")
+				case "ReplaceAll":
+					return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit(", ") + g.genExpr(expr.Args[1])() + g.Emit(")")
+				case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
+					return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit(")")
+				case "TrimSpace", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
+					return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X)() + g.Emit(")")
+				default:
+					extName := "agl1.String." + fnName
+					rawFnT := g.env.Get(extName)
+					tmp := g.extensionsString[extName]
+					if tmp.gen == nil {
+						tmp.gen = make(map[string]ExtensionTest)
+					}
+					tmp.gen[rawFnT.String()] = ExtensionTest{raw: rawFnT}
+					g.extensionsString[extName] = tmp
+					return g.Emit("AglString"+fnName+"(") + g.genExpr(e.X)() + g.Emit(")")
+				}
+			case types.MapType:
+				fnName := e.Sel.Name
+				switch fnName {
+				case "Len":
+					return g.Emit("AglIdentity(AglMapLen(") + g.genExpr(e.X)() + "))"
+				case "Get":
+					return g.Emit("AglIdentity(AglMapIndex(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit("))")
+				case "ContainsKey":
+					return g.Emit("AglIdentity(AglMapContainsKey(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit("))")
+				case "Keys", "Values":
+					return g.Emit("AglIdentity(AglMap"+fnName+"(") + g.genExpr(e.X)() + g.Emit("))")
+				case "Filter":
+					return g.Emit("AglIdentity(AglMapFilter(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit("))")
+				case "Map":
+					return g.Emit("AglIdentity(AglMapMap(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit("))")
+				case "Reduce", "ReduceInto":
+					return g.Emit("AglMap"+fnName+"(") + g.genExpr(e.X)() + g.Emit(", ") + g.genExpr(expr.Args[0])() + g.Emit(", ") + g.genExpr(expr.Args[1])() + g.Emit(")")
+				}
 			default:
-				panic(fmt.Sprintf("%v", to(t)))
-			}
-			return g.Emit("AglIn(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
-		}
-		if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
-			if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
-				var out string
-				if op == "!=" {
-					out += g.Emit("!")
+				if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
+					return g.Emit("AglNewSet(") + g.genExprs(expr.Args) + g.Emit(")")
+				} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
+					return g.Emit("AglHttpNewRequest(") + g.genExprs(expr.Args) + g.Emit(")")
 				}
-				out += g.Emit("AglSetEquals(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
+			}
+		case *ast.Ident:
+			if e.Name == "assert" {
+				out = g.Emit("AglAssert(")
+				var contents []func() string
+				for _, arg := range expr.Args {
+					contents = append(contents, func() string { return g.genExpr(arg)() })
+				}
+				line := g.fset.Position(expr.Pos()).Line
+				msg := fmt.Sprintf(`"assert failed line %d"`, line)
+				if len(contents) == 1 {
+					contents = append(contents, func() string { return g.Emit(msg) })
+				} else {
+					tmp := contents[1]
+					contents[1] = func() string { return g.Emit(msg+` + " " + `) + tmp() }
+				}
+				for i, c := range contents {
+					out += c()
+					if i < len(contents)-1 {
+						out += g.Emit(", ")
+					}
+				}
+				out += g.Emit(")")
 				return out
-			}
-		} else if TryCast[types.ArrayType](xT) && TryCast[types.ArrayType](yT) {
-			lhsT := types.Unwrap(xT.(types.ArrayType).Elt)
-			rhsT := types.Unwrap(yT.(types.ArrayType).Elt)
-			if op == "+" && g.env.Get("agl1.Vec.__ADD") != nil {
-				return g.Emit("AglVec__ADD(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
-			}
-			if TryCast[types.ByteType](lhsT) && TryCast[types.ByteType](rhsT) {
-				if op == "==" || op == "!=" {
-					var out string
-					if op == "!=" {
-						out += g.Emit("!")
-					}
-					out += g.Emit("AglBytesEqual(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
-					return out
-				}
-			}
-		} else if TryCast[types.StructType](xT) && TryCast[types.StructType](yT) {
-			lhsName := xT.(types.StructType).Name
-			rhsName := yT.(types.StructType).Name
-			if lhsName == rhsName {
-				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
-					var out string
-					if op == "!=" {
-						out += g.Emit("!")
-					}
-					out += content1() + g.Emit(".__EQL(") + content2() + g.Emit(")")
-					return out
-				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
-					return content1() + g.Emit(".__ADD(") + content2() + g.Emit(")")
-				} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
-					return content1() + g.Emit(".__SUB(") + content2() + g.Emit(")")
-				} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
-					return content1() + g.Emit(".__MUL(") + content2() + g.Emit(")")
-				} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
-					return content1() + g.Emit(".__QUO(") + content2() + g.Emit(")")
-				} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
-					return content1() + g.Emit(".__REM(") + content2() + g.Emit(")")
-				}
+			} else if e.Name == "panic" {
+				return g.Emit("panic(nil)")
+			} else if e.Name == "panicWith" {
+				return g.Emit("panic(") + g.genExpr(expr.Args[0])() + g.Emit(")")
 			}
 		}
+		content1 := func() string { return "" }
+		content2 := func() string { return "" }
+		switch v := expr.Fun.(type) {
+		case *ast.Ident:
+			t1 := g.env.Get(v.Name)
+			if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
+				content1 = func() string { return v.Name }
+				content2 = func() string { return g.genExprs(expr.Args) }
+			} else {
+				if fnT, ok := t1.(types.FuncType); ok {
+					if !InArray(v.Name, []string{"make", "append", "len", "new", "AglAbs", "min", "max"}) && fnT.IsGeneric() {
+						oFnT := g.env.Get(v.Name)
+						newFnT := g.env.GetType(v)
+						fnDecl := g.genFuncDecls[oFnT.String()]
+						m := types.FindGen(oFnT, newFnT)
+						var outFnDecl string
+						g.WithGenMapping(m, func() {
+							outFnDecl = g.decrPrefix(func() string {
+								return g.genFuncDecl(fnDecl)()
+							})
+						})
+						content1 = func() string {
+							out := g.genExpr(v)()
+							for _, k := range slices.Sorted(maps.Keys(m)) {
+								out += fmt.Sprintf("_%s_%s", k, m[k].GoStr())
+							}
+							g.genFuncDecls2[out] = outFnDecl
+							return out
+						}
+						content2 = func() string {
+							var out string
+							g.WithGenMapping(m, func() {
+								out += g.genExprs(expr.Args)
+							})
+							return out
+						}
+					} else if v.Name == "make" {
+						content1 = func() string { return g.genExpr(v)() }
+						content2 = func() string {
+							var out string
+							if g.genMap != nil {
+								out = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
+							} else {
+								out = g.genExpr(expr.Args[0])()
+							}
+							if len(expr.Args) > 1 {
+								out += g.Emit(", ") + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr)() }, ", ")
+							}
+							return out
+						}
+					} else {
+						content1 = func() string { return g.genExpr(expr.Fun)() }
+						content2 = func() string { return g.genExprs(expr.Args) }
+					}
+				} else {
+					content1 = func() string { return g.genExpr(expr.Fun)() }
+					content2 = func() string { return g.genExprs(expr.Args) }
+				}
+			}
+		default:
+			content1 = func() string { return g.genExpr(expr.Fun)() }
+			content2 = func() string { return g.genExprs(expr.Args) }
+		}
+		out = content1() + g.Emit("(")
+		out += content2()
+		if expr.Ellipsis != 0 {
+			out += g.Emit("...")
+		}
+		out += g.Emit(")")
+		return out
 	}
-	return content1() + g.Emit(" "+expr.Op.String()+" ") + content2()
 }
 
-func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
+func (g *Generator) genSetType(expr *ast.SetType) func() string {
+	return func() string {
+		return g.Emit("AglSet[") + g.genExpr(expr.Key)() + g.Emit("]")
+	}
+}
+
+func (g *Generator) genArrayType(expr *ast.ArrayType) SomethingTest {
+	return func() string {
+		var out string
+		out += g.Emit("[]")
+		switch v := expr.Elt.(type) {
+		case *ast.TupleExpr:
+			out += g.Emit(types.ReplGenM(g.env.GetType(v), g.genMap).GoStr())
+		default:
+			out += g.genExpr(expr.Elt)()
+		}
+		return out
+	}
+}
+
+func (g *Generator) genKeyValueExpr(expr *ast.KeyValueExpr) SomethingTest {
+	return func() string {
+		var out string
+		out += g.genExpr(expr.Key)()
+		out += g.Emit(": ")
+		out += g.genExpr(expr.Value)()
+		return out
+	}
+}
+
+func (g *Generator) genResultExpr(expr *ast.ResultExpr) SomethingTest {
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("Result[") + c1() + g.Emit("]") }
+}
+
+func (g *Generator) genOptionExpr(expr *ast.OptionExpr) SomethingTest {
+	c1 := g.genExpr(expr.X)
+	return func() string { return g.Emit("Option[") + c1() + g.Emit("]") }
+}
+
+func (g *Generator) genBasicLit(expr *ast.BasicLit) SomethingTest {
+	return func() string { return g.Emit(expr.Value) }
+}
+
+func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) SomethingTest {
+	return func() string {
+		content1 := func() string { return g.genExpr(expr.X)() }
+		content2 := func() string { return g.genExpr(expr.Y)() }
+		op := expr.Op.String()
+		xT := g.env.GetType(expr.X)
+		yT := g.env.GetType(expr.Y)
+		if xT != nil && yT != nil {
+			if op == "in" {
+				t := g.env.GetType(expr.Y)
+				switch t.(type) {
+				case types.ArrayType:
+					t = t.(types.ArrayType).Elt
+					content2 = func() string { return fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), g.genExpr(expr.Y)()) }
+				case types.MapType:
+					kT := t.(types.MapType).K
+					vT := t.(types.MapType).V
+					content2 = func() string {
+						return fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), g.genExpr(expr.Y)())
+					}
+				case types.SetType:
+				default:
+					panic(fmt.Sprintf("%v", to(t)))
+				}
+				return g.Emit("AglIn(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
+			}
+			if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
+				if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
+					var out string
+					if op == "!=" {
+						out += g.Emit("!")
+					}
+					out += g.Emit("AglSetEquals(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
+					return out
+				}
+			} else if TryCast[types.ArrayType](xT) && TryCast[types.ArrayType](yT) {
+				lhsT := types.Unwrap(xT.(types.ArrayType).Elt)
+				rhsT := types.Unwrap(yT.(types.ArrayType).Elt)
+				if op == "+" && g.env.Get("agl1.Vec.__ADD") != nil {
+					return g.Emit("AglVec__ADD(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
+				}
+				if TryCast[types.ByteType](lhsT) && TryCast[types.ByteType](rhsT) {
+					if op == "==" || op == "!=" {
+						var out string
+						if op == "!=" {
+							out += g.Emit("!")
+						}
+						out += g.Emit("AglBytesEqual(") + content1() + g.Emit(", ") + content2() + g.Emit(")")
+						return out
+					}
+				}
+			} else if TryCast[types.StructType](xT) && TryCast[types.StructType](yT) {
+				lhsName := xT.(types.StructType).Name
+				rhsName := yT.(types.StructType).Name
+				if lhsName == rhsName {
+					if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
+						var out string
+						if op == "!=" {
+							out += g.Emit("!")
+						}
+						out += content1() + g.Emit(".__EQL(") + content2() + g.Emit(")")
+						return out
+					} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
+						return content1() + g.Emit(".__ADD(") + content2() + g.Emit(")")
+					} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
+						return content1() + g.Emit(".__SUB(") + content2() + g.Emit(")")
+					} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
+						return content1() + g.Emit(".__MUL(") + content2() + g.Emit(")")
+					} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
+						return content1() + g.Emit(".__QUO(") + content2() + g.Emit(")")
+					} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
+						return content1() + g.Emit(".__REM(") + content2() + g.Emit(")")
+					}
+				}
+			}
+		}
+		return content1() + g.Emit(" "+expr.Op.String()+" ") + content2()
+	}
+}
+
+func (g *Generator) genCompositeLit(expr *ast.CompositeLit) SomethingTest {
+	var out string
 	if expr.Type != nil {
-		out += g.genExpr(expr.Type)
+		out += g.genExpr(expr.Type)()
 	}
 	if out == "AglVoid{}" {
-		return
+		return NewTest1(out)
 	}
 	out += g.Emit("{")
 	if expr.Type != nil && TryCast[types.SetType](g.env.GetType(expr.Type)) {
 		for i, el := range expr.Elts {
-			out += g.genExpr(el)
+			out += g.genExpr(el)()
 			out += g.Emit(": {}")
 			if i < len(expr.Elts)-1 {
 				out += g.Emit(", ")
@@ -1792,52 +1851,54 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) (out string) {
 		out += g.genExprs(expr.Elts)
 	}
 	out += g.Emit("}")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genTupleExpr(expr *ast.TupleExpr) string {
-	_ = g.genExprs(expr.Values)
-	t := g.env.GetType(expr)
-	var isType bool
-	if v, ok := t.(types.TypeType); ok {
-		isType = true
-		t = v.W
-	}
-	tup := types.ReplGenM(t, g.genMap).(types.TupleType)
-	structName := tup.GoStr()
-	structName1 := tup.GoStr2()
-	var args []string
-	for i, x := range expr.Values {
-		xT := g.env.GetType2(x, g.fset)
-		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
-	}
-	structStr := fmt.Sprintf("type %s struct {\n", structName1)
-	structStr += strings.Join(args, "")
-	structStr += "}\n"
-	g.tupleStructs[structName] = structStr
-	if isType {
-		return g.Emit(structName)
-	}
-	out := g.Emit(structName) + g.Emit("{")
-	for i, x := range expr.Values {
-		out += g.Emit(fmt.Sprintf("Arg%d: ", i))
-		out += g.Emit(g.genExpr(x))
-		if i < len(expr.Values)-1 {
-			out += g.Emit(", ")
+func (g *Generator) genTupleExpr(expr *ast.TupleExpr) func() string {
+	return func() string {
+		_ = g.genExprs(expr.Values)
+		t := g.env.GetType(expr)
+		var isType bool
+		if v, ok := t.(types.TypeType); ok {
+			isType = true
+			t = v.W
 		}
+		tup := types.ReplGenM(t, g.genMap).(types.TupleType)
+		structName := tup.GoStr()
+		structName1 := tup.GoStr2()
+		var args []string
+		for i, x := range expr.Values {
+			xT := g.env.GetType2(x, g.fset)
+			args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
+		}
+		structStr := fmt.Sprintf("type %s struct {\n", structName1)
+		structStr += strings.Join(args, "")
+		structStr += "}\n"
+		g.tupleStructs[structName] = structStr
+		if isType {
+			return g.Emit(structName)
+		}
+		out := g.Emit(structName) + g.Emit("{")
+		for i, x := range expr.Values {
+			out += g.Emit(fmt.Sprintf("Arg%d: ", i))
+			out += g.Emit(g.genExpr(x)())
+			if i < len(expr.Values)-1 {
+				out += g.Emit(", ")
+			}
+		}
+		out += g.Emit("}")
+		return out
 	}
-	out += g.Emit("}")
-	return out
 }
 
 func (g *Generator) genExprs(e []ast.Expr) (out string) {
 	for i, x := range e {
-		out += g.genExpr(x)
+		out += g.genExpr(x)()
 		if i < len(e)-1 {
 			out += g.Emit(", ")
 		}
 	}
-	return
+	return out
 }
 
 func (g *Generator) genStmts(s []ast.Stmt) (out string) {
@@ -1846,79 +1907,87 @@ func (g *Generator) genStmts(s []ast.Stmt) (out string) {
 			content1 := g.genStmt(stmt)
 			var beforeStmtStr string
 			for _, b := range g.beforeStmt {
-				beforeStmtStr += b.Content()
+				beforeStmtStr += b.w()
 			}
 			out += beforeStmtStr
-			out += content1
+			out += content1()
 		})
 	}
 	return out
 }
 
-func (g *Generator) genBlockStmt(stmt *ast.BlockStmt) (out string) {
-	return g.genStmts(stmt.List)
-}
-
-func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) (out string) {
-	for _, spec := range specs {
-		out += g.genSpec(spec, tok)
+func (g *Generator) genBlockStmt(stmt *ast.BlockStmt) SomethingTest {
+	return func() string {
+		return g.genStmts(stmt.List)
 	}
-	return
 }
 
-func (g *Generator) genSpec(s ast.Spec, tok token.Token) (out string) {
-	switch spec := s.(type) {
-	case *ast.ValueSpec:
-		e := func(s string) string { return g.Emit(s, WithNode(spec)) }
-		var namesArr []string
-		for _, name := range spec.Names {
-			namesArr = append(namesArr, name.Name)
+func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) SomethingTest {
+	return func() string {
+		var tmp string
+		for _, spec := range specs {
+			tmp += g.genSpec(spec, tok)()
 		}
-		out += e(g.prefix + tok.String() + " ")
-		out += e(strings.Join(namesArr, ", "))
-		if spec.Type != nil {
-			out += e(" ") + g.genExpr(spec.Type)
-		}
-		if spec.Values != nil {
-			out += e(" = ") + g.genExprs(spec.Values)
-		}
-		out += e("\n")
-		return
-	case *ast.TypeSpec:
-		e := func(s string) string { return g.Emit(s, WithNode(spec)) }
-		if v, ok := spec.Type.(*ast.EnumType); ok {
-			out += e(g.prefix) + g.genEnumType(spec.Name.Name, v) + e("\n")
-		} else {
-			out += e(g.prefix + "type " + spec.Name.Name)
-			if typeParams := spec.TypeParams; typeParams != nil {
-				if len(typeParams.List) > 0 {
-					out += e("[")
-				}
-				for i, field := range typeParams.List {
-					namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string {
-						return g.genIdent(n.Ident)
-					}, ", ")
-					namesStr = utils.SuffixIf(namesStr, " ")
-					out += e(namesStr) + g.genExpr(field.Type)
-					if i < len(typeParams.List)-1 {
-						out += e(", ")
+		return tmp
+	}
+}
+
+func (g *Generator) genSpec(s ast.Spec, tok token.Token) SomethingTest {
+	return func() string {
+		var out string
+		switch spec := s.(type) {
+		case *ast.ValueSpec:
+			e := func(s string) string { return g.Emit(s, WithNode(spec)) }
+			var namesArr []string
+			for _, name := range spec.Names {
+				namesArr = append(namesArr, name.Name)
+			}
+			out += e(g.prefix + tok.String() + " ")
+			out += e(strings.Join(namesArr, ", "))
+			if spec.Type != nil {
+				out += e(" ") + g.genExpr(spec.Type)()
+			}
+			if spec.Values != nil {
+				out += e(" = ") + g.genExprs(spec.Values)
+			}
+			out += e("\n")
+			return out
+		case *ast.TypeSpec:
+			e := func(s string) string { return g.Emit(s, WithNode(spec)) }
+			if v, ok := spec.Type.(*ast.EnumType); ok {
+				out += e(g.prefix) + g.genEnumType(spec.Name.Name, v) + e("\n")
+			} else {
+				out += e(g.prefix + "type " + spec.Name.Name)
+				if typeParams := spec.TypeParams; typeParams != nil {
+					if len(typeParams.List) > 0 {
+						out += e("[")
+					}
+					for i, field := range typeParams.List {
+						namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string {
+							return g.genIdent(n.Ident)()
+						}, ", ")
+						namesStr = utils.SuffixIf(namesStr, " ")
+						out += e(namesStr) + g.genExpr(field.Type)()
+						if i < len(typeParams.List)-1 {
+							out += e(", ")
+						}
+					}
+					if len(typeParams.List) > 0 {
+						out += e("]")
 					}
 				}
-				if len(typeParams.List) > 0 {
-					out += e("]")
-				}
+				out += e(" ") + g.genExpr(spec.Type)() + e("\n")
 			}
-			out += e(" ") + g.genExpr(spec.Type) + e("\n")
+			return out
+		case *ast.ImportSpec:
+			return out
+		default:
+			panic(fmt.Sprintf("%v", to(s)))
 		}
-		return
-	case *ast.ImportSpec:
-		return
-	default:
-		panic(fmt.Sprintf("%v", to(s)))
 	}
 }
 
-func (g *Generator) genDecl(d ast.Decl) (out string) {
+func (g *Generator) genDecl(d ast.Decl) SomethingTest {
 	switch decl := d.(type) {
 	case *ast.GenDecl:
 		return g.genGenDecl(decl)
@@ -1927,41 +1996,44 @@ func (g *Generator) genDecl(d ast.Decl) (out string) {
 	default:
 		panic(fmt.Sprintf("%v", to(d)))
 	}
-	return
 }
 
-func (g *Generator) genGenDecl(decl *ast.GenDecl) string {
+func (g *Generator) genGenDecl(decl *ast.GenDecl) SomethingTest {
 	return g.genSpecs(decl.Specs, decl.Tok)
 }
 
-func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) string {
+func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) SomethingTest {
 	return g.genDecl(stmt.Decl)
 }
 
-func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) (out string) {
-	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
-	var op string
-	switch stmt.Tok {
-	case token.INC:
-		op = "++"
-	case token.DEC:
-		op = "--"
-	default:
-		panic("")
+func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) SomethingTest {
+	return func() string {
+		var out string
+		e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+		var op string
+		switch stmt.Tok {
+		case token.INC:
+			op = "++"
+		case token.DEC:
+			op = "--"
+		default:
+			panic("")
+		}
+		if !g.inlineStmt {
+			out += e(g.prefix)
+		}
+		out += g.genExpr(stmt.X)() + e(op)
+		if !g.inlineStmt {
+			out += e("\n")
+		}
+		return out
 	}
-	if !g.inlineStmt {
-		out += e(g.prefix)
-	}
-	out += g.genExpr(stmt.X) + e(op)
-	if !g.inlineStmt {
-		out += e("\n")
-	}
-	return
 }
 
-func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
+func (g *Generator) genForStmt(stmt *ast.ForStmt) SomethingTest {
+	var out string
 	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
-	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body) }) }
+	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body)() }) }
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
@@ -1969,11 +2041,11 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 				yT := g.env.GetType(v.Y)
 				if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
 					varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-					out += e(g.prefix+"for _, "+varName+" := range ") + g.genExpr(v.Y) + e(" {\n")
+					out += e(g.prefix+"for _, "+varName+" := range ") + g.genExpr(v.Y)() + e(" {\n")
 					xTup := v.X.(*ast.TupleExpr)
 					out += e(g.prefix + "\t")
 					for i := range tup.Elts {
-						out += g.genExpr(xTup.Values[i])
+						out += g.genExpr(xTup.Values[i])()
 						if i < len(tup.Elts)-1 {
 							out += e(", ")
 						}
@@ -1989,14 +2061,14 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 				} else {
 					switch yT.(type) {
 					case types.ArrayType:
-						out += e(g.prefix+"for _, ") + g.genExpr(v.X) + e(" := range ") + g.genExpr(v.Y) + e(" {\n")
+						out += e(g.prefix+"for _, ") + g.genExpr(v.X)() + e(" := range ") + g.genExpr(v.Y)() + e(" {\n")
 					case types.SetType:
-						out += e(g.prefix+"for ") + g.genExpr(v.X) + e(" := range (") + g.genExpr(v.Y) + e(").Iter() {\n")
+						out += e(g.prefix+"for ") + g.genExpr(v.X)() + e(" := range (") + g.genExpr(v.Y)() + e(").Iter() {\n")
 					case types.MapType:
 						xTup := v.X.(*ast.TupleExpr)
-						key := func() string { return g.genExpr(xTup.Values[0]) }
-						val := func() string { return g.genExpr(xTup.Values[1]) }
-						y := func() string { return g.genExpr(v.Y) }
+						key := func() string { return g.genExpr(xTup.Values[0])() }
+						val := func() string { return g.genExpr(xTup.Values[1])() }
+						y := func() string { return g.genExpr(v.Y)() }
 						out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
 					default:
 						panic("")
@@ -2004,7 +2076,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 				}
 				out += body()
 				out += e(g.prefix + "}\n")
-				return
+				return NewTest1(out)
 			}
 		}
 	}
@@ -2012,17 +2084,17 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 	var els []string
 	if stmt.Init != nil {
 		g.WithInlineStmt(func() {
-			init = g.genStmt(stmt.Init)
+			init = g.genStmt(stmt.Init)()
 		})
 		els = append(els, init)
 	}
 	if stmt.Cond != nil {
-		cond = g.genExpr(stmt.Cond)
+		cond = g.genExpr(stmt.Cond)()
 		els = append(els, cond)
 	}
 	if stmt.Post != nil {
 		g.WithInlineStmt(func() {
-			post = g.genStmt(stmt.Post)
+			post = g.genStmt(stmt.Post)()
 		})
 		els = append(els, post)
 	}
@@ -2031,10 +2103,11 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) (out string) {
 	out += e(g.prefix+"for ") + tmp + e("{\n")
 	out += body()
 	out += e(g.prefix + "}\n")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
+func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) SomethingTest {
+	var out string
 	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
 	content3 := func() string {
 		isCompLit := TryCast[*ast.CompositeLit](stmt.X)
@@ -2042,7 +2115,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
 		if isCompLit {
 			out += "("
 		}
-		out += g.genExpr(stmt.X)
+		out += g.genExpr(stmt.X)()
 		if isCompLit {
 			out += ")"
 		}
@@ -2052,36 +2125,53 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) (out string) {
 	if stmt.Key == nil && stmt.Value == nil {
 		out += e(g.prefix+"for range ") + content3() + e(" {\n")
 	} else if stmt.Value == nil {
-		out += e(g.prefix+"for ") + g.genExpr(stmt.Key) + e(" "+op.String()+" range ") + content3() + e(" {\n")
+		out += e(g.prefix+"for ") + g.genExpr(stmt.Key)() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 	} else {
-		out += e(g.prefix+"for ") + g.genExpr(stmt.Key) + e(", ") + g.genExpr(stmt.Value) + e(" "+op.String()+" range ") + content3() + e(" {\n")
+		out += e(g.prefix+"for ") + g.genExpr(stmt.Key)() + e(", ") + g.genExpr(stmt.Value)() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 	}
 	out += g.incrPrefix(func() string {
-		return g.genStmt(stmt.Body)
+		return g.genStmt(stmt.Body)()
 	})
 	out += e(g.prefix + "}\n")
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) (out string) {
-	if stmt.Result == nil {
-		return g.Emit(g.prefix + "return\n")
-	}
-	return g.Emit(g.prefix+"return ") + g.genExpr(stmt.Result) + g.Emit("\n")
+type SomethingTest func() string
+
+func NewTest1(s string) SomethingTest {
+	return func() string { return s }
 }
 
-func (g *Generator) genExprStmt(stmt *ast.ExprStmt) (out string) {
-	if !g.inlineStmt {
-		out += g.Emit(g.prefix)
+func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) SomethingTest {
+	var tmp SomethingTest
+	if stmt.Result != nil {
+		tmp = g.genExpr(stmt.Result)
 	}
-	out += g.genExpr(stmt.X)
-	if !g.inlineStmt {
-		out += g.Emit("\n")
+	return func() string {
+		if stmt.Result == nil {
+			return g.Emit(g.prefix + "return\n")
+		}
+		return g.Emit(g.prefix+"return ") + tmp() + g.Emit("\n")
 	}
-	return
 }
 
-func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
+func (g *Generator) genExprStmt(stmt *ast.ExprStmt) SomethingTest {
+	tmp := g.genExpr(stmt.X)
+	return func() string {
+		var out string
+		if !g.inlineStmt {
+			out += g.Emit(g.prefix)
+		}
+		out += tmp()
+		if !g.inlineStmt {
+			out += g.Emit("\n")
+		}
+		return out
+	}
+}
+
+func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
+	var out string
 	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
 	lhs := func() string { return "" }
 	var after string
@@ -2148,7 +2238,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 		}
 		if isMutStarMap() {
 			v := stmt.Lhs[0].(*ast.IndexExpr)
-			lhs = func() string { return "(*" + g.genExpr(v.X) + ")[" + g.genExpr(v.Index) + "]" }
+			lhs = func() string { return "(*" + g.genExpr(v.X)() + ")[" + g.genExpr(v.Index)() + "]" }
 		} else {
 			lhs = func() string { return g.genExprs(stmt.Lhs) }
 		}
@@ -2184,14 +2274,15 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) (out string) {
 	if !g.inlineStmt {
 		out += e("\n")
 	}
-	return out
+	return NewTest1(out)
 }
 
-func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
+func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) SomethingTest {
+	var out string
 	gPrefix := g.prefix
 	ass := stmt.Ass
-	lhs := func() string { return g.genExpr(ass.Lhs[0]) }
-	rhs := func() string { return g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0]) }) }
+	lhs := func() string { return g.genExpr(ass.Lhs[0])() }
+	rhs := func() string { return g.incrPrefix(func() string { return g.genExpr(ass.Rhs[0])() }) }
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	var cond string
 	unwrapFn := "Unwrap"
@@ -2220,34 +2311,35 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) (out string) {
 	if g.allowUnused {
 		out += g.Emit(gPrefix+"\tAglNoop(") + lhs() + g.Emit(")\n")
 	}
-	out += g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	out += g.incrPrefix(func() string { return g.genStmt(stmt.Body)() })
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
 		case *ast.IfStmt, *ast.IfLetStmt:
 			out += g.Emit(gPrefix + "} else ")
 			g.WithInlineStmt(func() {
-				out += g.genStmt(stmt.Else)
+				out += g.genStmt(stmt.Else)()
 			})
 		default:
 			out += g.Emit(gPrefix + "} else {\n")
 			out += g.incrPrefix(func() string {
-				return g.genStmt(stmt.Else)
+				return g.genStmt(stmt.Else)()
 			})
 			out += g.Emit(gPrefix + "}\n")
 		}
 	} else {
 		out += g.Emit(gPrefix + "}\n")
 	}
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
+func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) SomethingTest {
+	var out string
 	gPrefix := g.prefix
 	ass := stmt.Ass
 	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
-	lhs := g.genExpr(lhs0)
-	rhs := g.incrPrefix(func() string { return g.genExpr(rhs0) })
-	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body) })
+	lhs := g.genExpr(lhs0)()
+	rhs := g.incrPrefix(func() string { return g.genExpr(rhs0)() })
+	body := g.incrPrefix(func() string { return g.genStmt(stmt.Body)() })
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	var cond string
 	unwrapFn := "Unwrap"
@@ -2277,10 +2369,11 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) (out string) {
 	if g.allowUnused {
 		out += gPrefix + fmt.Sprintf("AglNoop(%s)\n", lhs)
 	}
-	return out
+	return NewTest1(out)
 }
 
-func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
+func (g *Generator) genIfStmt(stmt *ast.IfStmt) SomethingTest {
+	var out string
 	gPrefix := g.prefix
 	if !g.inlineStmt {
 		out += g.Emit(gPrefix, WithNode(stmt))
@@ -2288,47 +2381,49 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) (out string) {
 	out += g.Emit("if ", WithNode(stmt))
 	if stmt.Init != nil {
 		g.WithInlineStmt(func() {
-			out += g.genStmt(stmt.Init) + g.Emit("; ")
+			out += g.genStmt(stmt.Init)() + g.Emit("; ")
 		})
 	}
-	out += g.genExpr(stmt.Cond) + g.Emit(" {\n")
+	out += g.genExpr(stmt.Cond)() + g.Emit(" {\n")
 	g.inlineStmt = false
 	out += g.incrPrefix(func() string {
-		return g.genStmt(stmt.Body)
+		return g.genStmt(stmt.Body)()
 	})
 	if stmt.Else != nil {
 		switch stmt.Else.(type) {
 		case *ast.IfStmt, *ast.IfLetStmt:
 			out += g.Emit(gPrefix + "} else ")
 			g.WithInlineStmt(func() {
-				out += g.genStmt(stmt.Else)
+				out += g.genStmt(stmt.Else)()
 			})
 		default:
 
 			out += g.Emit(gPrefix + "} else {\n")
 			out += g.incrPrefix(func() string {
-				return g.genStmt(stmt.Else)
+				return g.genStmt(stmt.Else)()
 			})
 			out += g.Emit(gPrefix + "}\n")
 		}
 	} else {
 		out += g.Emit(gPrefix + "}\n")
 	}
-	return out
+	return NewTest1(out)
 }
 
-func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) (out string) {
-	cond := func() string { return g.genExpr(stmt.Cond) }
+func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) SomethingTest {
+	var out string
+	cond := func() string { return g.genExpr(stmt.Cond)() }
 	gPrefix := g.prefix
 	out += g.Emit(gPrefix+"if !(") + cond() + g.Emit(") {\n")
 	out += g.incrPrefix(func() string {
-		return g.genStmt(stmt.Body)
+		return g.genStmt(stmt.Body)()
 	})
 	out += g.Emit(gPrefix + "}\n")
-	return out
+	return NewTest1(out)
 }
 
-func (g *Generator) genDecls(f *ast.File) (out string) {
+func (g *Generator) genDecls(f *ast.File) SomethingTest {
+	var out string
 	for _, decl := range f.Decls {
 		switch declT := decl.(type) {
 		case *ast.FuncDecl:
@@ -2339,12 +2434,13 @@ func (g *Generator) genDecls(f *ast.File) (out string) {
 		}
 	}
 	for _, decl := range f.Decls {
-		out += g.genDecl(decl)
+		out += g.genDecl(decl)()
 	}
-	return
+	return NewTest1(out)
 }
 
-func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
+func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
+	var out string
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	recv := func() string { return "" }
 	var name, typeParamsStr, paramsStr, resultStr string
@@ -2357,7 +2453,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 						tmp := g.extensions[fnName]
 						tmp.decl = decl
 						g.extensions[fnName] = tmp
-						return
+						return NewTest1(out)
 					}
 				}
 			} else if tmp2, ok := decl.Recv.List[0].Type.(*ast.SelectorExpr); ok {
@@ -2366,7 +2462,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 					tmp := g.extensionsString[fnName]
 					tmp.decl = decl
 					g.extensionsString[fnName] = tmp
-					return
+					return NewTest1(out)
 				}
 			}
 		}
@@ -2383,7 +2479,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	fnT := g.env.GetType(decl)
 	if g.genMap == nil && fnT.(types.FuncType).IsGeneric() {
 		g.genFuncDecls[fnT.String()] = decl
-		return ""
+		return NewTest1(out)
 	}
 	if decl.Name != nil {
 		fnName := decl.Name.Name
@@ -2414,7 +2510,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 				case *ast.TupleExpr:
 					content = g.env.GetType(field.Type).GoStr()
 				default:
-					content = g.genExpr(field.Type)
+					content = g.genExpr(field.Type)()
 				}
 			}
 			namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
@@ -2439,11 +2535,11 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) (out string) {
 	out += g.Emit(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsStr, paramsStr, resultStr), WithNode(decl))
 	if decl.Body != nil {
 		out += g.incrPrefix(func() string {
-			return g.genStmt(decl.Body)
+			return g.genStmt(decl.Body)()
 		})
 	}
 	out += g.Emit("}\n", WithNode(decl))
-	return
+	return NewTest1(out)
 }
 
 func (g *Generator) joinList(l *ast.FieldList) (out string) {
@@ -2452,7 +2548,7 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 	}
 	for i, field := range l.List {
 		for j, n := range field.Names {
-			out += g.genIdent(n.Ident)
+			out += g.genIdent(n.Ident)()
 			if j < len(field.Names)-1 {
 				out += g.Emit(", ")
 			}
@@ -2460,7 +2556,7 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 		if out != "" {
 			out += g.Emit(" ")
 		}
-		out += g.genExpr(field.Type)
+		out += g.genExpr(field.Type)()
 		if i < len(l.List)-1 {
 			out += g.Emit(", ")
 		}
@@ -2469,7 +2565,7 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 }
 
 type BeforeStmt struct {
-	w func() string
+	w SomethingTest
 }
 
 func (b *BeforeStmt) Content() string {
