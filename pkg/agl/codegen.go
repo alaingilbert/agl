@@ -1273,15 +1273,23 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			content1 := g.genExpr(expr.X)
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-				tmpl := fmt.Sprintf("%s, ok := %s\nif !ok {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, exprXT.W.GoStr())
-				before := addPrefix(tmpl, g.prefix)
-				g.addBeforeStmt(func() string { return before })
+				g.addBeforeStmt(func() string {
+					out := g.prefix + varName + ", ok := " + content1 + "\n"
+					out += g.prefix + "if !ok {\n"
+					out += g.prefix + "\treturn MakeOptionNone[" + exprXT.W.GoStr() + "]()\n"
+					out += g.prefix + "}\n"
+					return out
+				})
 				return g.Emit("AglIdentity(") + varName + g.Emit(")")
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-				tmpl := fmt.Sprintf("%s := %s\nif %s.IsNone() {\n\treturn MakeOptionNone[%s]()\n}\n", varName, content1, varName, g.returnType.(types.OptionType).W)
-				before2 := addPrefix(tmpl, g.prefix)
-				g.addBeforeStmt(func() string { return before2 })
+				g.addBeforeStmt(func() string {
+					out := g.prefix + varName + " := " + content1 + "\n"
+					out += g.prefix + "if " + varName + ".IsNone() {\n"
+					out += g.prefix + "\treturn MakeOptionNone[" + g.returnType.(types.OptionType).W.String() + "]()\n"
+					out += g.prefix + "}\n"
+					return out
+				})
 				out += varName + g.Emit(".Unwrap()")
 			}
 		} else {
@@ -1290,10 +1298,14 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmpVar%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
-				tmpl := fmt.Sprintf("%s, %s := %s\nif %s != nil {\n\tpanic(%s)\n}\n", varName, errName, content1, errName, errName)
-				before := addPrefix(tmpl, g.prefix)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
-				g.addBeforeStmt(func() string { return before })
+				g.addBeforeStmt(func() string {
+					out := g.prefix + varName + ", " + errName + " := " + content1 + "\n"
+					out += g.prefix + "if " + errName + " != nil {\n"
+					out += g.prefix + "\tpanic(" + errName + ")\n"
+					out += g.prefix + "}\n"
+					return out
+				})
 				return
 			} else {
 				content1 := g.genExpr(expr.X)
