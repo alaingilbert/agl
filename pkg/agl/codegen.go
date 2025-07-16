@@ -1362,20 +1362,20 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + ", ok := " + content1() + "\n"
-					out += g.prefix + "if !ok {\n"
-					out += g.prefix + "\treturn MakeOptionNone[" + exprXT.W.GoStr() + "]()\n"
-					out += g.prefix + "}\n"
+					out := g.Emit(g.prefix+varName+", ok := ") + content1() + g.Emit("\n")
+					out += g.Emit(g.prefix + "if !ok {\n")
+					out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + exprXT.W.GoStr() + "]()\n")
+					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
 				return func() string { return g.Emit("AglIdentity(") + varName + g.Emit(")") }
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + " := " + content1() + "\n"
-					out += g.prefix + "if " + varName + ".IsNone() {\n"
-					out += g.prefix + "\treturn MakeOptionNone[" + g.returnType.(types.OptionType).W.String() + "]()\n"
-					out += g.prefix + "}\n"
+					out := g.Emit(g.prefix+varName+" := ") + content1() + g.Emit("\n")
+					out += g.Emit(g.prefix + "if " + varName + ".IsNone() {\n")
+					out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + g.returnType.(types.OptionType).W.String() + "]()\n")
+					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
 				return func() string { return varName + g.Emit(".Unwrap()") }
@@ -1388,10 +1388,10 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 				errName := fmt.Sprintf("aglTmpErr%d", id)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
 				g.addBeforeStmt(func() string {
-					out := g.prefix + varName + ", " + errName + " := " + content1() + "\n"
-					out += g.prefix + "if " + errName + " != nil {\n"
-					out += g.prefix + "\tpanic(" + errName + ")\n"
-					out += g.prefix + "}\n"
+					out := g.Emit(g.prefix+varName+", "+errName+" := ") + content1() + g.Emit("\n")
+					out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
+					out += g.Emit(g.prefix + "\tpanic(" + errName + ")\n")
+					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
 				return func() string { return out }
@@ -1428,7 +1428,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.Emit(g.prefix + "if " + errName + " := " + content1() + "; " + errName + " != nil {\n")
+				out := g.Emit(g.prefix+"if "+errName+" := ") + content1() + g.Emit("; "+errName+" != nil {\n")
 				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + exprXT.W.GoStrType() + "](" + errName + ")\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
@@ -1439,7 +1439,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
 			g.addBeforeStmt(func() string {
-				out := g.Emit(g.prefix + varName + ", " + errName + " := " + content1() + "\n")
+				out := g.Emit(g.prefix+varName+", "+errName+" := ") + content1() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + g.returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
 				out += g.Emit(g.prefix + "}\n")
@@ -1449,7 +1449,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 		} else if exprXT.ConvertToNone {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.Emit(g.prefix + varName + " := " + content1() + "\n")
+				out := g.Emit(g.prefix+varName+" := ") + content1() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + varName + ".IsErr() {\n")
 				out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + exprXT.ToNoneType.GoStrType() + "]()\n")
 				out += g.Emit(g.prefix + "}\n")
@@ -1459,7 +1459,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
-				out := g.Emit(g.prefix + varName + " := " + content1() + "\n")
+				out := g.Emit(g.prefix+varName+" := ") + content1() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + varName + ".IsErr() {\n")
 				out += g.Emit(g.prefix + "\treturn " + varName + "\n")
 				out += g.Emit(g.prefix + "}\n")
@@ -1473,7 +1473,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 				c1 := g.genExpr(expr.X)
 				tmpErrVar := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
-					out := g.Emit(g.prefix + tmpErrVar + " := " + c1() + "\n")
+					out := g.Emit(g.prefix+tmpErrVar+" := ") + c1() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + tmpErrVar + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + tmpErrVar + ")\n")
 					out += g.Emit(g.prefix + "}\n")
