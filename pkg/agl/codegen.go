@@ -1982,7 +1982,7 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) func() string {
 		out := g.Emit(structName) + g.Emit("{")
 		for i, x := range expr.Values {
 			out += g.Emit(fmt.Sprintf("Arg%d: ", i))
-			out += g.Emit(g.genExpr(x)())
+			out += g.genExpr(x)()
 			if i < len(expr.Values)-1 {
 				out += g.Emit(", ")
 			}
