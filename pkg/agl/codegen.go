@@ -2184,18 +2184,19 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) SomethingTest {
 }
 
 func (g *Generator) genForStmt(stmt *ast.ForStmt) SomethingTest {
-	return SomethingTest{F: func() string {
-		var out string
-		e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
-		body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) }
-		if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
-			if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
-				if v.Op == token.IN {
-					xT := g.env.GetType(v.X)
-					yT := g.env.GetType(v.Y)
+	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) }
+	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
+		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
+			if v.Op == token.IN {
+				xT := g.env.GetType(v.X)
+				yT := g.env.GetType(v.Y)
+				c1 := g.genExpr(v.Y)
+				return SomethingTest{F: func() string {
+					var out string
 					if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-						out += e(g.prefix+"for _, "+varName+" := range ") + g.genExpr(v.Y).F() + e(" {\n")
+						out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
 						xTup := v.X.(*ast.TupleExpr)
 						out += e(g.prefix + "\t")
 						for i := range tup.Elts {
@@ -2215,14 +2216,14 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) SomethingTest {
 					} else {
 						switch yT.(type) {
 						case types.ArrayType:
-							out += e(g.prefix+"for _, ") + g.genExpr(v.X).F() + e(" := range ") + g.genExpr(v.Y).F() + e(" {\n")
+							out += e(g.prefix+"for _, ") + g.genExpr(v.X).F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.SetType:
-							out += e(g.prefix+"for ") + g.genExpr(v.X).F() + e(" := range (") + g.genExpr(v.Y).F() + e(").Iter() {\n")
+							out += e(g.prefix+"for ") + g.genExpr(v.X).F() + e(" := range (") + c1.F() + e(").Iter() {\n")
 						case types.MapType:
 							xTup := v.X.(*ast.TupleExpr)
 							key := func() string { return g.genExpr(xTup.Values[0]).F() }
 							val := func() string { return g.genExpr(xTup.Values[1]).F() }
-							y := func() string { return g.genExpr(v.Y).F() }
+							y := func() string { return c1.F() }
 							out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
 						default:
 							panic("")
@@ -2231,48 +2232,51 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) SomethingTest {
 					out += body()
 					out += e(g.prefix + "}\n")
 					return out
-				}
+				}}
 			}
 		}
-		tmp := func() string {
-			var init, cond, post func() string
-			var els []func() string
-			if stmt.Init != nil {
-				init = func() string {
-					var out string
-					g.WithInlineStmt(func() {
-						out = g.genStmt(stmt.Init).F()
-					})
-					return out
-				}
-				els = append(els, init)
+	}
+	tmp := func() string {
+		var init, cond, post func() string
+		var els []func() string
+		if stmt.Init != nil {
+			init = func() string {
+				var out string
+				g.WithInlineStmt(func() {
+					out = g.genStmt(stmt.Init).F()
+				})
+				return out
 			}
-			if stmt.Cond != nil {
-				cond = func() string { return g.genExpr(stmt.Cond).F() }
-				els = append(els, cond)
-			}
-			if stmt.Post != nil {
-				post = func() string {
-					var out string
-					g.WithInlineStmt(func() {
-						out = g.genStmt(stmt.Post).F()
-					})
-					return out
-				}
-				els = append(els, post)
-			}
-			var out string
-			for i, el := range els {
-				out += el()
-				if i < len(els)-1 {
-					out += e("; ")
-				}
-			}
-			if out != "" {
-				out += e(" ")
-			}
-			return out
+			els = append(els, init)
 		}
+		if stmt.Cond != nil {
+			cond = func() string { return g.genExpr(stmt.Cond).F() }
+			els = append(els, cond)
+		}
+		if stmt.Post != nil {
+			post = func() string {
+				var out string
+				g.WithInlineStmt(func() {
+					out = g.genStmt(stmt.Post).F()
+				})
+				return out
+			}
+			els = append(els, post)
+		}
+		var out string
+		for i, el := range els {
+			out += el()
+			if i < len(els)-1 {
+				out += e("; ")
+			}
+		}
+		if out != "" {
+			out += e(" ")
+		}
+		return out
+	}
+	return SomethingTest{F: func() string {
+		var out string
 		out += e(g.prefix+"for ") + tmp() + e("{\n")
 		out += body()
 		out += e(g.prefix + "}\n")
