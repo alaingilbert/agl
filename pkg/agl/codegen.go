@@ -1840,9 +1840,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 }
 
 func (g *Generator) genSetType(expr *ast.SetType) SomethingTest {
+	var bs []func() string
+	c1 := g.genExpr(expr.Key)
+	bs = append(bs, c1.B...)
 	return SomethingTest{F: func() string {
-		return g.Emit("AglSet[") + g.genExpr(expr.Key).F() + g.Emit("]")
-	}}
+		return g.Emit("AglSet[") + c1.F() + g.Emit("]")
+	}, B: bs}
 }
 
 func (g *Generator) genArrayType(expr *ast.ArrayType) SomethingTest {
@@ -1969,11 +1972,18 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) SomethingTest {
 }
 
 func (g *Generator) genCompositeLit(expr *ast.CompositeLit) SomethingTest {
+	var bs []func() string
 	c1 := g.genExprs(expr.Elts)
+	c2 := SomethingTest{F: func() string { return "" }}
+	if expr.Type != nil {
+		c2 = g.genExpr(expr.Type)
+	}
+	bs = append(bs, c1.B...)
+	bs = append(bs, c2.B...)
 	return SomethingTest{F: func() string {
 		var out string
 		if expr.Type != nil {
-			out += g.genExpr(expr.Type).F()
+			out += c2.F()
 		}
 		if out == "AglVoid{}" {
 			return out
@@ -1992,7 +2002,7 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) SomethingTest {
 		}
 		out += g.Emit("}")
 		return out
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genTupleExpr(expr *ast.TupleExpr) SomethingTest {
