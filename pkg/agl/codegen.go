@@ -2561,7 +2561,9 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) SomethingTest {
 }
 
 func (g *Generator) genIfStmt(stmt *ast.IfStmt) SomethingTest {
+	var bs []func() string
 	cond := g.genExpr(stmt.Cond)
+	bs = append(bs, cond.B...)
 	return SomethingTest{F: func() string {
 		var out string
 		gPrefix := g.prefix
@@ -2598,7 +2600,7 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) SomethingTest {
 			out += g.Emit(gPrefix + "}\n")
 		}
 		return out
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) SomethingTest {
