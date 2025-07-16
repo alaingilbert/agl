@@ -1388,7 +1388,7 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) SomethingTest {
 			} else {
 				out = g.Emit("Make_") + content1() + g.Emit("_") + content2()
 				if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
-					out += "()"
+					out += g.Emit("()")
 				}
 			}
 			return out
@@ -1413,7 +1413,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
-				return func() string { return g.Emit("AglIdentity(") + varName + g.Emit(")") }
+				return func() string { return g.Emit("AglIdentity(" + varName + ")") }
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				g.addBeforeStmt(func() string {
@@ -1423,7 +1423,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
-				return func() string { return varName + g.Emit(".Unwrap()") }
+				return func() string { return g.Emit(varName + ".Unwrap()") }
 			}
 		} else {
 			if exprXT.Native {
@@ -1439,7 +1439,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 					out += g.Emit(g.prefix + "}\n")
 					return out
 				})
-				return func() string { return out }
+				return func() string { return g.Emit(out) }
 			} else {
 				return func() string { return g.genExpr(expr.X)() + g.Emit(".Unwrap()") }
 			}
@@ -1460,7 +1460,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 			tmp += g.prefix + fmt.Sprintf("}\n")
 			return tmp
 		})
-		return func() string { return varName }
+		return func() string { return g.Emit(varName) }
 	default:
 		panic("")
 	}
@@ -1500,7 +1500,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 				out += g.Emit(g.prefix + "}\n")
 				return out
 			})
-			return func() string { return varName + g.Emit(".Unwrap()") }
+			return func() string { return g.Emit(varName + ".Unwrap()") }
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
 			g.addBeforeStmt(func() string {
@@ -1510,7 +1510,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 				out += g.Emit(g.prefix + "}\n")
 				return out
 			})
-			return func() string { return varName + g.Emit(".Unwrap()") }
+			return func() string { return g.Emit(varName + ".Unwrap()") }
 		}
 	} else {
 		if exprXT.Native {
@@ -2061,7 +2061,7 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) SomethingTest {
 		case *ast.TypeSpec:
 			e := func(s string) string { return g.Emit(s, WithNode(spec)) }
 			if v, ok := spec.Type.(*ast.EnumType); ok {
-				out += e(g.prefix) + g.genEnumType(spec.Name.Name, v) + e("\n")
+				out += e(g.prefix) + e(g.genEnumType(spec.Name.Name, v)) + e("\n")
 			} else {
 				out += e(g.prefix + "type " + spec.Name.Name)
 				if typeParams := spec.TypeParams; typeParams != nil {
@@ -2187,27 +2187,46 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) SomethingTest {
 				}
 			}
 		}
-		var init, cond, post string
-		var els []string
-		if stmt.Init != nil {
-			g.WithInlineStmt(func() {
-				init = g.genStmt(stmt.Init)()
-			})
-			els = append(els, init)
+		tmp := func() string {
+			var init, cond, post func() string
+			var els []func() string
+			if stmt.Init != nil {
+				init = func() string {
+					var out string
+					g.WithInlineStmt(func() {
+						out = g.genStmt(stmt.Init)()
+					})
+					return out
+				}
+				els = append(els, init)
+			}
+			if stmt.Cond != nil {
+				cond = func() string { return g.genExpr(stmt.Cond)() }
+				els = append(els, cond)
+			}
+			if stmt.Post != nil {
+				post = func() string {
+					var out string
+					g.WithInlineStmt(func() {
+						out = g.genStmt(stmt.Post)()
+					})
+					return out
+				}
+				els = append(els, post)
+			}
+			var out string
+			for i, el := range els {
+				out += el()
+				if i < len(els)-1 {
+					out += e("; ")
+				}
+			}
+			if out != "" {
+				out += e(" ")
+			}
+			return out
 		}
-		if stmt.Cond != nil {
-			cond = g.genExpr(stmt.Cond)()
-			els = append(els, cond)
-		}
-		if stmt.Post != nil {
-			g.WithInlineStmt(func() {
-				post = g.genStmt(stmt.Post)()
-			})
-			els = append(els, post)
-		}
-		tmp := strings.Join(els, "; ")
-		tmp = utils.SuffixIf(tmp, " ")
-		out += e(g.prefix+"for ") + tmp + e("{\n")
+		out += e(g.prefix+"for ") + tmp() + e("{\n")
 		out += body()
 		out += e(g.prefix + "}\n")
 		return out
@@ -2294,17 +2313,17 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 			lhs = func() string { return g.genExprs(stmt.Lhs)() }
 		} else {
 			varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
-			lhs = func() string { return varName }
+			lhs = func() string { return e(varName) }
 			var names []string
 			var exprs []string
 			for i, x := range stmt.Lhs {
 				names = append(names, x.(*ast.Ident).Name)
-				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", lhs(), enumT.SubTyp, i))
+				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", varName, enumT.SubTyp, i))
 			}
 			if !g.inlineStmt {
 				after += g.prefix
 			}
-			after += fmt.Sprintf("%s := %s", strings.Join(names, ", "), strings.Join(exprs, ", "))
+			after += strings.Join(names, ", ") + " := " + strings.Join(exprs, ", ")
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
 		if len(stmt.Lhs) == 1 {
@@ -2314,14 +2333,14 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 				lhs = func() string { return g.genExprs(stmt.Lhs)() }
 			} else {
 				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
-				lhs = func() string { return varName }
+				lhs = func() string { return e(varName) }
 				rhs := stmt.Rhs[0]
 				var names []string
 				var exprs []string
 				for i := range g.env.GetType(rhs).(types.TupleType).Elts {
 					name := stmt.Lhs[i].(*ast.Ident).Name
 					names = append(names, name)
-					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", lhs(), i))
+					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", varName, i))
 				}
 				if !g.inlineStmt {
 					after += g.prefix
