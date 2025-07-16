@@ -1330,29 +1330,44 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		content1 := g.genExpr(expr.X)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("if %s := %%s; %s != nil {\n\treturn MakeResultErr[%%s](%s)\n}\n", errName, errName, errName)
-			before := addPrefix(fmt.Sprintf(tmpl, content1, exprXT.W.GoStrType()), g.prefix)
-			g.addBeforeStmt(func() string { return before })
+			g.addBeforeStmt(func() string {
+				out := g.prefix + "if " + errName + " := " + content1 + "; " + errName + " != nil {\n"
+				out += g.prefix + "\treturn MakeResultErr[" + exprXT.W.GoStrType() + "](" + errName + ")\n"
+				out += g.prefix + "}\n"
+				return out
+			})
 			return g.Emit(`AglNoop()`)
 		} else if exprXT.Native {
 			id := g.varCounter.Add(1)
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
-			tmpl := fmt.Sprintf("%s, %s := %%s\nif %s != nil {\n\treturn MakeResultErr[%%s](%s)\n}\n", varName, errName, errName, errName)
-			before := addPrefix(fmt.Sprintf(tmpl, content1, g.returnType.(types.ResultType).W.GoStrType()), g.prefix)
-			g.addBeforeStmt(func() string { return before })
+			g.addBeforeStmt(func() string {
+				out := g.prefix + varName + ", " + errName + " := " + content1 + "\n"
+				out += g.prefix + "if " + errName + " != nil {\n"
+				out += g.prefix + "\treturn MakeResultErr[" + g.returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n"
+				out += g.prefix + "}\n"
+				return out
+			})
 			return g.Emit("AglIdentity(") + varName + g.Emit(")")
 		} else if exprXT.ConvertToNone {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsErr() {\n\treturn MakeOptionNone[%%s]()\n}\n", varName, varName)
-			before2 := addPrefix(fmt.Sprintf(tmpl, content1, exprXT.ToNoneType.GoStrType()), g.prefix)
-			g.addBeforeStmt(func() string { return before2 })
+			g.addBeforeStmt(func() string {
+				out := g.prefix + varName + " := " + content1 + "\n"
+				out += g.prefix + "if " + varName + ".IsErr() {\n"
+				out += g.prefix + "\treturn MakeOptionNone[" + exprXT.ToNoneType.GoStrType() + "]()\n"
+				out += g.prefix + "}\n"
+				return out
+			})
 			out += varName + g.Emit(".Unwrap()")
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
-			tmpl := fmt.Sprintf("%s := %%s\nif %s.IsErr() {\n\treturn %s\n}\n", varName, varName, varName)
-			before2 := addPrefix(fmt.Sprintf(tmpl, content1), g.prefix)
-			g.addBeforeStmt(func() string { return before2 })
+			g.addBeforeStmt(func() string {
+				out := g.prefix + varName + " := " + content1 + "\n"
+				out += g.prefix + "if " + varName + ".IsErr() {\n"
+				out += g.prefix + "\treturn " + varName + "\n"
+				out += g.prefix + "}\n"
+				return out
+			})
 			out += varName + g.Emit(".Unwrap()")
 		}
 	} else {
