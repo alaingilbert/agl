@@ -725,20 +725,20 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) SomethingTest {
 }
 
 func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTest) {
-	content1 := g.genExpr(expr.X)()
+	content1 := g.genExpr(expr.X)
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
 	g.addBeforeStmt(func() string {
 		before := ""
-		before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
-		before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
-		before += gPrefix + "\tcontinue"
+		before += g.Emit(gPrefix+varName+" := ") + content1() + g.Emit("\n")
+		before += g.Emit(gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check))
+		before += g.Emit(gPrefix + "\tcontinue")
 		if expr.Label != nil {
-			before += " " + expr.Label.String()
+			before += g.Emit(" " + expr.Label.String())
 		}
-		before += "\n"
-		before += gPrefix + "}\n"
+		before += g.Emit("\n")
+		before += g.Emit(gPrefix + "}\n")
 		return before
 	})
 	return func() string {
@@ -749,25 +749,26 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTe
 func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out SomethingTest) {
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+	c1 := g.genExpr(expr.X)
 	g.addBeforeStmt(func() string {
 		out := ""
-		out += g.prefix + fmt.Sprintf("%s := %s\n", varName, g.genExpr(expr.X)())
-		out += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
+		out += g.Emit(g.prefix+varName+" := ") + c1() + g.Emit("\n")
+		out += g.Emit(g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check))
 		if g.returnType == nil {
-			out += g.prefix + "\treturn\n"
+			out += g.Emit(g.prefix + "\treturn\n")
 		} else {
 			switch retT := g.returnType.(type) {
 			case types.ResultType:
-				out += g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName)
+				out += g.Emit(g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName))
 			case types.OptionType:
-				out += g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W.GoStrType())
+				out += g.Emit(g.prefix + fmt.Sprintf("\treturn MakeOptionNone[%s]()\n", retT.W.GoStrType()))
 			case types.VoidType:
-				out += g.prefix + fmt.Sprintf("\treturn\n")
+				out += g.Emit(g.prefix + fmt.Sprintf("\treturn\n"))
 			default:
 				assert(false, "cannot use or_return in a function that does not return void/Option/Result")
 			}
 		}
-		out += g.prefix + "}\n"
+		out += g.Emit(g.prefix + "}\n")
 		return out
 	})
 	return func() string {
