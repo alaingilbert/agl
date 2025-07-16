@@ -1431,14 +1431,15 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 			}
 		}
 	case types.TypeAssertType:
-		content1 := g.genExpr(expr.X).F()
+		content1 := g.genExpr(expr.X)
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmpVar%d", id)
 		okName := fmt.Sprintf("aglTmpOk%d", id)
+		returnType := g.returnType
 		return SomethingTest{F: func() string { return g.Emit(varName) }, B: []func() string{func() string {
-			tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1)
+			tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1.F())
 			tmp += g.prefix + fmt.Sprintf("if !%s {\n", okName)
-			if v, ok := g.returnType.(types.OptionType); ok {
+			if v, ok := returnType.(types.OptionType); ok {
 				tmp += g.prefix + fmt.Sprintf("\tMakeOptionNone[%s]()\n", v.W.GoStrType())
 			} else {
 				tmp += g.prefix + fmt.Sprintf("\tpanic(\"type assert failed\")\n")
@@ -1467,12 +1468,13 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 			id := g.varCounter.Add(1)
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
+			returnType := g.returnType
 			return SomethingTest{F: func() string {
 				return g.Emit("AglIdentity(" + varName + ")")
 			}, B: []func() string{func() string {
 				out := g.Emit(g.prefix+varName+", "+errName+" := ") + content1.F() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
-				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + g.returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
+				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
 			}}}
@@ -2635,8 +2637,8 @@ func (g *Generator) genDecls(f *ast.File) SomethingTest {
 }
 
 func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
-	c1 := g.genStmt(decl.Body)
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
+	c1 := g.genStmt(decl.Body)
 	recv := func() string { return "" }
 	var name, typeParamsStr, paramsStr, resultStr string
 	if decl.Recv != nil {
