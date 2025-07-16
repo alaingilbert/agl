@@ -211,7 +211,9 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		if decl == nil {
 			return ""
 		}
-		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
+		typeParamsStr := func() string { return "" }
+		var bodyStr, paramsStr, resultStr func() string
+		var name string
 		if decl.Name != nil {
 			name = decl.Name.Name
 		}
@@ -247,44 +249,61 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
 		g.WithGenMapping(m, func() {
 			if params := paramsClone; params != nil {
-				var fieldsItems []string
-				for _, field := range params {
-					var content string
-					if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
-						if _, ok := v.W.(types.FuncType); ok {
-							content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
-						} else {
-							content = g.genExpr(field.Type)()
+				paramsStr = func() string {
+					var out string
+					for i, field := range params {
+						for j, n := range field.Names {
+							out += g.Emit(n.Name)
+							if j < len(field.Names)-1 {
+								out += g.Emit(", ")
+							}
 						}
-					} else {
-						switch field.Type.(type) {
-						case *ast.TupleExpr:
-							content = g.env.GetType(field.Type).GoStr()
-						default:
-							content = g.genExpr(field.Type)()
+						if len(field.Names) > 0 {
+							out += g.Emit(" ")
+						}
+						if i < len(params)-1 {
+							out += ", "
+						}
+						if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
+							if _, ok := v.W.(types.FuncType); ok {
+								out += g.Emit(types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1())
+							} else {
+								out += g.genExpr(field.Type)()
+							}
+						} else {
+							switch field.Type.(type) {
+							case *ast.TupleExpr:
+								out += g.Emit(g.env.GetType(field.Type).GoStr())
+							default:
+								out += g.genExpr(field.Type)()
+							}
 						}
 					}
-					namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
-					namesStr = utils.SuffixIf(namesStr, " ")
-					fieldsItems = append(fieldsItems, namesStr+content)
+					return out
 				}
-				paramsStr = strings.Join(fieldsItems, ", ")
 			}
 			if result := decl.Type.Result; result != nil {
-				resT := g.env.GetType(result)
-				for k, v := range m {
-					resT = types.ReplGen(resT, k, v)
+				resultStr = func() string {
+					resT := g.env.GetType(result)
+					for k, v := range m {
+						resT = types.ReplGen(resT, k, v)
+					}
+					if v := resT.GoStr(); v != "" {
+						return g.Emit(" " + v)
+					}
+					return ""
 				}
-				resultStr = utils.PrefixIf(resT.GoStr(), " ")
 			}
 			if decl.Body != nil {
-				content := g.incrPrefix(func() string {
-					return g.genStmt(decl.Body)()
-				})
-				bodyStr = content
+				bodyStr = func() string {
+					return g.incrPrefix(func() string {
+						return g.genStmt(decl.Body)()
+					})
+				}
 			}
-			out += fmt.Sprintf("func AglVec%s_%s%s(%s)%s {\n%s}", name, strings.Join(elts, "_"), typeParamsStr, paramsStr, resultStr, bodyStr)
-			out += "\n"
+			out += g.Emit("func AglVec"+name+"_"+strings.Join(elts, "_")) + typeParamsStr() + g.Emit("(") + paramsStr() + g.Emit(")") + resultStr() + g.Emit(" {\n")
+			out += bodyStr()
+			out += g.Emit("}\n")
 		})
 	}
 	return
@@ -1577,7 +1596,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 					}
 					elsStr := strings.Join(els, "_")
 					content2 := utils.PrefixIf(g.genExprs(expr.Args)(), ", ")
-					return g.Emit("AglVec"+fnName+"_") + elsStr + g.Emit("(") + genEX() + content2 + g.Emit(")")
+					return g.Emit("AglVec"+fnName+"_"+elsStr+"(") + genEX() + content2 + g.Emit(")")
 				}
 			case types.SetType:
 				fnName := e.Sel.Name
@@ -1722,12 +1741,18 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 						content2 = func() string {
 							var out string
 							if g.genMap != nil {
-								out = types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr()
+								out = g.Emit(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
 							} else {
 								out = g.genExpr(expr.Args[0])()
 							}
 							if len(expr.Args) > 1 {
-								out += g.Emit(", ") + utils.MapJoin(expr.Args[1:], func(expr ast.Expr) string { return g.genExpr(expr)() }, ", ")
+								out += g.Emit(", ")
+								for i, arg := range expr.Args[1:] {
+									out += g.genExpr(arg)()
+									if i < len(expr.Args[1:])-1 {
+										out += g.Emit(", ")
+									}
+								}
 							}
 							return out
 						}
