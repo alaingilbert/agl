@@ -693,7 +693,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
-	beforeFn := func() string {
+	g.addBeforeStmt(func() string {
 		out := ""
 		out += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		out += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
@@ -704,8 +704,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) (out string) {
 		out += "\n"
 		out += gPrefix + "}\n"
 		return out
-	}
-	g.addBeforeStmt(beforeFn)
+	})
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -714,7 +713,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
-	beforeFn := func() string {
+	g.addBeforeStmt(func() string {
 		before := ""
 		before += gPrefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		before += gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check)
@@ -725,8 +724,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out string) {
 		before += "\n"
 		before += gPrefix + "}\n"
 		return before
-	}
-	g.addBeforeStmt(beforeFn)
+	})
 	return fmt.Sprintf("AglIdentity(%s).Unwrap()", varName)
 }
 
@@ -734,7 +732,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 	content1 := g.genExpr(expr.X)
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	beforeFn := func() string {
+	g.addBeforeStmt(func() string {
 		out := ""
 		out += g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		out += g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check)
@@ -754,8 +752,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out string) {
 		}
 		out += g.prefix + "}\n"
 		return out
-	}
-	g.addBeforeStmt(beforeFn)
+	})
 	return fmt.Sprintf("AglIdentity(%s)", varName)
 }
 
@@ -1211,12 +1208,11 @@ func (g *Generator) genDumpExpr(expr *ast.DumpExpr) string {
 	content1 := g.genExpr(expr.X)
 	safeContent1 := strconv.Quote(content1)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	beforeFn := func() string {
+	g.addBeforeStmt(func() string {
 		before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1)
 		before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
 		return before
-	}
-	g.addBeforeStmt(beforeFn)
+	})
 	return content1
 }
 
@@ -1318,7 +1314,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmpVar%d", id)
 		okName := fmt.Sprintf("aglTmpOk%d", id)
-		beforeFn := func() string {
+		g.addBeforeStmt(func() string {
 			tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1)
 			tmp += g.prefix + fmt.Sprintf("if !%s {\n", okName)
 			if v, ok := g.returnType.(types.OptionType); ok {
@@ -1328,8 +1324,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) (out string)
 			}
 			tmp += g.prefix + fmt.Sprintf("}\n")
 			return tmp
-		}
-		g.addBeforeStmt(beforeFn)
+		})
 		return varName
 	default:
 		panic("")
@@ -1386,27 +1381,25 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out string)
 		if exprXT.Native {
 			if _, ok := exprXT.W.(types.VoidType); ok {
 				tmpErrVar := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
-				beforeFn := func() string {
+				g.addBeforeStmt(func() string {
 					out := g.prefix + tmpErrVar + " := " + g.genExpr(expr.X) + "\n"
 					out += g.prefix + "if " + tmpErrVar + " != nil {\n"
 					out += g.prefix + "\tpanic(" + tmpErrVar + ")\n"
 					out += g.prefix + "}\n"
 					return out
-				}
-				g.addBeforeStmt(beforeFn)
+				})
 				out = g.Emit(`AglNoop()`)
 			} else {
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmp%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
-				beforeFn := func() string {
+				g.addBeforeStmt(func() string {
 					out := g.Emit(g.prefix+varName+", "+errName+" := ") + g.genExpr(expr.X) + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + errName + ")\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}
-				g.addBeforeStmt(beforeFn)
+				})
 				out = g.Emit("AglIdentity(" + varName + ")")
 			}
 			return
