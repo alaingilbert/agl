@@ -20,7 +20,6 @@ type Generator struct {
 	env              *Env
 	a, b             *ast.File
 	prefix           string
-	beforeStmt       []*BeforeStmt
 	genFuncDecls2    map[string]string
 	tupleStructs     map[string]string
 	genFuncDecls     map[string]*ast.FuncDecl
@@ -32,17 +31,6 @@ type Generator struct {
 	allowUnused      bool
 	inlineStmt       bool
 	fragments        Frags
-}
-
-func (g *Generator) addBeforeStmt(s SomethingTest) {
-	g.beforeStmt = append(g.beforeStmt, NewBeforeStmt(s))
-}
-
-func (g *Generator) WithSub(clb func()) {
-	prev := g.beforeStmt
-	g.beforeStmt = make([]*BeforeStmt, 0)
-	clb()
-	g.beforeStmt = prev
 }
 
 func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
@@ -728,7 +716,9 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) SomethingTest {
 	c1 := g.genExpr(expr.X)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
-	g.addBeforeStmt(SomethingTest{F: func() string {
+	return SomethingTest{F: func() string {
+		return g.Emit("AglIdentity(" + varName + ").Unwrap()")
+	}, B: []func() string{func() string {
 		check := getCheck(g.env.GetType(expr.X))
 		out := g.Emit(gPrefix+varName+" := ") + c1.F() + g.Emit("\n")
 		out += g.Emit(gPrefix + "if " + varName + "." + check + " {\n")
@@ -739,10 +729,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) SomethingTest {
 		out += g.Emit("\n")
 		out += g.Emit(gPrefix + "}\n")
 		return out
-	}})
-	return SomethingTest{F: func() string {
-		return g.Emit("AglIdentity(" + varName + ").Unwrap()")
-	}}
+	}}}
 }
 
 func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTest) {
@@ -750,7 +737,9 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTe
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	gPrefix := g.prefix
-	g.addBeforeStmt(SomethingTest{F: func() string {
+	return SomethingTest{F: func() string {
+		return g.Emit("AglIdentity(" + varName + ").Unwrap()")
+	}, B: []func() string{func() string {
 		before := ""
 		before += g.Emit(gPrefix+varName+" := ") + content1.F() + g.Emit("\n")
 		before += g.Emit(gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check))
@@ -761,17 +750,16 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out SomethingTe
 		before += g.Emit("\n")
 		before += g.Emit(gPrefix + "}\n")
 		return before
-	}})
-	return SomethingTest{F: func() string {
-		return g.Emit("AglIdentity(" + varName + ").Unwrap()")
-	}}
+	}}}
 }
 
 func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out SomethingTest) {
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	c1 := g.genExpr(expr.X)
-	g.addBeforeStmt(SomethingTest{F: func() string {
+	return SomethingTest{F: func() string {
+		return g.Emit("AglIdentity(" + varName + ")")
+	}, B: []func() string{func() string {
 		out := ""
 		out += g.Emit(g.prefix+varName+" := ") + c1.F() + g.Emit("\n")
 		out += g.Emit(g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check))
@@ -791,10 +779,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out SomethingTest) {
 		}
 		out += g.Emit(g.prefix + "}\n")
 		return out
-	}})
-	return SomethingTest{F: func() string {
-		return g.Emit("AglIdentity(" + varName + ")")
-	}}
+	}}}
 }
 
 func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) SomethingTest {
@@ -1334,16 +1319,15 @@ func (g *Generator) genLabelledArg(expr *ast.LabelledArg) SomethingTest {
 
 func (g *Generator) genDumpExpr(expr *ast.DumpExpr) SomethingTest {
 	content1 := g.genExpr(expr.X)
-	g.addBeforeStmt(SomethingTest{F: func() string {
+	return SomethingTest{F: func() string {
+		return content1.F()
+	}, B: []func() string{func() string {
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		safeContent1 := strconv.Quote(content1.F())
 		before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1.F())
 		before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
 		return before
-	}})
-	return SomethingTest{F: func() string {
-		return content1.F()
-	}}
+	}}}
 }
 
 func (g *Generator) genSliceExpr(expr *ast.SliceExpr) SomethingTest {
@@ -1408,24 +1392,22 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 			content1 := g.genExpr(expr.X)
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-				g.addBeforeStmt(SomethingTest{F: func() string {
+				return SomethingTest{F: func() string { return g.Emit("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
 					out := g.Emit(g.prefix+varName+", ok := ") + content1.F() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if !ok {\n")
 					out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + exprXT.W.GoStr() + "]()\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}})
-				return SomethingTest{F: func() string { return g.Emit("AglIdentity(" + varName + ")") }}
+				}}}
 			} else {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-				g.addBeforeStmt(SomethingTest{F: func() string {
+				return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }, B: []func() string{func() string {
 					out := g.Emit(g.prefix+varName+" := ") + content1.F() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + varName + ".IsNone() {\n")
 					out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + g.returnType.(types.OptionType).W.String() + "]()\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}})
-				return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }}
+				}}}
 			}
 		} else {
 			if exprXT.Native {
@@ -1434,14 +1416,13 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 				varName := fmt.Sprintf("aglTmpVar%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
 				out = fmt.Sprintf(`AglIdentity(%s)`, varName)
-				g.addBeforeStmt(SomethingTest{F: func() string {
+				return SomethingTest{F: func() string { return g.Emit(out) }, B: []func() string{func() string {
 					out := g.Emit(g.prefix+varName+", "+errName+" := ") + content1.F() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + errName + ")\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}})
-				return SomethingTest{F: func() string { return g.Emit(out) }}
+				}}}
 			} else {
 				return SomethingTest{F: func() string { return g.genExpr(expr.X).F() + g.Emit(".Unwrap()") }}
 			}
@@ -1451,7 +1432,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmpVar%d", id)
 		okName := fmt.Sprintf("aglTmpOk%d", id)
-		g.addBeforeStmt(SomethingTest{F: func() string {
+		return SomethingTest{F: func() string { return g.Emit(varName) }, B: []func() string{func() string {
 			tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1)
 			tmp += g.prefix + fmt.Sprintf("if !%s {\n", okName)
 			if v, ok := g.returnType.(types.OptionType); ok {
@@ -1461,8 +1442,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 			}
 			tmp += g.prefix + fmt.Sprintf("}\n")
 			return tmp
-		}})
-		return SomethingTest{F: func() string { return g.Emit(varName) }}
+		}}}
 	default:
 		panic("")
 	}
@@ -1474,78 +1454,68 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out Somethi
 		content1 := g.genExpr(expr.X)
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 			errName := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
-			g.addBeforeStmt(SomethingTest{F: func() string {
+			return SomethingTest{F: func() string { return g.Emit(`AglNoop()`) }, B: []func() string{func() string {
 				out := g.Emit(g.prefix+"if "+errName+" := ") + content1.F() + g.Emit("; "+errName+" != nil {\n")
 				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + exprXT.W.GoStrType() + "](" + errName + ")\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
-			}})
-			return SomethingTest{F: func() string { return g.Emit(`AglNoop()`) }}
+			}}}
 		} else if exprXT.Native {
 			id := g.varCounter.Add(1)
 			varName := fmt.Sprintf("aglTmpVar%d", id)
 			errName := fmt.Sprintf("aglTmpErr%d", id)
-			p("?")
-			printCallers(100)
-			g.addBeforeStmt(SomethingTest{F: func() string {
+			return SomethingTest{F: func() string {
+				return g.Emit("AglIdentity(" + varName + ")")
+			}, B: []func() string{func() string {
 				out := g.Emit(g.prefix+varName+", "+errName+" := ") + content1.F() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 				out += g.Emit(g.prefix + "\treturn MakeResultErr[" + g.returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
-			}})
-			return SomethingTest{F: func() string {
-				p("?2")
-				printCallers(100)
-				return g.Emit("AglIdentity(" + varName + ")")
-			}}
+			}}}
 		} else if exprXT.ConvertToNone {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
-			g.addBeforeStmt(SomethingTest{F: func() string {
+			return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }, B: []func() string{func() string {
 				out := g.Emit(g.prefix+varName+" := ") + content1.F() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + varName + ".IsErr() {\n")
 				out += g.Emit(g.prefix + "\treturn MakeOptionNone[" + exprXT.ToNoneType.GoStrType() + "]()\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
-			}})
-			return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }}
+			}}}
 		} else {
 			varName := fmt.Sprintf("aglTmpVar%d", g.varCounter.Add(1))
-			g.addBeforeStmt(SomethingTest{F: func() string {
+			return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }, B: []func() string{func() string {
 				out := g.Emit(g.prefix+varName+" := ") + content1.F() + g.Emit("\n")
 				out += g.Emit(g.prefix + "if " + varName + ".IsErr() {\n")
 				out += g.Emit(g.prefix + "\treturn " + varName + "\n")
 				out += g.Emit(g.prefix + "}\n")
 				return out
-			}})
-			return SomethingTest{F: func() string { return g.Emit(varName + ".Unwrap()") }}
+			}}}
 		}
 	} else {
 		if exprXT.Native {
 			if _, ok := exprXT.W.(types.VoidType); ok {
 				c1 := g.genExpr(expr.X)
 				tmpErrVar := fmt.Sprintf("aglTmpErr%d", g.varCounter.Add(1))
-				g.addBeforeStmt(SomethingTest{F: func() string {
+				return SomethingTest{F: func() string { return g.Emit(`AglNoop()`) }, B: []func() string{func() string {
 					out := g.Emit(g.prefix+tmpErrVar+" := ") + c1.F() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + tmpErrVar + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + tmpErrVar + ")\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}})
-				return SomethingTest{F: func() string { return g.Emit(`AglNoop()`) }}
+				}}}
 			} else {
 				c1 := g.genExpr(expr.X)
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmp%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
-				g.addBeforeStmt(SomethingTest{F: func() string {
+				return SomethingTest{F: func() string { return g.Emit("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
 					out := g.Emit(g.prefix+varName+", "+errName+" := ") + c1.F() + g.Emit("\n")
 					out += g.Emit(g.prefix + "if " + errName + " != nil {\n")
 					out += g.Emit(g.prefix + "\tpanic(" + errName + ")\n")
 					out += g.Emit(g.prefix + "}\n")
 					return out
-				}})
-				return SomethingTest{F: func() string { return g.Emit("AglIdentity(" + varName + ")") }}
+				}}}
 			}
 		} else {
 			return SomethingTest{F: func() string { return g.genExpr(expr.X).F() + g.Emit(".Unwrap()") }}
@@ -2001,8 +1971,11 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) SomethingTest {
 
 func (g *Generator) genExprs(e []ast.Expr) SomethingTest {
 	arr := make([]func() string, len(e))
+	var bs []func() string
 	for i, x := range e {
-		arr[i] = g.genExpr(x).F
+		tmp := g.genExpr(x)
+		arr[i] = tmp.F
+		bs = append(bs, tmp.B...)
 	}
 	return SomethingTest{F: func() string {
 		var out string
@@ -2013,25 +1986,21 @@ func (g *Generator) genExprs(e []ast.Expr) SomethingTest {
 			}
 		}
 		return out
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genStmts(s []ast.Stmt) SomethingTest {
-	var stmts []func() string
+	var stmts []SomethingTest
 	for _, stmt := range s {
-		stmts = append(stmts, g.genStmt(stmt).F)
+		stmts = append(stmts, g.genStmt(stmt))
 	}
 	return SomethingTest{F: func() string {
 		var out string
 		for _, stmt := range stmts {
-			g.WithSub(func() {
-				var beforeStmtStr string
-				for _, b := range g.beforeStmt {
-					beforeStmtStr += b.w.F()
-				}
-				out += beforeStmtStr
-				out += stmt()
-			})
+			for _, b := range stmt.B {
+				out += b()
+			}
+			out += stmt.F()
 		}
 		return out
 	}}
@@ -2283,6 +2252,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) SomethingTest {
 
 type SomethingTest struct {
 	F func() string
+	B []func() string
 }
 
 func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) SomethingTest {
@@ -2402,6 +2372,8 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 			}
 		}
 	}
+	var bs []func() string
+	bs = append(bs, content2.B...)
 	return SomethingTest{F: func() string {
 		var out string
 		if !g.inlineStmt {
@@ -2419,7 +2391,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 			out += e("\n")
 		}
 		return out
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) SomethingTest {
