@@ -31,6 +31,13 @@ type Generator struct {
 	allowUnused      bool
 	inlineStmt       bool
 	fragments        Frags
+	emitEnabled      bool
+}
+
+func (g *Generator) WithoutEmit(clb func()) {
+	g.emitEnabled = false
+	clb()
+	g.emitEnabled = true
 }
 
 func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
@@ -90,7 +97,9 @@ func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...Generat
 		tupleStructs:     make(map[string]string),
 		genFuncDecls2:    make(map[string]string),
 		genFuncDecls:     genFns,
-		allowUnused:      conf.AllowUnused}
+		allowUnused:      conf.AllowUnused,
+		emitEnabled:      true,
+	}
 }
 
 type Frag struct {
@@ -113,6 +122,9 @@ func WithNode(n ast.Node) EmitOption {
 }
 
 func (g *Generator) Emit(s string, opts ...EmitOption) string {
+	if !g.emitEnabled {
+		return s
+	}
 	c := &EmitConf{}
 	for _, opt := range opts {
 		opt(c)
@@ -266,7 +278,7 @@ func (g *Generator) genExtension(e Extension) (out string) {
 							}
 						}
 						if i < len(params)-1 {
-							out += ", "
+							out += g.Emit(", ")
 						}
 					}
 					return out
@@ -314,14 +326,6 @@ func (g *Generator) Generate() (out string) {
 	out += g.genImports(g.b)
 	out4 := g.genDecls(g.b)
 	out5 := g.genDecls(g.a)
-	var extStringStr string
-	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
-		extStringStr += g.genExtensionString(g.extensionsString[extKey])
-	}
-	var extStr string
-	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
-		extStr += g.genExtension(g.extensions[extKey])
-	}
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
@@ -330,7 +334,17 @@ func (g *Generator) Generate() (out string) {
 	for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls2)) {
 		genFuncDeclStr += g.genFuncDecls2[k]
 	}
-	return out + g.Emit(tupleStr) + genFuncDeclStr + out4.F() + out5.F() + extStr + extStringStr
+	out += g.Emit(tupleStr) + genFuncDeclStr + out4.F() + out5.F()
+	var extStr string
+	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
+		extStr += g.genExtension(g.extensions[extKey])
+	}
+	var extStringStr string
+	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
+		extStringStr += g.genExtensionString(g.extensionsString[extKey])
+	}
+	out += extStr + extStringStr
+	return
 }
 
 func (g *Generator) PkgName() string {
@@ -1563,8 +1577,21 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 					return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit(")") + g.Emit(")")
 				}}
 			case "Push":
-				paramsStr := utils.MapJoin(expr.Args, func(arg ast.Expr) string { return g.genExpr(arg).F() }, ", ")
-				ellipsis := utils.TernaryOrZero(expr.Ellipsis.IsValid(), "...")
+				paramsStr := func() (out string) {
+					for i, arg := range expr.Args {
+						out += g.genExpr(arg).F()
+						if i < len(expr.Args)-1 {
+							out += g.Emit(", ")
+						}
+					}
+					return
+				}
+				ellipsis := func() (out string) {
+					if expr.Ellipsis.IsValid() {
+						out = g.Emit("...")
+					}
+					return
+				}
 				tmpoeXT := oeXT
 				if v, ok := tmpoeXT.(types.MutType); ok {
 					tmpoeXT = v.W
@@ -1578,10 +1605,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 						if _, ok := vv.V.(types.StarType); !ok {
 							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 							return SomethingTest{F: func() string {
-								var out string
-								out += fmt.Sprintf("%s := %s\n", varName, genEX()) // temp variable to store the map value
-								out += g.prefix + fmt.Sprintf("AglVec%s(&%s, %s%s)\n", fnName, varName, paramsStr, ellipsis)
-								out += g.prefix + fmt.Sprintf("%s = %s", genEX(), varName) // put the temp value back in the map
+								out := g.Emit(varName+" := ") + genEX() + g.Emit("\n") // temp variable to store the map value
+								out += g.Emit(g.prefix + "AglVec" + fnName + "(&" + varName + ", " + paramsStr() + ellipsis() + ")\n")
+								out += g.Emit(g.prefix) + genEX() + g.Emit(" = "+varName) // put the temp value back in the map
 								return out
 							}}
 						}
@@ -1589,10 +1615,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 				}
 
 				if _, ok := tmpoeXT.(types.StarType); ok {
-					return SomethingTest{F: func() string { return fmt.Sprintf("AglVec%s(%s, %s%s)", fnName, genEX(), paramsStr, ellipsis) }}
+					return SomethingTest{F: func() string {
+						return g.Emit("AglVec"+fnName+"(") + genEX() + g.Emit(", ") + paramsStr() + ellipsis() + g.Emit(")")
+					}}
 				} else {
 					return SomethingTest{F: func() string {
-						return fmt.Sprintf("AglVec%s((*[]%s)(&%s), %s%s)", fnName, eltTStr, genEX(), paramsStr, ellipsis)
+						return g.Emit("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + g.Emit("), ") + paramsStr() + ellipsis() + g.Emit(")")
 					}}
 				}
 			default:
@@ -1619,7 +1647,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 				return SomethingTest{F: func() string {
 					out := g.Emit("AglVec"+fnName+"_"+elsStr+"(") + genEX()
 					if len(expr.Args) > 0 {
-						out += ", "
+						out += g.Emit(", ")
 					}
 					out += c1.F()
 					out += g.Emit(")")
@@ -1758,7 +1786,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 		t1 := g.env.Get(v.Name)
 		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
 			c2 := g.genExprs(expr.Args)
-			content1 = func() string { return v.Name }
+			content1 = func() string { return g.Emit(v.Name) }
 			content2 = func() string { return c2.F() }
 		} else {
 			if fnT, ok := t1.(types.FuncType); ok {
@@ -1773,13 +1801,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 							return g.genFuncDecl(fnDecl).F()
 						})
 					})
-					out := g.genExpr(v).F()
+					name := g.genExpr(v).FNoEmit(g)
 					for _, k := range slices.Sorted(maps.Keys(m)) {
-						out += fmt.Sprintf("_%s_%s", k, m[k].GoStr())
+						name += "_" + k + "_" + m[k].GoStr()
 					}
-					g.genFuncDecls2[out] = outFnDecl
+					g.genFuncDecls2[name] = outFnDecl
 					content1 = func() string {
-						return out
+						return g.Emit(name)
 					}
 					content2 = func() string {
 						var out string
@@ -2342,6 +2370,13 @@ type SomethingTest struct {
 	B []func() string
 }
 
+func (s SomethingTest) FNoEmit(g *Generator) (out string) {
+	g.WithoutEmit(func() {
+		out = s.F()
+	})
+	return
+}
+
 func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) SomethingTest {
 	var bs []func() string
 	var tmp SomethingTest
@@ -2434,7 +2469,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 		}
 		if isMutStarMap() {
 			v := stmt.Lhs[0].(*ast.IndexExpr)
-			lhs = func() string { return "(*" + g.genExpr(v.X).F() + ")[" + g.genExpr(v.Index).F() + "]" }
+			lhs = func() string { return e("(*") + g.genExpr(v.X).F() + e(")[") + g.genExpr(v.Index).F() + e("]") }
 		} else {
 			lhs = func() string { return g.genExprs(stmt.Lhs).F() }
 		}
@@ -2448,9 +2483,9 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 			default:
 				if !v.KeepRaw {
 					if _, ok := v.W.(types.VoidType); ok {
-						content2 = SomethingTest{F: func() string { return "AglWrapNative1(" + g.genExprs(stmt.Rhs).F() + ")" }}
+						content2 = SomethingTest{F: func() string { return e("AglWrapNative1(") + g.genExprs(stmt.Rhs).F() + e(")") }}
 					} else {
-						content2 = SomethingTest{F: func() string { return "AglWrapNative2(" + g.genExprs(stmt.Rhs).F() + ")" }}
+						content2 = SomethingTest{F: func() string { return e("AglWrapNative2(") + g.genExprs(stmt.Rhs).F() + e(")") }}
 					}
 				}
 			}
@@ -2472,7 +2507,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 		}
 		if after != "" {
 			if !g.inlineStmt {
-				after = e(g.prefix) + after
+				after = g.prefix + after
 			}
 			out += e(after)
 		}
@@ -2677,7 +2712,8 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var bs []func() string
 	recv := func() string { return "" }
-	var name, typeParamsStr, paramsStr, resultStr string
+	typeParamsFn := func() string { return "" }
+	var name, paramsStr, resultStr string
 	if decl.Recv != nil {
 		if len(decl.Recv.List) >= 1 {
 			if tmp1, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
@@ -2726,8 +2762,11 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 		name = " " + fnName
 	}
 	if typeParams := decl.Type.TypeParams; typeParams != nil {
-		typeParamsStr = g.joinList(decl.Type.TypeParams)
-		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
+		typeParamsFn = func() string {
+			out := g.joinList(decl.Type.TypeParams)
+			out = utils.WrapIf(out, "[", "]")
+			return out
+		}
 	}
 	if params := decl.Type.Params; params != nil {
 		var fieldsItems []string
@@ -2758,7 +2797,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 		resultStr = utils.PrefixIf(resultStr, " ")
 	}
 	if g.genMap != nil {
-		typeParamsStr = ""
+		typeParamsFn = func() string { return "" }
 		for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
 			v := g.genMap[k]
 			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
@@ -2770,7 +2809,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 		var out string
 		out += g.Emit("func")
 		out += recv()
-		out += g.Emit(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsStr, paramsStr, resultStr), WithNode(decl))
+		out += g.Emit(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsFn(), paramsStr, resultStr), WithNode(decl))
 		if decl.Body != nil {
 			out += g.incrPrefix(func() string {
 				return c1.F()
