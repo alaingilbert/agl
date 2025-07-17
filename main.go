@@ -2,6 +2,7 @@ package main
 
 import (
 	"agl/pkg/agl"
+	"agl/pkg/token"
 	"bytes"
 	"context"
 	"errors"
@@ -15,7 +16,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -104,7 +108,7 @@ func main() {
 	}
 }
 
-func spawnGoRunFromBytes(source []byte, programArgs []string) error {
+func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, programArgs []string) error {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "gorun")
 	if err != nil {
@@ -129,8 +133,31 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) error {
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
 	cmd := exec.Command("go", cmdArgs...)
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	buf := &bytes.Buffer{}
+	cmd.Stderr = buf
+	err = cmd.Run()
+	stdErrStr := buf.String()
+	if stdErrStr != "" {
+		fileName := "main.go"
+		aglFileName := "main.agl"
+		rgx := regexp.MustCompile(`/main\.go:(\d+)`)
+		matches := rgx.FindAllStringSubmatch(stdErrStr, -1)
+		for _, match := range matches {
+			origLine, _ := strconv.Atoi(match[1])
+			n := g.GenerateFrags(origLine)
+			if n != nil {
+				fmt.Println("?", n, reflect.TypeOf(n))
+				nPos := fset.Position(n.Pos())
+				from := fmt.Sprintf("%s:%d", fileName, origLine)
+				to := fmt.Sprintf("%s:%d (%s:%d)", fileName, origLine, aglFileName, nPos.Line)
+				stdErrStr = strings.Replace(stdErrStr, from, to, 1)
+			}
+		}
+	}
+	if err != nil {
+		panic(stdErrStr)
+	}
+	return err
 }
 
 func spawnGoBuild(fileName, outputFlag string) error {
@@ -189,7 +216,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	by := agl.Must(os.ReadFile(fileName))
-	src := genCode(fileName, by)
+	g, fset, src := genCode1(fileName, by)
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -197,7 +224,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		programArgs = cmd.Args().Slice()[1:] // Skip the .agl filename
 	}
 
-	_ = spawnGoRunFromBytes([]byte(src), programArgs)
+	_ = spawnGoRunFromBytes(g, fset, []byte(src), programArgs)
 	return nil
 }
 
@@ -439,7 +466,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	return nil
 }
 
-func genCode(fileName string, src []byte) string {
+func genCode1(fileName string, src []byte) (*agl.Generator, *token.FileSet, string) {
 	fset, f, f2 := agl.ParseSrc(string(src))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
@@ -448,7 +475,13 @@ func genCode(fileName string, src []byte) string {
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
-	return agl.NewGenerator(i.Env, f, f2, fset).Generate()
+	g := agl.NewGenerator(i.Env, f, f2, fset)
+	return g, fset, g.Generate()
+}
+
+func genCode(fileName string, src []byte) string {
+	_, _, out := genCode1(fileName, src)
+	return out
 }
 
 func buildAglFile(fileName string) error {

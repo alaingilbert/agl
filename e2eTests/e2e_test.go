@@ -306,7 +306,7 @@ func main() {
 	panic("")
 	fmt.Println(b)
 }`
-	expected := "/main.go:11 (main.agl:5)"
+	expected := "/main.go:11 (main.agl:6)"
 	PanicsContains(t, expected, func() { testGenOutput(src) })
 }
 
@@ -317,7 +317,7 @@ func PanicsContains(t *testing.T, errString string, f func()) bool {
 			if strings.Contains(s, errString) {
 				return
 			}
-			t.Fail()
+			t.Errorf("panic: %s", r)
 		}
 	}()
 	f()
