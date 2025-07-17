@@ -2,19 +2,21 @@ package e2eTests
 
 import (
 	"agl/pkg/agl"
+	"agl/pkg/token"
 	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
 )
 
-func spawnGoRunFromBytes(g *agl.Generator, source []byte, programArgs []string) ([]byte, error) {
+func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, programArgs []string) ([]byte, error) {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "gorun")
 	if err != nil {
@@ -43,14 +45,22 @@ func spawnGoRunFromBytes(g *agl.Generator, source []byte, programArgs []string) 
 	by, err := cmd.Output()
 	stdErrStr := buf.String()
 	if stdErrStr != "" {
-		n := g.GenerateFrags(11)
-		if n != nil {
-			fmt.Println("?", n, reflect.TypeOf(n))
-			stdErrStr = strings.Replace(stdErrStr, "main.go:11", "main.go:11 (main.agl:5)", 1)
+		fileName := "main.go"
+		aglFileName := "main.agl"
+		rgx := regexp.MustCompile(`/main\.go:(\d+)`)
+		matches := rgx.FindAllStringSubmatch(stdErrStr, -1)
+		for _, match := range matches {
+			origLine, _ := strconv.Atoi(match[1])
+			n := g.GenerateFrags(origLine)
+			if n != nil {
+				nPos := fset.Position(n.Pos())
+				from := fmt.Sprintf("%s:%d", fileName, origLine)
+				to := fmt.Sprintf("%s:%d (%s:%d)", fileName, origLine, aglFileName, nPos.Line)
+				stdErrStr = strings.Replace(stdErrStr, from, to, 1)
+			}
 		}
 		by = []byte(stdErrStr)
 	}
-	fmt.Println("??", stdErrStr)
 	return by, err
 }
 
@@ -62,7 +72,7 @@ func testGenOutput(src string) string {
 	i.InferFile("", f, fset, true)
 	g := agl.NewGenerator(env, f, f2, fset)
 	outSrc := g.Generate()
-	out, err := spawnGoRunFromBytes(g, []byte(outSrc), nil)
+	out, err := spawnGoRunFromBytes(g, fset, []byte(outSrc), nil)
 	if err != nil {
 		panic(string(out))
 	}
