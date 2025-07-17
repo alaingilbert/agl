@@ -1645,15 +1645,15 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 		okName := fmt.Sprintf("aglTmpOk%d", id)
 		returnType := g.returnType
 		return GenFrag{F: func() string { return e(varName) }, B: []func() string{func() string {
-			tmp := e(g.prefix+varName+", "+okName+" := ") + content1.F() + e("\n")
-			tmp += e(g.prefix + "if !" + okName + " {\n")
+			out := e(g.prefix+varName+", "+okName+" := ") + content1.F() + e("\n")
+			out += e(g.prefix + "if !" + okName + " {\n")
 			if v, ok := returnType.(types.OptionType); ok {
-				tmp += e(g.prefix + "\tMakeOptionNone[" + v.W.GoStrType() + "]()\n")
+				out += e(g.prefix + "\tMakeOptionNone[" + v.W.GoStrType() + "]()\n")
 			} else {
-				tmp += e(g.prefix + "\tpanic(\"type assert failed\")\n")
+				out += e(g.prefix + "\tpanic(\"type assert failed\")\n")
 			}
-			tmp += e(g.prefix + "}\n")
-			return tmp
+			out += e(g.prefix + "}\n")
+			return out
 		}}}
 	default:
 		panic("")
@@ -1738,53 +1738,53 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 }
 
 func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
-	ee := EmitWith(g, expr)
-	switch e := expr.Fun.(type) {
+	e := EmitWith(g, expr)
+	switch x := expr.Fun.(type) {
 	case *ast.SelectorExpr:
-		oeXT := g.env.GetType(e.X)
+		oeXT := g.env.GetType(x.X)
 		eXT := types.Unwrap(oeXT)
 		switch eXTT := eXT.(type) {
 		case types.ArrayType:
-			c1 := g.genExpr(e.X)
+			c1 := g.genExpr(x.X)
 			genEX := func() string { return c1.F() }
 			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 			eltT := types.ReplGenM(eXTT.Elt, g.genMap)
 			eltTStr := eltT.GoStr()
-			fnName := e.Sel.Name
+			fnName := x.Sel.Name
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
-				return GenFrag{F: func() string { return ee("AglVec"+fnName+"(") + genEX() + ee(")") }}
+				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
 			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
-				return GenFrag{F: func() string { return ee("AglVec"+fnName+"(") + genEX() + ee(", ") + genArgFn(0) + ee(")") }}
+				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 			case "Reduce", "ReduceInto":
 				return GenFrag{F: func() string {
-					return ee("AglVec"+fnName+"(") + genEX() + ee(", ") + genArgFn(0) + ee(", ") + genArgFn(1) + ee(")")
+					return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 				}}
 			case "Insert":
 				return GenFrag{F: func() string {
-					return ee("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + ee("), ") + genArgFn(0) + ee(", ") + genArgFn(1) + ee(")")
+					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 				}}
 			case "PopIf", "PushFront", "Remove":
 				return GenFrag{F: func() string {
-					return ee("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + ee("), ") + genArgFn(0) + ee(")")
+					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(")")
 				}}
 			case "Pop", "PopFront":
 				return GenFrag{F: func() string {
-					return ee("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + ee(")") + ee(")")
+					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")
 				}}
 			case "Push":
 				paramsStr := func() (out string) {
 					for i, arg := range expr.Args {
 						out += g.genExpr(arg).F()
 						if i < len(expr.Args)-1 {
-							out += ee(", ")
+							out += e(", ")
 						}
 					}
 					return
 				}
 				ellipsis := func() (out string) {
 					if expr.Ellipsis.IsValid() {
-						out = ee("...")
+						out = e("...")
 					}
 					return
 				}
@@ -1794,16 +1794,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 
 				// Push into a value of a mut map
-				if v, ok := e.X.(*ast.IndexExpr); ok {
+				if v, ok := x.X.(*ast.IndexExpr); ok {
 					ot := g.env.GetType(v.X)
 					t := types.Unwrap(ot)
 					if vv, ok := t.(types.MapType); ok {
 						if _, ok := vv.V.(types.StarType); !ok {
 							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 							return GenFrag{F: func() string {
-								out := ee(varName+" := ") + genEX() + ee("\n") // temp variable to store the map value
-								out += ee(g.prefix + "AglVec" + fnName + "(&" + varName + ", " + paramsStr() + ellipsis() + ")\n")
-								out += ee(g.prefix) + genEX() + ee(" = "+varName) // put the temp value back in the map
+								out := e(varName+" := ") + genEX() + e("\n") // temp variable to store the map value
+								out += e(g.prefix + "AglVec" + fnName + "(&" + varName + ", " + paramsStr() + ellipsis() + ")\n")
+								out += e(g.prefix) + genEX() + e(" = "+varName) // put the temp value back in the map
 								return out
 							}}
 						}
@@ -1812,11 +1812,11 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 
 				if _, ok := tmpoeXT.(types.StarType); ok {
 					return GenFrag{F: func() string {
-						return ee("AglVec"+fnName+"(") + genEX() + ee(", ") + paramsStr() + ellipsis() + ee(")")
+						return e("AglVec"+fnName+"(") + genEX() + e(", ") + paramsStr() + ellipsis() + e(")")
 					}}
 				} else {
 					return GenFrag{F: func() string {
-						return ee("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + ee("), ") + paramsStr() + ellipsis() + ee(")")
+						return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + paramsStr() + ellipsis() + e(")")
 					}}
 				}
 			default:
@@ -1841,17 +1841,17 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				elsStr := strings.Join(els, "_")
 				c1 := g.genExprs(expr.Args)
 				return GenFrag{F: func() string {
-					out := ee("AglVec"+fnName+"_"+elsStr+"(") + genEX()
+					out := e("AglVec"+fnName+"_"+elsStr+"(") + genEX()
 					if len(expr.Args) > 0 {
-						out += ee(", ")
+						out += e(", ")
 					}
 					out += c1.F()
-					out += ee(")")
+					out += e(")")
 					return out
 				}}
 			}
 		case types.SetType:
-			fnName := e.Sel.Name
+			fnName := x.Sel.Name
 			switch fnName {
 			case "Union", "FormUnion", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 				"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint":
@@ -1859,44 +1859,44 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				content2 := func() string {
 					switch v := g.env.GetType(arg0).(type) {
 					case types.ArrayType:
-						return ee("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + ee(")")
+						return e("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(")")
 					default:
 						return g.genExpr(arg0).F()
 					}
 				}
 				return GenFrag{F: func() string {
-					return ee("AglSet"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + content2() + ee(")")
+					return e("AglSet"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + content2() + e(")")
 				}}
 			case "Insert", "Remove", "Contains", "Equals":
 				return GenFrag{F: func() string {
-					return ee("AglSet"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee(")")
+					return e("AglSet"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e(")")
 				}}
 			case "Len", "Min", "Max", "Iter":
-				return GenFrag{F: func() string { return ee("AglSet"+fnName+"(") + g.genExpr(e.X).F() + ee(")") }}
+				return GenFrag{F: func() string { return e("AglSet"+fnName+"(") + g.genExpr(x.X).F() + e(")") }}
 			}
 		case types.I64Type:
-			fnName := e.Sel.Name
+			fnName := x.Sel.Name
 			switch fnName {
 			case "String":
-				return GenFrag{F: func() string { return ee("AglI64String(") + g.genExpr(e.X).F() + ee(")") }}
+				return GenFrag{F: func() string { return e("AglI64String(") + g.genExpr(x.X).F() + e(")") }}
 			}
 		case types.StringType, types.UntypedStringType:
-			fnName := e.Sel.Name
+			fnName := x.Sel.Name
 			switch fnName {
 			case "Replace":
 				return GenFrag{F: func() string {
-					return ee("AglString"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee(", ") + g.genExpr(expr.Args[1]).F() + ee(", ") + g.genExpr(expr.Args[2]).F() + ee(")")
+					return e("AglString"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e(", ") + g.genExpr(expr.Args[1]).F() + e(", ") + g.genExpr(expr.Args[2]).F() + e(")")
 				}}
 			case "ReplaceAll":
 				return GenFrag{F: func() string {
-					return ee("AglString"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee(", ") + g.genExpr(expr.Args[1]).F() + ee(")")
+					return e("AglString"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e(", ") + g.genExpr(expr.Args[1]).F() + e(")")
 				}}
 			case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
 				return GenFrag{F: func() string {
-					return ee("AglString"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee(")")
+					return e("AglString"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e(")")
 				}}
 			case "TrimSpace", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64":
-				return GenFrag{F: func() string { return ee("AglString"+fnName+"(") + g.genExpr(e.X).F() + ee(")") }}
+				return GenFrag{F: func() string { return e("AglString"+fnName+"(") + g.genExpr(x.X).F() + e(")") }}
 			default:
 				extName := "agl1.String." + fnName
 				rawFnT := g.env.Get(extName)
@@ -1906,73 +1906,73 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 				tmp.gen[rawFnT.String()] = ExtensionTest{raw: rawFnT}
 				g.extensionsString[extName] = tmp
-				return GenFrag{F: func() string { return ee("AglString"+fnName+"(") + g.genExpr(e.X).F() + ee(")") }}
+				return GenFrag{F: func() string { return e("AglString"+fnName+"(") + g.genExpr(x.X).F() + e(")") }}
 			}
 		case types.MapType:
-			fnName := e.Sel.Name
+			fnName := x.Sel.Name
 			switch fnName {
 			case "Len":
-				return GenFrag{F: func() string { return ee("AglIdentity(AglMapLen(") + g.genExpr(e.X).F() + "))" }}
+				return GenFrag{F: func() string { return e("AglIdentity(AglMapLen(") + g.genExpr(x.X).F() + "))" }}
 			case "Get":
 				return GenFrag{F: func() string {
-					return ee("AglIdentity(AglMapIndex(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee("))")
+					return e("AglIdentity(AglMapIndex(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e("))")
 				}}
 			case "ContainsKey":
 				return GenFrag{F: func() string {
-					return ee("AglIdentity(AglMapContainsKey(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee("))")
+					return e("AglIdentity(AglMapContainsKey(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e("))")
 				}}
 			case "Keys", "Values":
-				return GenFrag{F: func() string { return ee("AglIdentity(AglMap"+fnName+"(") + g.genExpr(e.X).F() + ee("))") }}
+				return GenFrag{F: func() string { return e("AglIdentity(AglMap"+fnName+"(") + g.genExpr(x.X).F() + e("))") }}
 			case "Filter":
 				return GenFrag{F: func() string {
-					return ee("AglIdentity(AglMapFilter(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee("))")
+					return e("AglIdentity(AglMapFilter(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e("))")
 				}}
 			case "Map":
 				return GenFrag{F: func() string {
-					return ee("AglIdentity(AglMapMap(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee("))")
+					return e("AglIdentity(AglMapMap(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e("))")
 				}}
 			case "Reduce", "ReduceInto":
 				return GenFrag{F: func() string {
-					return ee("AglMap"+fnName+"(") + g.genExpr(e.X).F() + ee(", ") + g.genExpr(expr.Args[0]).F() + ee(", ") + g.genExpr(expr.Args[1]).F() + ee(")")
+					return e("AglMap"+fnName+"(") + g.genExpr(x.X).F() + e(", ") + g.genExpr(expr.Args[0]).F() + e(", ") + g.genExpr(expr.Args[1]).F() + e(")")
 				}}
 			}
 		default:
-			if v, ok := e.X.(*ast.Ident); ok && v.Name == "agl" && e.Sel.Name == "NewSet" {
-				return GenFrag{F: func() string { return ee("AglNewSet(") + g.genExprs(expr.Args).F() + ee(")") }}
-			} else if v, ok := e.X.(*ast.Ident); ok && v.Name == "http" && e.Sel.Name == "NewRequest" {
-				return GenFrag{F: func() string { return ee("AglHttpNewRequest(") + g.genExprs(expr.Args).F() + ee(")") }}
+			if v, ok := x.X.(*ast.Ident); ok && v.Name == "agl" && x.Sel.Name == "NewSet" {
+				return GenFrag{F: func() string { return e("AglNewSet(") + g.genExprs(expr.Args).F() + e(")") }}
+			} else if v, ok := x.X.(*ast.Ident); ok && v.Name == "http" && x.Sel.Name == "NewRequest" {
+				return GenFrag{F: func() string { return e("AglHttpNewRequest(") + g.genExprs(expr.Args).F() + e(")") }}
 			}
 		}
 	case *ast.Ident:
-		if e.Name == "assert" {
+		if x.Name == "assert" {
 			var contents []func() string
 			for _, arg := range expr.Args {
 				contents = append(contents, g.genExpr(arg).F)
 			}
 			return GenFrag{F: func() string {
 				var out string
-				out = ee("AglAssert(")
+				out = e("AglAssert(")
 				line := g.fset.Position(expr.Pos()).Line
 				msg := fmt.Sprintf(`"assert failed line %d"`, line)
 				if len(contents) == 1 {
-					contents = append(contents, func() string { return ee(msg) })
+					contents = append(contents, func() string { return e(msg) })
 				} else {
 					tmp := contents[1]
-					contents[1] = func() string { return ee(msg+` + " " + `) + tmp() }
+					contents[1] = func() string { return e(msg+` + " " + `) + tmp() }
 				}
 				for i, c := range contents {
 					out += c()
 					if i < len(contents)-1 {
-						out += ee(", ")
+						out += e(", ")
 					}
 				}
-				out += ee(")")
+				out += e(")")
 				return out
 			}}
-		} else if e.Name == "panic" {
-			return GenFrag{F: func() string { return ee("panic(nil)") }}
-		} else if e.Name == "panicWith" {
-			return GenFrag{F: func() string { return ee("panic(") + g.genExpr(expr.Args[0]).F() + ee(")") }}
+		} else if x.Name == "panic" {
+			return GenFrag{F: func() string { return e("panic(nil)") }}
+		} else if x.Name == "panicWith" {
+			return GenFrag{F: func() string { return e("panic(") + g.genExpr(expr.Args[0]).F() + e(")") }}
 		}
 	}
 	content1 := func() string { return "" }
@@ -1982,7 +1982,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		t1 := g.env.Get(v.Name)
 		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
 			c2 := g.genExprs(expr.Args)
-			content1 = func() string { return ee(v.Name) }
+			content1 = func() string { return e(v.Name) }
 			content2 = func() string { return c2.F() }
 		} else {
 			if fnT, ok := t1.(types.FuncType); ok {
@@ -2004,7 +2004,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 						name += "_" + k + "_" + m[k].GoStr()
 					}
 					g.genFuncDecls2[name] = outFnDecl
-					content1 = func() string { return ee(name) }
+					content1 = func() string { return e(name) }
 					content2 = func() string {
 						var out string
 						g.WithGenMapping(m, func() {
@@ -2018,16 +2018,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 					content2 = func() string {
 						var out string
 						if g.genMap != nil {
-							out = ee(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
+							out = e(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
 						} else {
 							out = g.genExpr(expr.Args[0]).F()
 						}
 						if len(expr.Args) > 1 {
-							out += ee(", ")
+							out += e(", ")
 							for i, arg := range expr.Args[1:] {
 								out += g.genExpr(arg).F()
 								if i < len(expr.Args[1:])-1 {
-									out += ee(", ")
+									out += e(", ")
 								}
 							}
 						}
@@ -2054,12 +2054,12 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 	}
 	return GenFrag{F: func() string {
 		var out string
-		out = content1() + ee("(")
+		out = content1() + e("(")
 		out += content2()
 		if expr.Ellipsis != 0 {
-			out += ee("...")
+			out += e("...")
 		}
-		out += ee(")")
+		out += e(")")
 		return out
 	}}
 }
