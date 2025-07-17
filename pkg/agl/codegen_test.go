@@ -9714,6 +9714,24 @@ func main() {
 	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
 }
 
+func TestCodeGen334(t *testing.T) {
+	src := `package main
+func main() {
+	for 1 > 2 && 2 < 1 {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for 1 > 2 && 2 < 1 {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
