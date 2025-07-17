@@ -5,6 +5,7 @@ import (
 	"agl/pkg/token"
 	"agl/pkg/types"
 	"agl/pkg/utils"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"slices"
