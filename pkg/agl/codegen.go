@@ -1343,9 +1343,9 @@ func (g *Generator) genDumpExpr(expr *ast.DumpExpr) SomethingTest {
 		return content1.F()
 	}, B: []func() string{func() string {
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-		safeContent1 := strconv.Quote(content1.F())
-		before := g.prefix + fmt.Sprintf("%s := %s\n", varName, content1.F())
-		before += g.prefix + fmt.Sprintf("fmt.Printf(\"%s: %%s: %%v\\n\", %s, %s)\n", g.fset.Position(expr.X.Pos()), safeContent1, varName)
+		safeContent1 := strconv.Quote(content1.FNoEmit(g))
+		before := g.Emit(g.prefix+varName+" := ") + content1.F() + g.Emit("\n")
+		before += g.Emit(g.prefix + "fmt.Printf(\"" + g.fset.Position(expr.X.Pos()).String() + ": %s: %v\\n\", " + safeContent1 + ", " + varName + ")\n")
 		return before
 	}}}
 }
