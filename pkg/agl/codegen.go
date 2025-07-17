@@ -981,13 +981,13 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 					switch cv := c.Expr.(type) {
 					case *ast.CallExpr:
 						sel := cv.Fun.(*ast.SelectorExpr)
-						out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, sel.Sel.Name)
+						out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
 						for j, id := range cv.Args {
-							rhs := fmt.Sprintf("%s.%s_%d", expr.Init, v.Fields[i].Name, j)
+							rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
 							if id.(*ast.Ident).Name == "_" {
-								out += e(gPrefix+"\t_ = ") + rhs + e("\n")
+								out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
 							} else {
-								out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs + e("\n")
+								out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
 							}
 						}
 						out += e(gPrefix) + g.genStmts(c.Body).F()
@@ -2169,11 +2169,16 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) SomethingTest {
 						out += e("[")
 					}
 					for i, field := range typeParams.List {
-						namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string {
-							return g.genIdent(n.Ident).F()
-						}, ", ")
-						namesStr = utils.SuffixIf(namesStr, " ")
-						out += e(namesStr) + g.genExpr(field.Type).F()
+						for j, n := range field.Names {
+							out += g.genIdent(n.Ident).F()
+							if j < len(typeParams.List)-1 {
+								out += e(", ")
+							}
+						}
+						if len(field.Names) > 0 {
+							out += e(" ")
+						}
+						out += g.genExpr(field.Type).F()
 						if i < len(typeParams.List)-1 {
 							out += e(", ")
 						}
