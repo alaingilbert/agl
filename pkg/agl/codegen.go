@@ -925,19 +925,18 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 				for i, c := range expr.Body.List {
 					c := c.(*ast.MatchClause)
 					if v.Native {
+						assignOp := func(op string) string { return utils.Ternary(op == "_", "=", ":=") }
 						switch v := c.Expr.(type) {
 						case *ast.OkExpr:
 							binding := func() string { return g.genExpr(v.X).F() }
 							out += e(gPrefix + "if " + errName + " == nil {\n" + gPrefix + "\t")
 							op := binding()
-							assignOp := utils.Ternary(op == "_", "=", ":=")
-							out += op + e(" "+assignOp+" *"+varName+"\n")
+							out += op + e(" "+assignOp(op)+" *"+varName+"\n")
 						case *ast.ErrExpr:
 							binding := func() string { return g.genExpr(v.X).F() }
 							out += e(gPrefix + "if " + errName + " != nil {\n" + gPrefix + "\t")
 							op := binding()
-							assignOp := utils.Ternary(op == "_", "=", ":=")
-							out += op + e(" "+assignOp+" "+errName+"\n")
+							out += op + e(" "+assignOp(op)+" "+errName+"\n")
 						default:
 							panic("")
 						}
@@ -1825,9 +1824,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 						name += "_" + k + "_" + m[k].GoStr()
 					}
 					g.genFuncDecls2[name] = outFnDecl
-					content1 = func() string {
-						return g.Emit(name)
-					}
+					content1 = func() string { return g.Emit(name) }
 					content2 = func() string {
 						var out string
 						g.WithGenMapping(m, func() {
