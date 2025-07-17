@@ -107,6 +107,14 @@ func main() {
 	}
 }
 
+type RuntimeError struct {
+	err string
+}
+
+func (i *RuntimeError) Error() string {
+	return i.err
+}
+
 func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, programArgs []string) error {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "gorun")
@@ -153,7 +161,7 @@ func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, p
 		}
 	}
 	if err != nil {
-		panic(stdErrStr)
+		panic(&RuntimeError{err: stdErrStr})
 	}
 	return err
 }
@@ -194,6 +202,15 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 			var inferErr *agl.InferError
 			if err, ok := r.(error); ok && errors.As(err, &inferErr) {
 				msg := inferErr.Error()
+				if msg == "" || debugFlag {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
+				os.Exit(1)
+			}
+			var rtErr *RuntimeError
+			if err, ok := r.(error); ok && errors.As(err, &rtErr) {
+				msg := rtErr.Error()
 				if msg == "" || debugFlag {
 					msg += string(debug.Stack())
 				}
