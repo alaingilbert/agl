@@ -25,6 +25,7 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 - Operator overloading
 - Compile down to Go code
 - VSCode extension & LSP (language server protocol)
+- SourceMap
 - Shell "shebang" support
 
 ## Community
