@@ -102,6 +102,146 @@ func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...Generat
 	}
 }
 
+// SourceMapEntry represents a mapping from Go output to Agl source.
+type SourceMapEntry struct {
+	GoStartLine int    `json:"go_start_line"`
+	GoStartCol  int    `json:"go_start_col"`
+	GoEndLine   int    `json:"go_end_line"`
+	GoEndCol    int    `json:"go_end_col"`
+	AglFile     string `json:"agl_file"`
+	AglLine     int    `json:"agl_line"`
+	AglCol      int    `json:"agl_col"`
+	NodeType    string `json:"node_type,omitempty"`
+}
+
+// nodeTypeName returns the type name of the ast.Node for debugging.
+func nodeTypeName(n ast.Node) string {
+	if n == nil {
+		return ""
+	}
+	return fmt.Sprintf("%T", n)
+}
+
+// VLQ encoding for source maps (see https://sourcemaps.info/spec.html)
+func encodeVLQ(value int) string {
+	const (
+		VLQ_BASE_SHIFT       = 5
+		VLQ_BASE             = 1 << VLQ_BASE_SHIFT
+		VLQ_BASE_MASK        = VLQ_BASE - 1
+		VLQ_CONTINUATION_BIT = VLQ_BASE
+	)
+	vlq := value << 1
+	if value < 0 {
+		vlq = (-value << 1) + 1
+	}
+	result := ""
+	for {
+		digit := vlq & VLQ_BASE_MASK
+		vlq >>= VLQ_BASE_SHIFT
+		if vlq > 0 {
+			digit |= VLQ_CONTINUATION_BIT
+		}
+		result += base64VLQChar(digit)
+		if vlq == 0 {
+			break
+		}
+	}
+	return result
+}
+
+func base64VLQChar(digit int) string {
+	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	return string(chars[digit])
+}
+
+// GenerateStandardSourceMap outputs a standard-compliant source map (version 3) as a JSON string.
+// It uses VLQ encoding for the mappings field, and assumes a single source file (the main Agl file).
+// https://sokra.github.io/source-map-visualization
+func (g *Generator) GenerateStandardSourceMap(goOutput string, goFile string) (string, error) {
+	// Collect all fragments with source info
+	entries := []SourceMapEntry{}
+	line, col := 1, 1
+	for _, frag := range g.fragments {
+		fragText := frag.s
+		startLine, startCol := line, col
+		for _, r := range fragText {
+			if r == '\n' {
+				line++
+				col = 1
+			} else {
+				col++
+			}
+		}
+		endLine, endCol := line, col
+		if frag.n != nil {
+			pos := frag.n.Pos()
+			aglPos := g.fset.Position(pos)
+			entries = append(entries, SourceMapEntry{
+				GoStartLine: startLine,
+				GoStartCol:  startCol,
+				GoEndLine:   endLine,
+				GoEndCol:    endCol,
+				AglFile:     aglPos.Filename,
+				AglLine:     aglPos.Line,
+				AglCol:      aglPos.Column,
+				NodeType:    nodeTypeName(frag.n),
+			})
+		}
+	}
+	if len(entries) == 0 {
+		return "", nil
+	}
+	// For standard source maps, we need to build the mappings string.
+	// We'll map Go output lines to Agl source lines, using the first entry for each Go line.
+	mappings := ""
+	prevGenCol := 0
+	prevSrcIdx := 0 // always 0, since we only use one source file
+	prevSrcLine := 0
+	prevSrcCol := 0
+	//curLine := 1
+	entryIdx := 0
+	for lineNum := 1; lineNum <= entries[len(entries)-1].GoEndLine; lineNum++ {
+		if lineNum > 1 {
+			mappings += ";"
+		}
+		first := true
+		for entryIdx < len(entries) && entries[entryIdx].GoStartLine == lineNum {
+			entry := entries[entryIdx]
+			genCol := entry.GoStartCol - 1 // 0-based
+			srcLine := entry.AglLine - 1   // 0-based
+			srcCol := entry.AglCol - 1     // 0-based
+			if !first {
+				mappings += ","
+			}
+			first = false
+			// [generatedColumn, sourceIndex, sourceLine, sourceColumn]
+			mappings += encodeVLQ(genCol - prevGenCol)
+			prevGenCol = genCol
+			mappings += encodeVLQ(prevSrcIdx) // always 0
+			mappings += encodeVLQ(srcLine - prevSrcLine)
+			prevSrcLine = srcLine
+			mappings += encodeVLQ(srcCol - prevSrcCol)
+			prevSrcCol = srcCol
+			// names field omitted (no symbol names)
+			entryIdx++
+		}
+		prevGenCol = 0 // reset at each new line
+	}
+	// Compose the source map object
+	smap := map[string]interface{}{
+		"version":  3,
+		"file":     goFile,
+		"sources":  []string{entries[0].AglFile},
+		"names":    []string{},
+		"mappings": mappings,
+	}
+	b, err := json.MarshalIndent(smap, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
 type Frag struct {
 	n ast.Node
 	s string
