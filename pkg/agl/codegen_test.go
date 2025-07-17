@@ -9732,6 +9732,22 @@ func main() {
 	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
 }
 
+func TestCodeGen335(t *testing.T) {
+	src := `package main
+var mut a, mut b, mut c, d int`
+	expected := `// agl:generated
+package main
+var a, b, c, d int
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "mut int", test.TypeAt(2, 9).String())
+	tassert.Equal(t, "mut int", test.TypeAt(2, 16).String())
+	tassert.Equal(t, "mut int", test.TypeAt(2, 23).String())
+	tassert.Equal(t, "int", test.TypeAt(2, 26).String())
+	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

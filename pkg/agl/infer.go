@@ -342,11 +342,12 @@ func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 		infer.SetType(spec.Type, t)
 	}
 	for _, name := range spec.Names {
+		tt := t
 		if name.Mutable.IsValid() {
-			t = types.MutType{W: t}
+			tt = types.MutType{W: tt}
 		}
-		infer.env.Define(name, name.Name, t)
-		infer.SetType(name, t)
+		infer.env.Define(name, name.Name, tt)
+		infer.SetType(name, tt)
 	}
 }
 
