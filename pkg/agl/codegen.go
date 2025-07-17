@@ -2458,22 +2458,26 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 					if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
-						xTup := v.X.(*ast.TupleExpr)
 						out += e(g.prefix + "\t")
-						for i := range tup.Elts {
-							out += g.genExpr(xTup.Values[i]).F()
-							if i < len(tup.Elts)-1 {
-								out += e(", ")
+						switch vv := v.X.(type) {
+						case *ast.TupleExpr:
+							for i := range tup.Elts {
+								out += g.genExpr(vv.Values[i]).F()
+								if i < len(tup.Elts)-1 {
+									out += e(", ")
+								}
 							}
-						}
-						out += e(" := ")
-						for i := range tup.Elts {
-							out += e(fmt.Sprintf("%s.Arg%d", varName, i))
-							if i < len(tup.Elts)-1 {
-								out += e(", ")
+							out += e(" := ")
+							for i := range tup.Elts {
+								out += e(fmt.Sprintf("%s.Arg%d", varName, i))
+								if i < len(tup.Elts)-1 {
+									out += e(", ")
+								}
 							}
+							out += e("\n")
+						case *ast.Ident:
+							out += g.genExpr(vv).F() + e(" := "+varName+"\n")
 						}
-						out += e("\n")
 					} else {
 						switch yT.(type) {
 						case types.ArrayType:
