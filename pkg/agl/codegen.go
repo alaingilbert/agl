@@ -2392,7 +2392,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 
 type GenFrag struct {
 	F func() string
-	B []func() string
+	B []func() string // Store "functions that generated code" that we want to generate before the current statement
 }
 
 func (s GenFrag) FNoEmit(g *Generator) (out string) {
