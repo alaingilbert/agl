@@ -892,10 +892,11 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) SomethingTest {
 }
 
 func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
+	e := func(s string) string { return g.Emit(s, WithNode(expr)) }
+	content1 := g.genExpr(expr.Init)
+	initT := g.env.GetType(expr.Init)
 	return SomethingTest{F: func() string {
 		var out string
-		content1 := g.genExpr(expr.Init).F()
-		initT := g.env.GetType(expr.Init)
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf(`aglTmp%d`, id)
 		errName := fmt.Sprintf(`aglTmpErr%d`, id)
@@ -903,9 +904,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 		switch v := initT.(type) {
 		case types.ResultType:
 			if v.Native {
-				out += fmt.Sprintf("%s, %s := AglWrapNative2(%s).NativeUnwrap()\n", varName, errName, content1)
+				out += e(varName+", "+errName+" := AglWrapNative2(") + content1.F() + e(").NativeUnwrap()\n")
 			} else {
-				out += fmt.Sprintf("%s := %s\n", varName, content1)
+				out += e(varName+" := ") + content1.F() + e("\n")
 			}
 			if expr.Body != nil {
 				for i, c := range expr.Body.List {
@@ -913,22 +914,26 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 					if v.Native {
 						switch v := c.Expr.(type) {
 						case *ast.OkExpr:
-							binding := g.genExpr(v.X).F()
-							assignOp := utils.Ternary(binding == "_", "=", ":=")
-							out += gPrefix + fmt.Sprintf("if %s == nil {\n%s\t%s %s *%s\n", errName, gPrefix, binding, assignOp, varName)
+							binding := func() string { return g.genExpr(v.X).F() }
+							out += e(gPrefix + "if " + errName + " == nil {\n" + gPrefix + "\t")
+							op := binding()
+							assignOp := utils.Ternary(op == "_", "=", ":=")
+							out += op + e(" "+assignOp+" *"+varName+"\n")
 						case *ast.ErrExpr:
-							binding := g.genExpr(v.X).F()
-							assignOp := utils.Ternary(binding == "_", "=", ":=")
-							out += gPrefix + fmt.Sprintf("if %s != nil {\n%s\t%s %s %s\n", errName, gPrefix, binding, assignOp, errName)
+							binding := func() string { return g.genExpr(v.X).F() }
+							out += e(gPrefix + "if " + errName + " != nil {\n" + gPrefix + "\t")
+							op := binding()
+							assignOp := utils.Ternary(op == "_", "=", ":=")
+							out += op + e(" "+assignOp+" "+errName+"\n")
 						default:
 							panic("")
 						}
 					} else {
 						switch v := c.Expr.(type) {
 						case *ast.OkExpr:
-							out += gPrefix + fmt.Sprintf("if %s.IsOk() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X).F(), varName)
+							out += e(gPrefix+"if "+varName+".IsOk() {\n"+gPrefix+"\t") + g.genExpr(v.X).F() + e(" := "+varName+".Unwrap()\n")
 						case *ast.ErrExpr:
-							out += gPrefix + fmt.Sprintf("if %s.IsErr() {\n%s\t%s := %s.Err()\n", varName, gPrefix, g.genExpr(v.X).F(), varName)
+							out += e(gPrefix+"if "+varName+".IsErr() {\n"+gPrefix+"\t") + g.genExpr(v.X).F() + e(" := "+varName+".Err()\n")
 						default:
 							panic("")
 						}
@@ -937,22 +942,22 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 						return g.genStmts(c.Body).F()
 					})
 					out += content3
-					out += gPrefix + "}"
+					out += e(gPrefix + "}")
 					if i < len(expr.Body.List)-1 {
-						out += "\n"
+						out += e("\n")
 					}
 				}
 			}
 		case types.OptionType:
-			out += fmt.Sprintf("%s := %s\n", varName, content1)
+			out += e(varName+" := ") + content1.F() + e("\n")
 			if expr.Body != nil {
 				for i, c := range expr.Body.List {
 					c := c.(*ast.MatchClause)
 					switch v := c.Expr.(type) {
 					case *ast.SomeExpr:
-						out += gPrefix + fmt.Sprintf("if %s.IsSome() {\n%s\t%s := %s.Unwrap()\n", varName, gPrefix, g.genExpr(v.X).F(), varName)
+						out += e(gPrefix+"if "+varName+".IsSome() {\n"+gPrefix+"\t") + g.genExpr(v.X).F() + e(" := "+varName+".Unwrap()\n")
 					case *ast.NoneExpr:
-						out += gPrefix + fmt.Sprintf("if %s.IsNone() {\n", varName)
+						out += e(gPrefix + "if " + varName + ".IsNone() {\n")
 					default:
 						panic("")
 					}
@@ -960,9 +965,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 						return g.genStmts(c.Body).F()
 					})
 					out += content3
-					out += gPrefix + "}"
+					out += e(gPrefix + "}")
 					if i < len(expr.Body.List)-1 {
-						out += "\n"
+						out += e("\n")
 					}
 				}
 			}
@@ -971,8 +976,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 				for i, cc := range expr.Body.List {
 					c := cc.(*ast.MatchClause)
 					if i > 0 {
-						out += gPrefix
-						out += "} else "
+						out += e(gPrefix + "} else ")
 					}
 					switch cv := c.Expr.(type) {
 					case *ast.CallExpr:
@@ -981,22 +985,22 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) SomethingTest {
 						for j, id := range cv.Args {
 							rhs := fmt.Sprintf("%s.%s_%d", expr.Init, v.Fields[i].Name, j)
 							if id.(*ast.Ident).Name == "_" {
-								out += gPrefix + fmt.Sprintf("\t_ = %s\n", rhs)
+								out += e(gPrefix+"\t_ = ") + rhs + e("\n")
 							} else {
-								out += gPrefix + fmt.Sprintf("\t%s := %s\n", g.genExpr(id).F(), rhs)
+								out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs + e("\n")
 							}
 						}
-						out += gPrefix + g.genStmts(c.Body).F()
+						out += e(gPrefix) + g.genStmts(c.Body).F()
 					case *ast.SelectorExpr:
-						out += fmt.Sprintf("if %s.Tag == %s_%s {\n", expr.Init, v.Name, cv.Sel.Name)
-						out += gPrefix + g.genStmts(c.Body).F()
+						out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
+						out += e(gPrefix) + g.genStmts(c.Body).F()
 					default:
 						panic(fmt.Sprintf("%v", to(c.Expr)))
 					}
 				}
-				out += gPrefix + fmt.Sprintf("} else {\n")
-				out += gPrefix + fmt.Sprintf("\tpanic(\"match on enum should be exhaustive\")\n")
-				out += gPrefix + fmt.Sprintf("}")
+				out += e(gPrefix + "} else {\n")
+				out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
+				out += e(gPrefix + "}")
 			}
 		default:
 			panic(fmt.Sprintf("%v", to(initT)))
@@ -2483,9 +2487,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) SomethingTest {
 			default:
 				if !v.KeepRaw {
 					if _, ok := v.W.(types.VoidType); ok {
-						content2 = SomethingTest{F: func() string { return e("AglWrapNative1(") + g.genExprs(stmt.Rhs).F() + e(")") }}
+						c1 := g.genExprs(stmt.Rhs)
+						content2 = SomethingTest{F: func() string { return e("AglWrapNative1(") + c1.F() + e(")") }, B: c1.B}
 					} else {
-						content2 = SomethingTest{F: func() string { return e("AglWrapNative2(") + g.genExprs(stmt.Rhs).F() + e(")") }}
+						c1 := g.genExprs(stmt.Rhs)
+						content2 = SomethingTest{F: func() string { return e("AglWrapNative2(") + c1.F() + e(")") }, B: c1.B}
 					}
 				}
 			}
