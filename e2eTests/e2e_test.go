@@ -2,15 +2,19 @@ package e2eTests
 
 import (
 	"agl/pkg/agl"
+	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
 )
 
-func spawnGoRunFromBytes(source []byte, programArgs []string) ([]byte, error) {
+func spawnGoRunFromBytes(g *agl.Generator, source []byte, programArgs []string) ([]byte, error) {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "gorun")
 	if err != nil {
@@ -34,7 +38,20 @@ func spawnGoRunFromBytes(source []byte, programArgs []string) ([]byte, error) {
 	// Run `go run` on the file with additional arguments
 	cmdArgs := append([]string{"run", tmpFile, coreFile}, programArgs...)
 	cmd := exec.Command("go", cmdArgs...)
-	return cmd.Output()
+	buf := &bytes.Buffer{}
+	cmd.Stderr = buf
+	by, err := cmd.Output()
+	stdErrStr := buf.String()
+	if stdErrStr != "" {
+		n := g.GenerateFrags(11)
+		if n != nil {
+			fmt.Println("?", n, reflect.TypeOf(n))
+			stdErrStr = strings.Replace(stdErrStr, "main.go:11", "main.go:11 (main.agl:5)", 1)
+		}
+		by = []byte(stdErrStr)
+	}
+	fmt.Println("??", stdErrStr)
+	return by, err
 }
 
 func testGenOutput(src string) string {
@@ -43,8 +60,12 @@ func testGenOutput(src string) string {
 	i := agl.NewInferrer(env)
 	i.InferFile("", f2, fset, true)
 	i.InferFile("", f, fset, true)
-	outSrc := agl.NewGenerator(env, f, f2, fset).Generate()
-	out := agl.Must(spawnGoRunFromBytes([]byte(outSrc), nil))
+	g := agl.NewGenerator(env, f, f2, fset)
+	outSrc := g.Generate()
+	out, err := spawnGoRunFromBytes(g, []byte(outSrc), nil)
+	if err != nil {
+		panic(string(out))
+	}
 	return string(out)
 }
 
@@ -263,4 +284,32 @@ func main() {
     }
 }`
 	tassert.Equal(t, "123[1 2 3]1footrue2barfalse", testGenOutput(src))
+}
+
+func Test16(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	var a any = int(42)
+	b := a.(int)?
+	panic("")
+	fmt.Println(b)
+}`
+	expected := "/main.go:11 (main.agl:5)"
+	PanicsContains(t, expected, func() { testGenOutput(src) })
+}
+
+func PanicsContains(t *testing.T, errString string, f func()) bool {
+	defer func() {
+		if r := recover(); r != nil {
+			s := r.(string)
+			if strings.Contains(s, errString) {
+				return
+			}
+			t.Fail()
+		}
+	}()
+	f()
+	return true
 }

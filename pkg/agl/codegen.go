@@ -129,7 +129,6 @@ func (g *Generator) Emit(s string, opts ...EmitOption) string {
 	for _, opt := range opts {
 		opt(c)
 	}
-	//printCallers(1)
 	g.fragments = append(g.fragments, Frag{s: s, n: c.n})
 	return s
 }
@@ -309,6 +308,17 @@ func (g *Generator) genExtension(e Extension) (out string) {
 		})
 	}
 	return
+}
+
+func (g *Generator) GenerateFrags(line int) (n ast.Node) {
+	var out string
+	for _, f := range g.fragments {
+		out += f.s
+		if len(strings.Split(out, "\n")) >= line {
+			return f.n
+		}
+	}
+	return nil
 }
 
 func (g *Generator) Generate2() (out1, out2 string) {
