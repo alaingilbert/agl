@@ -158,7 +158,7 @@ func base64VLQChar(digit int) string {
 // GenerateStandardSourceMap outputs a standard-compliant source map (version 3) as a JSON string.
 // It uses VLQ encoding for the mappings field, and assumes a single source file (the main Agl file).
 // https://sokra.github.io/source-map-visualization
-func (g *Generator) GenerateStandardSourceMap(goOutput string, goFile string) (string, error) {
+func (g *Generator) GenerateStandardSourceMap(goFile string) (string, error) {
 	// Collect all fragments with source info
 	entries := []SourceMapEntry{}
 	line, col := 1, 1
