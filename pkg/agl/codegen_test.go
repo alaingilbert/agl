@@ -9631,10 +9631,6 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-type AglTupleStruct_int_int struct {
-	Arg0 int
-	Arg1 int
-}
 func main() {
 	for _, el := range []int{1, 2, 3} {
 	}
@@ -9652,6 +9648,10 @@ func AglVecEnumerated_T_int(v []int) []AglTupleStruct_int_int {
 		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: i, Arg1: v[i]})
 	}
 	return out
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
