@@ -61,6 +61,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "force", Aliases: []string{"f"}},
 					&cli.StringFlag{Name: "output", Aliases: []string{"o"}},
+					&cli.BoolFlag{Name: "sourceMap"},
 				},
 				Usage:  "build command",
 				Action: buildAction,
@@ -306,16 +307,17 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	}
 	outputFlag := cmd.String("output")
 	forceFlag := cmd.Bool("force")
+	sourceMapFlag := cmd.Bool("sourceMap")
 	fileName := cmd.Args().Get(0)
 	m := agl.NewPkgVisited()
-	err := buildFile(fileName, forceFlag, m)
+	err := buildFile(fileName, forceFlag, sourceMapFlag, m)
 	if err != nil {
 		panic(err)
 	}
 	return spawnGoBuild(fileName, outputFlag)
 }
 
-func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
+func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited) error {
 	if m.ContainsAdd(fileName) {
 		return nil
 	}
@@ -353,7 +355,7 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
+					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, m); err != nil {
 						panic(err)
 					}
 				}
@@ -375,7 +377,7 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 					continue
 				}
-				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, m); err != nil {
+				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, m); err != nil {
 					panic(err)
 				}
 			}
@@ -403,6 +405,13 @@ func buildFile(fileName string, forceFlag bool, m *agl.PkgVisited) error {
 	}
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
+	}
+
+	if sourceMapFlag {
+		if sourceMap, err := g.GenerateStandardSourceMap(fileName); err == nil {
+			path := strings.Replace(fileName, ".agl", ".go.map", 1)
+			_ = os.WriteFile(path, []byte(sourceMap), 0644)
+		}
 	}
 
 	packageName := g.PkgName()
