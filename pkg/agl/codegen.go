@@ -904,8 +904,12 @@ func (g *Generator) genMatchClause(expr *ast.MatchClause) GenFrag {
 	}}
 }
 
+func EmitWith(g *Generator, n ast.Node) func(string) string {
+	return func(s string) string { return g.Emit(s, WithNode(n)) }
+}
+
 func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
-	e := func(s string) string { return g.Emit(s, WithNode(expr)) }
+	e := EmitWith(g, expr)
 	content1 := g.genExpr(expr.Init)
 	initT := g.env.GetType(expr.Init)
 	return GenFrag{F: func() string {
@@ -1024,7 +1028,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
-		e := func(s string) string { return g.Emit(s, WithNode(expr)) }
+		e := EmitWith(g, expr)
 		out += e(g.prefix + "switch ")
 		if expr.Init != nil {
 			out += g.genStmt(expr.Init).F()
@@ -1093,7 +1097,7 @@ func (g *Generator) genCaseClause(expr *ast.CaseClause) GenFrag {
 }
 
 func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
-	e := func(s string) string { return g.Emit(s, WithNode(expr)) }
+	e := EmitWith(g, expr)
 	return GenFrag{F: func() string {
 		var out string
 		content1 := func() string {
@@ -1261,7 +1265,7 @@ func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
 func (g *Generator) genStructType(expr *ast.StructType) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
-		e := func(s string) string { return g.Emit(s, WithNode(expr)) }
+		e := EmitWith(g, expr)
 		gPrefix := g.prefix
 		if expr.Fields == nil || len(expr.Fields.List) == 0 {
 			return e("struct{}")
@@ -2155,7 +2159,7 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 		var out string
 		switch spec := s.(type) {
 		case *ast.ValueSpec:
-			e := func(s string) string { return g.Emit(s, WithNode(spec)) }
+			e := EmitWith(g, spec)
 			var namesArr []string
 			for _, name := range spec.Names {
 				namesArr = append(namesArr, name.Name)
@@ -2171,7 +2175,7 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 			out += e("\n")
 			return out
 		case *ast.TypeSpec:
-			e := func(s string) string { return g.Emit(s, WithNode(spec)) }
+			e := EmitWith(g, spec)
 			if v, ok := spec.Type.(*ast.EnumType); ok {
 				out += e(g.prefix) + e(g.genEnumType(spec.Name.Name, v)) + e("\n")
 			} else {
@@ -2232,7 +2236,7 @@ func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) GenFrag {
 func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
-		e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+		e := EmitWith(g, stmt)
 		var op string
 		switch stmt.Tok {
 		case token.INC:
@@ -2254,7 +2258,7 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 }
 
 func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
-	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+	e := EmitWith(g, stmt)
 	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) }
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
@@ -2357,7 +2361,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
-		e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+		e := EmitWith(g, stmt)
 		content3 := func() string {
 			isCompLit := TryCast[*ast.CompositeLit](stmt.X)
 			var out string
@@ -2430,7 +2434,7 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
 }
 
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
-	e := func(s string) string { return g.Emit(s, WithNode(stmt)) }
+	e := EmitWith(g, stmt)
 	lhs := func() string { return "" }
 	var after string
 	rhsT := g.env.GetType(stmt.Rhs[0])
