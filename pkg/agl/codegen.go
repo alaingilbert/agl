@@ -1455,14 +1455,14 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) SomethingTes
 		okName := fmt.Sprintf("aglTmpOk%d", id)
 		returnType := g.returnType
 		return SomethingTest{F: func() string { return g.Emit(varName) }, B: []func() string{func() string {
-			tmp := g.prefix + fmt.Sprintf("%s, %s := %s\n", varName, okName, content1.F())
-			tmp += g.prefix + fmt.Sprintf("if !%s {\n", okName)
+			tmp := g.Emit(g.prefix+varName+", "+okName+" := ") + content1.F() + g.Emit("\n")
+			tmp += g.Emit(g.prefix + "if !" + okName + " {\n")
 			if v, ok := returnType.(types.OptionType); ok {
-				tmp += g.prefix + fmt.Sprintf("\tMakeOptionNone[%s]()\n", v.W.GoStrType())
+				tmp += g.Emit(g.prefix + "\tMakeOptionNone[" + v.W.GoStrType() + "]()\n")
 			} else {
-				tmp += g.prefix + fmt.Sprintf("\tpanic(\"type assert failed\")\n")
+				tmp += g.Emit(g.prefix + "\tpanic(\"type assert failed\")\n")
 			}
-			tmp += g.prefix + fmt.Sprintf("}\n")
+			tmp += g.Emit(g.prefix + "}\n")
 			return tmp
 		}}}
 	default:
