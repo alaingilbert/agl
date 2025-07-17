@@ -2676,8 +2676,6 @@ func (g *Generator) genDecls(f *ast.File) SomethingTest {
 func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var bs []func() string
-	c1 := g.genStmt(decl.Body)
-	bs = append(bs, c1.B...)
 	recv := func() string { return "" }
 	var name, typeParamsStr, paramsStr, resultStr string
 	if decl.Recv != nil {
@@ -2766,6 +2764,8 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) SomethingTest {
 			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
 		}
 	}
+	c1 := g.genStmt(decl.Body)
+	bs = append(bs, c1.B...)
 	return SomethingTest{F: func() string {
 		var out string
 		out += g.Emit("func")
