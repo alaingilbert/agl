@@ -20,7 +20,7 @@ type Generator struct {
 	env              *Env
 	a, b             *ast.File
 	prefix           string
-	genFuncDecls2    map[string]string
+	genFuncDecls2    map[string]func() string
 	tupleStructs     map[string]string
 	genFuncDecls     map[string]*ast.FuncDecl
 	varCounter       atomic.Int64
@@ -95,7 +95,7 @@ func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...Generat
 		extensions:       make(map[string]Extension),
 		extensionsString: make(map[string]ExtensionString),
 		tupleStructs:     make(map[string]string),
-		genFuncDecls2:    make(map[string]string),
+		genFuncDecls2:    make(map[string]func() string),
 		genFuncDecls:     genFns,
 		allowUnused:      conf.AllowUnused,
 		emitEnabled:      true,
@@ -326,24 +326,27 @@ func (g *Generator) Generate() (out string) {
 	out += g.genImports(g.b)
 	out4 := g.genDecls(g.b)
 	out5 := g.genDecls(g.a)
+	out += out4.F() + out5.F()
+	var genFuncDeclStr string
+	for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls2)) {
+		genFuncDeclStr += g.genFuncDecls2[k]()
+	}
+	out += genFuncDeclStr
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
 	}
-	var genFuncDeclStr string
-	for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls2)) {
-		genFuncDeclStr += g.genFuncDecls2[k]
-	}
-	out += genFuncDeclStr + g.Emit(tupleStr) + out4.F() + out5.F()
+	out += g.Emit(tupleStr)
 	var extStr string
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
 		extStr += g.genExtension(g.extensions[extKey])
 	}
+	out += extStr
 	var extStringStr string
 	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
 		extStringStr += g.genExtensionString(g.extensionsString[extKey])
 	}
-	out += extStr + extStringStr
+	out += extStringStr
 	return
 }
 
@@ -1799,12 +1802,14 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) SomethingTest {
 					newFnT := g.env.GetType(v)
 					fnDecl := g.genFuncDecls[oFnT.String()]
 					m := types.FindGen(oFnT, newFnT)
-					var outFnDecl string
-					g.WithGenMapping(m, func() {
-						outFnDecl = g.decrPrefix(func() string {
-							return g.genFuncDecl(fnDecl).F()
+					outFnDecl := func() (out string) {
+						g.WithGenMapping(m, func() {
+							out = g.decrPrefix(func() string {
+								return g.genFuncDecl(fnDecl).F()
+							})
 						})
-					})
+						return
+					}
 					name := g.genExpr(v).FNoEmit(g)
 					for _, k := range slices.Sorted(maps.Keys(m)) {
 						name += "_" + k + "_" + m[k].GoStr()
