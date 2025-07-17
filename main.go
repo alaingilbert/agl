@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -146,7 +145,6 @@ func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, p
 			origLine, _ := strconv.Atoi(match[1])
 			n := g.GenerateFrags(origLine)
 			if n != nil {
-				fmt.Println("?", n, reflect.TypeOf(n))
 				nPos := fset.Position(n.Pos())
 				from := fmt.Sprintf("%s:%d", fileName, origLine)
 				to := fmt.Sprintf("%s:%d (%s:%d)", fileName, origLine, aglFileName, nPos.Line)
