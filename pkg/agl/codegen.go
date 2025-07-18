@@ -3000,10 +3000,11 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		for _, field := range params.List {
 			var content string
 			if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
+				tmp := types.ReplGenM(v.W, g.genMap)
 				if _, ok := v.W.(types.FuncType); ok {
-					content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
+					content = tmp.(types.FuncType).GoStr1()
 				} else {
-					content = types.ReplGenM(v.W, g.genMap).GoStr()
+					content = tmp.GoStr()
 				}
 			} else {
 				switch field.Type.(type) {
