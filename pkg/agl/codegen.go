@@ -989,10 +989,11 @@ func (g *Generator) genSendStmt(expr *ast.SendStmt) GenFrag {
 
 func (g *Generator) genSelectStmt(expr *ast.SelectStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genStmt(expr.Body)
 	return GenFrag{F: func() string {
 		var out string
 		out += e(g.prefix + "select {\n")
-		out += g.genStmt(expr.Body).F()
+		out += c1.F()
 		out += e(g.prefix + "}\n")
 		return out
 	}}
@@ -1000,10 +1001,11 @@ func (g *Generator) genSelectStmt(expr *ast.SelectStmt) GenFrag {
 
 func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genStmt(expr.Stmt)
 	return GenFrag{F: func() string {
 		var out string
 		out += e(g.prefix + expr.Label.Name + ":\n")
-		out += g.genStmt(expr.Stmt).F()
+		out += c1.F()
 		return out
 	}}
 }
@@ -1173,6 +1175,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 }
 
 func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
+	c1 := g.genStmt(expr.Assign)
 	return GenFrag{F: func() string {
 		var out string
 		e := EmitWith(g, expr)
@@ -1187,7 +1190,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
 					n = vv.Name
 				}
 			}
-			out += g.genStmt(expr.Assign).F()
+			out += c1.F()
 		})
 		out += e(" {\n")
 
@@ -1310,19 +1313,27 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 
 func (g *Generator) genCommClause(expr *ast.CommClause) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := GenFrag{F: func() string { return "" }}
+	c2 := GenFrag{F: func() string { return "" }}
+	if expr.Comm != nil {
+		c1 = g.genStmt(expr.Comm)
+	}
+	if expr.Body != nil {
+		c2 = g.genStmts(expr.Body)
+	}
 	return GenFrag{F: func() string {
 		var out string
 		out += e(g.prefix)
 		if expr.Comm != nil {
 			g.WithInlineStmt(func() {
-				out += e("case ") + g.genStmt(expr.Comm).F() + e(":")
+				out += e("case ") + c1.F() + e(":")
 			})
 		} else {
 			out += e("default:")
 		}
 		out += e("\n")
 		if expr.Body != nil {
-			out += g.genStmts(expr.Body).F()
+			out += c2.F()
 		}
 		return out
 	}}
@@ -2451,7 +2462,7 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 
 func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	e := EmitWith(g, stmt)
-	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) }
+	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) } // TODO
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
@@ -2569,6 +2580,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 	if stmt.Value != nil {
 		c3 = g.genExpr(stmt.Value)
 	}
+	c4 := g.genStmt(stmt.Body)
 	return GenFrag{F: func() string {
 		var out string
 		e := EmitWith(g, stmt)
@@ -2593,7 +2605,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 			out += e(g.prefix+"for ") + c2.F() + e(", ") + c3.F() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 		}
 		out += g.incrPrefix(func() string {
-			return g.genStmt(stmt.Body).F()
+			return c4.F()
 		})
 		out += e(g.prefix + "}\n")
 		return out
@@ -2770,6 +2782,11 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 	ass := stmt.Ass
 	c1 := g.genExpr(ass.Lhs[0])
 	c2 := g.genExpr(ass.Rhs[0])
+	c3 := g.genStmt(stmt.Body)
+	c4 := GenFrag{F: func() string { return "" }}
+	if stmt.Else != nil {
+		c4 = g.genStmt(stmt.Else)
+	}
 	return GenFrag{F: func() string {
 		var out string
 		gPrefix := g.prefix
@@ -2803,18 +2820,18 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		if g.allowUnused {
 			out += e(gPrefix+"\tAglNoop(") + lhs() + e(")\n")
 		}
-		out += g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() })
+		out += g.incrPrefix(func() string { return c3.F() })
 		if stmt.Else != nil {
 			switch stmt.Else.(type) {
 			case *ast.IfStmt, *ast.IfLetStmt:
 				out += e(gPrefix + "} else ")
 				g.WithInlineStmt(func() {
-					out += g.genStmt(stmt.Else).F()
+					out += c4.F()
 				})
 			default:
 				out += e(gPrefix + "} else {\n")
 				out += g.incrPrefix(func() string {
-					return g.genStmt(stmt.Else).F()
+					return c4.F()
 				})
 				out += e(gPrefix + "}\n")
 			}
