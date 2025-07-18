@@ -3001,13 +3001,6 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			var content string
 			if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 				content = types.ReplGenM(v.W, g.genMap).GoStrType()
-			} else {
-				switch field.Type.(type) {
-				case *ast.TupleExpr:
-					content = g.env.GetType(field.Type).GoStr()
-				default:
-					content = g.genExpr(field.Type).F()
-				}
 			}
 			namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
 			namesStr = utils.SuffixIf(namesStr, " ")
