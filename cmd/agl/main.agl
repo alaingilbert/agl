@@ -289,10 +289,9 @@ func buildFolder(folderPath string, visited set[string]) ! {
 			src := os.ReadFile(fileName)!
 			fset := token.NewFileSet()
 			var node *ast.File
-			match parser.ParseFile(fset, fileName, src, parser.AllErrors) {
-			case Ok(res):
+			if Ok(res) := parser.ParseFile(fset, fileName, src, parser.AllErrors) {
 				node = res
-			case Err(_):
+			} else {
 				fmt.Printf("failed to parse %s\n", fileName)
 				continue
 			}
