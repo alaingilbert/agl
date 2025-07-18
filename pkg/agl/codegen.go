@@ -1298,13 +1298,16 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 						var out string
 						if tagIsEnum {
 							tagT := g.env.GetType(expr.Tag).(types.EnumType)
-							out += utils.MapJoin(expr1.List, func(el ast.Expr) string {
+							for i, el := range expr1.List {
 								if sel, ok := el.(*ast.SelectorExpr); ok {
-									return fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name) // TODO: validate Sel.Name is an actual field
+									out += e(fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name)) // TODO: validate Sel.Name is an actual field
 								} else {
-									return g.genExpr(el).F()
+									out += g.genExpr(el).F()
 								}
-							}, ", ")
+								if i < len(expr1.List)-1 {
+									out += e(", ")
+								}
+							}
 						} else {
 							for i, el := range expr1.List {
 								out += g.genExpr(el).F()
