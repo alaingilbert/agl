@@ -2847,12 +2847,13 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
 	c1 := g.genExpr(lhs0)
 	c2 := g.genExpr(rhs0)
+	c3 := g.genStmt(stmt.Body)
 	return GenFrag{F: func() string {
 		var out string
 		gPrefix := g.prefix
 		lhs := c1.F()
 		rhs := g.incrPrefix(func() string { return c2.F() })
-		body := g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() })
+		body := g.incrPrefix(func() string { return c3.F() })
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		var cond string
 		unwrapFn := "Unwrap"
@@ -2945,13 +2946,14 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) GenFrag {
 func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	c1 := g.genExpr(stmt.Cond)
+	c2 := g.genStmt(stmt.Body)
 	return GenFrag{F: func() string {
 		var out string
 		cond := func() string { return c1.F() }
 		gPrefix := g.prefix
 		out += e(gPrefix+"if !(") + cond() + e(") {\n")
 		out += g.incrPrefix(func() string {
-			return g.genStmt(stmt.Body).F()
+			return c2.F()
 		})
 		out += e(gPrefix + "}\n")
 		return out
