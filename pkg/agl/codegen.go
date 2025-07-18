@@ -1600,11 +1600,11 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) GenFrag {
 func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 	e := EmitWith(g, expr)
 	returnType := g.returnType
+	content1 := g.genExpr(expr.X)
 	var out string
 	switch exprXT := g.env.GetInfo(expr.X).Type.(type) {
 	case types.OptionType:
 		if exprXT.Bubble {
-			content1 := g.genExpr(expr.X)
 			if exprXT.Native {
 				varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 				return GenFrag{F: func() string { return e("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
@@ -1626,7 +1626,6 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 			}
 		} else {
 			if exprXT.Native {
-				content1 := g.genExpr(expr.X)
 				id := g.varCounter.Add(1)
 				varName := fmt.Sprintf("aglTmpVar%d", id)
 				errName := fmt.Sprintf("aglTmpErr%d", id)
@@ -1639,7 +1638,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 					return out
 				}}}
 			} else {
-				return GenFrag{F: func() string { return g.genExpr(expr.X).F() + e(".Unwrap()") }}
+				return GenFrag{F: func() string { return content1.F() + e(".Unwrap()") }}
 			}
 		}
 	case types.TypeAssertType:
@@ -1729,7 +1728,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				}}}
 			}
 		} else {
-			return GenFrag{F: func() string { return g.genExpr(expr.X).F() + e(".Unwrap()") }}
+			return GenFrag{F: func() string { return content1.F() + e(".Unwrap()") }}
 		}
 	}
 }
