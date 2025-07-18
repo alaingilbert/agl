@@ -2633,7 +2633,8 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](rhsT) {
 		enumT := rhsT.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
-			lhs = func() string { return g.genExprs(stmt.Lhs).F() }
+			c1 := g.genExprs(stmt.Lhs)
+			lhs = func() string { return c1.F() }
 		} else {
 			varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			lhs = func() string { return e(varName) }
@@ -2647,10 +2648,12 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
 		if len(stmt.Lhs) == 1 {
-			lhs = func() string { return g.genExprs(stmt.Lhs).F() }
+			c1 := g.genExprs(stmt.Lhs)
+			lhs = func() string { return c1.F() }
 		} else {
 			if v, ok := rhsT.(types.TupleType); ok && v.KeepRaw {
-				lhs = func() string { return g.genExprs(stmt.Lhs).F() }
+				c1 := g.genExprs(stmt.Lhs)
+				lhs = func() string { return c1.F() }
 			} else {
 				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 				lhs = func() string { return e(varName) }
@@ -2666,7 +2669,8 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			}
 		}
 	} else if len(stmt.Lhs) == 1 && TryCast[*ast.IndexExpr](stmt.Lhs[0]) && TryCast[*ast.MapType](stmt.Lhs[0].(*ast.IndexExpr).X) {
-		lhs = func() string { return g.genExprs(stmt.Lhs).F() }
+		c1 := g.genExprs(stmt.Lhs)
+		lhs = func() string { return c1.F() }
 	} else {
 		isMutStarMap := func() bool {
 			if len(stmt.Lhs) == 1 {
@@ -2683,9 +2687,12 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		}
 		if isMutStarMap() {
 			v := stmt.Lhs[0].(*ast.IndexExpr)
-			lhs = func() string { return e("(*") + g.genExpr(v.X).F() + e(")[") + g.genExpr(v.Index).F() + e("]") }
+			c1 := g.genExpr(v.X)
+			c2 := g.genExpr(v.Index)
+			lhs = func() string { return e("(*") + c1.F() + e(")[") + c2.F() + e("]") }
 		} else {
-			lhs = func() string { return g.genExprs(stmt.Lhs).F() }
+			c1 := g.genExprs(stmt.Lhs)
+			lhs = func() string { return c1.F() }
 		}
 	}
 	content2 := g.genExprs(stmt.Rhs)
