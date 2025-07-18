@@ -2814,7 +2814,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				infer.env.Define(cond.X, v.Name, t)
 			case *ast.TupleExpr:
 				for i, e := range v.Values {
-					infer.env.Define(nil, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
+					infer.env.Define(e, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
 				}
 			default:
 				infer.errorf(cond.X, "unsupported type %v", to(cond.X))
