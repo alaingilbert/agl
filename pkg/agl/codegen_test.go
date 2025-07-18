@@ -9861,6 +9861,8 @@ func main() {
 	}
 	if Err(err) := os.ReadFile("") {
 	}
+	guard Ok(file) := os.ReadFile("") else { return }
+	guard Err(err) := os.ReadFile("") else { return }
 }`
 	expected := `// agl:generated
 package main
@@ -9872,6 +9874,16 @@ func main() {
 	if _, aglTmpErr2 := os.ReadFile(""); aglTmpErr2 != nil {
 		err := aglTmpErr2
 	}
+	aglTmp3, aglTmpErr3 := os.ReadFile("")
+	if aglTmpErr3 != nil {
+		return
+	}
+	file := aglTmp3
+	_, aglTmpErr4 := os.ReadFile("")
+	if aglTmpErr4 == nil {
+		return
+	}
+	err := aglTmpErr4
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

@@ -2830,6 +2830,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 }
 
 func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
+	e := EmitWith(g, stmt)
 	ass := stmt.Ass
 	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
 	c1 := g.genExpr(lhs0)
@@ -2841,7 +2842,9 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		lhs := c1.F()
 		rhs := g.incrPrefix(func() string { return c2.F() })
 		body := g.incrPrefix(func() string { return c3.F() })
-		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+		id := g.varCounter.Add(1)
+		varName := fmt.Sprintf("aglTmp%d", id)
+		errName := fmt.Sprintf("aglTmpErr%d", id)
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -2861,11 +2864,51 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			out += body
 			out += gPrefix + "}\n"
 		} else {
-			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
-			out += gPrefix + fmt.Sprintf("if %s {\n", cond)
-			out += body
-			out += gPrefix + "}\n"
-			out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
+
+			var handled bool
+			switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
+			case types.ResultType:
+				if exprXT.Native {
+					handled = true
+					switch stmt.Op {
+					case token.OK:
+						out += e(gPrefix+varName+", "+errName+" := ") + rhs + e("\n")
+						out += e(gPrefix + "if " + errName + " != nil {\n")
+						out += body
+						out += gPrefix + "}\n"
+						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, varName)
+					case token.ERR:
+						out += e(gPrefix+"_, "+errName+" := ") + rhs + e("\n")
+						out += e(gPrefix + "if " + errName + " == nil {\n")
+						out += body
+						out += gPrefix + "}\n"
+						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, errName)
+					default:
+						panic("")
+					}
+				}
+			case types.OptionType:
+				if exprXT.Native {
+					handled = true
+					switch stmt.Op {
+					case token.SOME:
+						out += e(gPrefix+varName+", ok := ") + rhs + e("\n")
+						out += e(gPrefix + "if !ok {\n")
+						out += body
+						out += gPrefix + "}\n"
+						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, varName)
+					default:
+						panic("")
+					}
+				}
+			}
+			if !handled {
+				out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
+				out += gPrefix + fmt.Sprintf("if %s {\n", cond)
+				out += body
+				out += gPrefix + "}\n"
+				out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
+			}
 		}
 		if g.allowUnused {
 			out += gPrefix + fmt.Sprintf("AglNoop(%s)\n", lhs)
