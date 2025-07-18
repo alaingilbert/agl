@@ -944,11 +944,11 @@ import (
 	"fmt"
 )
 func main() {
-	aglTmp1, aglTmpErr1 := os.ReadFile("test.txt")
+	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	by := AglIdentity(aglTmp1)
+	by := AglIdentity(aglTmpVar1)
 	fmt.Println(by)
 }
 `
@@ -2834,11 +2834,11 @@ import "strconv"
 func main() {
 	a := []string{"1", "2"}
 	AglVecMap(a, func(aglArg0 string) int {
-		aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+		aglTmpVar1, aglTmpErr1 := strconv.Atoi(aglArg0)
 		if aglTmpErr1 != nil {
 			panic(aglTmpErr1)
 		}
-		return AglIdentity(aglTmp1)
+		return AglIdentity(aglTmpVar1)
 	})
 }
 `
@@ -2859,11 +2859,11 @@ import "strconv"
 func main() {
 	a := "1 2"
 	AglVecMap(AglStringSplit(a, " "), func(aglArg0 string) int {
-		aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+		aglTmpVar1, aglTmpErr1 := strconv.Atoi(aglArg0)
 		if aglTmpErr1 != nil {
 			panic(aglTmpErr1)
 		}
-		return AglIdentity(aglTmp1)
+		return AglIdentity(aglTmpVar1)
 	})
 }
 `
@@ -2887,11 +2887,11 @@ func main() {
 	a := "1 2, 3 4"
 	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
 		return AglVecMap(AglStringSplit(aglArg0, " "), func(aglArg0 string) int {
-			aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+			aglTmpVar1, aglTmpErr1 := strconv.Atoi(aglArg0)
 			if aglTmpErr1 != nil {
 				panic(aglTmpErr1)
 			}
-			return AglIdentity(aglTmp1)
+			return AglIdentity(aglTmpVar1)
 		})
 	})
 }
@@ -2918,11 +2918,11 @@ func main() {
 	AglVecMap(AglStringSplit(a, ","), func(aglArg0 string) []int {
 		tmp1 := AglStringSplit(aglArg0, " ")
 		return AglVecMap(tmp1, func(aglArg0 string) int {
-			aglTmp1, aglTmpErr1 := strconv.Atoi(aglArg0)
+			aglTmpVar1, aglTmpErr1 := strconv.Atoi(aglArg0)
 			if aglTmpErr1 != nil {
 				panic(aglTmpErr1)
 			}
-			return AglIdentity(aglTmp1)
+			return AglIdentity(aglTmpVar1)
 		})
 	})
 }
@@ -3881,11 +3881,11 @@ import (
 	"net/http"
 )
 func main() {
-	aglTmp1, aglTmpErr1 := http.Get("https://google.com")
+	aglTmpVar1, aglTmpErr1 := http.Get("https://google.com")
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	res := AglIdentity(aglTmp1)
+	res := AglIdentity(aglTmpVar1)
 	fmt.Println(res)
 }
 `
@@ -3907,11 +3907,11 @@ import (
 	myHttp "net/http"
 )
 func main() {
-	aglTmp1, aglTmpErr1 := myHttp.Get("https://google.com")
+	aglTmpVar1, aglTmpErr1 := myHttp.Get("https://google.com")
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	res := AglIdentity(aglTmp1)
+	res := AglIdentity(aglTmpVar1)
 	fmt.Println(res)
 }
 `
@@ -4683,11 +4683,11 @@ func main() {
 package main
 import "net/http"
 func main() {
-	aglTmp1, aglTmpErr1 := http.Get("")
+	aglTmpVar1, aglTmpErr1 := http.Get("")
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	r := AglIdentity(aglTmp1)
+	r := AglIdentity(aglTmpVar1)
 	r.Body.Close()
 }
 `
@@ -6494,17 +6494,17 @@ import (
 func main() {
 	req := AglHttpNewRequest(http.MethodGet, "https://jsonip.com", MakeOptionNone[io.Reader]()).Unwrap()
 	c := http.Client{}
-	aglTmp1, aglTmpErr1 := c.Do(req)
+	aglTmpVar1, aglTmpErr1 := c.Do(req)
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	resp := AglIdentity(aglTmp1)
+	resp := AglIdentity(aglTmpVar1)
 	defer resp.Body.Close()
-	aglTmp2, aglTmpErr2 := io.ReadAll(resp.Body)
+	aglTmpVar2, aglTmpErr2 := io.ReadAll(resp.Body)
 	if aglTmpErr2 != nil {
 		panic(aglTmpErr2)
 	}
-	by := AglIdentity(aglTmp2)
+	by := AglIdentity(aglTmpVar2)
 	fmt.Println(string(by))
 }
 `
@@ -6567,24 +6567,24 @@ func main() {
 	fileName := "request.go"
 	fnName := "NewRequest"
 	filePath := filepath.Join(goroot, "src", "net", "http", fileName)
-	aglTmp1, aglTmpErr1 := os.ReadFile(filePath)
+	aglTmpVar1, aglTmpErr1 := os.ReadFile(filePath)
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	src := AglIdentity(aglTmp1)
+	src := AglIdentity(aglTmpVar1)
 	fset := token.NewFileSet()
-	aglTmp2, aglTmpErr2 := parser.ParseFile(fset, fileName, src, parser.AllErrors)
+	aglTmpVar2, aglTmpErr2 := parser.ParseFile(fset, fileName, src, parser.AllErrors)
 	if aglTmpErr2 != nil {
 		panic(aglTmpErr2)
 	}
-	node := AglIdentity(aglTmp2)
+	node := AglIdentity(aglTmpVar2)
 	conf := types.Config{Importer: nil}
 	info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
-	aglTmp3, aglTmpErr3 := conf.Check("", fset, []*ast.File{node}, info)
+	aglTmpVar3, aglTmpErr3 := conf.Check("", fset, []*ast.File{node}, info)
 	if aglTmpErr3 != nil {
 		panic(aglTmpErr3)
 	}
-	_ = AglIdentity(aglTmp3)
+	_ = AglIdentity(aglTmpVar3)
 	for _, decl := range node.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -7156,16 +7156,16 @@ func findTitle(n *html.Node) string {
 	return ""
 }
 func main() {
-	aglTmp1, aglTmpErr1 := http.Get("https://news.ycombinator.com")
+	aglTmpVar1, aglTmpErr1 := http.Get("https://news.ycombinator.com")
 	if aglTmpErr1 != nil {
 		panic(aglTmpErr1)
 	}
-	resp := AglIdentity(aglTmp1)
-	aglTmp2, aglTmpErr2 := html.Parse(resp.Body)
+	resp := AglIdentity(aglTmpVar1)
+	aglTmpVar2, aglTmpErr2 := html.Parse(resp.Body)
 	if aglTmpErr2 != nil {
 		panic(aglTmpErr2)
 	}
-	doc := AglIdentity(aglTmp2)
+	doc := AglIdentity(aglTmpVar2)
 	title := findTitle(doc)
 	fmt.Println("Title:", title)
 }
