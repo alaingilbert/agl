@@ -394,7 +394,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 			if params := paramsClone; params != nil {
 				paramsStr = func() string {
 					var out string
-					for i, field := range params {
+					out += MapJoin(e, params, func(field ast.Field) (out string) {
 						out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 						if len(field.Names) > 0 {
 							out += e(" ")
@@ -413,10 +413,8 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 								out += g.genExpr(field.Type).F()
 							}
 						}
-						if i < len(params)-1 {
-							out += e(", ")
-						}
-					}
+						return
+					}, ", ")
 					return out
 				}
 			}
@@ -1090,8 +1088,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 				out += e(varName+" := ") + content1.F() + e("\n")
 			}
 			if expr.Body != nil {
-				for i, c := range expr.Body.List {
-					c := c.(*ast.MatchClause)
+				out += MapJoin(e, expr.Body.List, func(cc ast.Stmt) (out string) {
+					c := cc.(*ast.MatchClause)
 					if v.Native {
 						assignOp := func(op string) string { return utils.Ternary(op == "_", "=", ":=") }
 						switch v := c.Expr.(type) {
@@ -1123,16 +1121,14 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					})
 					out += content3
 					out += e(gPrefix + "}")
-					if i < len(expr.Body.List)-1 {
-						out += e("\n")
-					}
-				}
+					return
+				}, "\n")
 			}
 		case types.OptionType:
 			out += e(varName+" := ") + content1.F() + e("\n")
 			if expr.Body != nil {
-				for i, c := range expr.Body.List {
-					c := c.(*ast.MatchClause)
+				out += MapJoin(e, expr.Body.List, func(cc ast.Stmt) (out string) {
+					c := cc.(*ast.MatchClause)
 					switch v := c.Expr.(type) {
 					case *ast.SomeExpr:
 						out += e(gPrefix+"if "+varName+".IsSome() {\n"+gPrefix+"\t") + g.genExpr(v.X).F() + e(" := "+varName+".Unwrap()\n")
@@ -1146,10 +1142,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					})
 					out += content3
 					out += e(gPrefix + "}")
-					if i < len(expr.Body.List)-1 {
-						out += e("\n")
-					}
-				}
+					return
+				}, "\n")
 			}
 		case types.EnumType:
 			if expr.Body != nil {
@@ -1453,20 +1447,18 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 		out += e("(")
 		var paramsStr string
 		if params := expr.Params; params != nil {
-			for i, field := range params.List {
-				paramsStr += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
+			paramsStr += MapJoin(e, params.List, func(field *ast.Field) (out string) {
+				out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 				if len(field.Names) > 0 {
-					paramsStr += e(" ")
+					out += e(" ")
 				}
 				if _, ok := field.Type.(*ast.TupleExpr); ok {
-					paramsStr += e(g.env.GetType(field.Type).GoStr())
+					out += e(g.env.GetType(field.Type).GoStr())
 				} else {
-					paramsStr += g.genExpr(field.Type).F()
+					out += g.genExpr(field.Type).F()
 				}
-				if i < len(params.List)-1 {
-					paramsStr += e(", ")
-				}
-			}
+				return
+			}, ", ")
 		}
 		out += paramsStr
 		out += e(")")
@@ -2357,21 +2349,14 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 					if len(typeParams.List) > 0 {
 						out += e("[")
 					}
-					for i, field := range typeParams.List {
-						for j, n := range field.Names {
-							out += g.genIdent(n.Ident).F()
-							if j < len(typeParams.List)-1 {
-								out += e(", ")
-							}
-						}
+					out += MapJoin(e, typeParams.List, func(field *ast.Field) (out string) {
+						out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return g.genIdent(n.Ident).F() }, ", ")
 						if len(field.Names) > 0 {
 							out += e(" ")
 						}
 						out += g.genExpr(field.Type).F()
-						if i < len(typeParams.List)-1 {
-							out += e(", ")
-						}
-					}
+						return
+					}, ", ")
 					if len(typeParams.List) > 0 {
 						out += e("]")
 					}
