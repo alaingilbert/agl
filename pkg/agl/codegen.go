@@ -3051,31 +3051,6 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 	return
 }
 
-type BeforeStmt struct {
-	w GenFrag
-}
-
-func (b *BeforeStmt) Content() string {
-	return b.w.F()
-}
-
-func NewBeforeStmt(content GenFrag) *BeforeStmt {
-	return &BeforeStmt{w: content}
-}
-
-func addPrefix(s, prefix string) string {
-	var newArr []string
-	arr := strings.Split(s, "\n")
-	for i := 0; i < len(arr); i++ {
-		line := arr[i]
-		if i < len(arr)-1 {
-			line = prefix + line
-		}
-		newArr = append(newArr, line)
-	}
-	return strings.Join(newArr, "\n")
-}
-
 func GenHeaders() string {
 	return `import (
 	aglImportBytes "bytes"
