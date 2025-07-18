@@ -912,23 +912,8 @@ func (f FuncType) GoStr() string {
 	}
 	return f.Name + typeParamsStr
 }
-func (f FuncType) GoStrType() string {
-	var typeParamsStr string
-	if f.TypeParams != nil {
-		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
-			switch v := t.(type) {
-			case GenericType:
-				return v.TypeParamGoStr()
-			default:
-				return t.GoStrType()
-			}
-		}, ", ")
-		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
-	}
-	return f.Name + typeParamsStr
-}
 
-func (f FuncType) GoStr1() string { // TODO
+func (f FuncType) GoStrType() string {
 	var recvStr, nameStr, resultStr, paramsStr, typeParamsStr string
 	if f.Name != "" {
 		nameStr = " " + f.Name

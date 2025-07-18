@@ -303,7 +303,7 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 				var content string
 				if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 					if _, ok := v.W.(types.FuncType); ok {
-						content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1()
+						content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType()
 					} else {
 						content = g.genExpr(field.Type).F()
 					}
@@ -406,7 +406,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 						}
 						if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 							if _, ok := v.W.(types.FuncType); ok {
-								out += e(types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStr1())
+								out += e(types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType())
 							} else {
 								out += g.genExpr(field.Type).F()
 							}
@@ -1389,7 +1389,7 @@ func (g *Generator) genInterfaceType(expr *ast.InterfaceType) GenFrag {
 		out += e("interface {\n")
 		if expr.Methods != nil {
 			for _, m := range expr.Methods.List {
-				content1 := g.env.GetType(m.Type).(types.FuncType).GoStr1()
+				content1 := g.env.GetType(m.Type).(types.FuncType).GoStrType()
 				out += e(g.prefix + "\t" + m.Names[0].Name + strings.TrimPrefix(content1, "func") + "\n")
 			}
 		}
@@ -3002,7 +3002,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
 				tmp := types.ReplGenM(v.W, g.genMap)
 				if _, ok := v.W.(types.FuncType); ok {
-					content = tmp.(types.FuncType).GoStr1()
+					content = tmp.(types.FuncType).GoStrType()
 				} else {
 					content = tmp.GoStr()
 				}
