@@ -3043,7 +3043,7 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 	out += MapJoin(e, l.List, func(field *ast.Field) (out string) {
 		out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return g.genIdent(n.Ident).F() }, ", ")
 		if out != "" {
-			out += g.Emit(" ")
+			out += e(" ")
 		}
 		out += g.genExpr(field.Type).F()
 		return
