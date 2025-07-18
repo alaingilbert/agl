@@ -9813,9 +9813,9 @@ func main() {
 	a := []int{1, 2, 3}
 	m := map[string]int{"a": 1, "b": 2}
 	s := set[u8]{1, 2, 3}
-	s1 := sett(a)
-	s2 := sett(m)
-	s3 := sett(s)
+	s1 := Set(a)
+	s2 := Set(m)
+	s3 := Set(s)
 }`
 	expected := `// agl:generated
 package main

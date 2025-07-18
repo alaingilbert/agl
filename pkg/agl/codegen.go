@@ -1961,7 +1961,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		} else if x.Name == "panicWith" {
 			c1 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
-		} else if x.Name == "sett" {
+		} else if x.Name == "Set" {
 			c1 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglBuildSet(") + c1.F() + e(")") }}
 		}
