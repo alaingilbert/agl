@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "github.com/PuerkitoBio/goquery"
-    "net/http"
+    "agl1/net/http"
 )
 
 func main() {

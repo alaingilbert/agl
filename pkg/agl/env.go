@@ -610,7 +610,7 @@ func processSpec(path, entryName string, node *goast.File, fset *gotoken.FileSet
 					tmp := func() types.Type {
 						t := env.GetGoType2(pkgName, field.Type, keepRaw)
 						t = types.Unwrap(t)
-						if TryCast[types.VoidType](t) {
+						if TryCast[types.VoidType](t) || t == nil {
 							fT := field.Type
 							if vv, ok := field.Type.(*goast.StarExpr); ok {
 								fT = vv.X
