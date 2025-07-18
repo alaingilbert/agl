@@ -571,8 +571,6 @@ func (g *Generator) genStmt(s ast.Stmt) (out GenFrag) {
 		return g.genSwitchStmt(stmt)
 	case *ast.LabeledStmt:
 		return g.genLabeledStmt(stmt)
-	case *ast.CaseClause:
-		return g.genCaseClause(stmt)
 	case *ast.BranchStmt:
 		return g.genBranchStmt(stmt)
 	case *ast.DeferStmt:
@@ -1219,28 +1217,6 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
 		}
 
 		out += e(g.prefix + "}\n")
-		return out
-	}}
-}
-
-func (g *Generator) genCaseClause(expr *ast.CaseClause) GenFrag {
-	return GenFrag{F: func() string {
-		var out string
-		var listStr string
-		if expr.List != nil {
-			tmp := utils.MapJoin(expr.List, func(el ast.Expr) string { return g.genExpr(el).F() }, ", ")
-			listStr = "case " + tmp + ":\n"
-		} else {
-			listStr = "default:\n"
-		}
-		var content1 string
-		if expr.Body != nil {
-			content1 = g.incrPrefix(func() string {
-				return g.genStmts(expr.Body).F()
-			})
-		}
-		out += g.prefix + listStr
-		out += content1
 		return out
 	}}
 }
