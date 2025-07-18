@@ -2482,7 +2482,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							}
 							out += e("\n")
 						case *ast.Ident:
-							out += g.genExpr(vv).F() + e(" := "+varName+"\n")
+							out += c2.F() + e(" := "+varName+"\n")
 						}
 					} else {
 						switch yT.(type) {
