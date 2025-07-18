@@ -299,10 +299,10 @@ func buildFolder(folderPath string, visited set[string]) ! {
 			conf := types.Config{Importer: nil}
 			info := &types.Info{Defs: make(map[*ast.Ident]types.Object)}
 			_, _ = conf.Check("", fset, []*ast.File{node}, info)
-			for _, decl := range node.Decls {
+			for decl in node.Decls {
 				switch d := decl.(type) {
 				case *ast.GenDecl:
-					for _, spec := range d.Specs {
+					for spec in d.Specs {
 						switch s := spec.(type) {
 						case *ast.ImportSpec:
 							pathValue := s.Path.Value.ReplaceAll(`"`, ``)
@@ -402,14 +402,14 @@ func modTidyAction(_ context.Context, c *cli.Command) error {
 func modVendorAction(_ context.Context, c *cli.Command) error {
 	entries := os.ReadDir(".")!
 	var imports []string
-	for _, entry := range entries {
+	for entry in entries {
 		if entry.IsDir() {
 			continue
 		}
 		if entry.Name().HasSuffix(".agl") {
 			by := os.ReadFile(entry.Name())!
 			_, f, _ := agl.ParseSrc(string(by))
-			for _, i := range f.Imports {
+			for i in f.Imports {
 				imports.Push(fmt.Sprintf("import _ %s", i.Path.Value))
 			}
 		}
