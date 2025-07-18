@@ -892,10 +892,10 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.X)
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	gPrefix := g.prefix
 	return GenFrag{F: func() string {
 		return e("AglIdentity(" + varName + ").Unwrap()")
 	}, B: []func() string{func() string {
+		gPrefix := g.prefix
 		check := getCheck(g.env.GetType(expr.X))
 		out := e(gPrefix+varName+" := ") + c1.F() + e("\n")
 		out += e(gPrefix + "if " + varName + "." + check + " {\n")
@@ -914,10 +914,10 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) (out GenFrag) {
 	content1 := g.genExpr(expr.X)
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-	gPrefix := g.prefix
 	return GenFrag{F: func() string {
 		return e("AglIdentity(" + varName + ").Unwrap()")
 	}, B: []func() string{func() string {
+		gPrefix := g.prefix
 		before := ""
 		before += e(gPrefix+varName+" := ") + content1.F() + e("\n")
 		before += e(gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check))
@@ -2462,7 +2462,8 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 
 func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	e := EmitWith(g, stmt)
-	body := func() string { return g.incrPrefix(func() string { return g.genStmt(stmt.Body).F() }) } // TODO
+	cc1 := g.genStmt(stmt.Body)
+	body := func() string { return g.incrPrefix(func() string { return cc1.F() }) }
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
