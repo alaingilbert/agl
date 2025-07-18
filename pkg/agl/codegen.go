@@ -2930,7 +2930,6 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) GenFrag {
 					out += c1.F()
 				})
 			default:
-
 				out += e(gPrefix + "} else {\n")
 				out += g.incrPrefix(func() string {
 					return c1.F()
