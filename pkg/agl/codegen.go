@@ -1675,7 +1675,6 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				out += e(g.prefix + "if " + errName + " != nil {\n")
 				out += e(g.prefix + "\treturn MakeResultErr[" + returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
 				out += e(g.prefix + "}\n")
-				out += e(g.prefix + "AglNoop(" + varName + ")\n")
 				return out
 			}}}
 		} else if exprXT.ConvertToNone {
@@ -1712,7 +1711,6 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 					out += e(g.prefix + "if " + errName + " != nil {\n")
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
-					out += e(g.prefix + "AglNoop(" + varName + ")\n")
 					return out
 				}}}
 			}
