@@ -369,7 +369,11 @@ func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) 
 	if info := doc.env.GetInfo(node); info != nil {
 		if typ := info.Type; typ != nil {
 			typ = types.Unwrap(typ)
-			switch typ.(type) {
+			switch v := typ.(type) {
+			case types.StructType:
+				for _, e := range v.Fields {
+					completions = append(completions, lsp.CompletionItem{Label: e.Name, Kind: lsp.CIKField, Detail: ""})
+				}
 			case types.ArrayType:
 				completions = append(completions,
 					lsp.CompletionItem{Label: "AllSatisfy", Kind: lsp.CIKMethod, Detail: ""},
