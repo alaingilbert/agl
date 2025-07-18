@@ -781,7 +781,7 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 			}
 			return t
 		}
-		panic("")
+		return t
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(currT)))
