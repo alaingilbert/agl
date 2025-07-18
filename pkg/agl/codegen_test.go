@@ -9803,7 +9803,7 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
 }
 
@@ -9829,10 +9829,27 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
 	tassert.Equal(t, "set[int]", test.TypeAt(6, 2).String())
 	tassert.Equal(t, "set[string]", test.TypeAt(7, 2).String())
 	tassert.Equal(t, "set[u8]", test.TypeAt(8, 2).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
+func TestCodeGen340(t *testing.T) {
+	src := `package main
+func main() {
+	panic()
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	panic(nil)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
