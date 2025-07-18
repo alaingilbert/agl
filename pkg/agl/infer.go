@@ -2060,13 +2060,13 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		singleExprStmt := len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0])
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
 		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](lastStmt()) }
-		if multStmt && lastIsRetStmt() {
+		if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
+			expr.Body.List = append(expr.Body.List, voidReturnStmt)
+		} else if multStmt && lastIsRetStmt() {
 			returnStmt := lastStmt().(*ast.ReturnStmt).Result
 			inferExpr(returnStmt, ft)
-		} else if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
-			expr.Body.List = append(expr.Body.List, voidReturnStmt)
 		} else if singleExprStmt {
-			returnStmt := expr.Body.List[0].(*ast.ExprStmt).X
+			returnStmt := lastStmt().(*ast.ExprStmt).X
 			inferExpr(returnStmt, ft)
 			expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
 		}
