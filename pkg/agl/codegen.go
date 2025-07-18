@@ -395,12 +395,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 				paramsStr = func() string {
 					var out string
 					for i, field := range params {
-						for j, n := range field.Names {
-							out += e(n.Name)
-							if j < len(field.Names)-1 {
-								out += e(", ")
-							}
-						}
+						out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 						if len(field.Names) > 0 {
 							out += e(" ")
 						}
@@ -1053,7 +1048,27 @@ func (g *Generator) genEmptyStmt(expr *ast.EmptyStmt) (out GenFrag) {
 	}}
 }
 
-func EmitWith(g *Generator, n ast.Node) func(string) string {
+type Emitter interface {
+	Emit(string) string
+}
+
+type EmitterFunc func(string) string
+
+func (e EmitterFunc) Emit(s string) string {
+	return e(s)
+}
+
+func MapJoin[T any](e Emitter, a []T, clb func(T) string, sep string) (out string) {
+	for i, el := range a {
+		out += clb(el)
+		if i < len(a)-1 {
+			out += e.Emit(sep)
+		}
+	}
+	return
+}
+
+func EmitWith(g *Generator, n ast.Node) EmitterFunc {
 	return func(s string) string { return g.Emit(s, WithNode(n)) }
 }
 
@@ -1199,12 +1214,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
 			out += e(g.prefix)
 			if cc.List != nil {
 				out += e("case ")
-				for i, el := range cc.List {
-					out += g.genExpr(el).F()
-					if i < len(cc.List)-1 {
-						out += e(", ")
-					}
-				}
+				out += MapJoin(e, cc.List, func(el ast.Expr) string { return g.genExpr(el).F() }, ", ")
 				out += e(":\n")
 			} else {
 				out += e("default:\n")
@@ -1268,23 +1278,15 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 						var out string
 						if tagIsEnum {
 							tagT := g.env.GetType(expr.Tag).(types.EnumType)
-							for i, el := range expr1.List {
+							out += MapJoin(e, expr1.List, func(el ast.Expr) string {
 								if sel, ok := el.(*ast.SelectorExpr); ok {
-									out += e(fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name)) // TODO: validate Sel.Name is an actual field
+									return e(fmt.Sprintf("%s_%s", tagT.Name, sel.Sel.Name)) // TODO: validate Sel.Name is an actual field
 								} else {
-									out += g.genExpr(el).F()
+									return g.genExpr(el).F()
 								}
-								if i < len(expr1.List)-1 {
-									out += e(", ")
-								}
-							}
+							}, ", ")
 						} else {
-							for i, el := range expr1.List {
-								out += g.genExpr(el).F()
-								if i < len(expr1.List)-1 {
-									out += e(", ")
-								}
-							}
+							out += MapJoin(e, expr1.List, func(el ast.Expr) string { return g.genExpr(el).F() }, ", ")
 						}
 						return out
 					}
@@ -1424,12 +1426,7 @@ func (g *Generator) genStructType(expr *ast.StructType) GenFrag {
 		out += e("struct {\n")
 		for _, field := range expr.Fields.List {
 			out += e(gPrefix + "\t")
-			for i, name := range field.Names {
-				out += e(name.Name)
-				if i < len(field.Names)-1 {
-					out += e(", ")
-				}
-			}
+			out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 			out += e(" ")
 			out += g.genExpr(field.Type).F()
 			if field.Tag != nil {
@@ -1457,12 +1454,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 		var paramsStr string
 		if params := expr.Params; params != nil {
 			for i, field := range params.List {
-				for j, n := range field.Names {
-					paramsStr += e(n.Name)
-					if j < len(field.Names)-1 {
-						paramsStr += e(", ")
-					}
-				}
+				paramsStr += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 				if len(field.Names) > 0 {
 					paramsStr += e(" ")
 				}
@@ -1757,12 +1749,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}}
 			case "Push":
 				paramsStr := func() (out string) {
-					for i, arg := range expr.Args {
-						out += g.genExpr(arg).F()
-						if i < len(expr.Args)-1 {
-							out += e(", ")
-						}
-					}
+					out += MapJoin(e, expr.Args, func(arg ast.Expr) string { return g.genExpr(arg).F() }, ", ")
 					return
 				}
 				ellipsis := func() (out string) {
@@ -1973,12 +1960,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 					tmp := contents[1]
 					contents[1] = func() string { return e(msg+` + " " + `) + tmp() }
 				}
-				for i, c := range contents {
-					out += c()
-					if i < len(contents)-1 {
-						out += e(", ")
-					}
-				}
+				out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
 				out += e(")")
 				return out
 			}}
@@ -2039,12 +2021,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 						}
 						if len(expr.Args) > 1 {
 							out += e(", ")
-							for i, arg := range expr.Args[1:] {
-								out += g.genExpr(arg).F()
-								if i < len(expr.Args[1:])-1 {
-									out += e(", ")
-								}
-							}
+							out += MapJoin(e, expr.Args[1:], func(e ast.Expr) string { return g.genExpr(e).F() }, ", ")
 						}
 						return out
 					}
@@ -2243,13 +2220,7 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) GenFrag {
 		}
 		out += e("{")
 		if expr.Type != nil && TryCast[types.SetType](g.env.GetType(expr.Type)) {
-			for i, el := range expr.Elts {
-				out += g.genExpr(el).F()
-				out += e(": {}")
-				if i < len(expr.Elts)-1 {
-					out += e(", ")
-				}
-			}
+			out += MapJoin(e, expr.Elts, func(el ast.Expr) string { return g.genExpr(el).F() + e(": {}") }, ", ")
 		} else {
 			out += c1.F()
 		}
@@ -2551,12 +2522,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 			els = append(els, post)
 		}
 		var out string
-		for i, el := range els {
-			out += el()
-			if i < len(els)-1 {
-				out += e("; ")
-			}
-		}
+		out += MapJoin(e, els, func(el func() string) string { return el() }, "; ")
 		if out != "" {
 			out += e(" ")
 		}
@@ -3088,21 +3054,15 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 	if l == nil {
 		return ""
 	}
-	for i, field := range l.List {
-		for j, n := range field.Names {
-			out += g.genIdent(n.Ident).F()
-			if j < len(field.Names)-1 {
-				out += g.Emit(", ")
-			}
-		}
+	e := EmitWith(g, l)
+	out += MapJoin(e, l.List, func(field *ast.Field) (out string) {
+		out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return g.genIdent(n.Ident).F() }, ", ")
 		if out != "" {
 			out += g.Emit(" ")
 		}
 		out += g.genExpr(field.Type).F()
-		if i < len(l.List)-1 {
-			out += g.Emit(", ")
-		}
-	}
+		return
+	}, ", ")
 	return
 }
 
