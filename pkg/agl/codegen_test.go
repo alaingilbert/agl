@@ -9759,6 +9759,20 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "4:2: Assignment count mismatch: 2 = 3")
 }
 
+func TestCodeGen337(t *testing.T) {
+	src := `package main
+type Something enum {
+	V(u8, u8, u8)
+}
+func main() {
+	a := Something.V(1, 2, 3)
+	b, c := a
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Contains(t, test.errs[0].Error(), "7:2: Assignment count mismatch: 2 = 3")
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

@@ -2965,6 +2965,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				if f == nil {
 					panic(fmt.Sprintf("Field not found: %s", v.SubTyp))
 				}
+				if len(f.Elts) != len(stmt.Lhs) {
+					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(f.Elts))
+					return
+				}
 				for i, x := range f.Elts {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
@@ -3039,6 +3043,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						return
 					}
 				case types.EnumType:
+					if len(v.Fields) != len(stmt.Lhs) {
+						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(v.Fields))
+						return
+					}
 					for i, f := range v.Fields {
 						lhs := stmt.Lhs[i]
 						lhsID := MustCast[*ast.Ident](lhs)
