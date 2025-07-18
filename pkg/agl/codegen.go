@@ -2620,11 +2620,12 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 		tmp = g.genExpr(stmt.Result)
 		bs = append(bs, tmp.B...)
 	}
-	return GenFrag{F: func() string {
-		if stmt.Result == nil {
-			return e(g.prefix + "return\n")
+	return GenFrag{F: func() (out string) {
+		out += e(g.prefix + "return")
+		if stmt.Result != nil {
+			out += e(" ") + tmp.F()
 		}
-		return e(g.prefix+"return ") + tmp.F() + e("\n")
+		return out + e("\n")
 	}, B: bs}
 }
 
