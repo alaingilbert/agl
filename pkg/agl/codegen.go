@@ -1672,11 +1672,11 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 		errName := fmt.Sprintf("aglTmpErr%d", id)
 		return varName, errName
 	}
+	content1 := g.genExpr(expr.X)
 	exprXT := MustCast[types.ResultType](g.env.GetType(expr.X))
 	if exprXT.Bubble {
-		content1 := g.genExpr(expr.X)
+		varName, errName := getVar()
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
-			_, errName := getVar()
 			return GenFrag{F: func() string { return e(`AglNoop()`) }, B: []func() string{func() string {
 				out := e(g.prefix+"if "+errName+" := ") + content1.F() + e("; "+errName+" != nil {\n")
 				out += e(g.prefix + "\treturn MakeResultErr[" + exprXT.W.GoStrType() + "](" + errName + ")\n")
@@ -1684,7 +1684,6 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				return out
 			}}}
 		} else if exprXT.Native {
-			varName, errName := getVar()
 			return GenFrag{F: func() string {
 				return e("AglIdentity(" + varName + ")")
 			}, B: []func() string{func() string {
@@ -1695,7 +1694,6 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				return out
 			}}}
 		} else if exprXT.ConvertToNone {
-			varName, _ := getVar()
 			return GenFrag{F: func() string { return e(varName + ".Unwrap()") }, B: []func() string{func() string {
 				out := e(g.prefix+varName+" := ") + content1.F() + e("\n")
 				out += e(g.prefix + "if " + varName + ".IsErr() {\n")
@@ -1704,7 +1702,6 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				return out
 			}}}
 		} else {
-			varName, _ := getVar()
 			return GenFrag{F: func() string { return e(varName + ".Unwrap()") }, B: []func() string{func() string {
 				out := e(g.prefix+varName+" := ") + content1.F() + e("\n")
 				out += e(g.prefix + "if " + varName + ".IsErr() {\n")
@@ -1715,21 +1712,18 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 		}
 	} else {
 		if exprXT.Native {
+			varName, errName := getVar()
 			if _, ok := exprXT.W.(types.VoidType); ok {
-				c1 := g.genExpr(expr.X)
-				_, errName := getVar()
 				return GenFrag{F: func() string { return e(`AglNoop()`) }, B: []func() string{func() string {
-					out := e(g.prefix+errName+" := ") + c1.F() + e("\n")
+					out := e(g.prefix+errName+" := ") + content1.F() + e("\n")
 					out += e(g.prefix + "if " + errName + " != nil {\n")
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
 					return out
 				}}}
 			} else {
-				c1 := g.genExpr(expr.X)
-				varName, errName := getVar()
 				return GenFrag{F: func() string { return e("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
-					out := e(g.prefix+varName+", "+errName+" := ") + c1.F() + e("\n")
+					out := e(g.prefix+varName+", "+errName+" := ") + content1.F() + e("\n")
 					out += e(g.prefix + "if " + errName + " != nil {\n")
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
