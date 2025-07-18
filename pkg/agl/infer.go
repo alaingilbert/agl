@@ -375,7 +375,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 						tt = types.MutType{W: tt}
 					}
 					fields = append(fields, types.FieldType{Name: n.Name, Typ: tt})
-					infer.env.Define(nil, spec.Name.Name+"."+n.Name, tt)
+					infer.env.Define(spec.Name, spec.Name.Name+"."+n.Name, tt)
 				}
 			}
 		}
@@ -2014,7 +2014,7 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 					if name.Mutable.IsValid() {
 						t = types.MutType{W: t}
 					}
-					infer.env.Define(nil, name.Name, t)
+					infer.env.Define(name, name.Name, t)
 					infer.SetType(name, t)
 				}
 			}
@@ -3417,7 +3417,7 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 						if len(ass.Lhs) == 1 && len(c.List) == 1 {
 							id := ass.Lhs[0].(*ast.Ident).Name
 							idT := infer.env.GetType2(c.List[0], infer.fset)
-							infer.env.Define(nil, id, idT)
+							infer.env.Define(ass.Lhs[0], id, idT)
 						}
 					case *ast.ExprStmt:
 					}
