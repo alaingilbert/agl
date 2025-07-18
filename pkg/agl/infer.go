@@ -2950,6 +2950,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			rhsIdT := infer.env.Get(rhs1.Name)
 			switch v := rhsIdT.(type) {
 			case types.TupleType:
+				if len(v.Elts) != len(stmt.Lhs) {
+					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(v.Elts))
+					return
+				}
 				for i, x := range v.Elts {
 					lhs := stmt.Lhs[i]
 					lhsID := MustCast[*ast.Ident](lhs)
@@ -3045,6 +3049,10 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					if keepRaw {
 						v.KeepRaw = keepRaw
 						infer.SetTypeForce(rhs, v)
+					}
+					if len(v.Elts) != len(stmt.Lhs) {
+						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(v.Elts))
+						return
 					}
 					for i, x := range v.Elts {
 						lhs := stmt.Lhs[i]

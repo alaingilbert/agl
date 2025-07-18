@@ -9748,6 +9748,17 @@ var a, b, c, d int
 	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
 }
 
+func TestCodeGen336(t *testing.T) {
+	src := `package main
+func main() {
+	a := (1, "foo", true)
+	b, c := a
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Contains(t, test.errs[0].Error(), "4:2: Assignment count mismatch: 2 = 3")
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
