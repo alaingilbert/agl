@@ -2035,34 +2035,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			}
 		}
 		infer.stmt(expr.Body)
-		// implicit return
-		ft := infer.env.GetType(expr).(types.FuncType)
-		if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) {
-			if (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return) {
-				expr.Body.List = append(expr.Body.List, &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}})
-			} else {
-				returnStmt := expr.Body.List[0].(*ast.ExprStmt)
-				if infer.env.GetType(returnStmt.X) != nil && infer.env.GetType(expr) != nil {
-					if t, ok := ft.Return.(types.ArrayType); ok {
-						ft.Return = t.Elt
-					}
-					if t, ok := ft.Return.(types.OptionType); ok {
-						ft.Return = t.W
-					}
-					if t, ok := ft.Return.(types.ResultType); ok {
-						ft.Return = t.W
-					}
-					if t, ok := ft.Return.(types.GenericType); ok {
-						ft = ft.T(t.Name, infer.env.GetType(returnStmt.X))
-						infer.SetType(expr, ft)
-					}
-				}
-				expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
-			}
-		} else if len(expr.Body.List) > 0 && TryCast[types.VoidType](ft.Return) && !TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) {
-			expr.Body.List = append(expr.Body.List, &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}})
-		} else if len(expr.Body.List) > 0 && TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) { // Explicit return
-			returnStmt := Must(Last(expr.Body.List)).(*ast.ReturnStmt)
+		inferExpr := func(returnStmt ast.Expr, ft types.FuncType) {
 			if infer.env.GetType(returnStmt) != nil && infer.env.GetType(expr) != nil {
 				if t, ok := ft.Return.(types.ArrayType); ok {
 					ft.Return = t.Elt
@@ -2074,10 +2047,26 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 					ft.Return = t.W
 				}
 				if t, ok := ft.Return.(types.GenericType); ok {
-					ft = ft.T(t.Name, infer.env.GetType(returnStmt.Result))
+					ft = ft.T(t.Name, infer.env.GetType(returnStmt))
 					infer.SetType(expr, ft)
 				}
 			}
+		}
+		// implicit return
+		ft := infer.env.GetType(expr).(types.FuncType)
+		if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) {
+			if (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return) {
+				expr.Body.List = append(expr.Body.List, &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}})
+			} else {
+				returnStmt := expr.Body.List[0].(*ast.ExprStmt).X
+				inferExpr(returnStmt, ft)
+				expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
+			}
+		} else if len(expr.Body.List) > 0 && TryCast[types.VoidType](ft.Return) && !TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) {
+			expr.Body.List = append(expr.Body.List, &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}})
+		} else if len(expr.Body.List) > 0 && TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) { // Explicit return
+			returnStmt := Must(Last(expr.Body.List)).(*ast.ReturnStmt).Result
+			inferExpr(returnStmt, ft)
 		}
 		// expr type is set in CallExpr
 	})
