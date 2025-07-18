@@ -931,6 +931,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.UnwrapOrDefault", "func [T any]() T")
 		e.DefineFn(nenv, "agl1.Result.IsOk", "func () bool")
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
+		e.DefineFn(nenv, "sett", "func[T any] (it Iterator[T]) agl1.Set[T]")
 	})
 }
 

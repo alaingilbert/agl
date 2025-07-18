@@ -9807,6 +9807,35 @@ func main() {
 	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
 }
 
+func TestCodeGen339(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	m := map[string]int{"a": 1, "b": 2}
+	s := set[u8]{1, 2, 3}
+	s1 := sett(a)
+	s2 := sett(m)
+	s3 := sett(s)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	m := map[string]int{"a": 1, "b": 2}
+	s := AglSet[uint8]{1: {}, 2: {}, 3: {}}
+	s1 := AglBuildSet(a)
+	s2 := AglBuildSet(m)
+	s3 := AglBuildSet(s)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, "[]int", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "set[int]", test.TypeAt(6, 2).String())
+	tassert.Equal(t, "set[string]", test.TypeAt(7, 2).String())
+	tassert.Equal(t, "set[u8]", test.TypeAt(8, 2).String())
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

@@ -1961,6 +1961,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		} else if x.Name == "panicWith" {
 			c1 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
+		} else if x.Name == "sett" {
+			c1 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglBuildSet(") + c1.F() + e(")") }}
 		}
 	}
 	content1 := func() string { return "" }
@@ -4049,6 +4052,13 @@ func AglIn[T comparable](e T, it Iterator[T]) bool {
 		}
 	}
 	return false
+}
+
+func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
+	for el := range it.Iter() {
+		AglSetInsert(out, el)
+	}
+	return
 }
 `
 }

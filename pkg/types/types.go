@@ -764,6 +764,24 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 	case GenericType:
 		t = t.(FuncType).ReplaceGenericParameter(currT.Name, newTyp)
 		return t
+	case InterfaceType:
+		if currT.Name == "Iterator" {
+			switch v := newTyp.(type) {
+			case ArrayType:
+				newTyp = v.Elt
+			case MapType:
+				newTyp = v.K
+			case SetType:
+				newTyp = v.K
+			default:
+				panic("")
+			}
+			for _, p := range currT.TypeParams {
+				t = t.(FuncType).ReplaceGenericParameter(p.String(), newTyp)
+			}
+			return t
+		}
+		panic("")
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(currT)))
