@@ -940,16 +940,17 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out GenFrag) {
 	check := getCheck(g.env.GetType(expr.X))
 	varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 	c1 := g.genExpr(expr.X)
+	returnType := g.returnType
 	return GenFrag{F: func() string {
 		return e("AglIdentity(" + varName + ")")
 	}, B: []func() string{func() string {
 		out := ""
 		out += e(g.prefix+varName+" := ") + c1.F() + e("\n")
 		out += e(g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check))
-		if g.returnType == nil {
+		if returnType == nil {
 			out += e(g.prefix + "\treturn\n")
 		} else {
-			switch retT := g.returnType.(type) {
+			switch retT := returnType.(type) {
 			case types.ResultType:
 				out += e(g.prefix + fmt.Sprintf("\treturn MakeResultErr[%s](%s.Err())\n", retT.W.GoStrType(), varName))
 			case types.OptionType:
