@@ -1684,9 +1684,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 				return out
 			}}}
 		} else if exprXT.Native {
-			return GenFrag{F: func() string {
-				return e("AglIdentity(" + varName + ")")
-			}, B: []func() string{func() string {
+			return GenFrag{F: func() string { return e("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
 				out := e(g.prefix+varName+", "+errName+" := ") + content1.F() + e("\n")
 				out += e(g.prefix + "if " + errName + " != nil {\n")
 				out += e(g.prefix + "\treturn MakeResultErr[" + returnType.(types.ResultType).W.GoStrType() + "](" + errName + ")\n")
