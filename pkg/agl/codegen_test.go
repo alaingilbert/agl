@@ -9773,6 +9773,40 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "7:2: Assignment count mismatch: 2 = 3")
 }
 
+func TestCodeGen338(t *testing.T) {
+	src := `package main
+import "agl1/fmt"
+import "agl1/os"
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "")!
+		}
+	}()
+}`
+	expected := `// agl:generated
+package main
+import (
+	"fmt"
+	"os"
+)
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			aglTmpVar1, aglTmpErr1 := fmt.Fprintln(os.Stderr, "")
+			if aglTmpErr1 != nil {
+				panic(aglTmpErr1)
+			}
+			AglIdentity(aglTmpVar1)
+		}
+	}()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	testCodeGen1(t, test.GenCode(AllowUnused()), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

@@ -2904,7 +2904,7 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) GenFrag {
 	bs = append(bs, cond.B...)
 	bs = append(bs, c3.B...)
 	bs = append(bs, c1.B...)
-	bs = append(bs, c2.B...)
+	//bs = append(bs, c2.B...)
 	return GenFrag{F: func() string {
 		var out string
 		gPrefix := g.prefix
