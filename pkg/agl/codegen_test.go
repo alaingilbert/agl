@@ -9853,6 +9853,32 @@ func main() {
 	testCodeGen1(t, test.GenCode(), expected)
 }
 
+func TestCodeGen341(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func main() {
+	if Ok(file) := os.ReadFile("") {
+	}
+	if Err(err) := os.ReadFile("") {
+	}
+}`
+	expected := `// agl:generated
+package main
+import "os"
+func main() {
+	if aglTmp1, aglTmpErr1 := os.ReadFile(""); aglTmpErr1 == nil {
+		file := aglTmp1
+	}
+	if _, aglTmpErr2 := os.ReadFile(""); aglTmpErr2 != nil {
+		err := aglTmpErr2
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen1(t, test.GenCode(), expected)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
