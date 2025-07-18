@@ -2054,13 +2054,14 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		// implicit return
 		ft := infer.env.GetType(expr).(types.FuncType)
+		lastStmt := func() ast.Stmt { return Must(Last(expr.Body.List)) }
 		voidReturnStmt := &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}}
 		multStmt := len(expr.Body.List) > 0
 		singleExprStmt := len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0])
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
-		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](Must(Last(expr.Body.List))) }
+		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](lastStmt()) }
 		if multStmt && lastIsRetStmt() {
-			returnStmt := Must(Last(expr.Body.List)).(*ast.ReturnStmt).Result
+			returnStmt := lastStmt().(*ast.ReturnStmt).Result
 			inferExpr(returnStmt, ft)
 		} else if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
 			expr.Body.List = append(expr.Body.List, voidReturnStmt)
