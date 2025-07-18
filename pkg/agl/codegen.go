@@ -583,8 +583,6 @@ func (g *Generator) genStmt(s ast.Stmt) (out GenFrag) {
 		return g.genTypeSwitchStmt(stmt)
 	case *ast.EmptyStmt:
 		return g.genEmptyStmt(stmt)
-	case *ast.MatchClause:
-		return g.genMatchClause(stmt)
 	default:
 		panic(fmt.Sprintf("%v %v", s, to(s)))
 	}
@@ -968,19 +966,22 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) (out GenFrag) {
 
 func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genExpr(expr.X)
 	return GenFrag{F: func() string {
-		return e(expr.Op.String()) + g.genExpr(expr.X).F()
+		return e(expr.Op.String()) + c1.F()
 	}}
 }
 
 func (g *Generator) genSendStmt(expr *ast.SendStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genExpr(expr.Chan)
+	c2 := g.genExpr(expr.Value)
 	return GenFrag{F: func() string {
 		var out string
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
-		out += g.genExpr(expr.Chan).F() + e(" <- ") + g.genExpr(expr.Value).F()
+		out += c1.F() + e(" <- ") + c2.F()
 		if !g.inlineStmt {
 			out += e("\n")
 		}
@@ -1011,11 +1012,15 @@ func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) GenFrag {
 
 func (g *Generator) genBranchStmt(expr *ast.BranchStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := GenFrag{F: func() string { return "" }}
+	if expr.Label != nil {
+		c1 = g.genExpr(expr.Label)
+	}
 	return GenFrag{F: func() string {
 		var out string
 		out += e(g.prefix + expr.Tok.String())
 		if expr.Label != nil {
-			out += e(" ") + g.genExpr(expr.Label).F()
+			out += e(" ") + c1.F()
 		}
 		out += e("\n")
 		return out
@@ -1024,18 +1029,20 @@ func (g *Generator) genBranchStmt(expr *ast.BranchStmt) GenFrag {
 
 func (g *Generator) genDeferStmt(expr *ast.DeferStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genExpr(expr.Call)
 	return GenFrag{F: func() string {
 		var out string
-		out += e(g.prefix+"defer ") + g.genExpr(expr.Call).F() + e("\n")
+		out += e(g.prefix+"defer ") + c1.F() + e("\n")
 		return out
 	}}
 }
 
 func (g *Generator) genGoStmt(expr *ast.GoStmt) GenFrag {
 	e := EmitWith(g, expr)
+	c1 := g.genExpr(expr.Call)
 	return GenFrag{F: func() string {
 		var out string
-		out += e(g.prefix+"go ") + g.genExpr(expr.Call).F() + e("\n")
+		out += e(g.prefix+"go ") + c1.F() + e("\n")
 		return out
 	}}
 }
@@ -1043,27 +1050,6 @@ func (g *Generator) genGoStmt(expr *ast.GoStmt) GenFrag {
 func (g *Generator) genEmptyStmt(expr *ast.EmptyStmt) (out GenFrag) {
 	return GenFrag{F: func() string {
 		return ""
-	}}
-}
-
-func (g *Generator) genMatchClause(expr *ast.MatchClause) GenFrag {
-	e := EmitWith(g, expr)
-	return GenFrag{F: func() string {
-		var out string
-		switch v := expr.Expr.(type) {
-		case *ast.ErrExpr:
-			out += e(g.prefix+"case Err(") + g.genExpr(v.X).F() + e("):\n")
-		case *ast.OkExpr:
-			out += e(g.prefix+"case Ok(") + g.genExpr(v.X).F() + e("):\n")
-		case *ast.SomeExpr:
-			out += e(g.prefix+"case Some(") + g.genExpr(v.X).F() + e("):\n")
-		default:
-			panic("")
-		}
-		out += g.incrPrefix(func() string {
-			return g.genStmts(expr.Body).F()
-		})
-		return out
 	}}
 }
 
@@ -2901,7 +2887,8 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	return GenFrag{F: func() string {
 		var out string
-		cond := func() string { return g.genExpr(stmt.Cond).F() }
+		c1 := g.genExpr(stmt.Cond)
+		cond := func() string { return c1.F() }
 		gPrefix := g.prefix
 		out += e(gPrefix+"if !(") + cond() + e(") {\n")
 		out += g.incrPrefix(func() string {
