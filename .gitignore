@@ -10,3 +10,4 @@ node_modules/
 language_server/agl-lsp
 examples/adventOfCode2024/*/data.txt
 examples/adventOfCode2024/*/*.go
+*.go.map
