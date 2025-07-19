@@ -2735,8 +2735,9 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	ass := stmt.Ass
-	c1 := g.genExpr(ass.Lhs[0])
-	c2 := g.genExpr(ass.Rhs[0])
+	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
+	c1 := g.genExpr(lhs0)
+	c2 := g.genExpr(rhs0)
 	c3 := g.genStmt(stmt.Body)
 	c4 := GenFrag{F: func() string { return "" }}
 	if stmt.Else != nil {
@@ -2748,7 +2749,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		lhs := func() string { return c1.F() }
 		rhs := func() string {
 			return g.incrPrefix(func() string {
-				switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
+				switch exprXT := g.env.GetType(rhs0).(type) {
 				case types.ResultType:
 					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 						return e("AglWrapNative1(") + c2.F() + e(")")
@@ -2827,7 +2828,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		lhs := c1.F()
 		rhs := func() string {
 			return g.incrPrefix(func() string {
-				switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
+				switch exprXT := g.env.GetType(rhs0).(type) {
 				case types.ResultType:
 					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
 						return e("AglWrapNative1(") + c2.F() + e(")")
