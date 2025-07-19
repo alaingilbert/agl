@@ -197,7 +197,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypesLoose(tt, t) {
-			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) {
+			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) && !TryCast[types.UntypedNoneType](tt) {
 				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
@@ -2367,6 +2367,15 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.StarType](a) && TryCast[types.StarType](b) {
 		return cmpTypes(a.(types.StarType).X, b.(types.StarType).X)
 	}
+	if TryCast[types.SomeType](a) && TryCast[types.OptionType](b) {
+		return cmpTypesLoose(a.(types.SomeType).W, b.(types.OptionType).W)
+	}
+	if TryCast[types.NoneType](a) && TryCast[types.OptionType](b) {
+		return cmpTypesLoose(a.(types.NoneType).W, b.(types.OptionType).W)
+	}
+	if TryCast[types.UntypedNoneType](a) && TryCast[types.OptionType](b) {
+		return true
+	}
 	if TryCast[types.OptionType](a) && TryCast[types.OptionType](b) {
 		return cmpTypes(a.(types.OptionType).W, b.(types.OptionType).W)
 	}
@@ -3161,6 +3170,12 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				infer.withForceReturn(lhsT, func() {
 					infer.expr(rhs)
 					rhsT := infer.env.GetType2(rhs, infer.fset)
+					lhsWantedTT := types.Unwrap(lhsWantedT)
+					if TryCast[types.UntypedNoneType](rhsT) {
+						optEl := lhsWantedTT.(types.OptionType).W
+						rhsT = types.NoneType{W: optEl}
+						infer.SetType(rhs, rhsT)
+					}
 					if !cmpTypesLoose(rhsT, lhsT) {
 						infer.errorf(lhs, "return type %s does not match expected type %s", rhsT, lhsT)
 					}
