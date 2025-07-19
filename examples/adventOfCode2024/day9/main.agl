@@ -34,9 +34,7 @@ func reorder(mut blocks []uint?) {
         } else if blocks[p2].IsNone() {
             p2 -= 1;
         } else {
-            tmp1 := blocks[p1]
-            blocks[p1] = blocks[p2]
-            blocks[p2] = tmp1
+            blocks.Swap(p1, p2)
             p1 += 1;
             p2 -= 1;
         }
