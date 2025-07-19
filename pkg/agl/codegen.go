@@ -2732,6 +2732,22 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	}, B: bs}
 }
 
+func (g *Generator) wrapNative(e Emitter, x ast.Expr, v string) string {
+	switch exprXT := g.env.GetType(x).(type) {
+	case types.ResultType:
+		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
+			return e.Emit("AglWrapNative1(") + v + e.Emit(")")
+		} else if exprXT.Native {
+			return e.Emit("AglWrapNative2(") + v + e.Emit(")")
+		}
+	case types.OptionType:
+		if exprXT.Native {
+			return e.Emit("AglWrapNativeOpt(") + v + e.Emit(")")
+		}
+	}
+	return v
+}
+
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	ass := stmt.Ass
@@ -2749,19 +2765,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		lhs := func() string { return c1.F() }
 		rhs := func() string {
 			return g.incrPrefix(func() string {
-				switch exprXT := g.env.GetType(rhs0).(type) {
-				case types.ResultType:
-					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
-						return e("AglWrapNative1(") + c2.F() + e(")")
-					} else if exprXT.Native {
-						return e("AglWrapNative2(") + c2.F() + e(")")
-					}
-				case types.OptionType:
-					if exprXT.Native {
-						return e("AglWrapNativeOpt(") + c2.F() + e(")")
-					}
-				}
-				return c2.F()
+				return g.wrapNative(e, rhs0, c2.F())
 			})
 		}
 		id := g.varCounter.Add(1)
@@ -2828,19 +2832,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		lhs := c1.F()
 		rhs := func() string {
 			return g.incrPrefix(func() string {
-				switch exprXT := g.env.GetType(rhs0).(type) {
-				case types.ResultType:
-					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
-						return e("AglWrapNative1(") + c2.F() + e(")")
-					} else if exprXT.Native {
-						return e("AglWrapNative2(") + c2.F() + e(")")
-					}
-				case types.OptionType:
-					if exprXT.Native {
-						return e("AglWrapNativeOpt(") + c2.F() + e(")")
-					}
-				}
-				return c2.F()
+				return g.wrapNative(e, rhs0, c2.F())
 			})
 		}
 		body := g.incrPrefix(func() string { return c3.F() })
