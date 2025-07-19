@@ -1355,7 +1355,7 @@ func (g *Generator) genNoneExpr(expr *ast.NoneExpr) GenFrag {
 		case types.TypeType:
 			typeStr = v.GoStrType()
 		default:
-			panic("")
+			panic(fmt.Sprintf("%v", to(nT)))
 		}
 		return e("MakeOptionNone[" + typeStr + "]()")
 	}}
