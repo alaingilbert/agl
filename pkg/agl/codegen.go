@@ -1715,6 +1715,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 
 func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 	e := EmitWith(g, expr)
+	var bs []func() string
 	switch x := expr.Fun.(type) {
 	case *ast.SelectorExpr:
 		oeXT := g.env.GetType(x.X)
@@ -2015,6 +2016,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				} else if v.Name == "make" {
 					c1 := g.genExpr(v)
 					c2 := g.genExpr(expr.Args[0])
+					bs = append(bs, c1.B...)
+					bs = append(bs, c2.B...)
 					content1 = func() string { return c1.F() }
 					content2 = func() string {
 						var out string
@@ -2032,12 +2035,16 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				} else {
 					c1 := g.genExpr(expr.Fun)
 					c2 := g.genExprs(expr.Args)
+					bs = append(bs, c1.B...)
+					bs = append(bs, c2.B...)
 					content1 = func() string { return c1.F() }
 					content2 = func() string { return c2.F() }
 				}
 			} else {
 				c1 := g.genExpr(expr.Fun)
 				c2 := g.genExprs(expr.Args)
+				bs = append(bs, c1.B...)
+				bs = append(bs, c2.B...)
 				content1 = func() string { return c1.F() }
 				content2 = func() string { return c2.F() }
 			}
@@ -2045,6 +2052,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 	default:
 		c1 := g.genExpr(expr.Fun)
 		c2 := g.genExprs(expr.Args)
+		bs = append(bs, c1.B...)
+		bs = append(bs, c2.B...)
 		content1 = func() string { return c1.F() }
 		content2 = func() string { return c2.F() }
 	}
@@ -2057,7 +2066,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		}
 		out += e(")")
 		return out
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genSetType(expr *ast.SetType) GenFrag {
