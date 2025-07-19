@@ -8830,7 +8830,7 @@ func main() {
 	tassert.Equal(t, "i32", test.TypeAt(3, 9).String())
 	tassert.Equal(t, "string", test.TypeAt(5, 6).String())
 	tassert.Equal(t, "int", test.TypeAt(5, 9).String())
-	testCodeGen1(t, test.GenCode(), expected)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen305(t *testing.T) {
