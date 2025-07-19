@@ -9863,9 +9863,12 @@ func main() {
 	}
 	if Err(err) := os.Remove("") {
 	}
+	if Some(env) := os.LookupEnv("") {
+	}
 	guard Ok(file) := os.ReadFile("") else { return }
 	guard Err(err1) := os.ReadFile("") else { return }
 	guard Err(err2) := os.Remove("") else { return }
+	guard Some(val) := os.LookupEnv("") else { return }
 }`
 	expected := `// agl:generated
 package main
@@ -9880,21 +9883,29 @@ func main() {
 	if aglTmp3 := AglWrapNative1(os.Remove("")); aglTmp3.IsErr() {
 		err := aglTmp3.Err()
 	}
-	aglTmp4 := AglWrapNative2(os.ReadFile(""))
-	if aglTmp4.IsErr() {
-		return
+	if aglTmp4 := AglWrapNativeOpt(os.LookupEnv("")); aglTmp4.IsSome() {
+		env := aglTmp4.Unwrap()
 	}
-	file := aglTmp4.Unwrap()
 	aglTmp5 := AglWrapNative2(os.ReadFile(""))
-	if aglTmp5.IsOk() {
+	if aglTmp5.IsErr() {
 		return
 	}
-	err1 := aglTmp5.Err()
-	aglTmp6 := AglWrapNative1(os.Remove(""))
+	file := aglTmp5.Unwrap()
+	aglTmp6 := AglWrapNative2(os.ReadFile(""))
 	if aglTmp6.IsOk() {
 		return
 	}
-	err2 := aglTmp6.Err()
+	err1 := aglTmp6.Err()
+	aglTmp7 := AglWrapNative1(os.Remove(""))
+	if aglTmp7.IsOk() {
+		return
+	}
+	err2 := aglTmp7.Err()
+	aglTmp8 := AglWrapNativeOpt(os.LookupEnv(""))
+	if aglTmp8.IsNone() {
+		return
+	}
+	val := aglTmp8.Unwrap()
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
