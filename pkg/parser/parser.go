@@ -1594,6 +1594,21 @@ func (p *parser) parseStmtList() (list []ast.Stmt) {
 	return
 }
 
+func (p *parser) parseBody2() ast.Stmt {
+	if p.trace {
+		defer un(trace(p, "Body"))
+	}
+
+	if p.tok == token.LBRACE {
+		lbrace := p.expect(token.LBRACE)
+		list := p.parseStmtList()
+		rbrace := p.expect2(token.RBRACE)
+		return &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
+	} else {
+		return p.parseStmt()
+	}
+}
+
 func (p *parser) parseBody() *ast.BlockStmt {
 	if p.trace {
 		defer un(trace(p, "Body"))
@@ -1623,15 +1638,17 @@ func (p *parser) parseBlockStmt() *ast.BlockStmt {
 
 func (p *parser) parseShortFuncLit() ast.Expr {
 	var args []*ast.Ident
+	pipe1Pos := token.NoPos
+	pipe2Pos := token.NoPos
 	if p.tok == token.OR {
-		p.next()
+		pipe1Pos = p.expect(token.OR)
 		args = p.parseIdentList()
-		p.expect(token.OR)
+		pipe2Pos = p.expect(token.OR)
 	}
 	p.exprLev++
-	body := p.parseBody()
+	body := p.parseBody2()
 	p.exprLev--
-	return &ast.ShortFuncLit{Args: args, Body: body}
+	return &ast.ShortFuncLit{Pipe1: pipe1Pos, Pipe2: pipe2Pos, Args: args, Body: body}
 }
 
 func (p *parser) parseFuncTypeOrLit() ast.Expr {

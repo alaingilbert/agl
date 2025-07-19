@@ -10062,10 +10062,14 @@ func TestCodeGen346(t *testing.T) {
 	src := `package main
 func main() {
 	[]int{1, 2, 3}.Map(|el| { el + 1 })
+	[]int{1, 2, 3}.Map(|el| el + 1)
 }`
 	expected := `// agl:generated
 package main
 func main() {
+	AglVecMap([]int{1, 2, 3}, func(el int) int {
+		return el + 1
+	})
 	AglVecMap([]int{1, 2, 3}, func(el int) int {
 		return el + 1
 	})

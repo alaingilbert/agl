@@ -359,8 +359,10 @@ type (
 	}
 
 	ShortFuncLit struct {
-		Args []*Ident
-		Body Stmt // function body
+		Pipe1 token.Pos
+		Pipe2 token.Pos
+		Args  []*Ident
+		Body  Stmt // function body
 	}
 
 	// A FuncLit node represents a function literal.
@@ -577,6 +579,9 @@ func (t TupleExpr) End() token.Pos { return t.Rparen }
 func (t TupleExpr) exprNode() {}
 
 func (s ShortFuncLit) Pos() token.Pos {
+	if s.Pipe1.IsValid() {
+		return s.Pipe1
+	}
 	return s.Body.Pos()
 }
 

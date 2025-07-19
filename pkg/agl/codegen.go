@@ -759,7 +759,11 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 		if len(t.Params) > 0 {
 			var tmp []string
 			for i, arg := range t.Params {
-				tmp = append(tmp, fmt.Sprintf("aglArg%d %s", i, types.ReplGenM(arg, g.genMap).GoStr()))
+				n := fmt.Sprintf("aglArg%d", i)
+				if len(expr.Args) > 0 {
+					n = expr.Args[i].Name
+				}
+				tmp = append(tmp, fmt.Sprintf("%s %s", n, types.ReplGenM(arg, g.genMap).GoStr()))
 			}
 			argsStr = strings.Join(tmp, ", ")
 		}
