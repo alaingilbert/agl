@@ -2732,7 +2732,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	}, B: bs}
 }
 
-func (g *Generator) wrapNative(e Emitter, x ast.Expr, v string) string {
+func (g *Generator) wrapIfNative(e Emitter, x ast.Expr, v string) string {
 	switch exprXT := g.env.GetType(x).(type) {
 	case types.ResultType:
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
@@ -2763,11 +2763,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		var out string
 		gPrefix := g.prefix
 		lhs := func() string { return c1.F() }
-		rhs := func() string {
-			return g.incrPrefix(func() string {
-				return g.wrapNative(e, rhs0, c2.F())
-			})
-		}
+		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F()) }
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmp%d", id)
 		var cond string
@@ -2830,11 +2826,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		var out string
 		gPrefix := g.prefix
 		lhs := c1.F()
-		rhs := func() string {
-			return g.incrPrefix(func() string {
-				return g.wrapNative(e, rhs0, c2.F())
-			})
-		}
+		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F()) }
 		body := g.incrPrefix(func() string { return c3.F() })
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmp%d", id)
