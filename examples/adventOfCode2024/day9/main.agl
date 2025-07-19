@@ -6,7 +6,7 @@ import (
 )
 
 func gen_blocks(diskMap string) []uint? {
-    tmp := diskMap.Split("").Enumerated().FlatMap({
+    diskMap.Split("").Enumerated().FlatMap({
         n := ($0.1).Int()?
         i := $0.0
         var mut file_id uint?
@@ -21,7 +21,6 @@ func gen_blocks(diskMap string) []uint? {
         }
         return out
     })
-    return tmp
 }
 
 
