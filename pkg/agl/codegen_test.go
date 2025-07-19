@@ -9861,32 +9861,44 @@ func main() {
 	}
 	if Err(err) := os.ReadFile("") {
 	}
+	if Err(err) := os.Remove("") {
+	}
 	guard Ok(file) := os.ReadFile("") else { return }
-	guard Err(err) := os.ReadFile("") else { return }
+	guard Err(err1) := os.ReadFile("") else { return }
+	guard Err(err2) := os.Remove("") else { return }
 }`
 	expected := `// agl:generated
 package main
 import "os"
 func main() {
-	if aglTmp1, aglTmpErr1 := os.ReadFile(""); aglTmpErr1 == nil {
-		file := aglTmp1
+	if aglTmp1 := AglWrapNative2(os.ReadFile("")); aglTmp1.IsOk() {
+		file := aglTmp1.Unwrap()
 	}
-	if _, aglTmpErr2 := os.ReadFile(""); aglTmpErr2 != nil {
-		err := aglTmpErr2
+	if aglTmp2 := AglWrapNative2(os.ReadFile("")); aglTmp2.IsErr() {
+		err := aglTmp2.Err()
 	}
-	aglTmp3, aglTmpErr3 := os.ReadFile("")
-	if aglTmpErr3 != nil {
+	if aglTmp3 := AglWrapNative1(os.Remove("")); aglTmp3.IsErr() {
+		err := aglTmp3.Err()
+	}
+	aglTmp4 := AglWrapNative2(os.ReadFile(""))
+	if aglTmp4.IsErr() {
 		return
 	}
-	file := aglTmp3
-	_, aglTmpErr4 := os.ReadFile("")
-	if aglTmpErr4 == nil {
+	file := aglTmp4.Unwrap()
+	aglTmp5 := AglWrapNative2(os.ReadFile(""))
+	if aglTmp5.IsOk() {
 		return
 	}
-	err := aglTmpErr4
+	err1 := aglTmp5.Err()
+	aglTmp6 := AglWrapNative1(os.Remove(""))
+	if aglTmp6.IsOk() {
+		return
+	}
+	err2 := aglTmp6.Err()
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen1(t, test.GenCode(), expected)
 }

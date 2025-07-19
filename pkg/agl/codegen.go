@@ -2746,10 +2746,25 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		var out string
 		gPrefix := g.prefix
 		lhs := func() string { return c1.F() }
-		rhs := func() string { return g.incrPrefix(func() string { return c2.F() }) }
+		rhs := func() string {
+			return g.incrPrefix(func() string {
+				switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
+				case types.ResultType:
+					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
+						return e("AglWrapNative1(") + c2.F() + e(")")
+					} else if exprXT.Native {
+						return e("AglWrapNative2(") + c2.F() + e(")")
+					}
+				case types.OptionType:
+					if exprXT.Native {
+						return e("AglWrapNativeOpt(") + c2.F() + e(")")
+					}
+				}
+				return c2.F()
+			})
+		}
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmp%d", id)
-		errName := fmt.Sprintf("aglTmpErr%d", id)
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -2770,38 +2785,8 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 			out += e("if ") + lhs() + e(", ok := ") + rhs() + e("; ok {\n")
 			g.inlineStmt = false
 		} else {
-			var handled bool
-			switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
-			case types.ResultType:
-				if exprXT.Native {
-					handled = true
-					switch stmt.Op {
-					case token.OK:
-						out += e("if "+varName+", "+errName+" := ") + rhs() + e("; "+errName+" == nil {\n")
-						out += e(gPrefix+"\t") + lhs() + e(" := "+varName+"\n")
-					case token.ERR:
-						out += e("if _, "+errName+" := ") + rhs() + e("; "+errName+" != nil {\n")
-						out += e(gPrefix+"\t") + lhs() + e(" := "+errName+"\n")
-					default:
-						panic("")
-					}
-				}
-			case types.OptionType:
-				if exprXT.Native {
-					handled = true
-					switch stmt.Op {
-					case token.SOME:
-						out += e("if "+varName+", ok := ") + rhs() + e("; ok {\n")
-						out += e(gPrefix+"\t") + lhs() + e(" := "+varName+"\n")
-					default:
-						panic("")
-					}
-				}
-			}
-			if !handled {
-				out += e("if "+varName+" := ") + rhs() + e("; "+cond+" {\n")
-				out += e(gPrefix+"\t") + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
-			}
+			out += e("if "+varName+" := ") + rhs() + e("; "+cond+" {\n")
+			out += e(gPrefix+"\t") + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
 			g.inlineStmt = false
 		}
 		if g.allowUnused {
@@ -2840,11 +2825,26 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		var out string
 		gPrefix := g.prefix
 		lhs := c1.F()
-		rhs := g.incrPrefix(func() string { return c2.F() })
+		rhs := func() string {
+			return g.incrPrefix(func() string {
+				switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
+				case types.ResultType:
+					if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
+						return e("AglWrapNative1(") + c2.F() + e(")")
+					} else if exprXT.Native {
+						return e("AglWrapNative2(") + c2.F() + e(")")
+					}
+				case types.OptionType:
+					if exprXT.Native {
+						return e("AglWrapNativeOpt(") + c2.F() + e(")")
+					}
+				}
+				return c2.F()
+			})
+		}
 		body := g.incrPrefix(func() string { return c3.F() })
 		id := g.varCounter.Add(1)
 		varName := fmt.Sprintf("aglTmp%d", id)
-		errName := fmt.Sprintf("aglTmpErr%d", id)
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -2852,63 +2852,23 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			cond = fmt.Sprintf("%s.IsNone()", varName)
 		case token.OK:
 			cond = fmt.Sprintf("%s.IsErr()", varName)
-			unwrapFn = "Err"
 		case token.ERR:
 			cond = fmt.Sprintf("%s.IsOk()", varName)
+			unwrapFn = "Err"
 		default:
 			panic("")
 		}
 		if _, ok := rhs0.(*ast.TypeAssertExpr); ok {
-			out += gPrefix + fmt.Sprintf("%s, %s := %s\n", lhs, varName, rhs)
+			out += gPrefix + fmt.Sprintf("%s, %s := %s\n", lhs, varName, rhs())
 			out += gPrefix + fmt.Sprintf("if !%s {\n", varName)
 			out += body
 			out += gPrefix + "}\n"
 		} else {
-
-			var handled bool
-			switch exprXT := g.env.GetType(ass.Rhs[0]).(type) {
-			case types.ResultType:
-				if exprXT.Native {
-					handled = true
-					switch stmt.Op {
-					case token.OK:
-						out += e(gPrefix+varName+", "+errName+" := ") + rhs + e("\n")
-						out += e(gPrefix + "if " + errName + " != nil {\n")
-						out += body
-						out += gPrefix + "}\n"
-						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, varName)
-					case token.ERR:
-						out += e(gPrefix+"_, "+errName+" := ") + rhs + e("\n")
-						out += e(gPrefix + "if " + errName + " == nil {\n")
-						out += body
-						out += gPrefix + "}\n"
-						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, errName)
-					default:
-						panic("")
-					}
-				}
-			case types.OptionType:
-				if exprXT.Native {
-					handled = true
-					switch stmt.Op {
-					case token.SOME:
-						out += e(gPrefix+varName+", ok := ") + rhs + e("\n")
-						out += e(gPrefix + "if !ok {\n")
-						out += body
-						out += gPrefix + "}\n"
-						out += gPrefix + fmt.Sprintf("%s := %s\n", lhs, varName)
-					default:
-						panic("")
-					}
-				}
-			}
-			if !handled {
-				out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs)
-				out += gPrefix + fmt.Sprintf("if %s {\n", cond)
-				out += body
-				out += gPrefix + "}\n"
-				out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
-			}
+			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs())
+			out += gPrefix + fmt.Sprintf("if %s {\n", cond)
+			out += body
+			out += gPrefix + "}\n"
+			out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
 		}
 		if g.allowUnused {
 			out += gPrefix + fmt.Sprintf("AglNoop(%s)\n", lhs)
@@ -3171,6 +3131,13 @@ func AglWrapNative2[T any](v1 T, err error) Result[T] {
 		return MakeResultErr[T](err)
 	}
 	return MakeResultOk(v1)
+}
+
+func AglWrapNativeOpt[T any](v1 T, ok bool) Option[T] {
+	if !ok {
+		return MakeOptionNone[T](err)
+	}
+	return MakeOptionSome(v1)
 }
 
 type AglVoid struct{}
