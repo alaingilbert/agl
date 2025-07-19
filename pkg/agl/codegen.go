@@ -1764,7 +1764,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 							varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 							return GenFrag{F: func() string {
 								out := e(varName+" := ") + genEX() + e("\n") // temp variable to store the map value
-								out += e(g.prefix + "AglVec" + fnName + "(&" + varName + ", " + paramsStr() + ellipsis() + ")\n")
+								out += e(g.prefix+"AglVec"+fnName+"(&"+varName+", ") + paramsStr() + ellipsis() + e(")\n")
 								out += e(g.prefix) + genEX() + e(" = "+varName) // put the temp value back in the map
 								return out
 							}}
@@ -2128,12 +2128,12 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 				switch t.(type) {
 				case types.ArrayType:
 					t = t.(types.ArrayType).Elt
-					content2 = func() string { return fmt.Sprintf("AglVec[%s](%s)", t.GoStrType(), c2.F()) }
+					content2 = func() string { return e("AglVec["+t.GoStrType()+"](") + c2.F() + e(")") }
 				case types.MapType:
 					kT := t.(types.MapType).K
 					vT := t.(types.MapType).V
 					content2 = func() string {
-						return fmt.Sprintf("AglMap[%s, %s](%s)", kT.GoStrType(), vT.GoStrType(), c2.F())
+						return e("AglMap["+kT.GoStrType()+", "+vT.GoStrType()+"](") + c2.F() + e(")")
 					}
 				case types.SetType:
 				default:
@@ -2543,11 +2543,11 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 			isCompLit := TryCast[*ast.CompositeLit](stmt.X)
 			var out string
 			if isCompLit {
-				out += "("
+				out += e("(")
 			}
 			out += c1.F()
 			if isCompLit {
-				out += ")"
+				out += e(")")
 			}
 			return out
 		}

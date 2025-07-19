@@ -37,7 +37,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen1(t, test.GenCode(), expected)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGenGuard_2(t *testing.T) {
@@ -65,7 +65,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Contains(t, test.errs[0].Error(), "guard must return/break/continue")
-	testCodeGen1(t, test.GenCode(), expected)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGenGuard_3(t *testing.T) {
@@ -105,5 +105,5 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen1(t, test.GenCode(), expected)
+	testCodeGen2(t, expected, test)
 }

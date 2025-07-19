@@ -86,6 +86,10 @@ func (t *Test) GenCode(opts ...GeneratorOption) string {
 	return NewGenerator(t.env, t.f, t.f2, t.fset, opts...).Generate()
 }
 
+func (t *Test) GenCode2(opts ...GeneratorOption) (string, string) {
+	return NewGenerator(t.env, t.f, t.f2, t.fset, opts...).Generate2()
+}
+
 func (t *Test) TypeAt(row, col int) types.Type {
 	offset := t.file.LineStart(row) + token.Pos(col-1)
 	n := findNodeAtPosition(t.f, t.fset, t.fset.Position(offset))
