@@ -567,6 +567,16 @@ func (p *parser) parseExprList() (list []ast.Expr) {
 	return
 }
 
+func (p *parser) parseTypeList() (list []ast.Expr) {
+	list = append(list, p.tryIdentOrTypeNoShortFn())
+	for p.tok == token.COMMA {
+		p.next()
+		list = append(list, p.tryIdentOrTypeNoShortFn())
+	}
+
+	return
+}
+
 func (p *parser) parseList(inRhs bool) []ast.Expr {
 	old := p.inRhs
 	p.inRhs = inRhs
@@ -1566,7 +1576,7 @@ func (p *parser) tryIdentOrTypeOrShortFnHelper(canBeShortFn bool) ast.Expr {
 		return p.parseChanType()
 	case token.LPAREN:
 		lparen := p.expect(token.LPAREN)
-		values := p.parseExprList()
+		values := p.parseTypeList()
 		rparen := p.expect(token.RPAREN)
 		if len(values) > 1 {
 			return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}

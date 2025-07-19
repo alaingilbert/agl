@@ -10081,6 +10081,16 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen347(t *testing.T) {
+	src := `package main
+func main() {
+	a := [](int, int?, u8, u8?){}
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[](int, int?, u8, u8?)", test.TypeAt(3, 2).String())
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
