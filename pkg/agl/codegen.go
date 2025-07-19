@@ -3136,7 +3136,7 @@ func AglWrapNative2[T any](v1 T, err error) Result[T] {
 
 func AglWrapNativeOpt[T any](v1 T, ok bool) Option[T] {
 	if !ok {
-		return MakeOptionNone[T](err)
+		return MakeOptionNone[T]()
 	}
 	return MakeOptionSome(v1)
 }
