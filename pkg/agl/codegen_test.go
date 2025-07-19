@@ -9255,7 +9255,7 @@ func AglStringMyLowercased(s string) string {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen1(t, test.GenCode(), expected)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen317(t *testing.T) {

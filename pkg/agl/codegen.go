@@ -274,10 +274,11 @@ func (g *Generator) Emit(s string, opts ...EmitOption) string {
 	return s
 }
 
-func (g *Generator) genExtensionString(e ExtensionString) (out string) {
-	for _, _ = range slices.Sorted(maps.Keys(e.gen)) {
-		decl := e.decl
-		var name, typeParamsStr, paramsStr, resultStr, bodyStr string
+func (g *Generator) genExtensionString(ext ExtensionString) (out string) {
+	e := EmitWith(g, ext.decl)
+	for _, _ = range slices.Sorted(maps.Keys(ext.gen)) {
+		decl := ext.decl
+		var name, resultStr string
 		if decl.Name != nil {
 			name = decl.Name.Name
 		}
@@ -295,50 +296,58 @@ func (g *Generator) genExtensionString(e ExtensionString) (out string) {
 		recvT := recv.Type.(*ast.SelectorExpr).Sel.Name
 		var recvTName string
 		recvTName = recvT
-		firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.Ident{Name: recvTName}}
-		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
-		if params := paramsClone; params != nil {
-			var fieldsItems []string
-			for i, field := range params {
-				var content string
-				if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
-					if _, ok := v.W.(types.FuncType); ok {
-						content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType()
-					} else {
-						content = g.genExpr(field.Type).F()
+		paramsStr := func() (out string) {
+			firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.Ident{Name: recvTName}}
+			paramsClone = append([]ast.Field{firstArg}, paramsClone...)
+			if params := paramsClone; params != nil {
+				for i, field := range params {
+					out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
+					if len(field.Names) > 0 {
+						out += e(" ")
 					}
-				} else {
-					switch field.Type.(type) {
-					case *ast.TupleExpr:
-						content = g.env.GetType(field.Type).GoStr()
-					default:
-						content = g.genExpr(field.Type).F()
+					content := func() string {
+						var content string
+						if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
+							if _, ok := v.W.(types.FuncType); ok {
+								content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType()
+							} else {
+								content = g.genExpr(field.Type).FNoEmit(g)
+							}
+						} else {
+							switch field.Type.(type) {
+							case *ast.TupleExpr:
+								content = g.env.GetType(field.Type).GoStr()
+							default:
+								content = g.genExpr(field.Type).FNoEmit(g)
+							}
+						}
+						if i == 0 {
+							if content != "String" {
+								panic("")
+							}
+							content = e("string")
+						}
+						return content
+					}
+					out += content()
+					if i < len(params)-1 {
+						out += e(", ")
 					}
 				}
-				if i == 0 {
-					if content != "String" {
-						panic("")
-					}
-					content = "string"
-				}
-				namesStr := utils.MapJoin(field.Names, func(n *ast.LabelledIdent) string { return n.Name }, ", ")
-				namesStr = utils.SuffixIf(namesStr, " ")
-				fieldsItems = append(fieldsItems, namesStr+content)
 			}
-			paramsStr = strings.Join(fieldsItems, ", ")
+			return
 		}
 		if result := decl.Type.Result; result != nil {
 			resT := g.env.GetType(result)
 			resultStr = utils.PrefixIf(resT.GoStr(), " ")
 		}
+		out += e("func AglString"+name+"(") + paramsStr() + e(")"+resultStr+" {\n")
 		if decl.Body != nil {
-			content := g.incrPrefix(func() string {
+			out += g.incrPrefix(func() string {
 				return g.genStmt(decl.Body).F()
 			})
-			bodyStr = content
 		}
-		out += fmt.Sprintf("func AglString%s%s(%s)%s {\n%s}", name, typeParamsStr, paramsStr, resultStr, bodyStr)
-		out += "\n"
+		out += e("}\n")
 	}
 	return out
 }
