@@ -124,7 +124,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 				})
 			}
 		}
-		return fmt.Errorf("failed to parse file: %v", err)
+		return nil // fmt.Errorf("failed to parse file: %v", err)
 	}
 
 	// Create an environment and infer types
@@ -180,7 +180,7 @@ func (s *Server) Definition(ctx context.Context, params lsp.TextDocumentPosition
 	uri := string(params.TextDocument.URI)
 	doc, ok := s.documents[uri]
 	if !ok {
-		return nil, fmt.Errorf("document not found: %s", uri)
+		return nil, nil // fmt.Errorf("document not found: %s", uri)
 	}
 
 	// Convert LSP position to Go token position
@@ -284,8 +284,7 @@ func (s *Server) Hover(ctx context.Context, params lsp.TextDocumentPositionParam
 	uri := string(params.TextDocument.URI)
 	doc, ok := s.documents[uri]
 	if !ok {
-		log.Printf("Document not found: %s", uri)
-		return nil, fmt.Errorf("document not found: %s", uri)
+		return nil, nil // fmt.Errorf("document not found: %s", uri)
 	}
 
 	// Convert LSP position to Go token position
@@ -336,7 +335,7 @@ func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPosition
 	uri := string(params.TextDocument.URI)
 	doc, ok := s.documents[uri]
 	if !ok {
-		return nil, fmt.Errorf("document not found: %s", uri)
+		return nil, nil //fmt.Errorf("document not found: %s", uri)
 	}
 
 	// Convert LSP position to Go token position
@@ -350,6 +349,9 @@ func (s *Server) Completion(ctx context.Context, params lsp.TextDocumentPosition
 	}
 
 	// Convert line/column to offset
+	if line < 1 {
+		return nil, nil
+	}
 	offset := file.LineStart(line) + token.Pos(column-1)
 
 	// Find the node at the current position
