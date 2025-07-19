@@ -2732,20 +2732,20 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	}, B: bs}
 }
 
-func (g *Generator) wrapIfNative(e Emitter, x ast.Expr, v string) string {
+func (g *Generator) wrapIfNative(e Emitter, x ast.Expr, v func() string) string {
 	switch exprXT := g.env.GetType(x).(type) {
 	case types.ResultType:
 		if _, ok := exprXT.W.(types.VoidType); ok && exprXT.Native {
-			return e.Emit("AglWrapNative1(") + v + e.Emit(")")
+			return e.Emit("AglWrapNative1(") + v() + e.Emit(")")
 		} else if exprXT.Native {
-			return e.Emit("AglWrapNative2(") + v + e.Emit(")")
+			return e.Emit("AglWrapNative2(") + v() + e.Emit(")")
 		}
 	case types.OptionType:
 		if exprXT.Native {
-			return e.Emit("AglWrapNativeOpt(") + v + e.Emit(")")
+			return e.Emit("AglWrapNativeOpt(") + v() + e.Emit(")")
 		}
 	}
-	return v
+	return v()
 }
 
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
@@ -2763,9 +2763,8 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		var out string
 		gPrefix := g.prefix
 		lhs := func() string { return c1.F() }
-		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F()) }
-		id := g.varCounter.Add(1)
-		varName := fmt.Sprintf("aglTmp%d", id)
+		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
+		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -2825,11 +2824,10 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
 		gPrefix := g.prefix
-		lhs := c1.F()
-		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F()) }
-		body := g.incrPrefix(func() string { return c3.F() })
-		id := g.varCounter.Add(1)
-		varName := fmt.Sprintf("aglTmp%d", id)
+		lhs := func() string { return c1.F() }
+		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
+		body := func() string { return g.incrPrefix(func() string { return c3.F() }) }
+		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -2844,19 +2842,19 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			panic("")
 		}
 		if _, ok := rhs0.(*ast.TypeAssertExpr); ok {
-			out += gPrefix + fmt.Sprintf("%s, %s := %s\n", lhs, varName, rhs())
-			out += gPrefix + fmt.Sprintf("if !%s {\n", varName)
-			out += body
-			out += gPrefix + "}\n"
+			out += e(gPrefix) + lhs() + e(", "+varName+" := ") + rhs() + e("\n")
+			out += e(gPrefix + "if !" + varName + " {\n")
+			out += body()
+			out += e(gPrefix + "}\n")
 		} else {
-			out += gPrefix + fmt.Sprintf("%s := %s\n", varName, rhs())
-			out += gPrefix + fmt.Sprintf("if %s {\n", cond)
-			out += body
-			out += gPrefix + "}\n"
-			out += gPrefix + fmt.Sprintf("%s := %s.%s()\n", lhs, varName, unwrapFn)
+			out += e(gPrefix+varName+" := ") + rhs() + e("\n")
+			out += e(gPrefix + "if " + cond + " {\n")
+			out += body()
+			out += e(gPrefix + "}\n")
+			out += e(gPrefix) + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
 		}
 		if g.allowUnused {
-			out += gPrefix + fmt.Sprintf("AglNoop(%s)\n", lhs)
+			out += e(gPrefix+"AglNoop(") + lhs() + e(")\n")
 		}
 		return out
 	}}
