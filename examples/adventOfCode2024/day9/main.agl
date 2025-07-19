@@ -30,13 +30,13 @@ func reorder(mut blocks []uint?) {
     mut p2 := blocks.Len() - 1;
     for p1 <= p2 {
         if blocks[p1].IsSome() {
-            p1 += 1;
+            p1++
         } else if blocks[p2].IsNone() {
-            p2 -= 1;
+            p2--
         } else {
             blocks.Swap(p1, p2)
-            p1 += 1;
-            p2 -= 1;
+            p1++
+            p2--
         }
     }
 }
