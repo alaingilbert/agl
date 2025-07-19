@@ -1535,7 +1535,7 @@ func (p *parser) tryIdentOrType2(canBeShortFn bool) ast.Expr {
 
 func (p *parser) tryIdentOrTypeOrShortFnHelper(canBeShortFn bool) ast.Expr {
 	defer decNestLev(incNestLev(p))
-	if canBeShortFn && p.tok == token.LBRACE {
+	if canBeShortFn && (p.tok == token.LBRACE || p.tok == token.OR) {
 		return p.parseShortFuncLit()
 	}
 	switch p.tok {
@@ -1622,10 +1622,16 @@ func (p *parser) parseBlockStmt() *ast.BlockStmt {
 // Expressions
 
 func (p *parser) parseShortFuncLit() ast.Expr {
+	var args []*ast.Ident
+	if p.tok == token.OR {
+		p.next()
+		args = p.parseIdentList()
+		p.expect(token.OR)
+	}
 	p.exprLev++
 	body := p.parseBody()
 	p.exprLev--
-	return &ast.ShortFuncLit{Body: body}
+	return &ast.ShortFuncLit{Args: args, Body: body}
 }
 
 func (p *parser) parseFuncTypeOrLit() ast.Expr {

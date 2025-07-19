@@ -359,7 +359,8 @@ type (
 	}
 
 	ShortFuncLit struct {
-		Body *BlockStmt // function body
+		Args []*Ident
+		Body Stmt // function body
 	}
 
 	// A FuncLit node represents a function literal.

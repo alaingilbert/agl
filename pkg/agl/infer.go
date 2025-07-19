@@ -2081,6 +2081,10 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		// Define args shortcuts in environment ($0, $1...)
 		if t := infer.env.GetType(expr); t != nil {
+			params := t.(types.FuncType).Params
+			for i, arg := range expr.Args {
+				infer.env.Define(nil, arg.Name, params[i])
+			}
 			for i, param := range t.(types.FuncType).Params {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
 			}

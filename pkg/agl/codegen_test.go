@@ -10058,6 +10058,25 @@ type AglTupleStruct_int_string struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen346(t *testing.T) {
+	src := `package main
+func main() {
+	[]int{1, 2, 3}.Map(|el| { el + 1 })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglVecMap([]int{1, 2, 3}, func(el int) int {
+		return el + 1
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
