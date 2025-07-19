@@ -1742,7 +1742,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 				}}
-			case "Insert":
+			case "Insert", "Swap":
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 				}}
@@ -3949,6 +3949,13 @@ func AglVecPopFront[T any](a *[]T) Option[T] {
 	var el T
 	el, *a = (*a)[0], (*a)[1:]
 	return MakeOptionSome(el)
+}
+
+// AglVecSwap ...
+func AglVecSwap[T any](a *[]T, b, c int) {
+	tmp := (*a)[b]
+	(*a)[b] = (*a)[c]
+	(*a)[c] = tmp
 }
 
 // AglVecInsert ...
