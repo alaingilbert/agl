@@ -1,0 +1,61 @@
+package main
+
+import (
+    "agl1/os"
+    "agl1/fmt"
+)
+
+func gen_blocks(diskMap string) []uint? {
+    tmp := diskMap.Split("").Enumerated().FlatMap({
+        n := ($0.1).Int()?
+        i := $0.0
+        var mut file_id uint?
+        if i % 2 == 0 {
+            file_id = Some(uint(i/2))
+        } else {
+            file_id = None
+        }
+        var mut out []uint?
+        for j := 0; j < n; j++ {
+            out.Push(file_id)
+        }
+        return out
+    })
+    return tmp
+}
+
+
+func reorder(mut blocks []uint?) {
+    mut p1 := 0;
+    mut p2 := blocks.Len() - 1;
+    for p1 <= p2 {
+        if blocks[p1].IsSome() {
+            p1 += 1;
+        } else if blocks[p2].IsNone() {
+            p2 -= 1;
+        } else {
+            tmp1 := blocks[p1]
+            blocks[p1] = blocks[p2]
+            blocks[p2] = tmp1
+            p1 += 1;
+            p2 -= 1;
+        }
+    }
+}
+
+func checksum(mut blocks []uint?) uint {
+    var mut out uint
+    for (i, block) in blocks.Enumerated() {
+        if Some(id) := block {
+            out += uint(i) * id
+        }
+    }
+    return out
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day9/data.txt")!)
+    mut blocks := gen_blocks(fileContent)
+    reorder(blocks)
+    fmt.Println("part1:", checksum(blocks))
+}
