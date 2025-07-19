@@ -68,7 +68,7 @@ func (r *strings.Reader) Len() int
 func (r *strings.Reader) Read(b []byte) (int, error)
 func (r *strings.Reader) ReadAt(b []byte, off int64) (int, error)
 func (r *strings.Reader) ReadByte() (byte, error)
-func (r *strings.Reader) ReadRune() (rune, int(), error)
+func (r *strings.Reader) ReadRune() (rune, int, error)
 func (r *strings.Reader) Reset(s string)
 func (r *strings.Reader) Seek(offset int64, whence int) (i64, error)
 func (r *strings.Reader) Size() i64
