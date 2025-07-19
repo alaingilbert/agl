@@ -1946,6 +1946,15 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 					return e("AglMap"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(")")
 				}}
 			}
+		case types.OptionType, types.SomeType, types.NoneType:
+			c1 := g.genExpr(x.X)
+			genEX := func() string { return c1.F() }
+			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
+			fnName := x.Sel.Name
+			switch fnName {
+			case "Map":
+				return GenFrag{F: func() string { return e("AglOption"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+			}
 		default:
 			c1 := g.genExprs(expr.Args)
 			if v, ok := x.X.(*ast.Ident); ok && v.Name == "agl" && x.Sel.Name == "NewSet" {
@@ -3191,6 +3200,14 @@ func (o Option[T]) UnwrapOrDefault() T {
 		return zero
 	}
 	return *o.t
+}
+
+func AglOptionMap[T, R any](o Option[T], clb func(T) R) Option[R] {
+	if o.IsSome() {
+		r := clb(o.Unwrap())
+		return MakeOptionSome(r)
+	}
+	return MakeOptionNone[R]()
 }
 
 func MakeOptionSome[T any](t T) Option[T] {

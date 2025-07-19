@@ -1812,6 +1812,46 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				}
 			}
 		}
+	case types.SomeType:
+		fnName := exprT.Sel.Name
+		if fnName == "Map" {
+			exprPos := infer.Pos(expr)
+			info := infer.env.GetNameInfo("agl1.Option.Map")
+			mapFnT := infer.env.GetFn("agl1.Option.Map").T("T", idTT.W)
+			clbFnT := mapFnT.GetParam(1).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
+			exprArg0 := expr.Args[0]
+			mapFnT.Recv = []types.Type{idTT}
+			mapFnT.Params = mapFnT.Params[1:]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
+			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.expr(arg0)
+				rT := infer.GetTypeFn(arg0).Return
+				infer.SetTypeForce(expr, types.SomeType{W: rT})
+				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					rT := tmp.Return
+					infer.SetType(expr, rT)
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+				}
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			}
+		}
 	}
 }
 
@@ -2383,6 +2423,9 @@ func cmpTypes(a, b types.Type) bool {
 	}
 	if TryCast[types.NoneType](a) && TryCast[types.OptionType](b) {
 		return cmpTypesLoose(a.(types.NoneType).W, b.(types.OptionType).W)
+	}
+	if TryCast[types.NoneType](a) && TryCast[types.SomeType](b) {
+		return cmpTypesLoose(a.(types.NoneType).W, b.(types.SomeType).W)
 	}
 	if TryCast[types.UntypedNoneType](a) && TryCast[types.OptionType](b) {
 		return true
@@ -3183,7 +3226,17 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					rhsT := infer.env.GetType2(rhs, infer.fset)
 					lhsWantedTT := types.Unwrap(lhsWantedT)
 					if TryCast[types.UntypedNoneType](rhsT) {
-						optEl := lhsWantedTT.(types.OptionType).W
+						var optEl types.Type
+						switch lhsWantedTT.(type) {
+						case types.SomeType:
+							optEl = lhsWantedTT.(types.SomeType).W
+						case types.NoneType:
+							optEl = lhsWantedTT.(types.NoneType).W
+						case types.OptionType:
+							optEl = lhsWantedTT.(types.OptionType).W
+						default:
+							panic("")
+						}
 						rhsT = types.NoneType{W: optEl}
 						infer.SetType(rhs, rhsT)
 					}

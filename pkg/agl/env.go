@@ -927,6 +927,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Option.UnwrapOrDefault", "func [T any]() T", WithDesc("Unwraps an Option value, yielding the content of a Some(x), or the default if None."))
 		e.DefineFn(nenv, "agl1.Option.IsSome", "func () bool")
 		e.DefineFn(nenv, "agl1.Option.IsNone", "func () bool")
+		e.DefineFn(nenv, "agl1.Option.Map", "func [T, R any](o T?, f func(e T) R) R?")
 		e.DefineFn(nenv, "agl1.Result.Unwrap", "func [T any]() T")
 		e.DefineFn(nenv, "agl1.Result.UnwrapOr", "func [T any](t T) T")
 		e.DefineFn(nenv, "agl1.Result.UnwrapOrDefault", "func [T any]() T")
