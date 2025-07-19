@@ -383,12 +383,17 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 			recvTName = recvT
 		}
 
+		r := strings.NewReplacer(
+			"[", "_",
+			"]", "_",
+		)
+
 		var elts []string
 		for _, k := range slices.Sorted(maps.Keys(m)) {
-			elts = append(elts, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+			elts = append(elts, fmt.Sprintf("%s_%s", k, r.Replace(m[k].GoStr())))
 		}
 		if _, ok := m["T"]; !ok {
-			elts = append(elts, fmt.Sprintf("%s_%s", "T", recvTName))
+			elts = append(elts, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
 		}
 
 		firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
@@ -1802,13 +1807,17 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 				tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
 				g.extensions[extName] = tmp
+				r := strings.NewReplacer(
+					"[", "_",
+					"]", "_",
+				)
 				var els []string
 				for _, k := range slices.Sorted(maps.Keys(m)) {
-					els = append(els, fmt.Sprintf("%s_%s", k, m[k].GoStr()))
+					els = append(els, fmt.Sprintf("%s_%s", k, r.Replace(m[k].GoStr())))
 				}
 				if _, ok := m["T"]; !ok {
 					recvTName := rawFnT.(types.FuncType).TypeParams[0].(types.GenericType).W.GoStr()
-					els = append(els, fmt.Sprintf("%s_%s", "T", recvTName))
+					els = append(els, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
 				}
 				elsStr := strings.Join(els, "_")
 				c1 := g.genExprs(expr.Args)

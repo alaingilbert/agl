@@ -9962,6 +9962,48 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen344(t *testing.T) {
+	src := `package main
+func main() {
+    tmp := "1 2 3 4".Split("").Enumerated().FlatMap({
+        return []uint?{($0.1).Uint()}
+    })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	tmp := AglVecFlatMap_R_Option_uint__T_AglTupleStruct_int_string(AglVecEnumerated_T_string(AglStringSplit("1 2 3 4", "")), func(aglArg0 AglTupleStruct_int_string) []Option[uint] {
+		return []Option[uint]{AglStringUint((aglArg0.Arg1))}
+	})
+}
+func AglVecEnumerated_T_string(v []string) []AglTupleStruct_int_string {
+	out := make([]AglTupleStruct_int_string, 0)
+	for i := range v {
+		AglVecPush((*[]AglTupleStruct_int_string)(&out), AglTupleStruct_int_string{Arg0: i, Arg1: v[i]})
+	}
+	return out
+}
+func AglVecFlatMap_R_Option_uint__T_AglTupleStruct_int_string(v []AglTupleStruct_int_string, f func(AglTupleStruct_int_string) []Option[uint]) []Option[uint] {
+	out := make([]Option[uint], 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			AglVecPush((*[]Option[uint])(&out), el1)
+		}
+	}
+	return out
+}
+type AglTupleStruct_int_string struct {
+	Arg0 int
+	Arg1 string
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
