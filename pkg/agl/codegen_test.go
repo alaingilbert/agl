@@ -10004,6 +10004,60 @@ type AglTupleStruct_int_string struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen345(t *testing.T) {
+	src := `package main
+func main() {
+    tmp := "1 2 3 4 5".Split("").Enumerated().FlatMap({
+        var mut tmp int?
+        if $0.0 % 2 == 0 {
+            tmp = Some($0.0/2)
+        } else {
+            tmp = None
+        }
+		return []int?{tmp}
+    })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	tmp := AglVecFlatMap_R_Option_int__T_AglTupleStruct_int_string(AglVecEnumerated_T_string(AglStringSplit("1 2 3 4 5", "")), func(aglArg0 AglTupleStruct_int_string) []Option[int] {
+		var tmp Option[int]
+		if aglArg0.Arg0 % 2 == 0 {
+			tmp = MakeOptionSome(aglArg0.Arg0 / 2)
+		} else {
+			tmp = MakeOptionNone[int]()
+		}
+		return []Option[int]{tmp}
+	})
+}
+func AglVecEnumerated_T_string(v []string) []AglTupleStruct_int_string {
+	out := make([]AglTupleStruct_int_string, 0)
+	for i := range v {
+		AglVecPush((*[]AglTupleStruct_int_string)(&out), AglTupleStruct_int_string{Arg0: i, Arg1: v[i]})
+	}
+	return out
+}
+func AglVecFlatMap_R_Option_int__T_AglTupleStruct_int_string(v []AglTupleStruct_int_string, f func(AglTupleStruct_int_string) []Option[int]) []Option[int] {
+	out := make([]Option[int], 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			AglVecPush((*[]Option[int])(&out), el1)
+		}
+	}
+	return out
+}
+type AglTupleStruct_int_string struct {
+	Arg0 int
+	Arg1 string
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

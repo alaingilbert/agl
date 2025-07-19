@@ -197,7 +197,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypesLoose(tt, t) {
-			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) && !TryCast[types.UntypedNoneType](tt) {
+			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) && !TryCast[types.UntypedNoneType](tt) && !TryCast[types.UntypedNoneType](t) {
 				panic(fmt.Sprintf("type already declared for %s %s %v %v %v %v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
@@ -3269,11 +3269,20 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.SomeType, types.NoneType:
-				if !TryCast[types.OptionType](rhsT) {
+				if !TryCast[types.OptionType](rhsT) && !TryCast[types.SomeType](rhsT) && !TryCast[types.NoneType](rhsT) {
 					infer.errorf(lhs, "try to destructure a non-Option type into an OptionType")
 					return
 				}
-				infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
+				switch rhsT.(type) {
+				case types.OptionType:
+					infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
+				case types.SomeType:
+					infer.SetTypeForce(lhs, rhsT.(types.SomeType).W)
+				case types.NoneType:
+					infer.SetTypeForce(lhs, rhsT.(types.NoneType).W)
+				default:
+					panic("")
+				}
 			case types.ErrType, types.OkType:
 				if !TryCast[types.ResultType](rhsT) {
 					infer.errorf(lhs, "try to destructure a non-Result type into an ResultType")
