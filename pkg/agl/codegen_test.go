@@ -9935,6 +9935,33 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen343(t *testing.T) {
+	src := `package main
+func main() {
+	var mut v uint?
+	if 42 % 2 == 0 {
+		v = Some(42)
+	} else {
+		v = None
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var v Option[uint]
+	if 42 % 2 == 0 {
+		v = MakeOptionSome(42)
+	} else {
+		v = MakeOptionNone[uint]()
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
