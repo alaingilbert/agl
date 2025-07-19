@@ -3953,9 +3953,7 @@ func AglVecPopFront[T any](a *[]T) Option[T] {
 
 // AglVecSwap ...
 func AglVecSwap[T any](a *[]T, b, c int) {
-	tmp := (*a)[b]
-	(*a)[b] = (*a)[c]
-	(*a)[c] = tmp
+	(*a)[b], (*a)[c] = (*a)[c], (*a)[b]
 }
 
 // AglVecInsert ...
