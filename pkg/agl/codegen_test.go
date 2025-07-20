@@ -10245,12 +10245,12 @@ func main() {
 func TestCodeGen354(t *testing.T) {
 	src := `package main
 func main() {
-    []int{}.FlatMap({
-        fileID := Some(u8(1))
-        var mut out []u8?
+	[]int{}.FlatMap({
+		fileID := Some(u8(1))
+		var mut out []u8?
 		out.Push(fileID)
-        return out
-    })
+		return out
+	})
 }`
 	test := NewTest(src, WithMutEnforced(true))
 	test.PrintErrors()
