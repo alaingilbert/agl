@@ -1066,8 +1066,43 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			} else {
 				infer.SetType(expr, types.VoidType{})
 			}
+		case types.SomeType:
+			if fnName == "Map" {
+				break
+			}
+			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Map"}) {
+				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+				return
+			}
+			info := infer.env.GetNameInfo("agl1.Option." + fnName)
+			fnT := infer.env.GetFn("agl1.Option." + fnName)
+			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+				fnT = fnT.T("T", idTT.W)
+			}
+			fnT.Recv = []types.Type{oexprFunT}
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case types.NoneType:
+			if fnName == "Map" {
+				break
+			}
+			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Map"}) {
+				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+				return
+			}
+			info := infer.env.GetNameInfo("agl1.Option." + fnName)
+			fnT := infer.env.GetFn("agl1.Option." + fnName)
+			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+				fnT = fnT.T("T", idTT.W)
+			}
+			fnT.Recv = []types.Type{oexprFunT}
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case types.OptionType:
-			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+			if fnName == "Map" {
+				break
+			}
+			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Map"}) {
 				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 				return
 			}
@@ -1812,6 +1847,46 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				}
 			}
 		}
+	case types.OptionType:
+		fnName := exprT.Sel.Name
+		if fnName == "Map" {
+			exprPos := infer.Pos(expr)
+			info := infer.env.GetNameInfo("agl1.Option.Map")
+			mapFnT := infer.env.GetFn("agl1.Option.Map").T("T", idTT.W)
+			clbFnT := mapFnT.GetParam(1).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
+			exprArg0 := expr.Args[0]
+			mapFnT.Recv = []types.Type{idTT}
+			mapFnT.Params = mapFnT.Params[1:]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
+			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.expr(arg0)
+				rT := infer.GetTypeFn(arg0).Return
+				infer.SetTypeForce(expr, types.SomeType{W: rT})
+				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					rT := tmp.Return
+					infer.SetType(expr, rT)
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+				}
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			}
+		}
 	case types.SomeType:
 		fnName := exprT.Sel.Name
 		if fnName == "Map" {
@@ -2109,21 +2184,27 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		// implicit return
 		ft := infer.env.GetType(expr).(types.FuncType)
-		lastStmt := func() ast.Stmt { return Must(Last(expr.Body.List)) }
+		switch v := expr.Body.(type) {
+		case *ast.BlockStmt:
+		default:
+			expr.Body = &ast.BlockStmt{List: []ast.Stmt{v}}
+		}
+		bodyBlock := expr.Body.(*ast.BlockStmt)
+		lastStmt := func() ast.Stmt { return Must(Last(bodyBlock.List)) }
 		voidReturnStmt := &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}}
-		multStmt := len(expr.Body.List) > 0
-		singleExprStmt := len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0])
+		multStmt := len(bodyBlock.List) > 0
+		singleExprStmt := len(bodyBlock.List) == 1 && TryCast[*ast.ExprStmt](bodyBlock.List[0])
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
 		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](lastStmt()) }
 		if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
-			expr.Body.List = append(expr.Body.List, voidReturnStmt)
+			bodyBlock.List = append(bodyBlock.List, voidReturnStmt)
 		} else if multStmt && lastIsRetStmt() {
 			returnStmt := lastStmt().(*ast.ReturnStmt).Result
 			inferExpr(returnStmt, ft)
 		} else if singleExprStmt {
 			returnStmt := lastStmt().(*ast.ExprStmt).X
 			inferExpr(returnStmt, ft)
-			expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
+			bodyBlock.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
 		}
 		// expr type is set in CallExpr
 	})
@@ -2514,6 +2595,10 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.X, exprXIdT.X)
 		infer.SetType(expr, exprXIdT.Type)
 	case types.OptionType:
+		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.Sel, exprXIdT.W)
+		infer.SetType(expr, exprXIdT.W)
+	case types.SomeType:
 		infer.SetType(expr.X, exprXIdT)
 		infer.SetType(expr.Sel, exprXIdT.W)
 		infer.SetType(expr, exprXIdT.W)

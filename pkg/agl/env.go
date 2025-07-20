@@ -1238,6 +1238,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.TypeAssertType:
 			return v.X
+		case types.SomeType:
+			name := fmt.Sprintf("Option.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		default:
 			panic(fmt.Sprintf("%v %v", xx.X, reflect.TypeOf(base)))
 		}
