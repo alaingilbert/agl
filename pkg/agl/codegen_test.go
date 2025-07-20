@@ -8003,7 +8003,46 @@ func main() {
 	a := 42
 	test(a)
 }`
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:7: missing mut keyword")
+}
+
+func TestCodeGen266_1(t *testing.T) {
+	src := `package main
+func test(mut a int) {
+	a = 43
+}
+func main() {
+	mut a := 42
+	test(a)
+}`
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:7: missing mut keyword")
+}
+
+func TestCodeGen266_2(t *testing.T) {
+	src := `package main
+func test(mut a int) {
+	a = 43
+}
+func main() {
+	a := 42
+	test(mut a)
+}`
 	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:7: cannot use immutable 'a'")
+}
+
+func TestCodeGen266_3(t *testing.T) {
+	src := `package main
+type A struct {
+	prop int
+}
+func test(mut a A) {
+	a = 43
+}
+func main() {
+	a := A{}
+	test(mut a.prop)
+}`
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "10:7: cannot use immutable 'a'")
 }
 
 func TestCodeGen267(t *testing.T) {
@@ -9768,7 +9807,6 @@ func main() {
 	b, c := a
 }`
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Contains(t, test.errs[0].Error(), "4:2: Assignment count mismatch: 2 = 3")
 }
 
@@ -9782,7 +9820,6 @@ func main() {
 	b, c := a
 }`
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Contains(t, test.errs[0].Error(), "7:2: Assignment count mismatch: 2 = 3")
 }
 
@@ -9972,7 +10009,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10014,7 +10050,6 @@ type AglTupleStruct_int_string struct {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10068,7 +10103,6 @@ type AglTupleStruct_int_string struct {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10091,7 +10125,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10135,7 +10168,6 @@ func main() {
 	t.1.Map(|el| { el + 1 })
 }`
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 }
 
@@ -10160,7 +10192,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10212,7 +10243,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10237,7 +10267,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10253,7 +10282,6 @@ func main() {
 	})
 }`
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 }
 
@@ -10281,7 +10309,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10324,9 +10351,21 @@ func AglVecFlatMap_R_Option_uint8__T_int(v []int, f func(int) []Option[uint8]) [
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen357(t *testing.T) {
+	src := `package main
+func test(mut a []int) {
+	a.Push(3)
+}
+func main() {
+	mut a := []int{1, 2}
+	test(a)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "7:7: missing mut keyword")
 }
 
 //func TestCodeGen318(t *testing.T) {

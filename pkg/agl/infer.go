@@ -1206,14 +1206,29 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
-			if len(expr.Args) > 0 {
+			if infer.mutEnforced && len(expr.Args) > 0 {
 				for i, pp := range v.Params {
+					if i > len(expr.Args)-1 {
+						break
+					}
+					arg := expr.Args[i]
 					if TryCast[types.MutType](pp) {
-						if id, ok := expr.Args[i].(*ast.Ident); ok {
-							if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(id)) {
-								infer.errorf(id, "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
-								return
-							}
+						var id *ast.Ident
+						switch vv := arg.(type) {
+						case *ast.Ident:
+							id = vv
+						case *ast.SelectorExpr:
+							id = vv.X.(*ast.Ident)
+						default:
+							panic(fmt.Sprintf("unsupported type %v", to(arg)))
+						}
+						if !id.Mutable.IsValid() {
+							infer.errorf(arg, "%s: missing mut keyword", infer.Pos(arg))
+							return
+						}
+						if !TryCast[types.MutType](infer.env.GetType(id)) {
+							infer.errorf(id, "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
+							return
 						}
 					}
 				}
