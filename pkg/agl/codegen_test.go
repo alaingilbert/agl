@@ -10242,6 +10242,21 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen354(t *testing.T) {
+	src := `package main
+func main() {
+    []int{}.FlatMap({
+        fileID := Some(u8(1))
+        var mut out []u8?
+		out.Push(fileID)
+        return out
+    })
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
