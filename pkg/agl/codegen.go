@@ -33,7 +33,15 @@ type Generator struct {
 	inlineStmt       bool
 	fragments        Frags
 	emitEnabled      bool
+	asType           bool
 	ifVarName        string
+}
+
+func (g *Generator) withAsType(clb func()) {
+	prev := g.asType
+	g.asType = true
+	clb()
+	g.asType = prev
 }
 
 func (g *Generator) WithIfVarName(n string, clb func()) {
@@ -2280,6 +2288,9 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 		isType = true
 		t = v.W
 	}
+	if g.asType {
+		isType = true
+	}
 	tup := types.ReplGenM(t, g.genMap).(types.TupleType)
 	structName := tup.GoStr()
 	structName1 := tup.GoStr2()
@@ -2383,7 +2394,11 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 			out += e(g.prefix + tok.String() + " ")
 			out += e(strings.Join(namesArr, ", "))
 			if spec.Type != nil {
-				out += e(" ") + g.genExpr(spec.Type).F()
+				tStr := func() (out string) {
+					g.withAsType(func() { out += g.genExpr(spec.Type).F() })
+					return
+				}
+				out += e(" ") + tStr()
 			}
 			if spec.Values != nil {
 				out += e(" = ") + g.genExprs(spec.Values).F()

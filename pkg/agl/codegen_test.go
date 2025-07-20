@@ -10368,6 +10368,26 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "7:7: missing mut keyword")
 }
 
+func TestCodeGen358(t *testing.T) {
+	src := `package main
+func main() {
+	var t (uint, uint)?
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var t Option[AglTupleStruct_uint_uint]
+}
+type AglTupleStruct_uint_uint struct {
+	Arg0 uint
+	Arg1 uint
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
