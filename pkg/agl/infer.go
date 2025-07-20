@@ -62,6 +62,7 @@ type FileInferrer struct {
 	mapKT, mapVT    types.Type
 	Errors          []error
 	mutEnforced     bool
+	destructure     bool
 }
 
 type InferError struct {
@@ -92,6 +93,13 @@ type OptTypeTmp struct {
 
 func (o *OptTypeTmp) IsDefinedFor(n ast.Node) bool {
 	return o != nil && o.Type != nil && o.Pos == n.Pos()
+}
+
+func (infer *FileInferrer) withDestructure(clb func()) {
+	prev := infer.destructure
+	infer.destructure = true
+	clb()
+	infer.destructure = prev
 }
 
 func (infer *FileInferrer) sandboxed(clb func()) {
@@ -3388,7 +3396,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				switch rhsT.(type) {
 				case types.OptionType:
-					infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
+					if infer.destructure {
+						infer.SetTypeForce(lhs, rhsT.(types.OptionType).W)
+					}
 				default:
 					panic("")
 				}
@@ -3706,7 +3716,9 @@ func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetExpr) {
 			panic("unreachable")
 		}
 		infer.SetType(lhs, lhsT)
-		infer.stmt(stmt.Ass)
+		infer.withDestructure(func() {
+			infer.stmt(stmt.Ass)
+		})
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}
@@ -3735,7 +3747,9 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 		panic("unreachable")
 	}
 	infer.SetType(lhs, lhsT)
-	infer.stmt(stmt.Ass)
+	infer.withDestructure(func() {
+		infer.stmt(stmt.Ass)
+	})
 	if stmt.Body == nil || len(stmt.Body.List) == 0 {
 		infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
 		return
