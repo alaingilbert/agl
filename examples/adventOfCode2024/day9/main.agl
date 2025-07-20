@@ -3,21 +3,21 @@ package main
 import (
     "agl1/os"
     "agl1/fmt"
+    "agl1/math"
 )
 
-func gen_blocks(diskMap string) []uint? {
+func genBlocks(diskMap string) []uint? {
     diskMap.Split("").Enumerated().FlatMap({
         i := $0.0
         n := $0.1.Int()?
-        file_id := if i % 2 == 0 { Some(uint(i/2)) } else { None }
+        fileID := if i % 2 == 0 { Some(uint(i/2)) } else { None }
         var mut out []uint?
         for j := 0; j < n; j++ {
-            out.Push(file_id)
+            out.Push(fileID)
         }
         return out
     })
 }
-
 
 func reorder(mut blocks []uint?) {
     mut p1 := 0;
@@ -35,13 +35,74 @@ func reorder(mut blocks []uint?) {
     }
 }
 
+func getFreeSpots(blocks []uint?) [](uint, uint) {
+    var mut freeSpots [](uint, uint)
+    var mut s (uint, uint)?
+    s = None
+    for (i, block) in blocks.Enumerated() {
+        if block.IsSome() {
+            if Some(s2) := s {
+                freeSpots.Push(s2)
+            }
+            s = None
+        } else if Some(t) := s {
+            idx, size := t
+            s = Some((idx, size+1))
+        } else {
+            s = Some((uint(i), uint(1)))
+        }
+    }
+    return freeSpots
+}
+
+func doSwap(mut blocks []uint?, mut freeSpots [](uint, uint), toSwap []uint) {
+    swapLen := uint(toSwap.Len())
+    if Some(t) := freeSpots.Enumerated().Find(|tt| {
+        idx, size := tt.1
+        return idx < toSwap[0] && size >= swapLen
+    }) {
+        spotIdx := t.0
+        startIdx := t.1.0
+        for (i, el) in toSwap.Enumerated() {
+            blocks.Swap(int(startIdx + uint(i)), int(el));
+        }
+        spot := freeSpots[spotIdx]
+        spot.0 += swapLen
+        spot.1 -= swapLen
+        freeSpots[spotIdx] = spot
+    }
+}
+
+func reorder2(mut blocks []uint?) {
+    mut freeSpots := getFreeSpots(blocks)
+    var mut toSwap []uint
+    mut lastFileID := uint(math.MaxUint64)
+    for p2 := uint(blocks.Len()-1); p2 > 0; p2-- {
+        if Some(blockID) := blocks[p2] {
+            if !toSwap.IsEmpty() && blockID != blocks[toSwap[0]].Unwrap() {
+                fileID := blocks[toSwap[0]].Unwrap();
+                if fileID < lastFileID {
+                    lastFileID = fileID;
+                    doSwap(mut blocks, mut freeSpots, toSwap);
+                }
+                toSwap = make([]uint, 0)
+            }
+            toSwap.Push(p2);
+        }
+    }
+}
+
 func checksum(blocks []uint?) uint {
     blocks.Enumerated().FilterMap(|t| { t.1.Map({ $0 * uint(t.0) }) }).Sum()
 }
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day9/data.txt")!)
-    mut blocks := gen_blocks(fileContent)
+    mut blocks := genBlocks(fileContent)
     reorder(mut blocks)
     fmt.Println("part1:", checksum(blocks))
+
+    mut blocks2 := genBlocks(fileContent)
+    reorder2(mut blocks2);
+    fmt.Println("part2:", checksum(blocks2));
 }
