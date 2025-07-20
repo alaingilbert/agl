@@ -3423,6 +3423,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			lhsT := infer.env.GetType(lhs)
 			switch lhsT.(type) {
 			case types.OptionType:
+				rhsT = types.Unwrap(rhsT)
 				if !TryCast[types.OptionType](rhsT) {
 					infer.errorf(lhs, "try to destructure a non-Option type into an OptionType")
 					return
