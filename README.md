@@ -225,6 +225,18 @@ func main() {
 }
 ```
 
+You can also name the arguments using the following syntax:
+
+```go
+names := people.Map(|person| { person.Name }).Joined(", ")
+```
+
+If a single statement is present in the lambda body, the curly brace can be omitted:
+
+```go
+names := people.Map(|person| person.Name).Joined(", ")
+```
+
 ## Destructuring
 
 ```go
