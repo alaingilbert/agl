@@ -2131,6 +2131,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			params := t.(types.FuncType).Params
 			for i, arg := range expr.Args {
 				infer.env.Define(nil, arg.Name, params[i])
+				infer.SetType(arg, params[i])
 			}
 			for i, param := range t.(types.FuncType).Params {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
