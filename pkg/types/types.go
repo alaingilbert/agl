@@ -131,6 +131,9 @@ func (o OptionType) String() string {
 	case ArrayType, StarType, StructType, InterfaceType, CustomType:
 		return fmt.Sprintf("(%s)?", o.W.String())
 	default:
+		if o.W == nil {
+			return "None"
+		}
 		return fmt.Sprintf("%s?", o.W.String())
 	}
 }
@@ -227,24 +230,6 @@ type UnderscoreType struct{ W Type }
 func (u UnderscoreType) GoStr() string     { return "_" }
 func (u UnderscoreType) GoStrType() string { return "_" }
 func (u UnderscoreType) String() string    { return "_" }
-
-type NoneType struct{ W Type }
-
-func (n NoneType) GoStr() string     { return "NoneType" }
-func (n NoneType) GoStrType() string { return "NoneType" }
-func (n NoneType) String() string    { return fmt.Sprintf("None[%s]", n.W.String()) }
-
-type UntypedNoneType struct{}
-
-func (n UntypedNoneType) GoStr() string     { return "UntypedNoneType" }
-func (n UntypedNoneType) GoStrType() string { return "UntypedNoneType" }
-func (n UntypedNoneType) String() string    { return "UntypedNoneType" }
-
-type SomeType struct{ W Type }
-
-func (s SomeType) GoStr() string     { return fmt.Sprintf("Option[%s]", s.W.GoStrType()) }
-func (s SomeType) GoStrType() string { return fmt.Sprintf("Option[%s]", s.W.GoStrType()) }
-func (s SomeType) String() string    { return fmt.Sprintf("%s?", s.W.String()) }
 
 type OkType struct{ W Type }
 
@@ -864,8 +849,6 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			params = append(params, p)
 		}
 		return TupleType{Elts: params}
-	case NoneType:
-		return ReplGen(t1.W, name, newTyp)
 	case ErrType:
 		return ReplGen(t1.W, name, newTyp)
 	default:

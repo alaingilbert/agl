@@ -1359,7 +1359,7 @@ func (g *Generator) genNoneExpr(expr *ast.NoneExpr) GenFrag {
 		nT := types.ReplGenM(g.env.GetType(expr), g.genMap)
 		var typeStr string
 		switch v := nT.(type) {
-		case types.NoneType:
+		case types.OptionType:
 			typeStr = v.W.GoStrType()
 		case types.TypeType:
 			typeStr = v.GoStrType()
@@ -1950,7 +1950,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 					return e("AglMap"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(")")
 				}}
 			}
-		case types.OptionType, types.SomeType, types.NoneType:
+		case types.OptionType:
 			c1 := g.genExpr(x.X)
 			genEX := func() string { return c1.F() }
 			genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
