@@ -4,6 +4,7 @@ type Sqrt2 f64
 type Pi f64
 
 const MaxUint32 uint32
+const MaxUint64 uint64
 
 func Abs(x float64) float64
 func Acos(x float64) float64
