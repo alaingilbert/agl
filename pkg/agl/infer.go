@@ -697,9 +697,9 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 	//p("infer.expr", to(e))
 	switch expr := e.(type) {
 	case *ast.IfExpr:
-		infer.ifStmt(expr)
+		infer.ifExpr(expr)
 	case *ast.IfLetExpr:
-		infer.ifLetStmt(expr)
+		infer.ifLetExpr(expr)
 	case *ast.MatchExpr:
 		infer.matchExpr(expr)
 	case *ast.Ident:
@@ -3699,7 +3699,7 @@ func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
 	infer.SetType(stmt, types.VoidType{})
 }
 
-func (infer *FileInferrer) ifLetStmt(stmt *ast.IfLetExpr) {
+func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 	infer.withEnv(func() {
 		lhs := stmt.Ass.Lhs[0]
 		var lhsT types.Type
@@ -3770,7 +3770,7 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 	infer.SetType(stmt, types.VoidType{})
 }
 
-func (infer *FileInferrer) ifStmt(stmt *ast.IfExpr) {
+func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 	infer.withEnv(func() {
 		if stmt.Init != nil {
 			infer.stmt(stmt.Init)
