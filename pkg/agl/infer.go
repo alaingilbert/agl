@@ -58,6 +58,7 @@ type FileInferrer struct {
 	PackageName     string
 	returnType      types.Type
 	optType         *OptTypeTmp
+	optType1        *OptTypeTmp
 	forceReturnType types.Type
 	mapKT, mapVT    types.Type
 	Errors          []error
@@ -122,6 +123,13 @@ func (infer *FileInferrer) withOptType(n ast.Node, t types.Type, clb func()) {
 	infer.optType = &OptTypeTmp{Type: t, Pos: n.Pos()}
 	clb()
 	infer.optType = prev
+}
+
+func (infer *FileInferrer) withOptType1(n ast.Node, t types.Type, clb func()) {
+	prev := infer.optType1
+	infer.optType1 = &OptTypeTmp{Type: t, Pos: n.Pos()}
+	clb()
+	infer.optType1 = prev
 }
 
 func (infer *FileInferrer) withForceReturn(t types.Type, clb func()) {
@@ -2248,8 +2256,8 @@ func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
 		}
 	}
 	var t types.Type
-	if infer.optType != nil {
-		t = infer.optType.Type
+	if infer.optType1 != nil {
+		t = infer.optType1.Type
 	}
 	infer.SetType(expr, types.OptionType{W: t})
 }
@@ -3801,7 +3809,7 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 			a = v
 			infer.SetType(stmt.Body, a)
 			infer.withEnv(func() {
-				infer.withOptType(stmt.Body, v.W, func() {
+				infer.withOptType1(stmt.Body, v.W, func() {
 					infer.stmt(stmt.Body)
 				})
 			})
@@ -3811,7 +3819,7 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 			b = v
 			infer.SetType(stmt.Else, b)
 			infer.withEnv(func() {
-				infer.withOptType(stmt.Else, v.W, func() {
+				infer.withOptType1(stmt.Else, v.W, func() {
 					infer.stmt(stmt.Else)
 				})
 			})
