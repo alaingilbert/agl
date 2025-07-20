@@ -10113,6 +10113,17 @@ func checksum(blocks []uint?) uint {
 	tassert.Equal(t, "func ([](int, uint?)) FilterMap(func((int, uint?)) uint?) []uint", test.TypeAt(3, 22).String())
 }
 
+func TestCodeGen350(t *testing.T) {
+	src := `package main
+func main() {
+	t := (1, []int{1, 2, 3})
+	t.1.Map(|el| { el + 1 })
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

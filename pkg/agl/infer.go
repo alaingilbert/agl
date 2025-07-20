@@ -950,8 +950,19 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.expr(callXT.X)
 			if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
 				callXTXT = types.Unwrap(callXTXT)
-				if v, ok := callXTXT.(types.StructType); ok {
+				switch v := callXTXT.(type) {
+				case types.StructType:
 					exprFunT = infer.inferStructType(v, callXT)
+				case types.TupleType:
+					idx, err := strconv.Atoi(callXT.Sel.Name)
+					if err != nil {
+						infer.errorf(callXT.Sel, "tuple selector must be a number")
+						return
+					}
+					exprFunT = v.Elts[idx]
+					infer.SetType(callXT.Sel, exprFunT)
+				default:
+					panic("")
 				}
 			} else {
 				//infer.SetType(callXT.X, )
