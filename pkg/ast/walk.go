@@ -380,6 +380,7 @@ func Walk(v Visitor, node Node) {
 		}
 
 	case *ShortFuncLit:
+		walkList(v, n.Args)
 		Walk(v, n.Body)
 
 	case *TupleExpr:
