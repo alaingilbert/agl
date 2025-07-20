@@ -10257,6 +10257,35 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 }
 
+func TestCodeGen355(t *testing.T) {
+	src := `package main
+func main() {
+	a := if 1 == 1 { Some(1) } else { None }
+	b := if 1 == 1 { None } else { Some(1) }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var aglTmp1 Option[int]
+	if 1 == 1 {
+		aglTmp1 = MakeOptionSome(1)
+	} else {
+		aglTmp1 = MakeOptionNone[Option[int]]()
+	}
+	a := AglIdentity(aglTmp1)
+	b := if 1 == 1 {
+		aglTmp1 = MakeOptionNone[Option[int]]()
+	} else {
+		aglTmp1 = MakeOptionSome(1)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

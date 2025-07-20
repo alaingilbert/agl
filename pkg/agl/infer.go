@@ -2241,7 +2241,11 @@ func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
-	infer.SetType(expr, types.OptionType{})
+	if infer.optType != nil {
+		infer.SetType(expr, types.OptionType{W: infer.optType.Type})
+	} else {
+		infer.SetType(expr, types.OptionType{})
+	}
 }
 
 func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
@@ -3786,6 +3790,22 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 		})
 		a := infer.GetType(stmt.Body)
 		b := infer.GetType(stmt.Else)
+		if v, ok := a.(types.OptionType); ok && v.W == nil {
+			v.W = b.(types.OptionType).W
+			a = v
+			infer.SetType(stmt.Body, a)
+			infer.withOptType(stmt.Body, a, func() {
+				infer.stmt(stmt.Body)
+			})
+		}
+		if v, ok := b.(types.OptionType); ok && v.W == nil {
+			v.W = a.(types.OptionType).W
+			b = v
+			infer.SetType(stmt.Else, b)
+			infer.withOptType(stmt.Else, b, func() {
+				infer.stmt(stmt.Else)
+			})
+		}
 		if !cmpTypesLoose(a, b) {
 			infer.errorf(stmt, "%s: if branches must have the same type `%s` VS `%s`", infer.Pos(stmt), a, b)
 			return
