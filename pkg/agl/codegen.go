@@ -1740,7 +1740,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
-			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
+			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 			case "Reduce", "ReduceInto":
 				return GenFrag{F: func() string {
@@ -3284,6 +3284,17 @@ func AglVecMap[T, R any](a []T, f func(T) R) []R {
 	var out []R
 	for _, v := range a {
 		out = append(out, f(v))
+	}
+	return out
+}
+
+func AglVecFilterMap[T, R any](a []T, f func(T) Option[R]) []R {
+	var out []R
+	for _, v := range a {
+		res := f(v)
+		if res.IsSome() {
+			out = append(out, res.Unwrap())
+		}
 	}
 	return out
 }
