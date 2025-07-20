@@ -2886,7 +2886,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 
 func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 	infer.expr(stmt.X)
-	infer.SetType(stmt, infer.GetType(stmt.X))
+	infer.SetType(stmt, types.VoidType{})
 }
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
