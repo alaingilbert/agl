@@ -10270,14 +10270,57 @@ func main() {
 	if 1 == 1 {
 		aglTmp1 = MakeOptionSome(1)
 	} else {
-		aglTmp1 = MakeOptionNone[Option[int]]()
+		aglTmp1 = MakeOptionNone[int]()
 	}
 	a := AglIdentity(aglTmp1)
 	b := if 1 == 1 {
-		aglTmp1 = MakeOptionNone[Option[int]]()
+		aglTmp1 = MakeOptionNone[int]()
 	} else {
 		aglTmp1 = MakeOptionSome(1)
 	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen356(t *testing.T) {
+	src := `package main
+func main() {
+	[]int{}.FlatMap({
+		fileID := if 1 % 2 == 0 { Some(uint(1)) } else { None }
+		var mut out []u8?
+		out.Push(fileID)
+		return out
+	})
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglVecFlatMap_R_Option_uint8__T_int([]int{}, func(aglArg0 int) []Option[uint8] {
+		var aglTmp1 Option[uint]
+		if 1 % 2 == 0 {
+			aglTmp1 = MakeOptionSome(uint(1))
+		} else {
+			aglTmp1 = MakeOptionNone[uint]()
+		}
+		fileID := AglIdentity(aglTmp1)
+		var out []Option[uint8]
+		AglVecPush((*[]Option[uint8])(&out), fileID)
+		return out
+	})
+}
+func AglVecFlatMap_R_Option_uint8__T_int(v []int, f func(int) []Option[uint8]) []Option[uint8] {
+	out := make([]Option[uint8], 0)
+	for _, el := range v {
+		subArr := f(el)
+		for _, el1 := range subArr {
+			AglVecPush((*[]Option[uint8])(&out), el1)
+		}
+	}
+	return out
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

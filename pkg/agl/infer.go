@@ -2241,11 +2241,17 @@ func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
-	if infer.optType != nil {
-		infer.SetType(expr, types.OptionType{W: infer.optType.Type})
-	} else {
-		infer.SetType(expr, types.OptionType{})
+	currT := infer.env.GetType(expr)
+	if v, ok := currT.(types.OptionType); ok {
+		if v.W != nil {
+			return
+		}
 	}
+	var t types.Type
+	if infer.optType != nil {
+		t = infer.optType.Type
+	}
+	infer.SetType(expr, types.OptionType{W: t})
 }
 
 func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
@@ -3794,16 +3800,20 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 			v.W = b.(types.OptionType).W
 			a = v
 			infer.SetType(stmt.Body, a)
-			infer.withOptType(stmt.Body, a, func() {
-				infer.stmt(stmt.Body)
+			infer.withEnv(func() {
+				infer.withOptType(stmt.Body, v.W, func() {
+					infer.stmt(stmt.Body)
+				})
 			})
 		}
 		if v, ok := b.(types.OptionType); ok && v.W == nil {
 			v.W = a.(types.OptionType).W
 			b = v
 			infer.SetType(stmt.Else, b)
-			infer.withOptType(stmt.Else, b, func() {
-				infer.stmt(stmt.Else)
+			infer.withEnv(func() {
+				infer.withOptType(stmt.Else, v.W, func() {
+					infer.stmt(stmt.Else)
+				})
 			})
 		}
 		if !cmpTypesLoose(a, b) {
