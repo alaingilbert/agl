@@ -887,7 +887,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Contains", "func [T comparable](a []T, e T) bool")
 		e.DefineFn(nenv, "agl1.Vec.ContainsWhere", "func [T comparable](a []T, where: p func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Vec.Filter", "func [T any](a []T, f func(e T) bool) []T", WithDesc("Returns a new collection of the same type containing, in order, the elements of the original collection that satisfy the given predicate."))
-		e.DefineFn(nenv, "agl1.Vec.FilterMap", "func [T, R any](a []T, f func(e T) R) []R")
+		e.DefineFn(nenv, "agl1.Vec.FilterMap", "func [T, R any](a []T, f func(e T) R?) []R")
 		e.DefineFn(nenv, "agl1.Vec.Find", "func [T any](a []T, f func(e T) bool) T?")
 		e.DefineFn(nenv, "agl1.Vec.First", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.FirstWhere", "func [T any](a []T, where: predicate func(T) bool) T?")

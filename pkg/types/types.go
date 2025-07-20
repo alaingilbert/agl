@@ -244,7 +244,7 @@ type SomeType struct{ W Type }
 
 func (s SomeType) GoStr() string     { return fmt.Sprintf("Option[%s]", s.W.GoStrType()) }
 func (s SomeType) GoStrType() string { return fmt.Sprintf("Option[%s]", s.W.GoStrType()) }
-func (s SomeType) String() string    { return fmt.Sprintf("Some[%s]", s.W.String()) }
+func (s SomeType) String() string    { return fmt.Sprintf("%s?", s.W.String()) }
 
 type OkType struct{ W Type }
 
