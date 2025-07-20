@@ -224,7 +224,7 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Cond)
 		Walk(v, n.Body)
 
-	case *IfStmt:
+	case *IfExpr:
 		if n.Init != nil {
 			Walk(v, n.Init)
 		}
@@ -419,7 +419,7 @@ func Walk(v Visitor, node Node) {
 	case *DumpExpr:
 		Walk(v, n.X)
 
-	case *IfLetStmt:
+	case *IfLetExpr:
 		Walk(v, n.Ass)
 		if n.Body != nil {
 			Walk(v, n.Body)

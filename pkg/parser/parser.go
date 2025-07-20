@@ -1713,6 +1713,8 @@ func (p *parser) parseOperand() ast.Expr {
 		x := p.parseIdent()
 		return x
 
+	case token.IF:
+		return p.parseIfExpr()
 	case token.MATCH:
 		return p.parseMatchExpr()
 	case token.SOME, token.OK, token.ERR:
@@ -2452,7 +2454,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 	return
 }
 
-func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
+func (p *parser) parseIfLetExpr(pos token.Pos) *ast.IfLetExpr {
 	var op token.Token
 	var ass *ast.AssignStmt
 	switch p.tok {
@@ -2477,7 +2479,7 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 		p.next()
 		switch p.tok {
 		case token.IF:
-			else_ = p.parseIfStmt()
+			else_ = &ast.ExprStmt{X: p.parseIfExpr()}
 		case token.LBRACE:
 			else_ = p.parseBlockStmt()
 			p.expectSemi()
@@ -2489,7 +2491,7 @@ func (p *parser) parseIfLetStmt(pos token.Pos) *ast.IfLetStmt {
 		p.expectSemi()
 	}
 
-	return &ast.IfLetStmt{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
+	return &ast.IfLetExpr{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
 }
 
 func (p *parser) parseGuardLetStmt(pos token.Pos) *ast.GuardLetStmt {
@@ -2532,17 +2534,17 @@ func (p *parser) parseGuardStmt() ast.Stmt {
 	return &ast.GuardStmt{Guard: pos, Else: elsePos, Cond: cond, Body: body}
 }
 
-func (p *parser) parseIfStmt() ast.Stmt {
+func (p *parser) parseIfExpr() ast.Expr {
 	defer decNestLev(incNestLev(p))
 
 	if p.trace {
-		defer un(trace(p, "IfStmt"))
+		defer un(trace(p, "IfExpr"))
 	}
 
 	pos := p.expect(token.IF)
 
 	if p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME {
-		return p.parseIfLetStmt(pos)
+		return p.parseIfLetExpr(pos)
 	}
 
 	init, cond := p.parseIfHeader()
@@ -2553,7 +2555,7 @@ func (p *parser) parseIfStmt() ast.Stmt {
 		p.next()
 		switch p.tok {
 		case token.IF:
-			else_ = p.parseIfStmt()
+			else_ = &ast.ExprStmt{X: p.parseIfExpr()}
 		case token.LBRACE:
 			else_ = p.parseBlockStmt()
 			p.expectSemi()
@@ -2565,7 +2567,7 @@ func (p *parser) parseIfStmt() ast.Stmt {
 		p.expectSemi()
 	}
 
-	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
+	return &ast.IfExpr{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
 }
 
 func (p *parser) parseMatchClause() *ast.MatchClause {
@@ -2895,7 +2897,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	case token.GUARD:
 		s = p.parseGuardStmt()
 	case token.IF:
-		s = p.parseIfStmt()
+		s = &ast.ExprStmt{X: p.parseIfExpr()}
 	case token.SWITCH:
 		s = p.parseSwitchStmt()
 	case token.SELECT:

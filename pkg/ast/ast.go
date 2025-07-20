@@ -849,13 +849,13 @@ func (*StarExpr) exprNode()       {}
 func (*UnaryExpr) exprNode()      {}
 func (*BinaryExpr) exprNode()     {}
 func (*KeyValueExpr) exprNode()   {}
-
-func (*ArrayType) exprNode()     {}
-func (*StructType) exprNode()    {}
-func (*FuncType) exprNode()      {}
-func (*InterfaceType) exprNode() {}
-func (*MapType) exprNode()       {}
-func (*ChanType) exprNode()      {}
+func (*IfExpr) exprNode()         {}
+func (*ArrayType) exprNode()      {}
+func (*StructType) exprNode()     {}
+func (*FuncType) exprNode()       {}
+func (*InterfaceType) exprNode()  {}
+func (*MapType) exprNode()        {}
+func (*ChanType) exprNode()       {}
 
 // ----------------------------------------------------------------------------
 // Convenience functions for Idents
@@ -992,7 +992,7 @@ type (
 		Rbrace token.Pos // position of "}", if any (may be absent due to syntax error)
 	}
 
-	IfLetStmt struct {
+	IfLetExpr struct {
 		If   token.Pos // position of "if" keyword
 		Op   token.Token
 		Ass  *AssignStmt
@@ -1008,8 +1008,8 @@ type (
 		Body  *BlockStmt
 	}
 
-	// An IfStmt node represents an if statement.
-	IfStmt struct {
+	// An IfExpr node represents an if statement.
+	IfExpr struct {
 		If   token.Pos // position of "if" keyword
 		Init Stmt      // initialization statement; or nil
 		Cond Expr      // condition
@@ -1130,18 +1130,17 @@ func (m MatchExpr) Pos() token.Pos { return m.Match }
 func (m MatchExpr) End() token.Pos { return m.Body.End() }
 func (m MatchExpr) exprNode()      {}
 
-func (s IfLetStmt) Pos() token.Pos {
+func (s IfLetExpr) Pos() token.Pos {
 	return s.If
 }
 
-func (s IfLetStmt) End() token.Pos {
+func (s IfLetExpr) End() token.Pos {
 	if s.Else != nil {
 		return s.Else.End()
 	}
 	return s.Body.End()
 }
-
-func (s IfLetStmt) stmtNode() {}
+func (s IfLetExpr) exprNode() {}
 
 // Pos and End implementations for statement nodes.
 
@@ -1158,7 +1157,7 @@ func (s *DeferStmt) Pos() token.Pos      { return s.Defer }
 func (s *ReturnStmt) Pos() token.Pos     { return s.Return }
 func (s *BranchStmt) Pos() token.Pos     { return s.TokPos }
 func (s *BlockStmt) Pos() token.Pos      { return s.Lbrace }
-func (s *IfStmt) Pos() token.Pos         { return s.If }
+func (s *IfExpr) Pos() token.Pos         { return s.If }
 func (s *CaseClause) Pos() token.Pos     { return s.Case }
 func (s *SwitchStmt) Pos() token.Pos     { return s.Switch }
 func (s *TypeSwitchStmt) Pos() token.Pos { return s.Switch }
@@ -1205,7 +1204,7 @@ func (s *BlockStmt) End() token.Pos {
 	}
 	return s.Lbrace + 1
 }
-func (s *IfStmt) End() token.Pos {
+func (s *IfExpr) End() token.Pos {
 	if s.Else != nil {
 		return s.Else.End()
 	}
@@ -1244,7 +1243,6 @@ func (*DeferStmt) stmtNode()      {}
 func (*ReturnStmt) stmtNode()     {}
 func (*BranchStmt) stmtNode()     {}
 func (*BlockStmt) stmtNode()      {}
-func (*IfStmt) stmtNode()         {}
 func (*CaseClause) stmtNode()     {}
 func (*SwitchStmt) stmtNode()     {}
 func (*TypeSwitchStmt) stmtNode() {}

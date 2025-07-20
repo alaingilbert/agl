@@ -329,7 +329,7 @@ func (r *resolver) Visit(node ast.Node) ast.Visitor {
 		defer r.closeScope()
 		r.walkStmts(n.List)
 
-	case *ast.IfStmt:
+	case *ast.IfExpr:
 		r.openScope(n.Pos())
 		defer r.closeScope()
 		if n.Init != nil {

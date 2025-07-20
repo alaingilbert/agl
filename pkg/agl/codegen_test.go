@@ -362,9 +362,11 @@ func main() {
 package main
 import "fmt"
 func main() {
+	var aglTmp1 Result[int]
 	if 2 % 2 == 0 {
-		fmt.Println("test")
+		aglTmp1 = AglWrapNative2(fmt.Println("test"))
 	}
+	AglIdentity(aglTmp1)
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -1273,13 +1275,16 @@ package main
 import "fmt"
 func main() {
 	a := 1
+	var aglTmp1 Result[int]
 	if a == 1 {
-		fmt.Println("a == 1")
+		aglTmp1 = AglWrapNative2(fmt.Println("a == 1"))
 	} else if a == 2 {
-		fmt.Println("a == 2")
+		aglTmp1 = AglWrapNative2(fmt.Println("a == 2"))
 	} else {
-		fmt.Println("else")
+		aglTmp1 = AglWrapNative2(fmt.Println("else"))
 	}
+
+	AglIdentity(aglTmp1)
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -1303,6 +1308,7 @@ func main() {
 	} else if a == 2 {
 	} else {
 	}
+
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -1802,9 +1808,11 @@ import "fmt"
 func main() {
 	a := 2
 	fmt.Println("first")
+	var aglTmp1 Result[int]
 	if a == 2 {
-		fmt.Println("second")
+		aglTmp1 = AglWrapNative2(fmt.Println("second"))
 	}
+	AglIdentity(aglTmp1)
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -1969,9 +1977,11 @@ type Writer interface{}
 type WriterA struct{}
 type WriterB struct{}
 func test(w Writer) {
+	var aglTmp1 Result[int]
 	if _, ok := w.(WriterA); ok {
-		fmt.Println("A")
+		aglTmp1 = AglWrapNative2(fmt.Println("A"))
 	}
+	AglIdentity(aglTmp1)
 }
 func main() {
 	w := WriterA{}
@@ -3035,6 +3045,7 @@ func main() {
 	} else {
 		fmt.Println("else")
 	}
+
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -6890,11 +6901,13 @@ func main() {
 package main
 import "fmt"
 func main() {
-	aglTmp1 := 1 == 1
-	fmt.Printf("4:10: %s: %v\n", "1 == 1", aglTmp1)
+	aglTmp2 := 1 == 1
+	fmt.Printf("4:10: %s: %v\n", "1 == 1", aglTmp2)
+	var aglTmp1 Result[int]
 	if 1 == 1 {
-		fmt.Println("test")
+		aglTmp1 = AglWrapNative2(fmt.Println("test"))
 	}
+	AglIdentity(aglTmp1)
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -9792,13 +9805,15 @@ import (
 )
 func main() {
 	defer func() {
+		var aglTmp1 int
 		if r := recover(); r != nil {
-			aglTmpVar1, aglTmpErr1 := fmt.Fprintln(os.Stderr, "")
-			if aglTmpErr1 != nil {
-				panic(aglTmpErr1)
+			aglTmpVar2, aglTmpErr2 := fmt.Fprintln(os.Stderr, "")
+			if aglTmpErr2 != nil {
+				panic(aglTmpErr2)
 			}
-			AglIdentity(aglTmpVar1)
+			aglTmp1 = AglIdentity(aglTmpVar2)
 		}
+		AglIdentity(aglTmp1)
 	}()
 }
 `
@@ -10124,6 +10139,84 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 }
 
+func TestCodeGen351(t *testing.T) {
+	src := `package main
+func main() {
+	a := if 1 == 1 { 1 } else if 1 == 2 { 2 } else { 3 }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var aglTmp1 int
+	if 1 == 1 {
+		aglTmp1 = 1
+	} else if 1 == 2 {
+		aglTmp1 = 2
+	} else {
+		aglTmp1 = 3
+	}
+
+	a := AglIdentity(aglTmp1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen352(t *testing.T) {
+	src := `package main
+func main() {
+	a := if 1 == 1 {
+		1
+	} else if 1 == 2 {
+		if 1 == 3 {
+			2
+		} else {
+			3
+		}
+	} else {
+		if 1 == 3 {
+			4
+		} else {
+			5
+		}
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var aglTmp1 int
+	if 1 == 1 {
+		aglTmp1 = 1
+	} else if 1 == 2 {
+		var aglTmp2 int
+		if 1 == 3 {
+			aglTmp2 = 2
+		} else {
+			aglTmp2 = 3
+		}
+		aglTmp1 = AglIdentity(aglTmp2)
+	} else {
+		var aglTmp3 int
+		if 1 == 3 {
+			aglTmp3 = 4
+		} else {
+			aglTmp3 = 5
+		}
+		aglTmp1 = AglIdentity(aglTmp3)
+	}
+
+	a := AglIdentity(aglTmp1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
@@ -10390,9 +10483,11 @@ import (
 	"os"
 )
 func main() {
+	var aglTmp1 Result[int]
 	if len(os.Args) > 1 {
-		fmt.Println(os.Args[1])
+		aglTmp1 = AglWrapNative2(fmt.Println(os.Args[1]))
 	}
+	AglIdentity(aglTmp1)
 	for i, arg := range os.Args {
 		fmt.Printf("Arg %d: %s\n", i, arg)
 	}

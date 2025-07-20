@@ -33,6 +33,14 @@ type Generator struct {
 	inlineStmt       bool
 	fragments        Frags
 	emitEnabled      bool
+	ifVarName        string
+}
+
+func (g *Generator) WithIfVarName(n string, clb func()) {
+	prev := g.ifVarName
+	g.ifVarName = n
+	clb()
+	g.ifVarName = prev
 }
 
 func (g *Generator) WithoutEmit(clb func()) {
@@ -546,10 +554,6 @@ func (g *Generator) genStmt(s ast.Stmt) (out GenFrag) {
 	switch stmt := s.(type) {
 	case *ast.BlockStmt:
 		return g.genBlockStmt(stmt)
-	case *ast.IfStmt:
-		return g.genIfStmt(stmt)
-	case *ast.IfLetStmt:
-		return g.genIfLetStmt(stmt)
 	case *ast.GuardStmt:
 		return g.genGuardStmt(stmt)
 	case *ast.GuardLetStmt:
@@ -596,6 +600,10 @@ func (g *Generator) genStmt(s ast.Stmt) (out GenFrag) {
 func (g *Generator) genExpr(e ast.Expr) (out GenFrag) {
 	//p("genExpr", to(e))
 	switch expr := e.(type) {
+	case *ast.IfExpr:
+		return g.genIfStmt(expr)
+	case *ast.IfLetExpr:
+		return g.genIfLetStmt(expr)
 	case *ast.MatchExpr:
 		return g.genMatchExpr(expr)
 	case *ast.Ident:
@@ -2788,7 +2796,7 @@ func (g *Generator) wrapIfNative(e Emitter, x ast.Expr, v func() string) string 
 	return v()
 }
 
-func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
+func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 	e := EmitWith(g, stmt)
 	ass := stmt.Ass
 	lhs0, rhs0 := ass.Lhs[0], ass.Rhs[0]
@@ -2818,9 +2826,6 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		default:
 			panic("")
 		}
-		if !g.inlineStmt {
-			out += e(gPrefix)
-		}
 		if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
 			out += e("if ") + lhs() + e(", ok := ") + rhs() + e("; ok {\n")
 			g.inlineStmt = false
@@ -2834,21 +2839,29 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetStmt) GenFrag {
 		}
 		out += g.incrPrefix(func() string { return c3.F() })
 		if stmt.Else != nil {
-			switch stmt.Else.(type) {
-			case *ast.IfStmt, *ast.IfLetStmt:
-				out += e(gPrefix + "} else ")
-				g.WithInlineStmt(func() {
-					out += c4.F()
-				})
-			default:
+			if v, ok := stmt.Else.(*ast.ExprStmt); ok {
+				switch v.X.(type) {
+				case *ast.IfExpr, *ast.IfLetExpr:
+					out += e(gPrefix + "} else ")
+					g.WithInlineStmt(func() {
+						out += c4.F()
+					})
+				default:
+					out += e(gPrefix + "} else {\n")
+					out += g.incrPrefix(func() string {
+						return c4.F()
+					})
+					out += e(gPrefix + "}")
+				}
+			} else {
 				out += e(gPrefix + "} else {\n")
 				out += g.incrPrefix(func() string {
 					return c4.F()
 				})
-				out += e(gPrefix + "}\n")
+				out += e(gPrefix + "}")
 			}
 		} else {
-			out += e(gPrefix + "}\n")
+			out += e(gPrefix + "}")
 		}
 		return out
 	}}
@@ -2900,27 +2913,63 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 	}}
 }
 
-func (g *Generator) genIfStmt(stmt *ast.IfStmt) GenFrag {
+func (g *Generator) genIfStmt(stmt *ast.IfExpr) GenFrag {
 	e := EmitWith(g, stmt)
 	var bs []func() string
+	ifT := g.env.GetType(stmt)
+	var varName string
+	hasTyp := !TryCast[types.VoidType](ifT)
+	var isFirst bool
+	if hasTyp {
+		if g.ifVarName == "" {
+			varName = fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+			g.ifVarName = varName
+			isFirst = true
+		} else {
+			varName = g.ifVarName
+		}
+	}
 	cond := g.genExpr(stmt.Cond)
 	c1 := GenFrag{F: func() string { return "" }}
 	c3 := GenFrag{F: func() string { return "" }}
 	if stmt.Init != nil {
 		c3 = g.genStmt(stmt.Init)
 	}
-	if stmt.Else != nil {
-		c1 = g.genStmt(stmt.Else)
+	if hasTyp {
+		last := Must(Last(stmt.Body.List))
+		stmt.Body.List[len(stmt.Body.List)-1] = &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
 	}
+	g.ifVarName = ""
 	c2 := g.genStmt(stmt.Body)
+	g.ifVarName = varName
+	if stmt.Else != nil {
+		if hasTyp {
+			switch v := stmt.Else.(type) {
+			case *ast.BlockStmt:
+				last := Must(Last(v.List))
+				v.List[len(v.List)-1] = &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
+			}
+		}
+		g.WithIfVarName(varName, func() {
+			switch stmt.Else.(type) {
+			case *ast.BlockStmt:
+				g.ifVarName = ""
+				c1 = g.genStmt(stmt.Else)
+				g.ifVarName = varName
+			default:
+				c1 = g.genStmt(stmt.Else)
+			}
+		})
+	}
 	bs = append(bs, cond.B...)
 	bs = append(bs, c3.B...)
-	bs = append(bs, c1.B...)
-	//bs = append(bs, c2.B...)
-	return GenFrag{F: func() string {
+	tmp := func() string {
 		var out string
 		gPrefix := g.prefix
-		if !g.inlineStmt {
+		if hasTyp && isFirst {
+			out += e(gPrefix + "var " + varName + " " + ifT.GoStrType() + "\n")
+		}
+		if hasTyp && isFirst {
 			out += e(gPrefix)
 		}
 		out += e("if ")
@@ -2936,23 +2985,43 @@ func (g *Generator) genIfStmt(stmt *ast.IfStmt) GenFrag {
 		})
 		if stmt.Else != nil {
 			switch stmt.Else.(type) {
-			case *ast.IfStmt, *ast.IfLetStmt:
-				out += e(gPrefix + "} else ")
-				g.WithInlineStmt(func() {
-					out += c1.F()
-				})
+			case *ast.ExprStmt:
+				switch stmt.Else.(*ast.ExprStmt).X.(type) {
+				case *ast.IfExpr, *ast.IfLetExpr:
+					out += e(gPrefix + "} else ")
+					g.WithInlineStmt(func() {
+						out += c1.F()
+					})
+				default:
+					out += e(gPrefix + "} else {\n")
+					out += g.incrPrefix(func() string {
+						return c1.F()
+					})
+					out += e(gPrefix + "}")
+				}
 			default:
 				out += e(gPrefix + "} else {\n")
 				out += g.incrPrefix(func() string {
 					return c1.F()
 				})
-				out += e(gPrefix + "}\n")
+				out += e(gPrefix + "}")
 			}
 		} else {
-			out += e(gPrefix + "}\n")
+			out += e(gPrefix + "}")
+		}
+		if hasTyp && isFirst {
+			out += e("\n")
 		}
 		return out
-	}, B: bs}
+	}
+	if hasTyp && isFirst {
+		bs = append(bs, tmp)
+		return GenFrag{F: func() string {
+			return e("AglIdentity(" + varName + ")")
+		}, B: bs}
+	} else {
+		return GenFrag{F: tmp, B: bs}
+	}
 }
 
 func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
