@@ -35,13 +35,13 @@ func reorder(mut blocks []uint?) {
     }
 }
 
-func checksum(mut blocks []uint?) uint {
+func checksum(blocks []uint?) uint {
     blocks.Enumerated().FilterMap(|t| { t.1.Map({ $0 * uint(t.0) }) }).Sum()
 }
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day9/data.txt")!)
     mut blocks := gen_blocks(fileContent)
-    reorder(blocks)
+    reorder(mut blocks)
     fmt.Println("part1:", checksum(blocks))
 }
