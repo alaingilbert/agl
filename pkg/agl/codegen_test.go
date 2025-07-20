@@ -10217,6 +10217,31 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen353(t *testing.T) {
+	src := `package main
+func main() {
+	a := if 1 == 1 { 1 } else { 2 }
+	var b int
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var aglTmp1 int
+	if 1 == 1 {
+		aglTmp1 = 1
+	} else {
+		aglTmp1 = 2
+	}
+	a := AglIdentity(aglTmp1)
+	var b int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

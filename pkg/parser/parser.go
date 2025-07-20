@@ -2482,13 +2482,10 @@ func (p *parser) parseIfLetExpr(pos token.Pos) *ast.IfLetExpr {
 			else_ = &ast.ExprStmt{X: p.parseIfExpr()}
 		case token.LBRACE:
 			else_ = p.parseBlockStmt()
-			p.expectSemi()
 		default:
 			p.errorExpected(p.pos, "if let statement or block")
 			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
 		}
-	} else {
-		p.expectSemi()
 	}
 
 	return &ast.IfLetExpr{If: pos, Op: op, Ass: ass, Body: body, Else: else_}
@@ -2558,13 +2555,10 @@ func (p *parser) parseIfExpr() ast.Expr {
 			else_ = &ast.ExprStmt{X: p.parseIfExpr()}
 		case token.LBRACE:
 			else_ = p.parseBlockStmt()
-			p.expectSemi()
 		default:
 			p.errorExpected(p.pos, "if statement or block")
 			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
 		}
-	} else {
-		p.expectSemi()
 	}
 
 	return &ast.IfExpr{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
@@ -2873,7 +2867,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.PERIOD, token.MUT, token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.PERIOD, token.MUT, token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, token.IF, // operands
 		token.LBRACK, token.STRUCT, token.MAP, token.SET, token.CHAN, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)
@@ -2896,8 +2890,6 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		p.expectSemi()
 	case token.GUARD:
 		s = p.parseGuardStmt()
-	case token.IF:
-		s = &ast.ExprStmt{X: p.parseIfExpr()}
 	case token.SWITCH:
 		s = p.parseSwitchStmt()
 	case token.SELECT:
