@@ -2381,32 +2381,28 @@ func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {
 
 func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
 	infer.exprs(expr.Values)
+	var elts []types.Type
 	if infer.optType.IsDefinedFor(expr) {
-		var elts []types.Type
 		expected := infer.optType.Type.(types.TupleType).Elts
 		for i, x := range expr.Values {
 			expectedI := expected[i]
 			xT := infer.GetType(x)
 			if _, ok := xT.(types.UntypedNumType); ok {
 				infer.SetType(x, expectedI)
-				elts = append(elts, expectedI)
-			} else {
-				if !cmpTypesLoose(xT, expectedI) {
-					infer.errorf(expr.Values[i], "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
-					return
-				}
-				elts = append(elts, xT)
+				xT = expectedI
+			} else if !cmpTypesLoose(xT, expectedI) {
+				infer.errorf(expr.Values[i], "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
+				return
 			}
+			elts = append(elts, xT)
 		}
-		infer.SetType(expr, types.TupleType{Elts: elts})
 	} else {
-		var elts []types.Type
 		for _, v := range expr.Values {
 			elT := infer.GetType(v)
 			elts = append(elts, elT)
 		}
-		infer.SetType(expr, types.TupleType{Elts: elts})
 	}
+	infer.SetType(expr, types.TupleType{Elts: elts})
 }
 
 func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
