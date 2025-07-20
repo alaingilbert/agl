@@ -10103,6 +10103,16 @@ func main() {
 	tassert.Equal(t, "func ([]u8) Sum() u8", test.TypeAt(4, 24).String())
 }
 
+func TestCodeGen349(t *testing.T) {
+	src := `package main
+func checksum(blocks []uint?) uint {
+	blocks.Enumerated().FilterMap(|t| { (t.1).Map({ $0 * uint(t.0) }) }).Sum()
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([](int, uint?)) FilterMap(func((int, uint?)) uint?) []uint", test.TypeAt(3, 22).String())
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

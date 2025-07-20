@@ -41,7 +41,7 @@ func reorder(mut blocks []uint?) {
 }
 
 func checksum(mut blocks []uint?) uint {
-    return blocks.Enumerated().FilterMap(|t| { (t.1).Map({ $0 * uint(t.0) }) }).Sum()
+    blocks.Enumerated().FilterMap(|t| { (t.1).Map({ $0 * uint(t.0) }) }).Sum()
 }
 
 func main() {

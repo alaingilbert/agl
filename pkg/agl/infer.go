@@ -1656,7 +1656,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, mapFnT.Return)
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return.(types.OptionType).W
+				var rT types.Type
+				switch v := infer.GetTypeFn(arg0).Return.(type) {
+				case types.OptionType:
+					rT = v.W
+				case types.SomeType:
+					rT = v.W
+				}
 				infer.SetType(expr, types.ArrayType{Elt: rT})
 				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
@@ -1669,7 +1675,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				infer.expr(exprArg0)
 				aT := infer.env.GetType(exprArg0)
 				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return.(types.OptionType).W
+					var rT types.Type
+					switch v := tmp.Return.(type) {
+					case types.OptionType:
+						rT = v.W
+					case types.SomeType:
+						rT = v.W
+					}
 					infer.SetType(expr, types.ArrayType{Elt: rT})
 					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
 				}
