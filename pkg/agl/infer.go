@@ -3274,8 +3274,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					rhsT := infer.env.GetType2(rhs, infer.fset)
 					lhsWantedTT := types.Unwrap(lhsWantedT)
 					if TryCast[types.OptionType](rhsT) {
-						optEl := lhsWantedTT.(types.OptionType).W
-						rhsT = types.OptionType{W: optEl}
+						rhsT = lhsWantedTT
 						infer.SetType(rhs, rhsT)
 					}
 					if !cmpTypesLoose(rhsT, lhsT) {
