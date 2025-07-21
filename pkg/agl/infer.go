@@ -1135,7 +1135,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 				return
 			}
-			infer.SetType(expr, types.RangeType{})
+			infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
 		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
@@ -2843,7 +2843,15 @@ func (infer *FileInferrer) labelledArg(expr *ast.LabelledArg) {
 func (infer *FileInferrer) rangeExpr(expr *ast.RangeExpr) {
 	infer.expr(expr.Start)
 	infer.expr(expr.End_)
-	infer.SetType(expr, types.RangeType{})
+	sT := infer.env.GetType2(expr.Start, infer.fset)
+	eT := infer.env.GetType2(expr.End_, infer.fset)
+	t := sT
+	if TryCast[types.UntypedNumType](t) {
+		t = eT
+	}
+	infer.SetType(expr.Start, t)
+	infer.SetType(expr.End_, t)
+	infer.SetType(expr, types.RangeType{Typ: t})
 }
 
 func (infer *FileInferrer) dumpExpr(expr *ast.DumpExpr) {
@@ -3009,7 +3017,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					return
 				}
 			case types.RangeType:
-				t = types.RangeType{}
+				t = v.Typ
 				infer.SetType(cond.X, t)
 			default:
 				infer.errorf(cond.Y, "unsupported type %v", to(yT))

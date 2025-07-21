@@ -1566,8 +1566,8 @@ func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
 		}
 	}
 	return GenFrag{F: func() (out string) {
-		out += e("AglNewRange[int](") + start.F() + e(", ") + end.F() + e(", ") + op() + e(")")
-		return out
+		out += e("AglNewRange["+g.env.GetType(expr).(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(", ") + op() + e(")")
+		return
 	}}
 }
 

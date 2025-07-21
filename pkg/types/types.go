@@ -47,7 +47,7 @@ func (m MapType) GoStrType() string {
 func (m MapType) String() string { return fmt.Sprintf("map[%s]%s", m.K, m.V) }
 
 type RangeType struct {
-	Start, End Type
+	Typ Type
 }
 
 func (r RangeType) GoStr() string     { return "RangeType" }
