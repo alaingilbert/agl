@@ -10484,6 +10484,37 @@ type AglTupleStruct_uint8_uint8_uint8 struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen364(t *testing.T) {
+	src := `package main
+func main() {
+    a := [](u8, (u8, u8)){(1, (u8(2), u8(3)))}
+	a.Map(|(a, (b, c))| a+b+c)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: AglTupleStruct_uint8_uint8{Arg0: uint8(2), Arg1: uint8(3)}}}
+	AglVecMap(a, func(aglArg0 AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) uint8 {
+		a := aglArg0.Arg0
+		b := aglArg0.Arg1.Arg0
+		c := aglArg0.Arg1.Arg1
+		return a + b + c
+	})
+}
+type AglTupleStruct_uint8_AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 AglTupleStruct_uint8_uint8
+}
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

@@ -797,7 +797,19 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 				switch v := expr.Args[i].(type) {
 				case *ast.TupleExpr:
 					for j, val := range v.Values {
-						out += e(g.prefix + "\t" + val.(*ast.Ident).Name + " := " + n + fmt.Sprintf(".Arg%d", j) + "\n")
+						switch vv := val.(type) {
+						case *ast.Ident:
+							if vv.Name != "_" {
+								out += e(g.prefix + "\t" + vv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + "\n")
+							}
+						case *ast.TupleExpr:
+							for k, ee := range vv.Values {
+								id := ee.(*ast.Ident)
+								if id.Name != "_" {
+									out += e(g.prefix + "\t" + id.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + "\n")
+								}
+							}
+						}
 					}
 				}
 			}

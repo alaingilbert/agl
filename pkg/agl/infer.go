@@ -2171,9 +2171,13 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 
 func (infer *FileInferrer) defineDestructuredTuple(vals []ast.Expr, t types.TupleType) {
 	for i, e := range vals {
-		id := e.(*ast.Ident)
-		infer.env.Define(nil, id.Name, t.Elts[i])
-		infer.SetType(id, t.Elts[i])
+		switch v := e.(type) {
+		case *ast.Ident:
+			infer.env.Define(nil, v.Name, t.Elts[i])
+			infer.SetType(v, t.Elts[i])
+		case *ast.TupleExpr:
+			infer.defineDestructuredTuple(v.Values, t.Elts[i].(types.TupleType))
+		}
 	}
 }
 
