@@ -40,8 +40,8 @@ func getFreeSpots(blocks []uint?) [](uint, uint) {
     s = None
     for (i, block) in blocks.Enumerated() {
         if block.IsSome() {
-            if Some(s2) := s {
-                freeSpots.Push(s2)
+            if Some(s) := s {
+                freeSpots.Push(s)
             }
             s = None
         } else if Some(t) := s {
