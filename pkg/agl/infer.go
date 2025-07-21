@@ -2284,8 +2284,22 @@ func (infer *FileInferrer) voidExpr(expr *ast.VoidExpr) {
 }
 
 func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
-	infer.expr(expr.X)
-	infer.SetType(expr, types.OptionType{W: infer.env.GetType(expr.X)})
+	var t types.Type
+	if infer.optType.IsDefinedFor(expr) {
+		t = infer.optType.Type
+		if v, ok := t.(types.OptionType); ok {
+			infer.withOptType(expr.X, v.W, func() {
+				infer.expr(expr.X)
+			})
+		} else {
+			infer.expr(expr.X)
+			t = types.OptionType{W: infer.env.GetType(expr.X)}
+		}
+	} else {
+		infer.expr(expr.X)
+		t = types.OptionType{W: infer.env.GetType(expr.X)}
+	}
+	infer.SetType(expr, t)
 }
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
@@ -3343,6 +3357,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				return
 			}
 			if lhsT := lhsWantedT; lhsT != nil && stmt.Tok != token.DEFINE {
+				infer.SetType(rhs, lhsWantedT)
 				infer.withForceReturn(lhsT, func() {
 					infer.withOptType(rhs, types.Unwrap(lhsT), func() {
 						infer.expr(rhs)
