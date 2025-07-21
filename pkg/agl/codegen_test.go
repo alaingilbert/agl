@@ -10540,9 +10540,9 @@ type AglTupleStruct_uint8_uint8 struct {
 func TestCodeGen365(t *testing.T) {
 	src := `package main
 func main() {
-    for e in (0..42) {
+	for e in (0..42) {
 	}
-    for e in (0..42).Rev() {
+	for e in (0..int(42)).Rev() {
 	}
 }`
 	expected := `// agl:generated
@@ -10550,12 +10550,13 @@ package main
 func main() {
 	for e := range AglNewRange[int](0, 42, false).Iter() {
 	}
-	for e := range AglDoubleEndedIteratorRev(AglNewRange[int](0, 42, false)).Iter() {
+	for e := range AglDoubleEndedIteratorRev(AglNewRange[int](0, int(42), false)).Iter() {
 	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func Rev[I agl1.DoubleEndedIterator[int]]() *agl1.Rev[int]", test.TypeAt(5, 24).String())
 	testCodeGen2(t, expected, test)
 }
 

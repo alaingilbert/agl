@@ -938,7 +938,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.IsOk", "func () bool")
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
 		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")
-		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
+		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 	})
 }
 

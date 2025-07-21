@@ -704,7 +704,7 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	newParams := make([]Type, 0)
 	newTypeParams := make([]Type, 0)
 	for _, p := range ff.TypeParams {
-		newTypeParams = append(newTypeParams, p)
+		newTypeParams = append(newTypeParams, ReplGen(p, name, typ))
 	}
 	for _, p := range ff.Params {
 		newParams = append(newParams, ReplGen(p, name, typ))
@@ -805,7 +805,8 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		if t1.Name == name {
 			return newTyp
 		}
-		return t
+		t1.W = ReplGen(t1.W, name, newTyp)
+		return t1
 	case TypeType:
 		return t
 	case FuncType:

@@ -3688,7 +3688,7 @@ func (r *Rev[T]) NextBack() Option[T] {
 	return r.it.Next()
 } 
 
-func AglDoubleEndedIteratorRev[T any](it DoubleEndedIterator[T]) *Rev[T] {
+func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 	return &Rev[T]{it: it}
 }
 
