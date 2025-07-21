@@ -21,8 +21,5 @@ func part1(list1, list2 []int) int {
 }
 
 func part2(list1, list2 []int) int {
-    return list1.Map({
-        el := $0
-        return el * list2.Filter({ $0 == el }).Len()
-    }).Sum()
+    return list1.Map(|el| el * list2.Filter({ $0 == el }).Len()).Sum()
 }
