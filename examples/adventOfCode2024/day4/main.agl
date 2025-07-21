@@ -20,8 +20,8 @@ func isValidPosition(x, y, width, height int) bool {
 
 func part1(lines [][]string, width, height int) int {
     var mut directions [](int, int)
-    for _, e1 := range []int{-1, 0, 1} {
-        for _, e2 := range []int{-1, 0, 1} {
+    for e1 in []int{-1, 0, 1} {
+        for e2 in []int{-1, 0, 1} {
             guard e1 != 0 || e2 != 0 else { continue }
             directions.Push((e1, e2))
         }
