@@ -1135,6 +1135,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 				return
 			}
+			if fnName == "Rev" {
+				info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
+				fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
+				fnT = fnT.T("T", idTT.Typ)
+				infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			}
 			infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
 		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)

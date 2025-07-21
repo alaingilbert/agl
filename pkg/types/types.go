@@ -52,7 +52,7 @@ type RangeType struct {
 
 func (r RangeType) GoStr() string     { return "RangeType" }
 func (r RangeType) GoStrType() string { return "RangeType" }
-func (r RangeType) String() string    { return "RangeType" }
+func (r RangeType) String() string    { return fmt.Sprintf("Range[%s]", r.Typ.String()) }
 
 type ChanType struct{ W Type }
 

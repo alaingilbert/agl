@@ -824,12 +824,14 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/cmp", "", m)
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/iter", "", m)
 		e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
+		e.Define(nil, "DoubleEndedIterator", types.InterfaceType{Pkg: "agl1", Name: "DoubleEndedIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.GenericType{
 			{Name: "K", W: types.AnyType{}},
 			{Name: "V", W: types.AnyType{}},
 		}})
 		e.Define(nil, "DictEntry.Key", types.GenericType{Name: "K", W: types.AnyType{}})
 		e.Define(nil, "DictEntry.Value", types.GenericType{Name: "V", W: types.AnyType{}})
+		e.Define(nil, "agl1.Rev", types.StructType{Pkg: "agl1", Name: "Rev", TypeParams: []types.GenericType{{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "agl1.Set", types.SetType{K: types.GenericType{Name: "T", W: types.AnyType{}}})
 		e.Define(nil, "agl1.Vec", types.ArrayType{Elt: types.GenericType{Name: "T", W: types.AnyType{}}})
 		e.Define(nil, "agl1.Enum", types.EnumType{})
@@ -936,6 +938,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.IsOk", "func () bool")
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
 		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")
+		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 	})
 }
 

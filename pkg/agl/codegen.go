@@ -3662,11 +3662,11 @@ type DoubleEndedIterator[T any] interface {
 	NextBack() Option[T]
 }
 
-type AglRev[T any] struct {
+type Rev[T any] struct {
 	it DoubleEndedIterator[T]
 }
 
-func (r AglRev[T]) Iter() aglImportIter.Seq[T] {
+func (r Rev[T]) Iter() aglImportIter.Seq[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -3680,16 +3680,16 @@ func (r AglRev[T]) Iter() aglImportIter.Seq[T] {
 	}
 }
 
-func (r *AglRev[T]) Next() Option[T] {
+func (r *Rev[T]) Next() Option[T] {
 	return r.it.NextBack()
 }
 
-func (r *AglRev[T]) NextBack() Option[T] {
+func (r *Rev[T]) NextBack() Option[T] {
 	return r.it.Next()
 } 
 
-func AglDoubleEndedIteratorRev[T any](it DoubleEndedIterator[T]) DoubleEndedIterator[T] {
-	return &AglRev[T]{it: it}
+func AglDoubleEndedIteratorRev[T any](it DoubleEndedIterator[T]) *Rev[T] {
+	return &Rev[T]{it: it}
 }
 
 func (s AglSet[T]) Iter() aglImportIter.Seq[T] {
