@@ -802,7 +802,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 							if vv.Name != "_" {
 								out += e(g.prefix + "\t" + vv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + "\n")
 							}
-						case *ast.TupleExpr:
+						case *ast.TupleExpr: // TODO should be recursive
 							for k, ee := range vv.Values {
 								id := ee.(*ast.Ident)
 								if id.Name != "_" {
