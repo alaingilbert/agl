@@ -2169,6 +2169,14 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 	})
 }
 
+func (infer *FileInferrer) defineDestructuredTuple(vals []ast.Expr, t types.TupleType) {
+	for i, e := range vals {
+		id := e.(*ast.Ident)
+		infer.env.Define(nil, id.Name, t.Elts[i])
+		infer.SetType(id, t.Elts[i])
+	}
+}
+
 func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 	infer.withEnv(func() {
 		if infer.optType.IsDefinedFor(expr) {
@@ -2178,8 +2186,15 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		if t := infer.env.GetType(expr); t != nil {
 			params := t.(types.FuncType).Params
 			for i, arg := range expr.Args {
-				infer.env.Define(nil, arg.Name, params[i])
-				infer.SetType(arg, params[i])
+				switch v := arg.(type) {
+				case *ast.Ident:
+					infer.env.Define(nil, v.Name, params[i])
+					infer.SetType(arg, params[i])
+				case *ast.TupleExpr:
+					infer.defineDestructuredTuple(v.Values, params[i].(types.TupleType))
+				default:
+					panic("")
+				}
 			}
 			for i, param := range t.(types.FuncType).Params {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)

@@ -361,7 +361,7 @@ type (
 	ShortFuncLit struct {
 		Pipe1 token.Pos
 		Pipe2 token.Pos
-		Args  []*Ident
+		Args  []Expr
 		Body  Stmt // function body
 	}
 

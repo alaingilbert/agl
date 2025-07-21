@@ -10429,6 +10429,7 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
+
 func TestCodeGen361(t *testing.T) {
 	src := `package main
 func main() {
@@ -10453,6 +10454,34 @@ func main() {
 }`
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Contains(t, test.errs[0].Error(), "4:4: method 'Swap' cannot be called on immutable type 'Vec'")
+}
+
+func TestCodeGen363(t *testing.T) {
+	src := `package main
+func main() {
+    a := [](u8, u8, u8){(1, 2, 3)}
+	a.Map(|(a, b, c)| a+b+c)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []AglTupleStruct_uint8_uint8_uint8{AglTupleStruct_uint8_uint8_uint8{Arg0: 1, Arg1: 2, Arg2: 3}}
+	AglVecMap(a, func(aglArg0 AglTupleStruct_uint8_uint8_uint8) uint8 {
+		a := aglArg0.Arg0
+		b := aglArg0.Arg1
+		c := aglArg0.Arg2
+		return a + b + c
+	})
+}
+type AglTupleStruct_uint8_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+	Arg2 uint8
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen318(t *testing.T) {

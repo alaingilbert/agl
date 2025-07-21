@@ -549,6 +549,22 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 	return
 }
 
+func (p *parser) parseIdentOrTupleList() (list []ast.Expr) {
+	if p.tok == token.LPAREN {
+		lparen := p.expect(token.LPAREN)
+		values := p.parseIdentOrTupleList()
+		rparen := p.expect(token.RPAREN)
+		list = append(list, &ast.TupleExpr{Lparen: lparen, Rparen: rparen, Values: values})
+		return
+	}
+	list = append(list, p.parseIdentOrMutIdent())
+	for p.tok == token.COMMA {
+		p.next()
+		list = append(list, p.parseIdentOrTupleList()...)
+	}
+	return
+}
+
 // ----------------------------------------------------------------------------
 // Common productions
 
@@ -1645,12 +1661,12 @@ func (p *parser) parseBlockStmt() *ast.BlockStmt {
 // Expressions
 
 func (p *parser) parseShortFuncLit() ast.Expr {
-	var args []*ast.Ident
+	var args []ast.Expr
 	pipe1Pos := token.NoPos
 	pipe2Pos := token.NoPos
 	if p.tok == token.OR {
 		pipe1Pos = p.expect(token.OR)
-		args = p.parseIdentList()
+		args = p.parseIdentOrTupleList()
 		pipe2Pos = p.expect(token.OR)
 	}
 	p.exprLev++

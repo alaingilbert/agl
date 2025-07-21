@@ -777,7 +777,10 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 			for i, arg := range t.Params {
 				n := fmt.Sprintf("aglArg%d", i)
 				if len(expr.Args) > 0 {
-					n = expr.Args[i].Name
+					switch v := expr.Args[i].(type) {
+					case *ast.Ident:
+						n = v.Name
+					}
 				}
 				tmp = append(tmp, fmt.Sprintf("%s %s", n, types.ReplGenM(arg, g.genMap).GoStr()))
 			}
@@ -788,6 +791,17 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 			returnStr = " " + ret.GoStrType()
 		}
 		out = e(fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr))
+		for i, _ := range t.Params {
+			n := fmt.Sprintf("aglArg%d", i)
+			if len(expr.Args) > 0 {
+				switch v := expr.Args[i].(type) {
+				case *ast.TupleExpr:
+					for j, val := range v.Values {
+						out += e(g.prefix + "\t" + val.(*ast.Ident).Name + " := " + n + fmt.Sprintf(".Arg%d", j) + "\n")
+					}
+				}
+			}
+		}
 		out += g.incrPrefix(func() string {
 			return c1.F()
 		})
