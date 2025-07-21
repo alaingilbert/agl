@@ -108,8 +108,7 @@ func (o Option[T]) UnwrapOrDefault() T {
 
 func AglOptionMap[T, R any](o Option[T], clb func(T) R) Option[R] {
 	if o.IsSome() {
-		r := clb(o.Unwrap())
-		return MakeOptionSome(r)
+		return MakeOptionSome(clb(o.Unwrap()))
 	}
 	return MakeOptionNone[R]()
 }
