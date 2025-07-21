@@ -56,10 +56,7 @@ func getFreeSpots(blocks []uint?) [](uint, uint) {
 
 func doSwap(mut blocks []uint?, mut freeSpots [](uint, uint), toSwap []uint) {
     swapLen := uint(toSwap.Len())
-    if Some(t) := freeSpots.Enumerated().Find(|tt| {
-        idx, size := tt.1
-        return idx < toSwap[0] && size >= swapLen
-    }) {
+    if Some(t) := freeSpots.Enumerated().Find(|(_, (idx, size))| idx < toSwap[0] && size >= swapLen) {
         spotIdx := t.0
         startIdx := t.1.0
         for (i, el) in toSwap.Enumerated() {
