@@ -317,7 +317,7 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 
 type AglVec[T any] []T
 
-func (a AglVec[T]) Len() int { return len(a) }
+func (v AglVec[T]) Len() int { return len(v) }
 
 func (v AglVec[T]) Iter() aglImportIter.Seq[T] {
 	return func(yield func(T) bool) {
