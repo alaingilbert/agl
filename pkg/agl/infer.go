@@ -3319,7 +3319,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 			if lhsT := lhsWantedT; lhsT != nil && stmt.Tok != token.DEFINE {
 				infer.withForceReturn(lhsT, func() {
-					infer.expr(rhs)
+					infer.withOptType(rhs, types.Unwrap(lhsT), func() {
+						infer.expr(rhs)
+					})
 					rhsT := infer.env.GetType2(rhs, infer.fset)
 					lhsWantedTT := types.Unwrap(lhsWantedT)
 					if TryCast[types.OptionType](rhsT) {

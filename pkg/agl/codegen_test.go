@@ -10388,6 +10388,28 @@ type AglTupleStruct_uint_uint struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen359(t *testing.T) {
+	src := `package main
+func main() {
+	var mut t (uint, uint)
+	t = (1, 2)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var t AglTupleStruct_uint_uint
+	t = AglTupleStruct_uint_uint{Arg0: 1, Arg1: 2}
+}
+type AglTupleStruct_uint_uint struct {
+	Arg0 uint
+	Arg1 uint
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
