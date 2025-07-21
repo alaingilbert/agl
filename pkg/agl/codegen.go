@@ -1796,7 +1796,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(")")
 				}}
-			case "Pop", "PopFront":
+			case "Pop", "PopFront", "Clear":
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")
 				}}
@@ -4129,6 +4129,11 @@ func AglVecRemove[T any](a *[]T, idx int) {
 // AglVecClone ...
 func AglVecClone[S ~[]E, E any](a S) S {
 	return aglImportSlices.Clone(a)
+}
+
+// AglVecClear ...
+func AglVecClear[T any](a *[]T) {
+	*a = (*a)[:0]
 }
 
 // AglVecIndices ...

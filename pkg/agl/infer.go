@@ -1724,7 +1724,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			findFnT.Params = findFnT.Params[1:]
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
-		} else if InArray(fnName, []string{"Sum", "Last", "Push", "Remove", "Clone", "Indices", "PushFront",
+		} else if InArray(fnName, []string{"Sum", "Last", "Push", "Remove", "Clone", "Clear", "Indices", "PushFront",
 			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter", "__ADD"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{oidT}

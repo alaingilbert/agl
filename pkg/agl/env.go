@@ -883,6 +883,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.I64.String", "func (i64) string")
 		e.DefineFn(nenv, "agl1.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool", WithDesc("Returns a Boolean value indicating whether every element of a sequence satisfies a given predicate."))
 		e.DefineFn(nenv, "agl1.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
+		e.DefineFn(nenv, "agl1.Vec.Clear", "func [T any](mut a []T)")
 		e.DefineFn(nenv, "agl1.Vec.Clone", "func [T any](a []T) []T")
 		e.DefineFn(nenv, "agl1.Vec.Contains", "func [T comparable](a []T, e T) bool")
 		e.DefineFn(nenv, "agl1.Vec.ContainsWhere", "func [T comparable](a []T, where: p func(T) bool) bool")
