@@ -333,3 +333,21 @@ func main() {
 }`
 	tassert.Equal(t, "", testGenOutput(src))
 }
+
+func Test18(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    mut a := []int{1, 2, 3}
+	a.Swap(1, 2)
+	assert(a[0] == 1)
+	assert(a[1] == 3)
+	assert(a[2] == 2)
+    mut b := []int{1, 2, 3}
+	b.Swap(u8(1), u16(2))
+	assert(b[0] == 1)
+	assert(b[1] == 3)
+	assert(b[2] == 2)
+}`
+	tassert.Equal(t, "", testGenOutput(src))
+}
