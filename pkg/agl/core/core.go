@@ -351,6 +351,15 @@ func (v *VecIter[T]) Next() Option[T] {
 	return MakeOptionSome(res)
 }
 
+type IntoIterator[T any] interface {
+	Iter() Iterator[T]
+}
+
+// Sequence anything that can be turned into an Iterator
+type Sequence[T any] interface {
+	IntoIterator[T]
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
