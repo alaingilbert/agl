@@ -4035,7 +4035,7 @@ type Number interface {
 	Integer | Float
 }
 
-func AglAbs[T AglNumber](e T) (out T) {
+func AglAbs[T Number](e T) (out T) {
 	return T(aglImportMath.Abs(float64(e)))
 }
 
@@ -4100,7 +4100,7 @@ func AglVecPopFront[T any](a *[]T) Option[T] {
 }
 
 // AglVecSwap ...
-func AglVecSwap[T any, I, J AglInteger](a *[]T, b I, c J) {
+func AglVecSwap[T any, I, J Integer](a *[]T, b I, c J) {
 	(*a)[b], (*a)[c] = (*a)[c], (*a)[b]
 }
 
