@@ -398,6 +398,14 @@ type (
 		Rparen token.Pos // position of ")"
 	}
 
+	RangeExpr struct {
+		Lparen token.Pos // position of "("
+		Op     token.Token
+		Start  Expr
+		End_   Expr
+		Rparen token.Pos // position of ")"
+	}
+
 	// A ParenExpr node represents a parenthesized expression.
 	ParenExpr struct {
 		Lparen token.Pos // position of "("
@@ -519,6 +527,10 @@ type (
 		Value Expr
 	}
 )
+
+func (r RangeExpr) Pos() token.Pos { return r.Lparen }
+func (r RangeExpr) End() token.Pos { return r.Rparen }
+func (r RangeExpr) exprNode()      {}
 
 func (l LabelledArg) Pos() token.Pos { return l.Label.Pos() }
 func (l LabelledArg) End() token.Pos { return l.X.End() }

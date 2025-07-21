@@ -583,6 +583,25 @@ func (p *parser) parseExprList() (list []ast.Expr) {
 	return
 }
 
+func (p *parser) parseExprListRangeTupleParen() ast.Expr {
+	lparen := p.expect(token.LPAREN)
+	x := p.parseExpr()
+	if p.tok == token.COMMA {
+		p.next()
+		values := append([]ast.Expr{x}, p.parseExprList()...)
+		rparen := p.expect(token.RPAREN)
+		return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
+	} else if p.tok == token.RANGEOP || p.tok == token.RANGEOPEQ {
+		op := p.tok
+		p.next()
+		end := p.parseExpr()
+		rparen := p.expect(token.RPAREN)
+		return &ast.RangeExpr{Lparen: lparen, Start: x, End_: end, Rparen: rparen, Op: op}
+	}
+	rparen := p.expect(token.RPAREN)
+	return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
+}
+
 func (p *parser) parseTypeList() (list []ast.Expr) {
 	list = append(list, p.tryIdentOrTypeNoShortFn())
 	for p.tok == token.COMMA {
@@ -1764,14 +1783,7 @@ func (p *parser) parseOperand() ast.Expr {
 		return p.parseFuncTypeOrLit()
 
 	case token.LPAREN:
-		lparen := p.expect(token.LPAREN)
-		values := p.parseExprList()
-		rparen := p.expect(token.RPAREN)
-		if len(values) > 1 {
-			return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
-		} else {
-			return &ast.ParenExpr{Lparen: lparen, X: values[0], Rparen: rparen}
-		}
+		return p.parseExprListRangeTupleParen()
 	}
 
 	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil { // do not consume trailing type parameters

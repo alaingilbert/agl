@@ -506,7 +506,7 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	}
 
 	// fractional part
-	if s.ch == '.' {
+	if s.ch == '.' && (s.peek() != '.' && s.peek() != '=') {
 		tok = token.FLOAT
 		if prefix == 'o' || prefix == 'b' {
 			s.error(s.offset, "invalid radix point in "+litname(prefix))
@@ -943,6 +943,13 @@ scanAgain:
 				s.next()
 				s.next() // consume last '.'
 				tok = token.ELLIPSIS
+			} else if s.ch == '.' && s.peek() == '=' {
+				s.next()
+				s.next()
+				tok = token.RANGEOPEQ
+			} else if s.ch == '.' {
+				s.next()
+				tok = token.RANGEOP
 			}
 		case ',':
 			tok = token.COMMA

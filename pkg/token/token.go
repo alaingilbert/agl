@@ -76,11 +76,13 @@ const (
 	ASSIGN // =
 	NOT    // !
 
-	NEQ      // !=
-	LEQ      // <=
-	GEQ      // >=
-	DEFINE   // :=
-	ELLIPSIS // ...
+	NEQ       // !=
+	LEQ       // <=
+	GEQ       // >=
+	DEFINE    // :=
+	ELLIPSIS  // ...
+	RANGEOP   // ..
+	RANGEOPEQ // ..=
 
 	LPAREN // (
 	LBRACK // [
@@ -205,11 +207,13 @@ var tokens = [...]string{
 	ASSIGN: "=",
 	NOT:    "!",
 
-	NEQ:      "!=",
-	LEQ:      "<=",
-	GEQ:      ">=",
-	DEFINE:   ":=",
-	ELLIPSIS: "...",
+	NEQ:       "!=",
+	LEQ:       "<=",
+	GEQ:       ">=",
+	DEFINE:    ":=",
+	ELLIPSIS:  "...",
+	RANGEOP:   "..",
+	RANGEOPEQ: "..=",
 
 	LPAREN: "(",
 	LBRACK: "[",

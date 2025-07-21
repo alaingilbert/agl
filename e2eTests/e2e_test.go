@@ -351,3 +351,24 @@ func main() {
 }`
 	tassert.Equal(t, "", testGenOutput(src))
 }
+
+func Test19(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+    for e in (0..3) {
+		fmt.Print(e)
+	}
+    for e in (0..=3) {
+		fmt.Print(e)
+	}
+    for e in (0..3).Rev() {
+		fmt.Print(e)
+	}
+    for e in (0..=3).Rev() {
+		fmt.Print(e)
+	}
+}`
+	tassert.Equal(t, "01201232103210", testGenOutput(src))
+}

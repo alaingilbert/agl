@@ -690,6 +690,8 @@ func (g *Generator) genExpr(e ast.Expr) (out GenFrag) {
 		return g.genDumpExpr(expr)
 	case *ast.LabelledArg:
 		return g.genLabelledArg(expr)
+	case *ast.RangeExpr:
+		return g.genRangeExpr(expr)
 	default:
 		panic(fmt.Sprintf("%v", to(e)))
 	}
@@ -1552,6 +1554,23 @@ func (g *Generator) genLabelledArg(expr *ast.LabelledArg) GenFrag {
 	return g.genExpr(expr.X)
 }
 
+func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
+	e := EmitWith(g, expr)
+	start := g.genExpr(expr.Start)
+	end := g.genExpr(expr.End_)
+	op := func() string {
+		if expr.Op == token.RANGEOPEQ {
+			return e("true")
+		} else {
+			return e("false")
+		}
+	}
+	return GenFrag{F: func() (out string) {
+		out += e("AglNewRange[int](") + start.F() + e(", ") + end.F() + e(", ") + op() + e(")")
+		return out
+	}}
+}
+
 func (g *Generator) genDumpExpr(expr *ast.DumpExpr) GenFrag {
 	e := EmitWith(g, expr)
 	content1 := g.genExpr(expr.X)
@@ -1904,6 +1923,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			case "Len", "Min", "Max", "Iter":
 				c1 := g.genExpr(x.X)
 				return GenFrag{F: func() string { return e("AglSet"+fnName+"(") + c1.F() + e(")") }}
+			}
+		case types.RangeType:
+			fnName := x.Sel.Name
+			switch fnName {
+			case "Rev":
+				c1 := g.genExpr(x.X)
+				return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
 			}
 		case types.I64Type:
 			fnName := x.Sel.Name
@@ -2556,8 +2582,10 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							val := func() string { return g.genExpr(xTup.Values[1]).F() }
 							y := func() string { return c1.F() }
 							out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
+						case types.RangeType:
+							out += e(g.prefix+"for ") + c2.F() + e(" := range ") + c1.F() + e(".Iter()") + e(" {\n")
 						default:
-							panic("")
+							panic(fmt.Sprintf("%v", to(v.X)))
 						}
 					}
 					out += body()
@@ -3580,8 +3608,93 @@ type AglSet[T comparable] map[T]struct{}
 
 func (s AglSet[T]) Len() int { return len(s) }
 
+type AglRange[T Integer] struct {
+	Start, End T
+	IsEq bool
+	Val T
+}
+
+func AglNewRange[T Integer](start, end T, isEq bool) *AglRange[T] {
+	r := &AglRange[T]{Start: start, End: end, IsEq: isEq}
+	return r
+}
+
+func (r *AglRange[T]) Next() Option[T] {
+	if (r.IsEq && r.Start > r.End) || (!r.IsEq && r.Start >= r.End) {
+		return MakeOptionNone[T]()
+	}
+	res := MakeOptionSome(r.Start)
+	r.Start++
+	return res
+}
+
+func (r *AglRange[T]) NextBack() Option[T] {
+	if (r.IsEq && r.Start > r.End) || (!r.IsEq && r.Start >= r.End) {
+		return MakeOptionNone[T]()
+	}
+	if r.IsEq {
+		res := MakeOptionSome(r.End)
+		r.End--
+		return res
+	} else {
+		r.End--
+		return MakeOptionSome(r.End)
+	}
+}
+
+func (r *AglRange[T]) Iter() aglImportIter.Seq[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
 type Iterator[T any] interface {
 	Iter() aglImportIter.Seq[T]
+	//Next() Option[T]
+}
+
+type DoubleEndedIterator[T any] interface {
+	Iterator[T]
+	Next() Option[T]
+	NextBack() Option[T]
+}
+
+type AglRev[T any] struct {
+	it DoubleEndedIterator[T]
+}
+
+func (r AglRev[T]) Iter() aglImportIter.Seq[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
+func (r *AglRev[T]) Next() Option[T] {
+	return r.it.NextBack()
+}
+
+func (r *AglRev[T]) NextBack() Option[T] {
+	return r.it.Next()
+} 
+
+func AglDoubleEndedIteratorRev[T any](it DoubleEndedIterator[T]) DoubleEndedIterator[T] {
+	return &AglRev[T]{it: it}
 }
 
 func (s AglSet[T]) Iter() aglImportIter.Seq[T] {

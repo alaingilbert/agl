@@ -788,6 +788,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.setTypeExpr(expr)
 	case *ast.LabelledArg:
 		infer.labelledArg(expr)
+	case *ast.RangeExpr:
+		infer.rangeExpr(expr)
 	default:
 		panic(fmt.Sprintf("unknown expression %v", to(e)))
 	}
@@ -994,6 +996,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case *ast.ParenExpr:
 			infer.expr(callXT)
 			exprFunT = infer.env.GetType2(callXT, infer.fset)
+		case *ast.RangeExpr:
+			infer.expr(callXT)
+			exprFunT = infer.env.GetType2(callXT, infer.fset)
 		default:
 			infer.errorf(call.X, "%v %v", call.X, to(call.X))
 			return
@@ -1125,6 +1130,12 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			fnT.Recv = []types.Type{oexprFunT}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case types.RangeType:
+			if !InArray(fnName, []string{"Rev"}) {
+				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+				return
+			}
+			infer.SetType(expr, types.RangeType{})
 		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
@@ -2829,6 +2840,12 @@ func (infer *FileInferrer) labelledArg(expr *ast.LabelledArg) {
 	infer.SetType(expr, t)
 }
 
+func (infer *FileInferrer) rangeExpr(expr *ast.RangeExpr) {
+	infer.expr(expr.Start)
+	infer.expr(expr.End_)
+	infer.SetType(expr, types.RangeType{})
+}
+
 func (infer *FileInferrer) dumpExpr(expr *ast.DumpExpr) {
 	infer.expr(expr.X)
 }
@@ -2991,6 +3008,9 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					infer.errorf(cond.X, "expected tuple, got %v", to(cond.X))
 					return
 				}
+			case types.RangeType:
+				t = types.RangeType{}
+				infer.SetType(cond.X, t)
 			default:
 				infer.errorf(cond.Y, "unsupported type %v", to(yT))
 				return

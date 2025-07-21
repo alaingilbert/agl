@@ -414,6 +414,10 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Init)
 		Walk(v, n.Body)
 
+	case *RangeExpr:
+		Walk(v, n.Start)
+		Walk(v, n.End_)
+
 	case *NoneExpr:
 
 	case *DumpExpr:

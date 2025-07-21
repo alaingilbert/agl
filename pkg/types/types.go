@@ -46,6 +46,14 @@ func (m MapType) GoStrType() string {
 }
 func (m MapType) String() string { return fmt.Sprintf("map[%s]%s", m.K, m.V) }
 
+type RangeType struct {
+	Start, End Type
+}
+
+func (r RangeType) GoStr() string     { return "RangeType" }
+func (r RangeType) GoStrType() string { return "RangeType" }
+func (r RangeType) String() string    { return "RangeType" }
+
 type ChanType struct{ W Type }
 
 func (m ChanType) GoStr() string     { return fmt.Sprintf("chan %s", m.W) }
