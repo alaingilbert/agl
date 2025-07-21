@@ -1,5 +1,3 @@
-// agl:generated
-
 package main
 
 import (
