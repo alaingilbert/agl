@@ -86,10 +86,10 @@ func GetOrigPathPositions2(data [][]string, guardPosition (int, int)) bool {
     return false
 }
 
-func CloneData(in [][]string) [][]string {
-    mut out := make([][]string, in.Len())
-    for y := range in {
-        out[y] = in[y].Clone()
+func CloneData(dataIn [][]string) [][]string {
+    mut out := make([][]string, dataIn.Len())
+    for y := range dataIn {
+        out[y] = dataIn[y].Clone()
     }
     return out
 }
