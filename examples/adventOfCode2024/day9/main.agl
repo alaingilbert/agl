@@ -73,7 +73,7 @@ func reorder2(mut blocks []uint?) {
     mut freeSpots := getFreeSpots(blocks)
     var mut toSwap []uint
     mut lastFileID := uint(math.MaxUint64)
-    for p2 := uint(blocks.Len()-1); p2 > 0; p2-- {
+    for p2 in (0..uint(blocks.Len())).Rev() {
         if Some(blockID) := blocks[p2] {
             if !toSwap.IsEmpty() && blockID != blocks[toSwap[0]].Unwrap() {
                 fileID := blocks[toSwap[0]].Unwrap();
