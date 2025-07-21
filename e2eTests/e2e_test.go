@@ -323,3 +323,13 @@ func PanicsContains(t *testing.T, errString string, f func()) bool {
 	f()
 	return true
 }
+
+func Test17(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	var mut t (uint, uint)?
+	assert(t.IsNone())
+}`
+	tassert.Equal(t, "", testGenOutput(src))
+}
