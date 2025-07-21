@@ -7,9 +7,8 @@ import (
 )
 
 func genBlocks(diskMap string) []uint? {
-    diskMap.Split("").Enumerated().FlatMap({
-        i := $0.0
-        n := $0.1.Int()?
+    diskMap.Split("").Enumerated().FlatMap(|(i, size)| {
+        n := size.Int()?
         fileID := if i % 2 == 0 { Some(uint(i/2)) } else { None }
         var mut out []uint?
         for j := 0; j < n; j++ {
