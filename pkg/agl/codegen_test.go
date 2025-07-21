@@ -10426,7 +10426,22 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen361(t *testing.T) {
+	src := `package main
+func main() {
+    abs(1)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglAbs(1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }

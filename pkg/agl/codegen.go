@@ -2025,7 +2025,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			content2 = func() string { return c2.F() }
 		} else {
 			if fnT, ok := t1.(types.FuncType); ok {
-				if !InArray(v.Name, []string{"make", "append", "len", "new", "AglAbs", "min", "max"}) && fnT.IsGeneric() {
+				if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "min", "max"}) && fnT.IsGeneric() {
 					oFnT := g.env.Get(v.Name)
 					newFnT := g.env.GetType(v)
 					fnDecl := g.genFuncDecls[oFnT.String()]
