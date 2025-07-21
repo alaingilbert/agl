@@ -559,7 +559,14 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 			returnTyp = infer.env.GetType2(decl.Type.Result, infer.fset)
 			if v, ok := decl.Type.Result.(*ast.IndexExpr); ok {
 				iT := infer.env.GetType2(v.Index, infer.fset)
-				returnTyp = returnTyp.(types.FuncType).Concrete([]types.Type{iT})
+				switch vv := returnTyp.(type) {
+				case types.FuncType:
+					returnTyp = vv.Concrete([]types.Type{iT})
+				case types.InterfaceType:
+					returnTyp = vv.Concrete([]types.Type{iT})
+				default:
+					panic(fmt.Sprintf("%v", to(returnTyp)))
+				}
 			}
 			infer.SetType(decl.Type.Result, returnTyp)
 		}
