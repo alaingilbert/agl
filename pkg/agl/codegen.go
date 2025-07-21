@@ -3250,8 +3250,14 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 	return
 }
 
-func GenHeaders() string {
-	return `import (
+func GenCore(packageName string) string {
+	return GenContent(packageName)
+}
+
+func GenContent(packageName string) string {
+	return GeneratedFilePrefix +
+		fmt.Sprintf("package %s\n", packageName) + `
+import (
 	aglImportBytes "bytes"
 	aglImportCmp "cmp"
 	aglImportFmt "fmt"
@@ -3263,19 +3269,8 @@ func GenHeaders() string {
 	aglImportSlices "slices"
 	aglImportStrconv "strconv"
 	aglImportStrings "strings"
-)`
-}
+)
 
-func GenCore(packageName string) string {
-	out := GeneratedFilePrefix
-	out += fmt.Sprintf("package %s\n", packageName)
-	out += GenHeaders()
-	out += GenContent()
-	return out
-}
-
-func GenContent() string {
-	return `
 func AglBytesEqual(a, b []byte) bool {
 	return aglImportBytes.Equal(a, b)
 }
