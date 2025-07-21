@@ -31,7 +31,7 @@ func part1(lines [][]string, width, height int) int {
     for y, line := range lines {
         for x := range line {
             direction_loop:
-            for _, dir := range directions {
+            for dir in directions {
                 dx, dy := dir
                 for i := 0; i < target.Len(); i++ {
                     nx := x + dx * i
