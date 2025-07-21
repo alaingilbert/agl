@@ -10410,6 +10410,27 @@ type AglTupleStruct_uint_uint struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen360(t *testing.T) {
+	src := `package main
+func main() {
+	mut a := []int{1, 2, 3}
+	for e in a {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	for _, e := range a {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +

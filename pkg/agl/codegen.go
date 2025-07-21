@@ -2519,7 +2519,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							out += c2.F() + e(" := "+varName+"\n")
 						}
 					} else {
-						switch yT.(type) {
+						switch types.Unwrap(yT).(type) {
 						case types.ArrayType:
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.SetType:

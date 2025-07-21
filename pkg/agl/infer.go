@@ -2926,7 +2926,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			infer.expr(cond.Y)
 			yT := infer.GetType(cond.Y)
 			var t types.Type
-			switch v := yT.(type) {
+			switch v := types.Unwrap(yT).(type) {
 			case types.ArrayType:
 				if xTup, ok := cond.X.(*ast.TupleExpr); ok {
 					yTupT := v.Elt.(types.TupleType)
