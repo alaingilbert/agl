@@ -337,6 +337,20 @@ func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+type VecIter[T any] struct {
+	v AglVec[T]
+	i int
+}
+
+func (v *VecIter[T]) Next() Option[T] {
+	if v.i >= len(v.v) {
+		return MakeOptionNone[T]()
+	}
+	res := v.v[v.i]
+	v.i++
+	return MakeOptionSome(res)
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
