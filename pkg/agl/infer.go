@@ -1758,6 +1758,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		} else if fnName == "Swap" {
 			fnT := infer.env.GetFn("agl1.Vec.Swap").T("T", idTT.Elt)
 			param0 := fnT.Params[0]
+			if TryCast[types.MutType](fnT.Params[0]) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
+			}
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
 				return

@@ -10429,7 +10429,6 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
-
 func TestCodeGen361(t *testing.T) {
 	src := `package main
 func main() {
@@ -10444,6 +10443,16 @@ func main() {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen362(t *testing.T) {
+	src := `package main
+func main() {
+    a := []int{1, 2, 3}
+	a.Swap(1, 2)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "4:4: method 'Swap' cannot be called on immutable type 'Vec'")
 }
 
 //func TestCodeGen318(t *testing.T) {
