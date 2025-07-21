@@ -81,7 +81,7 @@ func reorder2(mut blocks []uint?) {
                     lastFileID = fileID;
                     doSwap(mut blocks, mut freeSpots, toSwap);
                 }
-                toSwap = make([]uint, 0)
+                toSwap.Clear()
             }
             toSwap.Push(p2);
         }
