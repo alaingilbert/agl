@@ -1,6 +1,7 @@
 package main
 
 //import "math/rand"
+//import aglCoreImportIter "iter"
 
 // Creates a sequence of pairs built out of two underlying sequences.
 func zip[T, U any](a []T, b []U) [](T, U) {
@@ -13,6 +14,16 @@ func zip[T, U any](a []T, b []U) [](T, U) {
 	}
 	return out
 }
+
+//func (v agl1.Vec[T]) Iter() aglCoreImportIter.Seq[T] {
+//	return func(yield func(T) bool) {
+//		for _, e := range v {
+//			if !yield(e) {
+//				return
+//			}
+//		}
+//	}
+//}
 
 func (v agl1.Vec[T]) Enumerated() [](int, T) {
 	mut out := make([](int, T), 0)

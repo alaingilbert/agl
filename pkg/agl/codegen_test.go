@@ -10560,6 +10560,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+//func TestCodeGen367(t *testing.T) {
+//	src := `package main
+//func main() {
+//	for e := range []int{1, 2, 3}.Iter() {
+//	}
+//}`
+//	expected := `// agl:generated
+//package main
+//import aglCoreImportIter "iter"
+//func main() {
+//	for e := range AglVecIter_T_int([]int{1, 2, 3}) {
+//	}
+//}
+//func AglVecIter_T_int(v []int) aglCoreImportIter.Seq[int] {
+//	return func(yield func(T) bool) {
+//		for _, e := range v {
+//			if !yield(e) {
+//				return
+//			}
+//		}
+//	}
+//}
+//`
+//	test := NewTest(src, WithMutEnforced(true))
+//	tassert.Equal(t, 0, len(test.errs))
+//	testCodeGen2(t, expected, test)
+//}
+
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
