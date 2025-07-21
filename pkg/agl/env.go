@@ -476,6 +476,14 @@ func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token
 						t := nenv.GetType2(v, fset)
 						env.Define(nil, specName, t)
 					case *ast.FuncType:
+						if spec.TypeParams != nil {
+							for _, e := range spec.TypeParams.List {
+								typ := nenv.GetType2(e.Type, fset)
+								for _, n := range e.Names {
+									nenv.Define(nil, n.Name, types.GenericType{Name: n.Name, W: typ})
+								}
+							}
+						}
 						t := nenv.GetType2(v, fset).(types.FuncType)
 						t.Name = specName
 						if spec.TypeParams != nil {
