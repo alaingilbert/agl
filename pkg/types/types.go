@@ -372,6 +372,17 @@ type InterfaceType struct {
 	Methods    []InterfaceMethod
 }
 
+func (i InterfaceType) Concrete(typs []Type) InterfaceType {
+	var newParams []Type
+	for idx, p := range i.TypeParams {
+		if _, ok := p.(GenericType); ok {
+			newParams = append(newParams, typs[idx])
+		}
+	}
+	i.TypeParams = newParams
+	return i
+}
+
 func (i InterfaceType) GetMethodByName(name string) Type {
 	for _, m := range i.Methods {
 		if m.Name == name {
