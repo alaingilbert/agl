@@ -577,6 +577,24 @@ func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+func AglIteratorEach[T any](it Iterator[T]) aglImportIter.Seq[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := it.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
+func AglSequenceEach[T any](seq Sequence[T]) aglImportIter.Seq[T] {
+	return AglIteratorEach(seq.Iter())
+}
+
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.
 func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	newSet := make(AglSet[T])
