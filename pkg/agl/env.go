@@ -912,7 +912,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Remove", "func [T any](a []T, i int)")
 		e.DefineFn(nenv, "agl1.Vec.Sorted", "func [E cmp.Ordered](a []E) []E", WithDesc("Returns the elements of the sequence, sorted."))
 		e.DefineFn(nenv, "agl1.Vec.Sum", "func [T cmp.Ordered](a []T) T")
-		e.DefineFn(nenv, "agl1.Vec.Swap", "func [T any](mut a []T, b, c int)")
+		e.DefineFn(nenv, "agl1.Vec.Swap", "func [T any](mut a []T, b, c AglInteger)")
 		e.DefineFn(nenv, "agl1.Vec.__ADD", "func [T any](a, b []T) []T")
 		e.DefineFn(nenv, "agl1.Map.ContainsKey", "func [K comparable, V any](m map[K]V, k K) bool")
 		e.DefineFn(nenv, "agl1.Map.Len", "func [K comparable, V any]() int")
