@@ -198,10 +198,11 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, fset *token.F
 			t := env.GetType2(param.Type, fset)
 			n := max(len(param.Names), 1)
 			for i := 0; i < n; i++ {
+				tt := t
 				if len(param.Names) > i && param.Names[i].Mutable.IsValid() {
-					t = types.MutType{W: t}
+					tt = types.MutType{W: tt}
 				}
-				params = append(params, t)
+				params = append(params, tt)
 			}
 		}
 	}
