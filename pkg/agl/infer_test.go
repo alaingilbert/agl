@@ -36,7 +36,7 @@ func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position)
 
 type Test struct {
 	f, f2   *ast.File
-	imports []*ast.ImportSpec
+	imports map[string]*ast.ImportSpec
 	fset    *token.FileSet
 	env     *Env
 	file    *token.File

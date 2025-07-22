@@ -37,7 +37,7 @@ func NewInferrer(env *Env) *Inferrer {
 	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) ([]*ast.ImportSpec, []error) {
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) (map[string]*ast.ImportSpec, []error) {
 	if f.Doc != nil {
 		for _, r := range f.Doc.List {
 			if r.Text == "// agl:disable(mut_check)" {
@@ -45,7 +45,7 @@ func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileS
 			}
 		}
 	}
-	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced}
+	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced, imports: make(map[string]*ast.ImportSpec)}
 	fileInferrer.Infer()
 	return fileInferrer.imports, fileInferrer.Errors
 }
@@ -64,7 +64,7 @@ type FileInferrer struct {
 	Errors          []error
 	mutEnforced     bool
 	destructure     bool
-	imports         []*ast.ImportSpec
+	imports         map[string]*ast.ImportSpec
 }
 
 type InferError struct {
@@ -1826,7 +1826,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		} else {
 			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)
 			if fnFullName == "agl1.Vec.Iter" {
-				infer.imports = append(infer.imports, &ast.ImportSpec{Name: &ast.Ident{Name: "aglCoreImportIter"}, Path: &ast.BasicLit{Value: `"iter"`}})
+				infer.imports["aglCoreImportIter_iter"] = &ast.ImportSpec{Name: &ast.Ident{Name: "aglCoreImportIter"}, Path: &ast.BasicLit{Value: `"iter"`}}
 			}
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {

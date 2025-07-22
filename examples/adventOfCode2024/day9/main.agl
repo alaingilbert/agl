@@ -72,6 +72,7 @@ func doSwap(mut blocks []uint?, mut freeSpots [](uint, uint), toSwap []uint) {
 func reorder2(mut blocks []uint?) {
     mut freeSpots := getFreeSpots(blocks)
     var mut toSwap []uint
+    a := toSwap.Iter()
     mut lastFileID := uint(math.MaxUint64)
     for p2 in (0..uint(blocks.Len())).Rev() {
         if Some(blockID) := blocks[p2] {

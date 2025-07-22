@@ -942,8 +942,8 @@ func main() {
 	expected := `// agl:generated
 package main
 import (
-	"os"
 	"fmt"
+	"os"
 )
 func main() {
 	aglTmpVar1, aglTmpErr1 := os.ReadFile("test.txt")
@@ -2006,8 +2006,8 @@ func main() {
 	expected := `// agl:generated
 package main
 import (
-	"os"
 	"fmt"
+	"os"
 )
 func main() {
 	aglTmpErr1 := os.WriteFile("test.txt", []byte("test"), 0755)
@@ -2628,8 +2628,8 @@ import (
 	expected := `// agl:generated
 package main
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -3834,8 +3834,8 @@ func test() string? {
 	expected := `// agl:generated
 package main
 import (
-	"strconv"
 	"os"
+	"strconv"
 )
 func test() Option[string] {
 	aglTmp1, ok := os.LookupEnv("")
@@ -6499,8 +6499,8 @@ func main() {
 package main
 import (
 	"fmt"
-	"net/http"
 	"io"
+	"net/http"
 )
 func main() {
 	req := AglHttpNewRequest(http.MethodGet, "https://jsonip.com", MakeOptionNone[io.Reader]()).Unwrap()
@@ -7153,9 +7153,9 @@ func main () {
 package main
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"golang.org/x/net/html"
-	"io"
 )
 func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
@@ -8595,8 +8595,8 @@ func main() {
 	expected := `// agl:generated
 package main
 import (
-	"os"
 	"fmt"
+	"os"
 )
 func main() {
 	aglTmp1, aglTmpErr1 := AglWrapNative2(os.ReadFile("test.txt")).NativeUnwrap()
@@ -10940,8 +10940,8 @@ func main() {
 	expected := `// agl:generated
 package main
 import (
-	"os"
 	"fmt"
+	"os"
 )
 func getFirstArg() Result[string] {
 	if len(os.Args) < 2 {
