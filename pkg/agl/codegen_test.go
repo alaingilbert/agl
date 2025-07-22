@@ -10560,6 +10560,18 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen366(t *testing.T) {
+	src := `package main
+func main() {
+	"Hello World!".Lowercased()
+}`
+	expected := `// agl:generated
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
