@@ -1049,10 +1049,7 @@ func AglVecPop[T any](a *[]T) Option[T] {
 // AglVecPopIf Removes and returns the last element from a vector if the predicate returns true,
 // or None if the predicate returns false or the vector is empty (the predicate will not be called in that case).
 func AglVecPopIf[T any](a *[]T, pred func() bool) Option[T] {
-	if len(*a) == 0 {
-		return MakeOptionNone[T]()
-	}
-	if !pred() {
+	if len(*a) == 0 || !pred() {
 		return MakeOptionNone[T]()
 	}
 	var el T
