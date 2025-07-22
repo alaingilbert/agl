@@ -282,6 +282,15 @@ func main() {
     for (a, b, c) in [](int, string, bool){(1, "foo", true), (2, "bar", false)} {
         fmt.Println(a, b, c)
     }
+    for el in (0..3) { // 0 1 2
+        fmt.Println(el)
+    }
+    for el in (0..=3) { // 0 1 2 3
+		fmt.Println(el)
+    }
+    for el in (0..3).Rev() { // 2 1 0
+        fmt.Println(el)
+    }
 }
 ```
 
