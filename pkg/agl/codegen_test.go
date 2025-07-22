@@ -10566,6 +10566,10 @@ func main() {
 	"Hello World!".Lowercased()
 }`
 	expected := `// agl:generated
+package main
+func main() {
+	AglStringLowercased("Hello World!")
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
