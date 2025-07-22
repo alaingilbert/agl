@@ -10611,6 +10611,7 @@ func AglVecIter_T_int(v []int) iter.Seq[int] {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	//tassert.Equal(t, "func ([]int) Iter() iter.Seq[int]", test.TypeAt(3, 32).String()) // TODO
 	testCodeGen2(t, expected, test)
 }
 
