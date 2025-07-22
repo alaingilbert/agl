@@ -1068,7 +1068,7 @@ func (f FuncType) GoStr() string {
 		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
 			switch v := t.(type) {
 			case GenericType:
-				if f.Name == "aglCoreImportIter.Seq" {
+				if f.Name == "iter.Seq" {
 					return v.TypeParamGoStr2()
 				}
 				return v.TypeParamGoStr()

@@ -8238,14 +8238,14 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-import aglCoreImportIter "iter"
+import "iter"
 func AglPub_test(a []int) {
 	AglVecIter_T_int(a)
 }
 func main() {
 	AglPub_test([]int{1, 2})
 }
-func AglVecIter_T_int(v []int) aglCoreImportIter.Seq[int] {
+func AglVecIter_T_int(v []int) iter.Seq[int] {
 	return func(yield func(int) bool) {
 		for _, e := range v {
 			if !yield(e) {
@@ -10594,12 +10594,12 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-import aglCoreImportIter "iter"
+import "iter"
 func main() {
 	for e := range AglVecIter_T_int([]int{1, 2, 3}) {
 	}
 }
-func AglVecIter_T_int(v []int) aglCoreImportIter.Seq[int] {
+func AglVecIter_T_int(v []int) iter.Seq[int] {
 	return func(yield func(int) bool) {
 		for _, e := range v {
 			if !yield(e) {

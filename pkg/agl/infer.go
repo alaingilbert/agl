@@ -1826,7 +1826,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		} else {
 			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)
 			if fnFullName == "agl1.Vec.Iter" {
-				infer.imports["aglCoreImportIter_iter"] = &ast.ImportSpec{Name: &ast.Ident{Name: "aglCoreImportIter"}, Path: &ast.BasicLit{Value: `"iter"`}}
+				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
 			}
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
