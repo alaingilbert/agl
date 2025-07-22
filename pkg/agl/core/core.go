@@ -515,28 +515,46 @@ func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
 
-func AglSetMin[T cmp.Ordered](s AglSet[T]) Option[T] {
-	if len(s) == 0 {
-		return MakeOptionNone[T]()
+func AglIterMin[T cmp.Ordered](it iter.Seq[T]) Option[T] {
+	var out T
+	first := true
+	for e := range it {
+		if first {
+			out = e
+			first = false
+		} else {
+			out = min(out, e)
+		}
 	}
-	keys := slices.Sorted(maps.Keys(s))
-	out := keys[0]
-	for _, k := range keys {
-		out = min(out, k)
+	if first {
+		return MakeOptionNone[T]()
 	}
 	return MakeOptionSome(out)
 }
 
-func AglSetMax[T cmp.Ordered](s AglSet[T]) Option[T] {
-	if len(s) == 0 {
+func AglIterMax[T cmp.Ordered](it iter.Seq[T]) Option[T] {
+	var out T
+	first := true
+	for e := range it {
+		if first {
+			out = e
+			first = false
+		} else {
+			out = max(out, e)
+		}
+	}
+	if first {
 		return MakeOptionNone[T]()
 	}
-	keys := slices.Sorted(maps.Keys(s))
-	out := keys[0]
-	for _, k := range keys {
-		out = max(out, k)
-	}
 	return MakeOptionSome(out)
+}
+
+func AglSetMin[T cmp.Ordered](s AglSet[T]) Option[T] {
+	return AglIterMin(s.Iter())
+}
+
+func AglSetMax[T cmp.Ordered](s AglSet[T]) Option[T] {
+	return AglIterMax(s.Iter())
 }
 
 // AglSetEquals returns a Boolean value indicating whether two sets have equal elements.
