@@ -2,6 +2,7 @@ package main
 
 import (
 	"agl/pkg/agl"
+	"agl/pkg/parser"
 	"agl/pkg/token"
 	"bytes"
 	"context"
@@ -18,7 +19,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -206,11 +206,11 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	if cmd.NArg() > 0 {
 		input = cmd.Args().Get(0)
 	}
-	_, _, out := genCode1("", []byte(input))
 	core, _ := agl.ContentFs.ReadFile(filepath.Join("core", "core.go"))
 	coreLines := strings.Split(string(core), "\n")
+	coreImports := []byte(strings.Join(coreLines[:16], "\n"))
+	_, _, out := genCode1("", []byte(input), coreImports)
 	lines := strings.Split(out, "\n")
-	lines = slices.Insert(lines, 2, coreLines[2:16]...)
 	out = strings.Join(lines, "\n")
 	out += strings.Join(coreLines[16:], "\n")
 	fmt.Println(out)
@@ -263,7 +263,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	by := agl.Must(os.ReadFile(fileName))
-	g, fset, src := genCode1(fileName, by)
+	g, fset, src := genCode1(fileName, by, nil)
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -491,7 +491,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	return nil
 }
 
-func genCode1(fileName string, src []byte) (*agl.Generator, *token.FileSet, string) {
+func genCode1(fileName string, src, coreGoImports []byte) (*agl.Generator, *token.FileSet, string) {
 	fset, f, f2 := agl.ParseSrc(string(src))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
@@ -500,12 +500,20 @@ func genCode1(fileName string, src []byte) (*agl.Generator, *token.FileSet, stri
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
+	coreGo, _ := parser.ParseFile(fset, "", coreGoImports, parser.AllErrors|parser.ParseComments)
+	for _, i := range coreGo.Imports {
+		key := i.Path.Value
+		if i.Name != nil {
+			key = i.Name.Name + "_" + key
+		}
+		imports[key] = i
+	}
 	g := agl.NewGenerator(i.Env, f, f2, imports, fset)
 	return g, fset, g.Generate()
 }
 
 func genCode(fileName string, src []byte) string {
-	_, _, out := genCode1(fileName, src)
+	_, _, out := genCode1(fileName, src, nil)
 	return out
 }
 
