@@ -37,7 +37,7 @@ func NewInferrer(env *Env) *Inferrer {
 	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) []error {
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) ([]*ast.ImportSpec, []error) {
 	if f.Doc != nil {
 		for _, r := range f.Doc.List {
 			if r.Text == "// agl:disable(mut_check)" {
@@ -47,7 +47,7 @@ func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileS
 	}
 	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced}
 	fileInferrer.Infer()
-	return fileInferrer.Errors
+	return fileInferrer.imports, fileInferrer.Errors
 }
 
 type FileInferrer struct {
@@ -64,6 +64,7 @@ type FileInferrer struct {
 	Errors          []error
 	mutEnforced     bool
 	destructure     bool
+	imports         []*ast.ImportSpec
 }
 
 type InferError struct {
@@ -658,6 +659,10 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	if decl.Type.Result != nil {
 		infer.expr(decl.Type.Result)
 		returnT = infer.env.GetType2(decl.Type.Result, infer.fset)
+		switch v := returnT.(type) {
+		case types.FuncType:
+			returnT = v.RenameGenericParameter("V", "T")
+		}
 		switch r := returnT.(type) {
 		case types.ResultType:
 			r.Bubble = true
@@ -1749,7 +1754,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "Push", "Remove", "Clone", "Clear", "Indices", "PushFront",
-			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "Iter", "__ADD"}) {
+			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "__ADD"}) {
 			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			sumFnT.Recv = []types.Type{oidT}
 			if len(sumFnT.Params) > 0 {
@@ -1820,6 +1825,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, fnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)
+			if fnFullName == "agl1.Vec.Iter" {
+				infer.imports = append(infer.imports, &ast.ImportSpec{Name: &ast.Ident{Name: "aglCoreImportIter"}, Path: &ast.BasicLit{Value: `"iter"`}})
+			}
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
 				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
@@ -2247,7 +2255,8 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			}
 		}
 		// implicit return
-		ft := infer.env.GetType(expr).(types.FuncType)
+		t := types.Unwrap(infer.env.GetType(expr))
+		ft := t.(types.FuncType)
 		switch v := expr.Body.(type) {
 		case *ast.BlockStmt:
 		default:

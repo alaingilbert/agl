@@ -35,11 +35,12 @@ func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position)
 }
 
 type Test struct {
-	f, f2 *ast.File
-	fset  *token.FileSet
-	env   *Env
-	file  *token.File
-	errs  []error
+	f, f2   *ast.File
+	imports []*ast.ImportSpec
+	fset    *token.FileSet
+	env     *Env
+	file    *token.File
+	errs    []error
 }
 
 func (t *Test) PrintErrors() {
@@ -69,25 +70,26 @@ func NewTest(src string, opts ...TestOption) *Test {
 	noop(f2)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_ = i.InferFile("core.agl", f2, fset, c.MutEnforced)
-	errs := i.InferFile("", f, fset, c.MutEnforced)
+	_, _ = i.InferFile("core.agl", f2, fset, c.MutEnforced)
+	imports, errs := i.InferFile("", f, fset, c.MutEnforced)
 	file := fset.File(1)
 	return &Test{
-		f:    f,
-		f2:   f2,
-		fset: fset,
-		env:  env,
-		file: file,
-		errs: errs,
+		f:       f,
+		f2:      f2,
+		imports: imports,
+		fset:    fset,
+		env:     env,
+		file:    file,
+		errs:    errs,
 	}
 }
 
 func (t *Test) GenCode(opts ...GeneratorOption) string {
-	return NewGenerator(t.env, t.f, t.f2, t.fset, opts...).Generate()
+	return NewGenerator(t.env, t.f, t.f2, t.imports, t.fset, opts...).Generate()
 }
 
 func (t *Test) GenCode2(opts ...GeneratorOption) (string, string) {
-	return NewGenerator(t.env, t.f, t.f2, t.fset, opts...).Generate2()
+	return NewGenerator(t.env, t.f, t.f2, t.imports, t.fset, opts...).Generate2()
 }
 
 func (t *Test) TypeAt(row, col int) types.Type {

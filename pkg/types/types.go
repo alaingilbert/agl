@@ -443,6 +443,12 @@ func (g GenericType) TypeParamGoStr() string {
 	}
 	return fmt.Sprintf("%s %s", g.Name, g.W.String())
 }
+func (g GenericType) TypeParamGoStr2() string {
+	if g.W == nil {
+		return fmt.Sprintf("%s UNKNOWN", g.Name)
+	}
+	return fmt.Sprintf("%s", g.W.String())
+}
 func (g GenericType) GoStr() string     { return fmt.Sprintf("%s", g.Name) }
 func (g GenericType) GoStrType() string { return fmt.Sprintf("%s", g.Name) }
 func (g GenericType) String() string    { return fmt.Sprintf("%s", g.Name) }
@@ -955,10 +961,18 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			p = ReplGen(p, name, newTyp)
 			params = append(params, p)
 		}
+		var typeParams []Type
+		for _, p := range t1.TypeParams {
+			np := p.(GenericType)
+			if np.Name == name {
+				np.W = newTyp
+			}
+			typeParams = append(typeParams, np)
+		}
 		return FuncType{
 			Name:       t1.Name,
 			Recv:       t1.Recv,
-			TypeParams: t1.TypeParams,
+			TypeParams: typeParams,
 			Params:     params,
 			Return:     ReplGen(t1.Return, name, newTyp),
 			IsNative:   t1.IsNative,
@@ -1054,6 +1068,9 @@ func (f FuncType) GoStr() string {
 		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
 			switch v := t.(type) {
 			case GenericType:
+				if f.Name == "aglCoreImportIter.Seq" {
+					return v.TypeParamGoStr2()
+				}
 				return v.TypeParamGoStr()
 			default:
 				return t.GoStrType()

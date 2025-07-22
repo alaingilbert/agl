@@ -13,13 +13,13 @@ func getGenOutput(src string, opts ...GeneratorOption) (string, string) {
 	noop(f2)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_ = i.InferFile("core.agl", f2, fset, true)
-	errs := i.InferFile("", f, fset, true)
+	_, _ = i.InferFile("core.agl", f2, fset, true)
+	imports, errs := i.InferFile("", f, fset, true)
 	if len(errs) > 0 {
 		fmt.Println(errs)
 		return "", ""
 	}
-	g := NewGenerator(env, f, f2, fset, opts...)
+	g := NewGenerator(env, f, f2, imports, fset, opts...)
 	return g.Generate2()
 }
 
@@ -3454,8 +3454,8 @@ func main() {
 	fset, f, f2 := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_ = i.InferFile("core.agl", f2, fset, true)
-	errs := i.InferFile("", f, fset, true)
+	_, _ = i.InferFile("core.agl", f2, fset, true)
+	_, errs := i.InferFile("", f, fset, true)
 	fmt.Print(errs)
 	tassert.Equal(t, 1, 1)
 }
@@ -8238,11 +8238,21 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import aglCoreImportIter "iter"
 func AglPub_test(a []int) {
-	AglVecIter(a)
+	AglVecIter_T_int(a)
 }
 func main() {
 	AglPub_test([]int{1, 2})
+}
+func AglVecIter_T_int(v []int) aglCoreImportIter.Seq[int] {
+	return func(yield func(int) bool) {
+		for _, e := range v {
+			if !yield(e) {
+				return
+			}
+		}
+	}
 }
 `
 	testCodeGen2(t, expected, NewTest(src))
@@ -10569,6 +10579,34 @@ func main() {
 package main
 func main() {
 	AglStringLowercased("Hello World!")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen367(t *testing.T) {
+	src := `package main
+func main() {
+	for e := range []int{1, 2, 3}.Iter() {
+	}
+}`
+	expected := `// agl:generated
+package main
+import aglCoreImportIter "iter"
+func main() {
+	for e := range AglVecIter_T_int([]int{1, 2, 3}) {
+	}
+}
+func AglVecIter_T_int(v []int) aglCoreImportIter.Seq[int] {
+	return func(yield func(int) bool) {
+		for _, e := range v {
+			if !yield(e) {
+				return
+			}
+		}
+	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

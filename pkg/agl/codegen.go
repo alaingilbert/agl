@@ -37,6 +37,7 @@ type Generator struct {
 	emitEnabled      bool
 	asType           bool
 	ifVarName        string
+	imports          []*ast.ImportSpec
 }
 
 func (g *Generator) withAsType(clb func()) {
@@ -100,7 +101,7 @@ func AllowUnused() GeneratorOption {
 	}
 }
 
-func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...GeneratorOption) *Generator {
+func NewGenerator(env *Env, a, b *ast.File, imports []*ast.ImportSpec, fset *token.FileSet, opts ...GeneratorOption) *Generator {
 	conf := &GeneratorConf{}
 	for _, opt := range opts {
 		opt(conf)
@@ -118,6 +119,7 @@ func NewGenerator(env *Env, a, b *ast.File, fset *token.FileSet, opts ...Generat
 		genFuncDecls:     genFns,
 		allowUnused:      conf.AllowUnused,
 		emitEnabled:      true,
+		imports:          imports,
 	}
 }
 
@@ -357,7 +359,7 @@ func (g *Generator) genExtensionString(ext ExtensionString) (out string) {
 		}
 		if result := decl.Type.Result; result != nil {
 			resT := g.env.GetType(result)
-			resultStr = utils.PrefixIf(resT.GoStr(), " ")
+			resultStr = utils.PrefixIf(resT.GoStrType(), " ")
 		}
 		out += e("func AglString"+name+"(") + paramsStr() + e(")"+resultStr+" {\n")
 		if decl.Body != nil {
@@ -499,8 +501,8 @@ func (g *Generator) Generate2() (out1, out2 string) {
 func (g *Generator) Generate() (out string) {
 	out += g.Emit(GeneratedFilePrefix)
 	out += g.genPackage()
-	out += g.genImports(g.a)
-	out += g.genImports(g.b)
+	out += g.genImports(g.a.Imports)
+	out += g.genImports(g.imports)
 	out4 := g.genDecls(g.b)
 	out5 := g.genDecls(g.a)
 	out += out4.F() + out5.F()
@@ -535,7 +537,7 @@ func (g *Generator) genPackage() string {
 	return g.Emit("package "+g.a.Name.Name+"\n", WithNode(g.a.Name))
 }
 
-func (g *Generator) genImports(f *ast.File) (out string) {
+func (g *Generator) genImports(imports []*ast.ImportSpec) (out string) {
 	genRow := func(spec *ast.ImportSpec) (out string) {
 		if spec.Name != nil {
 			out += spec.Name.Name + " "
@@ -546,12 +548,12 @@ func (g *Generator) genImports(f *ast.File) (out string) {
 		}
 		return out + pathValue + "\n"
 	}
-	if len(f.Imports) == 1 {
-		spec := f.Imports[0]
+	if len(imports) == 1 {
+		spec := imports[0]
 		out += g.Emit("import "+genRow(spec), WithNode(spec))
-	} else if len(f.Imports) > 1 {
+	} else if len(imports) > 1 {
 		out += g.Emit("import (\n")
-		for _, spec := range f.Imports {
+		for _, spec := range imports {
 			out += g.Emit("\t"+genRow(spec), WithNode(spec))
 		}
 		out += g.Emit(")\n")
@@ -712,15 +714,16 @@ func (g *Generator) genIdent(expr *ast.Ident) (out GenFrag) {
 			expr.Name = strings.Replace(expr.Name, "@COLUMN", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Column), 1)
 		}
 		t := g.env.GetType(expr)
-		if v, ok := t.(types.TypeType); ok {
+		switch v := t.(type) {
+		case types.TypeType:
 			t = v.W
 			switch typ := t.(type) {
 			case types.GenericType:
 				if typ.IsType {
-					for k, v := range g.genMap {
+					for k, vv := range g.genMap {
 						if typ.Name == k {
-							typ.Name = v.GoStr()
-							typ.W = v
+							typ.Name = vv.GoStr()
+							typ.W = vv
 						}
 					}
 					return e(typ.GoStr())
@@ -1518,6 +1521,15 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 				}
 				if _, ok := field.Type.(*ast.TupleExpr); ok {
 					out += e(g.env.GetType(field.Type).GoStr())
+				} else if id, ok := field.Type.(*ast.Ident); ok && TryCast[types.GenericType](g.env.GetType(id)) {
+					typ := g.env.GetType(id).(types.GenericType)
+					if vv, ok := g.genMap[id.Name]; ok {
+						typ.Name = vv.GoStr()
+						typ.W = vv
+						out += e(typ.GoStr())
+					} else {
+						out += g.genExpr(field.Type).F()
+					}
 				} else {
 					out += g.genExpr(field.Type).F()
 				}
@@ -1801,7 +1813,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			eltTStr := eltT.GoStr()
 			fnName := x.Sel.Name
 			switch fnName {
-			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted", "Iter":
+			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
 			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}

@@ -909,7 +909,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
 		e.DefineFn(nenv, "agl1.Vec.IsEmpty", "func [T any](a []T) bool")
-		e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
+		//e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl1.Vec.Last", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.Len", "func [T any](a []T) int", WithDesc("The number of elements in the array."))
@@ -1266,6 +1266,10 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			case types.ArrayType:
 				return v.Elt
 			}
+		}
+		switch v := t.(type) {
+		case types.FuncType:
+			t = v.RenameGenericParameter("V", "T")
 		}
 		return t
 	case *ast.ParenExpr:
