@@ -386,12 +386,12 @@ func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited
 	}
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
-	_ = i.InferFile(fileName, f2, fset, true)
-	errs := i.InferFile(fileName, f, fset, true)
+	_, _ = i.InferFile(fileName, f2, fset, true)
+	imports, errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
-	g := agl.NewGenerator(i.Env, f, f2, fset)
+	g := agl.NewGenerator(i.Env, f, f2, imports, fset)
 	src := g.Generate()
 	path := strings.Replace(fileName, ".agl", ".go", 1)
 	if file, err := os.Open(path); err == nil {
@@ -496,11 +496,11 @@ func genCode1(fileName string, src []byte) (*agl.Generator, *token.FileSet, stri
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	i.InferFile("core.agl", f2, fset, true)
-	errs := i.InferFile(fileName, f, fset, true)
+	imports, errs := i.InferFile(fileName, f, fset, true)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
-	g := agl.NewGenerator(i.Env, f, f2, fset)
+	g := agl.NewGenerator(i.Env, f, f2, imports, fset)
 	return g, fset, g.Generate()
 }
 

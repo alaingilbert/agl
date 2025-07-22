@@ -130,8 +130,8 @@ func (s *Server) updateDocument(uri string, content string) error {
 	// Create an environment and infer types
 	env := agl.NewEnv(s.fset)
 	inferrer := agl.NewInferrer(env)
-	_ = inferrer.InferFile("core.agl", f2, s.fset, false)
-	errs := inferrer.InferFile(uri, file, s.fset, false)
+	_, _ = inferrer.InferFile("core.agl", f2, s.fset, false)
+	_, errs := inferrer.InferFile(uri, file, s.fset, false)
 	if len(errs) > 0 {
 		diagnostics := make([]lsp.Diagnostic, 0, len(errs))
 		for _, e := range errs {
