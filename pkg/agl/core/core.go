@@ -1,17 +1,17 @@
 package main
 
 import (
-	aglImportBytes "bytes"
-	aglImportCmp "cmp"
-	aglImportFmt "fmt"
-	aglImportIo "io"
-	aglImportIter "iter"
-	aglImportMaps "maps"
-	aglImportMath "math"
-	aglImportHttp "net/http"
-	aglImportSlices "slices"
-	aglImportStrconv "strconv"
-	aglImportStrings "strings"
+	"bytes"
+	"cmp"
+	"fmt"
+	"io"
+	"iter"
+	"maps"
+	"math"
+	"net/http"
+	"slices"
+	"strconv"
+	"strings"
 )
 
 type Signed interface {
@@ -39,7 +39,7 @@ type Number interface {
 }
 
 func AglBytesEqual(a, b []byte) bool {
-	return aglImportBytes.Equal(a, b)
+	return bytes.Equal(a, b)
 }
 
 func AglWrapNative1(err error) Result[AglVoid] {
@@ -73,7 +73,7 @@ func (o Option[T]) String() string {
 	if o.IsNone() {
 		return "None"
 	}
-	return aglImportFmt.Sprintf("Some(%v)", *o.t)
+	return fmt.Sprintf("Some(%v)", *o.t)
 }
 
 func (o Option[T]) IsSome() bool {
@@ -128,9 +128,9 @@ type Result[T any] struct {
 
 func (r Result[T]) String() string {
 	if r.IsErr() {
-		return aglImportFmt.Sprintf("Err(%v)", r.e)
+		return fmt.Sprintf("Err(%v)", r.e)
 	}
-	return aglImportFmt.Sprintf("Ok(%v)", *r.t)
+	return fmt.Sprintf("Ok(%v)", *r.t)
 }
 
 func (r Result[T]) IsErr() bool {
@@ -143,7 +143,7 @@ func (r Result[T]) IsOk() bool {
 
 func (r Result[T]) Unwrap() T {
 	if r.IsErr() {
-		panic(aglImportFmt.Sprintf("unwrap on an Err value: %s", r.e))
+		panic(fmt.Sprintf("unwrap on an Err value: %s", r.e))
 	}
 	return *r.t
 }
@@ -307,7 +307,7 @@ func AglAssert(pred bool, msg ...string) {
 	}
 }
 
-func AglVecIn[T aglImportCmp.Ordered](a []T, v T) bool {
+func AglVecIn[T cmp.Ordered](a []T, v T) bool {
 	for _, el := range a {
 		if el == v {
 			return true
@@ -363,7 +363,7 @@ type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
 
-func (v AglVec[T]) Iter() aglImportIter.Seq[T] {
+func (v AglVec[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, e := range v {
 			if !yield(e) {
@@ -373,7 +373,7 @@ func (v AglVec[T]) Iter() aglImportIter.Seq[T] {
 	}
 }
 
-func AglVecIter[T any](v AglVec[T]) aglImportIter.Seq[T] {
+func AglVecIter[T any](v AglVec[T]) iter.Seq[T] {
 	return v.Iter()
 }
 
@@ -384,7 +384,7 @@ type DictEntry[K comparable, V any] struct {
 
 type AglMap[K comparable, V any] map[K]V
 
-func (m AglMap[K, V]) Iter() aglImportIter.Seq[K] { return AglMapKeys(m) }
+func (m AglMap[K, V]) Iter() iter.Seq[K] { return AglMapKeys(m) }
 
 func (m AglMap[K, V]) Len() int { return len(m) }
 
@@ -426,7 +426,7 @@ func (r *AglRange[T]) NextBack() Option[T] {
 	}
 }
 
-func (r *AglRange[T]) Iter() aglImportIter.Seq[T] {
+func (r *AglRange[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -441,7 +441,7 @@ func (r *AglRange[T]) Iter() aglImportIter.Seq[T] {
 }
 
 type Iterator[T any] interface {
-	Iter() aglImportIter.Seq[T]
+	Iter() iter.Seq[T]
 	//Next() Option[T]
 }
 
@@ -455,7 +455,7 @@ type Rev[T any] struct {
 	it DoubleEndedIterator[T]
 }
 
-func (r Rev[T]) Iter() aglImportIter.Seq[T] {
+func (r Rev[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -481,7 +481,7 @@ func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 	return &Rev[T]{it: it}
 }
 
-func (s AglSet[T]) Iter() aglImportIter.Seq[T] {
+func (s AglSet[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for k := range s {
 			if !yield(k) {
@@ -491,16 +491,16 @@ func (s AglSet[T]) Iter() aglImportIter.Seq[T] {
 	}
 }
 
-func AglSetIter[T comparable](s AglSet[T]) aglImportIter.Seq[T] {
+func AglSetIter[T comparable](s AglSet[T]) iter.Seq[T] {
 	return s.Iter()
 }
 
 func (s AglSet[T]) String() string {
 	var tmp []string
 	for k := range s {
-		tmp = append(tmp, aglImportFmt.Sprintf("%v", k))
+		tmp = append(tmp, fmt.Sprintf("%v", k))
 	}
-	return aglImportFmt.Sprintf("set(%s)", aglImportStrings.Join(tmp, " "))
+	return fmt.Sprintf("set(%s)", strings.Join(tmp, " "))
 }
 
 func (s AglSet[T]) Intersects(other Iterator[T]) bool {
@@ -515,11 +515,11 @@ func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
 
-func AglSetMin[T aglImportCmp.Ordered](s AglSet[T]) Option[T] {
+func AglSetMin[T cmp.Ordered](s AglSet[T]) Option[T] {
 	if len(s) == 0 {
 		return MakeOptionNone[T]()
 	}
-	keys := aglImportSlices.Sorted(aglImportMaps.Keys(s))
+	keys := slices.Sorted(maps.Keys(s))
 	out := keys[0]
 	for _, k := range keys {
 		out = min(out, k)
@@ -527,11 +527,11 @@ func AglSetMin[T aglImportCmp.Ordered](s AglSet[T]) Option[T] {
 	return MakeOptionSome(out)
 }
 
-func AglSetMax[T aglImportCmp.Ordered](s AglSet[T]) Option[T] {
+func AglSetMax[T cmp.Ordered](s AglSet[T]) Option[T] {
 	if len(s) == 0 {
 		return MakeOptionNone[T]()
 	}
-	keys := aglImportSlices.Sorted(aglImportMaps.Keys(s))
+	keys := slices.Sorted(maps.Keys(s))
 	out := keys[0]
 	for _, k := range keys {
 		out = max(out, k)
@@ -759,44 +759,44 @@ func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 }
 
 func AglStringLines(s string) []string {
-	s = aglImportStrings.ReplaceAll(s, "\r\n", "\n")
-	return aglImportStrings.Split(s, "\n")
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	return strings.Split(s, "\n")
 }
 
 func AglStringReplace(s string, old, new string, n int) string {
-	return aglImportStrings.Replace(s, old, new, n)
+	return strings.Replace(s, old, new, n)
 }
 
 func AglStringReplaceAll(s string, old, new string) string {
-	return aglImportStrings.ReplaceAll(s, old, new)
+	return strings.ReplaceAll(s, old, new)
 }
 
 func AglStringTrimSpace(s string) string {
-	return aglImportStrings.TrimSpace(s)
+	return strings.TrimSpace(s)
 }
 
 func AglStringTrimPrefix(s string, prefix string) string {
-	return aglImportStrings.TrimPrefix(s, prefix)
+	return strings.TrimPrefix(s, prefix)
 }
 
 func AglStringHasPrefix(s string, prefix string) bool {
-	return aglImportStrings.HasPrefix(s, prefix)
+	return strings.HasPrefix(s, prefix)
 }
 
 func AglStringHasSuffix(s string, suffix string) bool {
-	return aglImportStrings.HasSuffix(s, suffix)
+	return strings.HasSuffix(s, suffix)
 }
 
 func AglStringSplit(s string, sep string) []string {
-	return aglImportStrings.Split(s, sep)
+	return strings.Split(s, sep)
 }
 
 func AglStringLowercased(s string) string {
-	return aglImportStrings.ToLower(s)
+	return strings.ToLower(s)
 }
 
 func AglStringUppercased(s string) string {
-	return aglImportStrings.ToUpper(s)
+	return strings.ToUpper(s)
 }
 
 func AglStringAsBytes(s string) []byte {
@@ -804,14 +804,14 @@ func AglStringAsBytes(s string) []byte {
 }
 
 func AglCleanupIntString(s string) (string, int) {
-	s = aglImportStrings.ReplaceAll(s, "_", "")
+	s = strings.ReplaceAll(s, "_", "")
 	var base int
 	switch {
-	case aglImportStrings.HasPrefix(s, "0b"):
+	case strings.HasPrefix(s, "0b"):
 		s, base = s[2:], 2
-	case aglImportStrings.HasPrefix(s, "0o"):
+	case strings.HasPrefix(s, "0o"):
 		s, base = s[2:], 8
-	case aglImportStrings.HasPrefix(s, "0x"):
+	case strings.HasPrefix(s, "0x"):
 		s, base = s[2:], 16
 	default:
 		base = 10
@@ -821,7 +821,7 @@ func AglCleanupIntString(s string) (string, int) {
 
 func AglStringInt(s string) Option[int] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseInt(s, base, 0)
+	v, err := strconv.ParseInt(s, base, 0)
 	if err != nil {
 		return MakeOptionNone[int]()
 	}
@@ -830,7 +830,7 @@ func AglStringInt(s string) Option[int] {
 
 func AglStringI8(s string) Option[int8] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseInt(s, base, 8)
+	v, err := strconv.ParseInt(s, base, 8)
 	if err != nil {
 		return MakeOptionNone[int8]()
 	}
@@ -839,7 +839,7 @@ func AglStringI8(s string) Option[int8] {
 
 func AglStringI16(s string) Option[int16] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseInt(s, base, 16)
+	v, err := strconv.ParseInt(s, base, 16)
 	if err != nil {
 		return MakeOptionNone[int16]()
 	}
@@ -848,7 +848,7 @@ func AglStringI16(s string) Option[int16] {
 
 func AglStringI32(s string) Option[int32] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseInt(s, base, 32)
+	v, err := strconv.ParseInt(s, base, 32)
 	if err != nil {
 		return MakeOptionNone[int32]()
 	}
@@ -857,7 +857,7 @@ func AglStringI32(s string) Option[int32] {
 
 func AglStringI64(s string) Option[int64] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseInt(s, base, 64)
+	v, err := strconv.ParseInt(s, base, 64)
 	if err != nil {
 		return MakeOptionNone[int64]()
 	}
@@ -866,7 +866,7 @@ func AglStringI64(s string) Option[int64] {
 
 func AglStringUint(s string) Option[uint] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseUint(s, base, 0)
+	v, err := strconv.ParseUint(s, base, 0)
 	if err != nil {
 		return MakeOptionNone[uint]()
 	}
@@ -875,7 +875,7 @@ func AglStringUint(s string) Option[uint] {
 
 func AglStringU8(s string) Option[uint8] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseUint(s, base, 8)
+	v, err := strconv.ParseUint(s, base, 8)
 	if err != nil {
 		return MakeOptionNone[uint8]()
 	}
@@ -884,7 +884,7 @@ func AglStringU8(s string) Option[uint8] {
 
 func AglStringU16(s string) Option[uint16] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseUint(s, base, 16)
+	v, err := strconv.ParseUint(s, base, 16)
 	if err != nil {
 		return MakeOptionNone[uint16]()
 	}
@@ -893,7 +893,7 @@ func AglStringU16(s string) Option[uint16] {
 
 func AglStringU32(s string) Option[uint32] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseUint(s, base, 32)
+	v, err := strconv.ParseUint(s, base, 32)
 	if err != nil {
 		return MakeOptionNone[uint32]()
 	}
@@ -902,7 +902,7 @@ func AglStringU32(s string) Option[uint32] {
 
 func AglStringU64(s string) Option[uint64] {
 	s, base := AglCleanupIntString(s)
-	v, err := aglImportStrconv.ParseUint(s, base, 64)
+	v, err := strconv.ParseUint(s, base, 64)
 	if err != nil {
 		return MakeOptionNone[uint64]()
 	}
@@ -910,7 +910,7 @@ func AglStringU64(s string) Option[uint64] {
 }
 
 func AglStringF32(s string) Option[float32] {
-	v, err := aglImportStrconv.ParseFloat(s, 32)
+	v, err := strconv.ParseFloat(s, 32)
 	if err != nil {
 		return MakeOptionNone[float32]()
 	}
@@ -918,28 +918,28 @@ func AglStringF32(s string) Option[float32] {
 }
 
 func AglStringF64(s string) Option[float64] {
-	v, err := aglImportStrconv.ParseFloat(s, 64)
+	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return MakeOptionNone[float64]()
 	}
 	return MakeOptionSome(v)
 }
 
-func AglVecSorted[E aglImportCmp.Ordered](a []E) []E {
-	return aglImportSlices.Sorted(aglImportSlices.Values(a))
+func AglVecSorted[E cmp.Ordered](a []E) []E {
+	return slices.Sorted(slices.Values(a))
 }
 
 func AglVecJoined(a []string, s string) string {
-	return aglImportStrings.Join(a, s)
+	return strings.Join(a, s)
 }
 
-func AglVecSum[T aglImportCmp.Ordered](a []T) (out T) {
+func AglVecSum[T cmp.Ordered](a []T) (out T) {
 	var zero T
 	return AglVecReduce(a, zero, func(acc, el T) T { return acc + el })
 }
 
 func AglAbs[T Number](e T) (out T) {
-	return T(aglImportMath.Abs(float64(e)))
+	return T(math.Abs(float64(e)))
 }
 
 func AglVecLast[T any](a []T) (out Option[T]) {
@@ -1019,7 +1019,7 @@ func AglVecRemove[T any](a *[]T, idx int) {
 
 // AglVecClone ...
 func AglVecClone[S ~[]E, E any](a S) S {
-	return aglImportSlices.Clone(a)
+	return slices.Clone(a)
 }
 
 // AglVecClear ...
@@ -1094,22 +1094,22 @@ func AglMapMap[K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R
 	return out
 }
 
-func AglMapKeys[K comparable, V any](m map[K]V) aglImportIter.Seq[K] {
-	return aglImportMaps.Keys(m)
+func AglMapKeys[K comparable, V any](m map[K]V) iter.Seq[K] {
+	return maps.Keys(m)
 }
 
-func AglMapValues[K comparable, V any](m map[K]V) aglImportIter.Seq[V] {
-	return aglImportMaps.Values(m)
+func AglMapValues[K comparable, V any](m map[K]V) iter.Seq[V] {
+	return maps.Values(m)
 }
 
-func AglHttpNewRequest(method, url string, b Option[aglImportIo.Reader]) Result[*aglImportHttp.Request] {
-	var body aglImportIo.Reader
+func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
+	var body io.Reader
 	if b.IsSome() {
 		body = b.Unwrap()
 	}
-	req, err := aglImportHttp.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return MakeResultErr[*aglImportHttp.Request](err)
+		return MakeResultErr[*http.Request](err)
 	}
 	return MakeResultOk(req)
 }
@@ -1121,9 +1121,9 @@ type Set[T comparable] struct {
 func (s *Set[T]) String() string {
 	var vals []string
 	for k := range s.values {
-		vals = append(vals, aglImportFmt.Sprintf("%v", k))
+		vals = append(vals, fmt.Sprintf("%v", k))
 	}
-	return "{" + aglImportStrings.Join(vals, " ") + "}"
+	return "{" + strings.Join(vals, " ") + "}"
 }
 
 func (s *Set[T]) Len() int {
@@ -1152,11 +1152,11 @@ func AglNewSet[T comparable](els ...T) *Set[T] {
 	return s
 }
 
-func AglIntString(v int) string   { return aglImportStrconv.FormatInt(int64(v), 10) }
-func AglI8String(v int8) string   { return aglImportStrconv.FormatInt(int64(v), 10) }
-func AglI16String(v int16) string { return aglImportStrconv.FormatInt(int64(v), 10) }
-func AglI32String(v int32) string { return aglImportStrconv.FormatInt(int64(v), 10) }
-func AglI64String(v int64) string { return aglImportStrconv.FormatInt(int64(v), 10) }
+func AglIntString(v int) string   { return strconv.FormatInt(int64(v), 10) }
+func AglI8String(v int8) string   { return strconv.FormatInt(int64(v), 10) }
+func AglI16String(v int16) string { return strconv.FormatInt(int64(v), 10) }
+func AglI32String(v int32) string { return strconv.FormatInt(int64(v), 10) }
+func AglI64String(v int64) string { return strconv.FormatInt(int64(v), 10) }
 
 func AglIn[T comparable](e T, it Iterator[T]) bool {
 	for el := range it.Iter() {
