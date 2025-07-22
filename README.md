@@ -286,7 +286,7 @@ func main() {
         fmt.Println(el)
     }
     for el in (0..=3) { // 0 1 2 3
-		fmt.Println(el)
+        fmt.Println(el)
     }
     for el in (0..3).Rev() { // 2 1 0
         fmt.Println(el)
