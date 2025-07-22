@@ -501,19 +501,18 @@ func (g *Generator) Generate2() (out1, out2 string) {
 func (g *Generator) Generate() (out string) {
 	out += g.Emit(GeneratedFilePrefix)
 	imports := make(map[string]*ast.ImportSpec)
-	for _, i := range g.imports {
+	addImport := func(i *ast.ImportSpec) {
 		key := i.Path.Value
 		if i.Name != nil {
 			key = i.Name.Name + "_" + key
 		}
 		imports[key] = i
 	}
+	for _, i := range g.imports {
+		addImport(i)
+	}
 	for _, i := range g.a.Imports {
-		key := i.Path.Value
-		if i.Name != nil {
-			key = i.Name.Name + "_" + key
-		}
-		imports[key] = i
+		addImport(i)
 	}
 	importsArr := make([]*ast.ImportSpec, len(imports))
 	for i, k := range slices.Sorted(maps.Keys(imports)) {
