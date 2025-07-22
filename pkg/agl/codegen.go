@@ -3255,7 +3255,7 @@ func (g *Generator) joinList(l *ast.FieldList) (out string) {
 func GenCore(packageName string) string {
 	by := []byte(GeneratedFilePrefix)
 	by = append(by, '\n')
-	by = append(by, Must(contentFs.ReadFile(filepath.Join("core", "core.go")))...)
+	by = append(by, Must(ContentFs.ReadFile(filepath.Join("core", "core.go")))...)
 	by = bytes.Replace(by, []byte("package main"), []byte(fmt.Sprintf("package %s", packageName)), 1)
 	return string(by)
 }

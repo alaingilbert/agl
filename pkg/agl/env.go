@@ -23,7 +23,7 @@ import (
 )
 
 //go:embed pkgs/* core/*
-var contentFs embed.FS
+var ContentFs embed.FS
 
 var envIDCounter atomic.Int64
 
@@ -776,7 +776,7 @@ func (e *Env) loadPkgVendor(depth int, t *TreeDrawer, nenv *Env, path, pkgName s
 
 func (e *Env) loadAglFile(depth int, t *TreeDrawer, nenv *Env, prefix, path, pkgName string, m *PkgVisited) error {
 	stdFilePath := filepath.Join("pkgs", path, filepath.Base(path)+".agl")
-	by, err := contentFs.ReadFile(stdFilePath)
+	by, err := ContentFs.ReadFile(stdFilePath)
 	if err != nil {
 		return err
 	}
@@ -952,7 +952,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 }
 
 func CoreFns() string {
-	return string(Must(contentFs.ReadFile(filepath.Join("core", "core.agl"))))
+	return string(Must(ContentFs.ReadFile(filepath.Join("core", "core.agl"))))
 }
 
 func (e *Env) loadBaseValues() {

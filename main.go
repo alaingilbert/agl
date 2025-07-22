@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -54,6 +55,11 @@ func main() {
 					&cli.BoolFlag{Name: "debug"},
 				},
 				Action: runAction,
+			},
+			{
+				Name:   "execute",
+				Usage:  "execute command",
+				Action: executeAction,
 			},
 			{
 				Name:    "build",
@@ -178,6 +184,37 @@ func spawnGoBuild(fileName, outputFlag string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func executeAction(ctx context.Context, cmd *cli.Command) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("EXIT_CODE:1")
+			var aglErr *agl.AglError
+			if err, ok := r.(error); ok && errors.As(err, &aglErr) {
+				msg := aglErr.Error()
+				if msg == "" {
+					msg += string(debug.Stack())
+				}
+				_, _ = fmt.Fprintln(os.Stderr, msg)
+				os.Exit(1)
+			}
+			panic(r)
+		}
+	}()
+	var input string
+	if cmd.NArg() > 0 {
+		input = cmd.Args().Get(0)
+	}
+	_, _, out := genCode1("", []byte(input))
+	core, _ := agl.ContentFs.ReadFile(filepath.Join("core", "core.go"))
+	coreLines := strings.Split(string(core), "\n")
+	lines := strings.Split(out, "\n")
+	lines = slices.Insert(lines, 2, coreLines[2:16]...)
+	out = strings.Join(lines, "\n")
+	out += strings.Join(coreLines[16:], "\n")
+	fmt.Println(out)
+	return nil
 }
 
 func runAction(ctx context.Context, cmd *cli.Command) error {
