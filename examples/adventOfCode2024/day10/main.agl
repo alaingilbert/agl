@@ -1,0 +1,52 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]int
+var mut width int
+var mut height int
+var directions = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}
+
+func findHeads() [](int, int) {
+    var mut heads [](int, int)
+    for y in data.Indices() {
+        for x in data[y].Indices() {
+            if data[y][x] == 0 {
+                heads.Push((x, y))
+            }
+        }
+    }
+    return heads
+}
+
+func findTrails(head (int, int), mut summits set[(int, int)]) {
+    curr := data[head.1][head.0]
+    if curr == 9 {
+        summits.Insert(head)
+        return
+    }
+    for dir in directions {
+        nx := head.0 + dir.0
+        ny := head.1 + dir.1
+        if nx >= 0 && nx < width && ny >= 0 && ny < height && data[ny][nx] == curr + 1 {
+            findTrails((nx, ny), mut summits)
+        }
+    }
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day10/data.txt")!)
+    data = fileContent.Lines().Map({ $0.Split("").Map({ string($0).Int()? }) })
+    width = data[0].Len()
+    height = data.Len()
+    heads := findHeads()
+    part1 := heads.Map({
+        mut summits := set[(int, int)]{}
+        findTrails($0, mut summits)
+        return summits.Len()
+    }).Sum()
+    fmt.Println("Part1:", part1)
+}
