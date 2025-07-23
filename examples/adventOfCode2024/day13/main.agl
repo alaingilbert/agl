@@ -1,0 +1,38 @@
+package main
+
+import (
+    "fmt"
+    "agl1/regexp"
+    "agl1/os"
+)
+
+func nums(s string) []int {
+    numsRgx := regexp.MustCompile(`(-?\d+)`)
+    m := numsRgx.FindAllString(s, -1)
+    return m.Map({ $0.Int()? })
+}
+
+func part1(blocks [](int, int, int, int, int, int)) {
+    mut res := 0
+    blocks_loop: for block in blocks {
+        x1, y1, x2, y2, x3, y3 := block
+        mut a, mut b := (0, 0)
+        for {
+            a += 1
+            b = (x3 - (a * x1)) / x2
+            guard b >= 0 else { break }
+            if a * x1 + b * x2 == x3 &&
+               a * y1 + b * y2 == y3 {
+                res += 3 * a + b
+                continue blocks_loop
+            }
+        }
+    }
+    fmt.Println(res)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day13/data.txt")!)
+    blocks := fileContent.Split("\n\n").Map({ nums($0) }).Map({ ($0[0], $0[1], $0[2], $0[3], $0[4], $0[5]) })
+    part1(blocks)
+}
