@@ -481,7 +481,7 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 func (p *parser) parseIdentOrOp() *ast.Ident {
 	switch p.tok {
 	case token.EQL, token.LSS, token.GTR, token.LEQ, token.GEQ,
-		token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.IN,
+		token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.IN, token.RANGEOP, token.RANGEOPEQ,
 		token.LAND, token.LOR,
 		token.AND, token.OR, token.XOR, token.SHL, token.SHR, token.AND_NOT:
 		pos := p.pos
@@ -583,7 +583,7 @@ func (p *parser) parseExprList() (list []ast.Expr) {
 	return
 }
 
-func (p *parser) parseExprListRangeTupleParen() ast.Expr {
+func (p *parser) parseExprListTupleParen() ast.Expr {
 	lparen := p.expect(token.LPAREN)
 	x := p.parseExpr()
 	if p.tok == token.COMMA {
@@ -591,12 +591,6 @@ func (p *parser) parseExprListRangeTupleParen() ast.Expr {
 		values := append([]ast.Expr{x}, p.parseExprList()...)
 		rparen := p.expect(token.RPAREN)
 		return &ast.TupleExpr{Lparen: lparen, Values: values, Rparen: rparen}
-	} else if p.tok == token.RANGEOP || p.tok == token.RANGEOPEQ {
-		op := p.tok
-		p.next()
-		end := p.parseExpr()
-		rparen := p.expect(token.RPAREN)
-		return &ast.RangeExpr{Lparen: lparen, Start: x, End_: end, Rparen: rparen, Op: op}
 	}
 	rparen := p.expect(token.RPAREN)
 	return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
@@ -1783,7 +1777,7 @@ func (p *parser) parseOperand() ast.Expr {
 		return p.parseFuncTypeOrLit()
 
 	case token.LPAREN:
-		return p.parseExprListRangeTupleParen()
+		return p.parseExprListTupleParen()
 	}
 
 	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil { // do not consume trailing type parameters
@@ -2219,7 +2213,11 @@ func (p *parser) parseBinaryExpr(x ast.Expr, prec1 int) ast.Expr {
 		}
 		pos := p.expect(op)
 		y := p.parseBinaryExpr(nil, oprec+1)
-		x = &ast.BinaryExpr{X: x, OpPos: pos, Op: op, Y: y}
+		if op == token.RANGEOP || op == token.RANGEOPEQ {
+			x = &ast.RangeExpr{Start: x, Op: op, End_: y}
+		} else {
+			x = &ast.BinaryExpr{X: x, OpPos: pos, Op: op, Y: y}
+		}
 	}
 }
 
