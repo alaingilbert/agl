@@ -10802,6 +10802,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen377(t *testing.T) {
+	src := `package main
+func main() {
+    a := []int{1, 2, 3, 4}
+	a.Sorted()
+	a.Sorted(by: func(a, b int) bool { return a > b })
+	a.Sorted(by: { $0 > $1 })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3, 4}
+	AglVecSorted(a)
+	AglVecSortedBy(a, func(a, b int) bool {
+		return a > b
+	})
+	AglVecSortedBy(a, func(aglArg0 int, aglArg1 int) bool {
+		return aglArg0 > aglArg1
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]int) Sorted() []int", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func ([]int) SortedBy(func(int, int) bool) []int", test.TypeAt(5, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

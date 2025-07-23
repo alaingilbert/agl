@@ -406,3 +406,16 @@ func main() {
 }`
 	tassert.Equal(t, "[3 5]\n", testGenOutput(src))
 }
+
+func Test23(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+    a := []int{1, 2, 3, 4}
+	fmt.Println(a.Sorted())
+	fmt.Println(a.Sorted(by: func(a, b int) bool { return a > b }))
+	fmt.Println(a.Sorted(by: { $0 > $1 }))
+}`
+	tassert.Equal(t, "[1 2 3 4]\n[4 3 2 1]\n[4 3 2 1]\n", testGenOutput(src))
+}

@@ -1958,7 +1958,16 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
 		} else if fnName == "Sorted" {
-			fnT := infer.env.GetFn("agl1.Vec.Sorted").T("E", idTT.Elt)
+			if len(expr.Args) > 0 {
+				if v, ok := expr.Args[0].(*ast.LabelledArg); ok {
+					if v.Label != nil && v.Label.Name == "by" {
+						exprT.Sel.Name = "SortedBy"
+						fnName = "SortedBy"
+					}
+				}
+			}
+			info := infer.env.GetNameInfo("agl1.Vec." + fnName)
+			fnT := infer.env.GetFn("agl1.Vec."+fnName).T("E", idTT.Elt)
 			param0 := fnT.Params[0]
 			if !cmpTypes(idT, param0) {
 				infer.errorf(exprT.Sel, "type mismatch, wants: %s, got: %s", param0, idT)
@@ -1967,6 +1976,37 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, fnT.Return)
 			fnT.Recv = []types.Type{param0}
 			fnT.Params = fnT.Params[1:]
+
+			if len(expr.Args) > 0 {
+				clbFnT := fnT.GetParam(0).(types.FuncType)
+				exprArg0 := expr.Args[0]
+				if v, ok := exprArg0.(*ast.LabelledArg); ok {
+					exprArg0 = v.X
+				}
+				if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+					infer.SetType(arg0, clbFnT)
+					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+				} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+					ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+					if !compareFunctionSignatures(ftReal, clbFnT) {
+						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+						return
+					}
+				} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+					infer.expr(exprArg0)
+					aT := infer.env.GetType(exprArg0)
+					if tmp, ok := aT.(types.FuncType); ok {
+						rT := tmp.Return
+						infer.SetType(expr, types.ArrayType{Elt: rT})
+						infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+					}
+					if !compareFunctionSignatures(ftReal, clbFnT) {
+						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+						return
+					}
+				}
+			}
+
 			infer.SetType(exprT.Sel, fnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)

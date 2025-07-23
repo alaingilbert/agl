@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -972,6 +973,13 @@ func AglStringF64(s string) Option[float64] {
 
 func AglVecSorted[E cmp.Ordered](a []E) []E {
 	return slices.Sorted(slices.Values(a))
+}
+
+func AglVecSortedBy[E any](a []E, f func(a, b E) bool) []E {
+	sort.Slice(a, func(i, j int) bool {
+		return f(a[i], a[j])
+	})
+	return a
 }
 
 func AglVecJoined(a []string, s string) string {
