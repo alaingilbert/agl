@@ -351,6 +351,7 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 	var t types.Type
 	if spec.Values != nil {
+		infer.expr(spec.Values[0])
 		t = infer.env.GetType2(spec.Values[0], infer.fset)
 	}
 	if spec.Type != nil {

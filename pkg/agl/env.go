@@ -1303,7 +1303,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.CustomType:
 			return types.StructType{Pkg: v.Pkg, Name: v.Name}
 		case types.ArrayType:
-			return types.ArrayType{Elt: e.GetType2(xx.Type, fset)}
+			return e.GetType2(xx.Type, fset)
 		case types.StructType:
 			return types.StructType{Pkg: v.Pkg, Name: v.Name}
 		case types.MapType:

@@ -10673,6 +10673,22 @@ type AglTupleStruct_uint8_uint8 struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen371(t *testing.T) {
+	src := `package main
+var directions = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}`
+	expected := `// agl:generated
+package main
+var directions = []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: -1}, AglTupleStruct_int_int{Arg0: 1, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}, AglTupleStruct_int_int{Arg0: -1, Arg1: 0}}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
