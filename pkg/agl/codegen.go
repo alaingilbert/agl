@@ -630,7 +630,7 @@ func (g *Generator) genExpr(e ast.Expr) (out GenFrag) {
 	//p("genExpr", to(e))
 	switch expr := e.(type) {
 	case *ast.IfExpr:
-		return g.genIfStmt(expr)
+		return g.genIfExpr(expr)
 	case *ast.IfLetExpr:
 		return g.genIfLetStmt(expr)
 	case *ast.MatchExpr:
@@ -3071,7 +3071,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 	}}
 }
 
-func (g *Generator) genIfStmt(stmt *ast.IfExpr) GenFrag {
+func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	e := EmitWith(g, stmt)
 	var bs []func() string
 	ifT := g.env.GetType(stmt)
