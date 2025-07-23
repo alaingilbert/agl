@@ -65,11 +65,12 @@ func part2() {
                 
                 mut groupsMap := map[int][](int, int){}
                 for pos in sidesArrDir {
-                    if dirMod {
-                        groupsMap[pos.0].Push(pos)
-                    } else {
-                        groupsMap[pos.1].Push(pos)
+                    mut k := pos.0
+                    if !dirMod {
+                        k = pos.1
                     }
+                    // k := if dirMod { pos.0 } else { pos.1 }
+                    groupsMap[k].Push(pos)
                 }
                 sides += groupsMap.Len()
                 groups := groupsMap.Values()
