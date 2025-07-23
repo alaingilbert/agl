@@ -69,8 +69,8 @@ func testGenOutput(src string) string {
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	i.InferFile("", f2, fset, true)
-	i.InferFile("", f, fset, true)
-	g := agl.NewGenerator(env, f, f2, fset)
+	imports, _ := i.InferFile("", f, fset, true)
+	g := agl.NewGenerator(env, f, f2, imports, fset)
 	outSrc := g.Generate()
 	out, err := spawnGoRunFromBytes(g, fset, []byte(outSrc), nil)
 	if err != nil {
