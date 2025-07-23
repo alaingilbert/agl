@@ -1,0 +1,33 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day11/data.txt")!)
+    mut data := fileContent.Split(" ").Map({ $0.Uint()? })
+    for i in (0..25) {
+        _ = i
+        mut newData := []uint{}
+        for stone in data {
+            if stone == 0 {
+                newData.Push(1)
+            } else {
+                stoneStr := stone.String()
+                if len(stoneStr) % 2 == 0 {
+                    middle := len(stoneStr) / 2
+                    s1 := stoneStr[:middle]
+                    s2 := stoneStr[middle:]
+                    newData.Push(s1.Uint()?)
+                    newData.Push(s2.Uint()?)
+                } else {
+                    newData.Push(stone * 2024)
+                }
+            }
+        }
+        data = newData
+    }
+    fmt.Println(data.Len())
+}
