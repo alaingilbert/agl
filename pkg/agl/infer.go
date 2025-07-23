@@ -3487,6 +3487,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						infer.errorf(v.Sel, "type mismatch, wants: %s, got: %s", want, got)
 						return
 					}
+					infer.SetType(v.Sel, got)
 					return
 				case types.StructType:
 					selT := infer.env.Get(xT.String() + "." + v.Sel.Name)
