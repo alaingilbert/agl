@@ -10876,7 +10876,7 @@ func main() {
 package main
 func main() {
 	a := [][]int{{1, 2}, {3, 4}}
-	t := AglVecMap(a, func(a []int) AglTupleStruct_int_int{Arg0: int, Arg1: int} {
+	t1 := AglVecMap(a, func(a []int) AglTupleStruct_int_int{Arg0: int, Arg1: int} {
 		x := a[0]
 		y := a[1]
 		return AglTupleStruct_int_int{Arg0: x, Arg1: y}
