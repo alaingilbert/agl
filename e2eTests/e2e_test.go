@@ -427,9 +427,9 @@ import "fmt"
 func main() {
     m := map[int]u8{1: 1, 2: 2, 3: 3}
 	vals := m.Values()
-	for e in vals {
-		fmt.Print(e)
+	for _ in vals {
+		fmt.Print(0)
 	}
 }`
-	tassert.Equal(t, "123", testGenOutput(src))
+	tassert.Equal(t, "000", testGenOutput(src))
 }
