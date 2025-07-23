@@ -372,3 +372,15 @@ func main() {
 }`
 	tassert.Equal(t, "01201232103210", testGenOutput(src))
 }
+
+func Test20(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+    m := map[int]u8{1: 200, 2: 55, 3: 10}
+	fmt.Println(m.Values().Sum())
+	fmt.Println(m.Values().Sum[int]())
+}`
+	tassert.Equal(t, "9\n265\n", testGenOutput(src))
+}
