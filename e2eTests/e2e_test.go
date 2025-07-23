@@ -384,3 +384,14 @@ func main() {
 }`
 	tassert.Equal(t, "9\n265\n", testGenOutput(src))
 }
+
+func Test21(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+    s := set[int]{1, 2, 3, 4}
+	fmt.Println(s.Filter({ $0 % 2 == 0 }))
+}`
+	tassert.Equal(t, "set(2 4)\n", testGenOutput(src))
+}

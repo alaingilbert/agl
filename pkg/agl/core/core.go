@@ -617,6 +617,16 @@ func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
 //	return AglIteratorEach(seq.Iter())
 //}
 
+func AglSetFilter[T comparable](s AglSet[T], pred func(T) bool) AglSet[T] {
+	newSet := make(AglSet[T])
+	for k := range s {
+		if pred(k) {
+			newSet[k] = struct{}{}
+		}
+	}
+	return newSet
+}
+
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.
 func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	newSet := make(AglSet[T])
