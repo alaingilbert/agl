@@ -2375,6 +2375,10 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 		isType = true
 		t = v.W
 	}
+	if v, ok := t.(types.TypeType); ok { // TODO fix double wrapped
+		isType = true
+		t = v.W
+	}
 	if g.asType {
 		isType = true
 	}
