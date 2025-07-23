@@ -17,10 +17,10 @@ func main() {
                 stoneStr := stone.String()
                 if len(stoneStr) % 2 == 0 {
                     middle := len(stoneStr) / 2
-                    s1 := stoneStr[:middle]
-                    s2 := stoneStr[middle:]
-                    newData.Push(s1.Uint()?)
-                    newData.Push(s2.Uint()?)
+                    s1 := stoneStr[:middle].Uint()?
+                    s2 := stoneStr[middle:].Uint()?
+                    newData.Push(s1)
+                    newData.Push(s2)
                 } else {
                     newData.Push(stone * 2024)
                 }
