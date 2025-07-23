@@ -906,6 +906,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.FirstIndex", "func [T any](a []T, of: e T) int?")
 		e.DefineFn(nenv, "agl1.Vec.FirstIndexWhere", "func [T any](a []T, where: p func(T) bool) int?")
 		e.DefineFn(nenv, "agl1.Vec.Get", "func [T any](a []T, i int) T?")
+		e.DefineFn(nenv, "agl1.Vec.With", "func [T any](mut a []T, i int, clb func(*T)) bool")
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
 		e.DefineFn(nenv, "agl1.Vec.IsEmpty", "func [T any](a []T) bool")

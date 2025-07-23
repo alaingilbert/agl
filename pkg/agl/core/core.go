@@ -993,6 +993,13 @@ func AglVecGet[T any](a []T, i int) (out Option[T]) {
 	return MakeOptionNone[T]()
 }
 
+func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) bool {
+	el := (*a)[i]
+	clb(&el)
+	(*a)[i] = el
+	return true
+}
+
 func AglVecLen[T any](a []T) int {
 	return len(a)
 }

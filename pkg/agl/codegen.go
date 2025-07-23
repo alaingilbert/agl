@@ -1846,6 +1846,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(")")
 				}}
+			case "With":
+				return GenFrag{F: func() string {
+					return e("AglVecWith((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
+				}}
 			case "Pop", "PopFront", "Clear":
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")

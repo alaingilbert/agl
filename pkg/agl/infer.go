@@ -1784,6 +1784,22 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr, sumFnT.Return)
 			infer.SetType(exprT.Sel, sumFnT)
+		} else if InArray(fnName, []string{"With"}) {
+			sumFnT := infer.env.GetFn("agl1.Vec.With").T("T", idTT.Elt)
+			clbT := sumFnT.GetParam(2).(types.FuncType)
+			sumFnT.Recv = []types.Type{idTT}
+			if TryCast[types.MutType](sumFnT.Params[0]) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
+			}
+			sumFnT.Params = sumFnT.Params[1:]
+			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
+				infer.SetType(expr.Args[1], clbT)
+			}
+			infer.SetType(expr, sumFnT.Return)
+			infer.SetType(exprT.Sel, sumFnT)
 		} else if fnName == "Swap" {
 			fnT := infer.env.GetFn("agl1.Vec.Swap").T("T", idTT.Elt)
 			param0 := fnT.Params[0]
