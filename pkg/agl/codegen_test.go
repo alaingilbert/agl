@@ -10637,6 +10637,7 @@ type AglTupleStruct_uint8_uint8 struct {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (mut [](u8, u8)) With(int, func(*(u8, u8)))", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "*(u8, u8)", test.TypeAt(4, 13).String())
 	tassert.Equal(t, "*(u8, u8)", test.TypeAt(4, 18).String())
 	testCodeGen2(t, expected, test)
