@@ -2382,7 +2382,12 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 				}
 			}
 		}
-		infer.stmt(expr.Body)
+		if expr.Type.Result != nil {
+			infer.expr(expr.Type.Result)
+		}
+		infer.withReturnType(ft.Return, func() {
+			infer.stmt(expr.Body)
+		})
 	})
 }
 

@@ -10862,6 +10862,37 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen379(t *testing.T) {
+	src := `package main
+func main() {
+	a := [][]int{{1, 2}, {3, 4}}
+	t1 := a.Map(func(a []int) (int, int) {
+		x := a[0]
+		y := a[1]
+		return (x, y)
+	})
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := [][]int{{1, 2}, {3, 4}}
+	t := AglVecMap(a, func(a []int) AglTupleStruct_int_int{Arg0: int, Arg1: int} {
+		x := a[0]
+		y := a[1]
+		return AglTupleStruct_int_int{Arg0: x, Arg1: y}
+	})
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[](int, int)", test.TypeAt(4, 2).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
