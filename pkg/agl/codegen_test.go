@@ -10311,11 +10311,13 @@ func main() {
 		aglTmp1 = MakeOptionNone[int]()
 	}
 	a := AglIdentity(aglTmp1)
-	b := if 1 == 1 {
-		aglTmp1 = MakeOptionNone[int]()
+	var aglTmp2 Option[int]
+	if 1 == 1 {
+		aglTmp2 = MakeOptionNone[int]()
 	} else {
-		aglTmp1 = MakeOptionSome(1)
+		aglTmp2 = MakeOptionSome(1)
 	}
+	b := AglIdentity(aglTmp2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10827,6 +10829,36 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func ([]int) Sorted() []int", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "func ([]int) SortedBy(func(int, int) bool) []int", test.TypeAt(5, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen378(t *testing.T) {
+	src := `package main
+func main() {
+	a := if 1 == 1 { 1 } else { 2 }
+	b := if 1 == 1 { 1 } else { 2 }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var aglTmp1 int
+	if 1 == 1 {
+		aglTmp1 = 1
+	} else {
+		aglTmp1 = 2
+	}
+	a := AglIdentity(aglTmp1)
+	var aglTmp2 int
+	if 1 == 1 {
+		aglTmp2 = 1
+	} else {
+		aglTmp2 = 2
+	}
+	b := AglIdentity(aglTmp2)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
 

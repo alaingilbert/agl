@@ -3123,6 +3123,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 			}
 		})
 	}
+	g.ifVarName = ""
 	bs = append(bs, cond.B...)
 	bs = append(bs, c3.B...)
 	tmp := func() string {
