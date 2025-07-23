@@ -419,3 +419,17 @@ func main() {
 }`
 	tassert.Equal(t, "[1 2 3 4]\n[4 3 2 1]\n[4 3 2 1]\n", testGenOutput(src))
 }
+
+func Test24(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+    m := map[int]u8{1: 1, 2: 2, 3: 3}
+	vals := m.Values()
+	for e in vals {
+		fmt.Print(e)
+	}
+}`
+	tassert.Equal(t, "123", testGenOutput(src))
+}
