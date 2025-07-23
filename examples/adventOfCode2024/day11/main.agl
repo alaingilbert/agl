@@ -37,11 +37,8 @@ func part2(dataIn []uint) {
     for _ in 0..75 {
         mut newData := make(map[uint]uint)
         mutMapFn := func(k, mult uint) {
-            mut tmp := mult
-            if Some(d) := newData.Get(k) {
-                tmp = d + mult
-            }
-            newData[k] = tmp
+            val := newData.Get(k).UnwrapOrDefault()
+            newData[k] = val + mult
         }
         for stone, mult := range data {
             if stone == 0 {
