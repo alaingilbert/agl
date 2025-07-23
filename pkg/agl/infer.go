@@ -3122,6 +3122,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 		}
 		if stmt.Key != nil {
 			var t types.Type = types.IntType{}
+			xT = types.Unwrap(xT)
 			if v, ok := xT.(types.MapType); ok {
 				t = v.K
 			}
