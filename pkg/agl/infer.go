@@ -1040,39 +1040,41 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			infer.SetType(call, tr)
 			infer.SetType(expr, tr)
 		case types.StructType:
-			name := idTT.GetFieldName(call.Sel.Name)
-			nameT := infer.env.Get(name)
+			if call.Sel.Name != "Sum" {
+				name := idTT.GetFieldName(call.Sel.Name)
+				nameT := infer.env.Get(name)
 
-			// Handle struct composition. If we did not find the method for the struct,
-			// we need to check other structs that are "inherited" (composition).
-			if nameT == nil {
-				for _, field := range idTT.Fields {
-					if field.Name == "" {
-						fieldType := types.Unwrap(field.Typ)
-						if v, ok := fieldType.(types.StructType); ok {
-							name = v.GetFieldName(call.Sel.Name)
-							nameT = infer.env.Get(name)
-							nameT = types.Unwrap(nameT)
+				// Handle struct composition. If we did not find the method for the struct,
+				// we need to check other structs that are "inherited" (composition).
+				if nameT == nil {
+					for _, field := range idTT.Fields {
+						if field.Name == "" {
+							fieldType := types.Unwrap(field.Typ)
+							if v, ok := fieldType.(types.StructType); ok {
+								name = v.GetFieldName(call.Sel.Name)
+								nameT = infer.env.Get(name)
+								nameT = types.Unwrap(nameT)
+							}
 						}
 					}
 				}
-			}
 
-			if nameT == nil {
-				infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
-				return
-			}
-			fnT := infer.env.GetFn(name)
-			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-				if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
-					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
+				if nameT == nil {
+					infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
 					return
 				}
+				fnT := infer.env.GetFn(name)
+				if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
+					if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
+						infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
+						return
+					}
+				}
+				toReturn := fnT.Return
+				toReturn = alterResultBubble(infer.returnType, toReturn)
+				infer.SetType(call.Sel, fnT)
+				infer.SetType(expr, toReturn)
 			}
-			toReturn := fnT.Return
-			toReturn = alterResultBubble(infer.returnType, toReturn)
-			infer.SetType(call.Sel, fnT)
-			infer.SetType(expr, toReturn)
 		case types.InterfaceType:
 			t := idTT.GetMethodByName(call.Sel.Name)
 			//name := fmt.Sprintf("%s.%s", idTT, fnName)
@@ -1441,6 +1443,24 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
+	case types.StructType:
+		fnName := exprT.Sel.Name
+		//exprPos := infer.Pos(expr)
+		if fnName == "Sum" {
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].W)
+			fnT.Recv = []types.Type{oidT}
+			if len(fnT.Params) > 0 {
+				if TryCast[types.MutType](fnT.Params[0]) {
+					if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+						infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
+						return
+					}
+				}
+				fnT.Params = fnT.Params[1:]
+			}
+			//infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
+		}
 	case types.ArrayType:
 		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)

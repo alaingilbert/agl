@@ -1273,6 +1273,8 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			}
 		}
 		switch v := t.(type) {
+		case types.StructType:
+			t = v.RenameGenericParameter("T", xx.Index.(*ast.Ident).Name)
 		case types.FuncType:
 			t = v.RenameGenericParameter("V", "T")
 		}

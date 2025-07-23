@@ -716,6 +716,19 @@ func (f FuncType) Concrete(typs []Type) FuncType {
 	return f
 }
 
+func (s StructType) RenameGenericParameter(name, newName string) StructType {
+	ff := s
+	newTypeParams := make([]GenericType, 0)
+	for _, p := range ff.TypeParams {
+		if p.Name == name {
+			p.Name = newName
+		}
+		newTypeParams = append(newTypeParams, p)
+	}
+	ff.TypeParams = newTypeParams
+	return ff
+}
+
 func (f FuncType) RenameGenericParameter(name, newName string) FuncType {
 	ff := f
 	newParams := make([]Type, 0)
