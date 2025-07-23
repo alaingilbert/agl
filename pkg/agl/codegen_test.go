@@ -10779,6 +10779,24 @@ func AglVecForEach_T_int(v []int, f func(int) AglVoid) {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen376(t *testing.T) {
+	src := `package main
+func main() {
+	a := map[int]int{1: 1, 2: 2, 3: 3}
+	a.Values().Sum()
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := map[int]int{1: 1, 2: 2, 3: 3}
+	AglSequenceSum(AglIdentity(AglMapValues(a)))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

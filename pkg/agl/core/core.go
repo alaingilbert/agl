@@ -355,8 +355,13 @@ type IntoIterator[T any] interface {
 }
 
 // Sequence anything that can be turned into an Iterator
-type Sequence[T any] interface {
-	IntoIterator[T]
+type Sequence[T any] iter.Seq[T]
+
+func AglSequenceSum[T cmp.Ordered](s Sequence[T]) (out T) {
+	for e := range s {
+		out += e
+	}
+	return out
 }
 
 type AglVec[T any] []T
@@ -384,7 +389,7 @@ type DictEntry[K comparable, V any] struct {
 
 type AglMap[K comparable, V any] map[K]V
 
-func (m AglMap[K, V]) Iter() iter.Seq[K] { return AglMapKeys(m) }
+func (m AglMap[K, V]) Iter() Sequence[K] { return AglMapKeys(m) }
 
 func (m AglMap[K, V]) Len() int { return len(m) }
 
@@ -491,8 +496,8 @@ func (s AglSet[T]) Iter() iter.Seq[T] {
 	}
 }
 
-func AglSetIter[T comparable](s AglSet[T]) iter.Seq[T] {
-	return s.Iter()
+func AglSetIter[T comparable](s AglSet[T]) Sequence[T] {
+	return Sequence[T](s.Iter())
 }
 
 func (s AglSet[T]) String() string {
@@ -1119,12 +1124,12 @@ func AglMapMap[K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R
 	return out
 }
 
-func AglMapKeys[K comparable, V any](m map[K]V) iter.Seq[K] {
-	return maps.Keys(m)
+func AglMapKeys[K comparable, V any](m map[K]V) Sequence[K] {
+	return Sequence[K](maps.Keys(m))
 }
 
-func AglMapValues[K comparable, V any](m map[K]V) iter.Seq[V] {
-	return maps.Values(m)
+func AglMapValues[K comparable, V any](m map[K]V) Sequence[V] {
+	return Sequence[V](maps.Values(m))
 }
 
 func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
