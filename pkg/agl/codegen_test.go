@@ -10711,7 +10711,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -10729,7 +10728,24 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen374(t *testing.T) {
+	src := `package main
+func main() {
+	s := "12345"
+	v := s[:3].Uint()?
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "12345"
+	v := AglStringUint(s[:3]).Unwrap()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
