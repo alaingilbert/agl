@@ -392,6 +392,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		if t.Fields != nil {
 			for _, f := range t.Fields.List {
 				typ := infer.env.GetType2(f.Type, infer.fset)
+				infer.SetType(f.Type, typ)
 				if len(f.Names) == 0 {
 					fields = append(fields, types.FieldType{Name: "", Typ: typ})
 				}

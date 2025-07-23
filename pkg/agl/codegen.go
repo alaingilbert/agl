@@ -1511,7 +1511,7 @@ func (g *Generator) genStructType(expr *ast.StructType) GenFrag {
 			out += e(gPrefix + "\t")
 			out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 			out += e(" ")
-			out += g.genExpr(field.Type).F()
+			g.withAsType(func() { out += g.genExpr(field.Type).F() })
 			if field.Tag != nil {
 				out += e(" ") + g.genExpr(field.Tag).F()
 			}
