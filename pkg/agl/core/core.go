@@ -242,6 +242,12 @@ func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
 	return true
 }
 
+func AglVecForEach[T any](a []T, f func(T) AglVoid) {
+	for _, v := range a {
+		f(v)
+	}
+}
+
 func AglVecContains[T comparable](a []T, e T) bool {
 	for _, v := range a {
 		if v == e {

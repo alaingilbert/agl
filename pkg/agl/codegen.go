@@ -1832,7 +1832,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			switch fnName {
 			case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
-			case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
+			case "ForEach", "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined", "Get", "FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD":
 				return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 			case "Reduce", "ReduceInto":
 				return GenFrag{F: func() string {

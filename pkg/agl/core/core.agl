@@ -54,11 +54,11 @@ func (v agl1.Vec[T]) FlatMap[R any](f func(T) []R) []R {
 	return out
 }
 
-func (v agl1.Vec[T]) ForEach(f func(T) void) {
-	for i := range v {
-		f(v[i])
-	}
-}
+// func (v agl1.Vec[T]) ForEach(f func(T) void) {
+// 	for i := range v {
+// 		f(v[i])
+// 	}
+// }
 
 func (v agl1.Vec[T]) Min() T? {
 	if len(v) == 0 {
