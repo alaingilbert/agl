@@ -1949,7 +1949,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		switch fnName {
 		case "Union", "FormUnion", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint",
-			"Filter":
+			"Filter", "Map":
 			arg0 := expr.Args[0]
 			content2 := func() string {
 				switch v := g.env.GetType(arg0).(type) {

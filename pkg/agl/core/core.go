@@ -617,6 +617,14 @@ func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
 //	return AglIteratorEach(seq.Iter())
 //}
 
+func AglSetMap[T comparable, R any](s AglSet[T], f func(T) R) []R {
+	var out []R
+	for k := range s {
+		out = append(out, f(k))
+	}
+	return out
+}
+
 func AglSetFilter[T comparable](s AglSet[T], pred func(T) bool) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {
