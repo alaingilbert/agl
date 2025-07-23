@@ -3000,7 +3000,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 				tt = infer.GetType(spec.Values[i])
 			}
 			if name.Mutable.IsValid() {
-				tt = types.MutType{W: t}
+				tt = types.MutType{W: tt}
 			}
 			if len(spec.Values) > 0 {
 				infer.exprs(spec.Values)

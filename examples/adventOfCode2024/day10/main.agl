@@ -42,7 +42,7 @@ func findTrails2(head (int, int)) int {
     if curr == 9 {
         return 1
     }
-    var mut res int
+    var mut res = 0
     for dir in directions {
         nx := head.0 + dir.0
         ny := head.1 + dir.1

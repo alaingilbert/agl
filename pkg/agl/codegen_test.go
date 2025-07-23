@@ -10689,6 +10689,33 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen372(t *testing.T) {
+	src := `package main
+func test() int {
+	var mut res = 0
+	res = 1
+	return res
+}
+func main() {
+	test()
+}`
+	expected := `// agl:generated
+package main
+func test() int {
+	var res = 0
+	res = 1
+	return res
+}
+func main() {
+	test()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
