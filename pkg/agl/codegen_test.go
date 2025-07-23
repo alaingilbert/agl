@@ -10750,6 +10750,30 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen375(t *testing.T) {
+	src := `package main
+import "fmt"
+func main() {
+	a := []int{1, 2, 3}
+	a.ForEach({ fmt.Print($0) })
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	a := []int{1, 2, 3}
+	AglVecForEach(a, func(aglArg0 int) AglVoid {
+		fmt.Print(aglArg0)
+		return AglVoid{}
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]int) ForEach(func(int))", test.TypeAt(5, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
