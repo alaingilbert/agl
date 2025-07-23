@@ -892,6 +892,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.F32", "func (s) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
 		e.DefineFn(nenv, "agl1.String.F64", "func (s) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
 		e.DefineFn(nenv, "agl1.I64.String", "func (i64) string")
+		e.DefineFn(nenv, "agl1.Uint.String", "func (uint) string")
 		e.DefineFn(nenv, "agl1.Vec.AllSatisfy", "func [T any](a []T, f func(T) bool) bool", WithDesc("Returns a Boolean value indicating whether every element of a sequence satisfies a given predicate."))
 		e.DefineFn(nenv, "agl1.Vec.Any", "func [T any](a []T, f func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Vec.Clear", "func [T any](mut a []T)")

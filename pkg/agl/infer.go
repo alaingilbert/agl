@@ -1025,6 +1025,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		case types.UntypedStringType:
 		case types.StringType:
 		case types.I64Type:
+		case types.UintType:
 		case types.SetType:
 		case types.ArrayType:
 		case types.MapType:
@@ -1343,6 +1344,19 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I64.String")
 			fnT = infer.env.GetFn("agl1.I64.String")
+		}
+		fnT.Recv = []types.Type{idTT}
+		fnT.Params = fnT.Params[1:]
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.UintType:
+		fnName := exprT.Sel.Name
+		var fnT types.FuncType
+		info := &Info{}
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.Uint.String")
+			fnT = infer.env.GetFn("agl1.Uint.String")
 		}
 		fnT.Recv = []types.Type{idTT}
 		fnT.Params = fnT.Params[1:]

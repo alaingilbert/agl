@@ -1973,6 +1973,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				c1 := g.genExpr(x.X)
 				return GenFrag{F: func() string { return e("AglI64String(") + c1.F() + e(")") }}
 			}
+		case types.UintType:
+			fnName := x.Sel.Name
+			switch fnName {
+			case "String":
+				c1 := g.genExpr(x.X)
+				return GenFrag{F: func() string { return e("AglUintString(") + c1.F() + e(")") }}
+			}
 		case types.StringType, types.UntypedStringType:
 			fnName := x.Sel.Name
 			switch fnName {

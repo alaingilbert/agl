@@ -1178,6 +1178,7 @@ func AglI8String(v int8) string   { return strconv.FormatInt(int64(v), 10) }
 func AglI16String(v int16) string { return strconv.FormatInt(int64(v), 10) }
 func AglI32String(v int32) string { return strconv.FormatInt(int64(v), 10) }
 func AglI64String(v int64) string { return strconv.FormatInt(int64(v), 10) }
+func AglUintString(v uint) string { return strconv.FormatInt(int64(v), 10) }
 
 func AglIn[T comparable](e T, it Iterator[T]) bool {
 	for el := range it.Iter() {
