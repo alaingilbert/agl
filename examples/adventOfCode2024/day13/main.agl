@@ -6,13 +6,15 @@ import (
     "agl1/os"
 )
 
+var mut blocks [](int, int, int, int, int, int)
+
 func nums(s string) []int {
     numsRgx := regexp.MustCompile(`(-?\d+)`)
     m := numsRgx.FindAllString(s, -1)
     return m.Map({ $0.Int()? })
 }
 
-func part1(blocks [](int, int, int, int, int, int)) {
+func part1() {
     mut res := 0
     blocks_loop: for block in blocks {
         x1, y1, x2, y2, x3, y3 := block
@@ -33,6 +35,6 @@ func part1(blocks [](int, int, int, int, int, int)) {
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day13/data.txt")!)
-    blocks := fileContent.Split("\n\n").Map({ nums($0) }).Map({ ($0[0], $0[1], $0[2], $0[3], $0[4], $0[5]) })
-    part1(blocks)
+    blocks = fileContent.Split("\n\n").Map({ nums($0) }).Map({ ($0[0], $0[1], $0[2], $0[3], $0[4], $0[5]) })
+    part1()
 }
