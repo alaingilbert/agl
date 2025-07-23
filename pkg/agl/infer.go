@@ -2426,7 +2426,6 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
 			}
 		}
-		infer.stmt(expr.Body)
 		inferExpr := func(returnStmt ast.Expr, ft types.FuncType) {
 			if infer.env.GetType(returnStmt) != nil && infer.env.GetType(expr) != nil {
 				if t, ok := ft.Return.(types.ArrayType); ok {
@@ -2447,6 +2446,9 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		// implicit return
 		t := types.Unwrap(infer.env.GetType(expr))
 		ft := t.(types.FuncType)
+		infer.withReturnType(ft.Return, func() {
+			infer.stmt(expr.Body)
+		})
 		switch v := expr.Body.(type) {
 		case *ast.BlockStmt:
 		default:

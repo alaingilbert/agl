@@ -10871,6 +10871,7 @@ func main() {
 		y := a[1]
 		return (x, y)
 	})
+	t2 := a.Map({ ($0[0], $0[1]) })
 }`
 	expected := `// agl:generated
 package main
@@ -10880,6 +10881,9 @@ func main() {
 		x := a[0]
 		y := a[1]
 		return AglTupleStruct_int_int{Arg0: x, Arg1: y}
+	})
+	t2 := AglVecMap(a, func(aglArg0 []int) AglTupleStruct_int_int {
+		return AglTupleStruct_int_int{Arg0: aglArg0[0], Arg1: aglArg0[1]}
 	})
 }
 type AglTupleStruct_int_int struct {
