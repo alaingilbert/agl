@@ -1758,51 +1758,51 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Last", "Push", "Remove", "Clone", "Clear", "Indices", "PushFront",
 			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "__ADD"}) {
-			sumFnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
-			sumFnT.Recv = []types.Type{oidT}
-			if len(sumFnT.Params) > 0 {
-				if TryCast[types.MutType](sumFnT.Params[0]) {
+			fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
+			fnT.Recv = []types.Type{oidT}
+			if len(fnT.Params) > 0 {
+				if TryCast[types.MutType](fnT.Params[0]) {
 					if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 						infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
 						return
 					}
 				}
-				sumFnT.Params = sumFnT.Params[1:]
+				fnT.Params = fnT.Params[1:]
 			}
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
 		} else if InArray(fnName, []string{"PopIf"}) {
-			sumFnT := infer.env.GetFn("agl1.Vec.PopIf").T("T", idTT.Elt)
-			clbT := sumFnT.GetParam(1).(types.FuncType)
-			sumFnT.Recv = []types.Type{idTT}
-			if TryCast[types.MutType](sumFnT.Params[0]) {
+			fnT := infer.env.GetFn("agl1.Vec.PopIf").T("T", idTT.Elt)
+			clbT := fnT.GetParam(1).(types.FuncType)
+			fnT.Recv = []types.Type{idTT}
+			if TryCast[types.MutType](fnT.Params[0]) {
 				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
 					return
 				}
 			}
-			sumFnT.Params = sumFnT.Params[1:]
+			fnT.Params = fnT.Params[1:]
 			if _, ok := expr.Args[0].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[0], clbT)
 			}
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
 		} else if InArray(fnName, []string{"With"}) {
-			sumFnT := infer.env.GetFn("agl1.Vec.With").T("T", idTT.Elt)
-			clbT := sumFnT.GetParam(2).(types.FuncType)
-			sumFnT.Recv = []types.Type{idTT}
-			if TryCast[types.MutType](sumFnT.Params[0]) {
+			fnT := infer.env.GetFn("agl1.Vec.With").T("T", idTT.Elt)
+			clbT := fnT.GetParam(2).(types.FuncType)
+			fnT.Recv = []types.Type{idTT}
+			if TryCast[types.MutType](fnT.Params[0]) {
 				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
 					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
 					return
 				}
 			}
-			sumFnT.Params = sumFnT.Params[1:]
+			fnT.Params = fnT.Params[1:]
 			if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
 				infer.SetType(expr.Args[1], clbT)
 			}
-			infer.SetType(expr, sumFnT.Return)
-			infer.SetType(exprT.Sel, sumFnT)
+			infer.SetType(expr, fnT.Return)
+			infer.SetType(exprT.Sel, fnT)
 		} else if fnName == "Swap" {
 			fnT := infer.env.GetFn("agl1.Vec.Swap").T("T", idTT.Elt)
 			param0 := fnT.Params[0]
