@@ -10897,6 +10897,38 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen380(t *testing.T) {
+	src := `package main
+var mut a [](int, int)
+func main() {
+	tmp := "1 2|3 4".Split("|").Map({ $0.Split(" ").Map({ $0.Int()? }) })
+	a = tmp.Map({ ($0[0], $0[1]) })
+}`
+	expected := `// agl:generated
+package main
+var a []AglTupleStruct_int_int
+func main() {
+	tmp := AglVecMap(AglStringSplit("1 2|3 4", "|"), func(aglArg0 string) []int {
+		return AglVecMap(AglStringSplit(aglArg0, " "), func(aglArg0 string) int {
+			return AglStringInt(aglArg0).Unwrap()
+		})
+	})
+	a = AglVecMap(tmp, func(aglArg0 []int) AglTupleStruct_int_int {
+		return AglTupleStruct_int_int{Arg0: aglArg0[0], Arg1: aglArg0[1]}
+	})
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[][]int", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "[](int, int)", test.TypeAt(5, 2).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

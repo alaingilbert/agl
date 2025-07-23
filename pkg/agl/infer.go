@@ -2715,6 +2715,9 @@ func cmpTypesLoose(a, b types.Type) bool {
 func cmpTypes(a, b types.Type) bool {
 	a = types.Unwrap(a)
 	b = types.Unwrap(b)
+	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
+		return true
+	}
 	if aa, ok := a.(types.FuncType); ok {
 		if bb, ok := b.(types.FuncType); ok {
 			if aa.GoStr() == bb.GoStr() {
@@ -2764,9 +2767,6 @@ func cmpTypes(a, b types.Type) bool {
 		aa := MustCast[types.SetType](a)
 		bb := MustCast[types.SetType](b)
 		return cmpTypes(aa.K, bb.K)
-	}
-	if TryCast[types.GenericType](a) || TryCast[types.GenericType](b) {
-		return true
 	}
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
