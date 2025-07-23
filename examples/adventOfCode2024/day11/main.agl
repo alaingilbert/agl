@@ -28,4 +28,52 @@ func main() {
         data = newData
     }
     fmt.Println(data.Len())
+    part2(fileContent.Split(" ").Map({ $0.Uint()? }))
+}
+
+func part2(dataIn []uint) {
+    mut data := make(map[uint]uint)
+    dataIn.ForEach({ data[$0] = 1 })
+    for _ in 0..75 {
+        mut newData := make(map[uint]uint)
+        for stone, mult := range data {
+            if stone == 0 {
+                mut tmp := mult
+                if Some(d) := newData.Get(uint(1)) {
+                    tmp = d + mult
+                }
+                newData[uint(1)] = tmp
+            } else {
+                stoneStr := stone.String();
+                if stoneStr.Len() % 2 == 0 {
+                    middle := stoneStr.Len() / 2;
+                    s1 := stoneStr[:middle].Uint()?
+                    s2 := stoneStr[middle:].Uint()?
+                    mut tmp1 := mult
+                    if Some(d) := newData.Get(s1) {
+                        tmp1 = d + mult
+                    }
+                    newData[s1] = tmp1
+                    mut tmp2 := mult
+                    if Some(d) := newData.Get(s2) {
+                        tmp2 = d + mult
+                    }
+                    newData[s2] = tmp2
+                } else {
+                    mut tmp := mult
+                    if Some(d) := newData.Get(stone * 2024) {
+                        tmp = d + mult
+                    }
+                    newData[stone * 2024] = tmp
+                }
+            }
+        }
+        data = newData;
+    }
+    mut acc := uint(0)
+    for _, v := range data {
+        acc += v
+    }
+    //res := data.iter().fold(0, |acc, (_, v)| acc + v);
+    fmt.Println(acc);
 }
