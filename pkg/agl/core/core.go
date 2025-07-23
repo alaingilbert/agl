@@ -776,6 +776,10 @@ func AglSetIntersects[T comparable](s AglSet[T], other Iterator[T]) bool {
 	return !AglSetIsDisjoint(s, other)
 }
 
+func AglStringLen(s string) int {
+	return len(s)
+}
+
 func AglStringLines(s string) []string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	return strings.Split(s, "\n")

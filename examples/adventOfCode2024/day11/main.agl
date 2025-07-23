@@ -15,8 +15,8 @@ func main() {
                 newData.Push(1)
             } else {
                 stoneStr := stone.String()
-                if len(stoneStr) % 2 == 0 {
-                    middle := len(stoneStr) / 2
+                if stoneStr.Len() % 2 == 0 {
+                    middle := stoneStr.Len() / 2
                     s1 := stoneStr[:middle].Uint()?
                     s2 := stoneStr[middle:].Uint()?
                     newData.Push(s1)
