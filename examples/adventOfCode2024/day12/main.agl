@@ -22,7 +22,7 @@ func dfs(id string, pos (int, int), mut seen set[(int, int)], mut sides set[((in
             continue
         }
         nregion := dfs(id, np, mut seen, mut sides)
-        region = region.Union(nregion)
+        region.FormUnion(nregion)
     }
     return region
 }
