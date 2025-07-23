@@ -37,6 +37,22 @@ func findTrails(head (int, int), mut summits set[(int, int)]) {
     }
 }
 
+func findTrails2(head (int, int)) int {
+    curr := data[head.1][head.0]
+    if curr == 9 {
+        return 1
+    }
+    var mut res int
+    for dir in directions {
+        nx := head.0 + dir.0
+        ny := head.1 + dir.1
+        if nx >= 0 && nx < width && ny >= 0 && ny < height && data[ny][nx] == curr + 1 {
+            res += findTrails2((nx, ny))
+        }
+    }
+    return res
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day10/data.txt")!)
     data = fileContent.Lines().Map({ $0.Split("").Map({ string($0).Int()? }) })
@@ -49,4 +65,5 @@ func main() {
         return summits.Len()
     }).Sum()
     fmt.Println("Part1:", part1)
+    fmt.Println("Part2:", heads.Map(findTrails2).Sum())
 }
