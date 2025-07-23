@@ -58,10 +58,5 @@ func part2(dataIn []uint) {
         }
         data = newData;
     }
-    mut acc := uint(0)
-    for _, v := range data {
-        acc += v
-    }
-    //res := data.iter().fold(0, |acc, (_, v)| acc + v);
-    fmt.Println(acc);
+    fmt.Println(data.Reduce(uint(0), { $0 + $1.Value }));
 }
