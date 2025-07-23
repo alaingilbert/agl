@@ -1833,7 +1833,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			fnName := x.Sel.Name
 			switch fnName {
 			case "Sum":
-				return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }}
+				retT := g.env.GetType(x.Sel).(types.FuncType).Return.GoStrType()
+				return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+retT+", "+retT+"](") + genEX() + e(")") }}
 			}
 		case types.ArrayType:
 			c1 := g.genExpr(x.X)

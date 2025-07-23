@@ -357,9 +357,9 @@ type IntoIterator[T any] interface {
 // Sequence anything that can be turned into an Iterator
 type Sequence[T any] iter.Seq[T]
 
-func AglSequenceSum[T cmp.Ordered](s Sequence[T]) (out T) {
+func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	for e := range s {
-		out += e
+		out += R(e)
 	}
 	return out
 }

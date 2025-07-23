@@ -10789,7 +10789,7 @@ func main() {
 package main
 func main() {
 	a := map[int]uint8{1: 1, 2: 2, 3: 3}
-	AglSequenceSum(AglIdentity(AglMapValues(a)))
+	AglSequenceSum[uint8, uint8](AglIdentity(AglMapValues(a)))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
