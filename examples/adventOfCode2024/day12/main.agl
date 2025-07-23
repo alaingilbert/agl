@@ -43,10 +43,56 @@ func part1() {
     fmt.Println(res)
 }
 
+func part2() {
+    mut res := 0
+    mut seen := set[(int, int)]{}
+    for y in data.Indices() {
+        for x in data[y].Indices() {
+            pos := (x, y)
+            id := data[y][x]
+            mut sidesSet := set[((int, int), (int, int))]{}
+            region := dfs(id, pos, mut seen, mut sidesSet)
+            mut sides := 0
+            for (dirI, dir) in directions.Enumerated() {
+                dirMod := dirI % 2 == 0
+                dirPos := dir
+                sidesArrDir := sidesSet.Filter({ $0.0 == dirPos }).Map({ $0.1 }).Sorted(by: {
+                    if $0.0 == $1.0 && $0.1 == $1.1 {
+                        return true
+                    }
+                    return if $0.0 == $1.0 { $0.1 < $1.1 } else { $0.0 < $1.0 }
+                })
+                
+                mut groupsMap := map[int][](int, int){}
+                for pos in sidesArrDir {
+                    if dirMod {
+                        groupsMap[pos.0].Push(pos)
+                    } else {
+                        groupsMap[pos.1].Push(pos)
+                    }
+                }
+                sides += groupsMap.Len()
+                groups := groupsMap.Values()
+                for group in groups {
+                    for (el1, el2) in zip(group, group[1:]) {
+                        diff := if dirMod { el2.1 - el1.1 } else { el2.0 - el1.0 }
+                        if diff > 1 {
+                            sides += 1
+                        }
+                    }
+                }
+            }
+            res += region.Len() * sides
+        }
+    }
+    fmt.Println(res)
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day12/data.txt")!)
     data = fileContent.Lines().Map({ $0.Split("") })
     width = data[0].Len()
     height = data.Len()
     part1()
+    part2()
 }
