@@ -7,10 +7,11 @@ import (
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day11/data.txt")!)
-    mut data := fileContent.Split(" ").Map({ $0.Uint()? })
+    data := fileContent.Split(" ").Map({ $0.Uint()? })
+    mut data1 := data.Clone()
     for _ in 0..25 {
         mut newData := []uint{}
-        for stone in data {
+        for stone in data1 {
             if stone == 0 {
                 newData.Push(1)
             } else {
@@ -25,10 +26,10 @@ func main() {
                 }
             }
         }
-        data = newData
+        data1 = newData
     }
-    fmt.Println(data.Len())
-    part2(fileContent.Split(" ").Map({ $0.Uint()? }))
+    fmt.Println(data1.Len())
+    part2(data)
 }
 
 func part2(dataIn []uint) {
