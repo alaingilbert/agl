@@ -3481,7 +3481,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				switch xTv := xT.(type) {
 				case types.TupleType:
 					argIdx, _ := strconv.Atoi(v.Sel.Name)
-					infer.SetType(v.X, xT)
+					infer.SetType(v.X, oxT)
 					want, got := xTv.Elts[argIdx], infer.GetType(rhs)
 					if !cmpTypesLoose(want, got) {
 						infer.errorf(v.Sel, "type mismatch, wants: %s, got: %s", want, got)

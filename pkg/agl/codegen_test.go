@@ -10615,6 +10615,33 @@ func AglVecIter_T_int(v []int) iter.Seq[int] {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen368(t *testing.T) {
+	src := `package main
+func main() {
+	mut a := [](u8, u8){(1, 2)}
+	a.With(0, |t| { t.0 = 3 })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}}
+	AglVecWith((*[]AglTupleStruct_uint8_uint8)(&a), 0, func(t *AglTupleStruct_uint8_uint8) AglVoid {
+		t.Arg0 = 3
+		return AglVoid{}
+	})
+}
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "*(u8, u8)", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "*(u8, u8)", test.TypeAt(4, 18).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
