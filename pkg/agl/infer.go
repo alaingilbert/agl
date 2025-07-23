@@ -2759,6 +2759,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 				infer.expr(elExpr)
 			})
 		}
+		infer.expr(expr.Type)
 		infer.SetType(v.Elt, t)
 		infer.SetType(expr, types.ArrayType{Elt: t})
 		return

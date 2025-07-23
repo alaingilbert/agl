@@ -10642,6 +10642,26 @@ type AglTupleStruct_uint8_uint8 struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen369(t *testing.T) {
+	src := `package main
+func main() {
+	[]*(u8, u8){}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	[]*AglTupleStruct_uint8_uint8{Arg0: uint8, Arg1: uint8}{}
+}
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
