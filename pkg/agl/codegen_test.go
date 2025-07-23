@@ -10716,6 +10716,24 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen373(t *testing.T) {
+	src := `package main
+func main() {
+	for _ in (0..2) {}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for _ = range AglNewRange[int](0, 2, false).Iter() {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
