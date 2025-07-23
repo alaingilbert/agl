@@ -64,6 +64,7 @@ type FileInferrer struct {
 	Errors          []error
 	mutEnforced     bool
 	destructure     bool
+	indexValue      types.Type
 	imports         map[string]*ast.ImportSpec
 }
 
@@ -95,6 +96,13 @@ type OptTypeTmp struct {
 
 func (o *OptTypeTmp) IsDefinedFor(n ast.Node) bool {
 	return o != nil && o.Type != nil && o.Pos == n.Pos()
+}
+
+func (infer *FileInferrer) withIndexValue(v types.Type, clb func()) {
+	prev := infer.indexValue
+	infer.indexValue = v
+	clb()
+	infer.indexValue = prev
 }
 
 func (infer *FileInferrer) withDestructure(clb func()) {
@@ -957,220 +965,229 @@ func (infer *FileInferrer) inferStructType(sT types.StructType, expr *ast.Select
 	return t
 }
 
-func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
-	switch call := expr.Fun.(type) {
-	case *ast.SelectorExpr:
-		var exprFunT types.Type
-		var callXParent *Info
+func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.SelectorExpr) {
+	var exprFunT types.Type
+	var callXParent *Info
 
-		switch callXT := call.X.(type) {
-		case *ast.Ident:
-			exprFunT = infer.env.Get(callXT.Name)
-			callXParent = infer.env.GetNameInfo(callXT.Name)
-			if exprFunT == nil {
-				infer.errorf(call.X, "Unresolved reference '%s'", callXT.Name)
-				return
-			}
-		case *ast.CompositeLit:
-			infer.expr(callXT)
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
-			infer.expr(callXT)
-			exprFunT = infer.GetType(callXT)
-		case *ast.SelectorExpr:
-			infer.expr(callXT.X)
-			if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
-				callXTXT = types.Unwrap(callXTXT)
-				switch v := callXTXT.(type) {
-				case types.StructType:
-					exprFunT = infer.inferStructType(v, callXT)
-				case types.TupleType:
-					idx, err := strconv.Atoi(callXT.Sel.Name)
-					if err != nil {
-						infer.errorf(callXT.Sel, "tuple selector must be a number")
-						return
-					}
-					exprFunT = v.Elts[idx]
-					infer.SetType(callXT.Sel, exprFunT)
-				default:
-					panic("")
-				}
-			} else {
-				//infer.SetType(callXT.X, )
-				exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
-			}
-		case *ast.IndexExpr:
-			infer.expr(callXT)
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		case *ast.TypeAssertExpr:
-			exprFunT = types.OptionType{W: infer.env.GetType2(callXT, infer.fset)}
-		case *ast.BasicLit:
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		case *ast.ParenExpr:
-			infer.expr(callXT)
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		case *ast.RangeExpr:
-			infer.expr(callXT)
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		case *ast.SliceExpr:
-			infer.expr(callXT)
-			exprFunT = infer.env.GetType2(callXT, infer.fset)
-		default:
-			infer.errorf(call.X, "%v %v", call.X, to(call.X))
+	switch callXT := call.X.(type) {
+	case *ast.Ident:
+		exprFunT = infer.env.Get(callXT.Name)
+		callXParent = infer.env.GetNameInfo(callXT.Name)
+		if exprFunT == nil {
+			infer.errorf(call.X, "Unresolved reference '%s'", callXT.Name)
 			return
 		}
+	case *ast.CompositeLit:
+		infer.expr(callXT)
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
+		infer.expr(callXT)
+		exprFunT = infer.GetType(callXT)
+	case *ast.SelectorExpr:
+		infer.expr(callXT.X)
+		if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
+			callXTXT = types.Unwrap(callXTXT)
+			switch v := callXTXT.(type) {
+			case types.StructType:
+				exprFunT = infer.inferStructType(v, callXT)
+			case types.TupleType:
+				idx, err := strconv.Atoi(callXT.Sel.Name)
+				if err != nil {
+					infer.errorf(callXT.Sel, "tuple selector must be a number")
+					return
+				}
+				exprFunT = v.Elts[idx]
+				infer.SetType(callXT.Sel, exprFunT)
+			default:
+				panic("")
+			}
+		} else {
+			//infer.SetType(callXT.X, )
+			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
+		}
+	case *ast.IndexExpr:
+		infer.expr(callXT)
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	case *ast.TypeAssertExpr:
+		exprFunT = types.OptionType{W: infer.env.GetType2(callXT, infer.fset)}
+	case *ast.BasicLit:
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	case *ast.ParenExpr:
+		infer.expr(callXT)
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	case *ast.RangeExpr:
+		infer.expr(callXT)
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	case *ast.SliceExpr:
+		infer.expr(callXT)
+		exprFunT = infer.env.GetType2(callXT, infer.fset)
+	default:
+		infer.errorf(call.X, "%v %v", call.X, to(call.X))
+		return
+	}
 
-		fnName := call.Sel.Name
-		oexprFunT := exprFunT
-		exprFunT = types.Unwrap(exprFunT)
-		switch idTT := exprFunT.(type) {
-		case types.TypeType:
-		case types.UntypedStringType:
-		case types.StringType:
-		case types.I64Type:
-		case types.UintType:
-		case types.SetType:
-		case types.ArrayType:
-		case types.MapType:
-		case types.CustomType:
-			name := fmt.Sprintf("%s.%s", idTT, fnName)
-			t := infer.env.Get(name)
-			tr := t.(types.FuncType).Return
-			infer.SetType(call.Sel, t)
-			infer.SetType(call, tr)
-			infer.SetType(expr, tr)
-		case types.StructType:
-			if call.Sel.Name != "Sum" {
-				name := idTT.GetFieldName(call.Sel.Name)
-				nameT := infer.env.Get(name)
+	fnName := call.Sel.Name
+	oexprFunT := exprFunT
+	exprFunT = types.Unwrap(exprFunT)
+	switch idTT := exprFunT.(type) {
+	case types.TypeType:
+	case types.UntypedStringType:
+	case types.StringType:
+	case types.I64Type:
+	case types.UintType:
+	case types.SetType:
+	case types.ArrayType:
+	case types.MapType:
+	case types.CustomType:
+		name := fmt.Sprintf("%s.%s", idTT, fnName)
+		t := infer.env.Get(name)
+		tr := t.(types.FuncType).Return
+		infer.SetType(call.Sel, t)
+		infer.SetType(call, tr)
+		infer.SetType(expr, tr)
+	case types.StructType:
+		if call.Sel.Name != "Sum" {
+			name := idTT.GetFieldName(call.Sel.Name)
+			nameT := infer.env.Get(name)
 
-				// Handle struct composition. If we did not find the method for the struct,
-				// we need to check other structs that are "inherited" (composition).
-				if nameT == nil {
-					for _, field := range idTT.Fields {
-						if field.Name == "" {
-							fieldType := types.Unwrap(field.Typ)
-							if v, ok := fieldType.(types.StructType); ok {
-								name = v.GetFieldName(call.Sel.Name)
-								nameT = infer.env.Get(name)
-								nameT = types.Unwrap(nameT)
-							}
+			// Handle struct composition. If we did not find the method for the struct,
+			// we need to check other structs that are "inherited" (composition).
+			if nameT == nil {
+				for _, field := range idTT.Fields {
+					if field.Name == "" {
+						fieldType := types.Unwrap(field.Typ)
+						if v, ok := fieldType.(types.StructType); ok {
+							name = v.GetFieldName(call.Sel.Name)
+							nameT = infer.env.Get(name)
+							nameT = types.Unwrap(nameT)
 						}
 					}
 				}
+			}
 
-				if nameT == nil {
-					infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
+			if nameT == nil {
+				infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
+				return
+			}
+			fnT := infer.env.GetFn(name)
+			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
+				if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
+					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
 					return
 				}
-				fnT := infer.env.GetFn(name)
-				if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-					if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
-						infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
-						return
-					}
-				}
-				toReturn := fnT.Return
-				toReturn = alterResultBubble(infer.returnType, toReturn)
-				infer.SetType(call.Sel, fnT)
-				infer.SetType(expr, toReturn)
 			}
-		case types.InterfaceType:
-			t := idTT.GetMethodByName(call.Sel.Name)
-			//name := fmt.Sprintf("%s.%s", idTT, fnName)
-			//t := infer.env.Get(name)
-			tr := t.(types.FuncType).Return
-			infer.SetType(call.Sel, t)
-			infer.SetType(call, tr)
-			infer.SetType(expr, tr)
-		case types.EnumType:
-			sub := call.Sel.Name
-			if sub == "RawValue" {
-				eT := infer.env.GetFn("agl1.Enum.RawValue").T("T", idTT)
-				eT.Recv = []types.Type{idTT}
-				eT.Params = eT.Params[1:]
-				infer.SetType(call.Sel, eT)
-			}
-			infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: sub, Fields: idTT.Fields})
-		case types.PackageType:
-			pkgT := infer.env.Get(idTT.Name)
-			if pkgT == nil {
-				infer.errorf(call.X, "package not found '%s'", idTT.Name)
-				return
-			}
-			name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
-			nameT := infer.env.Get(name)
-			nameTInfo := infer.env.GetNameInfo(name)
-			if nameT == nil {
-				infer.errorf(call.Sel, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
-				return
-			}
-			fnT := nameT.(types.FuncType)
 			toReturn := fnT.Return
-			if toReturn != nil {
-				toReturn = alterResultBubble(infer.returnType, toReturn)
-			}
-			infer.SetType(call.Sel, fnT, WithDefinition1(nameTInfo.Definition1))
-			infer.SetType(expr.Fun, fnT)
-			if toReturn != nil {
-				infer.SetType(expr, toReturn)
-			} else {
-				infer.SetType(expr, types.VoidType{})
-			}
-		case types.OptionType:
-			if fnName == "Map" {
-				break
-			}
-			if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Map"}) {
-				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
-				return
-			}
-			info := infer.env.GetNameInfo("agl1.Option." + fnName)
-			fnT := infer.env.GetFn("agl1.Option." + fnName)
-			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
-				fnT = fnT.T("T", idTT.W)
-			}
-			fnT.Recv = []types.Type{oexprFunT}
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case types.ResultType:
-			if !InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}) {
-				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
-				return
-			}
-			info := infer.env.GetNameInfo("agl1.Result." + fnName)
-			fnT := infer.env.GetFn("agl1.Result." + fnName)
-			if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
-				fnT = fnT.T("T", idTT.W)
-			} else if fnName == "Err" {
-				infer.errorf(call.X, "cannot call Err on Result")
-				return
-			}
-			fnT.Recv = []types.Type{oexprFunT}
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case types.RangeType:
-			if !InArray(fnName, []string{"Rev"}) {
-				infer.errorf(call.X, "Unresolved reference '%s'", fnName)
-				return
-			}
-			if fnName == "Rev" {
-				info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
-				fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
-				fnT = fnT.T("T", idTT.Typ)
-				infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			}
-			infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
-		default:
+			toReturn = alterResultBubble(infer.returnType, toReturn)
+			infer.SetType(call.Sel, fnT)
+			infer.SetType(expr, toReturn)
+		}
+	case types.InterfaceType:
+		t := idTT.GetMethodByName(call.Sel.Name)
+		//name := fmt.Sprintf("%s.%s", idTT, fnName)
+		//t := infer.env.Get(name)
+		tr := t.(types.FuncType).Return
+		infer.SetType(call.Sel, t)
+		infer.SetType(call, tr)
+		infer.SetType(expr, tr)
+	case types.EnumType:
+		sub := call.Sel.Name
+		if sub == "RawValue" {
+			eT := infer.env.GetFn("agl1.Enum.RawValue").T("T", idTT)
+			eT.Recv = []types.Type{idTT}
+			eT.Params = eT.Params[1:]
+			infer.SetType(call.Sel, eT)
+		}
+		infer.SetType(expr, types.EnumType{Name: idTT.Name, SubTyp: sub, Fields: idTT.Fields})
+	case types.PackageType:
+		pkgT := infer.env.Get(idTT.Name)
+		if pkgT == nil {
+			infer.errorf(call.X, "package not found '%s'", idTT.Name)
+			return
+		}
+		name := fmt.Sprintf("%s.%s", idTT.Name, call.Sel.Name)
+		nameT := infer.env.Get(name)
+		nameTInfo := infer.env.GetNameInfo(name)
+		if nameT == nil {
+			infer.errorf(call.Sel, "not found '%s' in package '%v'", call.Sel.Name, idTT.Name)
+			return
+		}
+		fnT := nameT.(types.FuncType)
+		toReturn := fnT.Return
+		if toReturn != nil {
+			toReturn = alterResultBubble(infer.returnType, toReturn)
+		}
+		infer.SetType(call.Sel, fnT, WithDefinition1(nameTInfo.Definition1))
+		infer.SetType(expr.Fun, fnT)
+		if toReturn != nil {
+			infer.SetType(expr, toReturn)
+		} else {
+			infer.SetType(expr, types.VoidType{})
+		}
+	case types.OptionType:
+		if fnName == "Map" {
+			break
+		}
+		if !InArray(fnName, []string{"IsNone", "IsSome", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Map"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
-		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
-		infer.inferGoExtensions(expr, exprFunT, oexprFunT, call)
-		if len(infer.Errors) > 0 {
+		info := infer.env.GetNameInfo("agl1.Option." + fnName)
+		fnT := infer.env.GetFn("agl1.Option." + fnName)
+		if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+			fnT = fnT.T("T", idTT.W)
+		}
+		fnT.Recv = []types.Type{oexprFunT}
+		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.ResultType:
+		if !InArray(fnName, []string{"IsOk", "IsErr", "Unwrap", "UnwrapOr", "UnwrapOrDefault", "Err"}) {
+			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
-		infer.exprs(expr.Args)
+		info := infer.env.GetNameInfo("agl1.Result." + fnName)
+		fnT := infer.env.GetFn("agl1.Result." + fnName)
+		if InArray(fnName, []string{"Unwrap", "UnwrapOr", "UnwrapOrDefault"}) {
+			fnT = fnT.T("T", idTT.W)
+		} else if fnName == "Err" {
+			infer.errorf(call.X, "cannot call Err on Result")
+			return
+		}
+		fnT.Recv = []types.Type{oexprFunT}
+		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.RangeType:
+		if !InArray(fnName, []string{"Rev"}) {
+			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+			return
+		}
+		if fnName == "Rev" {
+			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
+			fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
+			fnT = fnT.T("T", idTT.Typ)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+		}
+		infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
+	default:
+		infer.errorf(call.X, "Unresolved reference '%s'", fnName)
+		return
+	}
+	infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
+	infer.inferGoExtensions(expr, exprFunT, oexprFunT, call)
+	if len(infer.Errors) > 0 {
+		return
+	}
+	infer.exprs(expr.Args)
+}
+
+func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
+	switch call := expr.Fun.(type) {
+	case *ast.IndexExpr:
+		sel := call.X.(*ast.SelectorExpr)
+		infer.withIndexValue(infer.env.GetType2(call.Index, infer.fset), func() {
+			infer.callExprSelectorExpr(expr, sel)
+		})
+	case *ast.SelectorExpr:
+		infer.callExprSelectorExpr(expr, call)
 	case *ast.Ident:
 		infer.langFns(expr, call)
 		if call.Name == "panic" && len(expr.Args) > 0 {
@@ -1447,7 +1464,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		fnName := exprT.Sel.Name
 		//exprPos := infer.Pos(expr)
 		if fnName == "Sum" {
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].W)
+			rT := idTT.TypeParams[0].W
+			if infer.indexValue != nil {
+				rT = infer.indexValue
+			}
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].W).T("R", rT)
 			fnT.Recv = []types.Type{oidT}
 			if len(fnT.Params) > 0 {
 				if TryCast[types.MutType](fnT.Params[0]) {

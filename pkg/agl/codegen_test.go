@@ -10784,18 +10784,21 @@ func TestCodeGen376(t *testing.T) {
 func main() {
 	a := map[int]u8{1: 1, 2: 2, 3: 3}
 	a.Values().Sum()
+	a.Values().Sum[int]()
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	a := map[int]uint8{1: 1, 2: 2, 3: 3}
 	AglSequenceSum[uint8, uint8](AglIdentity(AglMapValues(a)))
+	AglSequenceSum[uint8, int](AglIdentity(AglMapValues(a)))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func (map[int]u8) Values() Sequence[u8]", test.TypeAt(4, 4).String())
 	tassert.Equal(t, "func (Sequence[u8]) Sum() u8", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (Sequence[u8]) Sum() int", test.TypeAt(5, 13).String())
 	testCodeGen2(t, expected, test)
 }
 
