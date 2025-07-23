@@ -1047,6 +1047,7 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case VoidType:
 	case StringType:
 	case IntType:
+	case UintType:
 	case U8Type:
 	case I64Type:
 	case BoolType:
@@ -1102,7 +1103,10 @@ func (f FuncType) GoStrType() string {
 			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
 				resultStr = " !"
 			} else {
-				val := result.GoStr()
+				val := result.GoStrType()
+				if val == "AglVoid{}" {
+					val = "AglVoid"
+				}
 				if val != "" {
 					resultStr = " " + val
 				}
@@ -1157,6 +1161,9 @@ func (f FuncType) String1() string {
 				resultStr = " !"
 			} else {
 				val := result.String()
+				if val == "void" {
+					val = ""
+				}
 				if val != "" {
 					resultStr = " " + val
 				}

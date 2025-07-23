@@ -10762,10 +10762,15 @@ package main
 import "fmt"
 func main() {
 	a := []int{1, 2, 3}
-	AglVecForEach(a, func(aglArg0 int) AglVoid {
+	AglVecForEach_T_int(a, func(aglArg0 int) AglVoid {
 		fmt.Print(aglArg0)
 		return AglVoid{}
 	})
+}
+func AglVecForEach_T_int(v []int, f func(int) AglVoid) {
+	for i := range v {
+		f(v[i])
+	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
