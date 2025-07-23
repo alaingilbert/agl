@@ -62,10 +62,10 @@ func doSwap(mut blocks []uint?, mut freeSpots [](uint, uint), toSwap []uint) {
         for (i, el) in toSwap.Enumerated() {
             blocks.Swap(startIdx + uint(i), el);
         }
-        spot := freeSpots[spotIdx]
-        spot.0 += swapLen
-        spot.1 -= swapLen
-        freeSpots[spotIdx] = spot
+        freeSpots.With(spotIdx, |spot| {
+            spot.0 += swapLen
+            spot.1 -= swapLen
+        })
     }
 }
 
