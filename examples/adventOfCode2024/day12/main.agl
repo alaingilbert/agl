@@ -1,0 +1,52 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]string
+var mut width int
+var mut height int
+var directions = [](int, int){(-1, 0), (0, -1), (1, 0), (0, 1)}
+
+func dfs(id string, pos (int, int), mut seen set[(int, int)], mut sides set[((int, int), (int, int))]) set[(int, int)] {
+    if !seen.Insert(pos) {
+        return set[(int, int)]{}
+    }
+    mut region := set[(int, int)]{pos}
+    for dir in directions {
+        np := (pos.0 + dir.0, pos.1 + dir.1)
+        if np.0 < 0 || np.0 >= width || np.1 < 0 || np.1 >= height || data[np.1][np.0] != id {
+            sides.Insert((dir, np))
+            continue
+        }
+        nregion := dfs(id, np, mut seen, mut sides)
+        region = region.Union(nregion)
+    }
+    return region
+}
+
+func part1() {
+    mut res := 0
+    mut seen := set[(int, int)]{}
+    for y in data.Indices() {
+        for x in data[y].Indices() {
+            pos := (x, y)
+            id := data[y][x]
+            mut sidesSet := set[((int, int), (int, int))]{}
+            region := dfs(id, pos, mut seen, mut sidesSet)
+            area := region.Len()
+            res += area * sidesSet.Len()
+        }
+    }
+    fmt.Println(res)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day12/data.txt")!)
+    data = fileContent.Lines().Map({ $0.Split("") })
+    width = data[0].Len()
+    height = data.Len()
+    part1()
+}
