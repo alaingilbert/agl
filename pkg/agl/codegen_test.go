@@ -10645,6 +10645,16 @@ type AglTupleStruct_uint8_uint8 struct {
 func TestCodeGen369(t *testing.T) {
 	src := `package main
 func main() {
+	a := [](u8, u8){(1, 2)}
+	a.With(0, |t| { t.0 = 3 })
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "4:4: method 'With' cannot be called on immutable type 'Vec'")
+}
+
+func TestCodeGen370(t *testing.T) {
+	src := `package main
+func main() {
 	[]*(u8, u8){}
 }`
 	expected := `// agl:generated

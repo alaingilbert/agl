@@ -1160,6 +1160,9 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 		}
 		infer.SetType(call.X, oexprFunT, WithDefinition(callXParent))
 		infer.inferGoExtensions(expr, exprFunT, oexprFunT, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 		infer.exprs(expr.Args)
 	case *ast.Ident:
 		infer.langFns(expr, call)
