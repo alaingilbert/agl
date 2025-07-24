@@ -1210,6 +1210,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 			oParams := callTT.Params
 			for i := range expr.Args {
 				arg := expr.Args[i]
+				if len(oParams) == 0 {
+					infer.errorf(call, "missing parameter")
+					return
+				}
 				oArg := oParams[min(i, len(oParams)-1)]
 				infer.withOptType(arg, oArg, func() {
 					infer.expr(arg)
