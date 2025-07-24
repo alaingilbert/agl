@@ -1217,21 +1217,13 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, fset, false)
 	case *ast.Ellipsis:
-		t := e.GetType2(xx.Elt, fset)
-		panicIfNil(t, xx.Elt)
-		return types.EllipsisType{Elt: t}
+		return types.EllipsisType{Elt: e.GetType2(xx.Elt, fset)}
 	case *ast.ArrayType:
-		t := e.GetType2(xx.Elt, fset)
-		panicIfNil(t, xx.Elt)
-		return types.ArrayType{Elt: t}
+		return types.ArrayType{Elt: e.GetType2(xx.Elt, fset)}
 	case *ast.ResultExpr:
-		t := e.GetType2(xx.X, fset)
-		panicIfNil(t, xx.X)
-		return types.ResultType{W: t}
+		return types.ResultType{W: e.GetType2(xx.X, fset)}
 	case *ast.OptionExpr:
-		t := e.GetType2(xx.X, fset)
-		panicIfNil(t, xx.X)
-		return types.OptionType{W: t}
+		return types.OptionType{W: e.GetType2(xx.X, fset)}
 	case *ast.CallExpr:
 		if v, ok := xx.Fun.(*ast.Ident); ok {
 			if v.Name == "make" {
