@@ -32,10 +32,8 @@ func mod(a int, n int) int {
 func part1() {
     robots := robots
     for i in robots.Indices() {
-        robot := robots[i]
-        robot.Position.0 = mod((robot.Position.0 + 100 * robot.Velocity.0), width)
-        robot.Position.1 = mod((robot.Position.1 + 100 * robot.Velocity.1), height)
-        robots[i] = robot
+        robots[i].Position.0 = mod((robots[i].Position.0 + 100 * robots[i].Velocity.0), width)
+        robots[i].Position.1 = mod((robots[i].Position.1 + 100 * robots[i].Velocity.1), height)
     }
     q1 := robots.Filter({ $0.Position.0 < mw && $0.Position.1 < mh }).Len()
     q2 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 < mh }).Len()
