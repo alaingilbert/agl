@@ -3585,8 +3585,25 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
 				case *ast.SelectorExpr:
-					tmp := infer.env.Get(vv.X.(*ast.Ident).Name)
-					lhsIdName = tmp.GoStrType() + "." + vv.Sel.Name
+					switch vvv := vv.X.(type) {
+					case *ast.Ident:
+						tmp := infer.env.Get(vvv.Name).GoStrType()
+						lhsIdName = tmp + "." + vv.Sel.Name
+					case *ast.IndexExpr:
+						switch vvvv := vvv.X.(type) {
+						case *ast.Ident:
+							t := infer.env.Get(vvvv.Name)
+							t = types.Unwrap(t)
+							tmp := t.(types.ArrayType).Elt.GoStrType()
+							lhsIdName = tmp + "." + vv.Sel.Name
+						default:
+							infer.errorf(lhs, "%v", to(vvv.X))
+							return
+						}
+					default:
+						infer.errorf(lhs, "%v", to(vv.X))
+						return
+					}
 				default:
 					infer.errorf(lhs, "%v", to(v.X))
 					return
@@ -3669,7 +3686,21 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsIdName = lhsID.Name
 				case *ast.SelectorExpr:
 					lhsID = vv.Sel
-					tmp := infer.env.Get(vv.X.(*ast.Ident).Name).GoStrType()
+					var tmp string
+					switch vvv := vv.X.(type) {
+					case *ast.Ident:
+						tmp = infer.env.Get(vvv.Name).GoStrType()
+					case *ast.IndexExpr:
+						switch vvvv := vvv.X.(type) {
+						case *ast.Ident:
+							t := infer.env.Get(vvvv.Name)
+							t = types.Unwrap(t)
+							tmp = t.(types.ArrayType).Elt.GoStrType()
+						default:
+							infer.errorf(lhs, "%v", to(vvv.X))
+							return
+						}
+					}
 					lhsIdName = tmp + "." + lhsID.Name
 				default:
 					infer.errorf(v.Sel, "...")
