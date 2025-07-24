@@ -1270,6 +1270,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			name := fmt.Sprintf("Option.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
 		default:
+			return nil
 			panic(fmt.Sprintf("%v %v", xx.X, reflect.TypeOf(base)))
 		}
 		return nil
