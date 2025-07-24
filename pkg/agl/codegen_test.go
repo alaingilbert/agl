@@ -11085,6 +11085,12 @@ func main() {
     c := a.Map({
 		return 0
 	}).Sum()
+    d := a.Map(func(a []string) u8 {
+		return 0
+	}).Sum()
+    e := a.Map(|a| {
+		return u16(0)
+	}).Sum()
 }`
 	expected := `// agl:generated
 package main
@@ -11095,6 +11101,12 @@ func main() {
 	}))
 	c := AglVecSum(AglVecMap(a, func(aglArg0 []string) int {
 		return 0
+	}))
+	d := AglVecSum(AglVecMap(a, func(a []string) uint8 {
+		return 0
+	}))
+	e := AglVecSum(AglVecMap(a, func(a []string) uint16 {
+		return uint16(0)
 	}))
 }
 `
