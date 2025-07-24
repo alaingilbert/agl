@@ -11025,6 +11025,31 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen385(t *testing.T) {
+	src := `package main
+type S1 struct {}
+type S2 struct {
+	P S1?
+}
+func main() {
+	a := []S2{{P: None}}
+}`
+	expected := `// agl:generated
+package main
+type S1 struct{}
+type S2 struct {
+	P Option[S1]
+}
+func main() {
+	a := []S2{{P: MakeOptionNone[S1]()}}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

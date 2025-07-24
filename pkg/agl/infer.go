@@ -2954,7 +2954,21 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 
 func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 	if expr.Type == nil {
-		infer.SetType(expr, infer.optType.Type)
+		if infer.optType != nil {
+			switch v := infer.optType.Type.(type) {
+			case types.StructType:
+				for _, elExpr := range expr.Elts {
+					infer.SetType(elExpr, infer.optType.Type)
+					switch vv := elExpr.(type) {
+					case *ast.KeyValueExpr:
+						k := fmt.Sprintf("%s.%s", v.Name, vv.Key.(*ast.Ident).Name)
+						kvT := infer.env.Get(k)
+						infer.SetType(vv.Value, kvT)
+					}
+				}
+			}
+			infer.SetType(expr, infer.optType.Type)
+		}
 		return
 	}
 	switch v := expr.Type.(type) {
