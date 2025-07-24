@@ -2536,7 +2536,7 @@ func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
 
 func (infer *FileInferrer) okExpr(expr *ast.OkExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, types.OkType{W: infer.env.GetType(expr.X)})
+	infer.SetType(expr, types.ResultType{W: infer.env.GetType(expr.X)})
 }
 
 func (infer *FileInferrer) errExpr(expr *ast.ErrExpr) {
@@ -3787,7 +3787,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				default:
 					panic("")
 				}
-			case types.ErrType, types.OkType:
+			case types.ErrType, types.ResultType:
 				if !TryCast[types.ResultType](rhsT) {
 					infer.errorf(lhs, "try to destructure a non-Result type into an ResultType")
 					return
@@ -4092,7 +4092,7 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 		case token.NONE:
 			lhsT = types.OptionType{}
 		case token.OK:
-			lhsT = types.OkType{}
+			lhsT = types.ResultType{}
 		case token.ERR:
 			lhsT = types.ErrType{}
 		case token.SOME:
@@ -4123,7 +4123,7 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 	case token.NONE:
 		lhsT = types.OptionType{}
 	case token.OK:
-		lhsT = types.OkType{}
+		lhsT = types.ResultType{}
 	case token.ERR:
 		lhsT = types.ErrType{}
 	case token.SOME:

@@ -147,12 +147,6 @@ func (o OptionType) String() string {
 	}
 }
 
-type OkType struct{ W Type }
-
-func (o OkType) GoStr() string     { return "OkType" }
-func (o OkType) GoStrType() string { return "OkType" }
-func (o OkType) String() string    { return fmt.Sprintf("Ok[%s]", o.W.String()) }
-
 type ErrType struct {
 	W Type
 	T Type
