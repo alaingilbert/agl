@@ -2519,16 +2519,11 @@ func (infer *FileInferrer) voidExpr(expr *ast.VoidExpr) {
 
 func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 	var t types.Type
-	if infer.optType.IsDefinedFor(expr) {
+	if infer.optType.IsDefinedFor(expr) && TryCast[types.OptionType](infer.optType.Type) {
 		t = infer.optType.Type
-		if v, ok := t.(types.OptionType); ok {
-			infer.withOptType(expr.X, v.W, func() {
-				infer.expr(expr.X)
-			})
-		} else {
+		infer.withOptType(expr.X, t.(types.OptionType).W, func() {
 			infer.expr(expr.X)
-			t = types.OptionType{W: infer.env.GetType(expr.X)}
-		}
+		})
 	} else {
 		infer.expr(expr.X)
 		t = types.OptionType{W: infer.env.GetType(expr.X)}
@@ -2538,10 +2533,8 @@ func (infer *FileInferrer) someExpr(expr *ast.SomeExpr) {
 
 func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
 	currT := infer.env.GetType(expr)
-	if v, ok := currT.(types.OptionType); ok {
-		if v.W != nil {
-			return
-		}
+	if v, ok := currT.(types.OptionType); ok && v.W != nil {
+		return
 	}
 	var t types.Type
 	if infer.optType1 != nil {
