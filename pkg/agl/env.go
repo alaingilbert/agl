@@ -1302,10 +1302,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	case *ast.ChanType:
 		return types.ChanType{W: e.GetType2(xx.Value, fset)}
 	case *ast.TupleExpr:
-		var elts []types.Type
-		for _, v := range xx.Values { // TODO NO GOOD
-			elt := e.GetType2(v, fset)
-			elts = append(elts, elt)
+		elts := make([]types.Type, len(xx.Values))
+		for i, v := range xx.Values {
+			elts[i] = e.GetType2(v, fset)
 		}
 		return types.TupleType{Elts: elts}
 	case *ast.BinaryExpr:
