@@ -948,7 +948,7 @@ func (g *Generator) genOkExpr(expr *ast.OkExpr) GenFrag {
 
 func (g *Generator) genErrExpr(expr *ast.ErrExpr) GenFrag {
 	e := EmitWith(g, expr)
-	t := g.env.GetType(expr).(types.ErrType).T.GoStrType()
+	t := g.env.GetType(expr).(types.ResultType).W.GoStrType()
 	c1 := g.genExpr(expr.X)
 	return GenFrag{F: func() string { return e("MakeResultErr["+t+"](") + c1.F() + e(")") }}
 }

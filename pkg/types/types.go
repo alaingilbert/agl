@@ -147,15 +147,6 @@ func (o OptionType) String() string {
 	}
 }
 
-type ErrType struct {
-	W Type
-	T Type
-}
-
-func (e ErrType) GoStr() string     { return "ErrType" }
-func (e ErrType) GoStrType() string { return "ErrType" }
-func (e ErrType) String() string    { return fmt.Sprintf("Err[%s]", e.T.String()) }
-
 type CustomType struct {
 	Pkg  string
 	Name string
@@ -929,8 +920,6 @@ func RenameGen(t Type, name, newName string) (out Type) {
 			params = append(params, p)
 		}
 		return TupleType{Elts: params}
-	case ErrType:
-		return RenameGen(t1.W, name, newName)
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
@@ -1022,8 +1011,6 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			params = append(params, p)
 		}
 		return TupleType{Elts: params}
-	case ErrType:
-		return ReplGen(t1.W, name, newTyp)
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
