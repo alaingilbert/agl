@@ -1011,7 +1011,7 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return ResultType{W: ReplGen(t1.W, name, newTyp)}
 	case EllipsisType:
 		return ReplGen(t1.Elt, name, newTyp)
-	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
+	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType, F32Type, F64Type:
 		return t
 	case StructType:
 		var typeParams []GenericType
@@ -1048,6 +1048,8 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	}
 }
 
+// FindGen returns a map of substitutions to be made
+// eg: "T: IntType"
 func FindGen(a, b Type) map[string]Type {
 	m := make(map[string]Type)
 	findGenHelper(m, a, b)
@@ -1056,6 +1058,8 @@ func FindGen(a, b Type) map[string]Type {
 
 func findGenHelper(m map[string]Type, a, b Type) {
 	switch t1 := a.(type) {
+	case GenericType:
+		m[t1.Name] = b
 	case ArrayType:
 		b = Unwrap(b)
 		findGenHelper(m, t1.Elt, b.(ArrayType).Elt)
@@ -1063,8 +1067,6 @@ func findGenHelper(m map[string]Type, a, b Type) {
 		for i, elt := range t1.Elts {
 			findGenHelper(m, elt, b.(TupleType).Elts[i])
 		}
-	case GenericType:
-		m[t1.Name] = b
 	case FuncType:
 		for i, rawParam := range t1.Params {
 			findGenHelper(m, rawParam, b.(FuncType).Params[i])
@@ -1072,20 +1074,28 @@ func findGenHelper(m map[string]Type, a, b Type) {
 		if t1.Return != nil {
 			findGenHelper(m, t1.Return, b.(FuncType).Return)
 		}
-	case VoidType:
-	case StringType:
-	case IntType:
-	case UintType:
-	case U8Type:
-	case I64Type:
-	case BoolType:
-	case EllipsisType:
 	case StarType:
 		findGenHelper(m, t1.X, b.(StarType).X)
 	case OptionType:
 		findGenHelper(m, t1.W, b.(OptionType).W)
 	case TypeType:
 		findGenHelper(m, t1.W, b.(TypeType).W)
+	case VoidType:
+	case StringType:
+	case IntType:
+	case UintType:
+	case U8Type:
+	case U16Type:
+	case U32Type:
+	case U64Type:
+	case I8Type:
+	case I16Type:
+	case I32Type:
+	case I64Type:
+	case F32Type:
+	case F64Type:
+	case BoolType:
+	case EllipsisType:
 	default:
 		panic(fmt.Sprintf("%v", reflect.TypeOf(a)))
 	}
