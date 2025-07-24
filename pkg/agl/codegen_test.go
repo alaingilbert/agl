@@ -11045,7 +11045,34 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen386(t *testing.T) {
+	src := `package main
+type S struct {
+	P (int, int)
+}
+func main() {
+	a := []S{{P: (1, 1)}}
+	a[0].P = (2, 3)
+}`
+	expected := `// agl:generated
+package main
+type S struct {
+	P AglTupleStruct_int_int
+}
+func main() {
+	a := []S{{P: AglTupleStruct_int_int{Arg0: 1, Arg1: 1}}}
+	a[0].P = AglTupleStruct_int_int{Arg0: 2, Arg1: 3}
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }

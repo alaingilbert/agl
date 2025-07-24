@@ -3637,6 +3637,17 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
+				case *ast.IndexExpr:
+					switch vvv := vv.X.(type) {
+					case *ast.Ident:
+						t := infer.env.Get(vvv.Name)
+						t = types.Unwrap(t)
+						tmp := t.(types.ArrayType).Elt.GoStrType()
+						lhsIdName = tmp + "." + v.Sel.Name
+					default:
+						infer.errorf(lhs, "%v", to(vv.X))
+						return
+					}
 				case *ast.SelectorExpr:
 					switch vvv := vv.X.(type) {
 					case *ast.Ident:
@@ -3665,12 +3676,11 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				xT = types.Unwrap(xT)
 				switch vv := xT.(type) {
 				case types.TupleType:
-					argIdx, err := strconv.Atoi(v.Sel.Name)
-					if err != nil {
-						infer.errorf(lhs, "%v", err)
-						return
+					if argIdx, err := strconv.Atoi(v.Sel.Name); err == nil {
+						lhsWantedT = vv.Elts[argIdx]
+					} else {
+						lhsWantedT = xT
 					}
-					lhsWantedT = vv.Elts[argIdx]
 				case types.StructType:
 					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
 					if infer.mutEnforced && !TryCast[types.MutType](selT) {
@@ -3755,6 +3765,17 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						}
 					}
 					lhsIdName = tmp + "." + lhsID.Name
+				case *ast.IndexExpr:
+					if v, ok := v.X.(*ast.Ident); ok {
+						lhsID = v
+						mutable = v.Mutable.IsValid()
+					} else {
+						return
+					}
+					lhsIDT := infer.env.Get(lhsID.Name)
+					infer.SetType(lhsID, lhsIDT)
+					lhsIDT = types.Unwrap(lhsIDT)
+					return
 				default:
 					infer.errorf(v.Sel, "...")
 					return
