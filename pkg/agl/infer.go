@@ -1320,8 +1320,11 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 	fnName := call.Name
 	switch fnName {
 	case "make":
-		fnT := infer.env.Get("make").(types.FuncType)
-		assert(len(expr.Args) >= 1, "'make' must have at least 1 argument")
+		fnT := infer.env.GetFn("make")
+		if len(expr.Args) == 0 {
+			infer.errorf(expr, "'make' must have at least 1 argument")
+			return
+		}
 		arg0 := expr.Args[0]
 		switch v := arg0.(type) {
 		case *ast.ArrayType, *ast.ChanType, *ast.MapType, *ast.SetType:
@@ -1335,13 +1338,13 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 	case "min", "max":
 		arg0T := infer.GetType2(expr.Args[0])
 		arg0T = types.Unwrap(arg0T)
-		fnT := infer.env.Get(fnName).(types.FuncType).T("T", arg0T)
+		fnT := infer.env.GetFn(fnName).T("T", arg0T)
 		for i := 0; i < len(expr.Args)-2; i++ {
 			fnT.Params = append(fnT.Params, arg0T)
 		}
 		infer.SetType(expr.Fun, fnT)
 	case "append":
-		fnT := infer.env.Get("append").(types.FuncType)
+		fnT := infer.env.GetFn("append")
 		arg0 := expr.Args[0]
 		arg0T := infer.GetType2(arg0)
 		arg0T = types.Unwrap(arg0T)
@@ -1355,10 +1358,11 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 		}
 	case "abs":
 		info := infer.env.GetNameInfo("abs")
-		fnT := infer.env.Get("abs").(types.FuncType)
-		infer.expr(expr.Args[0])
-		arg0 := infer.env.GetType(expr.Args[0])
-		fnT = fnT.T("T", arg0)
+		fnT := infer.env.GetFn("abs")
+		arg0 := expr.Args[0]
+		infer.expr(arg0)
+		arg0T := infer.env.GetType(arg0)
+		fnT = fnT.T("T", arg0T)
 		infer.SetType(expr.Fun, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	}
