@@ -77,10 +77,64 @@ func part1(warehouse [][]string, moves []string) {
     fmt.Println(boxes.Map({ 100 * $0.y + $0.x }).Sum())
 }
 
+func part2(warehouse [][]string, moves []string) {
+    var mut robot = getRobotPosition(warehouse)?
+    var mut boxes = Set(getBoxes(warehouse, "["))
+    for move in moves {
+        direction := getDirection(move)
+        mut canMove := true
+        var mut boxesToMove []Position
+        mut positions := set[Position]{robot}
+        mut seen := set[Position]{}
+        for !positions.IsEmpty() {
+            mut pos := positions.RemoveFirst()
+            if !seen.Insert(pos) {
+                continue
+            }
+            pos.Move(direction)
+            if warehouse[pos.y][pos.x] == "#" {
+                canMove = false
+                break
+            } else if Some(lbox) := boxes.First(where: { (pos.x == $0.x || pos.x == $0.x + 1) && pos.y == $0.y }) {
+                boxesToMove.Push(lbox)
+                positions.Insert(Position{x: lbox.x    , y: lbox.y})
+                positions.Insert(Position{x: lbox.x + 1, y: lbox.y})
+            }
+        }
+        if canMove {
+            robot.Move(direction)
+            var mut newBoxes []Position
+            for boxM in boxesToMove {
+                if Some(mut element) := boxes.Remove(boxM) {
+                    element.Move(direction)
+                    newBoxes.Push(element)
+                }
+            }
+            boxes.FormUnion(newBoxes)
+        }
+    }
+    fmt.Println(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day15/data.txt")!)
     parts := fileContent.Split("\n\n")
     warehouse := parts[0].Lines().Map({ $0.Split("") })
     moves := parts[1].Split("")
     part1(warehouse, moves)
+
+    warehouse2 := warehouse.Reduce(into: [][]string{}, |acc, row| {
+        var mut sub []string
+        for el in row {
+            switch el {
+            case "#": sub.Push("#", "#")
+            case ".": sub.Push(".", ".")
+            case "@": sub.Push("@", ".")
+            case "O": sub.Push("[", "]")
+            default: break
+            }
+        }
+        acc.Push(sub)
+    })
+    part2(warehouse2, moves)
 }
