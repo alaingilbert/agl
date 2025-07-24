@@ -392,43 +392,49 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		}
 		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
 	case *ast.StructType:
-		var fields []types.FieldType
-		if t.Fields != nil {
-			for _, f := range t.Fields.List {
-				typ := infer.GetType2(f.Type)
-				infer.SetType(f.Type, typ)
-				if len(f.Names) == 0 {
-					fields = append(fields, types.FieldType{Name: "", Typ: typ})
-				}
-				for _, n := range f.Names {
-					tt := typ
-					if n.Mutable.IsValid() {
-						tt = types.MutType{W: tt}
-					}
-					fields = append(fields, types.FieldType{Name: n.Name, Typ: tt})
-					infer.env.Define(spec.Name, spec.Name.Name+"."+n.Name, tt)
-				}
-			}
-		}
-		structT := types.StructType{Name: spec.Name.Name, Fields: fields}
-		var toDef1 types.Type
-		if spec.TypeParams != nil {
-			var tpFields []types.FieldType
-			for _, typeParam := range spec.TypeParams.List {
-				for _, n := range typeParam.Names {
+		structT := types.StructType{Name: spec.Name.Name}
+		infer.env.withEnv(func(nenv *Env) {
+			if spec.TypeParams != nil {
+				var tpFields []types.FieldType
+				for _, typeParam := range spec.TypeParams.List {
 					typ := infer.GetType2(typeParam.Type)
-					tpFields = append(tpFields, types.FieldType{Name: n.Name, Typ: typ})
+					if len(typeParam.Names) > 0 {
+						for _, n := range typeParam.Names {
+							tpFields = append(tpFields, types.FieldType{Name: n.Name, Typ: typ})
+							structT.TypeParams = append(structT.TypeParams, types.GenericType{Name: n.Name, W: typ, IsType: true})
+							nenv.Define(spec.Name, n.Name, typ)
+						}
+					} else {
+						structT.TypeParams = append(structT.TypeParams, types.GenericType{Name: "", W: typ, IsType: true})
+					}
+				}
+				//if len(tpFields) > 1 {
+				//	toDef1 = types.IndexListType{X: structT, Indices: tpFields}
+				//} else {
+				//	toDef1 = types.IndexType{X: structT, Index: tpFields}
+				//}
+			}
+			var fields []types.FieldType
+			if t.Fields != nil {
+				for _, f := range t.Fields.List {
+					typ := nenv.GetType2(f.Type, infer.fset)
+					infer.SetType(f.Type, typ)
+					if len(f.Names) == 0 {
+						fields = append(fields, types.FieldType{Name: "", Typ: typ})
+					}
+					for _, n := range f.Names {
+						tt := typ
+						if n.Mutable.IsValid() {
+							tt = types.MutType{W: tt}
+						}
+						fields = append(fields, types.FieldType{Name: n.Name, Typ: tt})
+						infer.env.Define(spec.Name, spec.Name.Name+"."+n.Name, tt)
+					}
 				}
 			}
-			if len(tpFields) > 1 {
-				toDef1 = types.IndexListType{X: structT, Indices: tpFields}
-			} else {
-				toDef1 = types.IndexType{X: structT, Index: tpFields}
-			}
-		} else {
-			toDef1 = structT
-		}
-		toDef = toDef1
+			structT.Fields = fields
+		})
+		toDef = structT
 	case *ast.EnumType:
 		var fields []types.EnumFieldType
 		if t.Values != nil {
@@ -1302,7 +1308,7 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					infer.SetTypeForce(arg, types.OptionType{W: v.Params[i].(types.OptionType).W})
 				}
 			}
-			if infer.GetType2(expr) == nil {
+			if infer.env.GetType(expr) == nil {
 				if v.Return != nil {
 					toReturn := v.Return
 					toReturn = alterResultBubble(infer.returnType, toReturn)
@@ -2613,7 +2619,13 @@ func (infer *FileInferrer) orContinue(expr *ast.OrContinueExpr) {
 
 func (infer *FileInferrer) orReturn(expr *ast.OrReturnExpr) {
 	infer.expr(expr.X)
-	infer.SetType(expr, infer.GetType(expr.X))
+	xT := infer.GetType(expr.X)
+	switch v := xT.(type) {
+	case types.ResultType:
+		infer.SetType(expr, v.W)
+	case types.OptionType:
+		infer.SetType(expr, v.W)
+	}
 }
 
 func (infer *FileInferrer) mapType(expr *ast.MapType) {
@@ -2702,6 +2714,12 @@ func cmpTypesLoose(a, b types.Type) bool {
 	if isNumericType(b) && TryCast[types.UntypedNumType](a) {
 		return true
 	}
+	if TryCast[types.UntypedStringType](a) && TryCast[types.StringType](b) {
+		return true
+	}
+	if TryCast[types.UntypedStringType](b) && TryCast[types.StringType](a) {
+		return true
+	}
 	return cmpTypes(a, b)
 }
 
@@ -2788,7 +2806,7 @@ func cmpTypes(a, b types.Type) bool {
 		return cmpTypesLoose(a.(types.OptionType).W, b.(types.OptionType).W)
 	}
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
-		return cmpTypes(a.(types.ResultType).W, b.(types.ResultType).W)
+		return cmpTypesLoose(a.(types.ResultType).W, b.(types.ResultType).W)
 	}
 	if TryCast[types.IndexListType](a) && TryCast[types.IndexListType](b) {
 		return cmpTypes(a.(types.IndexListType).X, b.(types.IndexListType).X)
@@ -3265,12 +3283,21 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 		} else {
 			if stmt.Init != nil {
 				infer.stmt(stmt.Init)
+				if len(infer.Errors) > 0 {
+					return
+				}
 			}
 			if stmt.Cond != nil {
 				infer.expr(stmt.Cond)
+				if len(infer.Errors) > 0 {
+					return
+				}
 			}
 			if stmt.Post != nil {
 				infer.stmt(stmt.Post)
+				if len(infer.Errors) > 0 {
+					return
+				}
 			}
 		}
 		if stmt.Body != nil {
@@ -3817,6 +3844,26 @@ func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 	if stmt.Result != nil {
 		infer.withOptType(stmt.Result, infer.returnType, func() {
+			// Allow Enum to be used without the name if the type is known eg: ".Red"
+			if v, ok := infer.returnType.(types.EnumType); ok {
+				if vv, ok := stmt.Result.(*ast.SelectorExpr); ok {
+					if vvv, ok := vv.X.(*ast.Ident); ok {
+						if vvv.Name == "" {
+							vvv.Name = v.Name
+							vv.X = vvv
+							stmt.Result = vv
+						}
+					}
+				}
+			}
+			rT := infer.GetType2(stmt.Result)
+			if v, ok := rT.(types.UnaryType); ok {
+				rT = v.X
+			}
+			if !cmpTypesLoose(rT, infer.returnType) {
+				infer.errorf(stmt.Result, "type mismatch")
+				return
+			}
 			infer.expr(stmt.Result)
 			if _, ok := infer.GetType(stmt.Result).(types.OptionType); ok {
 				if v, ok := infer.returnType.(types.OptionType); ok {

@@ -96,7 +96,9 @@ func add(a, b int64) Option[int64] {
 	return MakeOptionSome(a + b)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen2_1(t *testing.T) {
@@ -1873,7 +1875,9 @@ func main() {
 	test().Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen59(t *testing.T) {
@@ -5088,7 +5092,8 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen175(t *testing.T) {
@@ -5168,7 +5173,8 @@ func (v *Vertex) Abs() float64 {
 	return math.Sqrt(v.X * v.X + v.Y * v.Y)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen177(t *testing.T) {
@@ -6017,7 +6023,8 @@ func Index_T_string(s []string, x string) int {
 	return -1
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen192(t *testing.T) {
@@ -6286,7 +6293,9 @@ func main() {
 	fmt.Println(c.Value("somekey"))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen197(t *testing.T) {
@@ -7642,7 +7651,8 @@ func AglVecMyForEach_T_int(v []int, f func(int)) {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen252(t *testing.T) {
@@ -7848,7 +7858,8 @@ func main() {
 	isPrivate(home)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen257(t *testing.T) {
@@ -7872,7 +7883,8 @@ func AglVecMin_T_int(v []int) Option[int] {
 	return MakeOptionSome(out)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen258(t *testing.T) {
@@ -11165,6 +11177,79 @@ func main() {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen390(t *testing.T) {
+	src := `package main
+func test() int? {
+	return 42
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "3:9: type mismatch")
+}
+
+func TestCodeGen391(t *testing.T) {
+	src := `package main
+func getDirection(move string) (int, int) {
+	return (-1,  0)
+}`
+	expected := `// agl:generated
+package main
+func getDirection(move string) AglTupleStruct_int_int {
+	return AglTupleStruct_int_int{Arg0: -1, Arg1: 0}
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen392(t *testing.T) {
+	src := `package main
+func main() {
+    heads := [](int, int){}
+    part1 := heads.Map({
+        mut summits := set[(int, int)]{}
+        return 1
+    })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	heads := []AglTupleStruct_int_int{}
+	part1 := AglVecMap(heads, func(aglArg0 AglTupleStruct_int_int) int {
+		summits := AglSet[AglTupleStruct_int_int]{}
+		return 1
+	})
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen393(t *testing.T) {
+	src := `package main
+func cc(a, b i64) i64 {
+	(a.String() + b.String()).I64()?
+}`
+	expected := `// agl:generated
+package main
+func cc(a, b int64) int64 {
+	return AglStringI64((AglI64String(a) + AglI64String(b))).Unwrap()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
 

@@ -4,4 +4,6 @@ import "agl1/go/token"
 
 type AllErrors uint
 
+type Mode uint
+
 func ParseFile(fset *token.FileSet, filename string, src any, mode Mode) (*ast.File)!

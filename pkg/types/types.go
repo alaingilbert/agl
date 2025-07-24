@@ -119,6 +119,9 @@ type ResultType struct {
 func (r ResultType) GoStr() string     { return fmt.Sprintf("Result[%s]", r.W.GoStrType()) }
 func (r ResultType) GoStrType() string { return fmt.Sprintf("Result[%s]", r.W.GoStrType()) }
 func (r ResultType) String() string {
+	if r.W == nil {
+		return "NIL?"
+	}
 	switch r.W.(type) {
 	case ArrayType, StarType, StructType, InterfaceType, CustomType:
 		return fmt.Sprintf("(%s)!", r.W.String())

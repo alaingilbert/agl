@@ -34,7 +34,7 @@ func (s *bufio.Scanner) Buffer([]byte, int)
 func (s *bufio.Scanner) Bytes() []byte
 //func (s *Scanner) Err() !
 func (s *bufio.Scanner) Scan() bool
-func (s *bufio.Scanner) Split(split SplitFunc)
+//func (s *bufio.Scanner) Split(split SplitFunc)
 func (s *bufio.Scanner) Text() string
 
 func NewWriter(w io.Writer) *io.Writer

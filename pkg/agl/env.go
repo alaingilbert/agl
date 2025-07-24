@@ -35,6 +35,14 @@ type Env struct {
 	parent        *Env
 	NoIdxUnwrap   bool
 	fset          *token.FileSet
+	pkgName       string
+}
+
+func (e *Env) WithPkgName(pkgName string, clb func()) {
+	prev := e.pkgName
+	e.pkgName = pkgName
+	clb()
+	e.pkgName = prev
 }
 
 func (e *Env) withEnv(clb func(*Env)) {
@@ -313,6 +321,10 @@ func (e *Env) loadCoreTypes() {
 func (e *Env) loadCoreFunctions(m *PkgVisited) {
 	e.withEnv(func(nenv *Env) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/cmp", "", m)
+		e.Define(nil, "comparable", types.InterfaceType{Pkg: "", Name: "comparable"})
+		e.Define(nil, "Type", types.InterfaceType{Pkg: "", Name: "Type"})
+		e.Define(nil, "Number", types.InterfaceType{Pkg: "agl1", Name: "Number"})
+		e.Define(nil, "Integer", types.InterfaceType{Pkg: "agl1", Name: "Integer"})
 		e.DefineFn(nenv, "assert", "func (pred bool, msg ...string)")
 		e.DefineFn(nenv, "make", "func[T, U any](t T, size ...U) T")
 		e.DefineFn(nenv, "recover", "func () any")
@@ -395,8 +407,10 @@ func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName strin
 	if err := env.DefinePkg(pkgName, path); err != nil {
 		panic(err)
 	}
-	loadAglImports(path, depth, t, nenv, nenv, node, m, fset)
-	loadDecls(env, nenv, node, path, pkgName, fset)
+	nenv.WithPkgName(pkgName, func() {
+		loadAglImports(path, depth, t, nenv, nenv, node, m, fset)
+		loadDecls(env, nenv, node, path, pkgName, fset)
+	})
 }
 
 func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token.FileSet) {
@@ -887,19 +901,19 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.Uppercased", "func (s string) string")
 		e.DefineFn(nenv, "agl1.String.Lines", "func (s string) []string")
 		e.DefineFn(nenv, "agl1.String.AsBytes", "func (s string) []byte")
-		e.DefineFn(nenv, "agl1.String.Len", "func (s) int")
-		e.DefineFn(nenv, "agl1.String.Int", "func (s) int?", WithDesc("Parse the string into an 'int' value.\nReturns None if the string cannot be parsed as an 'int'."))
-		e.DefineFn(nenv, "agl1.String.I8", "func (s) i8?", WithDesc("Parse the string into an 'i8' value.\nReturns None if the string cannot be parsed as an 'i8'."))
-		e.DefineFn(nenv, "agl1.String.I16", "func (s) i16?", WithDesc("Parse the string into an 'i16' value.\nReturns None if the string cannot be parsed as an 'i16'."))
-		e.DefineFn(nenv, "agl1.String.I32", "func (s) i32?", WithDesc("Parse the string into an 'i32' value.\nReturns None if the string cannot be parsed as an 'i32'."))
-		e.DefineFn(nenv, "agl1.String.I64", "func (s) i64?", WithDesc("Parse the string into an 'i64' value.\nReturns None if the string cannot be parsed as an 'i64'."))
-		e.DefineFn(nenv, "agl1.String.Uint", "func (s) uint?", WithDesc("Parse the string into an 'uint' value.\nReturns None if the string cannot be parsed as an 'uint'."))
-		e.DefineFn(nenv, "agl1.String.U8", "func (s) u8?", WithDesc("Parse the string into an 'u8' value.\nReturns None if the string cannot be parsed as an 'u8'."))
-		e.DefineFn(nenv, "agl1.String.U16", "func (s) u16?", WithDesc("Parse the string into an 'u16' value.\nReturns None if the string cannot be parsed as an 'u16'."))
-		e.DefineFn(nenv, "agl1.String.U32", "func (s) u32?", WithDesc("Parse the string into an 'u32' value.\nReturns None if the string cannot be parsed as an 'u32'."))
-		e.DefineFn(nenv, "agl1.String.U64", "func (s) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
-		e.DefineFn(nenv, "agl1.String.F32", "func (s) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
-		e.DefineFn(nenv, "agl1.String.F64", "func (s) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
+		e.DefineFn(nenv, "agl1.String.Len", "func (s string) int")
+		e.DefineFn(nenv, "agl1.String.Int", "func (s string) int?", WithDesc("Parse the string into an 'int' value.\nReturns None if the string cannot be parsed as an 'int'."))
+		e.DefineFn(nenv, "agl1.String.I8", "func (s string) i8?", WithDesc("Parse the string into an 'i8' value.\nReturns None if the string cannot be parsed as an 'i8'."))
+		e.DefineFn(nenv, "agl1.String.I16", "func (s string) i16?", WithDesc("Parse the string into an 'i16' value.\nReturns None if the string cannot be parsed as an 'i16'."))
+		e.DefineFn(nenv, "agl1.String.I32", "func (s string) i32?", WithDesc("Parse the string into an 'i32' value.\nReturns None if the string cannot be parsed as an 'i32'."))
+		e.DefineFn(nenv, "agl1.String.I64", "func (s string) i64?", WithDesc("Parse the string into an 'i64' value.\nReturns None if the string cannot be parsed as an 'i64'."))
+		e.DefineFn(nenv, "agl1.String.Uint", "func (s string) uint?", WithDesc("Parse the string into an 'uint' value.\nReturns None if the string cannot be parsed as an 'uint'."))
+		e.DefineFn(nenv, "agl1.String.U8", "func (s string) u8?", WithDesc("Parse the string into an 'u8' value.\nReturns None if the string cannot be parsed as an 'u8'."))
+		e.DefineFn(nenv, "agl1.String.U16", "func (s string) u16?", WithDesc("Parse the string into an 'u16' value.\nReturns None if the string cannot be parsed as an 'u16'."))
+		e.DefineFn(nenv, "agl1.String.U32", "func (s string) u32?", WithDesc("Parse the string into an 'u32' value.\nReturns None if the string cannot be parsed as an 'u32'."))
+		e.DefineFn(nenv, "agl1.String.U64", "func (s string) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
+		e.DefineFn(nenv, "agl1.String.F32", "func (s string) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
+		e.DefineFn(nenv, "agl1.String.F64", "func (s string) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
 		e.DefineFn(nenv, "agl1.Int.String", "func (int) string")
 		e.DefineFn(nenv, "agl1.I64.String", "func (i64) string")
 		e.DefineFn(nenv, "agl1.Uint.String", "func (uint) string")
@@ -1214,24 +1228,46 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		if v2 := e.GetNameInfo(xx.Name); v2 != nil {
 			return v2.Type
 		}
-		return nil
+		if e.pkgName != "" {
+			if v2 := e.GetNameInfo(e.pkgName + "." + xx.Name); v2 != nil {
+				return v2.Type
+			}
+		}
+		//return nil
+		panic(fmt.Sprintf("%s: %v", e.fset.Position(xx.Pos()), xx.Name))
 	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, fset, false)
+	case *ast.FuncLit:
+		return funcTypeToFuncType("", xx.Type, e, fset, false)
 	case *ast.Ellipsis:
 		return types.EllipsisType{Elt: e.GetType2(xx.Elt, fset)}
 	case *ast.ArrayType:
 		return types.ArrayType{Elt: e.GetType2(xx.Elt, fset)}
 	case *ast.ResultExpr:
 		return types.ResultType{W: e.GetType2(xx.X, fset)}
+	case *ast.ErrExpr:
+		return types.ResultType{W: e.GetType2(&ast.Ident{Name: "error"}, fset)}
+	case *ast.OkExpr:
+		return types.ResultType{W: e.GetType2(xx.X, fset)}
 	case *ast.OptionExpr:
 		return types.OptionType{W: e.GetType2(xx.X, fset)}
+	case *ast.SomeExpr:
+		return types.OptionType{W: e.GetType2(xx.X, fset)}
+	case *ast.NoneExpr:
+		return types.OptionType{W: nil}
 	case *ast.CallExpr:
 		if v, ok := xx.Fun.(*ast.Ident); ok {
 			if v.Name == "make" {
 				return e.GetType2(xx.Args[0], fset)
 			}
 		}
-		return nil
+		t := e.GetType2(xx.Fun, fset)
+		if v, ok := t.(types.TypeType); ok {
+			return v.W
+		}
+		t = types.Unwrap(t)
+		tmp := t.(types.FuncType).Return
+		return tmp
 	case *ast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
@@ -1253,18 +1289,42 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.TupleType:
+			idx, err := strconv.Atoi(xx.Sel.Name)
+			if err != nil {
+				panic("")
+			}
+			return v.Elts[idx]
 		case types.TypeAssertType:
 			return v.X
+		case types.ArrayType:
+			name := fmt.Sprintf("agl1.Vec.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.SetType:
+			name := fmt.Sprintf("agl1.Set.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.OptionType:
 			name := fmt.Sprintf("Option.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.EnumType:
+			return v
+		case types.CustomType:
+			name := fmt.Sprintf("%s.%s.%s", v.Pkg, v.Name, xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.StringType:
+			name := fmt.Sprintf("agl1.String.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.I64Type:
+			name := fmt.Sprintf("agl1.I64.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		default:
-			return nil
-			panic(fmt.Sprintf("%v %v", xx.X, reflect.TypeOf(base)))
+			//return nil
+			panic(fmt.Sprintf("%s: %v %v", e.fset.Position(xx.X.Pos()), xx.X, reflect.TypeOf(base)))
 		}
 		return nil
 	case *ast.IndexExpr:
 		t := e.GetType2(xx.X, fset)
+		t = types.Unwrap(t)
 		if !e.NoIdxUnwrap {
 			switch v := t.(type) {
 			case types.ArrayType:
@@ -1276,6 +1336,14 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			t = v.RenameGenericParameter("T", xx.Index.(*ast.Ident).Name)
 		case types.FuncType:
 			t = v.RenameGenericParameter("V", "T")
+		case types.MapType:
+			t = v.V
+		case types.EnumType:
+		case types.SetType:
+		case types.InterfaceType:
+		case types.ArrayType:
+		default:
+			panic(fmt.Sprintf("%s: %v %v", e.fset.Position(xx.X.Pos()), t, to(t)))
 		}
 		return t
 	case *ast.ParenExpr:
@@ -1297,8 +1365,18 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		}
 		return types.TupleType{Elts: elts}
 	case *ast.BinaryExpr:
-		return types.BinaryType{X: e.GetType2(xx.X, fset), Y: e.GetType2(xx.Y, fset)}
+		switch xx.Op {
+		case token.EQL, token.NEQ, token.LOR, token.LAND, token.LEQ, token.LSS, token.GEQ, token.GTR, token.IN:
+			return types.BoolType{}
+		default:
+			return e.GetType2(xx.X, fset)
+		}
 	case *ast.UnaryExpr:
+		if xx.Op == token.SUB || xx.Op == token.ADD {
+			if _, ok := xx.X.(*ast.BasicLit); ok {
+				return e.GetType2(xx.X, fset)
+			}
+		}
 		return types.UnaryType{X: e.GetType2(xx.X, fset)}
 	case *ast.InterfaceType:
 		return types.AnyType{}
@@ -1308,13 +1386,17 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return types.StructType{Pkg: v.Pkg, Name: v.Name}
 		case types.ArrayType:
 			return e.GetType2(xx.Type, fset)
+		case types.SetType:
+			return e.GetType2(xx.Type, fset)
 		case types.StructType:
 			return types.StructType{Pkg: v.Pkg, Name: v.Name}
 		case types.MapType:
 			return e.GetType2(xx.Type, fset)
+		case types.TypeType:
+			return v.W
 		default:
-			return nil
-			panic(fmt.Sprintf("%v %v", xx.Type, reflect.TypeOf(v)))
+			//return nil
+			panic(fmt.Sprintf("%s: %v %v", e.fset.Position(xx.Pos()), xx.Type, reflect.TypeOf(v)))
 		}
 	case *ast.TypeAssertExpr:
 		xT := e.GetType2(xx.X, fset)
@@ -1327,7 +1409,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		info.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
 		return n
 	case *ast.BubbleOptionExpr:
-		return e.GetType2(xx.X, fset)
+		return e.GetType2(xx.X, fset).(types.OptionType).W
+	case *ast.BubbleResultExpr:
+		return e.GetType2(xx.X, fset).(types.ResultType).W
 	case *ast.SliceExpr:
 		return e.GetType2(xx.X, fset) // TODO
 	case *ast.IndexListExpr:
@@ -1336,8 +1420,17 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		return types.StructType{}
 	case *ast.LabelledArg:
 		return e.GetType2(xx.X, fset)
+	case *ast.IfExpr:
+		return e.GetType2(xx.Body, fset)
+	case *ast.BlockStmt:
+		if len(xx.List) == 0 {
+			return types.VoidType{}
+		}
+		return e.GetType2(xx.List[len(xx.List)-1], fset)
+	case *ast.ExprStmt:
+		return e.GetType2(xx.X, fset)
 	default:
-		return nil
+		//return nil
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
 }
