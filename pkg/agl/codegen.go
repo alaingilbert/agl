@@ -1981,6 +1981,13 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
 		}
+	case types.IntType:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "String":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglIntString(") + c1.F() + e(")") }}
+		}
 	case types.I64Type:
 		fnName := x.Sel.Name
 		switch fnName {
