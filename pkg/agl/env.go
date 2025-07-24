@@ -1324,7 +1324,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.MapType:
 			return e.GetType2(xx.Type, fset)
 		default:
-			//return nil
+			return nil
 			panic(fmt.Sprintf("%v %v", xx.Type, reflect.TypeOf(v)))
 		}
 	case *ast.TypeAssertExpr:
@@ -1348,6 +1348,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	case *ast.LabelledArg:
 		return e.GetType2(xx.X, fset)
 	default:
+		return nil
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
 	}
 }
