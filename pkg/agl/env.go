@@ -1180,6 +1180,12 @@ func (e *Env) makeKey(x ast.Node) NodeKey {
 	return makeKey(x)
 }
 
+func panicIfNil(t types.Type, typ any) {
+	if t == nil {
+		panic(fmt.Sprintf("type not found %v %v", typ, to(typ)))
+	}
+}
+
 func (e *Env) GetInfo(x ast.Node) *Info {
 	return e.lspNode(x)
 }
@@ -1189,12 +1195,6 @@ func (e *Env) GetType(x ast.Node) types.Type {
 		return v.Type
 	}
 	return nil
-}
-
-func panicIfNil(t types.Type, typ any) {
-	if t == nil {
-		panic(fmt.Sprintf("type not found %v %v", typ, to(typ)))
-	}
 }
 
 func (e *Env) GetType2(x ast.Node, fset *token.FileSet) types.Type {

@@ -2227,14 +2227,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 
 func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.SelectorExpr, idTArr types.ArrayType) {
 	eltT := idTArr.Elt
-	exprPos := infer.Pos(expr)
 	forceReturnType := infer.forceReturnType
 	forceReturnType = types.Unwrap(forceReturnType)
 	fnName := "Reduce"
 	if v, ok := expr.Args[0].(*ast.LabelledArg); ok {
 		if v.Label != nil && v.Label.Name == "into" {
-			exprFun.Sel.Name = "ReduceInto"
 			fnName = "ReduceInto"
+			exprFun.Sel.Name = fnName
 		}
 	}
 	fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", eltT)
@@ -2268,7 +2267,7 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		ft = ft.T("R", forceReturnType)
 		reduceFnT = reduceFnT.T("R", forceReturnType)
 		if !cmpTypes(arg0T, forceReturnType) {
-			infer.errorf(expr, "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
+			infer.errorf(expr, "type mismatch, want: %s, got: %s", forceReturnType, arg0T)
 			return
 		}
 	} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
@@ -2282,15 +2281,15 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	}
 	if _, ok := expr.Args[1].(*ast.ShortFuncLit); ok {
 		infer.SetType(expr.Args[1], ft)
-	} else if _, ok := exprArg0.(*ast.FuncType); ok {
-		ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+	} else if v, ok := exprArg0.(*ast.FuncType); ok {
+		ftReal := funcTypeToFuncType("", v, infer.env, infer.fset, false)
 		if !compareFunctionSignatures(ftReal, ft) {
-			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			infer.errorf(expr, "function type %s does not match inferred type %s", ftReal, ft)
 			return
 		}
 	} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 		if !compareFunctionSignatures(ftReal, ft) {
-			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			infer.errorf(expr, "function type %s does not match inferred type %s", ftReal, ft)
 			return
 		}
 	}
@@ -2302,7 +2301,6 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 }
 
 func (infer *FileInferrer) inferMapReduce(expr *ast.CallExpr, exprFun *ast.SelectorExpr, idTMap types.MapType) {
-	exprPos := infer.Pos(expr)
 	forceReturnType := infer.forceReturnType
 	forceReturnType = types.Unwrap(forceReturnType)
 	fnName := "Reduce"
@@ -2343,7 +2341,7 @@ func (infer *FileInferrer) inferMapReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		ft = ft.T("R", forceReturnType)
 		reduceFnT = reduceFnT.T("R", forceReturnType)
 		if !cmpTypes(arg0T, forceReturnType) {
-			infer.errorf(expr, "%s: type mismatch, want: %s, got: %s", exprPos, forceReturnType, arg0T)
+			infer.errorf(expr, "type mismatch, want: %s, got: %s", forceReturnType, arg0T)
 			return
 		}
 		//} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
@@ -2360,12 +2358,12 @@ func (infer *FileInferrer) inferMapReduce(expr *ast.CallExpr, exprFun *ast.Selec
 	} else if _, ok := exprArg0.(*ast.FuncType); ok {
 		ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
 		if !compareFunctionSignatures(ftReal, ft) {
-			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			infer.errorf(expr, "function type %s does not match inferred type %s", ftReal, ft)
 			return
 		}
 	} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
 		if !compareFunctionSignatures(ftReal, ft) {
-			infer.errorf(expr, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+			infer.errorf(expr, "function type %s does not match inferred type %s", ftReal, ft)
 			return
 		}
 	}
