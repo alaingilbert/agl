@@ -192,18 +192,6 @@ func (s CharType) GoStr() string     { return "char" }
 func (s CharType) GoStrType() string { return "char" }
 func (s CharType) String() string    { return "char" }
 
-type BoolValue struct{ V bool }
-
-func (b BoolValue) GoStr() string {
-	if b.V {
-		return "true"
-	} else {
-		return "false"
-	}
-}
-func (b BoolValue) GoStrType() string { return b.GoStr() }
-func (b BoolValue) String() string    { return b.GoStr() }
-
 type BoolType struct{}
 
 func (b BoolType) GoStr() string     { return "bool" }

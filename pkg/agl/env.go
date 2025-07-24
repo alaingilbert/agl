@@ -303,8 +303,8 @@ func (e *Env) loadCoreTypes() {
 	e.Define(nil, "rune", types.TypeType{W: types.RuneType{}})
 	e.Define(nil, "error", types.TypeType{W: types.InterfaceType{Name: "error"}})
 	e.Define(nil, "nil", types.TypeType{W: types.NilType{}})
-	e.Define(nil, "true", types.BoolValue{V: true})
-	e.Define(nil, "false", types.BoolValue{V: false})
+	e.Define(nil, "true", types.BoolType{})
+	e.Define(nil, "false", types.BoolType{})
 
 	e.Define(nil, "@LINE", types.StringType{})
 	e.Define(nil, "@COLUMN", types.StringType{})
