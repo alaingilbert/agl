@@ -1225,6 +1225,7 @@ func AglIn[T comparable](e T, it Iterator[T]) bool {
 }
 
 func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
+	out = make(AglSet[T])
 	for el := range it.Iter() {
 		AglSetInsert(out, el)
 	}
