@@ -1,0 +1,94 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]string
+
+type Position struct {
+    x, y int
+}
+
+type PosDir struct {
+    pos Position
+    dir int
+}
+
+type Metadata struct {
+    pos  Position
+    cost int
+    from Position?
+    pdir int
+    dir  int
+}
+
+func findChar(data [][]string, c string) Position? {
+    for y in data.Indices() {
+        if Some(x) := data[y].FirstIndex(of: c) {
+            return Some(Position{x: x, y: y})
+        }
+    }
+    return None
+}
+
+func getDir(p1, p2 Position) int {
+    if p2.x - p1.x == 1 {
+        return 0
+    } else if p2.y - p1.y == 1 {
+        return 1
+    } else if p2.x - p1.x == -1 {
+        return 2
+    } else if p2.y - p1.y == -1 {
+        return 3
+    }
+    return 0
+}
+
+func dijkstra(s, e Position) int {
+    mut seen := make(map[PosDir]Metadata)
+    mut q := []Metadata{{pos: s, cost: 0, pdir: 0, dir: 0}}
+    for !q.IsEmpty() {
+        m := q.RemoveFirst()
+        p := m.pos
+        if p == e {
+            return m.cost
+        }
+        add2q := func(next Position) {
+            guard data[next.y][next.x] != "#" else { return }
+            prev := m.from.UnwrapOr(p)
+            dir := getDir(prev, p)
+            ndir := getDir(p, next)
+            newCost := if dir == ndir { 1 } else { 1001 }
+            cost := m.cost + newCost
+            posDir := PosDir{pos: next, dir: dir}
+            if Some(seenNext) := seen.Get(posDir) {
+                if cost >= seenNext.cost {
+                    return
+                }
+            }
+            seen[posDir] = m
+            q.Push(Metadata{pos: next, cost: cost, from: Some(p), pdir: m.dir, dir: ndir})
+        }
+        add2q(Position{x: p.x-1, y: p.y  })
+        add2q(Position{x: p.x+1, y: p.y  })
+        add2q(Position{x: p.x,   y: p.y-1})
+        add2q(Position{x: p.x,   y: p.y+1})
+        q = q.Sorted(by: { $0.cost < $1.cost })
+    }
+    return 0
+}
+
+func part1(data [][]string) {
+    s := findChar(data, "S")?
+    e := findChar(data, "E")?
+    res := dijkstra(s, e)
+    fmt.Println(res)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day16/data.txt")!)
+    data = fileContent.Lines().Map({ $0.Split("") })
+    part1(data)
+}
