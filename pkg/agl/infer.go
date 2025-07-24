@@ -3584,6 +3584,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
+				case *ast.SelectorExpr:
+					tmp := infer.env.Get(vv.X.(*ast.Ident).Name)
+					lhsIdName = tmp.GoStrType() + "." + vv.Sel.Name
 				default:
 					infer.errorf(lhs, "%v", to(v.X))
 					return
@@ -3659,9 +3662,20 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				return
 			case *ast.SelectorExpr:
-				lhsID = v.X.(*ast.Ident)
+				var lhsIdName string
+				switch vv := v.X.(type) {
+				case *ast.Ident:
+					lhsID = vv
+					lhsIdName = lhsID.Name
+				case *ast.SelectorExpr:
+					lhsID = vv.Sel
+					tmp := infer.env.Get(vv.X.(*ast.Ident).Name).GoStrType()
+					lhsIdName = tmp + "." + lhsID.Name
+				default:
+					infer.errorf(v.Sel, "...")
+					return
+				}
 				mutable = lhsID.Mutable.IsValid()
-				lhsIdName := lhsID.Name
 				xT := infer.env.Get(lhsIdName)
 				oxT := xT
 				xT = types.Unwrap(xT)

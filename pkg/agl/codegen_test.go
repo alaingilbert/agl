@@ -10949,6 +10949,35 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen382(t *testing.T) {
+	src := `package main
+type S struct {
+    A (int, int)
+}
+func main() {
+	s := S{}
+	s.A.0 = 2
+}`
+	expected := `// agl:generated
+package main
+type S struct {
+	A AglTupleStruct_int_int
+}
+func main() {
+	s := S{}
+	s.A.Arg0 = 2
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
