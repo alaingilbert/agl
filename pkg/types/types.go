@@ -709,6 +709,12 @@ func (f FuncType) T(name string, typ Type) FuncType {
 	return f.ReplaceGenericParameter(name, typ)
 }
 
+func (f FuncType) IntoRecv(idTT Type) FuncType {
+	f.Recv = []Type{idTT}
+	f.Params = f.Params[1:]
+	return f
+}
+
 func (f FuncType) Concrete(typs []Type) FuncType {
 	var newParams []Type
 	for i, p := range f.TypeParams {

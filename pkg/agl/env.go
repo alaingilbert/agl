@@ -941,7 +941,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Swap", "func [T any](mut a []T, b, c Integer)")
 		e.DefineFn(nenv, "agl1.Vec.__ADD", "func [T any](a, b []T) []T")
 		e.DefineFn(nenv, "agl1.Map.ContainsKey", "func [K comparable, V any](m map[K]V, k K) bool")
-		e.DefineFn(nenv, "agl1.Map.Len", "func [K comparable, V any]() int")
+		e.DefineFn(nenv, "agl1.Map.Len", "func [K comparable, V any](m map[K]V) int")
 		e.DefineFn(nenv, "agl1.Map.Get", "func [K comparable, V any](m map[K]V) V?")
 		e.DefineFn(nenv, "agl1.Map.Keys", "func [K comparable, V any](m map[K]V) Sequence[K]")
 		e.DefineFn(nenv, "agl1.Map.Values", "func [K comparable, V any](m map[K]V) Sequence[V]")
