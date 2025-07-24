@@ -2013,7 +2013,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			return GenFrag{F: func() string {
 				return e("AglString"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(")")
 			}}
-		case "Split", "TrimPrefix", "HasPrefix", "HasSuffix":
+		case "Split", "TrimPrefix", "HasPrefix", "HasSuffix", "Contains":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {

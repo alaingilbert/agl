@@ -1407,7 +1407,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
 			infer.SetType(expr.Args[1], fnT.Params[2])
-		case "Split", "HasPrefix", "HasSuffix", "TrimPrefix":
+		case "Split", "HasPrefix", "HasSuffix", "TrimPrefix", "Contains":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName)
 			if len(expr.Args) < 1 {

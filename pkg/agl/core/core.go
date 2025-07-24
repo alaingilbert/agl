@@ -829,6 +829,10 @@ func AglStringHasPrefix(s string, prefix string) bool {
 	return strings.HasPrefix(s, prefix)
 }
 
+func AglStringContains(s string, substr string) bool {
+	return strings.Contains(s, substr)
+}
+
 func AglStringHasSuffix(s string, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
