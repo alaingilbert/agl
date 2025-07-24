@@ -600,6 +600,39 @@ func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+func AglSetIsEmpty[T comparable](s AglSet[T]) bool {
+	return len(s) == 0
+}
+
+func AglSetRemoveFirst[T comparable](s AglSet[T]) T {
+	for k := range s {
+		delete(s, k)
+		return k
+	}
+	panic("set is empty")
+}
+
+func AglSetFirst[T comparable](s AglSet[T]) (out Option[T]) {
+	if len(s) > 0 {
+		for k := range s {
+			return MakeOptionSome(k)
+		}
+	}
+	return MakeOptionNone[T]()
+}
+
+func AglSetFirstWhere[T comparable](s AglSet[T], predicate func(T) bool) (out Option[T]) {
+	if len(s) == 0 {
+		return MakeOptionNone[T]()
+	}
+	for k := range s {
+		if predicate(k) {
+			return MakeOptionSome(k)
+		}
+	}
+	return MakeOptionNone[T]()
+}
+
 //func AglIteratorEach[T any](it Iterator[T]) aglImportIter.Seq[T] {
 //	return func(yield func(T) bool) {
 //		for {

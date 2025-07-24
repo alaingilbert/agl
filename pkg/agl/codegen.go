@@ -1953,7 +1953,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			"Filter", "Map":
 			arg0 := expr.Args[0]
 			content2 := func() string {
-				switch v := g.env.GetType(arg0).(type) {
+				switch v := types.Unwrap(g.env.GetType(arg0)).(type) {
 				case types.ArrayType:
 					return e("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(")")
 				default:
@@ -1964,13 +1964,13 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			return GenFrag{F: func() string {
 				return e("AglSet"+fnName+"(") + c1.F() + e(", ") + content2() + e(")")
 			}}
-		case "Insert", "Remove", "Contains", "Equals":
+		case "Insert", "Remove", "Contains", "Equals", "FirstWhere":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglSet"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(")")
 			}}
-		case "Len", "Min", "Max", "Iter":
+		case "Len", "Min", "Max", "Iter", "RemoveFirst", "First", "IsEmpty":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglSet"+fnName+"(") + c1.F() + e(")") }}
 		}

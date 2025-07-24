@@ -1445,6 +1445,45 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				return
 			}
 			infer.SetType(expr.Args[0], fnT.Params[1])
+		case "RemoveFirst":
+			info = infer.env.GetNameInfo("agl1.Set." + fnName)
+			fnT = infer.env.GetFn("agl1.Set."+fnName).T("T", idTT.K)
+
+		case "First":
+			if len(expr.Args) > 0 {
+				exprArg0 := expr.Args[0]
+				if v, ok := exprArg0.(*ast.LabelledArg); ok {
+					exprArg0 = v.X
+				}
+				switch exprArg0.(type) {
+				case *ast.FuncLit, *ast.ShortFuncLit:
+					exprT.Sel.Name = "FirstWhere"
+					envFnName := "agl1.Set.FirstWhere"
+					info = infer.env.GetNameInfo(envFnName)
+					fnT = infer.env.GetFn(envFnName).T("T", idTT.K)
+					fnT.Name = "First"
+					infer.SetType(exprArg0, fnT.Params[1])
+					infer.SetType(expr, fnT.Return)
+					ft := fnT.GetParam(1).(types.FuncType)
+					if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
+						infer.SetType(exprArg0, ft)
+					} else if _, ok := exprArg0.(*ast.FuncType); ok {
+						ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+						if !compareFunctionSignatures(ftReal, ft) {
+							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+							return
+						}
+					} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+						if !compareFunctionSignatures(ftReal, ft) {
+							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+							return
+						}
+					}
+					fnT.Recv = []types.Type{idTT}
+					fnT.Params = fnT.Params[1:]
+					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+				}
+			}
 		case "Map":
 			info = infer.env.GetNameInfo("agl1.Set.Map")
 			fnT = infer.env.GetFn("agl1.Set.Map").T("T", idTT.K)
@@ -1511,7 +1550,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(expr, types.SetType{K: ft.Params[0]})
 			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
-		case "Len", "Min", "Max", "Iter":
+		case "Len", "Min", "Max", "Iter", "IsEmpty":
 			fnT = infer.env.GetFn("agl1.Set." + fnName)
 		}
 		if len(fnT.Params) > 0 {
