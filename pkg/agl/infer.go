@@ -2147,13 +2147,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		} else if fnName == "Map" {
 			info := infer.env.GetNameInfo("agl1.Map.Map")
 			mapFnT := infer.env.GetFn("agl1.Map.Map").T("K", idTT.K).T("V", idTT.V)
-			clbFnT := mapFnT.GetParam(1).(types.FuncType)
+			mapFnT.Recv = []types.Type{idTT}
+			mapFnT.Params = mapFnT.Params[1:]
+			clbFnT := mapFnT.GetParam(0).(types.FuncType)
 			if len(expr.Args) < 1 {
 				return
 			}
 			exprArg0 := expr.Args[0]
-			mapFnT.Recv = []types.Type{idTT}
-			mapFnT.Params = mapFnT.Params[1:]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
 			exprPos := infer.Pos(expr)

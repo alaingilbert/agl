@@ -11143,8 +11143,28 @@ func run(regA int, program []int) []int {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen389(t *testing.T) {
+	src := `package main
+func main() {
+    m := map[int]u8{1: 1, 2: 2, 3: 3}
+	keys := m.Map({ $0.Key })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int]uint8{1: 1, 2: 2, 3: 3}
+	keys := AglIdentity(AglMapMap(m, func(aglArg0 DictEntry[int, uint8]) int {
+		return aglArg0.Key
+	}))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[]int", test.TypeAt(4, 2).String())
 	testCodeGen2(t, expected, test)
 }
 
