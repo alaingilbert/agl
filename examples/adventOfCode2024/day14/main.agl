@@ -1,0 +1,52 @@
+package main
+
+import (
+    "agl1/os"
+    "agl1/regexp"
+    "fmt"
+)
+
+type Robot struct {
+    Position (int, int)
+    Velocity (int, int)
+}
+
+var mut robots []Robot
+var width = 101
+var height = 103
+var mw = width / 2
+var mh = height / 2
+
+func nums(s string) []int {
+    numsRgx := regexp.MustCompile(`(-?\d+)`)
+    m := numsRgx.FindAllString(s, -1)
+    return m.Map({ $0.Int()? })
+}
+
+func mod(a int, n int) int {
+    assert(n > 0)
+    r := a % n
+    return if r >= 0 { r } else { r + n }
+}
+
+func part1() {
+    robots := robots
+    for i in robots.Indices() {
+        robot := robots[i]
+        robot.Position.0 = mod((robot.Position.0 + 100 * robot.Velocity.0), width)
+        robot.Position.1 = mod((robot.Position.1 + 100 * robot.Velocity.1), height)
+        robots[i] = robot
+    }
+    q1 := robots.Filter({ $0.Position.0 < mw && $0.Position.1 < mh }).Len()
+    q2 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 < mh }).Len()
+    q3 := robots.Filter({ $0.Position.0 < mw && $0.Position.1 > mh }).Len()
+    q4 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 > mh }).Len()
+    fmt.Println(q1*q2*q3*q4)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day14/data.txt")!)
+    robots = fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
+    part1()
+    // part2()
+}
