@@ -11077,6 +11077,33 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen387(t *testing.T) {
+	src := `package main
+func main() {
+	a := [][]string{{"a"}}
+    b := a.Map({ 0 }).Sum()
+    c := a.Map({
+		return 0
+	}).Sum()
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := [][]string{{"a"}}
+	b := AglVecSum(AglVecMap(a, func(aglArg0 []string) int {
+		return 0
+	}))
+	c := AglVecSum(AglVecMap(a, func(aglArg0 []string) int {
+		return 0
+	}))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

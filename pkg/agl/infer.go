@@ -912,14 +912,14 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 		infer.SetType(expr, types.StringType{})
 	case token.FLOAT:
 		infer.SetType(expr, types.UntypedNumType{})
-		if infer.optType.IsDefinedFor(expr) {
+		if infer.optType.IsDefinedFor(expr) && !TryCast[types.GenericType](infer.optType.Type) {
 			infer.SetType(expr, infer.optType.Type)
 		} else {
 			infer.SetType(expr, types.UntypedNumType{})
 		}
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
-		if infer.optType.IsDefinedFor(expr) {
+		if infer.optType.IsDefinedFor(expr) && !TryCast[types.GenericType](infer.optType.Type) {
 			infer.SetType(expr, infer.optType.Type)
 		} else {
 			infer.SetType(expr, types.UntypedNumType{})
