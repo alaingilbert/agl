@@ -72,8 +72,7 @@ func part2(robots []Robot) {
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day14/data.txt")!)
-    robots1 := fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
-    robots2 := fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
-    part1(robots1)
-    part2(robots2)
+    getRobots := func() []Robot { fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} }) }
+    part1(getRobots())
+    part2(getRobots())
 }
