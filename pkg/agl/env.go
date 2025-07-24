@@ -933,6 +933,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.Reduce", "func [T any, R cmp.Ordered](a []T, r R, f func(a R, e T) R) R", WithDesc("Returns the result of combining the elements of the sequence using the given closure."))
 		e.DefineFn(nenv, "agl1.Vec.ReduceInto", "func [T any, R cmp.Ordered](a []T, into: r R, f func(mut a *R, e T)) R", WithDesc("Returns the result of combining the elements of the sequence using the given closure."))
 		e.DefineFn(nenv, "agl1.Vec.Remove", "func [T any](a []T, i int)")
+		e.DefineFn(nenv, "agl1.Vec.RemoveFirst", "func [T any](mut a []T) T")
 		e.DefineFn(nenv, "agl1.Vec.Sorted", "func [E cmp.Ordered](a []E) []E", WithDesc("Returns the elements of the sequence, sorted."))
 		e.DefineFn(nenv, "agl1.Vec.SortedBy", "func [E any](a []E, f func(a, b E) bool) []E")
 		e.DefineFn(nenv, "agl1.Vec.Sum", "func [T cmp.Ordered](a []T) T")

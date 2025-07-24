@@ -1864,7 +1864,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			return GenFrag{F: func() string {
 				return e("AglVecWith((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 			}}
-		case "Pop", "PopFront", "Clear":
+		case "Pop", "PopFront", "Clear", "RemoveFirst":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")
 			}}

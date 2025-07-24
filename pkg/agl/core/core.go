@@ -1098,6 +1098,14 @@ func AglVecPopFront[T any](a *[]T) Option[T] {
 	return MakeOptionSome(el)
 }
 
+func AglVecRemoveFirst[T any](a *[]T) T {
+	res := AglVecPopFront(a)
+	if res.IsNone() {
+		panic("Vec is empty")
+	}
+	return res.Unwrap()
+}
+
 // AglVecSwap ...
 func AglVecSwap[T any, I, J Integer](a *[]T, b I, c J) {
 	(*a)[b], (*a)[c] = (*a)[c], (*a)[b]
