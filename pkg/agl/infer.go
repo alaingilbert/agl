@@ -383,7 +383,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.Ident:
 		typ := infer.env.GetType2(t, infer.fset)
 		if typ == nil {
-			infer.errorf(spec.Name, "%s: type not found '%s'", infer.Pos(spec.Name), t)
+			infer.errorf(spec.Name, "type not found '%s'", t)
 			return
 		}
 		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
@@ -1225,17 +1225,17 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					}
 					if vv, ok := ooArg.(types.LabelledType); ok {
 						if v.Label.Name != "" && v.Label.Name != vv.Label {
-							infer.errorf(call, "%s: label name does not match %s vs %s", infer.Pos(arg), v.Label.Name, vv.Label)
+							infer.errorf(arg, "label name does not match %s vs %s", v.Label.Name, vv.Label)
 							return
 						}
 					} else {
-						infer.errorf(call, "%s: label does not exists", infer.Pos(arg))
+						infer.errorf(arg, "label does not exists")
 						return
 					}
 					arg = v.X
 				}
 				if !cmpTypesLoose(oArg, got) {
-					infer.errorf(call, "%s: types not equal, %v %v", infer.Pos(arg), oArg, got)
+					infer.errorf(arg, "types not equal, %v %v", oArg, got)
 					return
 				}
 				callT = types.ReplGen2(callT, oArg, got)
@@ -1421,7 +1421,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnFullName := fmt.Sprintf("agl1.String.%s", fnName)
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
-				infer.errorf(exprT.Sel, "%s: method '%s' of type String does not exists", infer.Pos(exprT.Sel), fnName)
+				infer.errorf(exprT.Sel, "method '%s' of type String does not exists", fnName)
 				return
 			}
 			return
@@ -2891,7 +2891,7 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		selT := infer.env.Get(pkg + "." + sel)
 		selTInfo := infer.env.GetNameInfo(pkg + "." + sel)
 		if selT == nil {
-			infer.errorf(expr.Sel, "%s: '%s' not found in package '%s'", infer.Pos(expr.Sel), sel, pkg)
+			infer.errorf(expr.Sel, "'%s' not found in package '%s'", sel, pkg)
 			return
 		}
 		infer.SetType(expr.Sel, selT, WithDefinition1(selTInfo.Definition1))
@@ -3233,7 +3233,7 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 				value := spec.Values[i]
 				valueT := infer.env.GetType(value)
 				if !cmpTypesLoose(tt, valueT) {
-					infer.errorf(name, "%s: type mismatch, want: %s, got: %s", infer.Pos(name), tt, valueT)
+					infer.errorf(name, "type mismatch, want: %s, got: %s", tt, valueT)
 					return
 				}
 			}
@@ -3927,7 +3927,7 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 	v := infer.env.Get(expr.Name)
 	info := infer.env.GetNameInfo(expr.Name)
 	if v == nil {
-		infer.errorf(expr, "%s: undefined identifier %s", infer.Pos(expr), expr.Name)
+		infer.errorf(expr, "undefined identifier %s", expr.Name)
 		return
 	}
 	if InArray(expr.Name, []string{"true", "false"}) {
