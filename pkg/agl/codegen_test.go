@@ -10973,7 +10973,6 @@ type AglTupleStruct_int_int struct {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -11002,7 +11001,26 @@ type AglTupleStruct_int_int struct {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen384(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	s := Set(a.Map({ $0 + 1 }))
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	s := AglBuildSet(AglVec[int](AglVecMap(a, func(aglArg0 int) int {
+		return aglArg0 + 1
+	})))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }

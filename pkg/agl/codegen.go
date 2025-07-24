@@ -2137,8 +2137,19 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			c1 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
 		} else if x.Name == "Set" {
-			c1 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglBuildSet(") + c1.F() + e(")") }}
+			arg0 := expr.Args[0]
+			arg0T := g.env.GetType(arg0)
+			c1 := g.genExpr(arg0)
+			return GenFrag{F: func() (out string) {
+				out += e("AglBuildSet(")
+				if TryCast[types.ArrayType](arg0T) {
+					out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
+				} else {
+					out += c1.F()
+				}
+				out += e(")")
+				return
+			}}
 		}
 	}
 	content1 := func() string { return "" }
