@@ -3843,15 +3843,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				infer.SetTypeForce(lhs, rhsT.(types.ResultType).W)
 			default:
-				tmp := rhsT
 				if v, ok := rhsT.(types.ResultType); ok {
 					v.Native = false
-					tmp = v
+					rhsT = v
 				}
-				if mutable && !TryCast[types.MutType](tmp) {
-					tmp = types.MutType{W: tmp}
+				if mutable && !TryCast[types.MutType](rhsT) {
+					rhsT = types.MutType{W: rhsT}
 				}
-				infer.SetType(lhs, tmp)
+				infer.SetType(lhs, rhsT)
 			}
 			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 		}
