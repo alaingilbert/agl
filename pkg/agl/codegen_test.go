@@ -9885,7 +9885,7 @@ func main() {
 	a := []int{1, 2, 3}
 	m := map[string]int{"a": 1, "b": 2}
 	s := AglSet[uint8]{1: {}, 2: {}, 3: {}}
-	s1 := AglBuildSet(a)
+	s1 := AglBuildSet(AglVec[int](a))
 	s2 := AglBuildSet(m)
 	s3 := AglBuildSet(s)
 }
