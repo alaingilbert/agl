@@ -402,7 +402,7 @@ func Test22(t *testing.T) {
 import "fmt"
 func main() {
     s := set[int]{1, 2, 3, 4}
-	fmt.Println(s.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }))
+	fmt.Println(s.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sorted())
 }`
 	tassert.Equal(t, "[3 5]\n", testGenOutput(src))
 }
