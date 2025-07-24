@@ -4,6 +4,7 @@ import (
     "agl1/os"
     "agl1/regexp"
     "fmt"
+    "agl1/strings"
 )
 
 type Robot struct {
@@ -11,7 +12,6 @@ type Robot struct {
     Velocity (int, int)
 }
 
-var mut robots []Robot
 var width = 101
 var height = 103
 var mw = width / 2
@@ -29,8 +29,7 @@ func mod(a int, n int) int {
     return if r >= 0 { r } else { r + n }
 }
 
-func part1() {
-    robots := robots
+func part1(robots []Robot) {
     for i in robots.Indices() {
         robots[i].Position.0 = mod((robots[i].Position.0 + 100 * robots[i].Velocity.0), width)
         robots[i].Position.1 = mod((robots[i].Position.1 + 100 * robots[i].Velocity.1), height)
@@ -42,9 +41,39 @@ func part1() {
     fmt.Println(q1*q2*q3*q4)
 }
 
+func pp(r []Robot) string {
+    rs := Set(r.Map({ $0.Position }))
+    mut out := ""
+    for y in 0..height {
+        for x in 0..width {
+            out += if rs.Contains((x, y)) { "*" } else { "." }
+        }
+        out += "\n"
+    }
+    return out
+}
+
+func part2(robots []Robot) {
+    mut steps := 0
+    for {
+        steps += 1
+        robots := robots.Clone()
+        for i in robots.Indices() {
+            robots[i].Position.0 = mod((robots[i].Position.0 + steps * robots[i].Velocity.0), width)
+            robots[i].Position.1 = mod((robots[i].Position.1 + steps * robots[i].Velocity.1), height)
+        }
+        p := pp(robots)
+        if strings.Contains(p, "**************") {
+            fmt.Println(steps)
+            break
+        }
+    }
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day14/data.txt")!)
-    robots = fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
-    part1()
-    // part2()
+    robots1 := fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
+    robots2 := fileContent.Lines().Map({ nums($0) }).Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
+    part1(robots1)
+    part2(robots2)
 }
