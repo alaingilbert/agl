@@ -32,12 +32,12 @@ func Sub(fsys fs.FS, dir string) fs.FS!
 
 func Stat(fsys fs.FS, name string) fs.FileInfo!
 
-func (m FileMode) IsDir() bool
-func (m FileMode) IsRegular() bool
-func (m FileMode) Perm() fs.FileMode
-func (m FileMode) String() string
-func (m FileMode) Type() fs.FileMode
+func (m fs.FileMode) IsDir() bool
+func (m fs.FileMode) IsRegular() bool
+func (m fs.FileMode) Perm() fs.FileMode
+func (m fs.FileMode) String() string
+func (m fs.FileMode) Type() fs.FileMode
 
 //func (e *PathError) Error() string
-func (e *PathError) Timeout() bool
-func (e *PathError) Unwrap() error
+func (e *fs.PathError) Timeout() bool
+func (e *fs.PathError) Unwrap() error
