@@ -397,11 +397,15 @@ func (i InterfaceType) GetMethodByName(name string) Type {
 
 func (i InterfaceType) GoStr() string     { return i.String() }
 func (i InterfaceType) GoStrType() string { return i.String() }
-func (i InterfaceType) String() string {
+func (i InterfaceType) NameStr() string {
 	out := i.Name
 	if i.Pkg != "" {
 		out = i.Pkg + "." + out
 	}
+	return out
+}
+func (i InterfaceType) String() string {
+	out := i.NameStr()
 	if len(i.TypeParams) > 0 {
 		var tmp []string
 		for _, t := range i.TypeParams {

@@ -1256,11 +1256,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.InterfaceType:
-			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
-			if v.Pkg != "" {
-				name = v.Pkg + "." + name
-			}
-			return e.GetType2(&ast.Ident{Name: name}, fset)
+			return e.GetType2(&ast.Ident{Name: v.NameStr()}, fset)
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
