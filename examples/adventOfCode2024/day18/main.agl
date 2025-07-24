@@ -37,9 +37,7 @@ func bfs(grid [][]bool) set[Position]? {
             mut el := e
             for {
                 p := seen[el]
-                if p == start {
-                    break
-                }
+                guard p != start else { break }
                 res += 1
                 el = p
                 path.Insert(p)
