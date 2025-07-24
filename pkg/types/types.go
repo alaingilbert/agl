@@ -3,6 +3,7 @@ package types
 import (
 	"agl/pkg/utils"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -680,25 +681,29 @@ func (f FuncType) IsGeneric() bool {
 	return len(f.TypeParams) > 0
 }
 
+func buildTypeParams(childFn FuncType) FuncType {
+	ptMap := make(map[string]GenericType)
+	for _, op := range childFn.Params {
+		if opG, ok := op.(GenericType); ok {
+			ptMap[opG.Name] = opG
+		}
+	}
+	if childFn.Return != nil {
+		if opG, ok := childFn.Return.(GenericType); ok {
+			ptMap[opG.Name] = opG
+		}
+	}
+	for _, k := range slices.Sorted(maps.Keys(ptMap)) {
+		childFn.TypeParams = append(childFn.TypeParams, ptMap[k])
+	}
+	return childFn
+}
+
 func (f FuncType) GetParam(i int) Type {
 	if len(f.Params) >= i {
 		param := f.Params[i]
-		ptMap := make(map[GenericType]bool)
 		if other, ok := param.(FuncType); ok {
-			for _, op := range other.Params {
-				if opG, ok := op.(GenericType); ok {
-					ptMap[opG] = true
-				}
-			}
-			if other.Return != nil {
-				if opG, ok := other.Return.(GenericType); ok {
-					ptMap[opG] = true
-				}
-			}
-			for k := range ptMap {
-				other.TypeParams = append(other.TypeParams, k)
-			}
-			param = other
+			param = buildTypeParams(other)
 		}
 		return param
 	}
