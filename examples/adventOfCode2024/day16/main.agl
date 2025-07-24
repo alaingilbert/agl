@@ -48,7 +48,7 @@ func getDir(p1, p2 Position) int {
 
 func dijkstra(s, e Position) int {
     mut seen := make(map[PosDir]Metadata)
-    mut q := []Metadata{{pos: s, cost: 0, pdir: 0, dir: 0}}
+    mut q := []Metadata{{pos: s, cost: 0, from: None, pdir: 0, dir: 0}}
     for !q.IsEmpty() {
         m := q.RemoveFirst()
         p := m.pos
