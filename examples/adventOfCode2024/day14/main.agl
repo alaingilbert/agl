@@ -4,7 +4,6 @@ import (
     "agl1/os"
     "agl1/regexp"
     "fmt"
-    "agl1/strings"
 )
 
 type Robot struct {
@@ -63,7 +62,7 @@ func part2(robots []Robot) {
             robots[i].Position.1 = mod((robots[i].Position.1 + steps * robots[i].Velocity.1), height)
         }
         p := pp(robots)
-        if strings.Contains(p, "**************") {
+        if p.Contains("**************") {
             fmt.Println(steps)
             break
         }
