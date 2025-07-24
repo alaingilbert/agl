@@ -1,0 +1,86 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+type Position struct {
+    mut x, mut y int
+}
+
+func (mut p *Position) Move(dir (int, int)) {
+    p.x += dir.0
+    p.y += dir.1
+}
+
+func getRobotPosition(warehouse [][]string) Position? {
+    for y in warehouse.Indices() {
+        if Some(x) := warehouse[y].FirstIndex(of: "@") {
+            return Some(Position{x: x, y: y})
+        }
+    }
+    return None
+}
+
+func getBoxes(warehouse [][]string, c string) []Position {
+    var mut boxes []Position
+    for y in warehouse.Indices() {
+        for x in warehouse[y].Indices() {
+            if warehouse[y][x] == c {
+                boxes.Push(Position{x: x, y: y})
+            }
+        }
+    }
+    return boxes
+}
+
+func getDirection(move string) (int, int) {
+    switch move {
+        case "<": return (-1,  0)
+        case "^": return ( 0, -1)
+        case "v": return ( 0,  1)
+        case ">": return ( 1,  0)
+        default:  return ( 0,  0)
+    }
+}
+
+func part1(warehouse [][]string, moves []string) {
+    mut robot := getRobotPosition(warehouse)?
+    mut boxes := Set(getBoxes(warehouse, "O"))
+    for move in moves {
+        direction := getDirection(move)
+        mut canMove := true
+        var mut boxesToMove []Position
+        mut np := robot
+        for {
+            np.Move(direction)
+            if warehouse[np.y][np.x] == "#" {
+                canMove = false
+                break
+            } else if boxes.Contains(np) {
+                boxesToMove.Push(np)
+            } else {
+                break
+            }
+        }
+        if canMove {
+            robot.Move(direction)
+            for boxM in boxesToMove.Reversed() {
+                if Some(mut element) := boxes.Remove(boxM) {
+                    element.Move(direction)
+                    boxes.Insert(element)
+                }
+            }
+        }
+    }
+    fmt.Println(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day15/data.txt")!)
+    parts := fileContent.Split("\n\n")
+    warehouse := parts[0].Lines().Map({ $0.Split("") })
+    moves := parts[1].Split("")
+    part1(warehouse, moves)
+}
