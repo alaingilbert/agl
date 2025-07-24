@@ -11111,6 +11111,38 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen388(t *testing.T) {
+	src := `package main
+func run(regA int, program []int) []int {
+    mut a := regA
+    mut output := []int{}
+    for a != 0 {
+        b := a & 0b111 ^ 0b11
+        el := (((a >> b) ^ b) ^ 0b101) & 0b111
+        output.Push(el)
+        a >>= 0b11
+    }
+    return output
+}`
+	expected := `// agl:generated
+package main
+func run(regA int, program []int) []int {
+	a := regA
+	output := []int{}
+	for a != 0 {
+		b := a & 0b111 ^ 0b11
+		el := (((a >> b) ^ b) ^ 0b101) & 0b111
+		AglVecPush((*[]int)(&output), el)
+		a >>= 0b11
+	}
+	return output
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)

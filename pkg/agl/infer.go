@@ -171,6 +171,7 @@ func (infer *FileInferrer) GetType(n ast.Node) types.Type {
 	t := infer.env.GetType(n)
 	if t == nil {
 		infer.errorf(n, "type not found for %v %v", n, to(n))
+		panic("")
 		return nil
 	}
 	return t
@@ -3926,6 +3927,7 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM:
 		infer.SetType(expr, infer.GetType(expr.X))
 	default:
+		infer.SetType(expr, infer.GetType(expr.X))
 	}
 }
 
