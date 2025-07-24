@@ -2810,43 +2810,41 @@ func cmpTypes(a, b types.Type) bool {
 
 func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 	infer.expr(expr.X)
-	exprXT := infer.GetType2(expr.X)
+	exprXT := types.Unwrap(infer.GetType2(expr.X))
 	if exprXT == nil {
 		infer.errorf(expr.X, "%s: type not found for '%s' %v", infer.Pos(expr.X), expr.X, to(expr.X))
 		return
 	}
-	exprXIdTRaw := exprXT
-	exprXIdTRaw = types.Unwrap(exprXIdTRaw)
-	switch exprXIdT := exprXIdTRaw.(type) {
+	switch exprXTT := exprXT.(type) {
 	case types.StructType:
-		infer.inferStructType(exprXIdT, expr)
+		infer.inferStructType(exprXTT, expr)
 		return
 	case types.InterfaceType:
 		return
 	case types.EnumType:
 		info := infer.env.GetInfo(expr.X)
-		infer.SetType(expr.X, exprXIdT)
-		infer.SetType(expr.Sel, exprXIdT, WithDefinition(info))
+		infer.SetType(expr.X, exprXTT)
+		infer.SetType(expr.Sel, exprXTT, WithDefinition(info))
 		enumName := expr.X.(*ast.Ident).Name
 		fieldName := expr.Sel.Name
-		validFields := make([]string, 0, len(exprXIdT.Fields))
-		for _, f := range exprXIdT.Fields {
+		validFields := make([]string, 0, len(exprXTT.Fields))
+		for _, f := range exprXTT.Fields {
 			validFields = append(validFields, f.Name)
 		}
 		if !InArray(fieldName, validFields) {
 			infer.errorf(expr.Sel, "%d: enum %s has no field %s", expr.Sel.Pos(), enumName, fieldName)
 			return
 		}
-		infer.SetType(expr, exprXIdT)
+		infer.SetType(expr, exprXTT)
 	case types.TupleType:
-		infer.SetType(expr.X, exprXIdT)
+		infer.SetType(expr.X, exprXTT)
 		argIdx, err := strconv.Atoi(expr.Sel.Name)
 		if err != nil {
 			infer.errorf(expr.Sel, "tuple arg index must be int")
 			return
 		}
-		infer.SetType(expr.Sel, exprXIdT.Elts[argIdx])
-		infer.SetType(expr, exprXIdT.Elts[argIdx])
+		infer.SetType(expr.Sel, exprXTT.Elts[argIdx])
+		infer.SetType(expr, exprXTT.Elts[argIdx])
 	case types.PackageType:
 		pkg := expr.X.(*ast.Ident).Name
 		sel := expr.Sel.Name
@@ -2859,8 +2857,8 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 		infer.SetType(expr.Sel, selT, WithDefinition1(selTInfo.Definition1))
 		infer.SetType(expr, selT)
 	case types.TypeAssertType:
-		exprXIdT.Type = types.Unwrap(exprXIdT.Type)
-		if v, ok := exprXIdT.Type.(types.StructType); ok {
+		exprXTT.Type = types.Unwrap(exprXTT.Type)
+		if v, ok := exprXTT.Type.(types.StructType); ok {
 			fieldName := expr.Sel.Name
 			name := v.GetFieldName(fieldName)
 			if f := infer.env.Get(name); f != nil {
@@ -2870,18 +2868,18 @@ func (infer *FileInferrer) selectorExpr(expr *ast.SelectorExpr) {
 				return
 			}
 		}
-		infer.SetType(expr.X, exprXIdT.X)
-		infer.SetType(expr, exprXIdT.Type)
+		infer.SetType(expr.X, exprXTT.X)
+		infer.SetType(expr, exprXTT.Type)
 	case types.OptionType:
-		infer.SetType(expr.X, exprXIdT)
-		infer.SetType(expr.Sel, exprXIdT.W)
-		infer.SetType(expr, exprXIdT.W)
+		infer.SetType(expr.X, exprXTT)
+		infer.SetType(expr.Sel, exprXTT.W)
+		infer.SetType(expr, exprXTT.W)
 	case types.TypeType:
-		infer.SetType(expr.X, exprXIdT)
-		infer.SetType(expr.Sel, exprXIdT.W)
-		infer.SetType(expr, exprXIdT.W)
+		infer.SetType(expr.X, exprXTT)
+		infer.SetType(expr.Sel, exprXTT.W)
+		infer.SetType(expr, exprXTT.W)
 	default:
-		infer.errorf(expr.X, "%v", to(exprXIdTRaw))
+		infer.errorf(expr.X, "%v", to(exprXT))
 		return
 	}
 }
