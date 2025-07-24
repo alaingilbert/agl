@@ -147,6 +147,21 @@ func (o OptionType) String() string {
 	}
 }
 
+type OkType struct{ W Type }
+
+func (o OkType) GoStr() string     { return "OkType" }
+func (o OkType) GoStrType() string { return "OkType" }
+func (o OkType) String() string    { return fmt.Sprintf("Ok[%s]", o.W.String()) }
+
+type ErrType struct {
+	W Type
+	T Type
+}
+
+func (e ErrType) GoStr() string     { return "ErrType" }
+func (e ErrType) GoStrType() string { return "ErrType" }
+func (e ErrType) String() string    { return fmt.Sprintf("Err[%s]", e.T.String()) }
+
 type CustomType struct {
 	Pkg  string
 	Name string
@@ -227,21 +242,6 @@ type UnderscoreType struct{ W Type }
 func (u UnderscoreType) GoStr() string     { return "_" }
 func (u UnderscoreType) GoStrType() string { return "_" }
 func (u UnderscoreType) String() string    { return "_" }
-
-type OkType struct{ W Type }
-
-func (o OkType) GoStr() string     { return "OkType" }
-func (o OkType) GoStrType() string { return "OkType" }
-func (o OkType) String() string    { return fmt.Sprintf("Ok[%s]", o.W.String()) }
-
-type ErrType struct {
-	W Type
-	T Type
-}
-
-func (e ErrType) GoStr() string     { return "ErrType" }
-func (e ErrType) GoStrType() string { return "ErrType" }
-func (e ErrType) String() string    { return fmt.Sprintf("Err[%s]", e.T.String()) }
 
 type PackageType struct{ Name, Path string }
 
