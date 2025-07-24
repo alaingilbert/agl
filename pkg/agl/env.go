@@ -1392,11 +1392,7 @@ func (e *Env) getGoType2Helper(pkgName string, x goast.Node, keepRaw bool) types
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
 			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
 		case types.InterfaceType:
-			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
-			if v.Pkg != "" {
-				name = v.Pkg + "." + name
-			}
-			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
+			return e.GetGoType2(pkgName, &goast.Ident{Name: v.NameStr()}, keepRaw)
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
 			return e.GetGoType2(pkgName, &goast.Ident{Name: name}, keepRaw)
