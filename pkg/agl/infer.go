@@ -1365,11 +1365,11 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 }
 
 func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types.Type, exprT *ast.SelectorExpr) {
+	fnName := exprT.Sel.Name
+	var fnT types.FuncType
+	info := &Info{}
 	switch idTT := idT.(type) {
 	case types.IntType:
-		fnName := exprT.Sel.Name
-		var fnT types.FuncType
-		info := &Info{}
 		switch fnName {
 		case "String":
 			info = infer.env.GetNameInfo("agl1.Int.String")
@@ -1378,9 +1378,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.I64Type:
-		fnName := exprT.Sel.Name
-		var fnT types.FuncType
-		info := &Info{}
 		switch fnName {
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I64.String")
@@ -1389,9 +1386,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.UintType:
-		fnName := exprT.Sel.Name
-		var fnT types.FuncType
-		info := &Info{}
 		switch fnName {
 		case "String":
 			info = infer.env.GetNameInfo("agl1.Uint.String")
@@ -1400,9 +1394,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.StringType, types.UntypedStringType:
-		fnName := exprT.Sel.Name
-		var fnT types.FuncType
-		info := &Info{}
 		switch fnName {
 		case "Replace":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
@@ -1443,10 +1434,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.SetType:
-		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
-		var fnT types.FuncType
-		info := &Info{}
 		switch fnName {
 		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
@@ -1574,8 +1562,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.StructType:
-		fnName := exprT.Sel.Name
-		//exprPos := infer.Pos(expr)
 		if fnName == "Sum" {
 			rT := idTT.TypeParams[0].W
 			if infer.indexValue != nil {
@@ -1596,7 +1582,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, fnT)
 		}
 	case types.ArrayType:
-		fnName := exprT.Sel.Name
 		exprPos := infer.Pos(expr)
 		if fnName == "Filter" {
 			info := infer.env.GetNameInfo("agl1.Vec.Filter")
@@ -2086,7 +2071,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, ft.Return)
 		}
 	case types.MapType:
-		fnName := exprT.Sel.Name
 		if InArray(fnName, []string{"Len"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
@@ -2142,7 +2126,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 		}
 	case types.OptionType:
-		fnName := exprT.Sel.Name
 		if fnName == "Map" {
 			exprPos := infer.Pos(expr)
 			info := infer.env.GetNameInfo("agl1.Option.Map")
