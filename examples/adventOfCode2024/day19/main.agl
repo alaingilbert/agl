@@ -47,7 +47,7 @@ func part1() {
 
 func part2() {
     mut cache := make(map[string]int)
-    fmt.Println(desiredDesigns.Reduce(int(0), { $0 + countDesignPossible($1, mut cache) }))
+    fmt.Println(desiredDesigns.Reduce(0, { $0 + countDesignPossible($1, mut cache) }))
 }
 
 func main() {

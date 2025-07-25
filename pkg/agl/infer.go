@@ -2222,6 +2222,9 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		}
 	} else if _, ok := infer.GetType(exprArg0).(types.UntypedNumType); ok {
 		eltT = types.Unwrap(eltT)
+		if !isNumericType(eltT) {
+			eltT = types.IntType{}
+		}
 		ft = ft.T("R", eltT)
 		reduceFnT = reduceFnT.T("R", eltT)
 	} else {

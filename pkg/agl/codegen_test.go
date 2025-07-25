@@ -11253,6 +11253,30 @@ func cc(a, b int64) int64 {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen394(t *testing.T) {
+	src := `package main
+func test() int { 42 }
+func main() {
+	arr := []string{}
+	arr.Reduce(0, { $0 + test() })
+}`
+	expected := `// agl:generated
+package main
+func test() int {
+	return 42
+}
+func main() {
+	arr := []string{}
+	AglVecReduce(arr, 0, func(aglArg0 int, aglArg1 string) int {
+		return aglArg0 + test()
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
