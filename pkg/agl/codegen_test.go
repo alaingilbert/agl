@@ -11321,6 +11321,20 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen397(t *testing.T) {
+	src := `package main
+func main() {
+	cache := make([]map[int]int)
+	keys := set[int]{}
+	keys.Map(|key| { cache.Reduce(0, { $0 + $1[key] }) })
+}`
+	expected := `// agl:generated
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
