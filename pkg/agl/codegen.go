@@ -1975,7 +1975,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 				out += e(", ") + content2() + e(")")
 				return
 			}}
-		case "Insert", "Remove", "Contains", "Equals", "FirstWhere":
+		case "Insert", "Remove", "Contains", "ContainsWhere", "Equals", "FirstWhere":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {

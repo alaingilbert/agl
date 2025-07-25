@@ -594,6 +594,15 @@ func AglSetContains[T comparable](s AglSet[T], el T) bool {
 	return ok
 }
 
+func AglSetContainsWhere[T comparable](s AglSet[T], p func(T) bool) bool {
+	for k := range s {
+		if p(k) {
+			return true
+		}
+	}
+	return false
+}
+
 // AglSetRemove removes the specified element from the set.
 // Return: The value of the member parameter if it was a member of the set; otherwise, nil.
 func AglSetRemove[T comparable](s AglSet[T], el T) Option[T] {

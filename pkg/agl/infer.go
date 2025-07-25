@@ -1451,7 +1451,19 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 	case types.SetType:
 		exprPos := infer.Pos(expr)
 		switch fnName {
-		case "Contains", "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
+		case "Contains", "ContainsWhere":
+			info = infer.env.GetNameInfo("agl1.Set." + fnName)
+			fnT = infer.env.GetFn("agl1.Set."+fnName).T("T", idTT.K)
+			if len(expr.Args) < 1 {
+				return
+			}
+			//switch expr.Args[0].(type) {
+			//case *ast.FuncLit, *ast.ShortFuncLit:
+			//	exprT.Sel.Name = "ContainsWhere"
+			//	envFnName := "agl1.Set.ContainsWhere"
+			//}
+			infer.SetType(expr.Args[0], fnT.Params[1])
+		case "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
 			"IsDisjoint", "Intersects", "Equals":
 			info = infer.env.GetNameInfo("agl1.Set." + fnName)

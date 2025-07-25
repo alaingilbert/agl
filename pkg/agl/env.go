@@ -866,6 +866,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Set.Remove", "func [T comparable](mut s agl1.Set[T], el T) T?")
 		e.DefineFn(nenv, "agl1.Set.RemoveFirst", "func [T comparable](mut s agl1.Set[T]) T")
 		e.DefineFn(nenv, "agl1.Set.Contains", "func [T comparable](s agl1.Set[T], el T) bool")
+		e.DefineFn(nenv, "agl1.Set.ContainsWhere", "func [T comparable](s agl1.Set[T], where: p func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Set.Iter", "func [T comparable](s agl1.Set[T]) Sequence[T]")
 		e.DefineFn(nenv, "agl1.Set.Filter", "func [T comparable](s agl1.Set[T], f func(e T) bool) agl1.Set[T]", WithDesc("Returns a new set containing the elements of the set that satisfy the given predicate."))
 		e.DefineFn(nenv, "agl1.Set.Union", "func [T comparable](s agl1.Set[T], other Iterator[T]) agl1.Set[T]")
