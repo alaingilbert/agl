@@ -77,8 +77,24 @@ func part1() {
     fmt.Println(bfs(grid)?.Len())
 }
 
+func part2() {
+    mut low, mut high := (1024, data.Len()-1)
+    for low != high {
+        mid := (high + low) / 2
+        grid := buildGrid(mid)
+        if bfs(grid).IsNone() {
+            high = mid
+        } else {
+            low = mid + 1
+        }
+    }
+    x, y := coord(low-1)
+    fmt.Printf("%d,%d\n", x, y)
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day18/data.txt")!)
     data = fileContent.Lines().Map({ nums($0) })
     part1()
+    part2()
 }
