@@ -852,7 +852,7 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 			case SetType:
 				newTyp = v.K
 			default:
-				panic("")
+				panic(fmt.Sprintf("%v", reflect.TypeOf(newTyp)))
 			}
 			for _, p := range currT.TypeParams {
 				t = t.(FuncType).ReplaceGenericParameter(p.String(), newTyp)
