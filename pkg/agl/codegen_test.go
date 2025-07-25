@@ -11329,6 +11329,16 @@ func main() {
 	keys.Map(|key| { cache.Reduce(0, { $0 + $1[key] }) })
 }`
 	expected := `// agl:generated
+package main
+func main() {
+	cache := make([]map[int]int)
+	keys := AglSet[int]{}
+	AglSetMap(keys, func(key int) int {
+		return AglVecReduce(cache, 0, func(aglArg0 int, aglArg1 map[int]int) int {
+			return aglArg0 + aglArg1[key]
+		})
+	})
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
