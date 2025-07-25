@@ -1289,6 +1289,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 							id = vv
 						case *ast.SelectorExpr:
 							id = vv.X.(*ast.Ident)
+						case *ast.UnaryExpr:
+							id = vv.X.(*ast.Ident)
 						default:
 							panic(fmt.Sprintf("unsupported type %v", to(arg)))
 						}
@@ -3656,6 +3658,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						return
 					}
 				}
+			case *ast.StarExpr:
+				lhsIdName := v.X.(*ast.Ident).Name
+				lhsWantedT = infer.env.Get(lhsIdName)
 			default:
 				infer.errorf(lhs, "%v", to(lhs))
 				return
@@ -3688,6 +3693,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			case *ast.Ident:
 				lhsID = v
 				mutable = v.Mutable.IsValid()
+			case *ast.StarExpr:
+				lhsID = v.X.(*ast.Ident)
+				mutable = v.X.(*ast.Ident).Mutable.IsValid()
 			case *ast.IndexExpr:
 				if v, ok := v.X.(*ast.Ident); ok {
 					lhsID = v
@@ -3831,7 +3839,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				}
 				infer.SetType(lhs, rhsT)
 			}
-			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+			assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType2(lhsID)})
 		}
 	}
 	assignsFn()
