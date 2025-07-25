@@ -30,7 +30,7 @@ Notable change: number types are `int i8 i16 i32 i64 uint u8 u16 u32 u64 f32 f64
 
 ## Community
 
-- Discord server https://discord.gg/uFxBsSnm
+- Discord server https://discord.gg/68FJ767Yna
 
 ## How to use
 
