@@ -1147,7 +1147,13 @@ func (f FuncType) String1() string {
 		nameStr = " " + f.Name
 	}
 	if f.TypeParams != nil {
-		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string { return t.(GenericType).TypeParamGoStr() }, ", ")
+		typeParamsStr = utils.MapJoin(f.TypeParams, func(t Type) string {
+			if v, ok := t.(GenericType); ok {
+				return v.TypeParamGoStr()
+			} else {
+				return t.String()
+			}
+		}, ", ")
 		typeParamsStr = utils.WrapIf(typeParamsStr, "[", "]")
 	}
 	if f.Params != nil {
