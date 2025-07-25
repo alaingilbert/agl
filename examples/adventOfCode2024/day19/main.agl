@@ -1,0 +1,36 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut towels []string
+var mut desiredDesigns []string
+
+func isDesignPossible(design string) bool {
+    if design == "" {
+        return true
+    }
+    for towel in towels {
+        guard design.HasPrefix(towel) else { continue }
+        mut subDesign := design
+        subDesign = subDesign.TrimPrefix(towel)
+        if isDesignPossible(subDesign) {
+            return true
+        }
+    }
+    return false
+}
+
+func part1() {
+    fmt.Println(desiredDesigns.Filter({ isDesignPossible($0) }).Len())
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day19/data.txt")!)
+    parts := fileContent.Split("\n\n")
+    towels = parts[0].Split(", ")
+    desiredDesigns = parts[1].Split("\n")
+    part1()
+}
