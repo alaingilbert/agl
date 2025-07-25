@@ -364,7 +364,7 @@ func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 	var t types.Type
 	if spec.Values != nil {
 		infer.expr(spec.Values[0])
-		t = infer.GetType2(spec.Values[0])
+		t = types.Unwrap(infer.GetType2(spec.Values[0]))
 	}
 	if spec.Type != nil {
 		infer.expr(spec.Type)

@@ -11278,6 +11278,28 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen395(t *testing.T) {
+	src := `package main
+var mut data []string
+var width = data.Len()
+func main() {
+	if 0 < width {
+	}
+}`
+	expected := `// agl:generated
+package main
+var data []string
+var width = AglVecLen(data)
+func main() {
+	if 0 < width {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
