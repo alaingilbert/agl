@@ -1,0 +1,44 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]string
+
+func part1() {
+    mut sets := make(map[string][]string)
+    mut m := make(map[string]set[string])
+    for arr in data {
+        if m[arr[0]] == nil {
+            m[arr[0]] = make(set[string])
+        }
+        if m[arr[1]] == nil {
+            m[arr[1]] = make(set[string])
+        }
+        m[arr[0]].Insert(arr[1])
+        m[arr[1]].Insert(arr[0])
+    }
+    for k1 in m.Keys() {
+        for k2 in m[k1] {
+            for k3 in m[k2] {
+                v3 := m[k3]
+                if v3.Contains(k1) && v3.Contains(k2) {
+                    sets[fmt.Sprintf("%v", []string{k1, k2, k3}.Sorted())] = []string{k1, k2, k3}
+                }
+            }
+        }
+    }
+    var mut tmp [][]string
+    for el in sets.Values() {
+        tmp.Push(el)
+    }
+    fmt.Println(tmp.Filter({ $0.Contains(where: { $0.HasPrefix("t") }) }).Len())
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day23/data.txt")!)
+    data = fileContent.Lines().Map({ $0.Split("-") })
+    part1()
+}
