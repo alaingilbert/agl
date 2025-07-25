@@ -1961,8 +1961,19 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 				}
 			}
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string {
-				return e("AglSet"+fnName+"(") + c1.F() + e(", ") + content2() + e(")")
+			c1T := g.env.GetType(x.X)
+			if v, ok := c1T.(types.MutType); ok {
+				c1T = v.W
+			}
+			return GenFrag{F: func() (out string) {
+				out += e("AglSet" + fnName + "(")
+				if TryCast[types.StarType](c1T) {
+					out += e("*") + c1.F()
+				} else {
+					out += c1.F()
+				}
+				out += e(", ") + content2() + e(")")
+				return
 			}}
 		case "Insert", "Remove", "Contains", "Equals", "FirstWhere":
 			c1 := g.genExpr(x.X)
