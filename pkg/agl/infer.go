@@ -2711,6 +2711,10 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 func cmpTypesLoose(a, b types.Type) bool {
 	a = types.Unwrap(a)
 	b = types.Unwrap(b)
+	a = types.Unwrap(a)
+	b = types.Unwrap(b)
+	a = types.Unwrap(a)
+	b = types.Unwrap(b)
 	if isNumericType(a) && TryCast[types.UntypedNumType](b) {
 		return true
 	}
