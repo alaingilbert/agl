@@ -11274,6 +11274,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]string) Reduce(int, func(int, string) int) int", test.TypeAt(5, 6).String())
 	testCodeGen2(t, expected, test)
 }
 

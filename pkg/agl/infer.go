@@ -2210,8 +2210,8 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 		infer.expr(exprArg0)
 	})
 	arg0T := infer.GetType(exprArg0)
-	reduceFnT := infer.env.GetType(exprFun.Sel).(types.FuncType)
-	ft := reduceFnT.GetParam(2).(types.FuncType)
+	reduceFnT := infer.env.GetType(exprFun.Sel).(types.FuncType).IntoRecv(idTArr)
+	ft := reduceFnT.GetParam(1).(types.FuncType)
 	if forceReturnType != nil {
 		arg0T = types.Unwrap(arg0T)
 		ft = ft.T("R", forceReturnType)
@@ -2246,8 +2246,6 @@ func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.Selec
 			return
 		}
 	}
-	reduceFnT.Recv = []types.Type{idTArr}
-	reduceFnT.Params = reduceFnT.Params[1:]
 	infer.SetTypeForce(exprFun.Sel, reduceFnT)
 	infer.SetType(expr.Fun, reduceFnT)
 	infer.SetType(expr, reduceFnT.Return)
