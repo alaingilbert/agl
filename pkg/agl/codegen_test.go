@@ -11300,6 +11300,27 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen396(t *testing.T) {
+	src := `package main
+func main() {
+	cache := make([]map[int]int)
+	cache.Reduce(into: set[int]{}, { $0.FormUnion($1.Keys()) })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	cache := make([]map[int]int)
+	AglVecReduceInto(cache, AglSet[int]{}, func(aglArg0 *AglSet[int], aglArg1 map[int]int) AglVoid {
+		AglSetFormUnion(*aglArg0, AglIdentity(AglMapKeys(aglArg1)))
+		return AglVoid{}
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
