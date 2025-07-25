@@ -2168,6 +2168,20 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				out += e(")")
 				return
 			}}
+		} else if x.Name == "Array" {
+			arg0 := expr.Args[0]
+			arg0T := g.env.GetType(arg0)
+			c1 := g.genExpr(arg0)
+			return GenFrag{F: func() (out string) {
+				out += e("AglBuildArray(")
+				if TryCast[types.ArrayType](arg0T) {
+					out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
+				} else {
+					out += c1.F()
+				}
+				out += e(")")
+				return
+			}}
 		}
 	}
 	content1 := func() string { return "" }

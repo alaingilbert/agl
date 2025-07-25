@@ -1280,3 +1280,10 @@ func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
 	}
 	return
 }
+
+func AglBuildArray[T comparable](it Iterator[T]) (out []T) {
+	for el := range it.Iter() {
+		out = append(out, el)
+	}
+	return
+}
