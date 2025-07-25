@@ -25,8 +25,45 @@ func part1() {
     fmt.Println(res)
 }
 
+
+type S struct {
+    a, b, c, d int
+}
+
+func part2() {
+    mut cache := make([]map[S]int, 0)
+    for secret1 in secrets {
+        mut secretCache := make(map[S]int)
+        mut secret := secret1
+        mut prev := secret % 10
+        mut arr := []int{0, 0, 0, 0}
+        mut p := 0
+        for i in 1..=2000 {
+            getNext(&mut secret)
+            price := secret % 10
+            diff := price - prev
+            arr[p] = diff
+            if i >= 4 {
+                key := S{a: arr[(p+0)%4], b: arr[(p+1)%4], c: arr[(p+2)%4], d: arr[(p+3)%4]}
+                if !secretCache.ContainsKey(key) {
+                    secretCache[key] = price
+                }
+            }
+            p = (p + 1) % 4
+            prev = price
+        }
+        cache.Push(secretCache)
+    }
+
+    keys := cache.Reduce(into: set[S]{}, { $0.FormUnion($1.Keys()) })
+    tmp := func(key S) int { cache.Reduce(0, { $0 + $1.Get(key).UnwrapOrDefault() }) }
+    res := keys.Map(|key| { tmp(key) }).Max()?
+    fmt.Println(res)
+}
+
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day22/data.txt")!)
     secrets = fileContent.Split("\n").Map({ $0.Int()? })
     part1()
+    part2()
 }
