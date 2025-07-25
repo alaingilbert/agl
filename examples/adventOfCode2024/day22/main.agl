@@ -56,8 +56,7 @@ func part2() {
     }
 
     keys := cache.Reduce(into: set[S]{}, { $0.FormUnion($1.Keys()) })
-    tmp := func(key S) int { cache.Reduce(0, { $0 + $1.Get(key).UnwrapOrDefault() }) }
-    res := keys.Map(|key| { tmp(key) }).Max()?
+    res := keys.Map(|key| { cache.Reduce(0, { $0 + $1.Get(key).UnwrapOrDefault() }) }).Max()?
     fmt.Println(res)
 }
 
