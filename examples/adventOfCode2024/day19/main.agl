@@ -9,7 +9,7 @@ var mut towels []string
 var mut desiredDesigns []string
 
 func isDesignPossible(design string) bool {
-    if design == "" {
+    if design.IsEmpty() {
         return true
     }
     for towel in towels {
@@ -24,7 +24,7 @@ func isDesignPossible(design string) bool {
 }
 
 func countDesignPossible(design string, mut cache map[string]int) int {
-    if design == "" {
+    if design.IsEmpty() {
         return 1
     }
     if Some(cached) := cache.Get(design) {
