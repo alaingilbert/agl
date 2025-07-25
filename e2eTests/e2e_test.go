@@ -391,9 +391,9 @@ func Test21(t *testing.T) {
 import "fmt"
 func main() {
     s := set[int]{1, 2, 3, 4}
-	fmt.Println(s.Filter({ $0 % 2 == 0 }))
+	fmt.Println(Array(s.Filter({ $0 % 2 == 0 })).Sorted())
 }`
-	tassert.Equal(t, "set(2 4)\n", testGenOutput(src))
+	tassert.Equal(t, "[2 4]\n", testGenOutput(src))
 }
 
 func Test22(t *testing.T) {
