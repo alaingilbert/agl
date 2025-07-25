@@ -1426,16 +1426,17 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(expr.Args[1], fnT.Params[1])
-		case "Split", "HasPrefix", "HasSuffix", "TrimPrefix", "Contains", "IsEmpty":
+		case "Split", "HasPrefix", "HasSuffix", "TrimPrefix", "Contains":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName).IntoRecv(idTT)
 			if len(expr.Args) < 1 {
 				return
 			}
 			infer.SetType(expr.Args[0], fnT.Params[0])
-		case "Len", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Lines", "Uppercased", "Lowercased", "TrimSpace", "AsBytes":
+		case "Len", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Lines",
+			"Uppercased", "Lowercased", "TrimSpace", "IsEmpty", "AsBytes":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
-			fnT = infer.env.GetFn("agl1.String." + fnName)
+			fnT = infer.env.GetFn("agl1.String." + fnName).IntoRecv(idTT)
 		default:
 			fnFullName := fmt.Sprintf("agl1.String.%s", fnName)
 			fnTRaw := infer.env.Get(fnFullName)
