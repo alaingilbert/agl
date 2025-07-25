@@ -23,8 +23,31 @@ func isDesignPossible(design string) bool {
     return false
 }
 
+func countDesignPossible(design string, mut cache map[string]int) int {
+    if design == "" {
+        return 1
+    }
+    if Some(cached) := cache.Get(design) {
+        return cached
+    }
+    mut count := 0
+    for towel in towels {
+        guard design.HasPrefix(towel) else { continue }
+        mut subDesign := design
+        subDesign = subDesign.TrimPrefix(towel)
+        count += countDesignPossible(subDesign, mut cache)
+    }
+    cache[design] = count
+    return count
+}
+
 func part1() {
     fmt.Println(desiredDesigns.Filter({ isDesignPossible($0) }).Len())
+}
+
+func part2() {
+    mut cache := make(map[string]int)
+    fmt.Println(desiredDesigns.Reduce(int(0), { $0 + countDesignPossible($1, mut cache) }))
 }
 
 func main() {
@@ -33,4 +56,5 @@ func main() {
     towels = parts[0].Split(", ")
     desiredDesigns = parts[1].Split("\n")
     part1()
+    part2()
 }
