@@ -2775,12 +2775,12 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.MapType](a) && TryCast[types.MapType](b) {
 		aa := MustCast[types.MapType](a)
 		bb := MustCast[types.MapType](b)
-		return cmpTypes(aa.K, bb.K) && cmpTypes(aa.V, bb.V)
+		return cmpTypesLoose(aa.K, bb.K) && cmpTypesLoose(aa.V, bb.V)
 	}
 	if TryCast[types.SetType](a) && TryCast[types.SetType](b) {
 		aa := MustCast[types.SetType](a)
 		bb := MustCast[types.SetType](b)
-		return cmpTypes(aa.K, bb.K)
+		return cmpTypesLoose(aa.K, bb.K)
 	}
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
@@ -2791,7 +2791,7 @@ func cmpTypes(a, b types.Type) bool {
 	if TryCast[types.ArrayType](a) && TryCast[types.ArrayType](b) {
 		aa := MustCast[types.ArrayType](a)
 		bb := MustCast[types.ArrayType](b)
-		return cmpTypes(aa.Elt, bb.Elt)
+		return cmpTypesLoose(aa.Elt, bb.Elt)
 	}
 	if TryCast[types.EnumType](a) || TryCast[types.EnumType](b) {
 		return true // TODO
@@ -2800,7 +2800,7 @@ func cmpTypes(a, b types.Type) bool {
 		return true // TODO
 	}
 	if TryCast[types.StarType](a) && TryCast[types.StarType](b) {
-		return cmpTypes(a.(types.StarType).X, b.(types.StarType).X)
+		return cmpTypesLoose(a.(types.StarType).X, b.(types.StarType).X)
 	}
 	if TryCast[types.OptionType](a) && TryCast[types.OptionType](b) {
 		if a.(types.OptionType).W == nil || b.(types.OptionType).W == nil {
@@ -2812,10 +2812,10 @@ func cmpTypes(a, b types.Type) bool {
 		return cmpTypesLoose(a.(types.ResultType).W, b.(types.ResultType).W)
 	}
 	if TryCast[types.IndexListType](a) && TryCast[types.IndexListType](b) {
-		return cmpTypes(a.(types.IndexListType).X, b.(types.IndexListType).X)
+		return cmpTypesLoose(a.(types.IndexListType).X, b.(types.IndexListType).X)
 	}
 	if TryCast[types.IndexType](a) && TryCast[types.IndexType](b) {
-		return cmpTypes(a.(types.IndexType).X, b.(types.IndexType).X)
+		return cmpTypesLoose(a.(types.IndexType).X, b.(types.IndexType).X)
 	}
 	return a == b
 }
