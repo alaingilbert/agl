@@ -358,6 +358,10 @@ type IntoIterator[T any] interface {
 // Sequence anything that can be turned into an Iterator
 type Sequence[T any] iter.Seq[T]
 
+func (s Sequence[T]) Iter() Sequence[T] {
+	return s
+}
+
 func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	for e := range s {
 		out += R(e)
@@ -369,7 +373,7 @@ type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
 
-func (v AglVec[T]) Iter() iter.Seq[T] {
+func (v AglVec[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for _, e := range v {
 			if !yield(e) {
@@ -379,7 +383,7 @@ func (v AglVec[T]) Iter() iter.Seq[T] {
 	}
 }
 
-func AglVecIter[T any](v AglVec[T]) iter.Seq[T] {
+func AglVecIter[T any](v AglVec[T]) Sequence[T] {
 	return v.Iter()
 }
 
@@ -432,7 +436,7 @@ func (r *AglRange[T]) NextBack() Option[T] {
 	}
 }
 
-func (r *AglRange[T]) Iter() iter.Seq[T] {
+func (r *AglRange[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -447,7 +451,7 @@ func (r *AglRange[T]) Iter() iter.Seq[T] {
 }
 
 type Iterator[T any] interface {
-	Iter() iter.Seq[T]
+	Iter() Sequence[T]
 	//Next() Option[T]
 }
 
@@ -461,7 +465,7 @@ type Rev[T any] struct {
 	it DoubleEndedIterator[T]
 }
 
-func (r Rev[T]) Iter() iter.Seq[T] {
+func (r Rev[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -487,7 +491,7 @@ func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 	return &Rev[T]{it: it}
 }
 
-func (s AglSet[T]) Iter() iter.Seq[T] {
+func (s AglSet[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for k := range s {
 			if !yield(k) {
@@ -521,7 +525,7 @@ func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
 
-func AglIterMin[T cmp.Ordered](it iter.Seq[T]) Option[T] {
+func AglIterMin[T cmp.Ordered](it Sequence[T]) Option[T] {
 	var out T
 	first := true
 	for e := range it {
@@ -538,7 +542,7 @@ func AglIterMin[T cmp.Ordered](it iter.Seq[T]) Option[T] {
 	return MakeOptionSome(out)
 }
 
-func AglIterMax[T cmp.Ordered](it iter.Seq[T]) Option[T] {
+func AglIterMax[T cmp.Ordered](it Sequence[T]) Option[T] {
 	var out T
 	first := true
 	for e := range it {

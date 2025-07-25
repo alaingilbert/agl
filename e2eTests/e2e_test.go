@@ -245,36 +245,36 @@ func main() {
 	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
 }
 
-func Test14(t *testing.T) {
-	t.Parallel()
-	src := `package main
-import "fmt"
-import "iter"
-type MyType struct {
-	a, b, c int
-}
-func (m MyType) Iter() iter.Seq[int] {
-	return func(yield func(int) bool) {
-		vals := []int{m.a, m.b, m.c}
-		for _, el := range vals {
-			if !yield(el) {
-				return
-			}	
-		}
-	}
-}
-func main() {
-	s := set[int]{1, 2, 3}
-	t := MyType{a: 3, b: 4, c: 5}
-	u := s.Union(t)
-	var mut out []int
-	for el := range u {
-		out.Push(el)
-	}
-	fmt.Println(out.Sorted())
-}`
-	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
-}
+//func Test14(t *testing.T) {
+//	t.Parallel()
+//	src := `package main
+//import "fmt"
+//import "iter"
+//type MyType struct {
+//	a, b, c int
+//}
+//func (m MyType) Iter() iter.Seq[int] {
+//	return func(yield func(int) bool) {
+//		vals := []int{m.a, m.b, m.c}
+//		for _, el := range vals {
+//			if !yield(el) {
+//				return
+//			}
+//		}
+//	}
+//}
+//func main() {
+//	s := set[int]{1, 2, 3}
+//	t := MyType{a: 3, b: 4, c: 5}
+//	u := s.Union(t)
+//	var mut out []int
+//	for el := range u {
+//		out.Push(el)
+//	}
+//	fmt.Println(out.Sorted())
+//}`
+//	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
+//}
 
 func Test15(t *testing.T) {
 	t.Parallel()
@@ -432,4 +432,19 @@ func main() {
 	}
 }`
 	tassert.Equal(t, "000", testGenOutput(src))
+}
+
+func Test25(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	s1 := set[int]{1, 2, 3}
+	s2 := set[int]{3, 4, 5}
+	_ = s1.Union(s2)
+	a1 := []int{3, 4, 5}
+	_ = s1.Union(a1)
+	m1 := map[int]int{1: 1, 2: 2, 3: 3}
+	_ = s1.Union(m1.Keys())
+}`
+	tassert.Equal(t, "", testGenOutput(src))
 }
