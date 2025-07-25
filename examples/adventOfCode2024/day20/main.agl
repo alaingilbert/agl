@@ -6,8 +6,8 @@ import (
 )
 
 var mut data [][]string
-var width = data[0].Len()
-var height = data.Len()
+var mut width int
+var mut height int
 
 type Position struct {
     x, y int
@@ -107,4 +107,8 @@ func part2() {
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day20/data.txt")!)
     data = fileContent.Split("\n").Map({ $0.Split("") })
+    width = data[0].Len()
+    height = data.Len()
+    part1()
+    part2()
 }
