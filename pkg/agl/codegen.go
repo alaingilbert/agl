@@ -2037,7 +2037,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			return GenFrag{F: func() string {
 				return e("AglString"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(")")
 			}}
-		case "TrimSpace", "Lowercased", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Len":
+		case "TrimSpace", "IsEmpty", "Lowercased", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Len":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
 		default:

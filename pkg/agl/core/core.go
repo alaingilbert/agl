@@ -858,6 +858,10 @@ func AglStringTrimSpace(s string) string {
 	return strings.TrimSpace(s)
 }
 
+func AglStringIsEmpty(s string) bool {
+	return s == ""
+}
+
 func AglStringTrimPrefix(s string, prefix string) string {
 	return strings.TrimPrefix(s, prefix)
 }
