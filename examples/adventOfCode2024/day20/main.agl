@@ -1,0 +1,110 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut data [][]string
+var width = data[0].Len()
+var height = data.Len()
+
+type Position struct {
+    x, y int
+}
+
+type Meta struct {
+    pos     Position
+    distEnd int
+}
+
+var dirs = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}
+
+func findChar(data [][]string, c string) Position? {
+    for y in data.Indices() {
+        if Some(x) := data[y].FirstIndex(of: c) {
+            return Some(Position{x: x, y: y})
+        }
+    }
+    return None
+}
+
+func bfs(grid [][]string, start Position, end Position) []Meta {
+    mut q := []Position{start}
+    mut seen := make(map[Position]Position)
+    for !q.IsEmpty() {
+        e := q.RemoveFirst()
+        if e == end {
+            mut el := Some(e)
+            var mut path []Meta
+            mut distEnd := 0
+            for {
+                if Some(current) := el {
+                    path.Push(Meta{pos: current, distEnd: distEnd})
+                    distEnd += 1
+                    el = seen.Get(current)
+                } else {
+                    break
+                }
+            }
+            return path.Reversed()
+        }
+        for dir in dirs {
+            nx, ny := (e.x + dir.0, e.y + dir.1)
+            next := Position{x: nx, y: ny}
+            if nx >= 0 && nx < width && ny >= 0 && ny < height && grid[ny][nx] != "#" && !seen.ContainsKey(next) && next != start {
+                seen[next] = e
+                q.Push(next)
+            }
+        }
+    }
+    return []Meta{}
+}
+
+func manhattanDistance(p1 Position, p2 Position) int {
+    abs(p1.x - p2.x) + abs(p1.y - p2.y)
+}
+
+func cheatRange(maxCheats int) [](int, int) {
+    var mut out [](int, int)
+    for y in -maxCheats..=maxCheats {
+        for x in -maxCheats..=maxCheats {
+            out.Push((x, y))
+        }
+    }
+    return out
+}
+
+func findRes(maxCheats int) int {
+    var mut count = 0
+    s := findChar(data, "S")?
+    e := findChar(data, "E")?
+    shortest := bfs(data, s, e)
+    cache := shortest.Reduce(into: make(map[Position]Meta), { $0[$1.pos] = $1 })
+    for (distStart, cheatStart) in shortest.Enumerated() {
+        for (dx, dy) in cheatRange(maxCheats) {
+            cheatEndPos := Position{x: cheatStart.pos.x + dx, y: cheatStart.pos.y + dy}
+            cheatDist := manhattanDistance(cheatStart.pos, cheatEndPos)
+            guard cheatDist <= maxCheats else { continue }
+            guard Some(cheatEnd) := cache.Get(cheatEndPos) else { continue }
+            saved := shortest.Len() - (distStart + cheatEnd.distEnd + cheatDist)
+            if saved >= 100 {
+                count += 1
+            }
+        }
+    }
+    return count
+}
+
+func part1() {
+    fmt.Println(findRes(2))
+}
+
+func part2() {
+    fmt.Println(findRes(20))
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day20/data.txt")!)
+    data = fileContent.Split("\n").Map({ $0.Split("") })
+}
