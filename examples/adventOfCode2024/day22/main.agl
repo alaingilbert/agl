@@ -1,0 +1,32 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut secrets []int
+
+func getNext(mut secret *int) {
+    *secret ^= *secret << 6 & 0xFFFFFF
+    *secret ^= *secret >> 5 & 0xFFFFFF
+    *secret ^= *secret << 11 & 0xFFFFFF
+}
+
+func part1() {
+    mut res := 0
+    for secret in secrets {
+        mut secret1 := secret
+        for _ in 0..2000 {
+            getNext(&mut secret1)
+        }
+        res += secret1
+    }
+    fmt.Println(res)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day22/data.txt")!)
+    secrets = fileContent.Split("\n").Map({ $0.Int()? })
+    part1()
+}
