@@ -288,7 +288,7 @@ func (t TypeAssertType) String() string    { return "TypeAssertType" }
 type StructType struct {
 	Name       string
 	Pkg        string
-	TypeParams []GenericType
+	TypeParams []Type
 	Fields     []FieldType
 }
 
@@ -302,7 +302,13 @@ func (s StructType) GoStr() string {
 	}
 	out := s.String1()
 	if len(s.TypeParams) > 0 {
-		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.GoStrType() }, ", ")
+		tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
+			if v, ok := t.(GenericType); ok {
+				return v.W.GoStrType()
+			} else {
+				return t.GoStr()
+			}
+		}, ", ")
 		out += fmt.Sprintf("[%s]", tmp)
 	}
 	return out
@@ -314,7 +320,13 @@ func (s StructType) GoStrType() string {
 	}
 	out := s.String1()
 	if len(s.TypeParams) > 0 {
-		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.GoStrType() }, ", ")
+		tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
+			if v, ok := t.(GenericType); ok {
+				return v.W.GoStrType()
+			} else {
+				return t.GoStr()
+			}
+		}, ", ")
 		out += fmt.Sprintf("[%s]", tmp)
 	}
 	return out
@@ -323,7 +335,13 @@ func (s StructType) GoStrType() string {
 func (s StructType) String() string {
 	out := s.String1()
 	if len(s.TypeParams) > 0 {
-		tmp := utils.MapJoin(s.TypeParams, func(t GenericType) string { return t.W.String() }, ", ")
+		tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
+			if v, ok := t.(GenericType); ok {
+				return v.W.String()
+			} else {
+				return t.String()
+			}
+		}, ", ")
 		out += fmt.Sprintf("[%s]", tmp)
 	}
 	return out
@@ -709,10 +727,13 @@ func (f FuncType) Concrete(typs []Type) FuncType {
 
 func (s StructType) RenameGenericParameter(name, newName string) StructType {
 	ff := s
-	newTypeParams := make([]GenericType, 0)
+	newTypeParams := make([]Type, 0)
 	for _, p := range ff.TypeParams {
-		if p.Name == name {
-			p.Name = newName
+		if v, ok := p.(GenericType); ok {
+			if v.Name == name {
+				v.Name = newName
+				p = v
+			}
 		}
 		newTypeParams = append(newTypeParams, p)
 	}
@@ -897,10 +918,13 @@ func RenameGen(t Type, name, newName string) (out Type) {
 	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
 		return t
 	case StructType:
-		var typeParams []GenericType
+		var typeParams []Type
 		for _, p := range t1.TypeParams {
-			if p.Name == name {
-				p.Name = newName
+			if v, ok := p.(GenericType); ok {
+				if v.Name == name {
+					v.Name = newName
+					p = v
+				}
 			}
 			typeParams = append(typeParams, p)
 		}
@@ -988,10 +1012,13 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType, F32Type, F64Type:
 		return t
 	case StructType:
-		var typeParams []GenericType
+		var typeParams []Type
 		for _, p := range t1.TypeParams {
-			if p.Name == name {
-				p.W = newTyp
+			if v, ok := p.(GenericType); ok {
+				if v.Name == name {
+					v.W = newTyp
+					p = v
+				}
 			}
 			typeParams = append(typeParams, p)
 		}

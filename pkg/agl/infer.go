@@ -962,7 +962,9 @@ func (infer *FileInferrer) inferStructType(sT types.StructType, expr *ast.Select
 
 	m := make(map[string]types.Type)
 	for _, pp := range sT.TypeParams {
-		m[pp.Name] = pp.W
+		if v, ok := pp.(types.GenericType); ok {
+			m[v.Name] = v.W
+		}
 	}
 	t = types.ReplGenM(t, m)
 
@@ -1575,11 +1577,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(expr, fnT.Return)
 	case types.StructType:
 		if fnName == "Sum" {
-			rT := idTT.TypeParams[0].W
+			rT := idTT.TypeParams[0].(types.GenericType).W
 			if infer.indexValue != nil {
 				rT = infer.indexValue
 			}
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].W).T("R", rT)
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).T("R", rT)
 			fnT.Recv = []types.Type{oidT}
 			if len(fnT.Params) > 0 {
 				if TryCast[types.MutType](fnT.Params[0]) {
@@ -3268,7 +3270,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				infer.SetType(cond.X, t)
 			case types.StructType:
 				if v.Name == "Sequence" {
-					t = v.TypeParams[0].W
+					t = v.TypeParams[0].(types.GenericType).W
 					infer.SetType(cond.X, t)
 				} else {
 					infer.errorf(cond.Y, "unsupported type %v", to(yT))

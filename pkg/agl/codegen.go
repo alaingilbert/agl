@@ -1831,7 +1831,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		switch fnName {
 		case "Sum":
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
-			recvT := fnT.Recv[0].(types.StructType).TypeParams[0].W.GoStrType()
+			recvT := fnT.Recv[0].(types.StructType).TypeParams[0].(types.GenericType).W.GoStrType()
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
 		}
