@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"encoding/binary"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"iter"
 	"maps"
@@ -479,6 +481,89 @@ type AglMap[K comparable, V any] map[K]V
 func (m AglMap[K, V]) Iter() Sequence[K] { return AglMapKeys(m) }
 
 func (m AglMap[K, V]) Len() int { return len(m) }
+
+type Hashable[T any] interface {
+	Equatable[T]
+	Hash() uint64
+}
+
+type Equatable[T any] interface {
+	__EQ(rhs T) bool
+}
+
+type AglString struct {
+	data string
+}
+
+type AglInt struct {
+	data int
+}
+
+func (i AglInt) __EQ(rhs AglInt) bool { return i.data == rhs.data }
+
+func (i AglInt) Hash() uint64 {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(i.data))
+	h := fnv.New64a()
+	_, _ = h.Write(buf)
+	return h.Sum64()
+}
+
+func (s AglString) __EQ(rhs AglString) bool { return s.data == rhs.data }
+
+func (s AglString) Hash() uint64 {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(s.data))
+	return h.Sum64()
+}
+
+type AglSet1[H Hashable[H]] struct {
+	data map[uint64]H
+}
+
+func (s *AglSet1[H]) Insert(e H) bool {
+	if s.data == nil {
+		s.data = make(map[uint64]H)
+	}
+	eH := e.Hash()
+	if _, ok := s.data[eH]; ok {
+		return false
+	}
+	s.data[eH] = e
+	return true
+}
+
+func (s AglSet1[H]) __EQ(rhs AglSet1[H]) bool {
+	if len(s.data) != len(rhs.data) {
+		return false
+	}
+	for _, v := range s.data {
+		if !rhs.Contains(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s AglSet1[H]) Hash() uint64 {
+	hashes := make([]uint64, len(s.data))
+	i := 0
+	for k := range s.data {
+		hashes[i] = k
+		i++
+	}
+	sort.Slice(hashes, func(i, j int) bool { return hashes[i] < hashes[j] })
+	var final uint64
+	for _, h := range hashes {
+		final ^= h
+	}
+	return final
+}
+
+func (s *AglSet1[H]) Contains(e H) bool {
+	_, ok := s.data[e.Hash()]
+	return ok
+}
 
 type AglSet[T comparable] map[T]struct{}
 
