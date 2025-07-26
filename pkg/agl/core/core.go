@@ -388,6 +388,69 @@ func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	}
 }
 
+func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
+	for v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
+}
+
+func AglSequenceContainsWhere[T any](s Sequence[T], pred func(T) bool) bool {
+	for v := range s {
+		if pred(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func AglSequenceAllSatisfy[T any](s Sequence[T], pred func(T) bool) bool {
+	for v := range s {
+		if !pred(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func AglSequenceMap[T, R any](s Sequence[T], f func(T) R) []R {
+	var out []R
+	for v := range s {
+		out = append(out, f(v))
+	}
+	return out
+}
+
+func AglSequenceReduce[T, R any](s Sequence[T], acc R, f func(R, T) R) R {
+	for v := range s {
+		acc = f(acc, v)
+	}
+	return acc
+}
+
+func AglSequenceReduceInto[T, R any](s Sequence[T], acc R, f func(*R, T) AglVoid) R {
+	for v := range s {
+		f(&acc, v)
+	}
+	return acc
+}
+
+func AglSequenceForEach[T any](s Sequence[T], f func(T) AglVoid) {
+	for v := range s {
+		f(v)
+	}
+}
+
+func AglSequenceSorted[T cmp.Ordered](s Sequence[T]) []T {
+	return slices.Sorted(iter.Seq[T](s))
+}
+
+func AglSequenceJoined(s Sequence[string], sep string) string {
+	return strings.Join(AglBuildArray(s), sep)
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
@@ -1313,7 +1376,7 @@ func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
 	return
 }
 
-func AglBuildArray[T comparable](it Iterator[T]) (out []T) {
+func AglBuildArray[T any](it Iterator[T]) (out []T) {
 	for el := range it.Iter() {
 		out = append(out, el)
 	}
