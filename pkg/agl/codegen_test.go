@@ -11403,6 +11403,27 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen400(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]int{1: 1, 2: 2, 3: 3}
+	m.Filter({ $0.Key % 2 == 0 })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int]int{1: 1, 2: 2, 3: 3}
+	AglIdentity(AglMapFilter(m, func(aglArg0 DictEntry[int, int]) bool {
+		return aglArg0.Key % 2 == 0
+	}))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (map[int]int) Filter(func(DictEntry[int, int]) bool) map[int]int", test.TypeAt(4, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

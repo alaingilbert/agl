@@ -463,3 +463,15 @@ func main() {
 }`
 	tassert.Equal(t, "[1 2 3]\n[1 2 3]\n", testGenOutput(src))
 }
+
+func Test27(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	m := map[int]int{1: 1, 2: 2, 3: 3, 4: 4}
+	a := m.Filter({ $0.Key % 2 == 0 }).Keys().Sorted()
+	fmt.Println(a)
+}`
+	tassert.Equal(t, "[2 4]\n", testGenOutput(src))
+}
