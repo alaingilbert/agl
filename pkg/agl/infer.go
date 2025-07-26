@@ -2731,10 +2731,6 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 func cmpTypesLoose(a, b types.Type) bool {
 	a = types.Unwrap(a)
 	b = types.Unwrap(b)
-	a = types.Unwrap(a)
-	b = types.Unwrap(b)
-	a = types.Unwrap(a)
-	b = types.Unwrap(b)
 	if isNumericType(a) && TryCast[types.UntypedNumType](b) {
 		return true
 	}
@@ -3017,7 +3013,10 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		keyT := infer.GetType2(v.Key)
 		infer.exprs(expr.Elts)
 		t := types.SetType{K: keyT}
-		infer.SetType(v.Key, types.TypeType{W: keyT})
+		if _, ok := keyT.(types.TypeType); !ok {
+			keyT = types.TypeType{W: keyT}
+		}
+		infer.SetType(v.Key, keyT)
 		infer.SetType(expr.Type, t)
 		infer.SetType(expr, t)
 		return
