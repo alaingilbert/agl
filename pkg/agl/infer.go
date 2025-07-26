@@ -1613,6 +1613,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			ft := fnT.GetParam(0).(types.FuncType)
 			infer.SetType(exprArg0, ft)
 			infer.SetTypeForce(exprT.Sel, fnT)
+		} else if fnName == "Len" {
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
+			infer.SetTypeForce(exprT.Sel, fnT)
 		}
 	case types.ArrayType:
 		exprPos := infer.Pos(expr)

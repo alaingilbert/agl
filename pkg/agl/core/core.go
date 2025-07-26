@@ -369,6 +369,13 @@ func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	return out
 }
 
+func AglSequenceLen[T any](s Sequence[T]) (out int) {
+	for range s {
+		out++
+	}
+	return
+}
+
 func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	return func(yield func(T) bool) {
 		for v := range s {
