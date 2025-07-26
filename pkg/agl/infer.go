@@ -978,6 +978,91 @@ func (infer *FileInferrer) inferStructType(sT types.StructType, expr *ast.Select
 	return t
 }
 
+func (infer *FileInferrer) callExprArrayType(expr *ast.CallExpr, call *ast.ArrayType) {
+	callT := infer.GetType2(call)
+	infer.SetType(call, callT)
+	infer.SetType(expr, callT)
+}
+
+func (infer *FileInferrer) callExprFuncLit(expr *ast.CallExpr, call *ast.FuncLit) {
+	infer.stmt(call.Body)
+	callT := funcTypeToFuncType("", call.Type, infer.env, infer.fset, false)
+	infer.SetType(call, callT)
+	infer.SetType(expr, callT.Return)
+}
+
+func (infer *FileInferrer) callExprIdent(expr *ast.CallExpr, call *ast.Ident) {
+	infer.langFns(expr, call)
+	if call.Name == "panic" && len(expr.Args) > 0 {
+		call.Name = "panicWith"
+	}
+	callT := infer.env.Get(call.Name)
+	if callT == nil {
+		infer.errorf(call, "Unresolved reference '%s'", call.Name)
+		return
+	}
+	switch callTT := callT.(type) {
+	case types.TypeType:
+		infer.expr(expr.Args[0])
+		infer.SetType(expr, callTT.W)
+	case types.FuncType:
+		oParams := callTT.Params
+		for i := range expr.Args {
+			arg := expr.Args[i]
+			if len(oParams) == 0 {
+				infer.errorf(call, "missing parameter")
+				return
+			}
+			oArg := oParams[min(i, len(oParams)-1)]
+			infer.withOptType(arg, oArg, func() {
+				infer.expr(arg)
+			})
+			if v, ok := oArg.(types.EllipsisType); ok {
+				oArg = v.Elt
+			}
+			got := infer.GetType(arg)
+			if oArgT, ok := oArg.(types.IndexType); ok {
+				oArg = oArgT.X
+			}
+			if v, ok := arg.(*ast.LabelledArg); ok {
+				ooArg := oArg
+				if vv, ok := oArg.(types.MutType); ok {
+					ooArg = vv.W
+				}
+				if vv, ok := ooArg.(types.LabelledType); ok {
+					if v.Label.Name != "" && v.Label.Name != vv.Label {
+						infer.errorf(arg, "label name does not match %s vs %s", v.Label.Name, vv.Label)
+						return
+					}
+				} else {
+					infer.errorf(arg, "label does not exists")
+					return
+				}
+				arg = v.X
+			}
+			if !cmpTypesLoose(oArg, got) {
+				infer.errorf(arg, "types not equal, %v %v", oArg, got)
+				return
+			}
+			callT = types.ReplGen2(callT, oArg, got)
+		}
+	default:
+		infer.errorf(call, "%v", to(callT))
+		return
+	}
+	parentInfo := infer.env.GetNameInfo(call.Name)
+	if infer.env.GetType(call) == nil {
+		infer.SetType(call, callT, WithDefinition(parentInfo))
+	}
+}
+
+func (infer *FileInferrer) callExprIndexExpr(expr *ast.CallExpr, call *ast.IndexExpr) {
+	sel := call.X.(*ast.SelectorExpr)
+	infer.withIndexValue(infer.GetType2(call.Index), func() {
+		infer.callExprSelectorExpr(expr, sel)
+	})
+}
+
 func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.SelectorExpr) {
 	var exprFunT types.Type
 	var callXParent *Info
@@ -1200,84 +1285,15 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	switch call := expr.Fun.(type) {
 	case *ast.IndexExpr:
-		sel := call.X.(*ast.SelectorExpr)
-		infer.withIndexValue(infer.GetType2(call.Index), func() {
-			infer.callExprSelectorExpr(expr, sel)
-		})
+		infer.callExprIndexExpr(expr, call)
 	case *ast.SelectorExpr:
 		infer.callExprSelectorExpr(expr, call)
 	case *ast.Ident:
-		infer.langFns(expr, call)
-		if call.Name == "panic" && len(expr.Args) > 0 {
-			call.Name = "panicWith"
-		}
-		callT := infer.env.Get(call.Name)
-		if callT == nil {
-			infer.errorf(call, "Unresolved reference '%s'", call.Name)
-			return
-		}
-		switch callTT := callT.(type) {
-		case types.TypeType:
-			infer.expr(expr.Args[0])
-			infer.SetType(expr, callTT.W)
-		case types.FuncType:
-			oParams := callTT.Params
-			for i := range expr.Args {
-				arg := expr.Args[i]
-				if len(oParams) == 0 {
-					infer.errorf(call, "missing parameter")
-					return
-				}
-				oArg := oParams[min(i, len(oParams)-1)]
-				infer.withOptType(arg, oArg, func() {
-					infer.expr(arg)
-				})
-				if v, ok := oArg.(types.EllipsisType); ok {
-					oArg = v.Elt
-				}
-				got := infer.GetType(arg)
-				if oArgT, ok := oArg.(types.IndexType); ok {
-					oArg = oArgT.X
-				}
-				if v, ok := arg.(*ast.LabelledArg); ok {
-					ooArg := oArg
-					if vv, ok := oArg.(types.MutType); ok {
-						ooArg = vv.W
-					}
-					if vv, ok := ooArg.(types.LabelledType); ok {
-						if v.Label.Name != "" && v.Label.Name != vv.Label {
-							infer.errorf(arg, "label name does not match %s vs %s", v.Label.Name, vv.Label)
-							return
-						}
-					} else {
-						infer.errorf(arg, "label does not exists")
-						return
-					}
-					arg = v.X
-				}
-				if !cmpTypesLoose(oArg, got) {
-					infer.errorf(arg, "types not equal, %v %v", oArg, got)
-					return
-				}
-				callT = types.ReplGen2(callT, oArg, got)
-			}
-		default:
-			infer.errorf(call, "%v", to(callT))
-			return
-		}
-		parentInfo := infer.env.GetNameInfo(call.Name)
-		if infer.env.GetType(call) == nil {
-			infer.SetType(call, callT, WithDefinition(parentInfo))
-		}
+		infer.callExprIdent(expr, call)
 	case *ast.FuncLit:
-		infer.stmt(call.Body)
-		callT := funcTypeToFuncType("", call.Type, infer.env, infer.fset, false)
-		infer.SetType(call, callT)
-		infer.SetType(expr, callT.Return)
+		infer.callExprFuncLit(expr, call)
 	case *ast.ArrayType:
-		callT := infer.GetType2(call)
-		infer.SetType(call, callT)
-		infer.SetType(expr, callT)
+		infer.callExprArrayType(expr, call)
 	default:
 		infer.errorf(expr.Fun, "%v", to(expr.Fun))
 		return
