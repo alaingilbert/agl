@@ -498,9 +498,7 @@ func (i AglInt) __EQ(rhs AglInt) bool { return i == rhs }
 func (i AglInt) Hash() uint64 {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(i.int))
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglI8 struct{ int8 }
@@ -508,9 +506,7 @@ type AglI8 struct{ int8 }
 func (i AglI8) __EQ(rhs AglI8) bool { return i == rhs }
 
 func (i AglI8) Hash() uint64 {
-	h := fnv.New64a()
-	_, _ = h.Write([]byte{byte(i.int8)})
-	return h.Sum64()
+	return fnvHash([]byte{byte(i.int8)})
 }
 
 type AglI16 struct{ int16 }
@@ -520,9 +516,7 @@ func (i AglI16) __EQ(rhs AglI16) bool { return i == rhs }
 func (i AglI16) Hash() uint64 {
 	buf := make([]byte, 2)
 	binary.BigEndian.PutUint16(buf, uint16(i.int16))
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglI32 struct{ int32 }
@@ -532,9 +526,7 @@ func (i AglI32) __EQ(rhs AglI32) bool { return i == rhs }
 func (i AglI32) Hash() uint64 {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, uint32(i.int32))
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglI64 struct{ int64 }
@@ -544,9 +536,7 @@ func (i AglI64) __EQ(rhs AglI64) bool { return i == rhs }
 func (i AglI64) Hash() uint64 {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(i.int64))
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglUint struct{ uint }
@@ -556,9 +546,7 @@ func (i AglUint) __EQ(rhs AglUint) bool { return i == rhs }
 func (i AglUint) Hash() uint64 {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(i.uint))
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglU8 struct{ uint8 }
@@ -566,9 +554,7 @@ type AglU8 struct{ uint8 }
 func (i AglU8) __EQ(rhs AglU8) bool { return i == rhs }
 
 func (i AglU8) Hash() uint64 {
-	h := fnv.New64a()
-	_, _ = h.Write([]byte{i.uint8})
-	return h.Sum64()
+	return fnvHash([]byte{i.uint8})
 }
 
 type AglU16 struct{ uint16 }
@@ -578,9 +564,7 @@ func (i AglU16) __EQ(rhs AglU16) bool { return i == rhs }
 func (i AglU16) Hash() uint64 {
 	buf := make([]byte, 2)
 	binary.BigEndian.PutUint16(buf, i.uint16)
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglU32 struct{ uint32 }
@@ -590,9 +574,7 @@ func (i AglU32) __EQ(rhs AglU32) bool { return i == rhs }
 func (i AglU32) Hash() uint64 {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, i.uint32)
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglU64 struct{ uint64 }
@@ -602,9 +584,7 @@ func (i AglU64) __EQ(rhs AglU64) bool { return i == rhs }
 func (i AglU64) Hash() uint64 {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, i.uint64)
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglF32 struct{ float32 }
@@ -615,9 +595,7 @@ func (f AglF32) Hash() uint64 {
 	bits := math.Float32bits(f.float32)
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, bits)
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglF64 struct{ float64 }
@@ -628,9 +606,7 @@ func (f AglF64) Hash() uint64 {
 	bits := math.Float64bits(f.float64)
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, bits)
-	h := fnv.New64a()
-	_, _ = h.Write(buf)
-	return h.Sum64()
+	return fnvHash(buf)
 }
 
 type AglString struct{ string }
@@ -638,8 +614,12 @@ type AglString struct{ string }
 func (s AglString) __EQ(rhs AglString) bool { return s == rhs }
 
 func (s AglString) Hash() uint64 {
+	return fnvHash([]byte(s.string))
+}
+
+func fnvHash(by []byte) uint64 {
 	h := fnv.New64a()
-	_, _ = h.Write([]byte(s.string))
+	_, _ = h.Write(by)
 	return h.Sum64()
 }
 
