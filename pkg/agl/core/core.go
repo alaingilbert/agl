@@ -623,6 +623,15 @@ func fnvHash(by []byte) uint64 {
 	return h.Sum64()
 }
 
+type DictEntry1[K Hashable[K], V any] struct {
+	Key   K
+	Value V
+}
+
+type AglMap1[K Hashable[K], V any] struct {
+	data map[uint64]DictEntry1[K, V]
+}
+
 type AglSet1[H Hashable[H]] struct {
 	data map[uint64]H
 }
