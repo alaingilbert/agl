@@ -1067,6 +1067,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 	var exprFunT types.Type
 	var callXParent *Info
 
+	infer.expr(call.X)
 	switch callXT := call.X.(type) {
 	case *ast.Ident:
 		exprFunT = infer.env.Get(callXT.Name)
@@ -1076,15 +1077,11 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			return
 		}
 	case *ast.CompositeLit:
-		infer.expr(callXT)
 		exprFunT = infer.GetType2(callXT)
 	case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
-		infer.expr(callXT)
 		exprFunT = infer.GetType(callXT)
 	case *ast.SelectorExpr:
-		infer.expr(callXT.X)
-		if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
-			callXTXT = types.Unwrap(callXTXT)
+		if callXTXT := types.Unwrap(infer.env.GetType(callXT.X)); callXTXT != nil {
 			switch v := callXTXT.(type) {
 			case types.StructType:
 				exprFunT = infer.inferStructType(v, callXT)
@@ -1104,20 +1101,16 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			exprFunT = infer.getSelectorType(callXT.X, callXT.Sel)
 		}
 	case *ast.IndexExpr:
-		infer.expr(callXT)
 		exprFunT = infer.GetType2(callXT)
 	case *ast.TypeAssertExpr:
 		exprFunT = types.OptionType{W: infer.GetType2(callXT)}
 	case *ast.BasicLit:
 		exprFunT = infer.GetType2(callXT)
 	case *ast.ParenExpr:
-		infer.expr(callXT)
 		exprFunT = infer.GetType2(callXT)
 	case *ast.RangeExpr:
-		infer.expr(callXT)
 		exprFunT = infer.GetType2(callXT)
 	case *ast.SliceExpr:
-		infer.expr(callXT)
 		exprFunT = infer.GetType2(callXT)
 	default:
 		infer.errorf(call.X, "%v %v", call.X, to(call.X))
