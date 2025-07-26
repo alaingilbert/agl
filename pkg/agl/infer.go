@@ -1613,14 +1613,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
-		} else if fnName == "Filter" {
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
-			exprArg0 := expr.Args[0]
-			ft := fnT.GetParam(0).(types.FuncType)
-			infer.SetType(exprArg0, ft)
-			infer.SetTypeForce(exprT.Sel, fnT)
-			infer.SetType(expr, fnT.Return)
-		} else if fnName == "Joined" {
+		} else if fnName == "Filter" || fnName == "Joined" {
 			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, fnT.GetParam(0))
