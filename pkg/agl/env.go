@@ -939,7 +939,6 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.IsEmpty", "func [T any](a []T) bool")
 		//e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
-		e.DefineFn(nenv, "agl1.Vec.Last", "func [T any](a []T) T?")
 		e.DefineFn(nenv, "agl1.Vec.Len", "func [T any](a []T) int", WithDesc("The number of elements in the array."))
 		e.DefineFn(nenv, "agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
 		e.DefineFn(nenv, "agl1.Vec.Pop", "func [T any](mut a []T) T?")

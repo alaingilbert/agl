@@ -60,6 +60,13 @@ func (v agl1.Vec[T]) ForEach(f func(T) void) {
 	}
 }
 
+func (v agl1.Vec[T]) Last() T? {
+	if len(v) > 0 {
+		return Some(v[len(v)-1])
+	}
+	return None
+}
+
 func (v agl1.Vec[T]) Min() T? {
 	if len(v) == 0 {
 		return None

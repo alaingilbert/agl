@@ -1346,13 +1346,6 @@ func AglAbs[T Number](e T) (out T) {
 	return T(math.Abs(float64(e)))
 }
 
-func AglVecLast[T any](a []T) (out Option[T]) {
-	if len(a) > 0 {
-		return MakeOptionSome(a[len(a)-1])
-	}
-	return MakeOptionNone[T]()
-}
-
 func AglVecFirst[T any](a []T) (out Option[T]) {
 	if len(a) > 0 {
 		return MakeOptionSome(a[0])

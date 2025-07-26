@@ -6866,10 +6866,19 @@ func main() {
 package main
 func main() {
 	a := []int{1, 2, 3}
-	b := AglVecLast(a)
+	b := AglVecLast_T_int(a)
+}
+func AglVecLast_T_int(v []int) Option[int] {
+	if len(v) > 0 {
+		return MakeOptionSome(v[len(v) - 1])
+	}
+	return MakeOptionNone[int]()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]int) Last() int?", test.TypeAt(4, 9).String())
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen214(t *testing.T) {

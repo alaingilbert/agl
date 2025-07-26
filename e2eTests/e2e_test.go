@@ -475,3 +475,14 @@ func main() {
 }`
 	tassert.Equal(t, "[2 4]\n", testGenOutput(src))
 }
+
+func Test28(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	a := []int{1, 2, 3}
+	fmt.Println(a.Last())
+}`
+	tassert.Equal(t, "Some(3)\n", testGenOutput(src))
+}

@@ -1848,7 +1848,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		eltTStr := eltT.GoStr()
 		fnName := x.Sel.Name
 		switch fnName {
-		case "Sum", "Last", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted":
+		case "Sum", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted":
 			return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
 		case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined", "Get",
 			"FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD", "SortedBy":
