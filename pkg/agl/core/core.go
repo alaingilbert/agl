@@ -494,6 +494,18 @@ func AglNewRange[T Integer](start, end T, isEq bool) *AglRange[T] {
 	return r
 }
 
+func (r *AglRange[T]) AllSatisfy(pred func(T) bool) bool {
+	for {
+		if el := r.Next(); el.IsSome() {
+			if !pred(el.Unwrap()) {
+				return false
+			}
+		} else {
+			return true
+		}
+	}
+}
+
 func (r *AglRange[T]) Next() Option[T] {
 	if (r.IsEq && r.Start > r.End) || (!r.IsEq && r.Start >= r.End) {
 		return MakeOptionNone[T]()
@@ -570,6 +582,10 @@ func (r *Rev[T]) NextBack() Option[T] {
 
 func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 	return &Rev[T]{it: it}
+}
+
+func AglIteratorAllSatisfy[T any, I Iterator[T]](it I, pred func(T) bool) bool {
+	return AglSequenceAllSatisfy(it.Iter(), pred)
 }
 
 func (s AglSet[T]) Iter() Sequence[T] {

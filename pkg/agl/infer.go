@@ -1168,7 +1168,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1176,6 +1176,12 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
 			fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
 			fnT = fnT.T("T", idTT.Typ)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+		} else if fnName == "AllSatisfy" {
+			info := infer.env.GetNameInfo("agl1.Iterator.AllSatisfy")
+			fnT := infer.env.GetFn("agl1.Iterator.AllSatisfy")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		}
 		infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
