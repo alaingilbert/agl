@@ -10568,6 +10568,10 @@ func main() {
 	}
 	for e in (0..int(42)).Rev() {
 	}
+	if (0..5).AllSatisfy(|e| e < 10) {
+	}
+	if (0..5).AllSatisfy({ $0 < 10 }) {
+	}
 }`
 	expected := `// agl:generated
 package main
@@ -10576,11 +10580,20 @@ func main() {
 	}
 	for e := range AglDoubleEndedIteratorRev((AglNewRange[int](0, int(42), false))).Iter() {
 	}
+	if AglIteratorAllSatisfy((AglNewRange[int](0, 5, false)), func(e int) bool {
+		return e < 10
+	}) {
+	}
+	if AglIteratorAllSatisfy((AglNewRange[int](0, 5, false)), func(aglArg0 int) bool {
+		return aglArg0 < 10
+	}) {
+	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func Rev[I agl1.DoubleEndedIterator[int]]() *agl1.Rev[int]", test.TypeAt(5, 24).String())
+	tassert.Equal(t, "func (Range[UntypedNumType]) AllSatisfy(func(UntypedNumType) bool) bool", test.TypeAt(7, 12).String())
 	testCodeGen2(t, expected, test)
 }
 
