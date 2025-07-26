@@ -11351,20 +11351,22 @@ func TestCodeGen398(t *testing.T) {
 	src := `package main
 func main() {
 	m := make(map[int]int)
-	m.Values().Filter({ $0 % 2 == 0 })
+	m.Values().Filter({ $0 % 2 == 0 }).Len()
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	m := make(map[int]int)
-	AglSequenceFilter(AglIdentity(AglMapValues(m)), func(aglArg0 int) bool {
+	AglSequenceLen(AglSequenceFilter(AglIdentity(AglMapValues(m)), func(aglArg0 int) bool {
 		return aglArg0 % 2 == 0
-	})
+	}))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (map[int]int) Values() Sequence[int]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (Sequence[int]) Filter(func(int) bool) Sequence[int]", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (Sequence[int]) Len() int", test.TypeAt(4, 37).String())
 	testCodeGen2(t, expected, test)
 }
 
