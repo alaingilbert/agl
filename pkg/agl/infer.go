@@ -1607,6 +1607,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			//infer.SetType(expr, fnT.Return)
 			infer.SetType(exprT.Sel, fnT)
+		} else if fnName == "Filter" {
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
+			infer.SetTypeForce(exprT.Sel, fnT)
 		}
 	case types.ArrayType:
 		exprPos := infer.Pos(expr)
