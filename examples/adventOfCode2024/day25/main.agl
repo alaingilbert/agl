@@ -31,7 +31,7 @@ func part1() {
     for lock in locks {
         for key in keys {
             if (0..5).AllSatisfy({ lock[$0] + key[$0] < 6 }) {
-                res += 1
+                res++
             }
         }
     }
