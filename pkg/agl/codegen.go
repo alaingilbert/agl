@@ -1835,8 +1835,8 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			recvT := fnT.Recv[0].(types.StructType).TypeParams[0].(types.GenericType).W.GoStrType()
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
-		case "Filter":
-			return GenFrag{F: func() string { return e("AglSequenceFilter(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+		case "Filter", "Joined":
+			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 		case "Len", "Sorted":
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }}
 		}

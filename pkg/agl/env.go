@@ -978,6 +978,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
 		e.DefineFn(nenv, "Sequence.Sum", "func [T, R Number](a []T) R")
 		e.DefineFn(nenv, "Sequence.Sorted", "func [T cmp.Ordered](s Sequence[T]) []T")
+		e.DefineFn(nenv, "Sequence.Joined", "func (s Sequence[string], sep string) string")
 		e.DefineFn(nenv, "Sequence.Filter", "func [T any](s Sequence[T], f func(e T) bool) Sequence[T]")
 		e.DefineFn(nenv, "Sequence.Len", "func [T any](s Sequence[T]) int")
 		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")

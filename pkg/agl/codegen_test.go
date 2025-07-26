@@ -11383,6 +11383,26 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen399(t *testing.T) {
+	src := `package main
+func main() {
+	m := make(map[string]int)
+	m.Keys().Joined(", ")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := make(map[string]int)
+	AglSequenceJoined(AglIdentity(AglMapKeys(m)), ", ")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (map[string]int) Keys() Sequence[string]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (Sequence[string]) Joined(string) string", test.TypeAt(4, 11).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
