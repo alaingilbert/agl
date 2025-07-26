@@ -1365,13 +1365,6 @@ func AglVecFirstWhere[T any](a []T, predicate func(T) bool) (out Option[T]) {
 	return MakeOptionNone[T]()
 }
 
-func AglVecGet[T any](a []T, i int) (out Option[T]) {
-	if i >= 0 && i <= len(a)-1 {
-		return MakeOptionSome(a[i])
-	}
-	return MakeOptionNone[T]()
-}
-
 func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) {
 	el := (*a)[i]
 	clb(&el)

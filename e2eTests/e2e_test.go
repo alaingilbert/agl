@@ -488,3 +488,15 @@ func main() {
 }`
 	tassert.Equal(t, "Some(3)\nNone\n", testGenOutput(src))
 }
+
+func Test29(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	a1 := []int{1, 2, 3}
+	fmt.Println(a1.Get(1))
+	fmt.Println(a1.Get(42))
+}`
+	tassert.Equal(t, "Some(2)\nNone\n", testGenOutput(src))
+}

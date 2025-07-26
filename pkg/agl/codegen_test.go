@@ -11433,6 +11433,31 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen401(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	a.Get(1)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []uint8{1, 2, 3}
+	AglVecGet_T_uint8(a, 1)
+}
+func AglVecGet_T_uint8(v []uint8, i int) Option[uint8] {
+	if i >= 0 && i <= len(v) - 1 {
+		return MakeOptionSome(v[i])
+	}
+	return MakeOptionNone[uint8]()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]u8) Get(int) u8?", test.TypeAt(4, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

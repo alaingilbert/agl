@@ -2022,7 +2022,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT.Recv = []types.Type{param0}
 			fnT.Params = fnT.Params[1:]
 			infer.SetType(exprT.Sel, fnT)
-		} else if InArray(fnName, []string{"Get", "Joined"}) {
+		} else if InArray(fnName, []string{"Joined"}) {
 			fnT := infer.env.GetFn("agl1.Vec." + fnName)
 			param0 := fnT.Params[0]
 			if !cmpTypes(idT, param0) {
