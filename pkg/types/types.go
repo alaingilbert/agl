@@ -981,6 +981,9 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return t1
 	case TypeType:
 		return t
+	case LabelledType:
+		t1.W = ReplGen(t1.W, name, newTyp)
+		return t1
 	case FuncType:
 		var params []Type
 		for _, p := range t1.Params {
@@ -1095,6 +1098,7 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case F64Type:
 	case BoolType:
 	case EllipsisType:
+	case LabelledType:
 	default:
 		panic(fmt.Sprintf("%v", reflect.TypeOf(a)))
 	}

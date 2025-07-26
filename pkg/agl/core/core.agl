@@ -74,6 +74,10 @@ func (v agl1.Vec[T]) Get(i int) T? {
 	return None
 }
 
+func (v agl1.Vec[T]) IsEmpty() bool {
+	return len(v) == 0
+}
+
 func (v agl1.Vec[T]) Min() T? {
 	if len(v) == 0 {
 		return None
@@ -102,6 +106,25 @@ func (v agl1.Vec[T]) Reversed() []T {
 		out[i] = v[len(v)-1-i]
 	}
 	return out
+}
+
+func (v agl1.Vec[T]) First() T? {
+	if len(v) > 0 {
+		return Some(v[0])
+	}
+	return None
+}
+
+func (v agl1.Vec[T]) First(where: predicate func(T) bool) T? {
+	if len(v) == 0 {
+		return None
+	}
+	for _, el := range v {
+		if predicate(el) {
+			return Some(el)
+		}
+	}
+	return None
 }
 
 // func (s agl1.Sequence[T]) Enumerated() Sequence[(int, T)] {

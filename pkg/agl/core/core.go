@@ -1346,25 +1346,6 @@ func AglAbs[T Number](e T) (out T) {
 	return T(math.Abs(float64(e)))
 }
 
-func AglVecFirst[T any](a []T) (out Option[T]) {
-	if len(a) > 0 {
-		return MakeOptionSome(a[0])
-	}
-	return MakeOptionNone[T]()
-}
-
-func AglVecFirstWhere[T any](a []T, predicate func(T) bool) (out Option[T]) {
-	if len(a) == 0 {
-		return MakeOptionNone[T]()
-	}
-	for _, el := range a {
-		if predicate(el) {
-			return MakeOptionSome(el)
-		}
-	}
-	return MakeOptionNone[T]()
-}
-
 func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) {
 	el := (*a)[i]
 	clb(&el)
@@ -1373,10 +1354,6 @@ func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) {
 
 func AglVecLen[T any](a []T) int {
 	return len(a)
-}
-
-func AglVecIsEmpty[T any](a []T) bool {
-	return len(a) == 0
 }
 
 func AglVecPush[T any](a *[]T, els ...T) {

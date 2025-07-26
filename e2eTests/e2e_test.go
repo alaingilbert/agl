@@ -500,3 +500,16 @@ func main() {
 }`
 	tassert.Equal(t, "Some(2)\nNone\n", testGenOutput(src))
 }
+
+func Test30(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	a := []u8{1, 2, 3}
+	fmt.Println(a.First())
+	fmt.Println(a.First(where: { $0 == 2 }))
+	fmt.Println(a.First(where: { $0 == 42 }))
+}`
+	tassert.Equal(t, "Some(1)\nSome(2)\nNone\n", testGenOutput(src))
+}

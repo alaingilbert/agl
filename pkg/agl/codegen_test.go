@@ -11458,6 +11458,69 @@ func AglVecGet_T_uint8(v []uint8, i int) Option[uint8] {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen402(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	a.First()
+	a.First(where: { $0 == 2 })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []uint8{1, 2, 3}
+	AglVecFirst_T_uint8(a)
+	AglVecFirst_where_T_uint8(a, func(aglArg0 uint8) bool {
+		return aglArg0 == 2
+	})
+}
+func AglVecFirst_T_uint8(v []uint8) Option[uint8] {
+	if len(v) > 0 {
+		return MakeOptionSome(v[0])
+	}
+	return MakeOptionNone[uint8]()
+}
+func AglVecFirst_where_T_uint8(v []uint8, predicate func(uint8) bool) Option[uint8] {
+	if len(v) == 0 {
+		return MakeOptionNone[uint8]()
+	}
+	for _, el := range v {
+		if predicate(el) {
+			return MakeOptionSome(el)
+		}
+	}
+	return MakeOptionNone[uint8]()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]u8) First() u8?", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func ([]u8) First(where: func(u8) bool) u8?", test.TypeAt(5, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen403(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	a.IsEmpty()
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []uint8{1, 2, 3}
+	AglVecIsEmpty_T_uint8(a)
+}
+func AglVecIsEmpty_T_uint8(v []uint8) bool {
+	return len(v) == 0
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]u8) IsEmpty() bool", test.TypeAt(4, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

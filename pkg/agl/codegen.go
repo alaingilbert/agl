@@ -389,6 +389,13 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		if decl.Name != nil {
 			name = decl.Name.Name
 		}
+		for _, a := range decl.Type.Params.List {
+			for _, n := range a.Names {
+				if n.Label != nil {
+					name += fmt.Sprintf("_%s", n.Label.Name)
+				}
+			}
+		}
 		assert(len(decl.Recv.List) == 1)
 		recv := decl.Recv.List[0]
 		var recvName string
@@ -400,7 +407,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		if el, ok := m[recvT]; ok {
 			recvTName = el.GoStr()
 		} else {
-			recvTName = recvT
+			recvTName = ge.concrete.(types.FuncType).Recv[0].(types.ArrayType).Elt.GoStrType()
 		}
 
 		r := strings.NewReplacer(
@@ -794,7 +801,11 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 	c1 := g.genStmt(expr.Body)
 	return GenFrag{F: func() string {
 		var out string
-		t := g.env.GetType(expr).(types.FuncType)
+		ftTmp := g.env.GetType(expr)
+		if v, ok := ftTmp.(types.LabelledType); ok {
+			ftTmp = v.W
+		}
+		t := ftTmp.(types.FuncType)
 		var returnStr, argsStr string
 		if len(t.Params) > 0 {
 			var tmp []string
@@ -1848,10 +1859,10 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		eltTStr := eltT.GoStr()
 		fnName := x.Sel.Name
 		switch fnName {
-		case "Sum", "First", "Len", "IsEmpty", "Clone", "Indices", "Sorted":
+		case "Sum", "Len", "Clone", "Indices", "Sorted":
 			return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
 		case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined",
-			"FirstIndex", "FirstIndexWhere", "FirstWhere", "__ADD", "SortedBy":
+			"FirstIndex", "FirstIndexWhere", "__ADD", "SortedBy":
 			return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 		case "Reduce", "ReduceInto":
 			return GenFrag{F: func() string {
@@ -1917,6 +1928,12 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			}
 		default:
 			extName := "agl1.Vec." + fnName
+			for _, a := range expr.Args {
+				if v, ok := a.(*ast.LabelledArg); ok {
+					extName += fmt.Sprintf("_%s", v.Label.Name)
+					fnName += fmt.Sprintf("_%s", v.Label.Name)
+				}
+			}
 			rawFnT := g.env.Get(extName)
 			concreteT := g.env.GetType(expr.Fun)
 			m := types.FindGen(rawFnT, concreteT)
@@ -1935,7 +1952,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 				els = append(els, fmt.Sprintf("%s_%s", k, r.Replace(m[k].GoStr())))
 			}
 			if _, ok := m["T"]; !ok {
-				recvTName := rawFnT.(types.FuncType).TypeParams[0].(types.GenericType).W.GoStr()
+				recvTName := concreteT.(types.FuncType).Recv[0].(types.ArrayType).Elt.GoStrType()
 				els = append(els, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
 			}
 			elsStr := strings.Join(els, "_")
@@ -3287,6 +3304,13 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 				if tmp2, ok := tmp1.X.(*ast.SelectorExpr); ok {
 					if tmp2.Sel.Name == "Vec" {
 						fnName := fmt.Sprintf("agl1.Vec.%s", decl.Name.Name)
+						for _, pp := range decl.Type.Params.List {
+							for _, n := range pp.Names {
+								if n.Label != nil {
+									fnName += fmt.Sprintf("_%s", n.Label.Name)
+								}
+							}
+						}
 						tmp := g.extensions[fnName]
 						tmp.decl = decl
 						g.extensions[fnName] = tmp

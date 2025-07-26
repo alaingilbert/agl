@@ -709,7 +709,13 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 	}
 	if decl.Recv != nil {
 		if vecExt {
-			outEnv.Define(decl.Name, fmt.Sprintf("agl1.Vec.%s", fnName), ft)
+			envName := fmt.Sprintf("agl1.Vec.%s", fnName)
+			for _, pp := range paramsT {
+				if v, ok := pp.(types.LabelledType); ok {
+					envName += fmt.Sprintf("_%s", v.Label)
+				}
+			}
+			outEnv.Define(decl.Name, envName, ft)
 		} else if strExt {
 			outEnv.Define(decl.Name, fmt.Sprintf("agl1.String.%s", fnName), ft)
 		}
@@ -1002,6 +1008,7 @@ func (infer *FileInferrer) callExprIdent(expr *ast.CallExpr, call *ast.Ident) {
 		return
 	}
 	switch callTT := callT.(type) {
+	case types.LabelledType:
 	case types.TypeType:
 		infer.expr(expr.Args[0])
 		infer.SetType(expr, callTT.W)
@@ -1789,51 +1796,6 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				infer.SetType(expr, filterFnT.Return)
 				infer.SetType(exprT.Sel, filterFnT)
 			}
-		} else if fnName == "First" {
-			if len(expr.Args) > 0 {
-				exprArg0 := expr.Args[0]
-				if v, ok := exprArg0.(*ast.LabelledArg); ok {
-					exprArg0 = v.X
-				}
-				switch exprArg0.(type) {
-				case *ast.FuncLit, *ast.ShortFuncLit:
-					exprT.Sel.Name = "FirstWhere"
-					envFnName := "agl1.Vec.FirstWhere"
-					info := infer.env.GetNameInfo(envFnName)
-					fnT := infer.env.GetFn(envFnName).T("T", idTT.Elt).IntoRecv(idTT)
-					fnT.Name = "First"
-					infer.SetType(exprArg0, fnT.Params[0])
-					infer.SetType(expr, fnT.Return)
-					ft := fnT.GetParam(0).(types.FuncType)
-					if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-						infer.SetType(exprArg0, ft)
-					} else if _, ok := exprArg0.(*ast.FuncType); ok {
-						ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-						if !compareFunctionSignatures(ftReal, ft) {
-							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-							return
-						}
-					} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-						if !compareFunctionSignatures(ftReal, ft) {
-							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-							return
-						}
-					}
-					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
-				}
-			} else {
-				sumFnT := infer.env.GetFn("agl1.Vec.First").T("T", idTT.Elt)
-				sumFnT.Recv = []types.Type{oidT}
-				if TryCast[types.MutType](sumFnT.Params[0]) {
-					if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
-						infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'Vec'", infer.Pos(exprT.Sel), fnName)
-						return
-					}
-				}
-				sumFnT.Params = sumFnT.Params[1:]
-				infer.SetType(expr, sumFnT.Return)
-				infer.SetType(exprT.Sel, sumFnT)
-			}
 		} else if fnName == "Any" {
 			filterFnT := infer.env.GetFn("agl1.Vec.Any").T("T", idTT.Elt).IntoRecv(idTT)
 			if len(expr.Args) < 1 {
@@ -1961,7 +1923,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Push", "Remove", "Clone", "Clear", "Indices", "PushFront",
-			"Insert", "Pop", "PopFront", "Len", "IsEmpty", "__ADD", "RemoveFirst"}) {
+			"Insert", "Pop", "PopFront", "Len", "__ADD", "RemoveFirst"}) {
 			fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			fnT.Recv = []types.Type{oidT}
 			if len(fnT.Params) > 0 {
@@ -2086,6 +2048,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, fnT)
 		} else {
 			fnFullName := fmt.Sprintf("agl1.Vec.%s", fnName)
+			for _, a := range expr.Args {
+				if v, ok := a.(*ast.LabelledArg); ok {
+					fnFullName += fmt.Sprintf("_%s", v.Label.Name)
+				}
+			}
 			if fnFullName == "agl1.Vec.Iter" {
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
 			}
@@ -2111,6 +2078,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			// Go through the arguments and get a mapping of "generic name" to "concrete type" (eg: {"T":int})
 			genericMapping := make(map[string]types.Type)
 			for i, arg := range expr.Args {
+				if v, ok := arg.(*ast.LabelledArg); ok {
+					arg = v.X
+				}
 				if TryCast[*ast.ShortFuncLit](arg) || TryCast[*ast.FuncLit](arg) {
 					genFn := ft.GetParam(i)
 					infer.SetType(arg, genFn)
@@ -2476,7 +2446,15 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		// Define args shortcuts in environment ($0, $1...)
 		if t := infer.env.GetType(expr); t != nil {
-			params := t.(types.FuncType).Params
+			var params []types.Type
+			switch v := t.(type) {
+			case types.FuncType:
+				params = v.Params
+			case types.LabelledType:
+				params = v.W.(types.FuncType).Params
+			default:
+				panic("")
+			}
 			for i, arg := range expr.Args {
 				switch v := arg.(type) {
 				case *ast.Ident:
@@ -2488,7 +2466,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 					panic("")
 				}
 			}
-			for i, param := range t.(types.FuncType).Params {
+			for i, param := range params {
 				infer.env.Define(nil, fmt.Sprintf("$%d", i), param)
 			}
 		}
@@ -2510,7 +2488,11 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			}
 		}
 		// implicit return
-		ft := infer.env.GetType(expr).(types.FuncType)
+		ftTmp := infer.env.GetType(expr)
+		if v, ok := ftTmp.(types.LabelledType); ok {
+			ftTmp = v.W
+		}
+		ft := ftTmp.(types.FuncType)
 		infer.withReturnType(ft.Return, func() {
 			infer.stmt(expr.Body)
 		})
