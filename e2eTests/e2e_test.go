@@ -481,8 +481,10 @@ func Test28(t *testing.T) {
 	src := `package main
 import "fmt"
 func main() {
-	a := []int{1, 2, 3}
-	fmt.Println(a.Last())
+	a1 := []int{1, 2, 3}
+	fmt.Println(a1.Last())
+	a2 := []int{}
+	fmt.Println(a2.Last())
 }`
-	tassert.Equal(t, "Some(3)\n", testGenOutput(src))
+	tassert.Equal(t, "Some(3)\nNone\n", testGenOutput(src))
 }
