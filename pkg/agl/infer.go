@@ -1081,7 +1081,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 	case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
 		exprFunT = infer.GetType(callXT)
 	case *ast.SelectorExpr:
-		if callXTXT := types.Unwrap(infer.env.GetType(callXT.X)); callXTXT != nil {
+		if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
 			switch v := callXTXT.(type) {
 			case types.StructType:
 				exprFunT = infer.inferStructType(v, callXT)
