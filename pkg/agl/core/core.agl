@@ -90,6 +90,16 @@ func (v agl1.Vec[T]) Reversed() []T {
 	return out
 }
 
+// func (s agl1.Sequence[T]) Enumerated() Sequence[(int, T)] {
+// 	return func(yield func(T) bool) {
+// 	    for e := range s {
+//             if !yield((i, e)) {
+//                 return
+//             }
+// 	    }
+// 	}
+// }
+
 //func (v agl1.Vec[T]) Shuffled() []T {
 //	out := make([]T, len(v))
 //	for i := 0; i < len(v); i++ {
