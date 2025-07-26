@@ -491,13 +491,7 @@ type Equatable[T any] interface {
 	__EQ(rhs T) bool
 }
 
-type AglString struct {
-	string
-}
-
-type AglInt struct {
-	int
-}
+type AglInt struct{ int }
 
 func (i AglInt) __EQ(rhs AglInt) bool { return i == rhs }
 
@@ -508,6 +502,8 @@ func (i AglInt) Hash() uint64 {
 	_, _ = h.Write(buf)
 	return h.Sum64()
 }
+
+type AglString struct{ string }
 
 func (s AglString) __EQ(rhs AglString) bool { return s == rhs }
 
