@@ -1827,6 +1827,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 	case types.StructType:
 		c1 := g.genExpr(x.X)
 		genEX := func() string { return c1.F() }
+		genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 		fnName := x.Sel.Name
 		switch fnName {
 		case "Sum":
@@ -1834,6 +1835,8 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			recvT := fnT.Recv[0].(types.StructType).TypeParams[0].(types.GenericType).W.GoStrType()
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
+		case "Filter":
+			return GenFrag{F: func() string { return e("AglSequenceFilter(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 		}
 	case types.ArrayType:
 		c1 := g.genExpr(x.X)
