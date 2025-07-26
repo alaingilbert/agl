@@ -30,13 +30,7 @@ func part1() {
     mut res := 0
     for lock in locks {
         for key in keys {
-            mut allGood := true
-            for i in 0..5 {
-                if lock[i] + key[i] >= 6 {
-                    allGood = false
-                }
-            }
-            if allGood {
+            if (0..5).AllSatisfy({ lock[$0] + key[$0] < 6 }) {
                 res += 1
             }
         }
