@@ -11347,6 +11347,23 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+//func TestCodeGen398(t *testing.T) {
+//	src := `package main
+//func main() {
+//	m := make(map[int]int)
+//	m.Values().Filter({ $0 % 2 == 0 })
+//}`
+//	expected := `// agl:generated
+//package main
+//func main() {
+//}
+//`
+//	test := NewTest(src, WithMutEnforced(true))
+//	test.PrintErrors()
+//	tassert.Equal(t, 0, len(test.errs))
+//	testCodeGen2(t, expected, test)
+//}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
