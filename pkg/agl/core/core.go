@@ -486,8 +486,7 @@ func (s AglSet[T]) Len() int { return len(s) }
 
 type AglRange[T Integer] struct {
 	Start, End T
-	IsEq       bool
-	Val        T
+	IsEq       bool // ".." vs "..="
 }
 
 func AglNewRange[T Integer](start, end T, isEq bool) *AglRange[T] {
