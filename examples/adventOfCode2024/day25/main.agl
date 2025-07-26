@@ -1,0 +1,51 @@
+package main
+
+import (
+    "agl1/os"
+    "fmt"
+)
+
+var mut parts [][][]string
+func part1() {
+    var mut locks [][]int
+    var mut keys [][]int
+    for part in parts {
+        isLock := part[0].AllSatisfy({ $0 == "#" })
+        var mut columns []int
+        for c in 0..5 {
+            for r in 0..7 {
+                if part[r][c] == if isLock { "." } else { "#" } {
+                    el := if isLock { r-1 } else { 6-r }
+                    columns.Push(el)
+                    break
+                }
+            }
+        }
+        if isLock {
+            locks.Push(columns)
+        } else {
+            keys.Push(columns)
+        }
+    }
+    mut res := 0
+    for lock in locks {
+        for key in keys {
+            mut allGood := true
+            for i in 0..5 {
+                if lock[i] + key[i] >= 6 {
+                    allGood = false
+                }
+            }
+            if allGood {
+                res += 1
+            }
+        }
+    }
+    fmt.Println(res)
+}
+
+func main() {
+    fileContent := string(os.ReadFile("examples/adventOfCode2024/day25/data.txt")!)
+    parts = fileContent.Split("\n\n").Map({ $0.Split("\n").Map({ $0.Split("") }) })
+    part1()
+}
