@@ -2473,8 +2473,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			}
 		}
 		// implicit return
-		t := types.Unwrap(infer.env.GetType(expr))
-		ft := t.(types.FuncType)
+		ft := infer.env.GetType(expr).(types.FuncType)
 		infer.withReturnType(ft.Return, func() {
 			infer.stmt(expr.Body)
 		})
