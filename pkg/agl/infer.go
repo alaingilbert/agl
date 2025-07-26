@@ -1605,17 +1605,19 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				}
 				fnT.Params = fnT.Params[1:]
 			}
-			//infer.SetType(expr, fnT.Return)
 			infer.SetType(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Filter" {
 			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
 			exprArg0 := expr.Args[0]
 			ft := fnT.GetParam(0).(types.FuncType)
 			infer.SetType(exprArg0, ft)
 			infer.SetTypeForce(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Len" {
 			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
 			infer.SetTypeForce(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		}
 	case types.ArrayType:
 		exprPos := infer.Pos(expr)
