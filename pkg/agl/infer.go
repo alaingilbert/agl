@@ -1079,7 +1079,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 	case *ast.CompositeLit:
 		exprFunT = infer.GetType2(callXT)
 	case *ast.CallExpr, *ast.BubbleResultExpr, *ast.BubbleOptionExpr:
-		exprFunT = infer.GetType(callXT)
+		exprFunT = infer.GetType2(callXT)
 	case *ast.SelectorExpr:
 		if callXTXT := infer.env.GetType(callXT.X); callXTXT != nil {
 			switch v := callXTXT.(type) {
@@ -1122,11 +1122,21 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 	exprFunT = types.Unwrap(exprFunT)
 	switch idTT := exprFunT.(type) {
 	case types.TypeType:
+	case types.UntypedNumType:
 	case types.UntypedStringType:
 	case types.StringType:
 	case types.IntType:
+	case types.I8Type:
+	case types.I16Type:
+	case types.I32Type:
 	case types.I64Type:
 	case types.UintType:
+	case types.U8Type:
+	case types.U16Type:
+	case types.U32Type:
+	case types.U64Type:
+	case types.F32Type:
+	case types.F64Type:
 	case types.SetType:
 	case types.ArrayType:
 	case types.MapType:
@@ -1250,12 +1260,13 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
-		if fnName == "Rev" {
+		switch fnName {
+		case "Rev":
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
 			fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-		} else if fnName == "AllSatisfy" {
+		case "AllSatisfy":
 			info := infer.env.GetNameInfo("agl1.Iterator.AllSatisfy")
 			fnT := infer.env.GetFn("agl1.Iterator.AllSatisfy")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
