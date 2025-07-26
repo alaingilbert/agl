@@ -3013,7 +3013,7 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		keyT := infer.GetType2(v.Key)
 		infer.exprs(expr.Elts)
 		t := types.SetType{K: keyT}
-		if _, ok := keyT.(types.TypeType); !ok {
+		if !TryCast[types.TypeType](keyT) {
 			keyT = types.TypeType{W: keyT}
 		}
 		infer.SetType(v.Key, keyT)
