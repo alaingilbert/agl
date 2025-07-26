@@ -492,28 +492,28 @@ type Equatable[T any] interface {
 }
 
 type AglString struct {
-	data string
+	string
 }
 
 type AglInt struct {
-	data int
+	int
 }
 
-func (i AglInt) __EQ(rhs AglInt) bool { return i.data == rhs.data }
+func (i AglInt) __EQ(rhs AglInt) bool { return i == rhs }
 
 func (i AglInt) Hash() uint64 {
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(i.data))
+	binary.BigEndian.PutUint64(buf, uint64(i.int))
 	h := fnv.New64a()
 	_, _ = h.Write(buf)
 	return h.Sum64()
 }
 
-func (s AglString) __EQ(rhs AglString) bool { return s.data == rhs.data }
+func (s AglString) __EQ(rhs AglString) bool { return s == rhs }
 
 func (s AglString) Hash() uint64 {
 	h := fnv.New64a()
-	_, _ = h.Write([]byte(s.data))
+	_, _ = h.Write([]byte(s.string))
 	return h.Sum64()
 }
 

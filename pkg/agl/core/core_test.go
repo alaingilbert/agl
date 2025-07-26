@@ -44,14 +44,14 @@ func (c CustomStruct) __EQ(rhs CustomStruct) bool {
 
 func TestAglSet1(t *testing.T) {
 	s1 := AglSet1[AglInt]{}
-	s1.Insert(AglInt{data: 1})
-	tassert.True(t, s1.Contains(AglInt{data: 1}))
-	tassert.False(t, s1.Contains(AglInt{data: 2}))
+	s1.Insert(AglInt{1})
+	tassert.True(t, s1.Contains(AglInt{1}))
+	tassert.False(t, s1.Contains(AglInt{2}))
 
 	s2 := AglSet1[AglString]{}
-	s2.Insert(AglString{data: "a"})
-	tassert.True(t, s2.Contains(AglString{data: "a"}))
-	tassert.False(t, s2.Contains(AglString{data: "b"}))
+	s2.Insert(AglString{"a"})
+	tassert.True(t, s2.Contains(AglString{"a"}))
+	tassert.False(t, s2.Contains(AglString{"b"}))
 
 	s3 := AglSet1[CustomStruct]{}
 	s3.Insert(CustomStruct{A: 1, B: "a"})
@@ -61,8 +61,8 @@ func TestAglSet1(t *testing.T) {
 
 	s4 := AglSet1[AglSet1[AglInt]]{}
 	innerSet := AglSet1[AglInt]{}
-	innerSet.Insert(AglInt{data: 1})
-	innerSet.Insert(AglInt{data: 2})
+	innerSet.Insert(AglInt{1})
+	innerSet.Insert(AglInt{2})
 	tassert.True(t, s4.Insert(innerSet))
 	tassert.False(t, s4.Insert(innerSet))
 	tassert.True(t, s4.Contains(innerSet))
