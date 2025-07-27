@@ -2356,9 +2356,9 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) GenFrag {
 	return GenFrag{F: func() (out string) {
 		if expr.Type != nil {
 			out += c2.F()
-		}
-		if out == "AglVoid{}" {
-			return out
+			if out == "AglVoid{}" {
+				return out
+			}
 		}
 		out += e("{")
 		if expr.Type != nil && TryCast[types.SetType](g.env.GetType(expr.Type)) {
