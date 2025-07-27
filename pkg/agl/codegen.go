@@ -2298,11 +2298,7 @@ func (g *Generator) genKeyValueExpr(expr *ast.KeyValueExpr) GenFrag {
 	bs = append(bs, c1.B...)
 	bs = append(bs, c2.B...)
 	return GenFrag{F: func() string {
-		var out string
-		out += c1.F()
-		out += e(": ")
-		out += c2.F()
-		return out
+		return c1.F() + e(": ") + c2.F()
 	}, B: bs}
 }
 
@@ -2405,7 +2401,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 				}
 			}
 		}
-		return content1() + e(" "+expr.Op.String()+" ") + content2()
+		return content1() + e(" "+op+" ") + content2()
 	}, B: bs}
 }
 
