@@ -787,9 +787,20 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 							}
 						case *ast.TupleExpr: // TODO should be recursive
 							for k, ee := range vv.Values {
-								id := ee.(*ast.Ident)
-								if id.Name != "_" {
-									out += e(g.prefix + "\t" + id.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + "\n")
+								switch vvv := ee.(type) {
+								case *ast.Ident:
+									if vvv.Name != "_" {
+										out += e(g.prefix + "\t" + vvv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + "\n")
+									}
+								case *ast.TupleExpr:
+									for l, eee := range vvv.Values {
+										switch vvvv := eee.(type) {
+										case *ast.Ident:
+											if vvvv.Name != "_" {
+												out += e(g.prefix + "\t" + vvvv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + fmt.Sprintf(".Arg%d", l) + "\n")
+											}
+										}
+									}
 								}
 							}
 						}
