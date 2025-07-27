@@ -2795,8 +2795,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		} else {
 			varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			lhs = func() string { return e(varName) }
-			var names []string
-			var exprs []string
+			var names, exprs []string
 			for i, x := range stmt.Lhs {
 				names = append(names, x.(*ast.Ident).Name)
 				exprs = append(exprs, fmt.Sprintf("%s.%s_%d", varName, enumT.SubTyp, i))
@@ -2815,8 +2814,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 				lhs = func() string { return e(varName) }
 				rhs := stmt.Rhs[0]
-				var names []string
-				var exprs []string
+				var names, exprs []string
 				for i := range g.env.GetType(rhs).(types.TupleType).Elts {
 					name := stmt.Lhs[i].(*ast.Ident).Name
 					names = append(names, name)
