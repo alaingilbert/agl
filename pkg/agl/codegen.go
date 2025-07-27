@@ -54,9 +54,10 @@ func (g *Generator) WithIfVarName(n string, clb func()) {
 }
 
 func (g *Generator) WithoutEmit(clb func()) {
+	prev := g.emitEnabled
 	g.emitEnabled = false
 	clb()
-	g.emitEnabled = true
+	g.emitEnabled = prev
 }
 
 func (g *Generator) WithGenMapping(m map[string]types.Type, clb func()) {
