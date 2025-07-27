@@ -2177,6 +2177,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 					newFnT := g.env.GetType(v)
 					fnDecl := g.genFuncDecls[oFnT.String()]
 					m := types.FindGen(oFnT, newFnT)
+					for k, v := range g.genMap {
+						m[k] = v
+					}
 					outFnDecl := func() (out string) {
 						g.WithGenMapping(m, func() {
 							out = g.decrPrefix(func() string {
