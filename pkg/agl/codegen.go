@@ -2155,81 +2155,68 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 	}
 	content1 := func() string { return "" }
 	content2 := func() string { return "" }
+	var isSet bool
 	switch v := expr.Fun.(type) {
 	case *ast.Ident:
 		t1 := g.env.Get(v.Name)
 		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
+			isSet = true
 			c2 := g.genExprs(expr.Args)
 			content1 = func() string { return e(v.Name) }
 			content2 = func() string { return c2.F() }
-		} else {
-			if fnT, ok := t1.(types.FuncType); ok {
-				if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "min", "max"}) && fnT.IsGeneric() {
-					oFnT := g.env.Get(v.Name)
-					newFnT := g.env.GetType(v)
-					fnDecl := g.genFuncDecls[oFnT.String()]
-					m := types.FindGen(oFnT, newFnT)
-					for k, v := range g.genMap {
-						m[k] = v
-					}
-					outFnDecl := func() (out string) {
-						g.WithGenMapping(m, func() {
-							out = g.decrPrefix(func() string {
-								return g.genFuncDecl(fnDecl).F()
-							})
-						})
-						return
-					}
-					name := g.genExpr(v).FNoEmit(g)
-					for _, k := range slices.Sorted(maps.Keys(m)) {
-						name += "_" + k + "_" + m[k].GoStr()
-					}
-					g.genFuncDecls2[name] = outFnDecl
-					content1 = func() string { return e(name) }
-					content2 = func() string {
-						var out string
-						g.WithGenMapping(m, func() {
-							out += g.genExprs(expr.Args).F()
-						})
-						return out
-					}
-				} else if v.Name == "make" {
-					c1 := g.genExpr(v)
-					c2 := g.genExpr(expr.Args[0])
-					bs = append(bs, c1.B...)
-					bs = append(bs, c2.B...)
-					content1 = func() string { return c1.F() }
-					content2 = func() string {
-						var out string
-						if g.genMap != nil {
-							out = e(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
-						} else {
-							out = c2.F()
-						}
-						if len(expr.Args) > 1 {
-							out += e(", ")
-							out += MapJoin(e, expr.Args[1:], func(e ast.Expr) string { return g.genExpr(e).F() }, ", ")
-						}
-						return out
-					}
-				} else {
-					c1 := g.genExpr(expr.Fun)
-					c2 := g.genExprs(expr.Args)
-					bs = append(bs, c1.B...)
-					bs = append(bs, c2.B...)
-					content1 = func() string { return c1.F() }
-					content2 = func() string { return c2.F() }
+		} else if fnT, ok := t1.(types.FuncType); ok {
+			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "min", "max"}) && fnT.IsGeneric() {
+				isSet = true
+				oFnT := g.env.Get(v.Name)
+				newFnT := g.env.GetType(v)
+				fnDecl := g.genFuncDecls[oFnT.String()]
+				m := types.FindGen(oFnT, newFnT)
+				for k, v := range g.genMap {
+					m[k] = v
 				}
-			} else {
-				c1 := g.genExpr(expr.Fun)
-				c2 := g.genExprs(expr.Args)
+				outFnDecl := func() (out string) {
+					g.WithGenMapping(m, func() {
+						out = g.decrPrefix(func() string {
+							return g.genFuncDecl(fnDecl).F()
+						})
+					})
+					return
+				}
+				name := g.genExpr(v).FNoEmit(g)
+				for _, k := range slices.Sorted(maps.Keys(m)) {
+					name += "_" + k + "_" + m[k].GoStr()
+				}
+				g.genFuncDecls2[name] = outFnDecl
+				content1 = func() string { return e(name) }
+				content2 = func() (out string) {
+					g.WithGenMapping(m, func() {
+						out += g.genExprs(expr.Args).F()
+					})
+					return out
+				}
+			} else if v.Name == "make" {
+				isSet = true
+				c1 := g.genExpr(v)
+				c2 := g.genExpr(expr.Args[0])
 				bs = append(bs, c1.B...)
 				bs = append(bs, c2.B...)
 				content1 = func() string { return c1.F() }
-				content2 = func() string { return c2.F() }
+				content2 = func() (out string) {
+					if g.genMap != nil {
+						out = e(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
+					} else {
+						out = c2.F()
+					}
+					if len(expr.Args) > 1 {
+						out += e(", ")
+						out += MapJoin(e, expr.Args[1:], func(e ast.Expr) string { return g.genExpr(e).F() }, ", ")
+					}
+					return out
+				}
 			}
 		}
-	default:
+	}
+	if !isSet {
 		c1 := g.genExpr(expr.Fun)
 		c2 := g.genExprs(expr.Args)
 		bs = append(bs, c1.B...)
