@@ -480,8 +480,11 @@ func (g *Generator) Generate() (out string) {
 	out5 := g.genDecls(g.a)
 	out += out4.F() + out5.F()
 	var genFuncDeclStr string
-	for _, k := range slices.Sorted(maps.Keys(g.genFuncDecls2)) {
-		genFuncDeclStr += g.genFuncDecls2[k]()
+	for len(g.genFuncDecls2) > 0 {
+		sorted := slices.Sorted(maps.Keys(g.genFuncDecls2))
+		key := sorted[0]
+		genFuncDeclStr += g.genFuncDecls2[key]()
+		delete(g.genFuncDecls2, key)
 	}
 	out += genFuncDeclStr
 	var extStr string
