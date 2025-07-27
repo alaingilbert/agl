@@ -2384,13 +2384,12 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 	}
 	tup := types.ReplGenM(t, g.genMap).(types.TupleType)
 	structName := tup.GoStr()
-	structName1 := tup.GoStr2()
 	var args []string
 	for i, x := range expr.Values {
 		xT := g.env.GetType2(x, g.fset)
 		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
 	}
-	structStr := fmt.Sprintf("type %s struct {\n", structName1)
+	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	structStr += strings.Join(args, "")
 	structStr += "}\n"
 	g.tupleStructs[structName] = structStr

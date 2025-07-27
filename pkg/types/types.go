@@ -608,35 +608,6 @@ func (t TupleType) GoStr() string {
 	)
 	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
 	tmpName = r.Replace(tmpName)
-	var typeParams []string
-	for _, el := range t.Elts {
-		if v, ok := el.(GenericType); ok {
-			typeParams = append(typeParams, v.Name)
-		}
-	}
-	if len(typeParams) > 0 {
-		tmpName += "[" + strings.Join(typeParams, ", ") + "]"
-	}
-	return name + tmpName
-}
-
-func (t TupleType) GoStr2() string {
-	name := "AglTupleStruct_"
-	r := strings.NewReplacer(
-		"[", "_",
-		"]", "_",
-	)
-	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
-	tmpName = r.Replace(tmpName)
-	var typeParams []string
-	for _, el := range t.Elts {
-		if v, ok := el.(GenericType); ok {
-			typeParams = append(typeParams, fmt.Sprintf("%s %s", v.Name, v.W.GoStr()))
-		}
-	}
-	if len(typeParams) > 0 {
-		tmpName += "[" + strings.Join(typeParams, ", ") + "]"
-	}
 	return name + tmpName
 }
 
