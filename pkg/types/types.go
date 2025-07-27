@@ -419,7 +419,7 @@ type EnumType struct {
 
 func (e EnumType) GoStr() string     { return e.Name }
 func (e EnumType) GoStrType() string { return e.Name }
-func (e EnumType) String() string    { return fmt.Sprintf("%s", e.Name) }
+func (e EnumType) String() string    { return e.Name }
 
 type EnumFieldType struct {
 	Name string
@@ -448,9 +448,9 @@ func (g GenericType) TypeParamGoStr2() string {
 	}
 	return fmt.Sprintf("%s", g.W.String())
 }
-func (g GenericType) GoStr() string     { return fmt.Sprintf("%s", g.Name) }
-func (g GenericType) GoStrType() string { return fmt.Sprintf("%s", g.Name) }
-func (g GenericType) String() string    { return fmt.Sprintf("%s", g.Name) }
+func (g GenericType) GoStr() string     { return g.Name }
+func (g GenericType) GoStrType() string { return g.Name }
+func (g GenericType) String() string    { return g.Name }
 
 type BubbleOptionType struct {
 	Elt    Type
@@ -601,14 +601,13 @@ type TupleType struct {
 }
 
 func (t TupleType) GoStr() string {
-	name := "AglTupleStruct_"
 	r := strings.NewReplacer(
 		"[", "_",
 		"]", "_",
 	)
-	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
-	tmpName = r.Replace(tmpName)
-	return name + tmpName
+	name := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
+	name = r.Replace(name)
+	return "AglTupleStruct_" + name
 }
 
 func (t TupleType) GoStrType() string { return t.GoStr() }
