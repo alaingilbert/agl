@@ -1325,15 +1325,13 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 				}
 				return out
 			}
-			content3 := func() string {
-				var out string
+			content3 := func() (out string) {
 				if expr1.Body != nil {
 					out = g.incrPrefix(g.genStmts(expr1.Body).F)
 				}
 				return out
 			}
-			out += e(g.prefix) + listStr()
-			out += content3()
+			out += e(g.prefix) + listStr() + content3()
 		}
 		out += e(g.prefix + "}\n")
 		return out
