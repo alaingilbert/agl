@@ -2053,12 +2053,15 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 					fnFullName += fmt.Sprintf("_%s", v.Label.Name)
 				}
 			}
+
+			// Manually add imports for functions in core.agl that are not going to be generated unless they're used
 			switch fnFullName {
 			case "agl1.Vec.Iter":
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
 			case "agl1.Vec.Shuffled":
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"math/rand"`}}
 			}
+			
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
 				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
