@@ -1,6 +1,6 @@
 package main
 
-//import "math/rand"
+import "math/rand"
 import "iter"
 
 // Creates a sequence of pairs built out of two underlying sequences.
@@ -142,16 +142,16 @@ func (v agl1.Vec[T]) First(where: predicate func(T) bool) T? {
 // 	}
 // }
 
-//func (v agl1.Vec[T]) Shuffled() []T {
-//	out := make([]T, len(v))
-//	for i := 0; i < len(v); i++ {
-//		out[i] = v[i]
-//	}
-//	rand.Shuffle(len(v), func(i, j int) {
-//		out[i], out[j] = out[j], out[i]
-//	})
-//	return out
-//}
+func (v agl1.Vec[T]) Shuffled() []T {
+	out := make([]T, len(v))
+	for i := 0; i < len(v); i++ {
+		out[i] = v[i]
+	}
+	rand.Shuffle(len(v), func(i, j int) {
+		out[i], out[j] = out[j], out[i]
+	})
+	return out
+}
 
 //func (s agl1.Set[T]) == (other agl1.Set) bool {
 //	if s.Len() != other.Len() {
