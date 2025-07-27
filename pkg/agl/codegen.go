@@ -1846,25 +1846,25 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		fnName := x.Sel.Name
 		switch fnName {
 		case "Sum", "Clone", "Indices", "Sorted":
-			return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(")") }}
+			return GenFrag{F: func() string {
+				return e("AglVec"+fnName+"(") + genEX() + e(")")
+			}}
 		case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined",
 			"FirstIndex", "FirstIndexWhere", "__ADD", "SortedBy":
-			return GenFrag{F: func() string { return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+			return GenFrag{F: func() string {
+				return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		case "Reduce", "ReduceInto":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 			}}
-		case "Insert", "Swap":
+		case "Insert", "Swap", "With":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 			}}
 		case "PopIf", "PushFront", "Remove":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(")")
-			}}
-		case "With":
-			return GenFrag{F: func() string {
-				return e("AglVecWith((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
 			}}
 		case "Pop", "PopFront", "Clear", "RemoveFirst":
 			return GenFrag{F: func() string {
