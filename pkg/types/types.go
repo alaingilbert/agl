@@ -600,17 +600,6 @@ type TupleType struct {
 	Elts    []Type
 }
 
-func (t TupleType) GoStr1() string {
-	name := "AglTupleStruct_"
-	r := strings.NewReplacer(
-		"[", "_",
-		"]", "_",
-	)
-	tmpName := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
-	tmpName = r.Replace(tmpName)
-	return name + tmpName
-}
-
 func (t TupleType) GoStr() string {
 	name := "AglTupleStruct_"
 	r := strings.NewReplacer(
