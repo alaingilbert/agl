@@ -425,7 +425,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 				}
 			}
 			var eltsStr string
-			if extType == "Vec" {
+			if len(elts) > 0 {
 				eltsStr = "_" + strings.Join(elts, "_")
 			}
 			out += e("func Agl"+extType+name+eltsStr) + typeParamsStr() + e("(") + paramsStr() + e(")") + resultStr() + e(" {\n")
