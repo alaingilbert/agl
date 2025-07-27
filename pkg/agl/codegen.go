@@ -1947,12 +1947,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			rawFnT := g.env.Get(extName)
 			concreteT := g.env.GetType(expr.Fun)
 			m := types.FindGen(rawFnT, concreteT)
-			tmp := g.extensions[extName]
-			if tmp.gen == nil {
-				tmp.gen = make(map[string]ExtensionTest)
-			}
-			tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
-			g.extensions[extName] = tmp
+			g.addExtension(extName, ExtensionTest{raw: rawFnT, concrete: concreteT})
 			r := strings.NewReplacer(
 				"[", "_",
 				"]", "_",
@@ -2080,12 +2075,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			extName := "agl1.String." + fnName
 			rawFnT := g.env.Get(extName)
 			concreteT := rawFnT
-			tmp := g.extensions[extName]
-			if tmp.gen == nil {
-				tmp.gen = make(map[string]ExtensionTest)
-			}
-			tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
-			g.extensions[extName] = tmp
+			g.addExtension(extName, ExtensionTest{raw: rawFnT, concrete: concreteT})
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
 		}
@@ -3262,18 +3252,14 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 								}
 							}
 						}
-						tmp := g.extensions[fnName]
-						tmp.decl = decl
-						g.extensions[fnName] = tmp
+						g.setExtensionDecl(fnName, decl)
 						return GenFrag{F: func() string { return "" }}
 					}
 				}
 			} else if tmp2, ok := decl.Recv.List[0].Type.(*ast.SelectorExpr); ok {
 				if tmp2.Sel.Name == "String" {
 					fnName := fmt.Sprintf("agl1.String.%s", decl.Name.Name)
-					tmp := g.extensions[fnName]
-					tmp.decl = decl
-					g.extensions[fnName] = tmp
+					g.setExtensionDecl(fnName, decl)
 					return GenFrag{F: func() string { return "" }}
 				}
 			}
@@ -3349,6 +3335,21 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		out += e("}\n")
 		return out
 	}, B: bs}
+}
+
+func (g *Generator) addExtension(extName string, ext ExtensionTest) {
+	tmp := g.extensions[extName]
+	if tmp.gen == nil {
+		tmp.gen = make(map[string]ExtensionTest)
+	}
+	tmp.gen[ext.raw.String()+"_"+ext.concrete.String()] = ext
+	g.extensions[extName] = tmp
+}
+
+func (g *Generator) setExtensionDecl(fnName string, decl *ast.FuncDecl) {
+	ext := g.extensions[fnName]
+	ext.decl = decl
+	g.extensions[fnName] = ext
 }
 
 func (g *Generator) joinList(l *ast.FieldList) (out string) {
