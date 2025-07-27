@@ -1515,12 +1515,7 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) GenFrag {
 	c1 := g.genExpr(expr.X)
 	c2 := g.genExpr(expr.Index)
 	return GenFrag{F: func() string {
-		var out string
-		out += c1.F()
-		out += e("[")
-		out += c2.F()
-		out += e("]")
-		return out
+		return c1.F() + e("[") + c2.F() + e("]")
 	}}
 }
 
@@ -1533,11 +1528,8 @@ func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
 	start := g.genExpr(expr.Start)
 	end := g.genExpr(expr.End_)
 	op := func() string {
-		if expr.Op == token.RANGEOPEQ {
-			return e("true")
-		} else {
-			return e("false")
-		}
+		opStr := utils.Ternary(expr.Op == token.RANGEOPEQ, "true", "false")
+		return e(opStr)
 	}
 	return GenFrag{F: func() (out string) {
 		out += e("AglNewRange["+g.env.GetType(expr).(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(", ") + op() + e(")")
