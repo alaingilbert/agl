@@ -2484,8 +2484,7 @@ func (g *Generator) genExprs(e []ast.Expr) GenFrag {
 		arr2[i] = x
 		bs = append(bs, tmp.B...)
 	}
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		for i, el := range arr1 {
 			out += el()
 			if i < len(e)-1 {
@@ -2504,8 +2503,7 @@ func (g *Generator) genStmts(s []ast.Stmt) GenFrag {
 		stmts = append(stmts, tmp)
 		bs = append(bs, tmp.B...)
 	}
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		for _, stmt := range stmts {
 			for _, b := range stmt.B {
 				out += b()
@@ -2536,8 +2534,7 @@ func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) GenFrag {
 }
 
 func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		switch spec := s.(type) {
 		case *ast.ValueSpec:
 			e := EmitWith(g, spec)
@@ -2613,8 +2610,7 @@ func (g *Generator) genDeclStmt(stmt *ast.DeclStmt) GenFrag {
 
 func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 	c1 := g.genExpr(stmt.X)
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		e := EmitWith(g, stmt)
 		var op string
 		switch stmt.Tok {
@@ -2647,8 +2643,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 				yT := g.env.GetType(v.Y)
 				c1 := g.genExpr(v.Y)
 				c2 := g.genExpr(v.X)
-				return GenFrag{F: func() string {
-					var out string
+				return GenFrag{F: func() (out string) {
 					if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
@@ -2719,8 +2714,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 		var init, cond, post func() string
 		var els []func() string
 		if stmt.Init != nil {
-			init = func() string {
-				var out string
+			init = func() (out string) {
 				g.WithInlineStmt(func() {
 					out = g.genStmt(stmt.Init).F()
 				})
@@ -2733,8 +2727,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 			els = append(els, cond)
 		}
 		if stmt.Post != nil {
-			post = func() string {
-				var out string
+			post = func() (out string) {
 				g.WithInlineStmt(func() {
 					out = g.genStmt(stmt.Post).F()
 				})
@@ -2749,8 +2742,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 		}
 		return out
 	}
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		out += e(g.prefix+"for ") + tmp() + e("{\n")
 		out += body()
 		out += e(g.prefix + "}\n")
@@ -2773,13 +2765,13 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 		var out string
 		e := EmitWith(g, stmt)
 		content3 := func() string {
-			isCompLit := TryCast[*ast.CompositeLit](stmt.X)
+			isCompositeLit := TryCast[*ast.CompositeLit](stmt.X)
 			var out string
-			if isCompLit {
+			if isCompositeLit {
 				out += e("(")
 			}
 			out += c1.F()
-			if isCompLit {
+			if isCompositeLit {
 				out += e(")")
 			}
 			return out
@@ -2815,15 +2807,15 @@ func (s GenFrag) FNoEmit(g *Generator) (out string) {
 func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	var bs []func() string
-	var tmp GenFrag
+	var resultFrag GenFrag
 	if stmt.Result != nil {
-		tmp = g.genExpr(stmt.Result)
-		bs = append(bs, tmp.B...)
+		resultFrag = g.genExpr(stmt.Result)
+		bs = append(bs, resultFrag.B...)
 	}
 	return GenFrag{F: func() (out string) {
 		out += e(g.prefix + "return")
 		if stmt.Result != nil {
-			out += e(" ") + tmp.F()
+			out += e(" ") + resultFrag.F()
 		}
 		return out + e("\n")
 	}, B: bs}
@@ -2831,14 +2823,14 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 
 func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
 	e := EmitWith(g, stmt)
-	tmp := g.genExpr(stmt.X)
-	bs := tmp.B
+	xFrag := g.genExpr(stmt.X)
+	bs := xFrag.B
 	return GenFrag{F: func() string {
 		var out string
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
-		out += tmp.F()
+		out += xFrag.F()
 		if !g.inlineStmt {
 			out += e("\n")
 		}
