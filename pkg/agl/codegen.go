@@ -19,25 +19,24 @@ import (
 const GeneratedFilePrefix = "// agl:generated\n"
 
 type Generator struct {
-	fset             *token.FileSet
-	env              *Env
-	a, b             *ast.File
-	prefix           string
-	genFuncDecls2    map[string]func() string
-	tupleStructs     map[string]string
-	genFuncDecls     map[string]*ast.FuncDecl
-	varCounter       atomic.Int64
-	returnType       types.Type
-	extensions       map[string]Extension
-	extensionsString map[string]ExtensionString
-	genMap           map[string]types.Type
-	allowUnused      bool
-	inlineStmt       bool
-	fragments        Frags
-	emitEnabled      bool
-	asType           bool
-	ifVarName        string
-	imports          map[string]*ast.ImportSpec
+	fset          *token.FileSet
+	env           *Env
+	a, b          *ast.File
+	prefix        string
+	genFuncDecls2 map[string]func() string
+	tupleStructs  map[string]string
+	genFuncDecls  map[string]*ast.FuncDecl
+	varCounter    atomic.Int64
+	returnType    types.Type
+	extensions    map[string]Extension
+	genMap        map[string]types.Type
+	allowUnused   bool
+	inlineStmt    bool
+	fragments     Frags
+	emitEnabled   bool
+	asType        bool
+	ifVarName     string
+	imports       map[string]*ast.ImportSpec
 }
 
 func (g *Generator) withAsType(clb func()) {
@@ -108,18 +107,17 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 	}
 	genFns := make(map[string]*ast.FuncDecl)
 	return &Generator{
-		fset:             fset,
-		env:              env,
-		a:                a,
-		b:                b,
-		extensions:       make(map[string]Extension),
-		extensionsString: make(map[string]ExtensionString),
-		tupleStructs:     make(map[string]string),
-		genFuncDecls2:    make(map[string]func() string),
-		genFuncDecls:     genFns,
-		allowUnused:      conf.AllowUnused,
-		emitEnabled:      true,
-		imports:          imports,
+		fset:          fset,
+		env:           env,
+		a:             a,
+		b:             b,
+		extensions:    make(map[string]Extension),
+		tupleStructs:  make(map[string]string),
+		genFuncDecls2: make(map[string]func() string),
+		genFuncDecls:  genFns,
+		allowUnused:   conf.AllowUnused,
+		emitEnabled:   true,
+		imports:       imports,
 	}
 }
 
@@ -294,88 +292,11 @@ func (g *Generator) Emit(s string, opts ...EmitOption) string {
 	return s
 }
 
-func (g *Generator) genExtensionString(ext ExtensionString) (out string) {
-	e := EmitWith(g, ext.decl)
-	for _, _ = range slices.Sorted(maps.Keys(ext.gen)) {
-		decl := ext.decl
-		var name, resultStr string
-		if decl.Name != nil {
-			name = decl.Name.Name
-		}
-		var paramsClone []ast.Field
-		if decl.Type.Params != nil {
-			for _, param := range decl.Type.Params.List {
-				paramsClone = append(paramsClone, *param)
-			}
-		}
-		recv := decl.Recv.List[0]
-		var recvName string
-		if len(recv.Names) >= 1 {
-			recvName = recv.Names[0].Name
-		}
-		recvT := recv.Type.(*ast.SelectorExpr).Sel.Name
-		var recvTName string
-		recvTName = recvT
-		paramsStr := func() (out string) {
-			firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.Ident{Name: recvTName}}
-			paramsClone = append([]ast.Field{firstArg}, paramsClone...)
-			if params := paramsClone; params != nil {
-				for i, field := range params {
-					out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
-					if len(field.Names) > 0 {
-						out += e(" ")
-					}
-					content := func() string {
-						var content string
-						if v, ok := g.env.GetType(field.Type).(types.TypeType); ok {
-							if _, ok := v.W.(types.FuncType); ok {
-								content = types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType()
-							} else {
-								content = g.genExpr(field.Type).FNoEmit(g)
-							}
-						} else {
-							switch field.Type.(type) {
-							case *ast.TupleExpr:
-								content = g.env.GetType(field.Type).GoStr()
-							default:
-								content = g.genExpr(field.Type).FNoEmit(g)
-							}
-						}
-						if i == 0 {
-							if content != "String" {
-								panic("")
-							}
-							content = e("string")
-						}
-						return content
-					}
-					out += content()
-					if i < len(params)-1 {
-						out += e(", ")
-					}
-				}
-			}
-			return
-		}
-		if result := decl.Type.Result; result != nil {
-			resT := g.env.GetType(result)
-			resultStr = utils.PrefixIf(resT.GoStrType(), " ")
-		}
-		out += e("func AglString"+name+"(") + paramsStr() + e(")"+resultStr+" {\n")
-		if decl.Body != nil {
-			out += g.incrPrefix(func() string {
-				return g.genStmt(decl.Body).F()
-			})
-		}
-		out += e("}\n")
-	}
-	return out
-}
-
 func (g *Generator) genExtension(ext Extension) (out string) {
 	e := EmitWith(g, ext.decl)
 	for _, key := range slices.Sorted(maps.Keys(ext.gen)) {
 		ge := ext.gen[key]
+		p(ge.raw, ge.concrete)
 		m := types.FindGen(ge.raw, ge.concrete)
 		decl := ext.decl
 		if decl == nil {
@@ -402,12 +323,30 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		if len(recv.Names) >= 1 {
 			recvName = recv.Names[0].Name
 		}
-		recvT := recv.Type.(*ast.IndexExpr).Index.(*ast.Ident).Name
+		var recvT string
+		var extType string
+		switch v := recv.Type.(type) {
+		case *ast.IndexExpr:
+			recvT = v.Index.(*ast.Ident).Name
+			extType = "Vec"
+		case *ast.SelectorExpr:
+			recvT = v.Sel.Name
+			extType = "String"
+		default:
+			panic(fmt.Sprintf("%v %v", recv.Type, to(recv.Type)))
+		}
 		var recvTName string
 		if el, ok := m[recvT]; ok {
 			recvTName = el.GoStr()
 		} else {
-			recvTName = ge.concrete.(types.FuncType).Recv[0].(types.ArrayType).Elt.GoStrType()
+			switch v := ge.concrete.(types.FuncType).Recv[0].(type) {
+			case types.ArrayType:
+				recvTName = v.Elt.GoStrType()
+			case types.StringType:
+				recvTName = v.GoStrType()
+			default:
+				panic(fmt.Sprintf("%v", to(v)))
+			}
 		}
 
 		r := strings.NewReplacer(
@@ -416,14 +355,21 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		)
 
 		var elts []string
-		for _, k := range slices.Sorted(maps.Keys(m)) {
-			elts = append(elts, fmt.Sprintf("%s_%s", k, r.Replace(m[k].GoStr())))
-		}
-		if _, ok := m["T"]; !ok {
-			elts = append(elts, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
+		if extType == "Vec" {
+			for _, k := range slices.Sorted(maps.Keys(m)) {
+				elts = append(elts, fmt.Sprintf("%s_%s", k, r.Replace(m[k].GoStr())))
+			}
+			if _, ok := m["T"]; !ok {
+				elts = append(elts, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
+			}
 		}
 
-		firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
+		var firstArg ast.Field
+		if extType == "Vec" {
+			firstArg = ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
+		} else {
+			firstArg = ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.Ident{Name: recvTName}}
+		}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
 			for _, param := range decl.Type.Params.List {
@@ -478,7 +424,11 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 					})
 				}
 			}
-			out += e("func AglVec"+name+"_"+strings.Join(elts, "_")) + typeParamsStr() + e("(") + paramsStr() + e(")") + resultStr() + e(" {\n")
+			var eltsStr string
+			if extType == "Vec" {
+				eltsStr = "_" + strings.Join(elts, "_")
+			}
+			out += e("func Agl"+extType+name+eltsStr) + typeParamsStr() + e("(") + paramsStr() + e(")") + resultStr() + e(" {\n")
 			out += bodyStr()
 			out += e("}\n")
 		})
@@ -536,15 +486,13 @@ func (g *Generator) Generate() (out string) {
 	}
 	out += genFuncDeclStr
 	var extStr string
-	for _, extKey := range slices.Sorted(maps.Keys(g.extensions)) {
+	for len(g.extensions) > 0 {
+		sorted := slices.Sorted(maps.Keys(g.extensions))
+		extKey := sorted[0]
 		extStr += g.genExtension(g.extensions[extKey])
+		delete(g.extensions, extKey)
 	}
 	out += extStr
-	var extStringStr string
-	for _, extKey := range slices.Sorted(maps.Keys(g.extensionsString)) {
-		extStringStr += g.genExtensionString(g.extensionsString[extKey])
-	}
-	out += extStringStr
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
@@ -2069,12 +2017,13 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		default:
 			extName := "agl1.String." + fnName
 			rawFnT := g.env.Get(extName)
-			tmp := g.extensionsString[extName]
+			concreteT := rawFnT
+			tmp := g.extensions[extName]
 			if tmp.gen == nil {
 				tmp.gen = make(map[string]ExtensionTest)
 			}
-			tmp.gen[rawFnT.String()] = ExtensionTest{raw: rawFnT}
-			g.extensionsString[extName] = tmp
+			tmp.gen[rawFnT.String()+"_"+concreteT.String()] = ExtensionTest{raw: rawFnT, concrete: concreteT}
+			g.extensions[extName] = tmp
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
 		}
@@ -3320,9 +3269,9 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			} else if tmp2, ok := decl.Recv.List[0].Type.(*ast.SelectorExpr); ok {
 				if tmp2.Sel.Name == "String" {
 					fnName := fmt.Sprintf("agl1.String.%s", decl.Name.Name)
-					tmp := g.extensionsString[fnName]
+					tmp := g.extensions[fnName]
 					tmp.decl = decl
-					g.extensionsString[fnName] = tmp
+					g.extensions[fnName] = tmp
 					return GenFrag{F: func() string { return "" }}
 				}
 			}
