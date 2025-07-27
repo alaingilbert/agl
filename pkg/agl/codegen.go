@@ -739,17 +739,17 @@ func (g *Generator) decrPrefix(clb func() string) string {
 	return out
 }
 
-func handleTupleExpr(prefix, n string, v *ast.TupleExpr, depth int, out *string, e EmitterFunc) {
-	for j, val := range v.Values {
+func handleTupleExpr(prefix, n string, v *ast.TupleExpr, out *string, e EmitterFunc) {
+	for i, val := range v.Values {
 		switch vv := val.(type) {
 		case *ast.Ident:
 			if vv.Name != "_" {
-				path := fmt.Sprintf("%s.Arg%d", n, j)
+				path := fmt.Sprintf("%s.Arg%d", n, i)
 				*out += e(fmt.Sprintf("%s%s := %s\n", prefix, vv.Name, path))
 			}
 		case *ast.TupleExpr:
-			nextPath := fmt.Sprintf("%s.Arg%d", n, j)
-			handleTupleExpr(prefix, nextPath, vv, depth+1, out, e)
+			nextPath := fmt.Sprintf("%s.Arg%d", n, i)
+			handleTupleExpr(prefix, nextPath, vv, out, e)
 		}
 	}
 }
@@ -795,7 +795,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 				switch v := expr.Args[i].(type) {
 				case *ast.TupleExpr:
 					out += g.incrPrefix(func() (out string) {
-						handleTupleExpr(g.prefix, n, v, 0, &out, e)
+						handleTupleExpr(g.prefix, n, v, &out, e)
 						return
 					})
 				}
