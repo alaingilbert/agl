@@ -3225,7 +3225,6 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 }
 
 func (g *Generator) genDecls(f *ast.File) GenFrag {
-	var bs []func() string
 	var decls []func() string
 	for _, decl := range f.Decls {
 		switch declT := decl.(type) {
@@ -3237,13 +3236,12 @@ func (g *Generator) genDecls(f *ast.File) GenFrag {
 		}
 		decls = append(decls, g.genDecl(decl).F)
 	}
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		for _, decl := range decls {
 			out += decl()
 		}
 		return out
-	}, B: bs}
+	}}
 }
 
 func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
