@@ -739,6 +739,21 @@ func (g *Generator) decrPrefix(clb func() string) string {
 	return out
 }
 
+func handleTupleExpr(prefix, n string, v *ast.TupleExpr, depth int, out *string, e EmitterFunc) {
+	for j, val := range v.Values {
+		switch vv := val.(type) {
+		case *ast.Ident:
+			if vv.Name != "_" {
+				path := fmt.Sprintf("%s.Arg%d", n, j)
+				*out += e(fmt.Sprintf("%s%s := %s\n", prefix, vv.Name, path))
+			}
+		case *ast.TupleExpr:
+			nextPath := fmt.Sprintf("%s.Arg%d", n, j)
+			handleTupleExpr(prefix, nextPath, vv, depth+1, out, e)
+		}
+	}
+}
+
 func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genStmt(expr.Body)
@@ -779,32 +794,10 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 			if len(expr.Args) > 0 {
 				switch v := expr.Args[i].(type) {
 				case *ast.TupleExpr:
-					for j, val := range v.Values {
-						switch vv := val.(type) {
-						case *ast.Ident:
-							if vv.Name != "_" {
-								out += e(g.prefix + "\t" + vv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + "\n")
-							}
-						case *ast.TupleExpr: // TODO should be recursive
-							for k, ee := range vv.Values {
-								switch vvv := ee.(type) {
-								case *ast.Ident:
-									if vvv.Name != "_" {
-										out += e(g.prefix + "\t" + vvv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + "\n")
-									}
-								case *ast.TupleExpr:
-									for l, eee := range vvv.Values {
-										switch vvvv := eee.(type) {
-										case *ast.Ident:
-											if vvvv.Name != "_" {
-												out += e(g.prefix + "\t" + vvvv.Name + " := " + n + fmt.Sprintf(".Arg%d", j) + fmt.Sprintf(".Arg%d", k) + fmt.Sprintf(".Arg%d", l) + "\n")
-											}
-										}
-									}
-								}
-							}
-						}
-					}
+					out += g.incrPrefix(func() (out string) {
+						handleTupleExpr(g.prefix, n, v, 0, &out, e)
+						return
+					})
 				}
 			}
 		}
