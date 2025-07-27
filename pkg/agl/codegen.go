@@ -296,10 +296,10 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		if decl == nil {
 			return ""
 		}
-		typeParamsStr := func() string { return "" }
-		paramsStr := func() string { return "" }
-		resultStr := func() string { return "" }
-		bodyStr := func() string { return "" }
+		typeParamsStr := emptyContent
+		paramsStr := emptyContent
+		resultStr := emptyContent
+		bodyStr := emptyContent
 		var name string
 		if decl.Name != nil {
 			name = decl.Name.Name
@@ -1051,7 +1051,7 @@ func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) GenFrag {
 
 func (g *Generator) genBranchStmt(expr *ast.BranchStmt) GenFrag {
 	e := EmitWith(g, expr)
-	c1 := GenFrag{F: func() string { return "" }}
+	c1 := GenFrag{F: emptyContent}
 	if expr.Label != nil {
 		c1 = g.genExpr(expr.Label)
 	}
@@ -1288,7 +1288,7 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 			return out
 		}
 		var tagIsEnum bool
-		c1 := GenFrag{F: func() string { return "" }}
+		c1 := GenFrag{F: emptyContent}
 		if expr.Tag != nil {
 			c1 = g.genExpr(expr.Tag)
 		}
@@ -1355,8 +1355,8 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 
 func (g *Generator) genCommClause(expr *ast.CommClause) GenFrag {
 	e := EmitWith(g, expr)
-	c1 := GenFrag{F: func() string { return "" }}
-	c2 := GenFrag{F: func() string { return "" }}
+	c1 := GenFrag{F: emptyContent}
+	c2 := GenFrag{F: emptyContent}
 	if expr.Comm != nil {
 		c1 = g.genStmt(expr.Comm)
 	}
@@ -2153,8 +2153,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			return res
 		}
 	}
-	content1 := func() string { return "" }
-	content2 := func() string { return "" }
+	content1 := emptyContent
+	content2 := emptyContent
 	var isSet bool
 	switch v := expr.Fun.(type) {
 	case *ast.Ident:
@@ -2375,11 +2375,13 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 	}, B: bs}
 }
 
+var emptyContent = func() string { return "" }
+
 func (g *Generator) genCompositeLit(expr *ast.CompositeLit) GenFrag {
 	e := EmitWith(g, expr)
 	var bs []func() string
 	c1 := g.genExprs(expr.Elts)
-	c2 := GenFrag{F: func() string { return "" }}
+	c2 := GenFrag{F: emptyContent}
 	if expr.Type != nil {
 		c2 = g.genExpr(expr.Type)
 	}
@@ -2676,7 +2678,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 			}
 		}
 	}
-	c1 := GenFrag{F: func() string { return "" }}
+	c1 := GenFrag{F: emptyContent}
 	if stmt.Cond != nil {
 		c1 = g.genExpr(stmt.Cond)
 	}
@@ -2722,8 +2724,8 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 
 func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 	c1 := g.genExpr(stmt.X)
-	c2 := GenFrag{F: func() string { return "" }}
-	c3 := GenFrag{F: func() string { return "" }}
+	c2 := GenFrag{F: emptyContent}
+	c3 := GenFrag{F: emptyContent}
 	if stmt.Key != nil {
 		c2 = g.genExpr(stmt.Key)
 	}
@@ -2810,7 +2812,7 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
 
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	e := EmitWith(g, stmt)
-	lhs := func() string { return "" }
+	lhs := emptyContent
 	var after string
 	rhsT := g.env.GetType(stmt.Rhs[0])
 	if v, ok := rhsT.(types.CustomType); ok {
@@ -2950,7 +2952,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 	c1 := g.genExpr(lhs0)
 	c2 := g.genExpr(rhs0)
 	c3 := g.genStmt(stmt.Body)
-	c4 := GenFrag{F: func() string { return "" }}
+	c4 := GenFrag{F: emptyContent}
 	if stmt.Else != nil {
 		c4 = g.genStmt(stmt.Else)
 	}
@@ -3077,8 +3079,8 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		}
 	}
 	cond := g.genExpr(stmt.Cond)
-	c1 := GenFrag{F: func() string { return "" }}
-	c3 := GenFrag{F: func() string { return "" }}
+	c1 := GenFrag{F: emptyContent}
+	c3 := GenFrag{F: emptyContent}
 	if stmt.Init != nil {
 		c3 = g.genStmt(stmt.Init)
 	}
@@ -3216,8 +3218,8 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 	e := EmitWith(g, decl)
 	g.returnType = g.env.GetType(decl).(types.FuncType).Return
 	var bs []func() string
-	recv := func() string { return "" }
-	typeParamsFn := func() string { return "" }
+	recv := emptyContent
+	typeParamsFn := emptyContent
 	var name, paramsStr, resultStr string
 	if decl.Recv != nil {
 		if len(decl.Recv.List) >= 1 {
@@ -3233,14 +3235,14 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 							}
 						}
 						g.setExtensionDecl(fnName, decl)
-						return GenFrag{F: func() string { return "" }}
+						return GenFrag{F: emptyContent}
 					}
 				}
 			} else if tmp2, ok := decl.Recv.List[0].Type.(*ast.SelectorExpr); ok {
 				if tmp2.Sel.Name == "String" {
 					fnName := fmt.Sprintf("agl1.String.%s", decl.Name.Name)
 					g.setExtensionDecl(fnName, decl)
-					return GenFrag{F: func() string { return "" }}
+					return GenFrag{F: emptyContent}
 				}
 			}
 		}
@@ -3257,7 +3259,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 	fnT := g.env.GetType(decl)
 	if g.genMap == nil && fnT.(types.FuncType).IsGeneric() {
 		g.genFuncDecls[fnT.String()] = decl
-		return GenFrag{F: func() string { return "" }}
+		return GenFrag{F: emptyContent}
 	}
 	if decl.Name != nil {
 		fnName := decl.Name.Name
@@ -3294,7 +3296,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		resultStr = utils.PrefixIf(resultStr, " ")
 	}
 	if g.genMap != nil {
-		typeParamsFn = func() string { return "" }
+		typeParamsFn = emptyContent
 		for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
 			v := g.genMap[k]
 			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
