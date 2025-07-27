@@ -11549,6 +11549,38 @@ func AglVecLen_T_uint8(v []uint8) int {
 	testCodeGen2(t, expected, test)
 }
 
+//func TestCodeGen405(t *testing.T) {
+//	src := `package main
+//func myLen[T any](a []T) int {
+//	return len(a)
+//}
+//func myIsEmpty[T any](a []T) bool {
+//	return myLen(a) == 0
+//}
+//func main() {
+//	a := []u8{1, 2, 3}
+//	myIsEmpty(a)
+//}
+//`
+//	expected := `// agl:generated
+//package main
+//func main() {
+//	a := []uint8{1, 2, 3}
+//	myIsEmpty_T_uint8(a)
+//}
+//func myLen_T_uint8(a []uint8) int {
+//	return len(a)
+//}
+//func myIsEmpty_T_uint8(a []uint8) bool {
+//	return myLen_T_uint8(a) == 0
+//}
+//`
+//	test := NewTest(src, WithMutEnforced(true))
+//	test.PrintErrors()
+//	tassert.Equal(t, 0, len(test.errs))
+//	testCodeGen2(t, expected, test)
+//}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
