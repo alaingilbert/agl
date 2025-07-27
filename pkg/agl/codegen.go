@@ -414,9 +414,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 			}
 			if decl.Body != nil {
 				bodyStr = func() string {
-					return g.incrPrefix(func() string {
-						return g.genStmt(decl.Body).F()
-					})
+					return g.incrPrefix(g.genStmt(decl.Body).F)
 				}
 			}
 			var eltsStr string
@@ -800,9 +798,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 				}
 			}
 		}
-		out += g.incrPrefix(func() string {
-			return c1.F()
-		})
+		out += g.incrPrefix(c1.F)
 		out += e(g.prefix + "}")
 		return out
 	}}
@@ -1162,9 +1158,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 							panic("")
 						}
 					}
-					content3 := g.incrPrefix(func() string {
-						return g.genStmts(c.Body).F()
-					})
+					content3 := g.incrPrefix(g.genStmts(c.Body).F)
 					out += content3
 					out += e(gPrefix + "}")
 					return
@@ -1183,9 +1177,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					default:
 						panic("")
 					}
-					content3 := g.incrPrefix(func() string {
-						return g.genStmts(c.Body).F()
-					})
+					content3 := g.incrPrefix(g.genStmts(c.Body).F)
 					out += content3
 					out += e(gPrefix + "}")
 					return
@@ -1263,9 +1255,7 @@ func (g *Generator) genTypeSwitchStmt(expr *ast.TypeSwitchStmt) GenFrag {
 				out += e(g.prefix + fmt.Sprintf("\tAglNoop(%s)\n", n))
 			}
 			if cc.Body != nil {
-				out += g.incrPrefix(func() string {
-					return g.genStmts(cc.Body).F()
-				})
+				out += g.incrPrefix(g.genStmts(cc.Body).F)
 			}
 		}
 
@@ -1339,9 +1329,7 @@ func (g *Generator) genSwitchStmt(expr *ast.SwitchStmt) GenFrag {
 			content3 := func() string {
 				var out string
 				if expr1.Body != nil {
-					out = g.incrPrefix(func() string {
-						return g.genStmts(expr1.Body).F()
-					})
+					out = g.incrPrefix(g.genStmts(expr1.Body).F)
 				}
 				return out
 			}
@@ -1420,9 +1408,7 @@ func (g *Generator) genInterfaceType(expr *ast.InterfaceType) GenFrag {
 func (g *Generator) genEllipsis(expr *ast.Ellipsis) GenFrag {
 	c1 := g.genExpr(expr.Elt)
 	return GenFrag{F: func() string {
-		content1 := g.incrPrefix(func() string {
-			return c1.F()
-		})
+		content1 := g.incrPrefix(c1.F)
 		return "..." + content1
 	}}
 }
@@ -1433,9 +1419,7 @@ func (g *Generator) genParenExpr(expr *ast.ParenExpr) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
 		out += e("(")
-		out += g.incrPrefix(func() string {
-			return c1.F()
-		})
+		out += g.incrPrefix(c1.F)
 		out += e(")")
 		return out
 	}}
@@ -1447,9 +1431,7 @@ func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
 		out += g.genFuncType(expr.Type).F() + e(" {\n")
-		out += g.incrPrefix(func() string {
-			return c1.F()
-		})
+		out += g.incrPrefix(c1.F)
 		out += e(g.prefix + "}")
 		return out
 	}}
@@ -2176,9 +2158,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 				outFnDecl := func() (out string) {
 					g.WithGenMapping(m, func() {
-						out = g.decrPrefix(func() string {
-							return g.genFuncDecl(fnDecl).F()
-						})
+						out = g.decrPrefix(g.genFuncDecl(fnDecl).F)
 					})
 					return
 				}
@@ -2607,7 +2587,7 @@ func (g *Generator) genIncDecStmt(stmt *ast.IncDecStmt) GenFrag {
 func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	cc1 := g.genStmt(stmt.Body)
-	body := func() string { return g.incrPrefix(func() string { return cc1.F() }) }
+	body := func() string { return g.incrPrefix(cc1.F) }
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
@@ -2756,9 +2736,7 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 		} else {
 			out += e(g.prefix+"for ") + c2.F() + e(", ") + c3.F() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 		}
-		out += g.incrPrefix(func() string {
-			return c4.F()
-		})
+		out += g.incrPrefix(c4.F)
 		out += e(g.prefix + "}\n")
 		return out
 	}}
@@ -2986,7 +2964,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 		if g.allowUnused {
 			out += e(gPrefix+"\tAglNoop(") + lhs() + e(")\n")
 		}
-		out += g.incrPrefix(func() string { return c3.F() })
+		out += g.incrPrefix(c3.F)
 		if stmt.Else != nil {
 			if v, ok := stmt.Else.(*ast.ExprStmt); ok {
 				switch v.X.(type) {
@@ -2997,16 +2975,12 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 					})
 				default:
 					out += e(gPrefix + "} else {\n")
-					out += g.incrPrefix(func() string {
-						return c4.F()
-					})
+					out += g.incrPrefix(c4.F)
 					out += e(gPrefix + "}")
 				}
 			} else {
 				out += e(gPrefix + "} else {\n")
-				out += g.incrPrefix(func() string {
-					return c4.F()
-				})
+				out += g.incrPrefix(c4.F)
 				out += e(gPrefix + "}")
 			}
 		} else {
@@ -3028,7 +3002,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		gPrefix := g.prefix
 		lhs := func() string { return c1.F() }
 		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
-		body := func() string { return g.incrPrefix(func() string { return c3.F() }) }
+		body := func() string { return g.incrPrefix(c3.F) }
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		var cond string
 		unwrapFn := "Unwrap"
@@ -3133,9 +3107,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		}
 		out += cond.F() + e(" {\n")
 		g.inlineStmt = false
-		out += g.incrPrefix(func() string {
-			return c2.F()
-		})
+		out += g.incrPrefix(c2.F)
 		if stmt.Else != nil {
 			switch stmt.Else.(type) {
 			case *ast.ExprStmt:
@@ -3147,16 +3119,12 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 					})
 				default:
 					out += e(gPrefix + "} else {\n")
-					out += g.incrPrefix(func() string {
-						return c1.F()
-					})
+					out += g.incrPrefix(c1.F)
 					out += e(gPrefix + "}")
 				}
 			default:
 				out += e(gPrefix + "} else {\n")
-				out += g.incrPrefix(func() string {
-					return c1.F()
-				})
+				out += g.incrPrefix(c1.F)
 				out += e(gPrefix + "}")
 			}
 		} else {
@@ -3186,9 +3154,7 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 		cond := func() string { return c1.F() }
 		gPrefix := g.prefix
 		out += e(gPrefix+"if !(") + cond() + e(") {\n")
-		out += g.incrPrefix(func() string {
-			return c2.F()
-		})
+		out += g.incrPrefix(c2.F)
 		out += e(gPrefix + "}\n")
 		return out
 	}}
@@ -3310,9 +3276,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		out += recv()
 		out += e(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsFn(), paramsStr, resultStr))
 		if decl.Body != nil {
-			out += g.incrPrefix(func() string {
-				return c1.F()
-			})
+			out += g.incrPrefix(c1.F)
 		}
 		out += e("}\n")
 		return out
