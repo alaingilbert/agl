@@ -2663,10 +2663,9 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 		c1 = g.genExpr(stmt.Cond)
 	}
 	tmp := func() string {
-		var init, cond, post func() string
 		var els []func() string
 		if stmt.Init != nil {
-			init = func() (out string) {
+			init := func() (out string) {
 				g.WithInlineStmt(func() {
 					out = g.genStmt(stmt.Init).F()
 				})
@@ -2675,11 +2674,10 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 			els = append(els, init)
 		}
 		if stmt.Cond != nil {
-			cond = func() string { return c1.F() }
-			els = append(els, cond)
+			els = append(els, c1.F)
 		}
 		if stmt.Post != nil {
-			post = func() (out string) {
+			post := func() (out string) {
 				g.WithInlineStmt(func() {
 					out = g.genStmt(stmt.Post).F()
 				})
