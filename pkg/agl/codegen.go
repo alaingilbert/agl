@@ -3112,9 +3112,12 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	if stmt.Init != nil {
 		c3 = g.genStmt(stmt.Init)
 	}
+	genAssignStmt := func(last ast.Stmt) *ast.AssignStmt {
+		return &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
+	}
 	if hasTyp {
 		last := Must(Last(stmt.Body.List))
-		stmt.Body.List[len(stmt.Body.List)-1] = &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
+		stmt.Body.List[len(stmt.Body.List)-1] = genAssignStmt(last)
 	}
 	g.ifVarName = ""
 	c2 := g.genStmt(stmt.Body)
@@ -3124,7 +3127,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 			switch v := stmt.Else.(type) {
 			case *ast.BlockStmt:
 				last := Must(Last(v.List))
-				v.List[len(v.List)-1] = &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
+				v.List[len(v.List)-1] = genAssignStmt(last)
 			}
 		}
 		g.WithIfVarName(varName, func() {
