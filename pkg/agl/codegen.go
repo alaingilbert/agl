@@ -1596,28 +1596,24 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) GenFrag {
 	c1 := g.genExpr(expr.X)
 	c2 := g.genExpr(expr.Sel)
 	return GenFrag{F: func() string {
-		var out string
-		content1 := c1.F
 		name := expr.Sel.Name
 		t := types.Unwrap(g.env.GetType(expr.X))
 		switch t.(type) {
 		case types.TupleType:
 			name = "Arg" + name
 		case types.EnumType:
-			content2 := c2.F
 			var out string
 			if expr.Sel.Name == "RawValue" {
-				out = content1() + e(".") + content2()
+				out = c1.F() + e(".") + c2.F()
 			} else {
-				out = e("Make_") + content1() + e("_") + content2()
+				out = e("Make_") + c1.F() + e("_") + c2.F()
 				if _, ok := g.env.GetType(expr).(types.EnumType); ok { // TODO
 					out += e("()")
 				}
 			}
 			return out
 		}
-		out = content1() + e("."+name)
-		return out
+		return c1.F() + e("."+name)
 	}}
 }
 
