@@ -2059,9 +2059,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			case "agl1.Vec.Iter":
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
 			case "agl1.Vec.Shuffled":
-				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"math/rand"`}}
+				infer.imports["math/rand"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"math/rand"`}}
 			}
-			
+
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
 				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
