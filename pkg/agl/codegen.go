@@ -2353,8 +2353,7 @@ func (g *Generator) genCompositeLit(expr *ast.CompositeLit) GenFrag {
 	}
 	bs = append(bs, c1.B...)
 	bs = append(bs, c2.B...)
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		if expr.Type != nil {
 			out += c2.F()
 		}
