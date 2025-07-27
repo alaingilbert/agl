@@ -374,8 +374,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		paramsClone = append([]ast.Field{firstArg}, paramsClone...)
 		g.WithGenMapping(m, func() {
 			if params := paramsClone; params != nil {
-				paramsStr = func() string {
-					var out string
+				paramsStr = func() (out string) {
 					out += MapJoin(e, params, func(field ast.Field) (out string) {
 						out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 						if len(field.Names) > 0 {
@@ -1136,12 +1135,12 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 						assignOp := func(op string) string { return utils.Ternary(op == "_", "=", ":=") }
 						switch v := c.Expr.(type) {
 						case *ast.OkExpr:
-							binding := func() string { return g.genExpr(v.X).F() }
+							binding := g.genExpr(v.X).F
 							out += e(gPrefix + "if " + errName + " == nil {\n" + gPrefix + "\t")
 							op := binding()
 							out += op + e(" "+assignOp(op)+" *"+varName+"\n")
 						case *ast.ErrExpr:
-							binding := func() string { return g.genExpr(v.X).F() }
+							binding := g.genExpr(v.X).F
 							out += e(gPrefix + "if " + errName + " != nil {\n" + gPrefix + "\t")
 							op := binding()
 							out += op + e(" "+assignOp(op)+" "+errName+"\n")
@@ -1598,14 +1597,14 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) GenFrag {
 	c2 := g.genExpr(expr.Sel)
 	return GenFrag{F: func() string {
 		var out string
-		content1 := func() string { return c1.F() }
+		content1 := c1.F
 		name := expr.Sel.Name
 		t := types.Unwrap(g.env.GetType(expr.X))
 		switch t.(type) {
 		case types.TupleType:
 			name = "Arg" + name
 		case types.EnumType:
-			content2 := func() string { return c2.F() }
+			content2 := c2.F
 			var out string
 			if expr.Sel.Name == "RawValue" {
 				out = content1() + e(".") + content2()
@@ -1824,7 +1823,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 	switch eXTT := eXT.(type) {
 	case types.StructType:
 		c1 := g.genExpr(x.X)
-		genEX := func() string { return c1.F() }
+		genEX := c1.F
 		genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 		fnName := x.Sel.Name
 		switch fnName {
@@ -1840,7 +1839,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		}
 	case types.ArrayType:
 		c1 := g.genExpr(x.X)
-		genEX := func() string { return c1.F() }
+		genEX := c1.F
 		genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 		eltT := types.ReplGenM(eXTT.Elt, g.genMap)
 		eltTStr := eltT.GoStr()
@@ -2097,7 +2096,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		}
 	case types.OptionType:
 		c1 := g.genExpr(x.X)
-		genEX := func() string { return c1.F() }
+		genEX := c1.F
 		genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 		fnName := x.Sel.Name
 		switch fnName {
@@ -2145,7 +2144,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			isSet = true
 			c2 := g.genExprs(expr.Args)
 			content1 = func() string { return e(v.Name) }
-			content2 = func() string { return c2.F() }
+			content2 = c2.F
 		} else if fnT, ok := t1.(types.FuncType); ok {
 			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "min", "max"}) && fnT.IsGeneric() {
 				isSet = true
@@ -2180,7 +2179,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				c2 := g.genExpr(expr.Args[0])
 				bs = append(bs, c1.B...)
 				bs = append(bs, c2.B...)
-				content1 = func() string { return c1.F() }
+				content1 = c1.F
 				content2 = func() (out string) {
 					if g.genMap != nil {
 						out = e(types.ReplGenM(g.env.GetType(expr.Args[0]), g.genMap).GoStr())
@@ -2277,8 +2276,8 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 	bs = append(bs, c1.B...)
 	bs = append(bs, c2.B...)
 	return GenFrag{F: func() string {
-		content1 := func() string { return c1.F() }
-		content2 := func() string { return c2.F() }
+		content1 := c1.F
+		content2 := c2.F
 		op := expr.Op.String()
 		xT := g.env.GetType(expr.X)
 		yT := g.env.GetType(expr.Y)
@@ -2467,21 +2466,16 @@ func (g *Generator) genStmts(s []ast.Stmt) GenFrag {
 }
 
 func (g *Generator) genBlockStmt(stmt *ast.BlockStmt) GenFrag {
-	var bs []func() string
 	c1 := g.genStmts(stmt.List)
-	bs = append(bs, c1.B...)
-	return GenFrag{F: func() string {
-		return c1.F()
-	}, B: bs}
+	return GenFrag{F: c1.F, B: c1.B}
 }
 
 func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) GenFrag {
-	return GenFrag{F: func() string {
-		var tmp string
+	return GenFrag{F: func() (out string) {
 		for _, spec := range specs {
-			tmp += g.genSpec(spec, tok).F()
+			out += g.genSpec(spec, tok).F()
 		}
-		return tmp
+		return
 	}}
 }
 
@@ -2627,9 +2621,9 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							out += e(g.prefix+"for ") + c2.F() + e(" := range (") + c1.F() + e(").Iter() {\n")
 						case types.MapType:
 							xTup := v.X.(*ast.TupleExpr)
-							key := func() string { return g.genExpr(xTup.Values[0]).F() }
-							val := func() string { return g.genExpr(xTup.Values[1]).F() }
-							y := func() string { return c1.F() }
+							key := g.genExpr(xTup.Values[0]).F
+							val := g.genExpr(xTup.Values[1]).F
+							y := c1.F
 							out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
 						case types.RangeType:
 							out += e(g.prefix + "for ")
@@ -2773,8 +2767,7 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	xFrag := g.genExpr(stmt.X)
 	bs := xFrag.B
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
@@ -2798,7 +2791,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		enumT := rhsT.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
 			c1 := g.genExprs(stmt.Lhs)
-			lhs = func() string { return c1.F() }
+			lhs = c1.F
 		} else {
 			varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			lhs = func() string { return e(varName) }
@@ -2813,11 +2806,11 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
 		if len(stmt.Lhs) == 1 {
 			c1 := g.genExprs(stmt.Lhs)
-			lhs = func() string { return c1.F() }
+			lhs = c1.F
 		} else {
 			if v, ok := rhsT.(types.TupleType); ok && v.KeepRaw {
 				c1 := g.genExprs(stmt.Lhs)
-				lhs = func() string { return c1.F() }
+				lhs = c1.F
 			} else {
 				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 				lhs = func() string { return e(varName) }
@@ -2834,7 +2827,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		}
 	} else if len(stmt.Lhs) == 1 && TryCast[*ast.IndexExpr](stmt.Lhs[0]) && TryCast[*ast.MapType](stmt.Lhs[0].(*ast.IndexExpr).X) {
 		c1 := g.genExprs(stmt.Lhs)
-		lhs = func() string { return c1.F() }
+		lhs = c1.F
 	} else {
 		isMutStarMap := func() bool {
 			if len(stmt.Lhs) == 1 {
@@ -2856,7 +2849,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			lhs = func() string { return e("(*") + c1.F() + e(")[") + c2.F() + e("]") }
 		} else {
 			c1 := g.genExprs(stmt.Lhs)
-			lhs = func() string { return c1.F() }
+			lhs = c1.F
 		}
 	}
 	content2 := g.genExprs(stmt.Rhs)
@@ -2880,8 +2873,7 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	}
 	var bs []func() string
 	bs = append(bs, content2.B...)
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
@@ -2932,10 +2924,9 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 	if stmt.Else != nil {
 		c4 = g.genStmt(stmt.Else)
 	}
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		gPrefix := g.prefix
-		lhs := func() string { return c1.F() }
+		lhs := c1.F
 		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 		var cond string
@@ -2998,7 +2989,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 	return GenFrag{F: func() string {
 		var out string
 		gPrefix := g.prefix
-		lhs := func() string { return c1.F() }
+		lhs := c1.F
 		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
 		body := func() string { return g.incrPrefix(c3.F) }
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
@@ -3088,8 +3079,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	g.ifVarName = ""
 	bs = append(bs, cond.B...)
 	bs = append(bs, c3.B...)
-	tmp := func() string {
-		var out string
+	tmp := func() (out string) {
 		gPrefix := g.prefix
 		if hasTyp && isFirst {
 			out += e(gPrefix + "var " + varName + " " + ifT.GoStrType() + "\n")
@@ -3147,9 +3137,8 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	c1 := g.genExpr(stmt.Cond)
 	c2 := g.genStmt(stmt.Body)
-	return GenFrag{F: func() string {
-		var out string
-		cond := func() string { return c1.F() }
+	return GenFrag{F: func() (out string) {
+		cond := c1.F
 		gPrefix := g.prefix
 		out += e(gPrefix+"if !(") + cond() + e(") {\n")
 		out += g.incrPrefix(c2.F)
@@ -3210,8 +3199,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 				}
 			}
 		}
-		recv = func() string {
-			var out string
+		recv = func() (out string) {
 			if decl.Recv != nil {
 				out += e(" (")
 				out += g.joinList(decl.Recv)
@@ -3268,8 +3256,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 	}
 	c1 := g.genStmt(decl.Body)
 	bs = append(bs, c1.B...)
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		out += e("func")
 		out += recv()
 		out += e(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsFn(), paramsStr, resultStr))
