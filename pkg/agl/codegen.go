@@ -2221,8 +2221,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		c2 := g.genExprs(expr.Args)
 		bs = append(bs, c1.B...)
 		bs = append(bs, c2.B...)
-		content1 = func() string { return c1.F() }
-		content2 = func() string { return c2.F() }
+		content1 = c1.F
+		content2 = c2.F
 	}
 	return GenFrag{F: func() string {
 		maybeEllipsis := func() (out string) {
