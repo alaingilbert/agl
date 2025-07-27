@@ -2053,9 +2053,10 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 					fnFullName += fmt.Sprintf("_%s", v.Label.Name)
 				}
 			}
-			if fnFullName == "agl1.Vec.Iter" {
+			switch fnFullName {
+			case "agl1.Vec.Iter":
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
-			} else if fnFullName == "agl1.Vec.Shuffled" {
+			case "agl1.Vec.Shuffled":
 				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"math/rand"`}}
 			}
 			fnTRaw := infer.env.Get(fnFullName)
