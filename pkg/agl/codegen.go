@@ -296,7 +296,6 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 	e := EmitWith(g, ext.decl)
 	for _, key := range slices.Sorted(maps.Keys(ext.gen)) {
 		ge := ext.gen[key]
-		m := types.FindGen(ge.raw, ge.concrete)
 		decl := ext.decl
 		if decl == nil {
 			return ""
@@ -334,6 +333,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		default:
 			panic(fmt.Sprintf("%v %v", recv.Type, to(recv.Type)))
 		}
+		m := types.FindGen(ge.raw, ge.concrete)
 		var recvTName string
 		if el, ok := m[recvT]; ok {
 			recvTName = el.GoStr()
