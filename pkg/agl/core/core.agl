@@ -74,6 +74,11 @@ func (v agl1.Vec[T]) Get(i int) T? {
 	return None
 }
 
+// The number of elements in the array.
+func (v agl1.Vec[T]) Len() int {
+	return len(v)
+}
+
 func (v agl1.Vec[T]) IsEmpty() bool {
 	return len(v) == 0
 }

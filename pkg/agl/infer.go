@@ -1923,7 +1923,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
 		} else if InArray(fnName, []string{"Sum", "Push", "Remove", "Clone", "Clear", "Indices", "PushFront",
-			"Insert", "Pop", "PopFront", "Len", "__ADD", "RemoveFirst"}) {
+			"Insert", "Pop", "PopFront", "__ADD", "RemoveFirst"}) {
 			fnT := infer.env.GetFn("agl1.Vec."+fnName).T("T", idTT.Elt)
 			fnT.Recv = []types.Type{oidT}
 			if len(fnT.Params) > 0 {

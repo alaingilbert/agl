@@ -1352,10 +1352,6 @@ func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) {
 	(*a)[i] = el
 }
 
-func AglVecLen[T any](a []T) int {
-	return len(a)
-}
-
 func AglVecPush[T any](a *[]T, els ...T) {
 	*a = append(*a, els...)
 }

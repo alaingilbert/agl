@@ -8848,7 +8848,10 @@ func main() {
 	m := map[string]int{"a": 1, "b": 2, "c": 3}
 	s := AglSet[int]{1: {}, 2: {}, 3: {}}
 	res := []HasLen{a, m, s}
-	AglAssert(AglVecLen(res) == 3, "assert failed line 10")
+	AglAssert(AglVecLen_T_HasLen(res) == 3, "assert failed line 10")
+}
+func AglVecLen_T_HasLen(v []HasLen) int {
+	return len(v)
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
@@ -11311,10 +11314,13 @@ func main() {
 	expected := `// agl:generated
 package main
 var data []string
-var width = AglVecLen(data)
+var width = AglVecLen_T_string(data)
 func main() {
 	if 0 < width {
 	}
+}
+func AglVecLen_T_string(v []string) int {
+	return len(v)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11518,6 +11524,28 @@ func AglVecIsEmpty_T_uint8(v []uint8) bool {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func ([]u8) IsEmpty() bool", test.TypeAt(4, 4).String())
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen404(t *testing.T) {
+	src := `package main
+func main() {
+	a := []u8{1, 2, 3}
+	a.Len()
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []uint8{1, 2, 3}
+	AglVecLen_T_uint8(a)
+}
+func AglVecLen_T_uint8(v []uint8) int {
+	return len(v)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]u8) Len() int", test.TypeAt(4, 4).String())
 	testCodeGen2(t, expected, test)
 }
 
