@@ -1990,11 +1990,9 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			return GenFrag{F: func() (out string) {
 				out += e("AglSet" + fnName + "(")
 				if TryCast[types.StarType](c1T) {
-					out += e("*") + c1.F()
-				} else {
-					out += c1.F()
+					out += e("*")
 				}
-				out += e(", ") + content2() + e(")")
+				out += c1.F() + e(", ") + content2() + e(")")
 				return
 			}}
 		case "Insert", "Remove", "Contains", "ContainsWhere", "Equals", "FirstWhere":
