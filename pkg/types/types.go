@@ -744,6 +744,17 @@ func (f FuncType) RenameGenericParameter(name, newName string) FuncType {
 }
 
 func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
+	replType := func(t Type) Type {
+		switch v := t.(type) {
+		case GenericType:
+			if v.Name == name {
+				t = typ
+			}
+		case FuncType:
+			t = v.ReplaceGenericParameter(name, typ)
+		}
+		return t
+	}
 	ff := f
 	newParams := make([]Type, 0)
 	newTypeParams := make([]Type, 0)
@@ -756,21 +767,9 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	if ff.Return != nil {
 		ff.Return = ReplGen(ff.Return, name, typ)
 	}
-	if v, ok := ff.Return.(GenericType); ok {
-		if v.Name == name {
-			ff.Return = typ
-		}
-	} else if v, ok := ff.Return.(FuncType); ok {
-		ff.Return = v.ReplaceGenericParameter(name, typ)
-	}
-	for i, p := range ff.Params {
-		if v, ok := p.(GenericType); ok {
-			if v.Name == name {
-				newParams[i] = typ
-			}
-		} else if v, ok := p.(FuncType); ok {
-			newParams[i] = v.ReplaceGenericParameter(name, typ)
-		}
+	ff.Return = replType(ff.Return)
+	for i := range ff.Params {
+		newParams[i] = replType(newParams[i])
 	}
 	for i, p := range f.TypeParams {
 		if v, ok := p.(GenericType); ok {
