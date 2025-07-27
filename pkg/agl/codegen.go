@@ -1781,6 +1781,65 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) (out GenFrag
 	}
 }
 
+func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
+	e := EmitWith(g, expr)
+	if x.Name == "assert" {
+		var contents []func() string
+		for _, arg := range expr.Args {
+			contents = append(contents, g.genExpr(arg).F)
+		}
+		return GenFrag{F: func() string {
+			var out string
+			out = e("AglAssert(")
+			line := g.fset.Position(expr.Pos()).Line
+			msg := fmt.Sprintf(`"assert failed line %d"`, line)
+			if len(contents) == 1 {
+				contents = append(contents, func() string { return e(msg) })
+			} else {
+				tmp := contents[1]
+				contents[1] = func() string { return e(msg+` + " " + `) + tmp() }
+			}
+			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
+			out += e(")")
+			return out
+		}}
+	} else if x.Name == "panic" {
+		return GenFrag{F: func() string { return e("panic(nil)") }}
+	} else if x.Name == "panicWith" {
+		c1 := g.genExpr(expr.Args[0])
+		return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
+	} else if x.Name == "Set" {
+		arg0 := expr.Args[0]
+		arg0T := g.env.GetType(arg0)
+		c1 := g.genExpr(arg0)
+		return GenFrag{F: func() (out string) {
+			out += e("AglBuildSet(")
+			if TryCast[types.ArrayType](arg0T) {
+				out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
+			} else {
+				out += c1.F()
+			}
+			out += e(")")
+			return
+		}}
+	} else if x.Name == "Array" {
+		arg0 := expr.Args[0]
+		arg0T := g.env.GetType(arg0)
+		c1 := g.genExpr(arg0)
+		return GenFrag{F: func() (out string) {
+			out += e("AglBuildArray(")
+			if TryCast[types.ArrayType](arg0T) {
+				out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
+			} else {
+				out += c1.F()
+			}
+			out += e(")")
+			return
+		}}
+	}
+	return GenFrag{}
+}
+
 func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorExpr) GenFrag {
 	e := EmitWith(g, expr)
 	oeXT := g.env.GetType(x.X)
@@ -2107,59 +2166,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			return res
 		}
 	case *ast.Ident:
-		if x.Name == "assert" {
-			var contents []func() string
-			for _, arg := range expr.Args {
-				contents = append(contents, g.genExpr(arg).F)
-			}
-			return GenFrag{F: func() string {
-				var out string
-				out = e("AglAssert(")
-				line := g.fset.Position(expr.Pos()).Line
-				msg := fmt.Sprintf(`"assert failed line %d"`, line)
-				if len(contents) == 1 {
-					contents = append(contents, func() string { return e(msg) })
-				} else {
-					tmp := contents[1]
-					contents[1] = func() string { return e(msg+` + " " + `) + tmp() }
-				}
-				out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
-				out += e(")")
-				return out
-			}}
-		} else if x.Name == "panic" {
-			return GenFrag{F: func() string { return e("panic(nil)") }}
-		} else if x.Name == "panicWith" {
-			c1 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
-		} else if x.Name == "Set" {
-			arg0 := expr.Args[0]
-			arg0T := g.env.GetType(arg0)
-			c1 := g.genExpr(arg0)
-			return GenFrag{F: func() (out string) {
-				out += e("AglBuildSet(")
-				if TryCast[types.ArrayType](arg0T) {
-					out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
-				} else {
-					out += c1.F()
-				}
-				out += e(")")
-				return
-			}}
-		} else if x.Name == "Array" {
-			arg0 := expr.Args[0]
-			arg0T := g.env.GetType(arg0)
-			c1 := g.genExpr(arg0)
-			return GenFrag{F: func() (out string) {
-				out += e("AglBuildArray(")
-				if TryCast[types.ArrayType](arg0T) {
-					out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
-				} else {
-					out += c1.F()
-				}
-				out += e(")")
-				return
-			}}
+		if res := g.genCallExprIdent(expr, x); res.F != nil {
+			return res
 		}
 	}
 	content1 := func() string { return "" }
