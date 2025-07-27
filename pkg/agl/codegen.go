@@ -79,11 +79,6 @@ type Extension struct {
 	gen  map[string]ExtensionTest
 }
 
-type ExtensionString struct {
-	decl *ast.FuncDecl
-	gen  map[string]ExtensionTest
-}
-
 type ExtensionTest struct {
 	raw      types.Type
 	concrete types.Type
