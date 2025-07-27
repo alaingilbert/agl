@@ -783,9 +783,6 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 		if ret != nil {
 			returnStr = " "
 			val := ret.GoStrType()
-			if val == "AglVoid{}" {
-				val = "AglVoid"
-			}
 			returnStr += val
 		}
 		out = e(fmt.Sprintf("func(%s)%s {\n", argsStr, returnStr))

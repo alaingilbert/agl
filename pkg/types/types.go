@@ -29,7 +29,7 @@ type StarType struct {
 }
 
 func (s StarType) GoStr() string     { return fmt.Sprintf("*%s", s.X.GoStr()) }
-func (s StarType) GoStrType() string { return s.GoStr() }
+func (s StarType) GoStrType() string { return fmt.Sprintf("*%s", s.X.GoStrType()) }
 func (s StarType) String() string {
 	if s.X == nil {
 		return "*UNKNOWN"
@@ -89,7 +89,7 @@ type IndexType struct {
 }
 
 func (i IndexType) GoStr() string     { return i.X.GoStr() }
-func (i IndexType) GoStrType() string { return i.X.GoStr() }
+func (i IndexType) GoStrType() string { return i.X.GoStrType() }
 func (i IndexType) String() string {
 	var tmp []string
 	for _, e := range i.Index {
@@ -104,7 +104,7 @@ type IndexListType struct {
 }
 
 func (i IndexListType) GoStr() string     { return i.X.GoStr() }
-func (i IndexListType) GoStrType() string { return i.X.GoStr() }
+func (i IndexListType) GoStrType() string { return i.X.GoStrType() }
 func (i IndexListType) String() string    { return i.X.String() }
 
 type ResultType struct {
@@ -180,7 +180,7 @@ func (l LabelledType) String() string {
 type TypeType struct{ W Type }
 
 func (t TypeType) GoStr() string     { return t.W.GoStr() }
-func (t TypeType) GoStrType() string { return t.GoStr() }
+func (t TypeType) GoStrType() string { return t.W.GoStrType() }
 func (t TypeType) String() string    { return t.W.String() }
 
 type StringType struct{ W Type }
@@ -252,19 +252,19 @@ func (n NilType) String() string    { return "nil" }
 type SetType struct{ K Type }
 
 func (s SetType) GoStr() string     { return fmt.Sprintf("AglSet[%s]", s.K.GoStr()) }
-func (s SetType) GoStrType() string { return fmt.Sprintf("AglSet[%s]", s.K.GoStr()) }
+func (s SetType) GoStrType() string { return fmt.Sprintf("AglSet[%s]", s.K.GoStrType()) }
 func (s SetType) String() string    { return fmt.Sprintf("set[%s]", s.K.String()) }
 
 type ArrayType struct{ Elt Type }
 
 func (a ArrayType) GoStr() string     { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
-func (a ArrayType) GoStrType() string { return fmt.Sprintf("[]%s", a.Elt.GoStr()) }
+func (a ArrayType) GoStrType() string { return fmt.Sprintf("[]%s", a.Elt.GoStrType()) }
 func (a ArrayType) String() string    { return fmt.Sprintf("[]%s", a.Elt.String()) }
 
 type EllipsisType struct{ Elt Type }
 
 func (e EllipsisType) GoStr() string     { return fmt.Sprintf("...%s", e.Elt.GoStr()) }
-func (e EllipsisType) GoStrType() string { return fmt.Sprintf("...%s", e.Elt.GoStr()) }
+func (e EllipsisType) GoStrType() string { return fmt.Sprintf("...%s", e.Elt.GoStrType()) }
 func (e EllipsisType) String() string    { return fmt.Sprintf("...%s", e.Elt.String()) }
 
 type FieldType struct {
@@ -324,7 +324,7 @@ func (s StructType) GoStrType() string {
 			if v, ok := t.(GenericType); ok {
 				return v.W.GoStrType()
 			} else {
-				return t.GoStr()
+				return t.GoStrType()
 			}
 		}, ", ")
 		out += fmt.Sprintf("[%s]", tmp)
@@ -1145,9 +1145,6 @@ func (f FuncType) GoStrType() string {
 				resultStr = " !"
 			} else {
 				val := result.GoStrType()
-				if val == "AglVoid{}" {
-					val = "AglVoid"
-				}
 				if val != "" {
 					resultStr = " " + val
 				}
