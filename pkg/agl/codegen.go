@@ -2255,14 +2255,13 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 		content2 = func() string { return c2.F() }
 	}
 	return GenFrag{F: func() string {
-		var out string
-		out = content1() + e("(")
-		out += content2()
-		if expr.Ellipsis != 0 {
-			out += e("...")
+		maybeEllipsis := func() (out string) {
+			if expr.Ellipsis != 0 {
+				out += e("...")
+			}
+			return
 		}
-		out += e(")")
-		return out
+		return content1() + e("(") + content2() + maybeEllipsis() + e(")")
 	}, B: bs}
 }
 
