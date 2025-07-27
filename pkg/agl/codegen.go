@@ -296,7 +296,6 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 	e := EmitWith(g, ext.decl)
 	for _, key := range slices.Sorted(maps.Keys(ext.gen)) {
 		ge := ext.gen[key]
-		p(ge.raw, ge.concrete)
 		m := types.FindGen(ge.raw, ge.concrete)
 		decl := ext.decl
 		if decl == nil {
@@ -364,11 +363,11 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 			}
 		}
 
-		var firstArg ast.Field
+		firstArg := ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}}
 		if extType == "Vec" {
-			firstArg = ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}}
+			firstArg.Type = &ast.ArrayType{Elt: &ast.Ident{Name: recvTName}}
 		} else {
-			firstArg = ast.Field{Names: []*ast.LabelledIdent{{Ident: &ast.Ident{Name: recvName}, Label: nil}}, Type: &ast.Ident{Name: recvTName}}
+			firstArg.Type = &ast.Ident{Name: recvTName}
 		}
 		var paramsClone []ast.Field
 		if decl.Type.Params != nil {
