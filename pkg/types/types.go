@@ -604,6 +604,7 @@ func (t TupleType) GoStr() string {
 	r := strings.NewReplacer(
 		"[", "_",
 		"]", "_",
+		"*", "_",
 	)
 	name := utils.MapJoin(t.Elts, func(t Type) string { return t.GoStr() }, "_")
 	name = r.Replace(name)

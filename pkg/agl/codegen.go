@@ -347,6 +347,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 		r := strings.NewReplacer(
 			"[", "_",
 			"]", "_",
+			"*", "_",
 		)
 
 		var elts []string
@@ -1921,6 +1922,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			r := strings.NewReplacer(
 				"[", "_",
 				"]", "_",
+				"*", "_",
 			)
 			var els []string
 			for _, k := range slices.Sorted(maps.Keys(m)) {
