@@ -1307,31 +1307,19 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	switch call := expr.Fun.(type) {
 	case *ast.IndexExpr:
 		infer.callExprIndexExpr(expr, call)
-		if len(infer.Errors) > 0 {
-			return
-		}
 	case *ast.SelectorExpr:
 		infer.callExprSelectorExpr(expr, call)
-		if len(infer.Errors) > 0 {
-			return
-		}
 	case *ast.Ident:
 		infer.callExprIdent(expr, call)
-		if len(infer.Errors) > 0 {
-			return
-		}
 	case *ast.FuncLit:
 		infer.callExprFuncLit(expr, call)
-		if len(infer.Errors) > 0 {
-			return
-		}
 	case *ast.ArrayType:
 		infer.callExprArrayType(expr, call)
-		if len(infer.Errors) > 0 {
-			return
-		}
 	default:
 		infer.errorf(expr.Fun, "%v", to(expr.Fun))
+		return
+	}
+	if len(infer.Errors) > 0 {
 		return
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
