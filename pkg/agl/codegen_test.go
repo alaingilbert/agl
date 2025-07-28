@@ -26,9 +26,7 @@ func getGenOutput(src string, opts ...GeneratorOption) (string, string) {
 func testCodeGen2(t *testing.T, expected string, test *Test, opts ...GeneratorOption) {
 	got1, got2 := test.GenCode2(opts...)
 	testCodeGen1(t, got1, expected)
-	if utils.True() {
-		testCodeGen1(t, got2, expected)
-	}
+	testCodeGen1(t, got2, expected)
 }
 
 func testCodeGen1(t *testing.T, got, expected string) {
