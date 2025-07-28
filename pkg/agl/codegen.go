@@ -2925,11 +2925,17 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	assignOpsFrag := GenFrag{}
 	if TryCast[types.StructType](lhsT) {
 		m := map[token.Token]token.Token{
-			token.ADD_ASSIGN: token.ADD,
-			token.SUB_ASSIGN: token.SUB,
-			token.MUL_ASSIGN: token.MUL,
-			token.QUO_ASSIGN: token.QUO,
-			token.REM_ASSIGN: token.REM,
+			token.ADD_ASSIGN:     token.ADD,
+			token.SUB_ASSIGN:     token.SUB,
+			token.MUL_ASSIGN:     token.MUL,
+			token.QUO_ASSIGN:     token.QUO,
+			token.REM_ASSIGN:     token.REM,
+			token.AND_ASSIGN:     token.AND,
+			token.OR_ASSIGN:      token.OR,
+			token.XOR_ASSIGN:     token.XOR,
+			token.SHL_ASSIGN:     token.SHL,
+			token.SHR_ASSIGN:     token.SHR,
+			token.AND_NOT_ASSIGN: token.AND_NOT,
 		}
 		if v, ok := m[op]; ok {
 			assignOpsFrag = g.genBinaryExpr(&ast.BinaryExpr{X: stmt.Lhs[0], Op: v, Y: stmt.Rhs[0]})
