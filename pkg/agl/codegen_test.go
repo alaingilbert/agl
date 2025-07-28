@@ -11660,6 +11660,23 @@ func (v *Value) __ADD_ASSIGN_Value(other Value) {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen407(t *testing.T) {
+	src := `package main
+type Value struct {
+	next *Value
+}
+`
+	expected := `// agl:generated
+package main
+type Value struct {
+	next *Value
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

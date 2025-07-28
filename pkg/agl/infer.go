@@ -393,6 +393,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
 	case *ast.StructType:
 		structT := types.StructType{Name: spec.Name.Name}
+		infer.env.Define(spec.Name, spec.Name.Name, structT)
 		infer.env.withEnv(func(nenv *Env) {
 			if spec.TypeParams != nil {
 				var tpFields []types.FieldType
