@@ -794,7 +794,7 @@ func ReplGenM(t Type, m map[string]Type) (out Type) {
 
 func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 	currTyp = Unwrap(currTyp)
-	newTyp = Unwrap(newTyp)
+	newTyp = Unwrap(Unwrap(newTyp))
 	switch currT := currTyp.(type) {
 	case ArrayType:
 		return ReplGen2(t, currT.Elt, newTyp.(ArrayType).Elt)
