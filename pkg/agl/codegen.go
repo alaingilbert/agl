@@ -2400,6 +2400,9 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 				}
 			}
 		}
+		if op == "**" {
+			return e("AglPow(") + content1() + e(", ") + content2() + e(")")
+		}
 		return content1() + e(" "+op+" ") + content2()
 	}, B: bs}
 }

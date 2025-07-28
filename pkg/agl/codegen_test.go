@@ -11681,12 +11681,14 @@ func TestCodeGen408(t *testing.T) {
 	src := `package main
 func main() {
 	_ = pow(1, 2)
+	_ = 2 ** 3.4
 }
 `
 	expected := `// agl:generated
 package main
 func main() {
 	_ = AglPow(1, 2)
+	_ = AglPow(2, 3.4)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

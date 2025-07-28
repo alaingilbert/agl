@@ -513,3 +513,15 @@ func main() {
 }`
 	tassert.Equal(t, "Some(1)\nSome(2)\nNone\n", testGenOutput(src))
 }
+
+func Test31(t *testing.T) {
+	t.Parallel()
+	src := `package main
+import "fmt"
+func main() {
+	fmt.Println(pow(2, 3))
+	fmt.Printf("%.4f\n", pow(2, 3.4))
+	fmt.Printf("%.4f\n", 2 ** 3.4)
+}`
+	tassert.Equal(t, "8\n10.5561\n10.5561\n", testGenOutput(src))
+}
