@@ -1079,6 +1079,7 @@ func (infer *FileInferrer) callExprIndexExpr(expr *ast.CallExpr, call *ast.Index
 func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.SelectorExpr) {
 	var exprFunT types.Type
 	var callXParent *Info
+	var exprFunTIsParen bool // TODO not a good fix, allows a non-mut ident to be wrapped in a paren
 
 	infer.expr(call.X)
 	switch callXT := call.X.(type) {
@@ -1121,6 +1122,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		exprFunT = infer.GetType2(callXT)
 	case *ast.ParenExpr:
 		exprFunT = infer.GetType2(callXT)
+		exprFunTIsParen = true
 	case *ast.RangeExpr:
 		exprFunT = infer.GetType2(callXT)
 	case *ast.SliceExpr:
@@ -1186,7 +1188,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			}
 			fnT := infer.env.GetFn(name)
 			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-				if infer.mutEnforced && !TryCast[types.MutType](oexprFunT) {
+				if infer.mutEnforced && !exprFunTIsParen && !TryCast[types.MutType](oexprFunT) {
 					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
 					return
 				}
