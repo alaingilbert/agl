@@ -39,14 +39,13 @@ func (mut v *Value) * (mut other *Value) *Value {
     return out
 }
 func (mut v *Value) ** (other int) *Value {
-    mut out := NewValue1(v.Data ** f64(other))
+    mut out := NewValue(v.Data ** f64(other), []*Value{v})
     out.backward = func() {
         v.Grad += f64(other) * (f64(v.Data) ** f64(other-1)) * out.Grad
     }
     return out
 }
 func (mut v *Value) += (other *Value) {
-    //mut out := NewValue(v.Data + other.Data, []*Value{v, other})
     v.Data += other.Data
 }
 func (mut v *Value) + (other f64) *Value {
@@ -110,16 +109,16 @@ func main() {
     b := NewValue1(2.0)
     mut c := a + b
     mut d := a * b + b**3
-    c += c + f64(1)
-    c += f64(1) + c + (-a)
+    c = c + (c + f64(1))
+    c = c + (f64(1) + c + (-a))
     mut tmp1 := b + a
-    d += d * f64(2) + tmp1.Relu()
+    d = d + (d * f64(2) + tmp1.Relu())
     mut tmp2 := b - a
-    d += f64(3) * d + tmp2.Relu()
+    d = d + (f64(3) * d + tmp2.Relu())
     e := c - d
     f := e**2
     mut g := f / f64(2)
-    g += f64(10) / f
+    g = g + (f64(10) / f)
     fmt.Printf("%.4f\n", g.Data) // prints 24.7041, the outcome of this forward pass
     g.Backward()
     fmt.Printf("%.4f\n", a.Grad) // prints 138.8338, i.e. the numerical value of dg/da
