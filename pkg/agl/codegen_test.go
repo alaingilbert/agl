@@ -11628,9 +11628,6 @@ func main() {
 	v = v + f64(2.0)
 	v += f64(2.0) + v + (-v)
 }
-func (mut v *Value) += (other Value) {
-	v.Data += other.Data
-}
 `
 	expected := `// agl:generated
 package main
@@ -11649,10 +11646,7 @@ func (v Value) __RADD_float64(other float64) Value {
 func main() {
 	v := Value{Data: 1.0}
 	v = v.__ADD_float64(float64(2.0))
-	v.__ADD_ASSIGN_Value(v.__RADD_float64(float64(2.0)).__ADD_Value((v.__NEG())))
-}
-func (v *Value) __ADD_ASSIGN_Value(other Value) {
-	v.Data += other.Data
+	v = v.__ADD_Value(v.__RADD_float64(float64(2.0)).__ADD_Value((v.__NEG())))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
