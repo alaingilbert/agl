@@ -52,7 +52,7 @@ func (mut v *Value) * (other f64) *Value {
     return v * NewValue1(other)
 }
 func (mut v *Value) - (other *Value) *Value {
-    return v + (-other)
+    return v + -other
 }
 func (mut v *Value) / (other *Value) *Value {
     return v * other ** f64(-1)
@@ -73,9 +73,9 @@ func (mut v *Value) __NEG() *Value {
     return v * f64(-1)
 }
 func (mut v *Value) Relu() *Value {
-    mut out := NewValue(if v.Data < f64(0.0) { f64(0.0) } else { v.Data }, []*Value{v})
+    mut out := NewValue(if v.Data < 0.0 { f64(0.0) } else { v.Data }, []*Value{v})
     out.backward = func() {
-        v.Grad += if out.Data > f64(0.0) { out.Grad } else { f64(0.0) }
+        v.Grad += if out.Data > 0.0 { out.Grad } else { f64(0.0) }
     }
     return out
 }
