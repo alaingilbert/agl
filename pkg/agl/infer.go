@@ -1303,14 +1303,29 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	switch call := expr.Fun.(type) {
 	case *ast.IndexExpr:
 		infer.callExprIndexExpr(expr, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	case *ast.SelectorExpr:
 		infer.callExprSelectorExpr(expr, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	case *ast.Ident:
 		infer.callExprIdent(expr, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	case *ast.FuncLit:
 		infer.callExprFuncLit(expr, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	case *ast.ArrayType:
 		infer.callExprArrayType(expr, call)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	default:
 		infer.errorf(expr.Fun, "%v", to(expr.Fun))
 		return
@@ -3736,6 +3751,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					infer.withOptType(rhs, types.Unwrap(lhsT), func() {
 						infer.expr(rhs)
 					})
+					if len(infer.Errors) > 0 {
+						return
+					}
 					rhsT := infer.GetType2(rhs)
 					lhsWantedTT := types.Unwrap(lhsWantedT)
 					if TryCast[types.OptionType](rhsT) {
@@ -3746,6 +3764,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						infer.errorf(lhs, "return type %s does not match expected type %s", rhsT, lhsT)
 					}
 				})
+				if len(infer.Errors) > 0 {
+					return
+				}
 			} else {
 				infer.expr(rhs)
 				if len(infer.Errors) > 0 {
@@ -3951,6 +3972,9 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 
 func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {
 	infer.stmts(stmt.List)
+	if len(infer.Errors) > 0 {
+		return
+	}
 	if stmt.List == nil || len(stmt.List) == 0 {
 		infer.SetType(stmt, types.VoidType{})
 	} else if infer.env.GetType(stmt) == nil {
@@ -3960,6 +3984,9 @@ func (infer *FileInferrer) blockStmt(stmt *ast.BlockStmt) {
 
 func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	infer.expr(expr.X)
+	if len(infer.Errors) > 0 {
+		return
+	}
 	if TryCast[types.OptionType](infer.GetType2(expr.X)) &&
 		TryCast[*ast.Ident](expr.Y) && expr.Y.(*ast.Ident).Name == "None" &&
 		infer.env.GetType(expr.Y) == nil {
@@ -3967,6 +3994,9 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	}
 	if t := infer.env.GetType(expr.Y); t == nil || TryCast[types.UntypedNumType](t) {
 		infer.expr(expr.Y)
+		if len(infer.Errors) > 0 {
+			return
+		}
 	}
 	if infer.GetType2(expr.X) != nil && infer.GetType2(expr.Y) != nil {
 		tmpFn := func(x, y ast.Expr) bool {
