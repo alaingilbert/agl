@@ -2923,8 +2923,17 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	op := stmt.Tok
 	lhsT := types.Unwrap(g.env.GetType(stmt.Lhs[0]))
 	assignOpsFrag := GenFrag{}
-	if op == token.ADD_ASSIGN && TryCast[types.StructType](lhsT) {
-		assignOpsFrag = g.genBinaryExpr(&ast.BinaryExpr{X: stmt.Lhs[0], Op: token.ADD, Y: stmt.Rhs[0]})
+	if TryCast[types.StructType](lhsT) {
+		m := map[token.Token]token.Token{
+			token.ADD_ASSIGN: token.ADD,
+			token.SUB_ASSIGN: token.SUB,
+			token.MUL_ASSIGN: token.MUL,
+			token.QUO_ASSIGN: token.QUO,
+			token.REM_ASSIGN: token.REM,
+		}
+		if v, ok := m[op]; ok {
+			assignOpsFrag = g.genBinaryExpr(&ast.BinaryExpr{X: stmt.Lhs[0], Op: v, Y: stmt.Rhs[0]})
+		}
 	}
 	var bs []func() string
 	bs = append(bs, content2.B...)
