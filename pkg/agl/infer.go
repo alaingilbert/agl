@@ -3054,6 +3054,8 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 				infer.expr(v1)
 			case *ast.CallExpr:
 				infer.expr(v1)
+			//case *ast.CompositeLit:
+			//	infer.expr(v1)
 			default:
 				infer.errorf(elExpr, "%v", to(elExpr))
 				return

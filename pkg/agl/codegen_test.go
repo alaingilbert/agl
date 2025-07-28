@@ -6438,7 +6438,9 @@ type AglTupleStruct_string___string struct {
 	Arg1 []string
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen199(t *testing.T) {
