@@ -38,7 +38,7 @@ func (mut v *Value) * (mut other *Value) *Value {
     }
     return out
 }
-func (mut v *Value) ** (other int) *Value {
+func (mut v *Value) ** (other f64) *Value {
     mut out := NewValue(v.Data ** f64(other), []*Value{v})
     out.backward = func() {
         v.Grad += f64(other) * (f64(v.Data) ** f64(other-1)) * out.Grad
@@ -55,13 +55,13 @@ func (mut v *Value) - (other *Value) *Value {
     return v + (-other)
 }
 func (mut v *Value) / (other *Value) *Value {
-    return v * (other ** -1)
+    return v * other ** f64(-1)
 }
 func (mut v *Value) / (other f64) *Value {
-    return v * (other ** -1)
+    return v * other ** f64(-1)
 }
 func (mut v *Value) __RQUO (other f64) *Value {
-    return other * (v ** -1)
+    return other * v ** f64(-1)
 }
 func (mut v *Value) __RADD (other f64) *Value {
     return v + other
@@ -103,13 +103,13 @@ func main() {
     a := NewValue1(-4.0)
     b := NewValue1(2.0)
     mut c := a + b
-    mut d := a * b + b**3
+    mut d := a * b + b**f64(3)
     c += c + f64(1)
     c += f64(1) + c + -a
     d += d * f64(2) + (b + a).Relu()
     d += f64(3) * d + (b - a).Relu()
     e := c - d
-    f := e**2
+    f := e**f64(2)
     mut g := f / f64(2)
     g += f64(10) / f
     fmt.Printf("%.4f\n", g.Data) // prints 24.7041, the outcome of this forward pass
