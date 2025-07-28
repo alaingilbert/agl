@@ -1,7 +1,6 @@
 package main
 
 import "fmt"
-import "math"
 
 type Value struct {
     mut Data f64
@@ -23,9 +22,6 @@ func NewValue(data f64, children []*Value) *Value {
 func NewValue1(data f64) *Value {
     return NewValue(data, []*Value{})
 }
-func (mut v *Value) += (other *Value) {
-    v.Data += other.Data
-}
 func (mut v *Value) + (mut other *Value) *Value {
     mut out := NewValue(v.Data + other.Data, []*Value{v, other})
     out.backward = func() {
@@ -33,9 +29,6 @@ func (mut v *Value) + (mut other *Value) *Value {
         other.Grad += out.Grad
     }
     return out
-}
-func (mut v *Value) + (other f64) *Value {
-    return v + NewValue1(other)
 }
 func (mut v *Value) * (mut other *Value) *Value {
     mut out := NewValue(v.Data * other.Data, []*Value{v, other})
@@ -45,15 +38,22 @@ func (mut v *Value) * (mut other *Value) *Value {
     }
     return out
 }
-func (mut v *Value) * (other f64) *Value {
-    return v * NewValue1(other)
-}
 func (mut v *Value) ** (other int) *Value {
-    mut out := NewValue1(math.Pow(v.Data, f64(other)))
+    mut out := NewValue1(v.Data ** f64(other))
     out.backward = func() {
-        v.Grad += f64(other) * math.Pow(f64(v.Data), f64(other-1)) * out.Grad
+        v.Grad += f64(other) * (f64(v.Data) ** f64(other-1)) * out.Grad
     }
     return out
+}
+func (mut v *Value) += (other *Value) {
+    //mut out := NewValue(v.Data + other.Data, []*Value{v, other})
+    v.Data += other.Data
+}
+func (mut v *Value) + (other f64) *Value {
+    return v + NewValue1(other)
+}
+func (mut v *Value) * (other f64) *Value {
+    return v * NewValue1(other)
 }
 func (mut v *Value) - (other *Value) *Value {
     return v + (-other)
@@ -62,13 +62,13 @@ func (mut v *Value) / (other *Value) *Value {
     return v * (other ** -1)
 }
 func (mut v *Value) / (other f64) *Value {
-    return v * (other ** -1.0)
+    return v * (other ** -1)
+}
+func (mut v *Value) __RQUO (other f64) *Value {
+    return other * (v ** -1)
 }
 func (mut v *Value) __RADD (other f64) *Value {
     return v + other
-}
-func (mut v *Value) __RQUO (other f64) *Value {
-    return other * (v ** int(-1))
 }
 func (mut v *Value) __RMUL (other f64) *Value {
     return v * other
