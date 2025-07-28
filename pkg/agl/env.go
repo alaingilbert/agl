@@ -1061,7 +1061,7 @@ func (e *Env) GetOrCreateNameInfo(name string) *Info {
 }
 
 func (e *Env) GetFn(name string) types.FuncType {
-	return e.Get(name).(types.FuncType)
+	return types.Unwrap(e.Get(name)).(types.FuncType)
 }
 
 func (e *Env) DefineFn(nenv *Env, name string, fnStr string, opts ...SetTypeOption) {

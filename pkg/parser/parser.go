@@ -481,7 +481,8 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 func (p *parser) parseIdentOrOp() *ast.Ident {
 	switch p.tok {
 	case token.EQL, token.LSS, token.GTR, token.LEQ, token.GEQ,
-		token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.IN, token.RANGEOP, token.RANGEOPEQ,
+		token.ADD, token.SUB, token.MUL, token.QUO, token.POW, token.REM, token.IN, token.RANGEOP, token.RANGEOPEQ,
+		token.ADD_ASSIGN, token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN, token.REM_ASSIGN,
 		token.LAND, token.LOR,
 		token.AND, token.OR, token.XOR, token.SHL, token.SHR, token.AND_NOT:
 		pos := p.pos

@@ -517,13 +517,18 @@ func (infer *FileInferrer) funcDecl(decl *ast.FuncDecl) {
 
 // mapping of "agl function name" to "go compiled function name"
 var overloadMapping = map[string]string{
-	"==": "__EQL",
-	"!=": "__EQL",
-	"+":  "__ADD",
-	"-":  "__SUB",
-	"*":  "__MUL",
-	"/":  "__QUO",
-	"%":  "__REM",
+	"==":     "__EQL",
+	"!=":     "__EQL",
+	"+":      "__ADD",
+	"-":      "__SUB",
+	"*":      "__MUL",
+	"/":      "__QUO",
+	"%":      "__REM",
+	"**":     "__POW",
+	"+=":     "__ADD_ASSIGN",
+	"__RADD": "__RADD",
+	"__RQUO": "__RQUO",
+	"__RMUL": "__RMUL",
 }
 
 func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
@@ -3963,8 +3968,14 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	switch expr.Op {
 	case token.EQL, token.NEQ, token.LOR, token.LAND, token.LEQ, token.LSS, token.GEQ, token.GTR, token.IN:
 		infer.SetType(expr, types.BoolType{})
-	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM:
-		infer.SetType(expr, types.Unwrap(infer.GetType(expr.X)))
+	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM, token.POW:
+		xT := types.Unwrap(infer.GetType(expr.X))
+		yT := types.Unwrap(infer.GetType(expr.Y))
+		if TryCast[types.StructType](yT) {
+			infer.SetType(expr, yT)
+		} else {
+			infer.SetType(expr, xT)
+		}
 	default:
 		infer.SetType(expr, types.Unwrap(infer.GetType(expr.X)))
 	}

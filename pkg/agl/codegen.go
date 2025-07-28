@@ -1001,6 +1001,13 @@ func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.X)
 	return GenFrag{F: func() string {
+		xT := types.Unwrap(g.env.GetType(expr.X))
+		if v, ok := xT.(types.StructType); ok {
+			lhsName := v.Name
+			if expr.Op.String() == "-" && g.env.Get(lhsName+".__NEG") != nil {
+				return c1.F() + e(".__NEG()")
+			}
+		}
 		return e(expr.Op.String()) + c1.F()
 	}}
 }
@@ -2266,8 +2273,8 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 		content1 := c1.F
 		content2 := c2.F
 		op := expr.Op.String()
-		xT := g.env.GetType(expr.X)
-		yT := g.env.GetType(expr.Y)
+		xT := types.Unwrap(g.env.GetType(expr.X))
+		yT := types.Unwrap(g.env.GetType(expr.Y))
 		if xT != nil && yT != nil {
 			if op == "in" {
 				t := g.env.GetType(expr.Y)
@@ -2324,16 +2331,68 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 						out += content1() + e(".__EQL(") + content2() + e(")")
 						return out
 					} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
-						return content1() + e(".__ADD(") + content2() + e(")")
+						return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
 					} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
-						return content1() + e(".__SUB(") + content2() + e(")")
+						return content1() + e(".__SUB_"+rhsName+"(") + content2() + e(")")
 					} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
-						return content1() + e(".__MUL(") + content2() + e(")")
+						return content1() + e(".__MUL_"+rhsName+"(") + content2() + e(")")
 					} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
-						return content1() + e(".__QUO(") + content2() + e(")")
+						return content1() + e(".__POW_"+rhsName+"(") + content2() + e(")")
+					} else if op == "/" && g.env.Get(lhsName+".__POW") != nil {
+						return content1() + e(".__QUO_"+rhsName+"(") + content2() + e(")")
 					} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
-						return content1() + e(".__REM(") + content2() + e(")")
+						return content1() + e(".__REM_"+rhsName+"(") + content2() + e(")")
 					}
+				}
+			} else if TryCast[types.StructType](xT) {
+				lhsName := xT.(types.StructType).Name
+				rhsName := yT.GoStrType()
+				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
+					var out string
+					if op == "!=" {
+						out += e("!")
+					}
+					out += content1() + e(".__EQL(") + content2() + e(")")
+					return out
+				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
+					return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
+				} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
+					return content1() + e(".__SUB_"+rhsName+"(") + content2() + e(")")
+				} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
+					return content1() + e(".__MUL_"+rhsName+"(") + content2() + e(")")
+				} else if op == "**" && g.env.Get(lhsName+".__POW") != nil {
+					return content1() + e(".__POW_"+rhsName+"(") + content2() + e(")")
+				} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
+					return content1() + e(".__QUO_"+rhsName+"(") + content2() + e(")")
+				} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
+					return content1() + e(".__REM_"+rhsName+"(") + content2() + e(")")
+				}
+			} else if TryCast[types.StructType](yT) {
+				lhsName := xT.GoStrType()
+				rhsName := yT.(types.StructType).Name
+				if (op == "==" || op == "!=") && g.env.Get(lhsName+".__EQL") != nil {
+					var out string
+					if op == "!=" {
+						out += e("!")
+					}
+					out += content1() + e(".__EQL(") + content2() + e(")")
+					return out
+				} else if op == "+" && g.env.Get(rhsName+".__RADD") != nil {
+					return content2() + e(".__RADD_"+lhsName+"(") + content1() + e(")")
+				} else if op == "+" && g.env.Get(rhsName+".__RQUO") != nil {
+					return content2() + e(".__RQUO_"+lhsName+"(") + content1() + e(")")
+				} else if op == "+" && g.env.Get(rhsName+".__RMUL") != nil {
+					return content2() + e(".__RMUL_"+lhsName+"(") + content1() + e(")")
+				} else if op == "-" && g.env.Get(rhsName+".__RSUB") != nil {
+					return content2() + e(".__RSUB_"+lhsName+"(") + content1() + e(")")
+				} else if op == "*" && g.env.Get(rhsName+".__RMUL") != nil {
+					return content2() + e(".__RMUL_"+lhsName+"(") + content1() + e(")")
+				} else if op == "**" && g.env.Get(rhsName+".__RPOW") != nil {
+					return content2() + e(".__RPOW_"+lhsName+"(") + content1() + e(")")
+				} else if op == "/" && g.env.Get(rhsName+".__RQUO") != nil {
+					return content2() + e(".__RQUO_"+lhsName+"(") + content1() + e(")")
+				} else if op == "%" && g.env.Get(rhsName+".__RREM") != nil {
+					return content2() + e(".__RREM_"+lhsName+"(") + content1() + e(")")
 				}
 			}
 		}
@@ -2860,7 +2919,12 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
-		out += lhs() + e(" "+stmt.Tok.String()+" ") + content2.F()
+		op := stmt.Tok
+		if op == token.ADD_ASSIGN {
+			rhsT := types.Unwrap(g.env.GetType(stmt.Rhs[0])).GoStrType()
+			return out + lhs() + e(".__ADD_ASSIGN_"+rhsT+"(") + content2.F() + e(")\n")
+		}
+		out += lhs() + e(" "+op.String()+" ") + content2.F()
 		if after != "" {
 			out += e("\n")
 		}
@@ -3199,7 +3263,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 	if decl.Name != nil {
 		fnName := decl.Name.Name
 		if newName, ok := overloadMapping[fnName]; ok {
-			fnName = newName
+			fnName = newName + "_" + types.Unwrap(fnT.(types.FuncType).Params[0]).GoStrType()
 		}
 		if decl.Pub.IsValid() {
 			fnName = "AglPub_" + fnName
