@@ -2920,7 +2920,8 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			out += e(g.prefix)
 		}
 		op := stmt.Tok
-		if op == token.ADD_ASSIGN {
+		lhsT := types.Unwrap(g.env.GetType(stmt.Lhs[0]))
+		if op == token.ADD_ASSIGN && TryCast[types.StructType](lhsT) {
 			rhsT := types.Unwrap(g.env.GetType(stmt.Rhs[0])).GoStrType()
 			return out + lhs() + e(".__ADD_ASSIGN_"+rhsT+"(") + content2.F() + e(")\n")
 		}

@@ -1781,7 +1781,7 @@ type Person struct {
 	name string
 	age int
 }
-func (p Person) __EQL(other Person) bool {
+func (p Person) __EQL_Person(other Person) bool {
 	return p.age == other.age
 }
 func main() {
@@ -11652,11 +11652,10 @@ func main() {
 	v.__ADD_ASSIGN_Value(v.__RADD_float64(float64(2.0)).__ADD_Value((v.__NEG())))
 }
 func (v *Value) __ADD_ASSIGN_Value(other Value) {
-	v.Data.__ADD_ASSIGN_float64(other.Data)
+	v.Data += other.Data
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
