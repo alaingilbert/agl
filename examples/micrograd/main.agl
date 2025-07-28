@@ -10,7 +10,9 @@ type Value struct {
     mut prev set[*Value]
     mut op string
 }
-
+func (v Value) String() string {
+    return fmt.Sprintf("V(data:%v grad:%v)", v.Data, v.Grad)
+}
 func NewValue(data f64, children []*Value) *Value {
     return &Value {
         Data: data,
@@ -54,25 +56,25 @@ func (mut v *Value) ** (other int) *Value {
     return out
 }
 func (mut v *Value) - (other *Value) *Value {
-    return NewValue(v.Data - other.Data, []*Value{v})
+    return v + (-other)
 }
 func (mut v *Value) / (other *Value) *Value {
     return v * (other ** -1)
 }
 func (mut v *Value) / (other f64) *Value {
-    return v * math.Pow(other, -1.0)
+    return v * (other ** -1.0)
 }
 func (mut v *Value) __RADD (other f64) *Value {
-    return v + NewValue1(other)
+    return v + other
 }
 func (mut v *Value) __RQUO (other f64) *Value {
-    return NewValue(other, []*Value{}) * (v ** int(-1))
+    return other * (v ** int(-1))
 }
 func (mut v *Value) __RMUL (other f64) *Value {
-    return v * NewValue1(other)
+    return v * other
 }
 func (mut v *Value) __NEG() *Value {
-    return v * NewValue1(-1)
+    return v * f64(-1)
 }
 func (mut v *Value) Relu() *Value {
     mut out := NewValue(if v.Data < f64(0.0) { f64(0.0) } else { v.Data }, []*Value{v})
@@ -100,7 +102,7 @@ func (mut v *Value) Backward() {
     for el in topo.Reversed() {
         el.backward()
     }
-    fmt.Println("??!?!?!", v.Grad)
+    fmt.Println("??!?!?!", topo)
 }
 
 func main() {
