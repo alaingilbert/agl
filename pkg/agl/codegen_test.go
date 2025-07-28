@@ -7508,7 +7508,7 @@ func zip2[T, U any](a []T, b []U) [](T, U) {
 	for i := range a {
 		out.Push((a[i], b[i]))
 	}
-	return nil
+	return out
 }
 func main() {
 	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
@@ -7529,14 +7529,14 @@ func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
 	for i := range a {
 		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
 	}
-	return nil
+	return out
 }
 func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
 	out := make([]AglTupleStruct_int_uint8, 0)
 	for i := range a {
 		AglVecPush((*[]AglTupleStruct_int_uint8)(&out), AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
 	}
-	return nil
+	return out
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
@@ -7547,7 +7547,9 @@ type AglTupleStruct_int_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen245(t *testing.T) {
