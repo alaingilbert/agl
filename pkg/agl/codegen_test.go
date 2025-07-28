@@ -55,7 +55,9 @@ func add(a, b int) int {
 	return a + b
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen1_1(t *testing.T) {
@@ -76,7 +78,9 @@ func add2(a, b int) int {
 	return a + b
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen2(t *testing.T) {
@@ -140,7 +144,9 @@ func add(a, b int64) Result[int64] {
 	return MakeResultOk(a + b)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen3(t *testing.T) {
@@ -215,7 +221,9 @@ func mapFn_T_int(a []int, f func(int) int) []int {
 	return make([]int, 0)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen9_optionalReturnKeyword(t *testing.T) {
@@ -231,7 +239,9 @@ func add1(a, b int) int {
 	return a + b
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen10(t *testing.T) {
@@ -253,7 +263,9 @@ func main() {
 	f1(f2)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen11(t *testing.T) {
@@ -273,7 +285,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen13(t *testing.T) {
@@ -293,7 +307,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen14(t *testing.T) {
@@ -311,7 +327,9 @@ func main() {
 	fmt.Println(a)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen15(t *testing.T) {
@@ -349,7 +367,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen17(t *testing.T) {
@@ -371,7 +391,9 @@ func main() {
 	AglIdentity(aglTmp1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen18(t *testing.T) {
@@ -385,7 +407,9 @@ func main() {
 	a := []int{1, 2, 3}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen19(t *testing.T) {
@@ -409,7 +433,9 @@ func findEvenNumber(arr []int) Option[int] {
 	return MakeOptionNone[int]()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen20(t *testing.T) {
@@ -443,7 +469,9 @@ func main() {
 	fmt.Println(tmp.Unwrap())
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen21(t *testing.T) {
@@ -475,7 +503,9 @@ func main() {
 	fmt.Println(findEvenNumber([]int{1, 2, 3, 4}).Unwrap())
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen22(t *testing.T) {
@@ -491,7 +521,9 @@ func main() {
 	a++
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen23(t *testing.T) {
@@ -521,7 +553,9 @@ func main() {
 	foundInt := findEvenNumber([]int{1, 2, 3, 4}).Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen24(t *testing.T) {
@@ -541,7 +575,9 @@ func main() {
 	parseInt("42").Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen25(t *testing.T) {
@@ -575,7 +611,9 @@ func main() {
 	inter("hello").Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen26(t *testing.T) {
@@ -597,7 +635,9 @@ func main() {
 	fmt.Println(add(1, 2))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen27(t *testing.T) {
@@ -619,7 +659,9 @@ func main() {
 	fmt.Println("4")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen28(t *testing.T) {
@@ -641,7 +683,9 @@ func parseInt(s string) Result[int] {
 	return MakeResultOk(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen29(t *testing.T) {
@@ -707,7 +751,9 @@ func main() {
 	a--
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen31_VecBuiltInFilter(t *testing.T) {
@@ -726,7 +772,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInFilter2(t *testing.T) {
@@ -749,7 +797,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInFilter3(t *testing.T) {
@@ -772,7 +822,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInFilter4(t *testing.T) {
@@ -805,7 +857,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInMap1(t *testing.T) {
@@ -824,7 +878,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInMap3(t *testing.T) {
@@ -843,7 +899,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_VecBuiltInMap2(t *testing.T) {
@@ -862,7 +920,9 @@ func main() {
 	b := AglVecMap(a, strconv.Itoa)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen33_VecBuiltInReduce(t *testing.T) {
@@ -883,7 +943,9 @@ func main() {
 	AglAssert(b == 10, "assert failed line 5" + " " + "b should be 10")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen34_Assert(t *testing.T) {
@@ -900,7 +962,9 @@ func main() {
 	AglAssert(1 != 2, "assert failed line 4" + " " + "1 should not be 2")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Reduce1(t *testing.T) {
@@ -929,7 +993,9 @@ func main() {
 	AglAssert(d == 8, "assert failed line 7")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen35(t *testing.T) {
@@ -956,7 +1022,9 @@ func main() {
 	fmt.Println(by)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen36(t *testing.T) {
@@ -981,7 +1049,9 @@ func main() {
 	AglAssert(testOption().IsNone(), "assert failed line 8")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Tuple1(t *testing.T) {
@@ -1039,7 +1109,9 @@ type AglTupleStruct_int_string_bool struct {
 	Arg2 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Tuple2(t *testing.T) {
@@ -1071,7 +1143,9 @@ type AglTupleStruct_uint8_string_bool struct {
 	Arg2 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen37(t *testing.T) {
@@ -1120,7 +1194,9 @@ type Person struct {
 	testArrayOfOpt []Option[string]
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen39(t *testing.T) {
@@ -1182,7 +1258,9 @@ func main() {
 	variadic(1, 2, "a", "b", "c")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen_Variadic2(t *testing.T) {
@@ -1223,7 +1301,9 @@ func someFn() {
 func main() {
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen43(t *testing.T) {
@@ -1289,7 +1369,9 @@ func main() {
 	AglIdentity(aglTmp1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen45(t *testing.T) {
@@ -1313,7 +1395,9 @@ func main() {
 
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen46(t *testing.T) {
@@ -1328,7 +1412,9 @@ func main() {
 	a := 1 == 1 || 2 == 2 && 3 == 3
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen47(t *testing.T) {
@@ -1352,7 +1438,9 @@ func main() {
 	test("a" == "b")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //	func TestCodeGen48(t *testing.T) {
@@ -1384,7 +1472,9 @@ func main() {
 	AglAssert(s == 6, "assert failed line 5")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen50(t *testing.T) {
@@ -1413,7 +1503,9 @@ func (p Person) speak() string {
 func main() {
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen51_1(t *testing.T) {
@@ -1434,7 +1526,9 @@ func main() {
 	p := Person{}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen52(t *testing.T) {
@@ -1460,7 +1554,9 @@ func main() {
 	a := p.method1().Unwrap().method1()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen52_1(t *testing.T) {
@@ -1486,7 +1582,9 @@ func main() {
 	a := p.method1().Unwrap().method1()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen53(t *testing.T) {
@@ -1512,7 +1610,9 @@ func main() {
 	a := p.method1().Unwrap().method1().Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen54(t *testing.T) {
@@ -1571,7 +1671,9 @@ func main() {
 	takeColor(color)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Enum2(t *testing.T) {
@@ -1625,7 +1727,9 @@ func main() {
 	color2 := Make_Color_other(1, "yellow")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Enum3(t *testing.T) {
@@ -1675,7 +1779,9 @@ func main() {
 	a, b := aglVar1.other_0, aglVar1.other_1
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_Enum4(t *testing.T) {
@@ -1727,7 +1833,9 @@ func main() {
 	a, b := aglVar1.other_0, aglVar1.other_1
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen_GenericMethod(t *testing.T) {
@@ -1790,7 +1898,9 @@ func main() {
 	AglAssert(p1.__EQL(p2), "assert failed line 12")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_55(t *testing.T) {
@@ -1817,7 +1927,9 @@ func main() {
 	AglIdentity(aglTmp1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //	func TestCodeGen_56(t *testing.T) {
@@ -1898,7 +2010,9 @@ func main() {
 	test().Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_ErrPropagationInOption(t *testing.T) {
@@ -1931,7 +2045,9 @@ func main() {
 	maybeInt().Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen60(t *testing.T) {
@@ -1946,7 +2062,9 @@ type Writer interface{}
 func main() {
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_TypeAssertion(t *testing.T) {
@@ -1993,7 +2111,9 @@ func main() {
 	fmt.Println("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen61(t *testing.T) {
@@ -2021,7 +2141,9 @@ func main() {
 	AglNoop()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen62(t *testing.T) {
@@ -2105,7 +2227,9 @@ func main() {
 	maybeInt()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen64(t *testing.T) {
@@ -2120,7 +2244,9 @@ type Writer interface {
 	write([]byte) Result[int]
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen65(t *testing.T) {
@@ -2137,7 +2263,9 @@ type Writer interface {
 	another() bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen_ValueSpec1(t *testing.T) {
@@ -2167,7 +2295,9 @@ func main() {
 	var a Option[int]
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen66(t *testing.T) {
@@ -2221,7 +2351,9 @@ func main() {
 	fmt.Println(a, b)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen67(t *testing.T) {
@@ -2244,7 +2376,9 @@ func main() {
 	fmt.Println(b)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen68(t *testing.T) {
@@ -2277,7 +2411,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen70(t *testing.T) {
@@ -2522,7 +2658,9 @@ func main() {
 	_ = 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen82(t *testing.T) {
@@ -2602,7 +2740,9 @@ func main() {
 	AglVecFind(a, f).Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen86(t *testing.T) {
@@ -2619,7 +2759,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen87(t *testing.T) {
@@ -2636,7 +2778,9 @@ import (
 	"fmt"
 )
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen88(t *testing.T) {
@@ -2651,7 +2795,9 @@ type Pos struct {
 	Row, Col int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen89(t *testing.T) {
@@ -2685,7 +2831,9 @@ func main() {
 	fmt.Println(res)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen90(t *testing.T) {
@@ -2718,7 +2866,9 @@ func main() {
 	var arr []int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen93(t *testing.T) {
@@ -2735,7 +2885,9 @@ func main() {
 	var arr2 []int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen94(t *testing.T) {
@@ -2752,7 +2904,9 @@ func main() {
 	var arr2 []int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen92(t *testing.T) {
@@ -2767,7 +2921,9 @@ func main() {
 	row, col := 1, 0
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95(t *testing.T) {
@@ -2798,7 +2954,9 @@ func main() {
 	}), ", ")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95_2(t *testing.T) {
@@ -2831,7 +2989,9 @@ func main() {
 	names := AglVecJoined(AglVecMap(people, clb), ", ")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95_3(t *testing.T) {
@@ -2856,7 +3016,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95_4(t *testing.T) {
@@ -2881,7 +3043,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95_5(t *testing.T) {
@@ -2910,7 +3074,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen95_6(t *testing.T) {
@@ -2941,7 +3107,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen96(t *testing.T) {
@@ -2972,7 +3140,9 @@ func main() {
 	}), ", ")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen97(t *testing.T) {
@@ -2993,7 +3163,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen98(t *testing.T) {
@@ -3014,7 +3186,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen99(t *testing.T) {
@@ -3052,7 +3226,9 @@ func main() {
 
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen100(t *testing.T) {
@@ -3080,7 +3256,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen101(t *testing.T) {
@@ -3108,7 +3286,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen102(t *testing.T) {
@@ -3155,7 +3335,9 @@ func main() {
 	a++
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen105(t *testing.T) {
@@ -3172,7 +3354,9 @@ func main() {
 	c <- 1
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen106(t *testing.T) {
@@ -3199,7 +3383,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen107(t *testing.T) {
@@ -3224,7 +3410,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen108(t *testing.T) {
@@ -3241,7 +3429,9 @@ func main() {
 	a["a"] = 2
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen109(t *testing.T) {
@@ -3262,7 +3452,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen110(t *testing.T) {
@@ -3283,7 +3475,9 @@ func main() {
 	go test()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen111(t *testing.T) {
@@ -3304,7 +3498,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen112(t *testing.T) {
@@ -3377,7 +3573,9 @@ type AglTupleStruct_int_string_bool struct {
 	Arg2 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen113(t *testing.T) {
@@ -3396,7 +3594,9 @@ func main() {
 	fmt.Println(string(a))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen114(t *testing.T) {
@@ -3415,7 +3615,9 @@ func main() {
 	fmt.Println(uint8(a))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen115(t *testing.T) {
@@ -3438,7 +3640,9 @@ func main() {
 	fmt.Println(a, b, c)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen116(t *testing.T) {
@@ -3476,7 +3680,9 @@ func main() {
 	m := make(map[string]int)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen118(t *testing.T) {
@@ -3497,7 +3703,9 @@ func main() {
 	test(m)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen119(t *testing.T) {
@@ -3530,7 +3738,9 @@ func main() {
 	test(a)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen121(t *testing.T) {
@@ -3563,7 +3773,9 @@ func main() {
 	test(a)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen123(t *testing.T) {
@@ -3638,7 +3850,9 @@ func main() {
 	fmt.Println(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen126(t *testing.T) {
@@ -3661,7 +3875,9 @@ func main() {
 	fmt.Println(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen127(t *testing.T) {
@@ -3684,7 +3900,9 @@ func main() {
 	fmt.Println(isOk)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen128(t *testing.T) {
@@ -3707,7 +3925,9 @@ func main() {
 	fmt.Println(isErr)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen129(t *testing.T) {
@@ -3730,7 +3950,9 @@ func main() {
 	fmt.Println(isSome)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen130(t *testing.T) {
@@ -3753,7 +3975,9 @@ func main() {
 	fmt.Println(isNone)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen131(t *testing.T) {
@@ -3776,7 +4000,9 @@ func main() {
 	fmt.Println(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen132(t *testing.T) {
@@ -3799,7 +4025,9 @@ func main() {
 	fmt.Println(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen133(t *testing.T) {
@@ -3824,7 +4052,9 @@ func test() Result[AglVoid] {
 	return MakeResultOk(AglVoid{})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen134(t *testing.T) {
@@ -3850,7 +4080,9 @@ func test() Option[string] {
 	return MakeOptionSome(res)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen135(t *testing.T) {
@@ -3878,7 +4110,9 @@ func test() Result[string] {
 	return MakeResultOk("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen136(t *testing.T) {
@@ -3904,7 +4138,9 @@ func main() {
 	fmt.Println(res)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen136_1(t *testing.T) {
@@ -3930,7 +4166,9 @@ func main() {
 	fmt.Println(res)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen137(t *testing.T) {
@@ -3962,7 +4200,9 @@ func main() {
 	inter("hello").Unwrap()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen138(t *testing.T) {
@@ -3998,7 +4238,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen139(t *testing.T) {
@@ -4050,7 +4292,9 @@ func main() {
 	fmt.Println("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen140(t *testing.T) {
@@ -4102,7 +4346,9 @@ func main() {
 	fmt.Println("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen141(t *testing.T) {
@@ -4154,7 +4400,9 @@ func main() {
 	fmt.Println("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen142(t *testing.T) {
@@ -4206,7 +4454,9 @@ func main() {
 	fmt.Println("done")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen143(t *testing.T) {
@@ -4228,7 +4478,9 @@ func main() {
 	AglIdentity(aglTmp1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen144(t *testing.T) {
@@ -4252,7 +4504,9 @@ func test2() Option[int] {
 	return MakeOptionSome(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen145(t *testing.T) {
@@ -4276,7 +4530,9 @@ func test2() Result[int] {
 	return MakeResultOk(num)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen146(t *testing.T) {
@@ -4322,7 +4578,9 @@ func AglVecEven_T_int(v []int) []int {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen147_1(t *testing.T) {
@@ -4362,7 +4620,9 @@ func AglVecEven_T_int(v []int) []int {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen148(t *testing.T) {
@@ -4398,7 +4658,9 @@ func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen148_1(t *testing.T) {
@@ -4434,7 +4696,9 @@ func AglVecMyMap_R_int64_T_int64(v []int64, clb func(int64) int64) []int64 {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen148_2(t *testing.T) {
@@ -4470,7 +4734,9 @@ func AglVecMyMap_R_uint8_T_int64(v []int64, clb func(int64) uint8) []uint8 {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen149(t *testing.T) {
@@ -4515,7 +4781,9 @@ func AglVecMyMap_R_uint64_T_uint8(v []uint8, clb func(uint8) uint64) []uint64 {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen150(t *testing.T) {
@@ -4553,7 +4821,9 @@ func AglVecMyJoined2_T_string(v []string) string {
 func AglVecTest_T_string(v []string) {
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen151(t *testing.T) {
@@ -4585,7 +4855,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen152(t *testing.T) {
@@ -4617,7 +4889,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen153(t *testing.T) {
@@ -4650,7 +4924,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen155(t *testing.T) {
@@ -4675,7 +4951,9 @@ func main() {
 	}()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen156_1(t *testing.T) {
@@ -4706,7 +4984,9 @@ func main() {
 	r.Body.Close()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen158(t *testing.T) {
@@ -4751,7 +5031,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen160_1(t *testing.T) {
@@ -4790,7 +5072,9 @@ func main() {
 	i := TestStruct[string]{a: "foo"}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen162(t *testing.T) {
@@ -4872,7 +5156,9 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen165(t *testing.T) {
@@ -4890,7 +5176,9 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen166(t *testing.T) {
@@ -4918,7 +5206,9 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen167(t *testing.T) {
@@ -4950,7 +5240,9 @@ type AglTupleStruct_int_bool struct {
 	Arg1 bool
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen168(t *testing.T) {
@@ -4966,7 +5258,9 @@ func main() {
 	arr[1] = 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen169(t *testing.T) {
@@ -4982,7 +5276,9 @@ func main() {
 	m["a"] = 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen170(t *testing.T) {
@@ -4996,7 +5292,9 @@ func main() {
 	m := make(map[string]AglTupleStruct_int_int)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen171(t *testing.T) {
@@ -5016,7 +5314,9 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen172(t *testing.T) {
@@ -5034,7 +5334,9 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen173(t *testing.T) {
@@ -5052,7 +5354,9 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen174(t *testing.T) {
@@ -5109,7 +5413,9 @@ func main() {
 	a := MyFloat64(1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen176(t *testing.T) {
@@ -5210,7 +5516,9 @@ func main() {
 	i.M()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen178(t *testing.T) {
@@ -5276,7 +5584,9 @@ func describe(i I) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen179(t *testing.T) {
@@ -5338,7 +5648,9 @@ func describe(i I) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen180(t *testing.T) {
@@ -5371,7 +5683,9 @@ func describe(i any) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen181(t *testing.T) {
@@ -5396,7 +5710,9 @@ func main() {
 	fmt.Println(f)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen181_1(t *testing.T) {
@@ -5441,7 +5757,9 @@ func main() {
 	fmt.Println(f)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen182(t *testing.T) {
@@ -5481,7 +5799,9 @@ func main() {
 	do(true)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen183(t *testing.T) {
@@ -5509,7 +5829,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen184(t *testing.T) {
@@ -5537,7 +5859,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen185(t *testing.T) {
@@ -5584,7 +5908,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen186(t *testing.T) {
@@ -5633,7 +5959,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen187(t *testing.T) {
@@ -5674,7 +6002,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen188(t *testing.T) {
@@ -5728,7 +6058,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen188_1(t *testing.T) {
@@ -5784,7 +6116,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen189(t *testing.T) {
@@ -5897,7 +6231,9 @@ func main() {
 	v.Scale(10)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen189_6(t *testing.T) {
@@ -5943,7 +6279,9 @@ func main() {
 	fmt.Println(v.Abs())
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen190(t *testing.T) {
@@ -5976,7 +6314,9 @@ func describe(i any) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen191(t *testing.T) {
@@ -6061,7 +6401,9 @@ func main() {
 	say("hello")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen193(t *testing.T) {
@@ -6101,7 +6443,9 @@ func main() {
 	fmt.Println(x, y, x + y)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen194(t *testing.T) {
@@ -6157,7 +6501,9 @@ func main() {
 	fibonacci(c, quit)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen195(t *testing.T) {
@@ -6213,7 +6559,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen195_1(t *testing.T) {
@@ -6231,7 +6579,9 @@ func main() {
 	a.Round(time.Millisecond)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen196(t *testing.T) {
@@ -6317,7 +6667,9 @@ func main() {
 	m["a"]++
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen198(t *testing.T) {
@@ -6456,7 +6808,9 @@ func main() {
 	mv := AglIdentity(AglMapIndex(m, "a"))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen200(t *testing.T) {
@@ -6472,7 +6826,10 @@ func main() {
 	}()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen201(t *testing.T) {
@@ -6488,7 +6845,9 @@ func main() {
 	a := 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen202(t *testing.T) {
@@ -6530,7 +6889,9 @@ func main() {
 	fmt.Println(string(by))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen203(t *testing.T) {
@@ -6625,7 +6986,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen204(t *testing.T) {
@@ -6649,7 +7012,9 @@ func main() {
 	b.Method()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen205(t *testing.T) {
@@ -6676,7 +7041,9 @@ func main() {
 	c := b[0]
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen206(t *testing.T) {
@@ -6701,7 +7068,9 @@ func main() {
 	b := a.Method()[0]
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen207(t *testing.T) {
@@ -6723,7 +7092,9 @@ func main() {
 	a[0].Method()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen208(t *testing.T) {
@@ -6752,7 +7123,9 @@ func test() Option[int] {
 	return MakeOptionSome(42)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen209(t *testing.T) {
@@ -6781,7 +7154,9 @@ func main() {
 	return MakeOptionSome(42)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen210(t *testing.T) {
@@ -6808,7 +7183,9 @@ func test() Option[int] {
 	return MakeOptionSome(42)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen211(t *testing.T) {
@@ -6833,7 +7210,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen212(t *testing.T) {
@@ -6854,7 +7233,9 @@ func main() {
 	}), ", ")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen213(t *testing.T) {
@@ -6906,7 +7287,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen215(t *testing.T) {
@@ -6930,7 +7313,9 @@ func main() {
 	AglIdentity(aglTmp1)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen216(t *testing.T) {
@@ -6948,7 +7333,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen217(t *testing.T) {
@@ -6966,7 +7353,9 @@ func main() {
 	})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen218(t *testing.T) {
@@ -6982,7 +7371,9 @@ func main() {
 	AglVecPush((*[]int)(&a), 4)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen219(t *testing.T) {
@@ -6998,7 +7389,9 @@ func main() {
 	fmt.Println("4", "21")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen220(t *testing.T) {
@@ -7062,7 +7455,9 @@ func main() {
 	s := new(Test)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen224(t *testing.T) {
@@ -7078,7 +7473,9 @@ func main() {
 	_, a, b := 1, 2, 3
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen225(t *testing.T) {
@@ -7141,7 +7538,9 @@ func main() {
 	t.Test()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen230(t *testing.T) {
@@ -7203,7 +7602,9 @@ func main() {
 	fmt.Println("Title:", title)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen231(t *testing.T) {
@@ -7259,7 +7660,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen232(t *testing.T) {
@@ -7306,7 +7709,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen233(t *testing.T) {
@@ -7330,7 +7735,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen234(t *testing.T) {
@@ -7361,7 +7768,9 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen236(t *testing.T) {
@@ -7391,7 +7800,9 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen239(t *testing.T) {
@@ -7408,7 +7819,9 @@ func main() {
 	fmt.Println("Hello world!")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen240(t *testing.T) {
@@ -7432,7 +7845,9 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen241(t *testing.T) {
@@ -7456,7 +7871,9 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen242(t *testing.T) {
@@ -7482,7 +7899,9 @@ type AglTupleStruct_int_int struct {
 	Arg1 int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen243(t *testing.T) {
@@ -7565,7 +7984,9 @@ func main() {
 	AglVecContains(arr, "a")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen246(t *testing.T) {
@@ -7579,7 +8000,9 @@ func main() {
 	AglVecContains([]string{"a", "b"}, "a")
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen247(t *testing.T) {
@@ -7593,7 +8016,9 @@ func main() {
 	arr := make([]AglTupleStruct_int_int, 0)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen248(t *testing.T) {
@@ -7607,7 +8032,9 @@ func main() {
 	var arr []AglTupleStruct_int_int
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen249(t *testing.T) {
@@ -7621,7 +8048,9 @@ func main() {
 	make(map[int]struct{})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen250(t *testing.T) {
@@ -7635,7 +8064,9 @@ func main() {
 	make(map[int]map[int]struct{})
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen251(t *testing.T) {
@@ -7702,7 +8133,9 @@ func AglVecMyCompactMap_R_int_T_string(v []string, f func(string) Option[int]) [
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen253(t *testing.T) {
@@ -7750,7 +8183,9 @@ func AglVecFlatMap_R_int_T_int(v []int, f func(int) []int) []int {
 	return out
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen254(t *testing.T) {
@@ -7778,7 +8213,9 @@ func AglVecMyMin_T_int(v []int) Option[int] {
 	return MakeOptionSome(out)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen255(t *testing.T) {
@@ -7794,7 +8231,9 @@ func main() {
 	_ = AglWrapNative2(fmt.Printf(""))
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen256(t *testing.T) {
@@ -7911,7 +8350,9 @@ func main() {
 	s := AglSet[int]{1: {}, 2: {}, 3: {}}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen259(t *testing.T) {
@@ -7929,7 +8370,9 @@ func main() {
 	s3 := AglSetUnion(s1, s2)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen260(t *testing.T) {
@@ -7943,7 +8386,9 @@ func main() {
 	a := [][]int{{1, 2}, {2, 3}}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen261(t *testing.T) {
@@ -7957,7 +8402,9 @@ func main() {
 	a := 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen262(t *testing.T) {
@@ -7973,7 +8420,9 @@ func main() {
 	a = 43
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen263(t *testing.T) {
@@ -8016,7 +8465,9 @@ func main() {
 	test(a)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen266(t *testing.T) {
@@ -8091,7 +8542,9 @@ func main() {
 	fmt.Println(sb.String())
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen268(t *testing.T) {
@@ -8130,7 +8583,9 @@ func main() {
 	b.AMethod()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen270(t *testing.T) {
@@ -8146,7 +8601,9 @@ func main() {
 	a = 42
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen271(t *testing.T) {
@@ -8171,7 +8628,9 @@ func main() {
 	m[1] = AglSet[int]{1: {}, 2: {}, 3: {}}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen273(t *testing.T) {
@@ -8195,7 +8654,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen274(t *testing.T) {
@@ -8220,7 +8681,9 @@ func main() {
 	AglSetInsert(s, 4)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen276(t *testing.T) {
@@ -8237,7 +8700,9 @@ func main() {
 	AglPub_test()
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen277(t *testing.T) {
@@ -8250,7 +8715,9 @@ func TestCodeGen277(t *testing.T) {
 		"type Test struct {\n" +
 		"	SomeProp int `json:\"some_prop\"`\n" +
 		"}\n"
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen278(t *testing.T) {
@@ -8280,7 +8747,9 @@ func AglVecIter_T_int(v []int) iter.Seq[int] {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen279(t *testing.T) {
@@ -8414,7 +8883,7 @@ func test(m map[string]struct{}) {
 `
 	test := NewTest(src)
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen2(t, expected, NewTest(src))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen285(t *testing.T) {
@@ -9313,7 +9782,9 @@ type AglTupleStruct_int_uint8 struct {
 	Arg1 uint8
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen316(t *testing.T) {
@@ -12001,7 +12472,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_OsArgsWithResult(t *testing.T) {
@@ -12037,7 +12510,9 @@ func main() {
 	fmt.Println(arg)
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen_WcExample(t *testing.T) {
@@ -12104,7 +12579,9 @@ func main() {
 	}
 }
 `
-	testCodeGen2(t, expected, NewTest(src))
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen_native_multi_values(t *testing.T) {
