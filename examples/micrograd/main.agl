@@ -96,12 +96,10 @@ func (mut v *Value) Backward() {
     var mut topo []*Value
     mut visited := set[*Value]{}
     buildTopo(v, mut visited, &mut topo)
-    fmt.Println("???", topo)
     v.Grad = 1.0
     for el in topo.Reversed() {
         el.backward()
     }
-    fmt.Println("??!?!?!", topo)
 }
 
 func main() {
