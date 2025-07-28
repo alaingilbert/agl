@@ -1,7 +1,6 @@
 package agl
 
 import (
-	"agl/pkg/utils"
 	"fmt"
 	"testing"
 
