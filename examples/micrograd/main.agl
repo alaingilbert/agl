@@ -105,7 +105,7 @@ func main() {
     mut c := a + b
     mut d := a * b + b**3
     c += c + f64(1)
-    c += f64(1) + c + (-a)
+    c += f64(1) + c + -a
     mut tmp1 := b + a
     d += d * f64(2) + tmp1.Relu()
     mut tmp2 := b - a
