@@ -11620,11 +11620,11 @@ func myLen_T_uint8(a []uint8) int {
 func TestCodeGen406(t *testing.T) {
 	src := `package main
 type Value struct { mut Data f64 }
-func (v Value) + (other f64) Value { Value{Data: v.Data + other} }
-func (v Value) __NEG () Value { Value{Data: -v.Data} }
-func (v Value) __RADD (other f64) Value { Value{Data: other + v.Data} }
+func (v *Value) + (other f64) *Value { &Value{Data: v.Data + other} }
+func (v *Value) __NEG () *Value { &Value{Data: -v.Data} }
+func (v *Value) __RADD (other f64) *Value { &Value{Data: other + v.Data} }
 func main() {
-	mut v := Value{Data: 1.0}
+	mut v := &Value{Data: 1.0}
 	v = v + f64(2.0)
 	v += f64(2.0) + v + (-v)
 }
@@ -11634,23 +11634,26 @@ package main
 type Value struct {
 	Data float64
 }
-func (v Value) __ADD_float64(other float64) Value {
-	return Value{Data: v.Data + other}
+func (v *Value) __ADD_float64(other float64) *Value {
+	return &Value{Data: v.Data + other}
 }
-func (v Value) __NEG() Value {
-	return Value{Data: -v.Data}
+func (v *Value) __NEG() *Value {
+	return &Value{Data: -v.Data}
 }
-func (v Value) __RADD_float64(other float64) Value {
-	return Value{Data: other + v.Data}
+func (v *Value) __RADD_float64(other float64) *Value {
+	return &Value{Data: other + v.Data}
 }
 func main() {
-	v := Value{Data: 1.0}
+	v := &Value{Data: 1.0}
 	v = v.__ADD_float64(float64(2.0))
 	v = v.__ADD_Value(v.__RADD_float64(float64(2.0)).__ADD_Value((v.__NEG())))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "mut *Value", test.TypeAt(7, 2).String())
+	tassert.Equal(t, "mut *Value", test.TypeAt(8, 2).String())
+	tassert.Equal(t, "mut *Value", test.TypeAt(9, 2).String())
 	testCodeGen2(t, expected, test)
 }
 

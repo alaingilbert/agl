@@ -4014,12 +4014,13 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 	case token.EQL, token.NEQ, token.LOR, token.LAND, token.LEQ, token.LSS, token.GEQ, token.GTR, token.IN:
 		infer.SetType(expr, types.BoolType{})
 	case token.ADD, token.SUB, token.QUO, token.MUL, token.REM, token.POW:
-		xT := types.Unwrap(infer.GetType(expr.X))
-		yT := types.Unwrap(infer.GetType(expr.Y))
+		oxT := infer.GetType(expr.X)
+		oyT := infer.GetType(expr.Y)
+		yT := types.Unwrap(oyT)
 		if TryCast[types.StructType](yT) {
-			infer.SetType(expr, yT)
+			infer.SetType(expr, oyT)
 		} else {
-			infer.SetType(expr, xT)
+			infer.SetType(expr, oxT)
 		}
 	default:
 		infer.SetType(expr, types.Unwrap(infer.GetType(expr.X)))
