@@ -1414,6 +1414,18 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 		fnT = fnT.T("T", arg0T)
 		infer.SetType(expr.Fun, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
+	case "pow":
+		info := infer.env.GetNameInfo("pow")
+		fnT := infer.env.GetFn("pow")
+		arg0 := expr.Args[0]
+		arg1 := expr.Args[1]
+		infer.expr(arg0)
+		infer.expr(arg1)
+		arg0T := infer.env.GetType(arg0)
+		arg1T := infer.env.GetType(arg1)
+		fnT = fnT.T("T", arg0T).T("E", arg1T)
+		infer.SetType(expr.Fun, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
 	}
 }
 

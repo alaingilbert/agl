@@ -333,6 +333,7 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 		e.DefineFn(nenv, "min", "func [T cmp.Ordered](x T, y ...T) T")
 		e.DefineFn(nenv, "max", "func [T cmp.Ordered](x T, y ...T) T")
 		e.DefineFn(nenv, "abs", "func [T Number](x T) T", WithDesc("Returns the absolute value of the given number."))
+		e.DefineFn(nenv, "pow", "func [T, E Number](v T, e E) T")
 		//e.DefineFn("zip", "func [T, U any](x []T, y []U) [](T, U)")
 		//e.DefineFn("clear", "func [T ~[]Type | ~map[Type]Type1](t T)")
 		e.DefineFn(nenv, "append", "func [T any](slice []T, elems ...T) []T")

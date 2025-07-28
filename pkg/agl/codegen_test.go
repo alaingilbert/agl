@@ -11677,6 +11677,23 @@ type Value struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen408(t *testing.T) {
+	src := `package main
+func main() {
+	_ = pow(1, 2)
+}
+`
+	expected := `// agl:generated
+package main
+func main() {
+	_ = AglPow(1, 2)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

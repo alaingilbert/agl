@@ -1346,6 +1346,10 @@ func AglAbs[T Number](e T) (out T) {
 	return T(math.Abs(float64(e)))
 }
 
+func AglPow[T, E Number](v T, e E) (out float64) {
+	return math.Pow(float64(v), float64(e))
+}
+
 func AglVecWith[T any](a *[]T, i int, clb func(*T) AglVoid) {
 	el := (*a)[i]
 	clb(&el)

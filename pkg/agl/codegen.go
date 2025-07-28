@@ -703,6 +703,8 @@ func (g *Generator) genIdent(expr *ast.Ident) (out GenFrag) {
 			return e("make")
 		case "abs":
 			return e("AglAbs")
+		case "pow":
+			return e("AglPow")
 		}
 		if v := g.env.Get(expr.Name); v != nil {
 			switch vv := v.(type) {
@@ -2142,7 +2144,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			content1 = func() string { return e(v.Name) }
 			content2 = c2.F
 		} else if fnT, ok := t1.(types.FuncType); ok {
-			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "min", "max"}) && fnT.IsGeneric() {
+			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "pow", "min", "max"}) && fnT.IsGeneric() {
 				isSet = true
 				oFnT := g.env.Get(v.Name)
 				newFnT := g.env.GetType(v)
