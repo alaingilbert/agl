@@ -6827,7 +6827,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
@@ -7133,7 +7132,7 @@ func TestCodeGen209(t *testing.T) {
 type Test struct {
 	Name string
 }
-func main() {
+func test() int? {
 	var a any = Test{Name: "foo"}
 	tmp := a.(Test).Name == "foo"
 	if tmp {
@@ -7146,7 +7145,7 @@ package main
 type Test struct {
 	Name string
 }
-func main() {
+func test() Option[int] {
 	var a any = Test{Name: "foo"}
 	tmp := a.(Test).Name == "foo"
 	if tmp {
@@ -8453,7 +8452,7 @@ func test(mut a int) {
 }
 func main() {
 	mut a := 42
-	test(a)
+	test(mut a)
 }`
 	expected := `// agl:generated
 package main
@@ -12087,7 +12086,6 @@ func myLen_T_uint8(a []uint8) int {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }

@@ -997,8 +997,10 @@ func (infer *FileInferrer) callExprArrayType(expr *ast.CallExpr, call *ast.Array
 }
 
 func (infer *FileInferrer) callExprFuncLit(expr *ast.CallExpr, call *ast.FuncLit) {
-	infer.stmt(call.Body)
 	callT := funcTypeToFuncType("", call.Type, infer.env, infer.fset, false)
+	infer.withReturnType(callT.Return, func() {
+		infer.stmt(call.Body)
+	})
 	infer.SetType(call, callT)
 	infer.SetType(expr, callT.Return)
 }
