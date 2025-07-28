@@ -113,9 +113,7 @@ func main() {
     e := c - d
     f := e**2
     mut g := f / f64(2)
-    fmt.Println(g)
     g += f64(10) / f
-    fmt.Println(g)
     fmt.Printf("%.4f\n", g.Data) // prints 24.7041, the outcome of this forward pass
     g.Backward()
     fmt.Printf("%.4f\n", a.Grad) // prints 138.8338, i.e. the numerical value of dg/da
