@@ -1269,8 +1269,7 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return v.W
 		}
 		t = types.Unwrap(t)
-		tmp := t.(types.FuncType).Return
-		return tmp
+		return t.(types.FuncType).Return
 	case *ast.BasicLit:
 		switch xx.Kind {
 		case token.INT:
