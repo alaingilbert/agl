@@ -4,8 +4,8 @@ package context
 //type CancelFunc func()
 type Context interface {}
 
-func AfterFunc(ctx context.Context, f func()) (func() bool)
-func Cause(c context.Context) error
+func AfterFunc(ctx Context, f func()) (func() bool)
+func Cause(c Context) error
 //func WithCancel(parent Context) (Context, CancelFunc)
 //func WithCancelCause(parent Context) (Context, CancelCauseFunc)
 //func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)
@@ -13,7 +13,7 @@ func Cause(c context.Context) error
 //func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)
 //func WithTimeoutCause(parent Context, timeout time.Duration, cause error) (Context, CancelFunc)
 
-func Background() context.Context
-func TODO() context.Context
-func WithValue(parent Context, key, val any) context.Context
-func WithoutCancel(parent Context) context.Context
+func Background() Context
+func TODO() Context
+func WithValue(parent Context, key, val any) Context
+func WithoutCancel(parent Context) Context

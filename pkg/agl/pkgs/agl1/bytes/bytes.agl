@@ -6,7 +6,7 @@ import "agl1/io"
 type Buffer struct {}
 type Reader struct {}
 
-func NewBuffer(buf []byte) *bytes.Buffer
+func NewBuffer(buf []byte) *Buffer
 func (b *Buffer) Available() int
 func (b *Buffer) AvailableBuffer() []byte
 func (b *Buffer) Bytes() []byte
@@ -31,7 +31,7 @@ func (b *Buffer) WriteRune(r rune) int!
 func (b *Buffer) WriteString(s string) int!
 func (b *Buffer) WriteTo(w io.Writer) i64!
 
-func NewReader(b []byte) *bytes.Reader
+func NewReader(b []byte) *Reader
 func (r *Reader) Len() int
 func (r *Reader) Read(b []byte) int!
 func (r *Reader) ReadAt(b []byte, off int64) int!

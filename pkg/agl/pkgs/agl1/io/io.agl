@@ -12,13 +12,13 @@ type WriteCloser interface{}
 type WriteSeeker interface{}
 type Writer interface{}
 
-func MultiWriter(writers ...io.Writer) io.Writer
-func ReadAll(r io.Reader) ([]byte)!
-func ReadFull(r io.Reader, buf []byte) int!
-func WriteString(w io.Writer, s string) int!
-func CopyBuffer(dst io.Writer, src io.Reader, buf []byte) int64!
-func CopyN(dst io.Writer, src io.Reader, n int64) int64!
-func Copy(dst io.Writer, src io.Reader) int64!
-//func Pipe(*io.PipeReader, *io.PipeWriter)
+func MultiWriter(writers ...Writer) Writer
+func ReadAll(r Reader) ([]byte)!
+func ReadFull(r Reader, buf []byte) int!
+func WriteString(w Writer, s string) int!
+func CopyBuffer(dst Writer, src Reader, buf []byte) int64!
+func CopyN(dst Writer, src Reader, n int64) int64!
+func Copy(dst Writer, src Reader) int64!
+//func Pipe(*PipeReader, *PipeWriter)
 func (ReadCloser) Read(p []byte) int!
 //func (ReadCloser) Close() !

@@ -1,6 +1,7 @@
 package parser
 
 import "agl1/go/token"
+import "agl1/go/ast"
 
 type AllErrors uint
 

@@ -5,12 +5,12 @@ import "agl1/io"
 type CorruptInputError int64
 type Encoding struct {}
 
-func NewDecoder(enc *base64.Encoding, r io.Reader) io.Reader
-func NewEncoder(enc *base64.Encoding, w io.Writer) io.WriteCloser
+func NewDecoder(enc *Encoding, r io.Reader) io.Reader
+func NewEncoder(enc *Encoding, w io.Writer) io.WriteCloser
 
 //func (e CorruptInputError) Error() string
 
-func NewEncoding(encoder string) *base64.Encoding
+func NewEncoding(encoder string) *Encoding
 func (enc *Encoding) AppendDecode(dst, src []byte) ([]byte)!
 func (enc *Encoding) AppendEncode(dst, src []byte) []byte
 func (enc *Encoding) Decode(dst, src []byte) int!
@@ -19,5 +19,5 @@ func (enc *Encoding) DecodedLen(n int) int
 func (enc *Encoding) Encode(dst, src []byte)
 func (enc *Encoding) EncodeToString(src []byte) string
 func (enc *Encoding) EncodedLen(n int) int
-func (enc Encoding) Strict() *base64.Encoding
-func (enc Encoding) WithPadding(padding rune) *base64.Encoding
+func (enc Encoding) Strict() *Encoding
+func (enc Encoding) WithPadding(padding rune) *Encoding

@@ -1,5 +1,8 @@
 package rand
 
+import "agl1/io"
+import "agl1/math/big"
+
 func Int(rand io.Reader, max *big.Int) (*big.Int)!
 func Prime(rand io.Reader, bits int) (*big.Int)!
 func Read(b []byte) int!

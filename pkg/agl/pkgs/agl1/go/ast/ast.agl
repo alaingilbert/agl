@@ -9,47 +9,47 @@ type BasicLit struct {
     Value string
 }
 type ImportSpec struct {
-    Name    *ast.Ident
-    Path    *ast.BasicLit
+    Name    *Ident
+    Path    *BasicLit
 }
 type File struct {
-    Decls []ast.Decl
-    Imports []*ast.ImportSpec
+    Decls []Decl
+    Imports []*ImportSpec
 }
 type Field struct{
-    Names []*ast.Ident
-    Type ast.Expr
+    Names []*Ident
+    Type Expr
 }
 type FieldList struct {
-    List []*ast.Field
+    List []*Field
 }
 type FuncType struct {
-    Params *ast.FieldList
-    Results *ast.FieldList
+    Params *FieldList
+    Results *FieldList
 }
 type FuncDecl struct {
-    Name *ast.Ident
-    Recv *ast.FieldList
-    Type *ast.FuncType
+    Name *Ident
+    Recv *FieldList
+    Type *FuncType
 }
 type Spec interface{}
 type GenDecl struct {
-    Specs []ast.Spec
+    Specs []Spec
 }
 type SelectorExpr struct {
-    X ast.Expr
-    Sel *ast.Ident
+    X Expr
+    Sel *Ident
 }
 type StarExpr struct {
-    X ast.Expr
+    X Expr
 }
 type StructType struct {
-    Fields *ast.FieldList
+    Fields *FieldList
 }
 type TypeSpec struct {
-    Name *ast.Ident
-    Type ast.Expr
+    Name *Ident
+    Type Expr
 }
 type InterfaceType struct {
-    Methods *ast.FieldList
+    Methods *FieldList
 }

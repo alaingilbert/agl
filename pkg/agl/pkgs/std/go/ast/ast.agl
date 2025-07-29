@@ -8,6 +8,10 @@ type Ident struct {
 type BasicLit struct {
     Value string
 }
+type ImportSpec struct {
+    Name    *ast.Ident
+    Path    *ast.BasicLit
+}
 type File struct {
     Decls []ast.Decl
     Imports []*ast.ImportSpec
@@ -29,10 +33,6 @@ type FuncDecl struct {
     Type *ast.FuncType
 }
 type Spec interface{}
-type ImportSpec struct {
-    Name    *ast.Ident
-    Path    *ast.BasicLit
-}
 type GenDecl struct {
     Specs []ast.Spec
 }
