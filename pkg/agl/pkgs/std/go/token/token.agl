@@ -1,5 +1,7 @@
 package token
 
+import "go/token"
+
 type FileSet struct {
 }
 

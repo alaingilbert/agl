@@ -16,10 +16,12 @@ type Response struct {
 type Request struct {
 }
 
+type Values map[string][]string
+
 func (c *Client) Do(req *Request) (*Response)! {}
 func (c *Client) Get(url string) (*Response)! {}
 func (c *Client) Post(url, contentType string, body io.Reader) (*Response)! {}
-func (c *Client) PostForm(url string, data url.Values) (*Response)! {}
+func (c *Client) PostForm(url string, data Values) (*Response)! {}
 func (c *Client) Head(url string) (*Response)! {}
 
 func Get (url string) (*Response)! {}

@@ -7,9 +7,9 @@ type Importer interface{}
 type Object interface{}
 type Package interface{}
 type Config struct {
-    Importer types.Importer
+    Importer Importer
 }
 type Info struct {
-    Defs map[*ast.Ident]types.Object
+    Defs map[*ast.Ident]Object
 }
-func (Config) Check(path string, fset *token.FileSet, files []*ast.File, info *types.Info) (*types.Package, error)
+func (Config) Check(path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package, error)

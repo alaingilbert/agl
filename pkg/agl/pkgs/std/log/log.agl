@@ -21,8 +21,8 @@ func SetOutput(w io.Writer)
 func SetPrefix(prefix string)
 func Writer() io.Writer
 
-func Default() *log.Logger
-func New(out io.Writer, prefix string, flag int) *log.Logger
+func Default() *Logger
+func New(out io.Writer, prefix string, flag int) *Logger
 func (l *Logger) Fatal(v ...any)
 func (l *Logger) Fatalf(format string, v ...any)
 func (l *Logger) Fatalln(v ...any)

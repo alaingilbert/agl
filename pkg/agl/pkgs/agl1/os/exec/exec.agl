@@ -7,6 +7,6 @@ type Cmd struct {
     Stderr io.Writer
 }
 
-func Command(name string, arg ...string) *exec.Cmd
+func Command(name string, arg ...string) *Cmd
 
-func (c *exec.Cmd) Run() !
+func (c *Cmd) Run() !

@@ -4,10 +4,10 @@ import "agl1/io"
 
 type Regexp struct {}
 
-func Compile(expr string) (*regexp.Regexp)!
-func CompilePOSIX(expr string) (*regexp.Regexp)!
-func MustCompile(str string) *regexp.Regexp
-func MustCompilePOSIX(str string) *regexp.Regexp
+func Compile(expr string) (*Regexp)!
+func CompilePOSIX(expr string) (*Regexp)!
+func MustCompile(str string) *Regexp
+func MustCompilePOSIX(str string) *Regexp
 
 func (re *Regexp) AppendText(b []byte) ([]byte)!
 func (re *Regexp) Expand(dst []byte, template []byte, src []byte, match1 []int) []byte

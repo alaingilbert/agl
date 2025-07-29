@@ -10,20 +10,20 @@ type DirEntry interface {
 type File struct {
 }
 
-func (*os.File) Close() error
-func (*os.File) Read(b []byte) (int, error)
+func (*File) Close() error
+func (*File) Read(b []byte) (int, error)
 
-var Stdout *os.File
-var Stderr *os.File
+var Stdout *File
+var Stderr *File
 
 type FileMode u32
 
 func DirFS(dir string) fs.FS
-func Open(name string) (*os.File, error)
+func Open(name string) (*File, error)
 func ReadFile(name string) ([]byte, error)
-func ReadDir(name string) ([]os.DirEntry, error)
+func ReadDir(name string) ([]DirEntry, error)
 func Remove(name string) error
-func WriteFile(name string, data []byte, perm os.FileMode) error
+func WriteFile(name string, data []byte, perm FileMode) error
 func MkdirTemp(dir, pattern string) (string, error)
 func RemoveAll(path string) error
 type Args []string

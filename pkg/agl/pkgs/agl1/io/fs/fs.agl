@@ -14,30 +14,30 @@ type ReadDirFile interface {}
 type ReadFileFS interface {}
 type StatFS interface {}
 type SubFS interface {}
-type WalkDirFunc func(path string, d fs.DirEntry, err error) error
+//type WalkDirFunc func(path string, d DirEntry, err error) error
 
 var SkipDir error
 
-func FormatDirEntry(dir fs.DirEntry) string
-func FormatFileInfo(info fs.FileInfo) string
-func Glob(fsys fs.FS, pattern string) ([]string)!
-func ReadFile(fsys fs.FS, name string) ([]byte)!
+func FormatDirEntry(dir DirEntry) string
+func FormatFileInfo(info FileInfo) string
+func Glob(fsys FS, pattern string) ([]string)!
+func ReadFile(fsys FS, name string) ([]byte)!
 func ValidPath(name string) bool
-func WalkDir(fsys fs.FS, root string, fn fs.WalkDirFunc) !
+//func WalkDir(fsys FS, root string, fn WalkDirFunc) !
 
-func FileInfoToDirEntry(info fs.FileInfo) fs.DirEntry
-func ReadDir(fsys fs.FS, name string) ([]fs.DirEntry)!
+func FileInfoToDirEntry(info FileInfo) DirEntry
+func ReadDir(fsys FS, name string) ([]DirEntry)!
 
-func Sub(fsys fs.FS, dir string) fs.FS!
+func Sub(fsys FS, dir string) FS!
 
-func Stat(fsys fs.FS, name string) fs.FileInfo!
+func Stat(fsys FS, name string) FileInfo!
 
-func (m fs.FileMode) IsDir() bool
-func (m fs.FileMode) IsRegular() bool
-func (m fs.FileMode) Perm() fs.FileMode
-func (m fs.FileMode) String() string
-func (m fs.FileMode) Type() fs.FileMode
+func (m FileMode) IsDir() bool
+func (m FileMode) IsRegular() bool
+func (m FileMode) Perm() FileMode
+func (m FileMode) String() string
+func (m FileMode) Type() FileMode
 
 //func (e *PathError) Error() string
-func (e *fs.PathError) Timeout() bool
-func (e *fs.PathError) Unwrap() error
+func (e *PathError) Timeout() bool
+func (e *PathError) Unwrap() error

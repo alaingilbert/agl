@@ -2,6 +2,8 @@ package slog
 
 import "agl1/io"
 import "agl1/log"
+import "agl1/context"
+import "agl1/time"
 
 type Level int
 type Logger struct {}
@@ -22,29 +24,29 @@ func DebugContext(ctx context.Context, msg string, args ...any)
 func ErrorContext(ctx context.Context, msg string, args ...any)
 func Info(msg string, args ...any)
 func InfoContext(ctx context.Context, msg string, args ...any)
-func Log(ctx context.Context, level slog.Level, msg string, args ...any)
-func LogAttrs(ctx context.Context, level slog.Level, msg string, attrs ...slog.Attr)
-func NewLogLogger(h Handler, level slog.Level) *log.Logger
-func SetDefault(l *slog.Logger)
+func Log(ctx context.Context, level Level, msg string, args ...any)
+func LogAttrs(ctx context.Context, level Level, msg string, attrs ...Attr)
+func NewLogLogger(h Handler, level Level) *log.Logger
+func SetDefault(l *Logger)
 func Warn(msg string, args ...any)
 func WarnContext(ctx context.Context, msg string, args ...any)
 
-func Any(key string, value any) slog.Attr
-func Bool(key string, v bool) slog.Attr
-func Duration(key string, v time.Duration) slog.Attr
-func Float64(key string, v float64) slog.Attr
-func Group(key string, args ...any) slog.Attr
-func Int(key string, value int) slog.Attr
-func Int64(key string, value int64) slog.Attr
-func String(key, value string) slog.Attr
-func Time(key string, v time.Time) slog.Attr
-func Uint64(key string, v uint64) slog.Attr
-func (a Attr) Equal(b slog.Attr) bool
+func Any(key string, value any) Attr
+func Bool(key string, v bool) Attr
+func Duration(key string, v time.Duration) Attr
+func Float64(key string, v float64) Attr
+func Group(key string, args ...any) Attr
+func Int(key string, value int) Attr
+func Int64(key string, value int64) Attr
+func String(key, value string) Attr
+func Time(key string, v time.Time) Attr
+func Uint64(key string, v uint64) Attr
+func (a Attr) Equal(b Attr) bool
 func (a Attr) String() string
 
-func SetLogLoggerLevel(level slog.Level) slog.Level
+func SetLogLoggerLevel(level Level) Level
 func (l Level) AppendText(b []byte) ([]byte)!
-func (l Level) Level() slog.Level
+func (l Level) Level() Level
 func (l Level) MarshalJSON() ([]byte)!
 func (l Level) MarshalText() ([]byte)!
 func (l Level) String() string
@@ -52,63 +54,66 @@ func (l *Level) UnmarshalJSON(data []byte) !
 func (l *Level) UnmarshalText(data []byte) !
 
 func (v *LevelVar) AppendText(b []byte) ([]byte)!
-func (v *LevelVar) Level() slog.Level
+func (v *LevelVar) Level() Level
 func (v *LevelVar) MarshalText() ([]byte)!
-func (v *LevelVar) Set(l slog.Level)
+func (v *LevelVar) Set(l Level)
 func (v *LevelVar) String() string
 func (v *LevelVar) UnmarshalText(data []byte) !
 
-func Default() *slog.Logger
-func New(h Handler) *slog.Logger
-func With(args ...any) *slog.Logger
+func Default() *Logger
+func New(h Handler) *Logger
+func With(args ...any) *Logger
 func (l *Logger) Debug(msg string, args ...any)
 func (l *Logger) DebugContext(ctx context.Context, msg string, args ...any)
-func (l *Logger) Enabled(ctx context.Context, level slog.Level) bool
+func (l *Logger) Enabled(ctx context.Context, level Level) bool
 func (l *Logger) Error(msg string, args ...any)
 func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any)
-func (l *Logger) Handler() slog.Handler
+func (l *Logger) Handler() Handler
 func (l *Logger) Info(msg string, args ...any)
 func (l *Logger) InfoContext(ctx context.Context, msg string, args ...any)
-func (l *Logger) Log(ctx context.Context, level slog.Level, msg string, args ...any)
-func (l *Logger) LogAttrs(ctx context.Context, level slog.Level, msg string, attrs ...slog.Attr)
+func (l *Logger) Log(ctx context.Context, level Level, msg string, args ...any)
+func (l *Logger) LogAttrs(ctx context.Context, level Level, msg string, attrs ...Attr)
 func (l *Logger) Warn(msg string, args ...any)
 func (l *Logger) WarnContext(ctx context.Context, msg string, args ...any)
-func (l *Logger) With(args ...any) *slog.Logger
-func (l *Logger) WithGroup(name string) *slog.Logger
+func (l *Logger) With(args ...any) *Logger
+func (l *Logger) WithGroup(name string) *Logger
 
-func NewRecord(t time.Time, level Level, msg string, pc uintptr) slog.Record
+func NewRecord(t time.Time, level Level, msg string, pc uintptr) Record
 func (r *Record) Add(args ...any)
-func (r *Record) AddAttrs(attrs ...slog.Attr)
-func (r Record) Attrs(f func(slog.Attr) bool)
-func (r Record) Clone() slog.Record
+func (r *Record) AddAttrs(attrs ...Attr)
+func (r Record) Attrs(f func(Attr) bool)
+func (r Record) Clone() Record
 func (r Record) NumAttrs() int
 
-func NewTextHandler(w io.Writer, opts *slog.HandlerOptions) *slog.TextHandler
-func (h *TextHandler) Enabled(_ context.Context, level slog.Level) bool
-func (h *TextHandler) Handle(_ context.Context, r slog.Record) error
-func (h *TextHandler) WithAttrs(attrs []slog.Attr) slog.Handler
-func (h *TextHandler) WithGroup(name string) slog.Handler
+type HandlerOptions struct {
+}
 
-func AnyValue(v any) slog.Value
-func BoolValue(v bool) slog.Value
-func DurationValue(v time.Duration) slog.Value
-func Float64Value(v float64) slog.Value
-func GroupValue(as ...slog.Attr) slog.Value
-func Int64Value(v int64) slog.Value
-func IntValue(v int) slog.Value
-func StringValue(value string) slog.Value
-func TimeValue(v time.Time) slog.Value
-func Uint64Value(v uint64) slog.Value
+func NewTextHandler(w io.Writer, opts *HandlerOptions) *TextHandler
+func (h *TextHandler) Enabled(_ context.Context, level Level) bool
+func (h *TextHandler) Handle(_ context.Context, r Record) error
+func (h *TextHandler) WithAttrs(attrs []Attr) Handler
+func (h *TextHandler) WithGroup(name string) Handler
+
+func AnyValue(v any) Value
+func BoolValue(v bool) Value
+func DurationValue(v time.Duration) Value
+func Float64Value(v float64) Value
+func GroupValue(as ...Attr) Value
+func Int64Value(v int64) Value
+func IntValue(v int) Value
+func StringValue(value string) Value
+func TimeValue(v time.Time) Value
+func Uint64Value(v uint64) Value
 func (v Value) Any() any
 func (v Value) Bool() bool
 func (v Value) Duration() time.Duration
-func (v Value) Equal(w slog.Value) bool
+func (v Value) Equal(w Value) bool
 func (v Value) Float64() float64
-func (v Value) Group() []slog.Attr
+func (v Value) Group() []Attr
 func (v Value) Int64() int64
-func (v Value) Kind() slog.Kind
-func (v Value) LogValuer() slog.LogValuer
-func (v Value) Resolve() slog.Value
+func (v Value) Kind() Kind
+func (v Value) LogValuer() LogValuer
+func (v Value) Resolve() Value
 func (v Value) String() string
 func (v Value) Time() time.Time
 func (v Value) Uint64() uint64

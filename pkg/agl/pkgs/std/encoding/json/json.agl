@@ -1,5 +1,8 @@
 package json
 
+import "std/bytes"
+import "std/io"
+
 type Decoder struct {}
 type Delim rune
 type Encoder struct {}
@@ -24,18 +27,18 @@ func MarshalIndent(v any, prefix, indent string) ([]byte)!
 func Unmarshal(data []byte, v any) !
 func Valid(data []byte) bool
 
-func NewDecoder(r io.Reader) *json.Decoder
+func NewDecoder(r io.Reader) *Decoder
 func (dec *Decoder) Buffered() io.Reader
 func (dec *Decoder) Decode(v any) !
 func (dec *Decoder) DisallowUnknownFields()
 func (dec *Decoder) InputOffset() int64
 func (dec *Decoder) More() bool
-func (dec *Decoder) Token() json.Token!
+func (dec *Decoder) Token() Token!
 func (dec *Decoder) UseNumber()
 
 func (d Delim) String() string
 
-func NewEncoder(w io.Writer) *json.Encoder
+func NewEncoder(w io.Writer) *Encoder
 func (enc *Encoder) Encode(v any) !
 func (enc *Encoder) SetEscapeHTML(on bool)
 func (enc *Encoder) SetIndent(prefix, indent string)

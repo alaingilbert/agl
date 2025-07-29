@@ -15,32 +15,32 @@ type FileInfo interface {
 type File struct {
 }
 
-func (*os.File) Close() error
-func (*os.File) Read(b []byte) int!
+func (*File) Close() error
+func (*File) Read(b []byte) int!
 
 func DirFS(dir string) fs.FS
-func Open(name string) (*os.File)!
+func Open(name string) (*File)!
 
-var Stdout *os.File
-var Stderr *os.File
+var Stdout *File
+var Stderr *File
 
 // file.go:799:6
 func ReadFile(name string) ([]byte)!
 // dir.go:118:6
-func ReadDir(name string) ([]os.DirEntry)!
+func ReadDir(name string) ([]DirEntry)!
 // file.go:849:6
-func WriteFile(name string, data []byte, perm os.FileMode) !
+func WriteFile(name string, data []byte, perm FileMode) !
 func Chdir(string) ! {}
 func Chown(name string, uid, gid int) !
-func Mkdir(name string, perm os.FileMode) !
-func MkdirAll(path string, perm os.FileMode) !
+func Mkdir(name string, perm FileMode) !
+func MkdirAll(path string, perm FileMode) !
 func MkdirTemp(dir, pattern string) string!
 // file_unix.go:375:6
 func Remove(name string) !
 // path.go:73:6
 func RemoveAll(path string) !
 func Rename(oldpath, newpath string) !
-func SameFile(fi1, fi2 os.FileInfo) bool
+func SameFile(fi1, fi2 FileInfo) bool
 func TempDir() string
 func Truncate(name string, size int64) !
 func Setenv(key, value string) !
