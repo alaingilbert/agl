@@ -17,8 +17,8 @@ func Encode(buf []byte, order binary.ByteOrder, data any) int!
 func PutUvarint(buf []byte, x uint64) int
 func PutVarint(buf []byte, x int64) int
 func Read(r io.Reader, order binary.ByteOrder, data any) !
-func ReadUvarint(r io.ByteReader) uint64!
-func ReadVarint(r io.ByteReader) int64!
+//func ReadUvarint(r io.ByteReader) uint64!
+//func ReadVarint(r io.ByteReader) int64!
 func Size(v any) int
 func Uvarint(buf []byte) (uint64, int)
 func Varint(buf []byte) (int64, int)

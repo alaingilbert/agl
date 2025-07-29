@@ -40,7 +40,7 @@ func (enc *Encoder) Encode(v any) !
 func (enc *Encoder) SetEscapeHTML(on bool)
 func (enc *Encoder) SetIndent(prefix, indent string)
 
-func (e *InvalidUnmarshalError) Error() string
+//func (e *InvalidUnmarshalError) Error() string
 
 func (e *MarshalerError) Error() string
 func (e *MarshalerError) Unwrap() !

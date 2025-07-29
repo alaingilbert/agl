@@ -698,6 +698,7 @@ func processSpec(path, entryName string, node *goast.File, fset *gotoken.FileSet
 			env.Define(nil, specName, t)
 		case *goast.FuncType:
 		case *goast.SelectorExpr:
+		case *goast.IndexExpr:
 		default:
 			panic(fmt.Sprintf("%v", to(spec.Type)))
 		}
