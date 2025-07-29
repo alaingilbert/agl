@@ -441,6 +441,12 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	if _, ok := visited[folderPath]; ok {
 		return nil
 	}
+	coreFile := filepath.Join(folderPath, "aglCore.go")
+	base := filepath.Base(folderPath)
+	if base == "." {
+		base = "main"
+	}
+	_ = os.WriteFile(coreFile, []byte(agl.GenCore(base)), 0644)
 	visited[folderPath] = struct{}{}
 	entries, _ := os.ReadDir(folderPath)
 	for _, entry := range entries {
