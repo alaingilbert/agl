@@ -3327,7 +3327,10 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
 		}
 	}
-	c1 := g.genStmt(decl.Body)
+	c1 := GenFrag{F: emptyContent}
+	if decl.Body != nil {
+		c1 = g.genStmt(decl.Body)
+	}
 	bs = append(bs, c1.B...)
 	return GenFrag{F: func() (out string) {
 		out += e("func")
