@@ -472,6 +472,9 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		vT := infer.GetType2(t.Value)
 		mT := types.MapType{K: kT, V: vT}
 		toDef = types.CustomType{Name: spec.Name.Name, W: mT}
+	case *ast.FuncType:
+		t.TypeParams = spec.TypeParams
+		toDef = funcTypeToFuncType("", t, infer.env, infer.fset, false)
 	default:
 		infer.errorf(spec.Name, "%v", to(spec.Type))
 		return
@@ -2850,6 +2853,11 @@ func cmpTypes(a, b types.Type) bool {
 		aa := MustCast[types.SetType](a)
 		bb := MustCast[types.SetType](b)
 		return cmpTypesLoose(aa.K, bb.K)
+	}
+	if TryCast[types.EllipsisType](a) && TryCast[types.EllipsisType](b) {
+		aa := MustCast[types.EllipsisType](a)
+		bb := MustCast[types.EllipsisType](b)
+		return cmpTypesLoose(aa.Elt, bb.Elt)
 	}
 	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
 		return true // TODO
