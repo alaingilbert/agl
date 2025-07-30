@@ -400,7 +400,7 @@ func (g *Generator) genExtension(ext Extension) (out string) {
 					return out
 				}
 			}
-			if result := decl.Type.Result; result != nil {
+			if result := decl.Type.Results; result != nil {
 				resultStr = func() string {
 					resT := g.env.GetType(result)
 					for k, v := range m {
@@ -1507,12 +1507,27 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 		}
 		out += paramsStr
 		out += e(")")
-		content1 := g.incrPrefix(func() string {
-			if expr.Result != nil {
-				return e(" ") + g.genExpr(expr.Result).F()
-			} else {
-				return ""
+		content1 := g.incrPrefix(func() (out string) {
+			if expr.Results != nil {
+				out += e(" ")
+				if len(expr.Results.List) > 1 {
+					var values []ast.Expr
+					for _, ee := range expr.Results.List {
+						values = append(values, ee.Type)
+					}
+					tup := &ast.TupleExpr{Values: values, Lparen: expr.Results.Opening, Rparen: expr.Results.Closing}
+					g.env.SetType(nil, nil, tup, g.env.GetType2(tup, g.fset), g.fset)
+					out += g.genExpr(tup).F()
+				} else {
+					for _, r := range expr.Results.List {
+						for _, n := range r.Names {
+							out += g.genExpr(n).F()
+						}
+						out += g.genExpr(r.Type).F()
+					}
+				}
 			}
+			return
 		})
 		out += content1
 		return out
@@ -2801,13 +2816,13 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	var bs []func() string
 	var resultFrag GenFrag
-	if stmt.Result != nil {
-		resultFrag = g.genExpr(stmt.Result)
+	if stmt.Results != nil {
+		resultFrag = g.genExprs(stmt.Results)
 		bs = append(bs, resultFrag.B...)
 	}
 	return GenFrag{F: func() (out string) {
 		out += e(g.prefix + "return")
-		if stmt.Result != nil {
+		if stmt.Results != nil {
 			out += e(" ") + resultFrag.F()
 		}
 		return out + e("\n")
@@ -3316,8 +3331,8 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		}
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
-	if result := decl.Type.Result; result != nil {
-		resultStr = types.ReplGenM(g.env.GetType(result), g.genMap).GoStr()
+	if results := decl.Type.Results; results != nil {
+		resultStr = types.ReplGenM(g.env.GetType(results), g.genMap).GoStr()
 		resultStr = utils.PrefixIf(resultStr, " ")
 	}
 	if g.genMap != nil {

@@ -215,30 +215,24 @@ func funcTypeToFuncType(name string, expr *ast.FuncType, env *Env, fset *token.F
 		}
 	}
 	var result types.Type
-	if expr.Result != nil {
-		result = env.GetType2(expr.Result, fset)
+	if expr.Results != nil {
+		result = env.GetType2(expr.Results, fset)
 		if result == nil {
-			panic(fmt.Sprintf("%s: type not found %v %v", fset.Position(expr.Pos()), expr.Result, to(expr.Result)))
+			panic(fmt.Sprintf("%s: type not found %v %v", fset.Position(expr.Pos()), expr.Results, to(expr.Results)))
 		}
-		if t, ok := result.(types.ResultType); ok {
-			t.Native = native
-			result = t
-		} else if t1, ok := result.(types.OptionType); ok {
-			t1.Native = native
-			result = t1
+		switch v := result.(type) {
+		case types.ResultType:
+			v.Native = native
+			result = v
+		case types.OptionType:
+			v.Native = native
+			result = v
 		}
 	}
 	parts := strings.Split(name, ".")
 	name = parts[len(parts)-1]
 	if result == nil {
-		switch expr.Result.(type) {
-		case *ast.ResultExpr:
-			result = types.ResultType{W: types.VoidType{}}
-		case *ast.OptionExpr:
-			result = types.OptionType{W: types.VoidType{}}
-		default:
-			result = types.VoidType{}
-		}
+		result = types.VoidType{}
 	}
 	ft := types.FuncType{
 		Name:       name,
@@ -1239,6 +1233,20 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		}
 		//return nil
 		panic(fmt.Sprintf("%s: %v", e.fset.Position(xx.Pos()), xx.Name))
+	case *ast.FieldList:
+		if len(xx.List) == 0 {
+			return types.VoidType{}
+		}
+		if len(xx.List) == 1 {
+			return e.GetType2(xx.List[0], fset)
+		}
+		var elts []types.Type
+		for _, ee := range xx.List {
+			elts = append(elts, e.GetType2(ee.Type, fset))
+		}
+		return types.TupleType{Elts: elts}
+	case *ast.Field:
+		return e.GetType2(xx.Type, fset)
 	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, fset, false)
 	case *ast.FuncLit:

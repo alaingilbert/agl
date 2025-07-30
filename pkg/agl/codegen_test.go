@@ -12163,6 +12163,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen409(t *testing.T) {
+	src := `package main
+func test() (int, int) {
+	return 1, 2
+}
+func main() {
+	a, b := test()
+}
+`
+	expected := `// agl:generated
+package main
+func test() AglTupleStruct_int_int {
+	return AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
+}
+func main() {
+	aglVar1 := test()
+	a, b := aglVar1.Arg0, aglVar1.Arg1
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

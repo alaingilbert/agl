@@ -693,7 +693,7 @@ type (
 		Func       token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
 		TypeParams *FieldList // type parameters; or nil
 		Params     *FieldList // (incoming) parameters; non-nil
-		Result     Expr       // (outgoing) result; or nil
+		Results    *FieldList // (outgoing) results; or nil
 	}
 
 	// An InterfaceType node represents an interface type.
@@ -827,8 +827,8 @@ func (x *KeyValueExpr) End() token.Pos   { return x.Value.End() }
 func (x *ArrayType) End() token.Pos      { return x.Elt.End() }
 func (x *StructType) End() token.Pos     { return x.Fields.End() }
 func (x *FuncType) End() token.Pos {
-	if x.Result != nil {
-		return x.Result.End()
+	if x.Results != nil {
+		return x.Results.End()
 	}
 	return x.Params.End()
 }
@@ -982,8 +982,8 @@ type (
 
 	// A ReturnStmt node represents a return statement.
 	ReturnStmt struct {
-		Return token.Pos // position of "return" keyword
-		Result Expr      // result expressions; or nil
+		Return  token.Pos // position of "return" keyword
+		Results []Expr    // result expressions; or nil
 	}
 
 	// A BranchStmt node represents a break, continue, goto,
@@ -1194,8 +1194,8 @@ func (s *AssignStmt) End() token.Pos { return s.Rhs[len(s.Rhs)-1].End() }
 func (s *GoStmt) End() token.Pos     { return s.Call.End() }
 func (s *DeferStmt) End() token.Pos  { return s.Call.End() }
 func (s *ReturnStmt) End() token.Pos {
-	if s.Result != nil {
-		return s.Result.End()
+	if s.Results != nil {
+		return s.Results[len(s.Results)-1].End()
 	}
 	return s.Return + 6 // len("return")
 }

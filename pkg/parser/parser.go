@@ -1254,7 +1254,7 @@ func (p *parser) parseParameters(result bool) *ast.FieldList {
 		return &ast.FieldList{Opening: lparen, List: list, Closing: rparen}
 	}
 
-	if typ := p.tryIdentOrTypeOrShortFn(); typ != nil {
+	if typ := p.tryIdentOrTypeNoShortFn(); typ != nil {
 		list := make([]*ast.Field, 1)
 		list[0] = &ast.Field{Type: typ}
 		return &ast.FieldList{List: list}
@@ -1278,9 +1278,36 @@ func (p *parser) parseFuncType() *ast.FuncType {
 		//}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrTypeNoShortFn()
+	results := p.parseParameters(true)
+	if p.tok == token.QUESTION || p.tok == token.NOT {
+		var exprs []ast.Expr
+		for _, l := range results.List {
+			t := l.Type
+			if len(l.Names) > 0 {
+				for range l.Names {
+					exprs = append(exprs, t)
+				}
+			} else {
+				exprs = append(exprs, t)
+			}
+		}
+		tup := &ast.TupleExpr{Lparen: results.Opening, Values: exprs, Rparen: results.Closing}
+		var t ast.Expr
+		if p.tok == token.QUESTION {
+			question := p.expect(token.QUESTION)
+			t = &ast.OptionExpr{X: tup, Question: question}
+		} else if p.tok == token.NOT {
+			not := p.expect(token.NOT)
+			if tup == nil {
+				t = &ast.VoidExpr{}
+			}
+			t = &ast.ResultExpr{X: tup, Not: not}
+		}
+		fl := &ast.FieldList{Opening: results.Opening, List: []*ast.Field{{Type: t}}, Closing: results.Closing}
+		return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Results: fl}
+	}
 
-	return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Result: result}
+	return &ast.FuncType{Func: pos, Params: params, TypeParams: tparams, Results: results}
 }
 
 func (p *parser) parseEnumValueSpec() *ast.EnumValue {
@@ -1323,12 +1350,13 @@ func (p *parser) parseMethodSpec() *ast.Field {
 
 				// TODO(rfindley) refactor to share code with parseFuncType.
 				params := p.parseParameters(false)
-				result := p.tryIdentOrTypeNoShortFn()
+				results := p.parseParameters(true)
+
 				idents = []*ast.LabelledIdent{{ident, nil}}
 				typ = &ast.FuncType{
-					Func:   token.NoPos,
-					Params: params,
-					Result: result,
+					Func:    token.NoPos,
+					Params:  params,
+					Results: results,
 				}
 			} else {
 				// embedded instantiated type
@@ -1353,9 +1381,37 @@ func (p *parser) parseMethodSpec() *ast.Field {
 			// ordinary method
 			// TODO(rfindley) refactor to share code with parseFuncType.
 			params := p.parseParameters(false)
-			result := p.tryIdentOrTypeNoShortFn()
+			results := p.parseParameters(true)
 			idents = []*ast.LabelledIdent{{ident, nil}}
-			typ = &ast.FuncType{Func: token.NoPos, Params: params, Result: result}
+			if p.tok == token.QUESTION || p.tok == token.NOT {
+				var exprs []ast.Expr
+				for _, l := range results.List {
+					t := l.Type
+					if len(l.Names) > 0 {
+						for range l.Names {
+							exprs = append(exprs, t)
+						}
+					} else {
+						exprs = append(exprs, t)
+					}
+				}
+				tup := &ast.TupleExpr{Lparen: results.Opening, Values: exprs, Rparen: results.Closing}
+				var t ast.Expr
+				if p.tok == token.QUESTION {
+					question := p.expect(token.QUESTION)
+					t = &ast.OptionExpr{X: tup, Question: question}
+				} else if p.tok == token.NOT {
+					not := p.expect(token.NOT)
+					if tup == nil {
+						t = &ast.VoidExpr{}
+					}
+					t = &ast.ResultExpr{X: tup, Not: not}
+				}
+				fl := &ast.FieldList{Opening: results.Opening, List: []*ast.Field{{Type: t}}, Closing: results.Closing}
+				typ = &ast.FuncType{Func: token.NoPos, Params: params, Results: fl}
+			} else {
+				typ = &ast.FuncType{Func: token.NoPos, Params: params, Results: results}
+			}
 		default:
 			// embedded type
 			typ = x
@@ -2379,13 +2435,13 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 
 	pos := p.pos
 	p.expect(token.RETURN)
-	var x ast.Expr
+	var x []ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
-		x = p.parseExpr()
+		x = p.parseList(true)
 	}
 	p.expectSemi()
 
-	return &ast.ReturnStmt{Return: pos, Result: x}
+	return &ast.ReturnStmt{Return: pos, Results: x}
 }
 
 func (p *parser) parseBranchStmt(tok token.Token) *ast.BranchStmt {
@@ -3247,7 +3303,36 @@ func (p *parser) parseFuncDecl(pubTok token.Pos) *ast.FuncDecl {
 		}
 	}
 	params := p.parseParameters(false)
-	result := p.tryIdentOrTypeNoShortFn()
+	results := p.parseParameters(true)
+	if p.tok == token.QUESTION || p.tok == token.NOT {
+		var exprs []ast.Expr
+		for _, l := range results.List {
+			t := l.Type
+			if len(l.Names) > 0 {
+				for range l.Names {
+					exprs = append(exprs, t)
+				}
+			} else {
+				exprs = append(exprs, t)
+			}
+		}
+		var t ast.Expr
+		if len(exprs) == 0 {
+			t = &ast.ParenExpr{X: &ast.VoidExpr{}, Lparen: results.Opening, Rparen: results.Closing}
+		} else if len(exprs) > 1 {
+			t = &ast.TupleExpr{Lparen: results.Opening, Values: exprs, Rparen: results.Closing}
+		} else {
+			t = exprs[0]
+		}
+		if p.tok == token.QUESTION {
+			t = &ast.OptionExpr{X: t, Question: p.expect(token.QUESTION)}
+		} else if p.tok == token.NOT {
+			t = &ast.ResultExpr{X: t, Not: p.expect(token.NOT)}
+		}
+		if t != nil {
+			results.List = []*ast.Field{{Type: t}}
+		}
+	}
 
 	var body *ast.BlockStmt
 	switch p.tok {
@@ -3275,7 +3360,7 @@ func (p *parser) parseFuncDecl(pubTok token.Pos) *ast.FuncDecl {
 			Func:       pos,
 			TypeParams: tparams,
 			Params:     params,
-			Result:     result,
+			Results:    results,
 		},
 		Body: body,
 	}

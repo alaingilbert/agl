@@ -8,10 +8,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	goast "go/ast"
 	goparser "go/parser"
 	gotoken "go/token"
-	gotypes "go/types"
 	"io/fs"
 	"log"
 	"os"
@@ -19,6 +17,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -449,8 +448,18 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	_ = os.WriteFile(coreFile, []byte(agl.GenCore(base)), 0644)
 	visited[folderPath] = struct{}{}
 	entries, _ := os.ReadDir(folderPath)
+	sort.Slice(entries, func(i, j int) bool {
+		return strings.HasSuffix(entries[i].Name(), ".agl")
+	})
 	for _, entry := range entries {
 		if entry.IsDir() {
+			if strings.HasPrefix(entry.Name(), "vendor") {
+				continue
+			}
+			err := buildFolder(filepath.Join(folderPath, entry.Name()), visited)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		fileName := filepath.Join(folderPath, entry.Name())
@@ -458,40 +467,40 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 			if err := buildAglFile(fileName); err != nil {
 				panic(fmt.Sprintf("failed to build %s", fileName))
 			}
-		} else if strings.HasSuffix(fileName, ".go") {
-			if strings.HasSuffix(fileName, "_test.go") {
-				continue
-			}
-			src, err := os.ReadFile(fileName)
-			if err != nil {
-				return err
-			}
-			fset := gotoken.NewFileSet()
-			node, err := goparser.ParseFile(fset, fileName, src, goparser.AllErrors)
-			if err != nil {
-				log.Printf("failed to parse %s\n", fileName)
-				continue
-			}
-			conf := gotypes.Config{Importer: nil}
-			info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
-			_, _ = conf.Check("", fset, []*goast.File{node}, info)
-			for _, decl := range node.Decls {
-				switch d := decl.(type) {
-				case *goast.GenDecl:
-					for _, spec := range d.Specs {
-						switch s := spec.(type) {
-						case *goast.ImportSpec:
-							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
-							if strings.HasPrefix(pathValue, modPrefix) {
-								newPath := strings.TrimPrefix(pathValue, modPrefix)
-								if err := buildFolder(newPath, visited); err != nil {
-									return err
-								}
-							}
-						}
-					}
-				}
-			}
+			//} else if strings.HasSuffix(fileName, ".go") {
+			//	if strings.HasSuffix(fileName, "_test.go") {
+			//		continue
+			//	}
+			//	src, err := os.ReadFile(fileName)
+			//	if err != nil {
+			//		return err
+			//	}
+			//	fset := gotoken.NewFileSet()
+			//	node, err := goparser.ParseFile(fset, fileName, src, goparser.AllErrors)
+			//	if err != nil {
+			//		log.Printf("failed to parse %s\n", fileName)
+			//		continue
+			//	}
+			//	conf := gotypes.Config{Importer: nil}
+			//	info := &gotypes.Info{Defs: make(map[*goast.Ident]gotypes.Object)}
+			//	_, _ = conf.Check("", fset, []*goast.File{node}, info)
+			//	for _, decl := range node.Decls {
+			//		switch d := decl.(type) {
+			//		case *goast.GenDecl:
+			//			for _, spec := range d.Specs {
+			//				switch s := spec.(type) {
+			//				case *goast.ImportSpec:
+			//					pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
+			//					if strings.HasPrefix(pathValue, modPrefix) {
+			//						newPath := strings.TrimPrefix(pathValue, modPrefix)
+			//						if err := buildFolder(newPath, visited); err != nil {
+			//							return err
+			//						}
+			//					}
+			//				}
+			//			}
+			//		}
+			//	}
 		}
 	}
 	return nil
@@ -502,7 +511,7 @@ func genCode1(fileName string, src, coreGoImports []byte) (*agl.Generator, *toke
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	i.InferFile("core.agl", f2, fset, true)
-	imports, errs := i.InferFile(fileName, f, fset, true)
+	imports, errs := i.InferFile(fileName, f, fset, false)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}

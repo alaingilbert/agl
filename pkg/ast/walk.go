@@ -156,8 +156,8 @@ func Walk(v Visitor, node Node) {
 		if n.Params != nil {
 			Walk(v, n.Params)
 		}
-		if n.Result != nil {
-			Walk(v, n.Result)
+		if n.Results != nil {
+			Walk(v, n.Results)
 		}
 
 	case *EnumType:
@@ -208,8 +208,8 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Call)
 
 	case *ReturnStmt:
-		if n.Result != nil {
-			Walk(v, n.Result)
+		if n.Results != nil {
+			walkList(v, n.Results)
 		}
 
 	case *BranchStmt:

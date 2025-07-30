@@ -584,10 +584,20 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 		}
 
 		var returnTyp types.Type = types.VoidType{}
-		if decl.Type.Result != nil {
-			infer.expr(decl.Type.Result)
-			returnTyp = infer.GetType2(decl.Type.Result)
-			if v, ok := decl.Type.Result.(*ast.IndexExpr); ok {
+		if decl.Type.Results != nil {
+			if decl.Type.Results != nil {
+				for _, result := range decl.Type.Results.List {
+					for _, n := range result.Names {
+						infer.expr(n)
+					}
+					infer.expr(result.Type)
+				}
+			}
+			returnTyp = infer.fieldListToTuple(decl.Type.Results)
+			if len(returnTyp.(types.TupleType).Elts) == 1 {
+				returnTyp = returnTyp.(types.TupleType).Elts[0]
+			}
+			if v, ok := decl.Type.Results.List[0].Type.(*ast.IndexExpr); ok {
 				iT := infer.GetType2(v.Index)
 				switch vv := returnTyp.(type) {
 				case types.FuncType:
@@ -598,22 +608,44 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					panic(fmt.Sprintf("%v", to(returnTyp)))
 				}
 			}
-			infer.SetType(decl.Type.Result, returnTyp)
+			if len(decl.Type.Results.List) > 1 {
+				returnTyp = infer.fieldListToTuple(decl.Type.Results)
+				infer.SetType(decl.Type.Results, returnTyp)
+				for i, e := range returnTyp.(types.TupleType).Elts {
+					infer.SetType(decl.Type.Results.List[i], e)
+				}
+			} else {
+				infer.SetType(decl.Type.Results, returnTyp)
+			}
 		}
 		infer.withReturnType(returnTyp, func() {
 			if decl.Body != nil {
 				// implicit return
 				cond1 := len(decl.Body.List) == 1 ||
 					(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
-				if cond1 && decl.Type.Result != nil {
+				if cond1 && decl.Type.Results != nil && len(decl.Type.Results.List) > 0 {
 					if v, ok := decl.Body.List[0].(*ast.ExprStmt); ok && !TryCast[*ast.MatchExpr](v.X) {
-						decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
+						decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Results: []ast.Expr{v.X}}}
 					}
 				}
 				infer.stmt(decl.Body)
 			}
 		})
 	})
+}
+
+func (infer *FileInferrer) fieldListToTuple(l *ast.FieldList) (out types.TupleType) {
+	for _, f := range l.List {
+		t := infer.GetType2(f.Type)
+		if len(f.Names) > 0 {
+			for range f.Names {
+				out.Elts = append(out.Elts, t)
+			}
+		} else {
+			out.Elts = append(out.Elts, t)
+		}
+	}
+	return out
 }
 
 func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) types.FuncType {
@@ -685,9 +717,16 @@ func (infer *FileInferrer) getFuncDeclType(decl *ast.FuncDecl, outEnv *Env) type
 			}
 		}
 	}
-	if decl.Type.Result != nil {
-		infer.expr(decl.Type.Result)
-		returnT = infer.GetType2(decl.Type.Result)
+	if decl.Type.Results != nil {
+		if decl.Type.Results != nil {
+			for i := range decl.Type.Results.List {
+				infer.expr(decl.Type.Results.List[i].Type)
+			}
+		}
+		returnT = infer.fieldListToTuple(decl.Type.Results)
+		if len(returnT.(types.TupleType).Elts) == 1 {
+			returnT = returnT.(types.TupleType).Elts[0]
+		}
 		switch v := returnT.(type) {
 		case types.FuncType:
 			returnT = v.RenameGenericParameter("V", "T")
@@ -2390,7 +2429,7 @@ func (infer *FileInferrer) inferMapReduce(expr *ast.CallExpr, exprFun *ast.Selec
 
 func alterResultBubble(fnReturn, curr types.Type) (out types.Type) {
 	if fnReturn == nil {
-		return
+		return curr
 	}
 	fnReturnIsResult := TryCast[types.ResultType](fnReturn)
 	fnReturnIsOption := TryCast[types.OptionType](fnReturn)
@@ -2435,7 +2474,7 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 	// implicit return
 	if len(expr.Body.List) == 1 && TryCast[*ast.ExprStmt](expr.Body.List[0]) && !TryCast[types.VoidType](ft.Return) {
 		returnStmt := expr.Body.List[0].(*ast.ExprStmt)
-		expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
+		expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Results: []ast.Expr{returnStmt.X}}}
 	}
 	infer.SetType(expr, ft)
 	infer.withEnv(func() {
@@ -2452,8 +2491,10 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 				}
 			}
 		}
-		if expr.Type.Result != nil {
-			infer.expr(expr.Type.Result)
+		if expr.Type.Results != nil {
+			for i := range expr.Type.Results.List {
+				infer.expr(expr.Type.Results.List[i].Type)
+			}
 		}
 		infer.withReturnType(ft.Return, func() {
 			infer.stmt(expr.Body)
@@ -2537,7 +2578,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		bodyBlock := expr.Body.(*ast.BlockStmt)
 		lastStmt := func() ast.Stmt { return Must(Last(bodyBlock.List)) }
-		voidReturnStmt := &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}}
+		voidReturnStmt := &ast.ReturnStmt{Results: []ast.Expr{&ast.CompositeLit{Type: &ast.Ident{Name: "void"}}}}
 		multStmt := len(bodyBlock.List) > 0
 		singleExprStmt := len(bodyBlock.List) == 1 && TryCast[*ast.ExprStmt](bodyBlock.List[0])
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
@@ -2545,12 +2586,12 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
 			bodyBlock.List = append(bodyBlock.List, voidReturnStmt)
 		} else if multStmt && lastIsRetStmt() {
-			returnStmt := lastStmt().(*ast.ReturnStmt).Result
+			returnStmt := lastStmt().(*ast.ReturnStmt).Results[0]
 			inferExpr(returnStmt, ft)
 		} else if singleExprStmt {
 			returnStmt := lastStmt().(*ast.ExprStmt).X
 			inferExpr(returnStmt, ft)
-			bodyBlock.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
+			bodyBlock.List = []ast.Stmt{&ast.ReturnStmt{Results: []ast.Expr{returnStmt}}}
 		}
 		// expr type is set in CallExpr
 	})
@@ -2571,9 +2612,14 @@ func (infer *FileInferrer) funcType(expr *ast.FuncType) {
 		}
 	}
 	var returnT types.Type = types.VoidType{}
-	if expr.Result != nil {
-		infer.expr(expr.Result)
-		returnT = infer.env.GetType(expr.Result)
+	if expr.Results != nil {
+		for i := range expr.Results.List {
+			infer.expr(expr.Results.List[i].Type)
+		}
+		if len(expr.Results.List) == 1 {
+			infer.SetType(expr.Results, infer.GetType2(expr.Results.List[0].Type))
+		}
+		returnT = infer.env.GetType(expr.Results)
 		if returnT == nil {
 			returnT = types.VoidType{}
 		}
@@ -3939,32 +3985,37 @@ func (infer *FileInferrer) exprStmt(stmt *ast.ExprStmt) {
 }
 
 func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
-	if stmt.Result != nil {
-		infer.withOptType(stmt.Result, infer.returnType, func() {
+	if stmt.Results != nil {
+		ret0 := stmt.Results[0]
+		if len(stmt.Results) > 1 {
+			ret0 = &ast.TupleExpr{Values: stmt.Results, Lparen: stmt.Pos(), Rparen: stmt.End()}
+			stmt.Results = []ast.Expr{ret0}
+		}
+		infer.withOptType(ret0, infer.returnType, func() {
 			// Allow Enum to be used without the name if the type is known eg: ".Red"
 			if v, ok := infer.returnType.(types.EnumType); ok {
-				if vv, ok := stmt.Result.(*ast.SelectorExpr); ok {
+				if vv, ok := ret0.(*ast.SelectorExpr); ok {
 					if vvv, ok := vv.X.(*ast.Ident); ok {
 						if vvv.Name == "" {
 							vvv.Name = v.Name
 							vv.X = vvv
-							stmt.Result = vv
+							stmt.Results = []ast.Expr{vv}
 						}
 					}
 				}
 			}
-			rT := infer.GetType2(stmt.Result)
+			rT := infer.GetType2(ret0)
 			if v, ok := rT.(types.UnaryType); ok {
 				rT = v.X
 			}
 			if !cmpTypesLoose(rT, infer.returnType) {
-				infer.errorf(stmt.Result, "type mismatch")
+				infer.errorf(ret0, "type mismatch")
 				return
 			}
-			infer.expr(stmt.Result)
-			if _, ok := infer.GetType(stmt.Result).(types.OptionType); ok {
+			infer.expr(ret0)
+			if _, ok := infer.GetType(ret0).(types.OptionType); ok {
 				if v, ok := infer.returnType.(types.OptionType); ok {
-					infer.SetTypeForce(stmt.Result, types.OptionType{W: v.W})
+					infer.SetTypeForce(ret0, types.OptionType{W: v.W})
 				}
 			}
 		})
