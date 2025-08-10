@@ -51,6 +51,7 @@ func (t *Test) PrintErrors() {
 
 type TestConf struct {
 	MutEnforced bool
+	PanicOnErr  bool
 }
 
 type TestOption func(*TestConf)
@@ -59,6 +60,10 @@ func WithMutEnforced(v bool) func(*TestConf) {
 	return func(c *TestConf) {
 		c.MutEnforced = v
 	}
+}
+
+var WithPanicOnErr = func(c *TestConf) {
+	c.PanicOnErr = true
 }
 
 func NewTest(src string, opts ...TestOption) *Test {
@@ -70,8 +75,8 @@ func NewTest(src string, opts ...TestOption) *Test {
 	noop(f2)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_, _ = i.InferFile("core.agl", f2, fset, c.MutEnforced)
-	imports, errs := i.InferFile("", f, fset, c.MutEnforced)
+	_, _ = i.InferFile("core.agl", f2, fset, c.MutEnforced, c.PanicOnErr)
+	imports, errs := i.InferFile("", f, fset, c.MutEnforced, c.PanicOnErr)
 	file := fset.File(1)
 	return &Test{
 		f:       f,

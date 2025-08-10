@@ -12,8 +12,8 @@ func getGenOutput(src string, opts ...GeneratorOption) (string, string) {
 	noop(f2)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_, _ = i.InferFile("core.agl", f2, fset, true)
-	imports, errs := i.InferFile("", f, fset, true)
+	_, _ = i.InferFile("core.agl", f2, fset, true, false)
+	imports, errs := i.InferFile("", f, fset, true, false)
 	if len(errs) > 0 {
 		fmt.Println(errs)
 		return "", ""
@@ -3659,8 +3659,8 @@ func main() {
 	fset, f, f2 := ParseSrc(src)
 	env := NewEnv(fset)
 	i := NewInferrer(env)
-	_, _ = i.InferFile("core.agl", f2, fset, true)
-	_, errs := i.InferFile("", f, fset, true)
+	_, _ = i.InferFile("core.agl", f2, fset, true, false)
+	_, errs := i.InferFile("", f, fset, true, false)
 	fmt.Print(errs)
 	tassert.Equal(t, 1, 1)
 }

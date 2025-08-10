@@ -37,7 +37,7 @@ func NewInferrer(env *Env) *Inferrer {
 	return &Inferrer{Env: env}
 }
 
-func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced bool) (map[string]*ast.ImportSpec, []error) {
+func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileSet, mutEnforced, panicOnErr bool) (map[string]*ast.ImportSpec, []error) {
 	if f.Doc != nil {
 		for _, r := range f.Doc.List {
 			if r.Text == "// agl:disable(mut_check)" {
@@ -45,7 +45,7 @@ func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileS
 			}
 		}
 	}
-	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced, imports: make(map[string]*ast.ImportSpec)}
+	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced, panicOnErr: panicOnErr, imports: make(map[string]*ast.ImportSpec)}
 	fileInferrer.Infer()
 	return fileInferrer.imports, fileInferrer.Errors
 }
@@ -62,6 +62,7 @@ type FileInferrer struct {
 	forceReturnType types.Type
 	mapKT, mapVT    types.Type
 	Errors          []error
+	panicOnErr      bool
 	mutEnforced     bool
 	destructure     bool
 	indexValue      types.Type
@@ -86,6 +87,9 @@ func (infer *FileInferrer) errorf(n ast.Node, f string, args ...any) {
 	msg += fmt.Sprintf("%d:%d: ", pos.Line, pos.Column)
 	msg += fmt.Sprintf(f, args...)
 	err := errors.New(msg)
+	if infer.panicOnErr {
+		panic(err)
+	}
 	infer.Errors = append(infer.Errors, &InferError{N: n, err: err})
 }
 
