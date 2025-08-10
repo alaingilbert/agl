@@ -2151,6 +2151,9 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 	content2 := emptyContent
 	var isSet bool
 	switch v := expr.Fun.(type) {
+	case *ast.IndexExpr:
+		t1 := g.env.Get(v.X.(*ast.Ident).Name)
+		p("????????????????????", expr.Fun, to(expr.Fun), t1, v.X, v.Index)
 	case *ast.Ident:
 		t1 := g.env.Get(v.Name)
 		if t2, ok := t1.(types.TypeType); ok && TryCast[types.CustomType](t2.W) {
@@ -2207,6 +2210,8 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 			}
 		}
+		//default:
+		//	panic(fmt.Sprintf("%v", to(expr.Fun)))
 	}
 	if !isSet {
 		c1 := g.genExpr(expr.Fun)

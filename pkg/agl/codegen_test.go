@@ -12191,6 +12191,55 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+//func TestCodeGen410(t *testing.T) {
+//	src := `package main
+//import "reflect"
+//func Cast[T any](origin any) (T, bool) {
+//	if val, ok := origin.(reflect.Value); ok {
+//		origin = val.Interface()
+//	}
+//	val, ok := origin.(T)
+//	return val, ok
+//}
+//func MustCast[T any](origin any) T {
+//	v, ok := Cast[T](origin)
+//	if !ok {
+//		panic("")
+//	}
+//	return v
+//}
+//func main() {
+//	var a any = 123
+//	MustCast[int](a)
+//}
+//`
+//	expected := `// agl:generated
+//package main
+//import "reflect"
+//func Cast_T_int(origin any) (int, bool) {
+//	if val, ok := origin.(reflect.Value); ok {
+//		origin = val.Interface()
+//	}
+//	val, ok := origin.(int)
+//	return val, ok
+//}
+//func MustCast_T_int(origin any) int {
+//	v, ok := Cast_T_int(origin)
+//	if !ok {
+//		panic("")
+//	}
+//	return v
+//}
+//func main() {
+//	var a any = 123
+//	MustCast_T_int(a)
+//}
+//`
+//	test := NewTest(src, WithMutEnforced(false), WithPanicOnErr)
+//	tassert.Equal(t, 0, len(test.errs))
+//	testCodeGen2(t, expected, test)
+//}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

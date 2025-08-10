@@ -1118,9 +1118,16 @@ func (infer *FileInferrer) callExprIdent(expr *ast.CallExpr, call *ast.Ident) {
 }
 
 func (infer *FileInferrer) callExprIndexExpr(expr *ast.CallExpr, call *ast.IndexExpr) {
-	sel := call.X.(*ast.SelectorExpr)
-	infer.withIndexValue(infer.GetType2(call.Index), func() {
-		infer.callExprSelectorExpr(expr, sel)
+	callT := infer.GetType2(call.Index)
+	infer.withIndexValue(callT, func() {
+		switch v := call.X.(type) {
+		case *ast.Ident:
+			infer.callExprIdent(expr, v)
+		case *ast.SelectorExpr:
+			infer.callExprSelectorExpr(expr, v)
+		default:
+			panic("")
+		}
 	})
 }
 

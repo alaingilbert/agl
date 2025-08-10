@@ -4,3 +4,7 @@ type Type interface {
 }
 
 func TypeOf(any) Type
+
+type Value struct{}
+
+func (v Value) Interface() any
