@@ -1112,7 +1112,12 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 	if name == "_" {
 		return nil
 	}
-	//p("DEF", name, typ, e.ID)
+	var pos token.Position
+	if e.fset != nil && n != nil {
+		pos = e.fset.Position(n.Pos())
+	}
+	utils.Noop(pos)
+	//p("DEF", name, typ, e.ID, pos)
 	conf := &SetTypeConf{}
 	for _, opt := range opts {
 		opt(conf)
