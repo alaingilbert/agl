@@ -40,6 +40,6 @@ func part1() {
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day25/data.txt")!)
-    parts = fileContent.Split("\n\n").Map({ $0.Split("\n").Map({ $0.Split("") }) })
+    parts = fileContent.Split("\n\n").Map({ $0.Lines().Map({ $0.Split("") }) })
     part1()
 }

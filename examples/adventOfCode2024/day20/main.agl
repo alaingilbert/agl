@@ -106,7 +106,7 @@ func part2() {
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day20/data.txt")!)
-    data = fileContent.Split("\n").Map({ $0.Split("") })
+    data = fileContent.Lines().Map({ $0.Split("") })
     width = data[0].Len()
     height = data.Len()
     part1()

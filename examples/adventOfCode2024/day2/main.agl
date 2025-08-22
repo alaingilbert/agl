@@ -15,7 +15,7 @@ func isSafe(report []int) bool {
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day2/data.txt")!
-    lines := string(data).Split("\n").Map({
+    lines := string(data).Lines().Map({
         $0.Split(" ").Map({ $0.Int()? })
     })
     fmt.Printf("part1: %d\n", part1(lines))
