@@ -6,20 +6,20 @@ import (
 )
 
 func main() {
-    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
+    data := string(os.ReadFile("examples/adventOfCode2024/day3/data.txt")!)
     printf("part1: %d", part1(data))
     printf("part2: %d", part2(data))
 }
 
-func part1(data []byte) int {
+func part1(data string) int {
    	rgxMul := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
-	matches := rgxMul.FindAllStringSubmatch(string(data), -1)
+	matches := rgxMul.FindAllStringSubmatch(data, -1)
     return matches.Map({ $0[1].Int()? * $0[2].Int()? }).Sum()
 }
 
-func part2(data []byte) int {
+func part2(data string) int {
     rgx := regexp.MustCompile(`mul\((\d+),(\d+)\)|do\(\)|don't\(\)`)
-	matches := rgx.FindAllStringSubmatch(string(data), -1)
+	matches := rgx.FindAllStringSubmatch(data, -1)
 	mut enabled := true
     return matches.Map({
         if $0[0] == "do()" {
