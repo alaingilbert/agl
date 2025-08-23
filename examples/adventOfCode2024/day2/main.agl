@@ -23,7 +23,7 @@ func main() {
 }
 
 func part1(data [][]int) int {
-    return data.Filter({ isSafe($0) }).Len()
+    return data.Filter(isSafe).Len()
 }
 
 func part2(data [][]int) int {
