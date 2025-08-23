@@ -29,7 +29,7 @@ func part1() {
             }
         }
     }
-    printf(res)
+    printf("%d", res)
 }
 
 func part2() {
@@ -46,7 +46,7 @@ func part2() {
             res += 3 * a + b
         }
     }
-    printf(res)
+    printf("%d", res)
 }
 
 func main() {

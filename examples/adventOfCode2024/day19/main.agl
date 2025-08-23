@@ -39,12 +39,12 @@ func countDesignPossible(design string, mut cache map[string]int) int {
 }
 
 func part1() {
-    printf(desiredDesigns.Filter({ isDesignPossible($0) }).Len())
+    printf("%d", desiredDesigns.Filter({ isDesignPossible($0) }).Len())
 }
 
 func part2() {
     mut cache := make(map[string]int)
-    printf(desiredDesigns.Reduce(0, { $0 + countDesignPossible($1, mut cache) }))
+    printf("%d", desiredDesigns.Reduce(0, { $0 + countDesignPossible($1, mut cache) }))
 }
 
 func main() {

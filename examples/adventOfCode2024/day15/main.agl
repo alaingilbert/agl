@@ -71,7 +71,7 @@ func part1(warehouse [][]string, moves []string) {
             }
         }
     }
-    printf(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+    printf("%d", boxes.Map({ 100 * $0.y + $0.x }).Sum())
 }
 
 func part2(warehouse [][]string, moves []string) {
@@ -110,7 +110,7 @@ func part2(warehouse [][]string, moves []string) {
             boxes.FormUnion(newBoxes)
         }
     }
-    printf(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+    printf("%d", boxes.Map({ 100 * $0.y + $0.x }).Sum())
 }
 
 func main() {

@@ -81,7 +81,7 @@ func part1(data [][]string) {
     s := findChar(data, "S")?
     e := findChar(data, "E")?
     res := dijkstra(s, e)
-    printf(res)
+    printf("%d", res)
 }
 
 func main() {

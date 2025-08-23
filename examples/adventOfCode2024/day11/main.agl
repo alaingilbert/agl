@@ -25,7 +25,7 @@ func main() {
         }
         data1 = newData
     }
-    printf(data1.Len())
+    printf("%d", data1.Len())
     part2(data)
 }
 
@@ -56,5 +56,5 @@ func part2(dataIn []uint) {
         }
         data = newData;
     }
-    printf(data.Values().Sum())
+    printf("%d", data.Values().Sum())
 }

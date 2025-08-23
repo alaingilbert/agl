@@ -73,7 +73,7 @@ func buildGrid(idx int) [][]bool {
 
 func part1() {
     grid := buildGrid(1024)
-    printf(bfs(grid)?.Len())
+    printf("%d", bfs(grid)?.Len())
 }
 
 func part2() {
@@ -88,7 +88,7 @@ func part2() {
         }
     }
     x, y := coord(low-1)
-    printf("%d,%d", x, y)
+    printf("%d", "%d,%d", x, y)
 }
 
 func main() {

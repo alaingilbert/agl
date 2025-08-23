@@ -61,10 +61,10 @@ func solve(expected i64, vals []i64, ops []Op) bool {
 
 func part1() {
     res := data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul}) }).Map({ $0.Key }).Sum()
-    printf(res)
+    printf("%d", res)
 }
 
 func part2() {
     res := data.Filter({ solve($0.Key, $0.Value, []Op{Op.add, Op.mul, Op.cat}) }).Map({ $0.Key }).Sum()
-    printf(res)
+    printf("%d", res)
 }

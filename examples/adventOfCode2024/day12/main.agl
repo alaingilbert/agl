@@ -37,7 +37,7 @@ func part1() {
             res += area * sidesSet.Len()
         }
     }
-    printf(res)
+    printf("%d", res)
 }
 
 func part2() {
@@ -79,7 +79,7 @@ func part2() {
             res += region.Len() * sides
         }
     }
-    printf(res)
+    printf("%d", res)
 }
 
 func main() {

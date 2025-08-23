@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut parts [][][]string
 func part1() {
@@ -35,7 +32,7 @@ func part1() {
             }
         }
     }
-    fmt.Println(res)
+    printf("%d", res)
 }
 
 func main() {
