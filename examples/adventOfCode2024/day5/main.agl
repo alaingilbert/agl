@@ -1,7 +1,6 @@
 package main
 
 import "agl1/os"
-import "fmt"
 
 var mut data1 [][]int
 var mut updates [][]int
@@ -17,8 +16,8 @@ func main() {
         a, b := d[0], d[1]
         rules[a] = rules.Get(a).UnwrapOr(set[int]{}).Union([]int{b})
     }
-    fmt.Println("part1:", updates.Filter(isValid).Map(middlePage).Sum())
-    fmt.Println("part2:", updates.Filter(isInvalid).Map(fixUpdate).Map(middlePage).Sum())
+    printf("part1: %d", updates.Filter(isValid).Map(middlePage).Sum())
+    printf("part2: %d", updates.Filter(isInvalid).Map(fixUpdate).Map(middlePage).Sum())
 }
 
 func isInvalid(update []int) bool {

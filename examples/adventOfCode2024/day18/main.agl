@@ -3,7 +3,6 @@ package main
 import (
     "agl1/os"
     "agl1/regexp"
-    "fmt"
 )
 
 var mut data [][]int
@@ -74,7 +73,7 @@ func buildGrid(idx int) [][]bool {
 
 func part1() {
     grid := buildGrid(1024)
-    fmt.Println(bfs(grid)?.Len())
+    printf(bfs(grid)?.Len())
 }
 
 func part2() {
@@ -89,7 +88,7 @@ func part2() {
         }
     }
     x, y := coord(low-1)
-    fmt.Printf("%d,%d\n", x, y)
+    printf("%d,%d", x, y)
 }
 
 func main() {

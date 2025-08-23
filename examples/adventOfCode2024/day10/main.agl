@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut data [][]int
 var mut width int
@@ -64,6 +61,6 @@ func main() {
         findTrails($0, mut summits)
         return summits.Len()
     }).Sum()
-    fmt.Println("Part1:", part1)
-    fmt.Println("Part2:", heads.Map(findTrails2).Sum())
+    printf("Part1: %d", part1)
+    printf("Part2: %d", heads.Map(findTrails2).Sum())
 }

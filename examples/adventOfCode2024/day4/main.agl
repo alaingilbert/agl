@@ -1,17 +1,14 @@
 package main
 
-import (
-    "fmt"
-    "agl1/os"
-)
+import "agl1/os"
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day4/data.txt")!
     lines := string(data).Lines().Map({ $0.Split("") })
     height := lines.Len()
     width := lines.First()?.Len()
-    fmt.Printf("part1: %d\n", part1(lines, width, height))
-    fmt.Printf("part2: %d\n", part2(lines, width, height))
+    printf("part1: %d", part1(lines, width, height))
+    printf("part2: %d", part2(lines, width, height))
 }
 
 func isValidPosition(x, y, width, height int) bool {

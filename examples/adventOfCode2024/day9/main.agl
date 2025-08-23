@@ -2,7 +2,6 @@ package main
 
 import (
     "agl1/os"
-    "agl1/fmt"
     "agl1/math"
 )
 
@@ -96,9 +95,9 @@ func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day9/data.txt")!)
     mut blocks := genBlocks(fileContent)
     reorder(mut blocks)
-    fmt.Println("part1:", checksum(blocks))
+    printf("part1: %d", checksum(blocks))
 
     mut blocks2 := genBlocks(fileContent)
     reorder2(mut blocks2);
-    fmt.Println("part2:", checksum(blocks2));
+    printf("part2: %d", checksum(blocks2));
 }

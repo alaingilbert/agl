@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut data [][]string
 
@@ -30,7 +27,7 @@ func part1() {
             }
         }
     }
-    fmt.Println(sets.Values().Filter({ $0.Contains(where: { $0.HasPrefix("t") }) }).Len())
+    printf(sets.Values().Filter({ $0.Contains(where: { $0.HasPrefix("t") }) }).Len())
 }
 
 func main() {

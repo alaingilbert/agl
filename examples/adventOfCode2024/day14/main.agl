@@ -3,7 +3,6 @@ package main
 import (
     "agl1/os"
     "agl1/regexp"
-    "fmt"
 )
 
 type Robot struct {
@@ -37,7 +36,7 @@ func part1(robots []Robot) {
     q2 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 < mh }).Len()
     q3 := robots.Filter({ $0.Position.0 < mw && $0.Position.1 > mh }).Len()
     q4 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 > mh }).Len()
-    fmt.Println(q1*q2*q3*q4)
+    printf(q1*q2*q3*q4)
 }
 
 func pp(r []Robot) string {
@@ -63,7 +62,7 @@ func part2(robots []Robot) {
         }
         p := pp(robots)
         if p.Contains("**************") {
-            fmt.Println(steps)
+            printf(steps)
             break
         }
     }

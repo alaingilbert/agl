@@ -1,15 +1,14 @@
 package main
 
 import (
-    "fmt"
     "regexp"
     "agl1/os"
 )
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!
-    fmt.Printf("part1: %d\n", part1(data))
-    fmt.Printf("part2: %d\n", part2(data))
+    printf("part1: %d", part1(data))
+    printf("part2: %d", part2(data))
 }
 
 func part1(data []byte) int {

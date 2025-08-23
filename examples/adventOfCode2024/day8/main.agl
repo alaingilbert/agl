@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut data [][]string
 var mut width, mut height int
@@ -39,7 +36,7 @@ func part1() {
             }
         }
     }
-    fmt.Println(antinodes.Len())
+    printf(antinodes.Len())
 }
 
 func part2() {
@@ -59,5 +56,5 @@ func part2() {
             }
         }
     }
-    fmt.Println(antinodes.Len())
+    printf(antinodes.Len())
 }

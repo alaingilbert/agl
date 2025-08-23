@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day1/data.txt")!
@@ -12,8 +9,8 @@ func main() {
     })
     list1 := lines.Map({ $0[0] }).Sorted()
     list2 := lines.Map({ $0[1] }).Sorted()
-    fmt.Printf("part1: %d\n", part1(list1, list2))
-    fmt.Printf("part2: %d\n", part2(list1, list2))
+    printf("part1: %d", part1(list1, list2))
+    printf("part2: %d", part2(list1, list2))
 }
 
 func part1(list1, list2 []int) int {

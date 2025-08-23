@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut towels []string
 var mut desiredDesigns []string
@@ -42,12 +39,12 @@ func countDesignPossible(design string, mut cache map[string]int) int {
 }
 
 func part1() {
-    fmt.Println(desiredDesigns.Filter({ isDesignPossible($0) }).Len())
+    printf(desiredDesigns.Filter({ isDesignPossible($0) }).Len())
 }
 
 func part2() {
     mut cache := make(map[string]int)
-    fmt.Println(desiredDesigns.Reduce(0, { $0 + countDesignPossible($1, mut cache) }))
+    printf(desiredDesigns.Reduce(0, { $0 + countDesignPossible($1, mut cache) }))
 }
 
 func main() {

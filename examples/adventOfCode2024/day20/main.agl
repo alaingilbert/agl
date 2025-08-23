@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut data [][]string
 var mut width int
@@ -97,11 +94,11 @@ func findRes(maxCheats int) int {
 }
 
 func part1() {
-    fmt.Println(findRes(2))
+    printf(findRes(2))
 }
 
 func part2() {
-    fmt.Println(findRes(20))
+    printf(findRes(20))
 }
 
 func main() {

@@ -3,7 +3,6 @@ package main
 import (
     "agl1/os"
     "agl1/regexp"
-    "fmt"
 )
 
 func nums(s string) []int {
@@ -27,7 +26,7 @@ func run(regA int, program []int) []int {
 func part1(programStr string) {
     regA := 45483412
     program := nums(programStr)
-    fmt.Println(run(regA, program).Map({ $0.String() }).Joined(","))
+    printf(run(regA, program).Map({ $0.String() }).Joined(","))
 }
 
 func main() {

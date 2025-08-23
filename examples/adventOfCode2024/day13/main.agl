@@ -1,7 +1,6 @@
 package main
 
 import (
-    "fmt"
     "agl1/regexp"
     "agl1/os"
 )
@@ -30,7 +29,7 @@ func part1() {
             }
         }
     }
-    fmt.Println(res)
+    printf(res)
 }
 
 func part2() {
@@ -47,7 +46,7 @@ func part2() {
             res += 3 * a + b
         }
     }
-    fmt.Println(res)
+    printf(res)
 }
 
 func main() {

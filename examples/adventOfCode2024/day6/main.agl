@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    "agl1/os"
-)
+import "agl1/os"
 
 var mut width, mut height int
 
@@ -101,7 +98,7 @@ func main() {
     height = data.Len()
     guardPosition := FindGuardPosition(data)
     origin := GetOrigPathPositions1(data, guardPosition)
-    fmt.Println("part1:", origin.Len())
+    printf("part1: %d", origin.Len())
 
     mut originArr := [](int, int){}
     for e := range origin {
@@ -117,5 +114,5 @@ func main() {
             }
         }
     }
-    fmt.Println("part2:", count)
+    printf("part2: %d", count)
 }

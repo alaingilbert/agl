@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 var mut secrets []int
 
@@ -22,7 +19,7 @@ func part1() {
         }
         res += secret1
     }
-    fmt.Println(res)
+    printf(res)
 }
 
 
@@ -57,7 +54,7 @@ func part2() {
 
     keys := cache.Reduce(into: set[S]{}, { $0.FormUnion($1.Keys()) })
     res := keys.Map(|key| { cache.Reduce(0, { $0 + $1.Get(key).UnwrapOrDefault() }) }).Max()?
-    fmt.Println(res)
+    printf(res)
 }
 
 func main() {

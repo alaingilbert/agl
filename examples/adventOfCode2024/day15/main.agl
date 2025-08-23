@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl1/os"
-    "fmt"
-)
+import "agl1/os"
 
 type Position struct {
     mut x, mut y int
@@ -74,7 +71,7 @@ func part1(warehouse [][]string, moves []string) {
             }
         }
     }
-    fmt.Println(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+    printf(boxes.Map({ 100 * $0.y + $0.x }).Sum())
 }
 
 func part2(warehouse [][]string, moves []string) {
@@ -113,7 +110,7 @@ func part2(warehouse [][]string, moves []string) {
             boxes.FormUnion(newBoxes)
         }
     }
-    fmt.Println(boxes.Map({ 100 * $0.y + $0.x }).Sum())
+    printf(boxes.Map({ 100 * $0.y + $0.x }).Sum())
 }
 
 func main() {
