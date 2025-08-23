@@ -27,11 +27,10 @@ func part1(data [][]int) int {
 }
 
 func part2(data [][]int) int {
-    return data.Filter({
-        report := $0
-        return report.Indices().Any({
+    return data.Filter(|report| {
+        return report.Indices().Any(|i| {
             mut modified := report.Clone()
-            modified.Remove($0)
+            modified.Remove(i)
             return isSafe(modified)
         })
     }).Len()
