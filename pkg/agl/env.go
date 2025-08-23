@@ -325,6 +325,7 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 		e.Define(nil, "Type", types.InterfaceType{Pkg: "", Name: "Type"})
 		e.Define(nil, "Number", types.InterfaceType{Pkg: "agl1", Name: "Number"})
 		e.Define(nil, "Integer", types.InterfaceType{Pkg: "agl1", Name: "Integer"})
+		e.DefineFn(nenv, "printf", "func (format string, a ...any)")
 		e.DefineFn(nenv, "assert", "func (pred bool, msg ...string)")
 		e.DefineFn(nenv, "make", "func[T, U any](t T, size ...U) T")
 		e.DefineFn(nenv, "recover", "func () any")

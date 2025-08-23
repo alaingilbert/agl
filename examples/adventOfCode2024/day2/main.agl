@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    "agl1/os"
-)
+import "agl1/os"
 
 func isSafe(report []int) bool {
     direction := report[0] < report[1]
@@ -18,8 +15,8 @@ func main() {
     lines := string(data).Lines().Map({
         $0.Split(" ").Map({ $0.Int()? })
     })
-    fmt.Printf("part1: %d\n", part1(lines))
-    fmt.Printf("part2: %d\n", part2(lines))
+    printf("part1: %d", part1(lines))
+    printf("part2: %d", part2(lines))
 }
 
 func part1(data [][]int) int {
