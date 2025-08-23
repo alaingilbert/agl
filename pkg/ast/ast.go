@@ -536,25 +536,25 @@ func (l LabelledArg) exprNode()      {}
 
 func (o OrReturnExpr) Pos() token.Pos { return o.OrReturn }
 
-func (o OrReturnExpr) End() token.Pos { return o.OrReturn + 1 }
+func (o OrReturnExpr) End() token.Pos { return o.OrReturn + 9 }
 
 func (o OrReturnExpr) exprNode() {}
 
 func (o OrContinueExpr) Pos() token.Pos { return o.OrContinue }
 
-func (o OrContinueExpr) End() token.Pos { return o.OrContinue + 1 }
+func (o OrContinueExpr) End() token.Pos { return o.OrContinue + 11 }
 
 func (o OrContinueExpr) exprNode() {}
 
 func (o OrBreakExpr) Pos() token.Pos { return o.OrBreak }
 
-func (o OrBreakExpr) End() token.Pos { return o.OrBreak + 1 }
+func (o OrBreakExpr) End() token.Pos { return o.OrBreak + 8 }
 
 func (o OrBreakExpr) exprNode() {}
 
 func (n NoneExpr) Pos() token.Pos { return n.None }
 
-func (n NoneExpr) End() token.Pos { return n.None + 1 }
+func (n NoneExpr) End() token.Pos { return n.None + 4 }
 
 func (n NoneExpr) exprNode() {}
 
