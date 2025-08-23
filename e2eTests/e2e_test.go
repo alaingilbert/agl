@@ -525,3 +525,15 @@ func main() {
 }`
 	tassert.Equal(t, "8\n10.5561\n10.5561\n", testGenOutput(src))
 }
+
+func Test32(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    for i in 0..3 {
+        defer printf("leaving %d", i)
+        printf("inside %d", i)
+    }
+}`
+	tassert.Equal(t, "inside 0\nleaving 0\ninside 1\nleaving 1\ninside 2\nleaving 2\n", testGenOutput(src))
+}

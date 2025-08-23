@@ -12199,6 +12199,118 @@ func main() {
 	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
 }
 
+func TestCodeGen411(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func main() {
+	b := make([]byte, 5)
+	f := os.Open("test.txt")!
+	defer f.Close()
+	defer func() {
+		printf("custom defer")
+	}()
+	a := if true {
+		defer printf("custom defer")
+		21
+	} else {
+		12
+	}
+	if true {
+		defer printf("custom defer")
+	}
+	for i := 0; i < 10; i++ {
+		guard i < 5 else {
+			defer printf("custom defer")
+			continue
+		}
+		defer printf("custom defer")
+	}
+	guard true else {
+		defer printf("custom defer")
+		return
+	}
+	_ = f.Read(b)!
+	printf("%v", b)
+}
+`
+	expected := `// agl:generated
+package main
+import "os"
+func main() {
+	b := make([]byte, 5)
+	aglTmpVar1, aglTmpErr1 := os.Open("test.txt")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
+	}
+	f := AglIdentity(aglTmpVar1)
+	defer f.Close()
+	defer func() {
+		AglPrintf("custom defer")
+	}()
+	var aglTmp2 int
+	func() {
+		if true {
+			defer AglPrintf("custom defer")
+			aglTmp2 = 21
+		} else {
+			aglTmp2 = 12
+		}
+	}()
+	a := AglIdentity(aglTmp2)
+	func() {
+		if true {
+			defer AglPrintf("custom defer")
+		}
+	}()
+	for i := 0; i < 10; i++ {
+		func() {
+			defer AglPrintf("custom defer")
+		}()
+	}
+	if !(true) {
+		func() {
+			defer AglPrintf("custom defer")
+		}()
+		return
+	}
+	aglTmpVar3, aglTmpErr3 := f.Read(b)
+	if aglTmpErr3 != nil {
+		panic(aglTmpErr3)
+	}
+	_ = AglIdentity(aglTmpVar3)
+	AglPrintf("%v", b)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen412(t *testing.T) {
+	src := `package main
+func main() {
+    for i in 0..3 {
+        defer printf("leaving %d", i)
+        printf("inside %d", i)
+    }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for i := range AglNewRange[int](0, 3, false).Iter() {
+		func() {
+			defer AglPrintf("leaving %d", i)
+			AglPrintf("inside %d", i)
+		}()
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -163,6 +163,15 @@ func (infer *FileInferrer) withEnv(clb func()) {
 	infer.env = old
 }
 
+func (infer *FileInferrer) withEnvStmt(stmt ast.Node, clb func()) {
+	infer.withEnv(func() {
+		clb()
+		if infer.env.needWrap {
+			infer.env.SetNeedWrap(stmt)
+		}
+	})
+}
+
 func (infer *FileInferrer) GetTypeFn(n ast.Node) types.FuncType {
 	return infer.GetType(n).(types.FuncType)
 }
@@ -2438,7 +2447,7 @@ func (infer *FileInferrer) funcLit(expr *ast.FuncLit) {
 		expr.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt.X}}
 	}
 	infer.SetType(expr, ft)
-	infer.withEnv(func() {
+	infer.withEnvStmt(expr, func() {
 		if expr.Type.Params != nil {
 			for _, field := range expr.Type.Params.List {
 				infer.expr(field.Type)
@@ -2474,7 +2483,7 @@ func (infer *FileInferrer) defineDestructuredTuple(vals []ast.Expr, t types.Tupl
 }
 
 func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(expr, func() {
 		if infer.optType.IsDefinedFor(expr) {
 			infer.SetType(expr, infer.optType.Type)
 		}
@@ -3306,7 +3315,7 @@ func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 }
 
 func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil &&
 			TryCast[*ast.BinaryExpr](stmt.Cond) && stmt.Cond.(*ast.BinaryExpr).Op == token.IN {
 			cond := stmt.Cond.(*ast.BinaryExpr)
@@ -3393,7 +3402,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 }
 
 func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		infer.expr(stmt.X)
 		xT := infer.GetType2(stmt.X)
 		if xT == nil {
@@ -4070,7 +4079,7 @@ func (infer *FileInferrer) commClause(stmt *ast.CommClause) {
 }
 
 func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		if stmt.Init != nil {
 			infer.stmt(stmt.Init)
 		}
@@ -4086,7 +4095,7 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 				infer.exprs(c.List)
 			}
 			if c.Body != nil {
-				infer.withEnv(func() {
+				infer.withEnvStmt(stmt, func() {
 					switch ass := stmt.Assign.(type) {
 					case *ast.AssignStmt:
 						if len(ass.Lhs) == 1 && len(c.List) == 1 {
@@ -4105,7 +4114,7 @@ func (infer *FileInferrer) typeSwitchStmt(stmt *ast.TypeSwitchStmt) {
 }
 
 func (infer *FileInferrer) switchStmt(stmt *ast.SwitchStmt) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		var tagT types.Type
 		if stmt.Tag != nil {
 			infer.expr(stmt.Tag)
@@ -4143,6 +4152,7 @@ func (infer *FileInferrer) branchStmt(stmt *ast.BranchStmt) {
 
 func (infer *FileInferrer) deferStmt(stmt *ast.DeferStmt) {
 	infer.expr(stmt.Call)
+	infer.env.needWrap = true
 	infer.SetType(stmt, types.VoidType{})
 }
 
@@ -4245,7 +4255,7 @@ func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
 }
 
 func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		lhs := stmt.Ass.Lhs[0]
 		var lhsT types.Type
 		switch stmt.Op {
@@ -4269,7 +4279,7 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 		}
 	})
 	if stmt.Else != nil {
-		infer.withEnv(func() {
+		infer.withEnvStmt(stmt, func() {
 			infer.stmt(stmt.Else)
 		})
 	}
@@ -4316,7 +4326,7 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 }
 
 func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		if stmt.Init != nil {
 			infer.stmt(stmt.Init)
 		}
@@ -4326,7 +4336,7 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 		}
 	})
 	if stmt.Else != nil {
-		infer.withEnv(func() {
+		infer.withEnvStmt(stmt, func() {
 			infer.stmt(stmt.Else)
 		})
 		a := infer.GetType(stmt.Body)
@@ -4364,7 +4374,7 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 }
 
 func (infer *FileInferrer) guardStmt(stmt *ast.GuardStmt) {
-	infer.withEnv(func() {
+	infer.withEnvStmt(stmt, func() {
 		infer.expr(stmt.Cond)
 		if stmt.Body == nil || len(stmt.Body.List) == 0 {
 			infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
