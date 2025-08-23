@@ -35,7 +35,7 @@ func part1() {
     yRes := y.Reduce(0, { $0 << 1 | m[$1] })
     zRes := z.Reduce(0, { $0 << 1 | m[$1] })
     _, _ = xRes, yRes
-    printf(zRes)
+    printf("%d", zRes)
 }
 
 func main() {
