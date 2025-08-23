@@ -30,7 +30,7 @@ func part2(data [][]int) int {
     return data.Filter({
         report := $0
         return report.Indices().Any({
-            modified := report.Clone()
+            mut modified := report.Clone()
             modified.Remove($0)
             return isSafe(modified)
         })
