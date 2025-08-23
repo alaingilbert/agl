@@ -29,6 +29,9 @@ func findNodeAtPosition(file *ast.File, fset *token.FileSet, pos token.Position)
 			}
 			return true // Continue searching for more specific nodes
 		}
+		if TryCast[*ast.OrContinueExpr](n) || TryCast[*ast.OrBreakExpr](n) || TryCast[*ast.OrReturnExpr](n) {
+			return true
+		}
 		return false
 	})
 	return result

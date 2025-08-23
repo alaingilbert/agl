@@ -256,6 +256,21 @@ func (s *Server) Definition(ctx context.Context, params lsp.TextDocumentPosition
 	return nil, nil
 }
 
+// Cast ...
+func Cast[T any](origin any) (T, bool) {
+	if val, ok := origin.(reflect.Value); ok {
+		origin = val.Interface()
+	}
+	val, ok := origin.(T)
+	return val, ok
+}
+
+// TryCast ...
+func TryCast[T any](origin any) bool {
+	_, ok := Cast[T](origin)
+	return ok
+}
+
 func (s *Server) findNodeAtPosition(file *ast.File, pos token.Position) ast.Node {
 	var result ast.Node
 	ast.Inspect(file, func(n ast.Node) bool {
@@ -274,6 +289,9 @@ func (s *Server) findNodeAtPosition(file *ast.File, pos token.Position) ast.Node
 				result = n
 			}
 			return true // Continue searching for more specific nodes
+		}
+		if TryCast[*ast.OrContinueExpr](n) || TryCast[*ast.OrBreakExpr](n) || TryCast[*ast.OrReturnExpr](n) {
+			return true
 		}
 		return false
 	})

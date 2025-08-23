@@ -12180,6 +12180,25 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen410(t *testing.T) {
+	src := `package main
+func main() {
+	a := []string{"a", "b", "c"}
+	a.FirstIndex("b")
+	for {
+		b := a.FirstIndex("b") or_continue
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]string) FirstIndex(string) int?", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "[]string", test.TypeAt(6, 8).String())
+	tassert.Equal(t, "func ([]string) FirstIndex(string) int?", test.TypeAt(6, 10).String())
+	tassert.Equal(t, "int", test.TypeAt(6, 3).String())
+	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {
