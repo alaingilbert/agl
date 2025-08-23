@@ -12,8 +12,8 @@ type Direction enum {
 }
 
 func FindGuardPosition(data [][]string) (int, int) {
-    for y in data.Indices() {
-        x := data[y].FirstIndex("^") or_continue
+    for (y, row) in data.Enumerated() {
+        x := row.FirstIndex("^") or_continue
         return (x, y)
     }
     return (0, 0)
