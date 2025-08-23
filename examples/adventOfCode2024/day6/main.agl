@@ -12,7 +12,7 @@ type Direction enum {
 }
 
 func FindGuardPosition(data [][]string) (int, int) {
-    for y := range data {
+    for y in data.Indices() {
         x := data[y].FirstIndex("^") or_continue
         return (x, y)
     }
@@ -84,7 +84,7 @@ func GetOrigPathPositions2(data [][]string, guardPosition (int, int)) bool {
 
 func CloneData(dataIn [][]string) [][]string {
     mut out := make([][]string, dataIn.Len())
-    for y := range dataIn {
+    for y in dataIn.Indices() {
         out[y] = dataIn[y].Clone()
     }
     return out
@@ -104,7 +104,7 @@ func main() {
         originArr.Push(e)
     }
     var count int
-    for _, pos := range originArr {
+    for pos in originArr {
         if pos != guardPosition {
             mut localData := CloneData(data)
             localData[pos.1][pos.0] = "#"
