@@ -951,11 +951,18 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		}
 		var typeParams []Type
 		for _, p := range t1.TypeParams {
-			np := p.(GenericType)
-			if np.Name == name {
-				np.W = newTyp
+			switch v := p.(type) {
+			case TupleType:
+				p = ReplGen(v, name, newTyp)
+				typeParams = append(typeParams, p)
+			case GenericType:
+				if v.Name == name {
+					v.W = newTyp
+				}
+				typeParams = append(typeParams, v)
+			default:
+				panic("")
 			}
-			typeParams = append(typeParams, np)
 		}
 		return FuncType{
 			Name:       t1.Name,
@@ -1003,6 +1010,10 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			params = append(params, p)
 		}
 		return TupleType{Elts: params}
+	case StringType:
+		return t
+	case VoidType:
+		return t
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))

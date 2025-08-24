@@ -12199,6 +12199,48 @@ func main() {
 	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
 }
 
+func TestCodeGen411(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := []string{"a", "b", "c"}
+	for e := range zip2(a, b) {
+		printf("%v", e)
+	}
+}`
+	expected := `// agl:generated
+package main
+import "iter"
+func main() {
+	a := []int{1, 2, 3}
+	b := []string{"a", "b", "c"}
+	for e := range zip2_T_int_U_string(a, b) {
+		AglPrintf("%v", e)
+	}
+}
+func zip2_T_int_U_string(a []int, b []string) iter.Seq[AglTupleStruct_int_string] {
+	return func(yield func(AglTupleStruct_int_string) bool) {
+		for i := range a {
+			if len(a) <= i || len(b) <= i {
+				break
+			}
+			if !yield(AglTupleStruct_int_string{Arg0: a[i], Arg1: b[i]}) {
+				return
+			}
+		}
+		return
+	}
+}
+type AglTupleStruct_int_string struct {
+	Arg0 int
+	Arg1 string
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
 //func main() {

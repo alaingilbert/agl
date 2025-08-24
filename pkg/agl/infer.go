@@ -1327,6 +1327,10 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 	}
 	if exprFunT := infer.env.GetType(expr.Fun); exprFunT != nil {
 		if v, ok := exprFunT.(types.FuncType); ok {
+			switch v.Name {
+			case "zip2":
+				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
+			}
 			if infer.mutEnforced && len(expr.Args) > 0 {
 				for i, pp := range v.Params {
 					if i > len(expr.Args)-1 {

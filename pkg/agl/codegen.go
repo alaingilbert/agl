@@ -1489,7 +1489,7 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 					out += e(" ")
 				}
 				if _, ok := field.Type.(*ast.TupleExpr); ok {
-					out += e(g.env.GetType(field.Type).GoStr())
+					out += e(types.ReplGenM(g.env.GetType(field.Type), g.genMap).GoStr())
 				} else if id, ok := field.Type.(*ast.Ident); ok && TryCast[types.GenericType](g.env.GetType(id)) {
 					typ := g.env.GetType(id).(types.GenericType)
 					if vv, ok := g.genMap[id.Name]; ok {

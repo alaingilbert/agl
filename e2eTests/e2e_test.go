@@ -525,3 +525,27 @@ func main() {
 }`
 	tassert.Equal(t, "8\n10.5561\n10.5561\n", testGenOutput(src))
 }
+
+func Test32(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := []string{"a", "b", "c"}
+	for e := range zip2(a, b) {
+		printf("%v", e)
+	}
+}`
+	tassert.Equal(t, "{1 a}\n{2 b}\n{3 c}\n", testGenOutput(src))
+}
+
+func Test33(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	b := []string{"a", "b", "c"}
+	printf("%d", zip(a, b).Map({ $0.0 }).Sum())
+}`
+	tassert.Equal(t, "6\n", testGenOutput(src))
+}
