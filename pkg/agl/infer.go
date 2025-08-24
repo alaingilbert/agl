@@ -594,6 +594,8 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					returnTyp = vv.Concrete([]types.Type{iT})
 				case types.InterfaceType:
 					returnTyp = vv.Concrete([]types.Type{iT})
+				case types.StructType:
+					returnTyp = vv.Concrete([]types.Type{iT})
 				default:
 					panic(fmt.Sprintf("%v", to(returnTyp)))
 				}

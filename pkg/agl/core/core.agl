@@ -15,13 +15,16 @@ func zip[T, U any](a []T, b []U) [](T, U) {
 	return out
 }
 
-func zip2[T, U any](a []T, b []U) iter.Seq[(T, U)] {
+func zip2[T, U any](a Sequence[T], b Sequence[U]) iter.Seq[(T, U)] {
 	return func(yield func((T, U)) bool) {
-        for i := range a {
-            if len(a) <= i || len(b) <= i {
-                break
-            }
-            if !yield((a[i], b[i])) {
+	    aNext, aStop := iter.Pull(a)
+        bNext, bStop := iter.Pull(b)
+        defer aStop()
+        defer bStop()
+        for {
+            v1 := aNext() or_break
+            v2 := bNext() or_break
+            if !yield((v1, v2)) {
                 return
             }
         }

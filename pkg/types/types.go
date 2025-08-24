@@ -378,6 +378,17 @@ func (i InterfaceType) Concrete(typs []Type) InterfaceType {
 	return i
 }
 
+func (s StructType) Concrete(typs []Type) StructType {
+	var newParams []Type
+	for idx, p := range s.TypeParams {
+		if _, ok := p.(GenericType); ok {
+			newParams = append(newParams, typs[idx])
+		}
+	}
+	s.TypeParams = newParams
+	return s
+}
+
 func (i InterfaceType) GetMethodByName(name string) Type {
 	for _, m := range i.Methods {
 		if m.Name == name {
@@ -1045,6 +1056,10 @@ func findGenHelper(m map[string]Type, a, b Type) {
 		}
 		if t1.Return != nil {
 			findGenHelper(m, t1.Return, b.(FuncType).Return)
+		}
+	case StructType:
+		for i, rawParam := range t1.TypeParams {
+			findGenHelper(m, rawParam, b.(StructType).TypeParams[i])
 		}
 	case StarType:
 		findGenHelper(m, t1.X, b.(StarType).X)

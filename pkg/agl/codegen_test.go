@@ -12218,13 +12218,24 @@ func main() {
 		AglPrintf("%v", e)
 	}
 }
-func zip2_T_int_U_string(a []int, b []string) iter.Seq[AglTupleStruct_int_string] {
+func zip2_T_int_U_string(a Sequence[int], b Sequence[string]) iter.Seq[AglTupleStruct_int_string] {
 	return func(yield func(AglTupleStruct_int_string) bool) {
-		for i := range a {
-			if len(a) <= i || len(b) <= i {
+		aNext, aStop := iter.Pull(a)
+		bNext, bStop := iter.Pull(b)
+		defer aStop()
+		defer bStop()
+		for {
+			aglTmp1 := AglWrapNativeOpt(aNext())
+			if aglTmp1.IsNone() {
 				break
 			}
-			if !yield(AglTupleStruct_int_string{Arg0: a[i], Arg1: b[i]}) {
+			v1 := AglIdentity(aglTmp1).Unwrap()
+			aglTmp2 := AglWrapNativeOpt(bNext())
+			if aglTmp2.IsNone() {
+				break
+			}
+			v2 := AglIdentity(aglTmp2).Unwrap()
+			if !yield(AglTupleStruct_int_string{Arg0: v1, Arg1: v2}) {
 				return
 			}
 		}

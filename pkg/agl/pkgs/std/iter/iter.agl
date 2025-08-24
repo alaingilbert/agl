@@ -1,3 +1,5 @@
 package iter
 
 type Seq[V any] func(yield func(V) bool)
+
+func Pull[V any](seq Seq[V]) (func() V?, func())
