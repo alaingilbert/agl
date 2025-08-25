@@ -1052,7 +1052,9 @@ func findGenHelper(m map[string]Type, a, b Type) {
 		}
 	case FuncType:
 		for i, rawParam := range t1.TypeParams {
-			findGenHelper(m, rawParam, b.(FuncType).TypeParams[i])
+			if len(t1.TypeParams) == len(b.(FuncType).TypeParams) {
+				findGenHelper(m, rawParam, b.(FuncType).TypeParams[i])
+			}
 		}
 		for i, rawParam := range t1.Params {
 			findGenHelper(m, rawParam, b.(FuncType).Params[i])

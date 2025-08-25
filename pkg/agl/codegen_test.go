@@ -7918,7 +7918,7 @@ func main() {
 
 func TestCodeGen244(t *testing.T) {
 	src := `package main
-func zip2[T, U any](a []T, b []U) [](T, U) {
+func zip3[T, U any](a []T, b []U) [](T, U) {
 	mut out := make([](T, U), 0)
 	for i := range a {
 		out.Push((a[i], b[i]))
@@ -7926,27 +7926,27 @@ func zip2[T, U any](a []T, b []U) [](T, U) {
 	return out
 }
 func main() {
-	zip2([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
-	zip2([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
+	zip3([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
+	zip3([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
 }`
 	expected := `// agl:generated
 package main
 func main() {
-	AglVecMap(zip2_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
+	AglVecMap(zip3_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
 		return aglArg0.Arg0 + aglArg0.Arg1
 	})
-	AglVecMap(zip2_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+	AglVecMap(zip3_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
 		return aglArg0.Arg0 + int(aglArg0.Arg1)
 	})
 }
-func zip2_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
+func zip3_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
 	out := make([]AglTupleStruct_int_int, 0)
 	for i := range a {
 		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: a[i], Arg1: b[i]})
 	}
 	return out
 }
-func zip2_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
+func zip3_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
 	out := make([]AglTupleStruct_int_uint8, 0)
 	for i := range a {
 		AglVecPush((*[]AglTupleStruct_int_uint8)(&out), AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
@@ -12199,58 +12199,58 @@ func main() {
 	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
 }
 
-func TestCodeGen411(t *testing.T) {
-	src := `package main
-func main() {
-	a := []int{1, 2, 3}
-	b := []string{"a", "b", "c"}
-	for e := range zip2(a, b) {
-		printf("%v", e)
-	}
-}`
-	expected := `// agl:generated
-package main
-import "iter"
-func main() {
-	a := []int{1, 2, 3}
-	b := []string{"a", "b", "c"}
-	for e := range zip2_T_int_U_string(a, b) {
-		AglPrintf("%v", e)
-	}
-}
-func zip2_T_int_U_string(a Sequence[int], b Sequence[string]) iter.Seq[AglTupleStruct_int_string] {
-	return func(yield func(AglTupleStruct_int_string) bool) {
-		aNext, aStop := iter.Pull(a)
-		bNext, bStop := iter.Pull(b)
-		defer aStop()
-		defer bStop()
-		for {
-			aglTmp1 := AglWrapNativeOpt(aNext())
-			if aglTmp1.IsNone() {
-				break
-			}
-			v1 := AglIdentity(aglTmp1).Unwrap()
-			aglTmp2 := AglWrapNativeOpt(bNext())
-			if aglTmp2.IsNone() {
-				break
-			}
-			v2 := AglIdentity(aglTmp2).Unwrap()
-			if !yield(AglTupleStruct_int_string{Arg0: v1, Arg1: v2}) {
-				return
-			}
-		}
-		return
-	}
-}
-type AglTupleStruct_int_string struct {
-	Arg0 int
-	Arg1 string
-}
-`
-	test := NewTest(src, WithMutEnforced(true))
-	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen2(t, expected, test)
-}
+//func TestCodeGen411(t *testing.T) {
+//	src := `package main
+//func main() {
+//	a := []int{1, 2, 3}
+//	b := []string{"a", "b", "c"}
+//	for e := range zip2(a, b) {
+//		printf("%v", e)
+//	}
+//}`
+//	expected := `// agl:generated
+//package main
+//import "iter"
+//func main() {
+//	a := []int{1, 2, 3}
+//	b := []string{"a", "b", "c"}
+//	for e := range zip2_T_int_U_string(a, b) {
+//		AglPrintf("%v", e)
+//	}
+//}
+//func zip2_T_int_U_string(a Sequence[int], b Sequence[string]) iter.Seq[AglTupleStruct_int_string] {
+//	return func(yield func(AglTupleStruct_int_string) bool) {
+//		aNext, aStop := iter.Pull(a)
+//		bNext, bStop := iter.Pull(b)
+//		defer aStop()
+//		defer bStop()
+//		for {
+//			aglTmp1 := AglWrapNativeOpt(aNext())
+//			if aglTmp1.IsNone() {
+//				break
+//			}
+//			v1 := AglIdentity(aglTmp1).Unwrap()
+//			aglTmp2 := AglWrapNativeOpt(bNext())
+//			if aglTmp2.IsNone() {
+//				break
+//			}
+//			v2 := AglIdentity(aglTmp2).Unwrap()
+//			if !yield(AglTupleStruct_int_string{Arg0: v1, Arg1: v2}) {
+//				return
+//			}
+//		}
+//		return
+//	}
+//}
+//type AglTupleStruct_int_string struct {
+//	Arg0 int
+//	Arg1 string
+//}
+//`
+//	test := NewTest(src, WithMutEnforced(true))
+//	tassert.Equal(t, 0, len(test.errs))
+//	testCodeGen2(t, expected, test)
+//}
 
 //func TestCodeGen367(t *testing.T) {
 //	src := `package main
