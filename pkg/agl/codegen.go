@@ -2707,7 +2707,16 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							panic(fmt.Sprintf("%v", to(v.X)))
 						}
 					}
-					out += body()
+					if g.env.NeedWrap(stmt) {
+						out += g.incrPrefix(func() (out string) {
+							out += e(g.prefix + "func() {\n")
+							out += body()
+							out += e(g.prefix + "}()\n")
+							return
+						})
+					} else {
+						out += body()
+					}
 					out += e(g.prefix + "}\n")
 					return out
 				}}
@@ -2750,7 +2759,16 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	}
 	return GenFrag{F: func() (out string) {
 		out += e(g.prefix+"for ") + tmp() + e("{\n")
-		out += body()
+		if g.env.NeedWrap(stmt) {
+			out += g.incrPrefix(func() (out string) {
+				out += e(g.prefix + "func() {\n")
+				out += body()
+				out += e(g.prefix + "}()\n")
+				return
+			})
+		} else {
+			out += body()
+		}
 		out += e(g.prefix + "}\n")
 		return out
 	}}
@@ -2790,7 +2808,16 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 		} else {
 			out += e(g.prefix+"for ") + c2.F() + e(", ") + c3.F() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 		}
-		out += g.incrPrefix(c4.F)
+		if g.env.NeedWrap(stmt) {
+			out += g.incrPrefix(func() (out string) {
+				out += e(g.prefix + "func() {\n")
+				out += g.incrPrefix(c4.F)
+				out += e(g.prefix + "}()\n")
+				return
+			})
+		} else {
+			out += g.incrPrefix(c4.F)
+		}
 		out += e(g.prefix + "}\n")
 		return out
 	}}
@@ -3093,12 +3120,30 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 		if _, ok := rhs0.(*ast.TypeAssertExpr); ok {
 			out += e(gPrefix) + lhs() + e(", "+varName+" := ") + rhs() + e("\n")
 			out += e(gPrefix + "if !" + varName + " {\n")
-			out += body()
+			if g.env.NeedWrap(stmt) {
+				out += g.incrPrefix(func() (out string) {
+					out += e(g.prefix + "func() {\n")
+					out += body()
+					out += e(g.prefix + "}()\n")
+					return
+				})
+			} else {
+				out += body()
+			}
 			out += e(gPrefix + "}\n")
 		} else {
 			out += e(gPrefix+varName+" := ") + rhs() + e("\n")
 			out += e(gPrefix + "if " + cond + " {\n")
-			out += body()
+			if g.env.NeedWrap(stmt) {
+				out += g.incrPrefix(func() (out string) {
+					out += e(g.prefix + "func() {\n")
+					out += body()
+					out += e(g.prefix + "}()\n")
+					return
+				})
+			} else {
+				out += body()
+			}
 			out += e(gPrefix + "}\n")
 			out += e(gPrefix) + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
 		}
@@ -3168,42 +3213,88 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		if hasTyp && isFirst {
 			out += e(gPrefix + "var " + varName + " " + ifT.GoStrType() + "\n")
 		}
-		if hasTyp && isFirst {
-			out += e(gPrefix)
-		}
-		out += e("if ")
-		if stmt.Init != nil {
-			g.WithInlineStmt(func() {
-				out += c3.F() + e("; ")
-			})
-		}
-		out += cond.F() + e(" {\n")
-		g.inlineStmt = false
-		out += g.incrPrefix(c2.F)
-		if stmt.Else != nil {
-			switch stmt.Else.(type) {
-			case *ast.ExprStmt:
-				switch stmt.Else.(*ast.ExprStmt).X.(type) {
-				case *ast.IfExpr, *ast.IfLetExpr:
-					out += e(gPrefix + "} else ")
+		if g.env.NeedWrap(stmt) {
+			if hasTyp && isFirst {
+				out += e(gPrefix)
+			}
+			out += e("func() {\n")
+			out += g.incrPrefix(func() (out string) {
+				gPrefix := g.prefix
+				out += e(gPrefix + "if ")
+				if stmt.Init != nil {
 					g.WithInlineStmt(func() {
-						out += c1.F()
+						out += c3.F() + e("; ")
 					})
+				}
+				out += cond.F() + e(" {\n")
+				g.inlineStmt = false
+				out += g.incrPrefix(c2.F)
+				if stmt.Else != nil {
+					switch stmt.Else.(type) {
+					case *ast.ExprStmt:
+						switch stmt.Else.(*ast.ExprStmt).X.(type) {
+						case *ast.IfExpr, *ast.IfLetExpr:
+							out += e(gPrefix + "} else ")
+							g.WithInlineStmt(func() {
+								out += c1.F()
+							})
+						default:
+							out += e(gPrefix + "} else {\n")
+							out += g.incrPrefix(c1.F)
+							out += e(gPrefix + "}")
+						}
+					default:
+						out += e(gPrefix + "} else {\n")
+						out += g.incrPrefix(c1.F)
+						out += e(gPrefix + "}")
+					}
+				} else {
+					out += e(gPrefix + "}")
+				}
+				return
+			})
+			out += e("\n" + gPrefix + "}()")
+			if hasTyp && isFirst {
+				out += e("\n")
+			}
+		} else {
+			if hasTyp && isFirst {
+				out += e(gPrefix)
+			}
+			out += e("if ")
+			if stmt.Init != nil {
+				g.WithInlineStmt(func() {
+					out += c3.F() + e("; ")
+				})
+			}
+			out += cond.F() + e(" {\n")
+			g.inlineStmt = false
+			out += g.incrPrefix(c2.F)
+			if stmt.Else != nil {
+				switch stmt.Else.(type) {
+				case *ast.ExprStmt:
+					switch stmt.Else.(*ast.ExprStmt).X.(type) {
+					case *ast.IfExpr, *ast.IfLetExpr:
+						out += e(gPrefix + "} else ")
+						g.WithInlineStmt(func() {
+							out += c1.F()
+						})
+					default:
+						out += e(gPrefix + "} else {\n")
+						out += g.incrPrefix(c1.F)
+						out += e(gPrefix + "}")
+					}
 				default:
 					out += e(gPrefix + "} else {\n")
 					out += g.incrPrefix(c1.F)
 					out += e(gPrefix + "}")
 				}
-			default:
-				out += e(gPrefix + "} else {\n")
-				out += g.incrPrefix(c1.F)
+			} else {
 				out += e(gPrefix + "}")
 			}
-		} else {
-			out += e(gPrefix + "}")
-		}
-		if hasTyp && isFirst {
-			out += e("\n")
+			if hasTyp && isFirst {
+				out += e("\n")
+			}
 		}
 		return out
 	}
@@ -3225,7 +3316,16 @@ func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
 		cond := c1.F
 		gPrefix := g.prefix
 		out += e(gPrefix+"if !(") + cond() + e(") {\n")
-		out += g.incrPrefix(c2.F)
+		if g.env.NeedWrap(stmt) {
+			out += g.incrPrefix(func() (out string) {
+				out += e(g.prefix + "func() {\n")
+				out += g.incrPrefix(c2.F)
+				out += e(g.prefix + "}()\n")
+				return
+			})
+		} else {
+			out += g.incrPrefix(c2.F)
+		}
 		out += e(gPrefix + "}\n")
 		return out
 	}}

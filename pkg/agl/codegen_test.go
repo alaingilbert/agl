@@ -12199,6 +12199,153 @@ func main() {
 	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
 }
 
+func TestCodeGen411(t *testing.T) {
+	src := `package main
+import "agl1/os"
+func main() {
+	b := make([]byte, 5)
+	f := os.Open("test.txt")!
+	defer f.Close()
+	defer func() {
+		printf("custom defer")
+	}()
+	a := if true {
+		defer printf("custom defer")
+		21
+	} else {
+		12
+	}
+	if true {
+		defer printf("custom defer")
+	}
+	for i := 0; i < 10; i++ {
+		guard i < 5 else {
+			defer printf("custom defer")
+			continue
+		}
+		defer printf("custom defer")
+	}
+	guard true else {
+		defer printf("custom defer")
+		return
+	}
+	_ = f.Read(b)!
+	printf("%v", b)
+}
+`
+	expected := `// agl:generated
+package main
+import "os"
+func main() {
+	b := make([]byte, 5)
+	aglTmpVar1, aglTmpErr1 := os.Open("test.txt")
+	if aglTmpErr1 != nil {
+		panic(aglTmpErr1)
+	}
+	f := AglIdentity(aglTmpVar1)
+	defer f.Close()
+	defer func() {
+		AglPrintf("custom defer")
+	}()
+	var aglTmp2 int
+	func() {
+		if true {
+			defer AglPrintf("custom defer")
+			aglTmp2 = 21
+		} else {
+			aglTmp2 = 12
+		}
+	}()
+	a := AglIdentity(aglTmp2)
+	func() {
+		if true {
+			defer AglPrintf("custom defer")
+		}
+	}()
+	for i := 0; i < 10; i++ {
+		func() {
+			defer AglPrintf("custom defer")
+		}()
+	}
+	if !(true) {
+		func() {
+			defer AglPrintf("custom defer")
+		}()
+		return
+	}
+	aglTmpVar3, aglTmpErr3 := f.Read(b)
+	if aglTmpErr3 != nil {
+		panic(aglTmpErr3)
+	}
+	_ = AglIdentity(aglTmpVar3)
+	AglPrintf("%v", b)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen412(t *testing.T) {
+	src := `package main
+func maybeInt() int? { Some(42) }
+func main() {
+	defer printf("defer 1")
+outer:
+	for _ in 0..3 {
+		defer printf("defer 2")
+    	for i in 0..3 {
+        	defer printf("defer 3")
+			maybeInt() or_break outer
+        	printf("inside %d", i)
+			if i == 2 {
+				return
+			}
+    	}
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	aglDefer1 := func() {
+		AglPrintf("defer 1")
+	}
+outer:
+	for _ = range AglNewRange[int](0, 3, false).Iter() {
+		aglDefer2 := func() {
+			AglPrintf("defer 2")
+		}
+		for i := range AglNewRange[int](0, 3, false).Iter() {
+			aglDefer3 := func() {
+				AglPrintf("defer 3")
+			}
+			aglTmp1 := maybeInt()
+			if aglTmp1.IsNone() {
+				aglDefer3()
+				aglDefer2()
+				break outer
+			}
+			AglIdentity(aglTmp1).Unwrap()
+			AglPrintf("inside %d", i)
+			if i == 2 {
+				aglDefer3()
+				aglDefer2()
+				aglDefer1()
+				return
+			}
+			aglDefer3()
+		}
+		aglDefer2()
+	}
+	aglDefer1()
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

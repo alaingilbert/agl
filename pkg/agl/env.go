@@ -32,8 +32,10 @@ type Env struct {
 	structCounter atomic.Int64
 	lookupTable   map[string]*Info  // Store constants/variables/functions
 	lspTable      map[NodeKey]*Info // Store type for Expr/Stmt
+	needWrapTable map[NodeKey]struct{}
 	parent        *Env
 	NoIdxUnwrap   bool
+	needWrap      bool
 	fset          *token.FileSet
 	pkgName       string
 }
@@ -1001,10 +1003,11 @@ func (e *Env) loadBaseValues() {
 
 func NewEnv(fset *token.FileSet) *Env {
 	env := &Env{
-		ID:          envIDCounter.Add(1),
-		lookupTable: make(map[string]*Info),
-		lspTable:    make(map[NodeKey]*Info),
-		fset:        fset,
+		ID:            envIDCounter.Add(1),
+		lookupTable:   make(map[string]*Info),
+		lspTable:      make(map[NodeKey]*Info),
+		needWrapTable: make(map[NodeKey]struct{}),
+		fset:          fset,
 	}
 	env.loadBaseValues()
 	return env
@@ -1012,12 +1015,13 @@ func NewEnv(fset *token.FileSet) *Env {
 
 func (e *Env) SubEnv() *Env {
 	env := &Env{
-		ID:          envIDCounter.Add(1),
-		lookupTable: make(map[string]*Info),
-		lspTable:    e.lspTable,
-		parent:      e,
-		NoIdxUnwrap: e.NoIdxUnwrap,
-		fset:        e.fset,
+		ID:            envIDCounter.Add(1),
+		lookupTable:   make(map[string]*Info),
+		lspTable:      e.lspTable,
+		needWrapTable: e.needWrapTable,
+		parent:        e,
+		NoIdxUnwrap:   e.NoIdxUnwrap,
+		fset:          e.fset,
 	}
 	//p("SubEnv", e.ID, env.ID)
 	return env
@@ -1208,6 +1212,15 @@ func panicIfNil(t types.Type, typ any) {
 
 func (e *Env) GetInfo(x ast.Node) *Info {
 	return e.lspNode(x)
+}
+
+func (e *Env) SetNeedWrap(x ast.Node) {
+	e.needWrapTable[e.makeKey(x)] = struct{}{}
+}
+
+func (e *Env) NeedWrap(x ast.Node) bool {
+	_, ok := e.needWrapTable[e.makeKey(x)]
+	return ok
 }
 
 func (e *Env) GetType(x ast.Node) types.Type {
