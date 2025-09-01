@@ -300,6 +300,10 @@ func AglMapReduceInto[K comparable, V, R any](m map[K]V, acc R, f func(*R, DictE
 	return acc
 }
 
+func AglPrint(a ...any) {
+	fmt.Println(a...)
+}
+
 func AglPrintf(format string, a ...any) {
 	fmt.Printf(format+"\n", a...)
 }

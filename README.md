@@ -48,8 +48,6 @@ go build               // Build the "agl" executable
 ```go
 package main
 
-import "fmt"
-
 func getInt() int! { // `int!` means the function return a `Result[int]`
     return Ok(42)
 }
@@ -61,7 +59,7 @@ func intermediate() int! {
 
 func main() {
     num := intermediate()! // crash on 'Err' value
-    fmt.Println(num)
+    print(num)
 }
 ```
 
@@ -69,8 +67,6 @@ func main() {
 
 ```go
 package main
-
-import "fmt"
 
 func maybeInt() int? { // `int?` means the the function return an `Option[int]`
     return Some(42)
@@ -83,7 +79,7 @@ func intermediate() int? {
 
 func main() {
     num := intermediate()? // crash on 'None' value
-    fmt.Println(num)
+    print(num)
 }
 ```
 
@@ -115,7 +111,7 @@ func maybeInt() int? { Some(42) } // Implicit return when a single expression is
 
 func main() {
     if Some(num) := maybeInt() {
-        fmt.Println(num)
+        print(num)
     }
 }
 ```
@@ -141,8 +137,6 @@ func main() {
 ```go
 package main
 
-import "fmt"
-
 func getInt() int! { Ok(42) }
 
 func maybeInt() int? { Some(42) }
@@ -150,16 +144,16 @@ func maybeInt() int? { Some(42) }
 func main() {
     match getInt() {
     case Ok(num):
-        fmt.Println("Num:", num)
+        print("Num:", num)
     case Err(err):
-        fmt.Println("Error:", err)
+        print("Error:", err)
     }
 
     match maybeInt() {
     case Some(num):
-        fmt.Println("Num:", num)
+        print("Num:", num)
     case None:
-        fmt.Println("No value")
+        print("No value")
     }
 }
 ```
@@ -171,7 +165,6 @@ func main() {
 ```go
 package main
 
-import "fmt"
 import "time"
 
 func test(i int) int? {
@@ -182,9 +175,9 @@ func test(i int) int? {
 }
 
 func main() {
-    for i := 0; i < 10; i++ {
+    for i in 0..10 {
         res := test(i) or_break // `res` has type `int`
-        fmt.Println(res)        // will print the value `0` and `1`
+        print(res)              // will print the value `0` and `1`
         time.Sleep(time.Second)
     }
 }
@@ -242,8 +235,6 @@ names := people.Map(|person| person.Name).Joined(", ")
 ```go
 package main
 
-import "fmt"
-
 type IpAddr enum {
     v4(u8, u8, u8, u8)
     v6(string)
@@ -258,7 +249,7 @@ func main() {
     tuple := (1, "hello", true)
     e, f, g := tuple
 
-    fmt.Println(a, b, c, d, e, f, g)
+    print(a, b, c, d, e, f, g)
 }
 ```
 
@@ -267,31 +258,52 @@ func main() {
 ```go
 package main
 
-import "fmt"
-
 func main() {
     for el in []int{1, 2, 3} {
-        fmt.Println(el)
+        print(el)
     }
     for el in set[int]{1, 2, 3} {
-        fmt.Println(el)
+        print(el)
     }
     for (k, v) in map[string]u8{"a": 1, "b": 2, "c": 3} {
-        fmt.Println(k, v)
+        print(k, v)
     }
     for (a, b, c) in [](int, string, bool){(1, "foo", true), (2, "bar", false)} {
-        fmt.Println(a, b, c)
+        print(a, b, c)
     }
     for el in 0..3 { // 0 1 2
-        fmt.Println(el)
+        print(el)
     }
     for el in 0..=3 { // 0 1 2 3
-        fmt.Println(el)
+        print(el)
     }
     for el in (0..3).Rev() { // 2 1 0
-        fmt.Println(el)
+        print(el)
     }
 }
+```
+
+## Defer
+
+In AGL `defer` is executed when it goes out of scope. This is different from Go's `defer` which is executed when the function returns.
+
+```go
+package main
+
+func main() {
+	for i in 0..3 {
+		defer printf("end of iteration %d", i)
+		printf("start of iteration %d", i)
+    }
+}
+/*
+start of iteration 0
+end of iteration 0
+start of iteration 1
+end of iteration 1
+start of iteration 2
+end of iteration 2
+*/
 ```
 
 ## Operator overloading
@@ -320,8 +332,6 @@ func main() {
 ```go
 package main
 
-import "fmt"
-
 func (v agl1.Vec[T]) Even() []T {
     out := make([]T, 0)
     for _, el := range v {
@@ -336,7 +346,7 @@ func main() {
     arr := []int{1, 2, 3, 4, 5, 6, 7, 8}
     res := arr.Even().Filter({ $0 <= 6 }).Map({ $0 + 1 }) 
     //         ^^^^^^ new method available
-    fmt.Println(res) // [3 5 7]
+    print(res) // [3 5 7]
 }
 ```
 
@@ -365,15 +375,12 @@ func (v agl1.Vec[string]) MyJoined(sep string) string {
 ```go
 package main
 
-import (
-    "fmt"
-    "agl1/os"
-)
+import "agl1/os"
 
 func main() {
     os.WriteFile("test.txt", []byte("test"), 0755)!
     by := os.ReadFile("test.txt")!
-    fmt.Println(string(by))
+    print(string(by))
 }
 ```
 
@@ -386,7 +393,6 @@ And here is a [simple example](https://github.com/alaingilbert/agl/blob/master/e
 package main
 
 import (
-    "fmt"
     "agl1/net/http"
     "agl1/io"
 )
@@ -397,7 +403,7 @@ func main() {
     resp := c.Do(req)!
     defer resp.Body.Close()
     by := io.ReadAll(resp.Body)!
-    fmt.Println(string(by))
+    print(string(by))
 }
 ```
 
@@ -407,10 +413,8 @@ func main() {
 #!/usr/bin/env agl run
 package main
 
-import "fmt"
-
 func main() {
-    fmt.Println("Hello AGL!")
+    print("Hello AGL!")
 }
 ```
 

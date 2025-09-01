@@ -37,6 +37,21 @@ type Generator struct {
 	asType        bool
 	ifVarName     string
 	imports       map[string]*ast.ImportSpec
+	scope         *Scope
+}
+
+type Scope struct {
+	typ    string
+	parent *Scope
+	defers []int64
+	labels map[string]struct{}
+}
+
+func (g *Generator) withScope(typ string, clb func()) {
+	prev := g.scope
+	g.scope = &Scope{typ: typ, parent: prev, labels: make(map[string]struct{})}
+	clb()
+	g.scope = prev
 }
 
 func (g *Generator) withAsType(clb func()) {
@@ -103,6 +118,7 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 	}
 	genFns := make(map[string]*ast.FuncDecl)
 	return &Generator{
+		scope:         &Scope{labels: map[string]struct{}{}},
 		fset:          fset,
 		env:           env,
 		a:             a,
@@ -801,10 +817,29 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 				}
 			}
 		}
-		out += g.incrPrefix(c1.F)
+		g.withScope("func", func() {
+			out += g.incrPrefix(c1.F)
+			if !endsWithReturn(expr.Body) {
+				out += g.incrPrefix(g.genDeferCalls(expr, nil, "", false).F)
+			}
+		})
 		out += e(g.prefix + "}")
 		return out
 	}}
+}
+
+func endsWithReturn(stmt ast.Stmt) (lastIsReturn bool) {
+	if block, ok := stmt.(*ast.BlockStmt); ok {
+		if len(block.List) > 0 {
+			last := block.List[len(block.List)-1]
+			if last != nil {
+				if _, ok := last.(*ast.ReturnStmt); ok {
+					lastIsReturn = true
+				}
+			}
+		}
+	}
+	return
 }
 
 func (g *Generator) genEnumType(enumName string, expr *ast.EnumType) string {
@@ -937,6 +972,7 @@ func (g *Generator) genOrBreakExpr(expr *ast.OrBreakExpr) GenFrag {
 		check := getCheck(g.env.GetType(expr.X))
 		out := e(gPrefix+varName+" := ") + c1.F() + e("\n")
 		out += e(gPrefix + "if " + varName + "." + check + " {\n")
+		out += g.incrPrefix(g.genDeferCalls(expr, expr.Label, "loop", false).F)
 		out += e(gPrefix + "\tbreak")
 		if expr.Label != nil {
 			out += e(" " + expr.Label.String())
@@ -959,6 +995,7 @@ func (g *Generator) genOrContinueExpr(expr *ast.OrContinueExpr) GenFrag {
 		before := ""
 		before += e(gPrefix+varName+" := ") + content1.F() + e("\n")
 		before += e(gPrefix + fmt.Sprintf("if %s.%s {\n", varName, check))
+		before += g.incrPrefix(g.genDeferCalls(expr, expr.Label, "loop", false).F)
 		before += e(gPrefix + "\tcontinue")
 		if expr.Label != nil {
 			before += e(" " + expr.Label.String())
@@ -980,6 +1017,7 @@ func (g *Generator) genOrReturn(expr *ast.OrReturnExpr) GenFrag {
 	}, B: []func() string{func() (out string) {
 		out += e(g.prefix+varName+" := ") + c1.F() + e("\n")
 		out += e(g.prefix + fmt.Sprintf("if %s.%s {\n", varName, check))
+		out += g.incrPrefix(g.genDeferCalls(expr, nil, "func", false).F)
 		if returnType == nil {
 			out += e(g.prefix + "\treturn\n")
 		} else {
@@ -1045,8 +1083,11 @@ func (g *Generator) genLabeledStmt(expr *ast.LabeledStmt) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genStmt(expr.Stmt)
 	return GenFrag{F: func() (out string) {
-		out += e(g.prefix + expr.Label.Name + ":\n")
-		out += c1.F()
+		g.withScope("label", func() {
+			g.scope.labels[expr.Label.Name] = struct{}{}
+			out += e(g.prefix + expr.Label.Name + ":\n")
+			out += c1.F()
+		})
 		return
 	}}
 }
@@ -1058,6 +1099,7 @@ func (g *Generator) genBranchStmt(expr *ast.BranchStmt) GenFrag {
 		c1 = g.genExpr(expr.Label)
 	}
 	return GenFrag{F: func() (out string) {
+		out += g.genDeferCalls(expr, expr.Label, "loop", false).F()
 		out += e(g.prefix + expr.Tok.String())
 		if expr.Label != nil {
 			out += e(" ") + c1.F()
@@ -1071,7 +1113,11 @@ func (g *Generator) genDeferStmt(expr *ast.DeferStmt) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.Call)
 	return GenFrag{F: func() (out string) {
-		out += e(g.prefix+"defer ") + c1.F() + e("\n")
+		id := g.varCounter.Add(1)
+		g.scope.defers = append(g.scope.defers, id)
+		out += e(g.prefix + fmt.Sprintf("aglDefer%d := func() {\n", id))
+		out += e(g.prefix+"\t") + g.incrPrefix(c1.F) + e("\n")
+		out += e(g.prefix + "}\n")
 		return
 	}}
 }
@@ -1429,12 +1475,16 @@ func (g *Generator) genParenExpr(expr *ast.ParenExpr) GenFrag {
 func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genStmt(expr.Body)
-	return GenFrag{F: func() string {
-		var out string
+	return GenFrag{F: func() (out string) {
 		out += g.genFuncType(expr.Type).F() + e(" {\n")
-		out += g.incrPrefix(c1.F)
+		g.withScope("func", func() {
+			out += g.incrPrefix(c1.F)
+			if !endsWithReturn(expr.Body) {
+				out += g.incrPrefix(g.genDeferCalls(expr, nil, "", false).F)
+			}
+		})
 		out += e(g.prefix + "}")
-		return out
+		return
 	}}
 }
 
@@ -1647,6 +1697,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 				return GenFrag{F: func() string { return e(out) }, B: []func() string{func() string {
 					out := e(g.prefix+varName+", "+errName+" := ") + content1.F() + e("\n")
 					out += e(g.prefix + "if " + errName + " != nil {\n")
+					out += g.incrPrefix(g.genDeferCalls(expr, nil, "func", false).F)
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
 					return out
@@ -1728,6 +1779,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) GenFrag {
 				return GenFrag{F: func() string { return e(`AglNoop()`) }, B: []func() string{func() string {
 					out := e(g.prefix+errName+" := ") + content1.F() + e("\n")
 					out += e(g.prefix + "if " + errName + " != nil {\n")
+					out += g.incrPrefix(g.genDeferCalls(expr, nil, "func", false).F)
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
 					return out
@@ -1736,6 +1788,7 @@ func (g *Generator) genBubbleResultExpr(expr *ast.BubbleResultExpr) GenFrag {
 				return GenFrag{F: func() string { return e("AglIdentity(" + varName + ")") }, B: []func() string{func() string {
 					out := e(g.prefix+varName+", "+errName+" := ") + content1.F() + e("\n")
 					out += e(g.prefix + "if " + errName + " != nil {\n")
+					out += g.incrPrefix(g.genDeferCalls(expr, nil, "func", false).F)
 					out += e(g.prefix + "\tpanic(" + errName + ")\n")
 					out += e(g.prefix + "}\n")
 					return out
@@ -1769,6 +1822,17 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			out += e(")")
 			return out
 		}}
+	} else if x.Name == "print" {
+		var contents []func() string
+		for _, arg := range expr.Args {
+			contents = append(contents, g.genExpr(arg).F)
+		}
+		return GenFrag{F: func() (out string) {
+			out = e("AglPrint(")
+			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
+			out += e(")")
+			return
+		}}
 	} else if x.Name == "printf" {
 		var contents []func() string
 		for _, arg := range expr.Args {
@@ -1781,10 +1845,24 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			return
 		}}
 	} else if x.Name == "panic" {
-		return GenFrag{F: func() string { return e("panic(nil)") }}
+		return GenFrag{F: func() (out string) {
+			if g.countDefers(nil, "all") > 0 {
+				out += g.genDeferCalls(expr, nil, "all", true).F()
+				out += e(g.prefix)
+			}
+			out += e("panic(nil)")
+			return
+		}}
 	} else if x.Name == "panicWith" {
 		c1 := g.genExpr(expr.Args[0])
-		return GenFrag{F: func() string { return e("panic(") + c1.F() + e(")") }}
+		return GenFrag{F: func() (out string) {
+			if g.countDefers(nil, "all") > 0 {
+				out += g.genDeferCalls(expr, nil, "all", true).F()
+				out += e(g.prefix)
+			}
+			out += e("panic(") + c1.F() + e(")")
+			return
+		}}
 	} else if x.Name == "Set" {
 		arg0 := expr.Args[0]
 		arg0T := g.env.GetType(arg0)
@@ -2700,7 +2778,10 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							panic(fmt.Sprintf("%v", to(v.X)))
 						}
 					}
-					out += body()
+					g.withScope("loop", func() {
+						out += body()
+						out += g.incrPrefix(g.genDeferCalls(stmt, nil, "", false).F)
+					})
 					out += e(g.prefix + "}\n")
 					return out
 				}}
@@ -2743,7 +2824,10 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	}
 	return GenFrag{F: func() (out string) {
 		out += e(g.prefix+"for ") + tmp() + e("{\n")
-		out += body()
+		g.withScope("loop", func() {
+			out += body()
+			out += g.incrPrefix(g.genDeferCalls(stmt, nil, "loop", false).F)
+		})
 		out += e(g.prefix + "}\n")
 		return out
 	}}
@@ -2810,9 +2894,17 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 		bs = append(bs, resultFrag.B...)
 	}
 	return GenFrag{F: func() (out string) {
-		out += e(g.prefix + "return")
 		if stmt.Result != nil {
-			out += e(" ") + resultFrag.F()
+			if g.countDefers(nil, "func") > 0 {
+				out += e(g.prefix+"aglReturnVal := ") + resultFrag.F() + e("\n")
+				out += g.genDeferCalls(stmt, nil, "func", false).F()
+				out += e(g.prefix + "return aglReturnVal")
+			} else {
+				out += e(g.prefix+"return ") + resultFrag.F()
+			}
+		} else {
+			out += g.genDeferCalls(stmt, nil, "func", false).F()
+			out += e(g.prefix + "return")
 		}
 		return out + e("\n")
 	}, B: bs}
@@ -3172,7 +3264,12 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		}
 		out += cond.F() + e(" {\n")
 		g.inlineStmt = false
-		out += g.incrPrefix(c2.F)
+		g.withScope("cond", func() {
+			out += g.incrPrefix(c2.F)
+			if !endsWithReturn(stmt.Body) {
+				out += g.incrPrefix(g.genDeferCalls(stmt, nil, "", false).F)
+			}
+		})
 		if stmt.Else != nil {
 			var isIf bool
 			out += e(gPrefix + "} else ")
@@ -3185,11 +3282,15 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 			}
 			if isIf {
 				g.WithInlineStmt(func() {
-					out += c1.F()
+					g.withScope("cond", func() {
+						out += c1.F()
+					})
 				})
 			} else {
 				out += e("{\n")
-				out += g.incrPrefix(c1.F)
+				g.withScope("cond", func() {
+					out += g.incrPrefix(c1.F)
+				})
 				out += e(gPrefix + "}")
 			}
 		} else {
@@ -3207,6 +3308,45 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		}
 	}
 	return GenFrag{F: tmp, B: bs}
+}
+
+func (g *Generator) getToDefers(lbl *ast.Ident, typ string) (out []int64) {
+	scope := g.scope
+	for {
+		for _, id := range scope.defers {
+			out = append(out, id)
+		}
+		if typ != "all" && ((typ == "" && lbl == nil) || (scope.typ == typ && lbl == nil)) {
+			break
+		} else if lbl != nil {
+			if _, ok := scope.labels[lbl.Name]; ok {
+				break
+			}
+		}
+		if scope.parent == nil {
+			break
+		}
+		scope = scope.parent
+	}
+	return out
+}
+
+func (g *Generator) countDefers(lbl *ast.Ident, typ string) int {
+	return len(g.getToDefers(lbl, typ))
+}
+
+func (g *Generator) genDeferCalls(stmt ast.Node, lbl *ast.Ident, typ string, skip bool) GenFrag {
+	e := EmitWith(g, stmt)
+	return GenFrag{F: func() (out string) {
+		gPrefix := g.prefix
+		for i, id := range g.getToDefers(lbl, typ) {
+			if i > 0 || !skip {
+				out += e(gPrefix)
+			}
+			out += e(fmt.Sprintf("aglDefer%d()\n", id))
+		}
+		return
+	}}
 }
 
 func (g *Generator) genGuardStmt(stmt *ast.GuardStmt) GenFrag {
@@ -3340,7 +3480,12 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		out += recv()
 		out += e(fmt.Sprintf("%s%s(%s)%s {\n", name, typeParamsFn(), paramsStr, resultStr))
 		if decl.Body != nil {
-			out += g.incrPrefix(c1.F)
+			g.withScope("func", func() {
+				out += g.incrPrefix(c1.F)
+				if !endsWithReturn(decl.Body) {
+					out += g.incrPrefix(g.genDeferCalls(decl, nil, "", false).F)
+				}
+			})
 		}
 		out += e("}\n")
 		return out

@@ -163,6 +163,8 @@ func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, p
 	}
 	if err != nil {
 		panic(&RuntimeError{err: stdErrStr})
+	} else {
+		print(stdErrStr)
 	}
 	return err
 }
