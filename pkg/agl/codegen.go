@@ -1780,6 +1780,17 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			out += e(")")
 			return
 		}}
+	} else if x.Name == "print" {
+		var contents []func() string
+		for _, arg := range expr.Args {
+			contents = append(contents, g.genExpr(arg).F)
+		}
+		return GenFrag{F: func() (out string) {
+			out = e("AglPrint(")
+			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
+			out += e(")")
+			return
+		}}
 	} else if x.Name == "panic" {
 		return GenFrag{F: func() string { return e("panic(nil)") }}
 	} else if x.Name == "panicWith" {

@@ -12199,6 +12199,40 @@ func main() {
 	tassert.Equal(t, "int", test.TypeAt(6, 26).String())
 }
 
+func TestCodeGen411(t *testing.T) {
+	src := `package main
+func main() {
+	print(42)
+}
+`
+	expected := `// agl:generated
+package main
+func main() {
+	AglPrint(42)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen412(t *testing.T) {
+	src := `package main
+func main() {
+	println(42)
+}
+`
+	expected := `// agl:generated
+package main
+func main() {
+	println(42)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
