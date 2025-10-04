@@ -3499,6 +3499,9 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	if len(stmt.Rhs) == 1 && len(stmt.Lhs) > 1 { // eg: `e, ok := m[0]`
 		rhs := stmt.Rhs[0]
 		infer.expr(rhs)
+		if len(infer.Errors) > 0 {
+			return
+		}
 		switch rhs1 := rhs.(type) {
 		case *ast.TupleExpr:
 			for i, x := range rhs1.Values {
@@ -4212,6 +4215,10 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 				if vv, ok := v.Fun.(*ast.SelectorExpr); ok {
 					if vvv, ok := infer.optType.Type.(types.EnumType); ok {
 						f := Find(vvv.Fields, func(f types.EnumFieldType) bool { return f.Name == vv.Sel.Name })
+						if len(v.Args) != len(f.Elts) {
+							infer.errorf(vv.Sel, "invalid number of arguments, has: %d, expect: %d", len(v.Args), len(f.Elts))
+							return
+						}
 						for i, el := range f.Elts {
 							arg := v.Args[i]
 							infer.env.Define(arg, arg.(*ast.Ident).Name, el)
@@ -4240,6 +4247,9 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 			prevBranchT = branchT
 		}
 	})
+	if len(infer.Errors) > 0 {
+		return
+	}
 	infer.SetType(expr.Body, infer.GetType(Must(Last(expr.Body.List))))
 	infer.SetType(expr, infer.GetType(expr.Body))
 }
