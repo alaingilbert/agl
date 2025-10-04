@@ -210,11 +210,11 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	}
 	core, _ := agl.ContentFs.ReadFile(filepath.Join("core", "core.go"))
 	coreLines := strings.Split(string(core), "\n")
-	coreImports := []byte(strings.Join(coreLines[:16], "\n"))
+	coreImports := []byte(strings.Join(coreLines[:18], "\n"))
 	_, _, out := genCode1("", []byte(input), coreImports)
 	lines := strings.Split(out, "\n")
 	out = strings.Join(lines, "\n")
-	out += strings.Join(coreLines[16:], "\n")
+	out += strings.Join(coreLines[18:], "\n")
 	fmt.Println(out)
 	return nil
 }
