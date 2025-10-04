@@ -4221,8 +4221,13 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 						}
 						for i, el := range f.Elts {
 							arg := v.Args[i]
-							infer.env.Define(arg, arg.(*ast.Ident).Name, el)
-							infer.SetType(arg, el)
+							if argIdent, ok := arg.(*ast.Ident); ok {
+								infer.env.Define(arg, argIdent.Name, el)
+								infer.SetType(arg, el)
+							} else {
+								infer.errorf(arg, "invalid variable name for argument #%d", i+1)
+								return
+							}
 						}
 					}
 				}

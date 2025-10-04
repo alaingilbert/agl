@@ -12317,6 +12317,23 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "8:8: invalid number of arguments, has: 3, expect: 2")
 }
 
+func TestCodeGen415(t *testing.T) {
+	src := `package main
+type MyEnum enum {
+	Val(u8)
+}
+func main() {
+	myEnum := MyEnum.Val(1, 2)
+	match myEnum {
+	case .Val(&x):
+		println("")
+	}
+}
+`
+	test := NewTest(src)
+	tassert.Contains(t, test.errs[0].Error(), "8:12: invalid variable name for argument #1")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
