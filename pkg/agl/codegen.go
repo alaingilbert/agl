@@ -1188,34 +1188,44 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 			}
 		case types.EnumType:
 			if expr.Body != nil {
+				var hasDefault bool
 				for i, cc := range expr.Body.List {
 					c := cc.(*ast.MatchClause)
 					if i > 0 {
 						out += e(gPrefix + "} else ")
 					}
-					switch cv := c.Expr.(type) {
-					case *ast.CallExpr:
-						sel := cv.Fun.(*ast.SelectorExpr)
-						out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
-						for j, id := range cv.Args {
-							rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
-							if id.(*ast.Ident).Name == "_" {
-								out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
-							} else {
-								out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
+					if c.Expr != nil {
+						switch cv := c.Expr.(type) {
+						case *ast.CallExpr:
+							sel := cv.Fun.(*ast.SelectorExpr)
+							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
+							for j, id := range cv.Args {
+								rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
+								if id.(*ast.Ident).Name == "_" {
+									out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
+								} else {
+									out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
+								}
 							}
+							out += e(gPrefix) + g.genStmts(c.Body).F()
+						case *ast.SelectorExpr:
+							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
+							out += e(gPrefix) + g.genStmts(c.Body).F()
+						default:
+							panic(fmt.Sprintf("%v", to(c.Expr)))
 						}
+					} else {
+						hasDefault = true
+						out += e("{\n")
 						out += e(gPrefix) + g.genStmts(c.Body).F()
-					case *ast.SelectorExpr:
-						out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-						out += e(gPrefix) + g.genStmts(c.Body).F()
-					default:
-						panic(fmt.Sprintf("%v", to(c.Expr)))
+						out += e(gPrefix) + e("}")
 					}
 				}
-				out += e(gPrefix + "} else {\n")
-				out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
-				out += e(gPrefix + "}")
+				if !hasDefault {
+					out += e(gPrefix + "} else {\n")
+					out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
+					out += e(gPrefix + "}")
+				}
 			}
 		default:
 			panic(fmt.Sprintf("%v", to(initT)))

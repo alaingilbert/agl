@@ -12233,6 +12233,73 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen413(t *testing.T) {
+	src := `package main
+type Color enum {
+	red
+	green
+	blue
+}
+func main() {
+	color := Color.red
+	match color {
+	case .red:
+		println("red")
+	default:
+		println("other")
+	}
+}
+`
+	expected := `// agl:generated
+package main
+type ColorTag int
+const (
+	Color_red ColorTag = iota
+	Color_green
+	Color_blue
+)
+type Color struct {
+	Tag ColorTag
+}
+func (v Color) String() string {
+	switch v.Tag {
+	case Color_red:
+		return "red"
+	case Color_green:
+		return "green"
+	case Color_blue:
+		return "blue"
+	default:
+		panic("")
+	}
+}
+func (v Color) RawValue() int {
+	return int(v.Tag)
+}
+func Make_Color_red() Color {
+	return Color{Tag: Color_red}
+}
+func Make_Color_green() Color {
+	return Color{Tag: Color_green}
+}
+func Make_Color_blue() Color {
+	return Color{Tag: Color_blue}
+}
+
+func main() {
+	color := Make_Color_red()
+	if color.Tag == Color_red {
+		println("red")
+	} else {
+		println("other")
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
