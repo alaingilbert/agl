@@ -294,7 +294,19 @@ func (infer *FileInferrer) Infer() {
 		if utils.False() {
 			t.Draw()
 		}
-		// TODO do a second pass for types that used before their declaration
+		// Pass 1: Register all type names to allow forward references
+		for _, d := range infer.f.Decls {
+			switch decl := d.(type) {
+			case *ast.GenDecl:
+				for _, s := range decl.Specs {
+					switch spec := s.(type) {
+					case *ast.TypeSpec:
+						infer.typeSpecPass1(spec)
+					}
+				}
+			}
+		}
+		// Pass 2: Process all declarations with type details
 		for _, d := range infer.f.Decls {
 			switch decl := d.(type) {
 			case *ast.GenDecl:
@@ -349,7 +361,7 @@ func (infer *FileInferrer) genDecl(decl *ast.GenDecl) {
 	for _, s := range decl.Specs {
 		switch spec := s.(type) {
 		case *ast.TypeSpec:
-			infer.typeSpec(spec)
+			infer.typeSpecPass2(spec)
 		case *ast.ImportSpec:
 		case *ast.ValueSpec:
 			infer.valueSpec(spec)
@@ -381,6 +393,31 @@ func (infer *FileInferrer) valueSpec(spec *ast.ValueSpec) {
 	}
 }
 
+// typeSpecPass1 registers type names to allow forward references
+func (infer *FileInferrer) typeSpecPass1(spec *ast.TypeSpec) {
+	switch spec.Type.(type) {
+	case *ast.StructType:
+		// Register struct name early
+		structT := types.StructType{Name: spec.Name.Name}
+		infer.env.Define(spec.Name, spec.Name.Name, structT)
+	case *ast.EnumType:
+		// Register enum name early with empty fields
+		enumT := types.EnumType{Name: spec.Name.Name, Fields: []types.EnumFieldType{}}
+		infer.env.Define(spec.Name, spec.Name.Name, enumT)
+	case *ast.InterfaceType:
+		// Register interface name early
+		interfaceT := types.InterfaceType{Name: spec.Name.Name, Methods: []types.InterfaceMethod{}}
+		infer.env.Define(spec.Name, spec.Name.Name, interfaceT)
+	default:
+		// For other types (aliases, etc.), we'll handle them in pass 2
+	}
+}
+
+// typeSpecPass2 fills in type details after all names are registered
+func (infer *FileInferrer) typeSpecPass2(spec *ast.TypeSpec) {
+	infer.typeSpec(spec)
+}
+
 func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	var toDef types.Type
 	switch t := spec.Type.(type) {
@@ -393,7 +430,7 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		toDef = types.TypeType{W: types.CustomType{Name: spec.Name.Name, W: typ}}
 	case *ast.StructType:
 		structT := types.StructType{Name: spec.Name.Name}
-		infer.env.Define(spec.Name, spec.Name.Name, structT)
+		infer.env.DefineForce(spec.Name, spec.Name.Name, structT)
 		infer.env.withEnv(func(nenv *Env) {
 			if spec.TypeParams != nil {
 				var tpFields []types.FieldType
@@ -479,7 +516,8 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 		infer.errorf(spec.Name, "%v", to(spec.Type))
 		return
 	}
-	infer.env.Define(spec.Name, spec.Name.Name, toDef)
+	// Use DefineForce to update types that were registered in pass 1
+	infer.env.DefineForce(spec.Name, spec.Name.Name, toDef)
 }
 
 func (infer *FileInferrer) structType(name *ast.Ident, s *ast.StructType) {
