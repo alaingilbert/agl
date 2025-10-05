@@ -3027,6 +3027,32 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 		lhs := c1.F
 		rhs := func() string { return g.wrapIfNative(e, rhs0, c2.F) }
 		varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+
+		// Helper function to generate else clause (shared by all branches)
+		genElse := func() {
+			if stmt.Else != nil {
+				if v, ok := stmt.Else.(*ast.ExprStmt); ok {
+					switch v.X.(type) {
+					case *ast.IfExpr, *ast.IfLetExpr:
+						out += e(gPrefix + "} else ")
+						g.WithInlineStmt(func() {
+							out += c4.F()
+						})
+					default:
+						out += e(gPrefix + "} else {\n")
+						out += g.incrPrefix(c4.F)
+						out += e(gPrefix + "}")
+					}
+				} else {
+					out += e(gPrefix + "} else {\n")
+					out += g.incrPrefix(c4.F)
+					out += e(gPrefix + "}")
+				}
+			} else {
+				out += e(gPrefix + "}")
+			}
+		}
+
 		var cond string
 		unwrapFn := "Unwrap"
 		switch stmt.Op {
@@ -3063,28 +3089,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 
 						g.inlineStmt = false
 						out += g.incrPrefix(c3.F)
-
-						if stmt.Else != nil {
-							if v, ok := stmt.Else.(*ast.ExprStmt); ok {
-								switch v.X.(type) {
-								case *ast.IfExpr, *ast.IfLetExpr:
-									out += e(gPrefix + "} else ")
-									g.WithInlineStmt(func() {
-										out += c4.F()
-									})
-								default:
-									out += e(gPrefix + "} else {\n")
-									out += g.incrPrefix(c4.F)
-									out += e(gPrefix + "}")
-								}
-							} else {
-								out += e(gPrefix + "} else {\n")
-								out += g.incrPrefix(c4.F)
-								out += e(gPrefix + "}")
-							}
-						} else {
-							out += e(gPrefix + "}")
-						}
+						genElse()
 						return out
 					}
 				}
@@ -3103,27 +3108,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 			out += e(gPrefix+"\tAglNoop(") + lhs() + e(")\n")
 		}
 		out += g.incrPrefix(c3.F)
-		if stmt.Else != nil {
-			if v, ok := stmt.Else.(*ast.ExprStmt); ok {
-				switch v.X.(type) {
-				case *ast.IfExpr, *ast.IfLetExpr:
-					out += e(gPrefix + "} else ")
-					g.WithInlineStmt(func() {
-						out += c4.F()
-					})
-				default:
-					out += e(gPrefix + "} else {\n")
-					out += g.incrPrefix(c4.F)
-					out += e(gPrefix + "}")
-				}
-			} else {
-				out += e(gPrefix + "} else {\n")
-				out += g.incrPrefix(c4.F)
-				out += e(gPrefix + "}")
-			}
-		} else {
-			out += e(gPrefix + "}")
-		}
+		genElse()
 		return out
 	}}
 }
