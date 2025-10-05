@@ -12344,6 +12344,7 @@ func main() {
 	if let MyEnum.Val(x, y) := myEnum {
 		println(x, y)
 	}
+	guard let MyEnum.Val(x, y) := myEnum else { return }
 }
 `
 	expected := `// agl:generated
@@ -12380,6 +12381,12 @@ func main() {
 		y := aglTmp2.Val_1
 		println(x, y)
 	}
+	aglTmp4 := myEnum
+	if aglTmp4.Tag != MyEnum_Val {
+		return
+	}
+	x := aglTmp4.Val_0
+	y := aglTmp4.Val_1
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
