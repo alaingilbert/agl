@@ -106,13 +106,20 @@ func main() {
 `,
                 set1: `package main
 
-import "fmt"
-
 func main() {
     s1 := set[int]{1, 2, 3}
     s2 := set[int]{1, 2, 3, 4, 5}
-    fmt.Println("s1.IsSubset(s2):", s1.IsSubset(s2))
-    fmt.Println("s2.IsSuperset(s1):", s2.IsSuperset(s1))
+    printf("s1.IsSubset(s2):            %v", s1.IsSubset(s2))
+    printf("s2.IsSuperset(s1):          %v", s2.IsSuperset(s1))
+    printf("s1.Union(s2):               %v", s1.Union(s2))
+    printf("s1.Min():                   %v", s1.Min())
+    printf("s1.Max():                   %v", s1.Max())
+    printf("s1.Intersection(s2):        %v", s1.Intersection(s2))
+    printf("s1.Intersects(s2):          %v", s1.Intersects(s2))
+    printf("s1.IsDisjoint(s2):          %v", s1.IsDisjoint(s2))
+    printf("s2.Subtracting(s1):         %v", s2.Subtracting(s1))
+    printf("s1.SymmetricDifference(s2): %v", s1.SymmetricDifference(s2))
+    printf("s1.IsEmpty():               %v", s1.IsEmpty())
 }
 `,
             };
