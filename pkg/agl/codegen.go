@@ -3045,23 +3045,17 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						fieldName := selExpr.Sel.Name
 						// Find field index
-						var fieldIdx int
-						for i, f := range enumType.Fields {
-							if f.Name == fieldName {
-								fieldIdx = i
-								break
-							}
-						}
+						_, fieldIdx := FindIdx(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
 
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						out += e(varName+" := ") + rhs() + e("\n")
-						out += e(gPrefix+"if "+varName+".Tag == "+enumType.Name+"_"+fieldName+" {\n")
+						out += e(gPrefix + "if " + varName + ".Tag == " + enumType.Name + "_" + fieldName + " {\n")
 
 						// Extract the values from the enum
 						for j, arg := range callExpr.Args {
 							if argIdent, ok := arg.(*ast.Ident); ok {
 								if argIdent.Name == "_" {
-									out += e(gPrefix+"\t_ = "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+									out += e(gPrefix + "\t_ = " + varName + "." + enumType.Fields[fieldIdx].Name + "_" + strconv.Itoa(j) + "\n")
 								} else {
 									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
 								}
@@ -3177,7 +3171,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						out += e(gPrefix+varName+" := ") + rhs() + e("\n")
-						out += e(gPrefix+"if "+varName+".Tag != "+enumType.Name+"_"+fieldName+" {\n")
+						out += e(gPrefix + "if " + varName + ".Tag != " + enumType.Name + "_" + fieldName + " {\n")
 						out += body()
 						out += e(gPrefix + "}\n")
 
@@ -3185,7 +3179,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 						for j, arg := range callExpr.Args {
 							if argIdent, ok := arg.(*ast.Ident); ok {
 								if argIdent.Name == "_" {
-									out += e(gPrefix+"_ = "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+									out += e(gPrefix + "_ = " + varName + "." + enumType.Fields[fieldIdx].Name + "_" + strconv.Itoa(j) + "\n")
 								} else {
 									out += e(gPrefix) + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
 								}

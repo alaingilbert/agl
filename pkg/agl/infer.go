@@ -4290,9 +4290,7 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						// Find the matching enum field
 						fieldName := selExpr.Sel.Name
-						field := Find(enumType.Fields, func(f types.EnumFieldType) bool {
-							return f.Name == fieldName
-						})
+						field := Find(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
 
 						if field == nil {
 							infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
