@@ -3047,7 +3047,6 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 						// Find field index
 						_, fieldIdx := FindIdx(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
 
-						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						out += e(varName+" := ") + rhs() + e("\n")
 						out += e(gPrefix + "if " + varName + ".Tag == " + enumType.Name + "_" + fieldName + " {\n")
 
@@ -3168,8 +3167,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 								break
 							}
 						}
-
-						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+						
 						out += e(gPrefix+varName+" := ") + rhs() + e("\n")
 						out += e(gPrefix + "if " + varName + ".Tag != " + enumType.Name + "_" + fieldName + " {\n")
 						out += body()

@@ -12375,18 +12375,18 @@ func Make_MyEnum_Val(arg0 uint8, arg1 uint16) MyEnum {
 
 func main() {
 	myEnum := Make_MyEnum_Val(1, 2)
-	aglTmp2 := myEnum
-	if aglTmp2.Tag == MyEnum_Val {
-		x := aglTmp2.Val_0
-		y := aglTmp2.Val_1
+	aglTmp1 := myEnum
+	if aglTmp1.Tag == MyEnum_Val {
+		x := aglTmp1.Val_0
+		y := aglTmp1.Val_1
 		println(x, y)
 	}
-	aglTmp4 := myEnum
-	if aglTmp4.Tag != MyEnum_Val {
+	aglTmp2 := myEnum
+	if aglTmp2.Tag != MyEnum_Val {
 		return
 	}
-	x := aglTmp4.Val_0
-	y := aglTmp4.Val_1
+	x := aglTmp2.Val_0
+	y := aglTmp2.Val_1
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
