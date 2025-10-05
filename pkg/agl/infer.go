@@ -3910,9 +3910,6 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					selT := infer.env.Get(xT.String() + "." + v.Sel.Name)
 					infer.SetType(v.X, oxT)
 					infer.SetType(v.Sel, selT)
-					// Mutation check for struct fields is done earlier
-					// We don't need to check if the base variable is mutable
-					return
 				case types.ArrayType:
 					infer.SetType(v.X, xT)
 				default:
