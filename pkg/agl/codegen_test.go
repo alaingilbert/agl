@@ -12334,6 +12334,63 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "8:12: invalid variable name for argument #1")
 }
 
+func TestCodeGen416(t *testing.T) {
+	src := `package main
+type MyEnum enum {
+	Val(u8, u16)
+}
+func main() {
+	myEnum := MyEnum.Val(1, 2)
+	if let MyEnum.Val(x, y) := myEnum {
+		println(x, y)
+	}
+}
+`
+	expected := `// agl:generated
+package main
+type MyEnumTag int
+const (
+	MyEnum_Val MyEnumTag = iota
+)
+type MyEnum struct {
+	Tag MyEnumTag
+	Val_0 uint8
+	Val_1 uint16
+}
+func (v MyEnum) String() string {
+	switch v.Tag {
+	case MyEnum_Val:
+		return fmt.Sprintf("Val(%v, %v)", v.Val_0, v.Val_1)
+	default:
+		panic("")
+	}
+}
+func (v MyEnum) RawValue() int {
+	return int(v.Tag)
+}
+func Make_MyEnum_Val(arg0 uint8, arg1 uint16) MyEnum {
+	return MyEnum{Tag: MyEnum_Val, Val_0: arg0, Val_1: arg1}
+}
+
+func main() {
+	myEnum := Make_MyEnum_Val(1, 2)
+	aglTmp2 := myEnum
+	if aglTmp2.Tag == MyEnum_Val {
+		x := aglTmp2.Val_0
+		y := aglTmp2.Val_1
+		println(x, y)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+	tassert.Equal(t, "u8", test.TypeAt(7, 20).String())
+	tassert.Equal(t, "u16", test.TypeAt(7, 23).String())
+	tassert.Equal(t, "u8", test.TypeAt(8, 11).String())
+	tassert.Equal(t, "u16", test.TypeAt(8, 14).String())
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

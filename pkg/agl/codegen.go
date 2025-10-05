@@ -3038,6 +3038,64 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 			cond = fmt.Sprintf("%s.IsErr()", varName)
 			unwrapFn = "Err"
 		default:
+			// Handle enum pattern matching: if let MyEnum.SomeProp(x, y) := someEnumValue
+			if callExpr, ok := lhs0.(*ast.CallExpr); ok {
+				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+					rhsType := g.env.GetType(rhs0)
+					if enumType, ok := rhsType.(types.EnumType); ok {
+						fieldName := selExpr.Sel.Name
+						// Find field index
+						var fieldIdx int
+						for i, f := range enumType.Fields {
+							if f.Name == fieldName {
+								fieldIdx = i
+								break
+							}
+						}
+
+						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+						out += e(varName+" := ") + rhs() + e("\n")
+						out += e(gPrefix+"if "+varName+".Tag == "+enumType.Name+"_"+fieldName+" {\n")
+
+						// Extract the values from the enum
+						for j, arg := range callExpr.Args {
+							if argIdent, ok := arg.(*ast.Ident); ok {
+								if argIdent.Name == "_" {
+									out += e(gPrefix+"\t_ = "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+								} else {
+									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+								}
+							}
+						}
+
+						g.inlineStmt = false
+						out += g.incrPrefix(c3.F)
+
+						if stmt.Else != nil {
+							if v, ok := stmt.Else.(*ast.ExprStmt); ok {
+								switch v.X.(type) {
+								case *ast.IfExpr, *ast.IfLetExpr:
+									out += e(gPrefix + "} else ")
+									g.WithInlineStmt(func() {
+										out += c4.F()
+									})
+								default:
+									out += e(gPrefix + "} else {\n")
+									out += g.incrPrefix(c4.F)
+									out += e(gPrefix + "}")
+								}
+							} else {
+								out += e(gPrefix + "} else {\n")
+								out += g.incrPrefix(c4.F)
+								out += e(gPrefix + "}")
+							}
+						} else {
+							out += e(gPrefix + "}")
+						}
+						return out
+					}
+				}
+			}
 			panic("")
 		}
 		if _, ok := ass.Rhs[0].(*ast.TypeAssertExpr); ok {
@@ -3102,6 +3160,49 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			cond = fmt.Sprintf("%s.IsOk()", varName)
 			unwrapFn = "Err"
 		default:
+			// Handle enum pattern matching: guard let MyEnum.SomeProp(x, y) := someEnumValue else { ... }
+			if callExpr, ok := lhs0.(*ast.CallExpr); ok {
+				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+					rhsType := g.env.GetType(rhs0)
+					if enumType, ok := rhsType.(types.EnumType); ok {
+						fieldName := selExpr.Sel.Name
+						// Find field index
+						var fieldIdx int
+						for i, f := range enumType.Fields {
+							if f.Name == fieldName {
+								fieldIdx = i
+								break
+							}
+						}
+
+						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+						out += e(gPrefix+varName+" := ") + rhs() + e("\n")
+						out += e(gPrefix+"if "+varName+".Tag != "+enumType.Name+"_"+fieldName+" {\n")
+						out += body()
+						out += e(gPrefix + "}\n")
+
+						// Extract the values from the enum
+						for j, arg := range callExpr.Args {
+							if argIdent, ok := arg.(*ast.Ident); ok {
+								if argIdent.Name == "_" {
+									out += e(gPrefix+"_ = "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+								} else {
+									out += e(gPrefix) + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+								}
+							}
+						}
+
+						if g.allowUnused {
+							for _, arg := range callExpr.Args {
+								if argIdent, ok := arg.(*ast.Ident); ok && argIdent.Name != "_" {
+									out += e(gPrefix+"AglNoop(") + g.genExpr(arg).F() + e(")\n")
+								}
+							}
+						}
+						return out
+					}
+				}
+			}
 			panic("")
 		}
 		if _, ok := rhs0.(*ast.TypeAssertExpr); ok {

@@ -2498,7 +2498,10 @@ func (p *parser) parseIfLetExpr(pos token.Pos) *ast.IfLetExpr {
 		y := p.parsePrimaryExpr2()
 		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
 	default:
-		p.error(pos, "unexpected token")
+		x := p.parseExpr()
+		p.expect(token.DEFINE)
+		y := p.parsePrimaryExpr2()
+		ass = &ast.AssignStmt{Lhs: []ast.Expr{x}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
 	}
 	body := p.parseBlockStmt()
 

@@ -4279,7 +4279,52 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 		case token.SOME:
 			lhsT = types.OptionType{}
 		default:
-			panic("unreachable")
+			// Handle enum pattern matching: if let MyEnum.SomeProp(x, y) := someEnumValue
+			if callExpr, ok := lhs.(*ast.CallExpr); ok {
+				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+					// Get the type of the RHS (the enum value)
+					rhs := stmt.Ass.Rhs[0]
+					infer.expr(rhs)
+					rhsType := infer.GetType(rhs)
+
+					if enumType, ok := rhsType.(types.EnumType); ok {
+						// Find the matching enum field
+						fieldName := selExpr.Sel.Name
+						field := Find(enumType.Fields, func(f types.EnumFieldType) bool {
+							return f.Name == fieldName
+						})
+
+						if field == nil {
+							infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
+							return
+						}
+
+						// Check argument count matches
+						if len(callExpr.Args) != len(field.Elts) {
+							infer.errorf(lhs, "invalid number of arguments, has: %d, expect: %d", len(callExpr.Args), len(field.Elts))
+							return
+						}
+
+						// Define each destructured variable with its type
+						for i, elt := range field.Elts {
+							arg := callExpr.Args[i]
+							if argIdent, ok := arg.(*ast.Ident); ok {
+								infer.env.Define(arg, argIdent.Name, elt)
+								infer.SetType(arg, elt)
+							} else {
+								infer.errorf(arg, "invalid variable name for argument #%d", i+1)
+								return
+							}
+						}
+
+						// Don't need to process the assignment further for enum patterns
+						if stmt.Body != nil {
+							infer.stmt(stmt.Body)
+						}
+						return
+					}
+				}
+			}
 		}
 		infer.SetType(lhs, lhsT)
 		infer.withDestructure(func() {
@@ -4310,6 +4355,67 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 	case token.SOME:
 		lhsT = types.OptionType{}
 	default:
+		// Handle enum pattern matching: guard let MyEnum.SomeProp(x, y) := someEnumValue else { ... }
+		if callExpr, ok := lhs.(*ast.CallExpr); ok {
+			if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+				// Get the type of the RHS (the enum value)
+				rhs := stmt.Ass.Rhs[0]
+				infer.expr(rhs)
+				rhsType := infer.GetType(rhs)
+
+				if enumType, ok := rhsType.(types.EnumType); ok {
+					// Find the matching enum field
+					fieldName := selExpr.Sel.Name
+					field := Find(enumType.Fields, func(f types.EnumFieldType) bool {
+						return f.Name == fieldName
+					})
+
+					if field == nil {
+						infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
+						return
+					}
+
+					// Check argument count matches
+					if len(callExpr.Args) != len(field.Elts) {
+						infer.errorf(lhs, "invalid number of arguments, has: %d, expect: %d", len(callExpr.Args), len(field.Elts))
+						return
+					}
+
+					// Define each destructured variable with its type
+					for i, elt := range field.Elts {
+						arg := callExpr.Args[i]
+						if argIdent, ok := arg.(*ast.Ident); ok {
+							infer.env.Define(arg, argIdent.Name, elt)
+							infer.SetType(arg, elt)
+						} else {
+							infer.errorf(arg, "invalid variable name for argument #%d", i+1)
+							return
+						}
+					}
+
+					// Validate guard body
+					if stmt.Body == nil || len(stmt.Body.List) == 0 {
+						infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
+						return
+					}
+					infer.stmt(stmt.Body)
+					lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
+					switch v := lastStmt.(type) {
+					case *ast.ReturnStmt:
+					case *ast.BranchStmt:
+						if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
+							infer.errorf(v, "guard must return/break/continue")
+							return
+						}
+					default:
+						infer.errorf(v, "guard must return/break/continue")
+						return
+					}
+					infer.SetType(stmt, types.VoidType{})
+					return
+				}
+			}
+		}
 		panic("unreachable")
 	}
 	infer.SetType(lhs, lhsT)
