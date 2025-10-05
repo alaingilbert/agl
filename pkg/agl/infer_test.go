@@ -365,11 +365,11 @@ func TestInfer19(t *testing.T) {
 	src := `package main
 func main() {
 	m := map[int]set[int]{1: set[int]{2}}
-	if Some(s) := m.Get(1) {
+	if let Some(s) := m.Get(1) {
 	}
 }`
 	test := NewTest(src)
-	tassert.Equal(t, "set[int]", test.TypeAt(4, 10).String())
+	tassert.Equal(t, "set[int]", test.TypeAt(4, 14).String())
 }
 
 func TestInfer20(t *testing.T) {

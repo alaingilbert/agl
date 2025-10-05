@@ -13,7 +13,7 @@ func test() int? { Some(42) }
 func main() {
 	a := 42
 	guard a < 100 else { return }
-	guard Some(b) := test() else { return }
+	guard let Some(b) := test() else { return }
 	fmt.Println(b)
 }`
 	expected := `// agl:generated

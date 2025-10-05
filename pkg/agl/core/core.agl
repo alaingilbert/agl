@@ -53,7 +53,7 @@ func (v agl1.Vec[T]) Enumerated() [](int, T) {
 func (v agl1.Vec[T]) CompactMap[R any](f func(T) R?) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
-		if Some(res) := f(el) {
+		if let Some(res) := f(el) {
 			out.Push(res)
 		}
 	}

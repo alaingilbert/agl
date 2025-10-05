@@ -96,7 +96,7 @@ func Test2(t *testing.T) {
 import "fmt"
 func test() int? { Some(42) }
 func main() {
-	guard Some(a) := test() else { return }
+	guard let Some(a) := test() else { return }
 	fmt.Println(a)
 }`
 	tassert.Equal(t, "42\n", testGenOutput(src))

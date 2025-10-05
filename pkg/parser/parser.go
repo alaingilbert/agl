@@ -2482,6 +2482,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 }
 
 func (p *parser) parseIfLetExpr(pos token.Pos) *ast.IfLetExpr {
+	p.next()
 	var op token.Token
 	var ass *ast.AssignStmt
 	switch p.tok {
@@ -2519,6 +2520,7 @@ func (p *parser) parseIfLetExpr(pos token.Pos) *ast.IfLetExpr {
 }
 
 func (p *parser) parseGuardLetStmt(pos token.Pos) *ast.GuardLetStmt {
+	p.next()
 	var op token.Token
 	var ass *ast.AssignStmt
 	switch p.tok {
@@ -2548,7 +2550,7 @@ func (p *parser) parseGuardStmt() ast.Stmt {
 		defer un(trace(p, "GuardStmt"))
 	}
 	pos := p.expect(token.GUARD)
-	if p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME {
+	if p.tok == token.LET {
 		return p.parseGuardLetStmt(pos)
 	}
 	condStmt, _ := p.parseSimpleStmt(basic)
@@ -2567,7 +2569,7 @@ func (p *parser) parseIfExpr() ast.Expr {
 
 	pos := p.expect(token.IF)
 
-	if p.tok == token.OK || p.tok == token.ERR || p.tok == token.SOME {
+	if p.tok == token.LET {
 		return p.parseIfLetExpr(pos)
 	}
 

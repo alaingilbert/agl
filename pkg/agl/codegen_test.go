@@ -3195,9 +3195,9 @@ func testSome() int? {
 	return Some(42)
 }
 func main() {
-	if Some(a) := testSome() {
+	if let Some(a) := testSome() {
 		fmt.Println(a)
-	} else if Some(b) := testSome() {
+	} else if let Some(b) := testSome() {
 		fmt.Println(b)
 	} else {
 		fmt.Println("else")
@@ -3235,7 +3235,7 @@ func testOk() int! {
 	return Ok(42)
 }
 func main() {
-	if Ok(a) := testOk() {
+	if let Ok(a) := testOk() {
 		fmt.Println(a)
 	}
 }
@@ -3265,7 +3265,7 @@ func testOk() int! {
 	return Err("error")
 }
 func main() {
-	if Err(e) := testOk() {
+	if let Err(e) := testOk() {
 		fmt.Println(e)
 	}
 }
@@ -3295,12 +3295,12 @@ func testSome() int? {
    return Some(42)
 }
 func main() {
-   if Err(a) := testSome() {
+   if let Err(a) := testSome() {
        fmt.Println("test", a)
    }
 }
 `
-	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:11: try to destructure a non-Result type into an ResultType")
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:15: try to destructure a non-Result type into an ResultType")
 }
 
 func TestCodeGen103(t *testing.T) {
@@ -3310,12 +3310,12 @@ func testResult() int! {
    return Ok(42)
 }
 func main() {
-   if Some(a) := testResult() {
+   if let Some(a) := testResult() {
        fmt.Println("test", a)
    }
 }
 `
-	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:12: try to destructure a non-Option type into an OptionType")
+	tassert.Contains(t, NewTest(src).errs[0].Error(), "7:16: try to destructure a non-Option type into an OptionType")
 }
 
 func TestCodeGen104(t *testing.T) {
@@ -5878,7 +5878,7 @@ func run() ! {
 	return Err(&MyError{time.Now(), "it didn't work"})
 }
 func main() {
-    if Err(err) := run() {
+    if let Err(err) := run() {
 		fmt.Println(err)
 	}
 }`
@@ -5928,7 +5928,7 @@ func run() ! {
 }
 func main() {
 	res := run()
-    if Err(err) := res {
+    if let Err(err) := res {
 		fmt.Println(err)
 	}
 }`
@@ -8101,7 +8101,7 @@ import "agl1/fmt"
 func (v agl1.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
-		if Some(res) := f(el) {
+		if let Some(res) := f(el) {
 			out.Push(res)
 		}
 	}
@@ -10232,9 +10232,9 @@ func main() {
 	}
 	b := 42
 	c, d := 1, 2
-	if Some(e) := a.(int) {
+	if let Some(e) := a.(int) {
 	}
-	guard Some(f) := a.(int) else { return }
+	guard let Some(f) := a.(int) else { return }
 }`
 	expected := `// agl:generated
 package main
@@ -10414,18 +10414,18 @@ func TestCodeGen341(t *testing.T) {
 	src := `package main
 import "agl1/os"
 func main() {
-	if Ok(file) := os.ReadFile("") {
+	if let Ok(file) := os.ReadFile("") {
 	}
-	if Err(err) := os.ReadFile("") {
+	if let Err(err) := os.ReadFile("") {
 	}
-	if Err(err) := os.Remove("") {
+	if let Err(err) := os.Remove("") {
 	}
-	if Some(env) := os.LookupEnv("") {
+	if let Some(env) := os.LookupEnv("") {
 	}
-	guard Ok(file) := os.ReadFile("") else { return }
-	guard Err(err1) := os.ReadFile("") else { return }
-	guard Err(err2) := os.Remove("") else { return }
-	guard Some(val) := os.LookupEnv("") else { return }
+	guard let Ok(file) := os.ReadFile("") else { return }
+	guard let Err(err1) := os.ReadFile("") else { return }
+	guard let Err(err2) := os.Remove("") else { return }
+	guard let Some(val) := os.LookupEnv("") else { return }
 }`
 	expected := `// agl:generated
 package main

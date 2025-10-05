@@ -100,7 +100,7 @@ func main() {
 }
 ```
 
-### `If Some(val) := ... {` to use a Option[T]/Result[T] value safely
+### `If let Some(val) := ... {` to use a Option[T]/Result[T] value safely
 
 This pattern works with any of `Ok`|`Err`|`Some`  
 
@@ -110,7 +110,7 @@ package main
 func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
 
 func main() {
-    if Some(num) := maybeInt() {
+    if let Some(num) := maybeInt() {
         print(num)
     }
 }
@@ -126,7 +126,7 @@ package main
 func maybeInt() int? { Some(42) } // Implicit return when a single expression is present
 
 func main() {
-    guard Some(num) := maybeInt() else { return } // can use guard to unwrap a value
+    guard let Some(num) := maybeInt() else { return } // can use guard to unwrap a value
     guard num < 100 else { return } // can use guard as a reverse if
     assert(num == 42) 
 }
