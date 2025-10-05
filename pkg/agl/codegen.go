@@ -3070,8 +3070,6 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 					rhsType := g.env.GetType(rhs0)
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						fieldName := selExpr.Sel.Name
-						// Find field index
-						_, fieldIdx := FindIdx(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
 
 						out += e(varName+" := ") + rhs() + e("\n")
 						out += e(gPrefix + "if " + varName + ".Tag == " + enumType.Name + "_" + fieldName + " {\n")
@@ -3080,9 +3078,9 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 						for j, arg := range callExpr.Args {
 							if argIdent, ok := arg.(*ast.Ident); ok {
 								if argIdent.Name == "_" {
-									out += e(gPrefix + "\t_ = " + varName + "." + enumType.Fields[fieldIdx].Name + "_" + strconv.Itoa(j) + "\n")
+									out += e(gPrefix + "\t_ = " + varName + "." + fieldName + "_" + strconv.Itoa(j) + "\n")
 								} else {
-									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
+									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+fieldName+"_"+strconv.Itoa(j)+"\n")
 								}
 							}
 						}
@@ -3152,7 +3150,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 								break
 							}
 						}
-						
+
 						out += e(gPrefix+varName+" := ") + rhs() + e("\n")
 						out += e(gPrefix + "if " + varName + ".Tag != " + enumType.Name + "_" + fieldName + " {\n")
 						out += body()
