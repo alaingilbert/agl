@@ -1207,18 +1207,18 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 									out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
 								}
 							}
-							out += e(gPrefix) + g.genStmts(c.Body).F()
+							out += g.incrPrefix(g.genStmts(c.Body).F)
 						case *ast.SelectorExpr:
 							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-							out += e(gPrefix) + g.genStmts(c.Body).F()
+							out += g.incrPrefix(g.genStmts(c.Body).F)
 						default:
 							panic(fmt.Sprintf("%v", to(c.Expr)))
 						}
 					} else {
 						hasDefault = true
 						out += e("{\n")
-						out += e(gPrefix) + g.genStmts(c.Body).F()
-						out += e(gPrefix) + e("}")
+						out += g.incrPrefix(g.genStmts(c.Body).F)
+						out += e(gPrefix + "}")
 					}
 				}
 				if !hasDefault {
