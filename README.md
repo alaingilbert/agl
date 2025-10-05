@@ -177,7 +177,7 @@ func test(i int) int? {
 func main() {
     for i in 0..10 {
         res := test(i) or_break // `res` has type `int`
-        print(res)        // will print the value `0` and `1`
+        print(res)              // will print the value `0` and `1`
         time.Sleep(time.Second)
     }
 }
