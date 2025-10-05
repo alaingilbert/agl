@@ -3068,6 +3068,10 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 			if callExpr, ok := lhs0.(*ast.CallExpr); ok {
 				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
 					rhsType := g.env.GetType(rhs0)
+					// Unwrap MutType if present
+					if mutType, ok := rhsType.(types.MutType); ok {
+						rhsType = mutType.W
+					}
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						fieldName := selExpr.Sel.Name
 
@@ -3140,6 +3144,10 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			if callExpr, ok := lhs0.(*ast.CallExpr); ok {
 				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
 					rhsType := g.env.GetType(rhs0)
+					// Unwrap MutType if present
+					if mutType, ok := rhsType.(types.MutType); ok {
+						rhsType = mutType.W
+					}
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						fieldName := selExpr.Sel.Name
 						// Find field index

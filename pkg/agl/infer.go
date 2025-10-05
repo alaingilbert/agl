@@ -4324,6 +4324,8 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 					rhs := stmt.Ass.Rhs[0]
 					infer.expr(rhs)
 					rhsType := infer.GetType(rhs)
+					// Unwrap MutType if present
+					rhsType = types.Unwrap(rhsType)
 
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						// Find the matching enum field
@@ -4398,6 +4400,8 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 				rhs := stmt.Ass.Rhs[0]
 				infer.expr(rhs)
 				rhsType := infer.GetType(rhs)
+				// Unwrap MutType if present
+				rhsType = types.Unwrap(rhsType)
 
 				if enumType, ok := rhsType.(types.EnumType); ok {
 					// Find the matching enum field
