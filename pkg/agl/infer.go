@@ -4260,8 +4260,12 @@ func (infer *FileInferrer) matchExpr(expr *ast.MatchExpr) {
 						for i, el := range f.Elts {
 							arg := v.Args[i]
 							if argIdent, ok := arg.(*ast.Ident); ok {
-								infer.env.Define(arg, argIdent.Name, el)
-								infer.SetType(arg, el)
+								t := el
+								if argIdent.Mutable.IsValid() {
+									t = types.MutType{W: t}
+								}
+								infer.env.Define(arg, argIdent.Name, t)
+								infer.SetType(arg, t)
 							} else {
 								infer.errorf(arg, "invalid variable name for argument #%d", i+1)
 								return
@@ -4347,8 +4351,12 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 						for i, elt := range field.Elts {
 							arg := callExpr.Args[i]
 							if argIdent, ok := arg.(*ast.Ident); ok {
-								infer.env.Define(arg, argIdent.Name, elt)
-								infer.SetType(arg, elt)
+								t := elt
+								if argIdent.Mutable.IsValid() {
+									t = types.MutType{W: t}
+								}
+								infer.env.Define(arg, argIdent.Name, t)
+								infer.SetType(arg, t)
 							} else {
 								infer.errorf(arg, "invalid variable name for argument #%d", i+1)
 								return
@@ -4425,8 +4433,12 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 					for i, elt := range field.Elts {
 						arg := callExpr.Args[i]
 						if argIdent, ok := arg.(*ast.Ident); ok {
-							infer.env.Define(arg, argIdent.Name, elt)
-							infer.SetType(arg, elt)
+							t := elt
+							if argIdent.Mutable.IsValid() {
+								t = types.MutType{W: t}
+							}
+							infer.env.Define(arg, argIdent.Name, t)
+							infer.SetType(arg, t)
 						} else {
 							infer.errorf(arg, "invalid variable name for argument #%d", i+1)
 							return
