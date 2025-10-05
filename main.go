@@ -53,6 +53,7 @@ func main() {
 				Usage:   "run command",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "debug"},
+					&cli.BoolFlag{Name: "no-mut-check", Usage: "disable mutation checking"},
 				},
 				Action: runAction,
 			},
@@ -211,7 +212,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	core, _ := agl.ContentFs.ReadFile(filepath.Join("core", "core.go"))
 	coreLines := strings.Split(string(core), "\n")
 	coreImports := []byte(strings.Join(coreLines[:18], "\n"))
-	_, _, out := genCode1("", []byte(input), coreImports)
+	_, _, out := genCode1("", []byte(input), coreImports, true)
 	lines := strings.Split(out, "\n")
 	out = strings.Join(lines, "\n")
 	out += strings.Join(coreLines[18:], "\n")
@@ -221,6 +222,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 
 func runAction(ctx context.Context, cmd *cli.Command) error {
 	debugFlag := cmd.Bool("debug")
+	noMutCheck := cmd.Bool("no-mut-check")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -265,7 +267,8 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 	by := agl.Must(os.ReadFile(fileName))
-	g, fset, src := genCode1(fileName, by, nil)
+	mutEnforced := !noMutCheck
+	g, fset, src := genCode1(fileName, by, nil, mutEnforced)
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -499,12 +502,12 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 	return nil
 }
 
-func genCode1(fileName string, src, coreGoImports []byte) (*agl.Generator, *token.FileSet, string) {
+func genCode1(fileName string, src, coreGoImports []byte, mutEnforced bool) (*agl.Generator, *token.FileSet, string) {
 	fset, f, f2 := agl.ParseSrc(string(src))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	i.InferFile("core.agl", f2, fset, true)
-	imports, errs := i.InferFile(fileName, f, fset, true)
+	imports, errs := i.InferFile(fileName, f, fset, mutEnforced)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
@@ -521,7 +524,7 @@ func genCode1(fileName string, src, coreGoImports []byte) (*agl.Generator, *toke
 }
 
 func genCode(fileName string, src []byte) string {
-	_, _, out := genCode1(fileName, src, nil)
+	_, _, out := genCode1(fileName, src, nil, true)
 	return out
 }
 
