@@ -230,6 +230,38 @@ If a single statement is present in the lambda body, the curly brace can be omit
 names := people.Map(|person| person.Name).Joined(", ")
 ```
 
+## Enum (sum type)
+
+```go
+package main
+
+type IpAddr enum {
+    V4(u8, u8, u8, u8)
+    V6(string)
+}
+
+func main() {
+    home := IpAddr.V4(127, 0, 0, 1)
+	
+    // match branches must be exhaustive
+    match home {
+    case .V4(a, b, c, d):
+        println(a, b, c, d)
+    case .V6(addr):
+        println(addr)
+    }
+	
+    // if-let can be used to pattern match
+    if let IpAddr.V4(a, b, c, d) = home {
+        println(a, b, c, d)
+    }
+	
+    // guard-let can also be used to pattern match
+    guard let IpAddr.V4(a, b, c, d) = home else { return }
+    println(a, b, c, d)
+}
+```
+
 ## Destructuring
 
 ```go
