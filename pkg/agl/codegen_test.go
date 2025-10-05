@@ -12597,7 +12597,7 @@ func printAddr(addr IpAddr) {
         _, _ = fmt.Printf("V4\n")
     case .V6(_):
         _, _ = fmt.Printf("V6\n")
-    case .Wot(mut x):
+    case .Wot(x):
         x.Voop = "new value"
         _, _ = fmt.Printf("Wot: %v\n", x)
     }
