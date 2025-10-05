@@ -69,6 +69,7 @@ func main() {
 					&cli.BoolFlag{Name: "force", Aliases: []string{"f"}},
 					&cli.StringFlag{Name: "output", Aliases: []string{"o"}},
 					&cli.BoolFlag{Name: "sourceMap"},
+					&cli.BoolFlag{Name: "no-mut-check", Usage: "disable mutation checking"},
 				},
 				Usage:  "build command",
 				Action: buildAction,
@@ -308,22 +309,25 @@ func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 }
 
 func buildAction(ctx context.Context, cmd *cli.Command) error {
+	noMutCheck := cmd.Bool("no-mut-check")
+	mutEnforced := !noMutCheck
+
 	if cmd.NArg() == 0 {
-		return buildProject()
+		return buildProject(mutEnforced)
 	}
 	outputFlag := cmd.String("output")
 	forceFlag := cmd.Bool("force")
 	sourceMapFlag := cmd.Bool("sourceMap")
 	fileName := cmd.Args().Get(0)
 	m := agl.NewPkgVisited()
-	err := buildFile(fileName, forceFlag, sourceMapFlag, m)
+	err := buildFile(fileName, forceFlag, sourceMapFlag, mutEnforced, m)
 	if err != nil {
 		panic(err)
 	}
 	return spawnGoBuild(fileName, outputFlag)
 }
 
-func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited) error {
+func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced bool, m *agl.PkgVisited) error {
 	if m.ContainsAdd(fileName) {
 		return nil
 	}
@@ -361,7 +365,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, m); err != nil {
+					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, mutEnforced, m); err != nil {
 						panic(err)
 					}
 				}
@@ -383,7 +387,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited
 				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 					continue
 				}
-				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, m); err != nil {
+				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, mutEnforced, m); err != nil {
 					panic(err)
 				}
 			}
@@ -392,7 +396,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	_, _ = i.InferFile(fileName, f2, fset, true)
-	imports, errs := i.InferFile(fileName, f, fset, true)
+	imports, errs := i.InferFile(fileName, f, fset, mutEnforced)
 	if len(errs) > 0 {
 		panic(errs[0])
 	}
@@ -429,9 +433,9 @@ func buildFile(fileName string, forceFlag, sourceMapFlag bool, m *agl.PkgVisited
 	return nil
 }
 
-func buildProject() error {
+func buildProject(mutEnforced bool) error {
 	visited := make(map[string]struct{})
-	if err := buildFolder(".", visited); err != nil {
+	if err := buildFolder(".", mutEnforced, visited); err != nil {
 		return err
 	}
 	cmd := exec.Command("go", "build")
@@ -442,7 +446,7 @@ func buildProject() error {
 
 const modPrefix = "agl/" // TODO get from go.mod
 
-func buildFolder(folderPath string, visited map[string]struct{}) error {
+func buildFolder(folderPath string, mutEnforced bool, visited map[string]struct{}) error {
 	if _, ok := visited[folderPath]; ok {
 		return nil
 	}
@@ -460,7 +464,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 		}
 		fileName := filepath.Join(folderPath, entry.Name())
 		if strings.HasSuffix(fileName, ".agl") {
-			if err := buildAglFile(fileName); err != nil {
+			if err := buildAglFile(fileName, mutEnforced); err != nil {
 				panic(fmt.Sprintf("failed to build %s", fileName))
 			}
 		} else if strings.HasSuffix(fileName, ".go") {
@@ -489,7 +493,7 @@ func buildFolder(folderPath string, visited map[string]struct{}) error {
 							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
 							if strings.HasPrefix(pathValue, modPrefix) {
 								newPath := strings.TrimPrefix(pathValue, modPrefix)
-								if err := buildFolder(newPath, visited); err != nil {
+								if err := buildFolder(newPath, mutEnforced, visited); err != nil {
 									return err
 								}
 							}
@@ -523,17 +527,17 @@ func genCode1(fileName string, src, coreGoImports []byte, mutEnforced bool) (*ag
 	return g, fset, g.Generate()
 }
 
-func genCode(fileName string, src []byte) string {
-	_, _, out := genCode1(fileName, src, nil, true)
+func genCode(fileName string, src []byte, mutEnforced bool) string {
+	_, _, out := genCode1(fileName, src, nil, mutEnforced)
 	return out
 }
 
-func buildAglFile(fileName string) error {
+func buildAglFile(fileName string, mutEnforced bool) error {
 	by, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	src := genCode(fileName, by)
+	src := genCode(fileName, by, mutEnforced)
 	path := strings.Replace(fileName, ".agl", "_agl.go", 1)
 	return os.WriteFile(path, []byte(src), 0644)
 }
@@ -555,7 +559,7 @@ func startAction(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		panic(err)
 	}
-	src := genCode(fileName, by)
+	src := genCode(fileName, by, true)
 	fmt.Println(src)
 	return nil
 }
