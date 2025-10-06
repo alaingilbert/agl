@@ -42,21 +42,16 @@ func combination(ops []Op, n int) [][]Op {
 }
 
 func solve(expected i64, vals []i64, ops []Op) bool {
-    combs := combination(ops, vals.Len())
-    for comb in combs {
-        var mut res i64
-        for i, el := range vals {
+    combination(ops, vals.Len()).Any(|comb| {
+        vals.Enumerated().Reduce(i64(0), |mut res, (i, el)| {
             switch comb[i] {
                 case .add: res += el
                 case .mul: res *= el
                 case .cat: res = cc(res, el)
             }
-        }
-        if res == expected {
-            return true
-        }
-    }
-    return false
+            return res
+        }) == expected
+    })
 }
 
 func part1() {
