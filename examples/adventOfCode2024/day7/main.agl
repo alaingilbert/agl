@@ -33,8 +33,8 @@ func combination(ops []Op, n int) [][]Op {
     }
     mut res := [][]Op{}
     combs := combination(ops, n-1)
-    for _, comb := range combs {
-        for _, op := range ops {
+    for comb in combs {
+        for op in ops {
             res.Push(comb + []Op{op})
         }
     }
@@ -43,7 +43,7 @@ func combination(ops []Op, n int) [][]Op {
 
 func solve(expected i64, vals []i64, ops []Op) bool {
     combs := combination(ops, vals.Len())
-    for _, comb := range combs {
+    for comb in combs {
         var mut res i64
         for i, el := range vals {
             switch comb[i] {
