@@ -2768,27 +2768,36 @@ func (infer *FileInferrer) ellipsis(expr *ast.Ellipsis) {
 }
 
 func (infer *FileInferrer) tupleExpr(expr *ast.TupleExpr) {
-	infer.exprs(expr.Values)
 	var elts []types.Type
-	if infer.optType.IsDefinedFor(expr) {
-		expected := infer.optType.Type.(types.TupleType).Elts
-		for i, x := range expr.Values {
-			expectedI := expected[i]
-			xT := infer.GetType(x)
-			if _, ok := xT.(types.UntypedNumType); ok {
-				infer.SetType(x, expectedI)
-				xT = expectedI
-			} else if !cmpTypesLoose(xT, expectedI) {
-				infer.errorf(expr.Values[i], "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
-				return
+	// Check if optType is available and is a TupleType (not necessarily for this specific expr)
+	if infer.optType != nil && infer.optType.Type != nil {
+		if tupType, ok := infer.optType.Type.(types.TupleType); ok {
+			expected := tupType.Elts
+			for i, x := range expr.Values {
+				expectedI := expected[i]
+				// Infer each element with the expected type as optType
+				infer.withOptType(x, expectedI, func() {
+					infer.expr(x)
+				})
+				xT := infer.GetType(x)
+				if _, ok := xT.(types.UntypedNumType); ok {
+					infer.SetType(x, expectedI)
+					xT = expectedI
+				} else if !cmpTypesLoose(xT, expectedI) {
+					infer.errorf(expr.Values[i], "%s: type mismatch, want: %s, got: %s", infer.Pos(expr.Values[i]), expectedI, xT)
+					return
+				}
+				elts = append(elts, xT)
 			}
-			elts = append(elts, xT)
+			infer.SetType(expr, types.TupleType{Elts: elts})
+			return
 		}
-	} else {
-		for _, v := range expr.Values {
-			elT := infer.GetType(v)
-			elts = append(elts, elT)
-		}
+	}
+	// Fallback: no optType or not a tuple type
+	infer.exprs(expr.Values)
+	for _, v := range expr.Values {
+		elT := infer.GetType(v)
+		elts = append(elts, elT)
 	}
 	infer.SetType(expr, types.TupleType{Elts: elts})
 }
@@ -3114,7 +3123,9 @@ func (infer *FileInferrer) compositeLit(expr *ast.CompositeLit) {
 		return
 	case *ast.SetType:
 		keyT := infer.GetType2(v.Key)
-		infer.exprs(expr.Elts)
+		infer.withOptType(expr, keyT, func() {
+			infer.exprs(expr.Elts)
+		})
 		t := types.SetType{K: keyT}
 		if !TryCast[types.TypeType](keyT) {
 			keyT = types.TypeType{W: keyT}

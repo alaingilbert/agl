@@ -12832,15 +12832,38 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_int_int{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_int_int{Arg0: 1, Arg1: 2}: {}, AglTupleStruct_int_int{Arg0: 1, Arg1: 3}: {}}
+	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 3}: {}}
 	for aglTmp1 := range s {
 		e := aglTmp1
 		println(e)
 	}
 }
-type AglTupleStruct_int_int struct {
-	Arg0 int
-	Arg1 int
+type AglTupleStruct_uint8_uint8 struct {
+	Arg0 uint8
+	Arg1 uint8
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen424(t *testing.T) {
+	src := `package main
+func main() {
+	s := set[(u8, u8)]{(1, 1), (1, 2)}
+	for e in s {
+		print(e)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}}
+	for aglTmp1 := range s {
+		e := aglTmp1
+		AglPrint(e)
+	}
 }
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
