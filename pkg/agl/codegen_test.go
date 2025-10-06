@@ -12229,7 +12229,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	println(42)
+	AglPrintln(42)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12293,9 +12293,9 @@ func Make_Color_blue() Color {
 func main() {
 	color := Make_Color_red()
 	if color.Tag == Color_red {
-		println("red")
+		AglPrintln("red")
 	} else {
-		println("other")
+		AglPrintln("other")
 	}
 }
 `
@@ -12384,7 +12384,7 @@ func main() {
 	if aglTmp1.Tag == MyEnum_Val {
 		x := aglTmp1.Val_0
 		y := aglTmp1.Val_1
-		println(x, y)
+		AglPrintln(x, y)
 	}
 	aglTmp2 := myEnum
 	if aglTmp2.Tag != MyEnum_Val {
@@ -12835,7 +12835,7 @@ func main() {
 	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 3}: {}}
 	for aglTmp1 := range (s) {
 		e := aglTmp1
-		println(e)
+		AglPrintln(e)
 	}
 }
 type AglTupleStruct_uint8_uint8 struct {
