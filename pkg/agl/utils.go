@@ -231,6 +231,17 @@ func FindIdxIter[T any](it iter.Seq[T], predicate func(T) bool) (*T, int) {
 	return nil, -1
 }
 
+// Filter ...
+func Filter[T any](arr []T, predicate func(T) bool) (out []T) {
+	out = make([]T, 0)
+	for _, el := range arr {
+		if predicate(el) {
+			out = append(out, el)
+		}
+	}
+	return out
+}
+
 func First[T any](a T, _ ...any) T { return a }
 
 func Second[T any](_ any, a T, _ ...any) T { return a }
