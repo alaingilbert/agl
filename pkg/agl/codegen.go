@@ -440,6 +440,59 @@ func (g *Generator) GenerateFrags(line int) (n ast.Node) {
 	return nil
 }
 
+func (g *Generator) scanForEnums() {
+	// Scan both AST files for enum declarations
+	needsFmt := false
+	scanDecls := func(decls []ast.Decl) {
+		for _, decl := range decls {
+			if genDecl, ok := decl.(*ast.GenDecl); ok {
+				for _, spec := range genDecl.Specs {
+					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+						if enumType, ok := typeSpec.Type.(*ast.EnumType); ok {
+							// Check if any enum field has parameters
+							for _, field := range enumType.Values.List {
+								if field.Params != nil {
+									needsFmt = true
+									return
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if g.a != nil {
+		scanDecls(g.a.Decls)
+	}
+	if g.b != nil && !needsFmt {
+		scanDecls(g.b.Decls)
+	}
+
+	// Add fmt import if needed and not already present
+	if needsFmt {
+		// Check if fmt is already imported in source file
+		hasFmt := false
+		if g.a != nil {
+			for _, imp := range g.a.Imports {
+				// Check for both "fmt" and "agl1/fmt" imports
+				if imp.Path.Value == "\"fmt\"" || imp.Path.Value == "\"agl1/fmt\"" {
+					hasFmt = true
+					break
+				}
+			}
+		}
+		if !hasFmt {
+			if g.imports == nil {
+				g.imports = make(map[string]*ast.ImportSpec)
+			}
+			g.imports["\"fmt\""] = &ast.ImportSpec{
+				Path: &ast.BasicLit{Value: "\"fmt\""},
+			}
+		}
+	}
+}
+
 func (g *Generator) Generate2() (out1, out2 string) {
 	out1 = g.Generate()
 	for _, f := range g.fragments {
@@ -449,6 +502,9 @@ func (g *Generator) Generate2() (out1, out2 string) {
 }
 
 func (g *Generator) Generate() (out string) {
+	// Scan for enums first to add necessary imports
+	g.scanForEnums()
+
 	out += g.Emit(GeneratedFilePrefix)
 	imports := make(map[string]*ast.ImportSpec)
 	addImport := func(i *ast.ImportSpec) {

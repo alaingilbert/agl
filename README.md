@@ -235,8 +235,6 @@ names := people.Map(|person| person.Name).Joined(", ")
 ```go
 package main
 
-import "fmt"
-
 type IpAddr enum {
     V4(u8, u8, u8, u8)
     V6(string)

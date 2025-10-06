@@ -1687,6 +1687,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 type ColorTag int
 const (
 	Color_red ColorTag = iota
@@ -1741,6 +1742,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 type ColorTag int
 const (
 	Color_red ColorTag = iota
@@ -1794,6 +1796,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 type ColorTag int
 const (
 	Color_red ColorTag = iota
@@ -8253,6 +8256,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 type IpAddrTag int
 const (
 	IpAddr_V4 IpAddrTag = iota
@@ -12349,6 +12353,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 type MyEnumTag int
 const (
 	MyEnum_Val MyEnumTag = iota
@@ -12413,6 +12418,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 type IpAddrTag int
 const (
 	IpAddr_V4 IpAddrTag = iota
@@ -12758,6 +12764,61 @@ type AglTupleStruct_int_int struct {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test, AllowUnused())
+}
+
+func TestCodeGen422(t *testing.T) {
+	src := `package main
+
+type IpAddr enum {
+    V4(u8, u8, u8, u8)
+    V6(string)
+}
+
+func main() {
+}
+`
+	expected := `// agl:generated
+package main
+import "fmt"
+type IpAddrTag int
+const (
+	IpAddr_V4 IpAddrTag = iota
+	IpAddr_V6
+)
+type IpAddr struct {
+	Tag IpAddrTag
+	V4_0 uint8
+	V4_1 uint8
+	V4_2 uint8
+	V4_3 uint8
+	V6_0 string
+}
+func (v IpAddr) String() string {
+	switch v.Tag {
+	case IpAddr_V4:
+		return fmt.Sprintf("V4(%v, %v, %v, %v)", v.V4_0, v.V4_1, v.V4_2, v.V4_3)
+	case IpAddr_V6:
+		return fmt.Sprintf("V6(%v)", v.V6_0)
+	default:
+		panic("")
+	}
+}
+func (v IpAddr) RawValue() int {
+	return int(v.Tag)
+}
+func Make_IpAddr_V4(arg0 uint8, arg1 uint8, arg2 uint8, arg3 uint8) IpAddr {
+	return IpAddr{Tag: IpAddr_V4, V4_0: arg0, V4_1: arg1, V4_2: arg2, V4_3: arg3}
+}
+func Make_IpAddr_V6(arg0 string) IpAddr {
+	return IpAddr{Tag: IpAddr_V6, V6_0: arg0}
+}
+
+func main() {
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
 }
 
 //func TestCodeGen411(t *testing.T) {
