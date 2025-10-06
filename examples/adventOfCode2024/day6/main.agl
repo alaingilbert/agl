@@ -98,13 +98,8 @@ func main() {
     guardPosition := FindGuardPosition(data)?
     origin := GetOrigPathPositions1(data, guardPosition)
     printf("part1: %d", origin.Len())
-
-    mut originArr := [](int, int){}
-    for e := range origin {
-        originArr.Push(e)
-    }
     var count int
-    for pos in originArr {
+    for pos in origin {
         if pos != guardPosition {
             mut localData := CloneData(data)
             localData[pos.1][pos.0] = "#"
