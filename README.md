@@ -235,6 +235,8 @@ names := people.Map(|person| person.Name).Joined(", ")
 ```go
 package main
 
+import "fmt"
+
 type IpAddr enum {
     V4(u8, u8, u8, u8)
     V6(string)
@@ -242,7 +244,7 @@ type IpAddr enum {
 
 func main() {
     home := IpAddr.V4(127, 0, 0, 1)
-	
+
     // match branches must be exhaustive
     match home {
     case .V4(a, b, c, d):
@@ -250,14 +252,14 @@ func main() {
     case .V6(addr):
         println(addr)
     }
-	
+
     // if-let can be used to pattern match
-    if let IpAddr.V4(a, b, c, d) = home {
+    if let IpAddr.V4(a, b, c, d) := home {
         println(a, b, c, d)
     }
-	
+
     // guard-let can also be used to pattern match
-    guard let IpAddr.V4(a, b, c, d) = home else { return }
+    guard let IpAddr.V4(a, b, c, d) := home else { return }
     println(a, b, c, d)
 }
 ```
