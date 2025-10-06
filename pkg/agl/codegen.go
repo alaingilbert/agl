@@ -1205,6 +1205,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 									out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
 								} else {
 									out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
+									if g.allowUnused {
+										out += e(gPrefix+"\tAglNoop(") + g.genExpr(id).F() + e(")\n")
+									}
 								}
 							}
 							out += g.incrPrefix(g.genStmts(c.Body).F)
@@ -2897,6 +2900,13 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", varName, i))
 				}
 				after += fmt.Sprintf("%s := %s", strings.Join(names, ", "), strings.Join(exprs, ", "))
+				if g.allowUnused {
+					// Add AglNoop for non-blank identifiers
+					nonBlankNames := Filter(names, func(s string) bool { return s != "_" })
+					if len(nonBlankNames) > 0 {
+						after += "\n\tAglNoop(" + strings.Join(nonBlankNames, ", ") + ")"
+					}
+				}
 			}
 		}
 	} else if len(stmt.Lhs) == 1 && TryCast[*ast.IndexExpr](stmt.Lhs[0]) && TryCast[*ast.MapType](stmt.Lhs[0].(*ast.IndexExpr).X) {
@@ -2976,11 +2986,21 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			return out + lhs() + e(" = ") + assignOpsFrag.F() + e("\n")
 		}
 		out += lhs() + e(" "+op.String()+" ") + content2.F()
+		if !g.inlineStmt && g.allowUnused {
+			// Check if all lhs are blank identifiers
+			allBlank := true
+			for _, l := range stmt.Lhs {
+				if ident, ok := l.(*ast.Ident); !ok || ident.Name != "_" {
+					allBlank = false
+					break
+				}
+			}
+			if !allBlank {
+				out += e("\n"+g.prefix+"AglNoop(") + lhs() + e(")")
+			}
+		}
 		if after != "" {
 			out += e("\n")
-		}
-		if !g.inlineStmt && g.allowUnused {
-			out += e("\n"+g.prefix+"AglNoop(") + lhs() + e(")") // Allow to have "declared and not used" variables
 		}
 		if after != "" {
 			if !g.inlineStmt {
@@ -3085,6 +3105,9 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 									out += e(gPrefix + "\t_ = " + varName + "." + fieldName + "_" + strconv.Itoa(j) + "\n")
 								} else {
 									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+fieldName+"_"+strconv.Itoa(j)+"\n")
+									if g.allowUnused {
+										out += e(gPrefix+"\tAglNoop(") + g.genExpr(arg).F() + e(")\n")
+									}
 								}
 							}
 						}
