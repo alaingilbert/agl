@@ -1,0 +1,9 @@
+package sha1
+
+import "std/hash"
+
+const Size = 20
+const BlockSize = 64
+
+func New() hash.Hash
+func Sum(data []byte) [Size]byte

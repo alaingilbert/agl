@@ -1,0 +1,6 @@
+package hmac
+
+import "std/hash"
+
+func Equal(mac1, mac2 []byte) bool
+func New(h func() hash.Hash, key []byte) hash.Hash
