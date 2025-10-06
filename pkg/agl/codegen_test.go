@@ -12725,7 +12725,9 @@ func TestCodeGen421(t *testing.T) {
 func test() (int, int) { return (1, 2) }
 func main() {
 	_, _ = test()
-	_, _ = test()
+	a, _ := test()
+	_, b := test()
+	c, d := test()
 }`
 	expected := `// agl:generated
 package main
@@ -12736,7 +12738,17 @@ func main() {
 	aglVar1 := test()
 	_, _ = aglVar1.Arg0, aglVar1.Arg1
 	aglVar2 := test()
-	_, _ = aglVar2.Arg0, aglVar2.Arg1
+	AglNoop(aglVar2)
+	a, _ := aglVar2.Arg0, aglVar2.Arg1
+	AglNoop(a)
+	aglVar3 := test()
+	AglNoop(aglVar3)
+	_, b := aglVar3.Arg0, aglVar3.Arg1
+	AglNoop(b)
+	aglVar4 := test()
+	AglNoop(aglVar4)
+	c, d := aglVar4.Arg0, aglVar4.Arg1
+	AglNoop(c, d)
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
