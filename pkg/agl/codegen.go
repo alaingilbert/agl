@@ -2899,7 +2899,9 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 					names = append(names, name)
 					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", varName, i))
 				}
-				after += fmt.Sprintf("%s := %s", strings.Join(names, ", "), strings.Join(exprs, ", "))
+				// Use the same operator as the original statement
+				op := stmt.Tok.String()
+				after += fmt.Sprintf("%s %s %s", strings.Join(names, ", "), op, strings.Join(exprs, ", "))
 				if g.allowUnused {
 					// Add AglNoop for non-blank identifiers
 					nonBlankNames := Filter(names, func(s string) bool { return s != "_" })
@@ -2985,7 +2987,12 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		if assignOpsFrag.F != nil {
 			return out + lhs() + e(" = ") + assignOpsFrag.F() + e("\n")
 		}
-		out += lhs() + e(" "+op.String()+" ") + content2.F()
+		// For tuple unpacking (when after != ""), always use := for the temp variable
+		actualOp := op.String()
+		if after != "" {
+			actualOp = ":="
+		}
+		out += lhs() + e(" "+actualOp+" ") + content2.F()
 		if !g.inlineStmt && g.allowUnused {
 			// Check if all lhs are blank identifiers
 			allBlank := true

@@ -12703,12 +12703,40 @@ func test() AglTupleStruct_int_int {
 	return AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
 }
 func main() {
-	aglVar1 = test()
-	_, _ := aglVar1.Arg0, aglVar1.Arg1
+	aglVar1 := test()
+	_, _ = aglVar1.Arg0, aglVar1.Arg1
 	aglVar2 := test()
 	AglNoop(aglVar2)
 	a, b := aglVar2.Arg0, aglVar2.Arg1
 	AglNoop(a, b)
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test, AllowUnused())
+}
+
+func TestCodeGen421(t *testing.T) {
+	src := `package main
+func test() (int, int) { return (1, 2) }
+func main() {
+	_, _ = test()
+	_, _ = test()
+}`
+	expected := `// agl:generated
+package main
+func test() AglTupleStruct_int_int {
+	return AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
+}
+func main() {
+	aglVar1 := test()
+	_, _ = aglVar1.Arg0, aglVar1.Arg1
+	aglVar2 := test()
+	_, _ = aglVar2.Arg0, aglVar2.Arg1
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
