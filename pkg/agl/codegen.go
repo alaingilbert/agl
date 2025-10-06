@@ -2727,7 +2727,12 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 				return GenFrag{F: func() (out string) {
 					if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
-						out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
+						// For sets, range only on keys (not index, key)
+						if TryCast[types.SetType](types.Unwrap(yT)) {
+							out += e(g.prefix+"for "+varName+" := range ") + c1.F() + e(" {\n")
+						} else {
+							out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
+						}
 						out += e(g.prefix + "\t")
 						switch vv := v.X.(type) {
 						case *ast.TupleExpr:
