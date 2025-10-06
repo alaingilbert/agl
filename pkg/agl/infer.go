@@ -2536,8 +2536,12 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			for i, arg := range expr.Args {
 				switch v := arg.(type) {
 				case *ast.Ident:
-					infer.env.Define(nil, v.Name, params[i])
-					infer.SetType(arg, params[i])
+					paramType := params[i]
+					if v.Mutable.IsValid() {
+						paramType = types.MutType{W: paramType}
+					}
+					infer.env.Define(nil, v.Name, paramType)
+					infer.SetType(arg, paramType)
 				case *ast.TupleExpr:
 					infer.defineDestructuredTuple(v.Values, params[i].(types.TupleType))
 				default:
