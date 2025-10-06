@@ -12900,6 +12900,30 @@ type AglTupleStruct_uint8_uint8 struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen426(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	a.Reduce(0, |mut res, el| {
+		res += el
+		return res
+	})
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	AglVecReduce(a, 0, func(res int, el int) int {
+		res += el
+		return res
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
