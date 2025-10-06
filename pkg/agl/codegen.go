@@ -2729,7 +2729,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						// For sets, range only on keys (not index, key)
 						if TryCast[types.SetType](types.Unwrap(yT)) {
-							out += e(g.prefix+"for "+varName+" := range ") + c1.F() + e(" {\n")
+							out += e(g.prefix+"for "+varName+" := range (") + c1.F() + e(") {\n")
 						} else {
 							out += e(g.prefix+"for _, "+varName+" := range ") + c1.F() + e(" {\n")
 						}
