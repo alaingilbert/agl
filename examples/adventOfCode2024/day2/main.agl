@@ -20,12 +20,12 @@ func main() {
 }
 
 func part1(data [][]int) int {
-    return data.Filter(isSafe).Len()
+    data.Filter(isSafe).Len()
 }
 
 func part2(data [][]int) int {
-    return data.Filter(|report| {
-        return report.Indices().Any(|i| {
+    data.Filter(|report| {
+        report.Indices().Any(|i| {
             mut modified := report.Clone()
             modified.Remove(i)
             return isSafe(modified)
