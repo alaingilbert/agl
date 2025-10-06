@@ -12924,6 +12924,67 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen427(t *testing.T) {
+	src := `package main
+type MyEnum enum {
+	foo
+	bar
+}
+func main() {
+	e := MyEnum.foo
+	match e {
+	case .foo: u8(1)
+	case .bar: u8(2)
+	}
+}`
+	expected := `// agl:generated
+package main
+type MyEnumTag int
+const (
+	MyEnum_foo MyEnumTag = iota
+	MyEnum_bar
+)
+type MyEnum struct {
+	Tag MyEnumTag
+}
+func (v MyEnum) String() string {
+	switch v.Tag {
+	case MyEnum_foo:
+		return "foo"
+	case MyEnum_bar:
+		return "bar"
+	default:
+		panic("")
+	}
+}
+func (v MyEnum) RawValue() int {
+	return int(v.Tag)
+}
+func Make_MyEnum_foo() MyEnum {
+	return MyEnum{Tag: MyEnum_foo}
+}
+func Make_MyEnum_bar() MyEnum {
+	return MyEnum{Tag: MyEnum_bar}
+}
+
+func main() {
+	e := Make_MyEnum_foo()
+	var aglTmp2 uint8
+	if e.Tag == MyEnum_foo {
+		aglTmp2 = uint8(1)
+	} else if e.Tag == MyEnum_bar {
+		aglTmp2 = uint8(2)
+	} else {
+		panic("match on enum should be exhaustive")
+	}
+	AglNoop(aglTmp2)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

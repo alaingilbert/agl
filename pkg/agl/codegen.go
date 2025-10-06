@@ -1244,6 +1244,16 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 			}
 		case types.EnumType:
 			if expr.Body != nil {
+				// Check if match expression returns a value
+				matchT := g.env.GetType(expr)
+				var matchReturnsTmp string
+				if _, isVoid := matchT.(types.VoidType); !isVoid {
+					// Declare temp variable for match result
+					tmpId := g.varCounter.Add(1)
+					matchReturnsTmp = fmt.Sprintf("aglTmp%d", tmpId)
+					out += e("var " + matchReturnsTmp + " " + matchT.GoStrType() + "\n")
+				}
+
 				var hasDefault bool
 				for i, cc := range expr.Body.List {
 					c := cc.(*ast.MatchClause)
@@ -1254,7 +1264,12 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 						switch cv := c.Expr.(type) {
 						case *ast.CallExpr:
 							sel := cv.Fun.(*ast.SelectorExpr)
-							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
+							// Add prefix if we're at i==0 and there's a temp variable (since var declaration broke the flow)
+							prefix := ""
+							if i == 0 && matchReturnsTmp != "" {
+								prefix = gPrefix
+							}
+							out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
 							for j, id := range cv.Args {
 								rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
 								if id.(*ast.Ident).Name == "_" {
@@ -1266,17 +1281,56 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 									}
 								}
 							}
-							out += g.incrPrefix(g.genStmts(c.Body).F)
+							if matchReturnsTmp != "" {
+								// For value-returning matches, assign the last expression to temp var
+								if len(c.Body) > 0 {
+									lastStmt := c.Body[len(c.Body)-1]
+									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+									} else {
+										out += g.incrPrefix(g.genStmts(c.Body).F)
+									}
+								}
+							} else {
+								out += g.incrPrefix(g.genStmts(c.Body).F)
+							}
 						case *ast.SelectorExpr:
-							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-							out += g.incrPrefix(g.genStmts(c.Body).F)
+							// Add prefix if we're at i==0 and there's a temp variable (since var declaration broke the flow)
+							prefix := ""
+							if i == 0 && matchReturnsTmp != "" {
+								prefix = gPrefix
+							}
+							out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
+							if matchReturnsTmp != "" {
+								// For value-returning matches, assign the last expression to temp var
+								if len(c.Body) > 0 {
+									lastStmt := c.Body[len(c.Body)-1]
+									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+									} else {
+										out += g.incrPrefix(g.genStmts(c.Body).F)
+									}
+								}
+							} else {
+								out += g.incrPrefix(g.genStmts(c.Body).F)
+							}
 						default:
 							panic(fmt.Sprintf("%v", to(c.Expr)))
 						}
 					} else {
 						hasDefault = true
 						out += e("{\n")
-						out += g.incrPrefix(g.genStmts(c.Body).F)
+						if matchReturnsTmp != "" && len(c.Body) > 0 {
+							// For default case with return value
+							lastStmt := c.Body[len(c.Body)-1]
+							if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+								out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+							} else {
+								out += g.incrPrefix(g.genStmts(c.Body).F)
+							}
+						} else {
+							out += g.incrPrefix(g.genStmts(c.Body).F)
+						}
 						out += e(gPrefix + "}")
 					}
 				}
@@ -1284,6 +1338,11 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					out += e(gPrefix + "} else {\n")
 					out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
 					out += e(gPrefix + "}")
+				}
+
+				// If match returns a value, add AglNoop
+				if matchReturnsTmp != "" {
+					out += e("\n" + gPrefix + "AglNoop(" + matchReturnsTmp + ")")
 				}
 			}
 		default:
