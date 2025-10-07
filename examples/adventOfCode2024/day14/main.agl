@@ -16,9 +16,7 @@ var mw = width / 2
 var mh = height / 2
 
 func nums(s string) []int {
-    numsRgx := regexp.MustCompile(`(-?\d+)`)
-    m := numsRgx.FindAllString(s, -1)
-    return m.Map({ $0.Int()? })
+    regexp.MustCompile(`-?\d+`).FindAllString(s, -1).Map({ $0.Int()? })
 }
 
 func mod(a int, n int) int {

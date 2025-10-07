@@ -8,9 +8,7 @@ import (
 var mut blocks [](int, int, int, int, int, int)
 
 func nums(s string) []int {
-    numsRgx := regexp.MustCompile(`(-?\d+)`)
-    m := numsRgx.FindAllString(s, -1)
-    return m.Map({ $0.Int()? })
+    regexp.MustCompile(`-?\d+`).FindAllString(s, -1).Map({ $0.Int()? })
 }
 
 func part1() {

@@ -11,9 +11,7 @@ var height = 71
 var grid = make([][]bool, height)
 
 func nums(s string) []int {
-    numsRgx := regexp.MustCompile(`(-?\d+)`)
-    m := numsRgx.FindAllString(s, -1)
-    return m.Map({ $0.Int()? })
+    regexp.MustCompile(`-?\d+`).FindAllString(s, -1).Map({ $0.Int()? })
 }
 
 type Position struct {
