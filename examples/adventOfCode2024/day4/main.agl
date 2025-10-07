@@ -26,7 +26,7 @@ func part1(lines [][]string, width, height int) int {
     target := "XMAS".Split("")
     found := 0
     for (y, line) in lines.Enumerated() {
-        for x in line {
+        for x in line.Indices() {
             direction_loop:
             for (dx, dy) in directions {
                 for i in 0..target.Len() {
