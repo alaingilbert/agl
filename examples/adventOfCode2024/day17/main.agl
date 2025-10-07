@@ -24,7 +24,7 @@ func run(regA int, program []int) []int {
 func part1(programStr string) {
     regA := 45483412
     program := nums(programStr)
-    printf(run(regA, program).Map({ $0.String() }).Joined(","))
+    print(run(regA, program).Map({ $0.String() }).Joined(","))
 }
 
 func main() {
