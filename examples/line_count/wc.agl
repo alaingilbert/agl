@@ -1,34 +1,30 @@
 package main
 
-import (
-    "fmt"
-    "os"
-)
+import "agl1/os"
 
 // Returns the line count of a filename using a result type
 func countLines(filename string) int! {
-    data := os.ReadFile(filename)!
-    content := string(data)
-    
+    content := string(os.ReadFile(filename)!)
+
     // Count total lines (wc -l compatible)
     totalCount := content.Split("\n").Len() - 1
-    
+
     return Ok(totalCount)
 }
 
 func main() {
     // Get filename from command line arguments
     if len(os.Args) < 2 {
-        fmt.Println("usage: wc <filename>")
+        print("usage: wc <filename>")
         return
     }
-    
+
     filename := os.Args[1]
-    
+
     match countLines(filename) {
     case Ok(total):
-        fmt.Printf("%8d %s\n", total, filename)
+        printf("%8d %s", total, filename)
     case Err(err):
-        fmt.Printf("wc: %s: %s\n", filename, err)
+        printf("wc: %s: %s", filename, err)
     }
 }
