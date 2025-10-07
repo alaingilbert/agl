@@ -1959,7 +1959,9 @@ func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 		// Check if we have a keyword followed by colon (argument label)
 		// Keywords can be used as labels since they're unambiguous in this context
 		// But exclude keywords that can start expressions (if, match, func, etc.)
-		if p.tok.IsKeyword() && !canStartExpr(p.tok) {
+		// Special case: WHERE and IF are in canStartExpr for for-loop parsing,
+		// but they should still be allowed as labels in function calls
+		if p.tok.IsKeyword() && (!canStartExpr(p.tok) || p.tok == token.WHERE || p.tok == token.IF) {
 			// Save position in case this is a label
 			labelPos := p.pos
 			labelName := p.tok.String()
