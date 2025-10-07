@@ -1225,6 +1225,10 @@ func AglStringContains(s string, substr string) bool {
 	return strings.Contains(s, substr)
 }
 
+func AglStringCount(s, substr string) int {
+	return strings.Count(s, substr)
+}
+
 func AglStringHasSuffix(s string, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
