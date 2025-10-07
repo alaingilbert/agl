@@ -3459,11 +3459,11 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 		}
 
 		// Type check the if condition if present
-		if stmt.IfCond != nil {
-			infer.expr(stmt.IfCond)
-			ifCondT := infer.GetType2(stmt.IfCond)
+		if stmt.WhereCond != nil {
+			infer.expr(stmt.WhereCond)
+			ifCondT := infer.GetType2(stmt.WhereCond)
 			if ifCondT != nil && !TryCast[types.BoolType](ifCondT) {
-				infer.errorf(stmt.IfCond, "condition must be boolean, got %v", to(ifCondT))
+				infer.errorf(stmt.WhereCond, "condition must be boolean, got %v", to(ifCondT))
 			}
 		}
 

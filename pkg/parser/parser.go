@@ -2845,11 +2845,11 @@ func (p *parser) parseForStmt() ast.Stmt {
 		p.exprLev = prevLev
 	}
 
-	// Check for optional "if" condition (for "for x in y if cond" syntax)
-	var ifCond ast.Expr
-	if p.tok == token.IF {
+	// Check for optional "where" condition (for "for x in y where cond" syntax)
+	var whereCond ast.Expr
+	if p.tok == token.WHERE {
 		p.next()
-		ifCond = p.parseRhs()
+		whereCond = p.parseRhs()
 	}
 
 	body := p.parseBlockStmt()
@@ -2882,19 +2882,19 @@ func (p *parser) parseForStmt() ast.Stmt {
 			Tok:    as.Tok,
 			Range:  as.Rhs[0].Pos(),
 			X:      x,
-			Cond:   ifCond,
+			Cond:   whereCond,
 			Body:   body,
 		}
 	}
 
 	// regular for statement
 	return &ast.ForStmt{
-		For:    pos,
-		Init:   s1,
-		Cond:   p.makeExpr(s2, "boolean or range expression"),
-		Post:   s3,
-		IfCond: ifCond,
-		Body:   body,
+		For:       pos,
+		Init:      s1,
+		Cond:      p.makeExpr(s2, "boolean or range expression"),
+		Post:      s3,
+		WhereCond: whereCond,
+		Body:      body,
 	}
 }
 

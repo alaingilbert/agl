@@ -2989,8 +2989,8 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 
 	// Handle optional if condition for "for x in y if cond" syntax
 	var ifCondFrag GenFrag
-	if stmt.IfCond != nil {
-		ifCondFrag = g.genExpr(stmt.IfCond)
+	if stmt.WhereCond != nil {
+		ifCondFrag = g.genExpr(stmt.WhereCond)
 	}
 
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
@@ -3064,7 +3064,7 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 					}
 
 					// Add if condition check if present
-					if stmt.IfCond != nil {
+					if stmt.WhereCond != nil {
 						out += e(g.prefix+"\t") + e("if !(") + ifCondFrag.F() + e(") {\n")
 						out += e(g.prefix+"\t\t") + e("continue\n")
 						out += e(g.prefix+"\t") + e("}\n")

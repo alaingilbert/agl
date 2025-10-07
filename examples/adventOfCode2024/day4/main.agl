@@ -25,8 +25,8 @@ func part1(lines [][]string, width, height int) int {
     }
     target := "XMAS".Split("")
     found := 0
-    for y, line := range lines {
-        for x := range line {
+    for (y, line) in lines.Enumerated() {
+        for x in line {
             direction_loop:
             for (dx, dy) in directions {
                 for i in 0..target.Len() {
@@ -47,7 +47,7 @@ func part2(lines [][]string, width, height int) int {
     found := 0
     arr := []string{"MS", "SM"}
     for y in 1..(height-1) {
-        for x in 1..(width-1) if lines[y][x] == "A" {
+        for x in 1..(width-1) where lines[y][x] == "A" {
             d1 := lines[y-1][x-1] + lines[y+1][x+1]
             d2 := lines[y-1][x+1] + lines[y+1][x-1]
             if d1 in arr && d2 in arr {

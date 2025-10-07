@@ -10223,13 +10223,13 @@ type AglTupleStruct_int_int struct {
 func TestCodeGenForInIf(t *testing.T) {
 	src := `package main
 func main() {
-	for el in []int{1, 2, 3, 4, 5} if el > 2 {
+	for el in []int{1, 2, 3, 4, 5} where el > 2 {
 		printf("%d\n", el)
 	}
-	for (k, v) in map[string]int{"a": 1, "b": 2, "c": 3} if v > 1 {
+	for (k, v) in map[string]int{"a": 1, "b": 2, "c": 3} where v > 1 {
 		printf("%s: %d\n", k, v)
 	}
-	for i in 0..10 if i % 2 == 0 {
+	for i in 0..10 where i % 2 == 0 {
 		printf("%d\n", i)
 	}
 }`

@@ -1088,12 +1088,12 @@ type (
 
 	// A ForStmt represents a for statement.
 	ForStmt struct {
-		For     token.Pos // position of "for" keyword
-		Init    Stmt      // initialization statement; or nil
-		Cond    Expr      // condition; or nil
-		Post    Stmt      // post iteration statement; or nil
-		IfCond  Expr      // optional condition for "for x in y if cond"; or nil
-		Body    *BlockStmt
+		For       token.Pos // position of "for" keyword
+		Init      Stmt      // initialization statement; or nil
+		Cond      Expr      // condition; or nil
+		Post      Stmt      // post iteration statement; or nil
+		WhereCond Expr      // optional condition for "for x in y if cond"; or nil
+		Body      *BlockStmt
 	}
 
 	// A RangeStmt represents a for statement with a range clause.

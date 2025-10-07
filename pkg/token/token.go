@@ -147,6 +147,7 @@ const (
 	TYPE
 	VAR
 	LET
+	WHERE
 	keyword_end
 
 	additional_beg
@@ -274,6 +275,7 @@ var tokens = [...]string{
 	DUMP:   "dump",
 	TYPE:   "type",
 	VAR:    "var",
+	WHERE:  "where",
 
 	AT_LINE:   "@LINE",
 	AT_COLUMN: "@COLUMN",
