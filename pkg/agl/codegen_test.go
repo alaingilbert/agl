@@ -13106,7 +13106,6 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	test.PrintErrors()
 	tassert.Equal(t, 2, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
