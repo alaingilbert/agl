@@ -39,11 +39,11 @@ func getFreeSpots(blocks []uint?) [](uint, uint) {
     s = None
     for (i, block) in blocks.Enumerated() {
         if block.IsSome() {
-            if Some(s) := s {
+            if let Some(s) := s {
                 freeSpots.Push(s)
             }
             s = None
-        } else if Some(t) := s {
+        } else if let Some(t) := s {
             idx, size := t
             s = Some((idx, size+1))
         } else {
@@ -55,7 +55,7 @@ func getFreeSpots(blocks []uint?) [](uint, uint) {
 
 func doSwap(mut blocks []uint?, mut freeSpots [](uint, uint), toSwap []uint) {
     swapLen := uint(toSwap.Len())
-    if Some(t) := freeSpots.Enumerated().Find(|(_, (idx, size))| idx < toSwap[0] && size >= swapLen) {
+    if let Some(t) := freeSpots.Enumerated().Find(|(_, (idx, size))| idx < toSwap[0] && size >= swapLen) {
         spotIdx := t.0
         startIdx := t.1.0
         for (i, el) in toSwap.Enumerated() {
@@ -73,7 +73,7 @@ func reorder2(mut blocks []uint?) {
     var mut toSwap []uint
     mut lastFileID := uint(math.MaxUint64)
     for p2 in (0..uint(blocks.Len())).Rev() {
-        if Some(blockID) := blocks[p2] {
+        if let Some(blockID) := blocks[p2] {
             if !toSwap.IsEmpty() && blockID != blocks[toSwap[0]].Unwrap() {
                 fileID := blocks[toSwap[0]].Unwrap();
                 if fileID < lastFileID {
