@@ -1192,6 +1192,14 @@ func AglStringCutPrefix(s string, prefix string) Option[string] {
 	return MakeOptionSome(after)
 }
 
+func AglStringCutSuffix(s string, suffix string) Option[string] {
+	before, found := strings.CutSuffix(s, suffix)
+	if !found {
+		return MakeOptionNone[string]()
+	}
+	return MakeOptionSome(before)
+}
+
 func AglStringHasPrefix(s string, prefix string) bool {
 	return strings.HasPrefix(s, prefix)
 }
