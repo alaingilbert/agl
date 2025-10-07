@@ -24,7 +24,7 @@ func countDesignPossible(design string, mut cache map[string]int) int {
     if design.IsEmpty() {
         return 1
     }
-    if Some(cached) := cache.Get(design) {
+    if let Some(cached) := cache.Get(design) {
         return cached
     }
     mut count := 0
