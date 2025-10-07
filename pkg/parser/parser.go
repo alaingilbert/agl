@@ -102,6 +102,9 @@ func canStartExpr(tok token.Token) bool {
 	// Keywords that can prefix expressions (mut x)
 	case token.MUT:
 		return true
+	// Keywords used in specific syntactic positions (like in for loops with conditions)
+	case token.WHERE:
+		return true
 	}
 	return false
 }
@@ -2908,7 +2911,10 @@ func (p *parser) parseForStmt() ast.Stmt {
 	var whereCond ast.Expr
 	if p.tok == token.WHERE {
 		p.next()
+		prevLev := p.exprLev
+		p.exprLev = -1
 		whereCond = p.parseRhs()
+		p.exprLev = prevLev
 	}
 
 	body := p.parseBlockStmt()
