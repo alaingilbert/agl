@@ -9,8 +9,7 @@ func isDesignPossible(design string) bool {
     if design.IsEmpty() {
         return true
     }
-    for towel in towels {
-        guard design.HasPrefix(towel) else { continue }
+    for towel in towels where design.HasPrefix(towel) {
         mut subDesign := design
         subDesign = subDesign.TrimPrefix(towel)
         if isDesignPossible(subDesign) {
