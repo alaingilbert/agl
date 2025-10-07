@@ -508,7 +508,7 @@ func main() {
 func TestCodeGen22(t *testing.T) {
 	src := `package main
 func main() {
-	a := 1
+	mut a := 1
 	a++
 }`
 	expected := `// agl:generated
@@ -3324,7 +3324,7 @@ func main() {
 func TestCodeGen104(t *testing.T) {
 	src := `package main
 func main() {
-	a := 1
+	mut a := 1
 	a++
 }
 `
@@ -4256,7 +4256,7 @@ func test(i int) int? {
 }
 
 func main() {
-    var i int
+    var mut i int
     for {
         res := test(i) or_break
         fmt.Println("test", res)
@@ -4310,7 +4310,7 @@ func test(i int) int! {
 }
 
 func main() {
-    var i int
+    var mut i int
     for {
         res := test(i) or_break
         fmt.Println("test", res)
@@ -4364,7 +4364,7 @@ func test(i int) int! {
 }
 
 func main() {
-    var i int
+    var mut i int
     for {
         res := test(i) or_continue
         fmt.Println("test", res)
@@ -4418,7 +4418,7 @@ func test(i int) int? {
 }
 
 func main() {
-    var i int
+    var mut i int
     for {
         res := test(i) or_continue
         fmt.Println("test", res)
