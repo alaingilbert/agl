@@ -2330,6 +2330,10 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorAllSatisfy(") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "Contains":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIteratorContains(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
 	case types.IntType:
 		fnName := x.Sel.Name
@@ -3615,7 +3619,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	genAssignStmt := func(last ast.Stmt) *ast.AssignStmt {
 		return &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
 	}
-	if hasTyp {
+	if hasTyp && len(stmt.Body.List) > 0 {
 		last := Must(Last(stmt.Body.List))
 		stmt.Body.List[len(stmt.Body.List)-1] = genAssignStmt(last)
 	}
@@ -3626,8 +3630,10 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		if hasTyp {
 			switch v := stmt.Else.(type) {
 			case *ast.BlockStmt:
-				last := Must(Last(v.List))
-				v.List[len(v.List)-1] = genAssignStmt(last)
+				if len(v.List) > 0 {
+					last := Must(Last(v.List))
+					v.List[len(v.List)-1] = genAssignStmt(last)
+				}
 			}
 		}
 		g.WithIfVarName(varName, func() {

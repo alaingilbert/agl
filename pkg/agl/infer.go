@@ -1316,7 +1316,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1326,14 +1326,22 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			fnT := infer.env.GetFn("agl1.DoubleEndedIterator.Rev")
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
 		case "AllSatisfy":
 			info := infer.env.GetNameInfo("agl1.Iterator.AllSatisfy")
 			fnT := infer.env.GetFn("agl1.Iterator.AllSatisfy")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "Contains":
+			info := infer.env.GetNameInfo("agl1.Iterator.Contains")
+			fnT := infer.env.GetFn("agl1.Iterator.Contains")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		}
-		infer.SetType(expr, types.RangeType{Typ: idTT.Typ})
 	default:
 		infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 		return

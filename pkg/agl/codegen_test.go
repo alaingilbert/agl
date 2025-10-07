@@ -11096,6 +11096,8 @@ func main() {
 	}
 	if (0..5).AllSatisfy({ $0 < 10 }) {
 	}
+	if (0..5).Contains(4) {
+	}
 }`
 	expected := `// agl:generated
 package main
@@ -11111,6 +11113,8 @@ func main() {
 	if AglIteratorAllSatisfy((AglNewRange[int](0, 5, false)), func(aglArg0 int) bool {
 		return aglArg0 < 10
 	}) {
+	}
+	if AglIteratorContains((AglNewRange[int](0, 5, false)), 4) {
 	}
 }
 `
