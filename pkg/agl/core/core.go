@@ -1233,6 +1233,10 @@ func AglStringIndex(s, substr string) int {
 	return strings.Index(s, substr)
 }
 
+func AglStringLastIndex(s, substr string) int {
+	return strings.LastIndex(s, substr)
+}
+
 func AglStringCount(s, substr string) int {
 	return strings.Count(s, substr)
 }
