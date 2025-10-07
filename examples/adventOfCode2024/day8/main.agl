@@ -23,7 +23,7 @@ func main() {
 
 func part1() {
     mut antinodes := set[(int, int)]{}
-    for _, antenas := range antenasDict {
+    for antenas in antenasDict.Values() {
         for a1 in antenas {
             for a2 in antenas {
                 guard a2 != a1 else { continue }
@@ -41,7 +41,7 @@ func part1() {
 
 func part2() {
     mut antinodes := set[(int, int)]{}
-    for _, antenas := range antenasDict {
+    for antenas in antenasDict.Values() {
         for a1 in antenas {
             for a2 in antenas {
                 guard a2 != a1 else { continue }
