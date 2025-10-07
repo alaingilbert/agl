@@ -1042,6 +1042,7 @@ func (g *Generator) genChanType(expr *ast.ChanType) GenFrag {
 }
 
 func getCheck(t types.Type) string {
+	t = types.Unwrap(t)
 	switch t.(type) {
 	case types.ResultType:
 		return "IsErr()"

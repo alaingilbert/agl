@@ -35,13 +35,10 @@ func bfs(grid [][]string, start Position, end Position) []Meta {
             var mut path []Meta
             mut distEnd := 0
             for {
-                if let Some(current) := el {
-                    path.Push(Meta{pos: current, distEnd: distEnd})
-                    distEnd += 1
-                    el = seen.Get(current)
-                } else {
-                    break
-                }
+                current := el or_break
+                path.Push(Meta{pos: current, distEnd: distEnd})
+                distEnd += 1
+                el = seen.Get(current)
             }
             return path.Reversed()
         }
