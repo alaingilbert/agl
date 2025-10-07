@@ -7,7 +7,7 @@ func countLines(filename string) int! {
     content := string(os.ReadFile(filename)!)
 
     // Count total lines (wc -l compatible)
-    totalCount := content.Split("\n").Len() - 1
+    totalCount := content.Lines().Len() - 1
 
     return Ok(totalCount)
 }
