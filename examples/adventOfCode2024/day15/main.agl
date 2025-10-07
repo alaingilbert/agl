@@ -63,10 +63,9 @@ func part1(warehouse [][]string, moves []string) {
         if canMove {
             robot.Move(direction)
             for boxM in boxesToMove.Reversed() {
-                if let Some(mut element) := boxes.Remove(boxM) {
-                    element.Move(direction)
-                    boxes.Insert(element)
-                }
+                mut element := boxes.Remove(boxM) or_continue
+                element.Move(direction)
+                boxes.Insert(element)
             }
         }
     }
@@ -101,10 +100,9 @@ func part2(warehouse [][]string, moves []string) {
             robot.Move(direction)
             var mut newBoxes []Position
             for boxM in boxesToMove {
-                if let Some(mut element) := boxes.Remove(boxM) {
-                    element.Move(direction)
-                    newBoxes.Push(element)
-                }
+                mut element := boxes.Remove(boxM) or_continue
+                element.Move(direction)
+                newBoxes.Push(element)
             }
             boxes.FormUnion(newBoxes)
         }
