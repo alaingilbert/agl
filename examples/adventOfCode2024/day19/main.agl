@@ -28,8 +28,7 @@ func countDesignPossible(design string, mut cache map[string]int) int {
         return cached
     }
     mut count := 0
-    for towel in towels {
-        guard design.HasPrefix(towel) else { continue }
+    for towel in towels where design.HasPrefix(towel) {
         mut subDesign := design
         subDesign = subDesign.TrimPrefix(towel)
         count += countDesignPossible(subDesign, mut cache)
