@@ -34,7 +34,7 @@ func part1(robots []Robot) {
     q2 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 < mh }).Len()
     q3 := robots.Filter({ $0.Position.0 < mw && $0.Position.1 > mh }).Len()
     q4 := robots.Filter({ $0.Position.0 > mw && $0.Position.1 > mh }).Len()
-    printf("%d", q1*q2*q3*q4)
+    print(q1*q2*q3*q4)
 }
 
 func pp(r []Robot) string {
@@ -60,7 +60,7 @@ func part2(robots []Robot) {
         }
         p := pp(robots)
         if p.Contains("**************") {
-            printf("%d", steps)
+            print(steps)
             break
         }
     }
