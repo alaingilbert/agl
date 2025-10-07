@@ -23,9 +23,8 @@ type Metadata struct {
 
 func findChar(data [][]string, c string) Position? {
     for y in data.Indices() {
-        if Some(x) := data[y].FirstIndex(of: c) {
-            return Some(Position{x: x, y: y})
-        }
+        x := data[y].FirstIndex(of: c) or_continue
+        return Some(Position{x: x, y: y})
     }
     return None
 }
@@ -60,7 +59,7 @@ func dijkstra(s, e Position) int {
             newCost := if dir == ndir { 1 } else { 1001 }
             cost := m.cost + newCost
             posDir := PosDir{pos: next, dir: dir}
-            if Some(seenNext) := seen.Get(posDir) {
+            if let Some(seenNext) := seen.Get(posDir) {
                 if cost >= seenNext.cost {
                     return
                 }
