@@ -42,9 +42,9 @@ func part2(dataIn []uint) {
             if stone == 0 {
                 mutMapFn(1, mult)
             } else {
-                stoneStr := stone.String();
+                stoneStr := stone.String()
                 if stoneStr.Len() % 2 == 0 {
-                    middle := stoneStr.Len() / 2;
+                    middle := stoneStr.Len() / 2
                     s1 := stoneStr[:middle].Uint()?
                     s2 := stoneStr[middle:].Uint()?
                     mutMapFn(s1, mult)
@@ -54,7 +54,7 @@ func part2(dataIn []uint) {
                 }
             }
         }
-        data = newData;
+        data = newData
     }
     printf("%d", data.Values().Sum())
 }
