@@ -13,9 +13,8 @@ func (mut p *Position) Move(dir (int, int)) {
 
 func getRobotPosition(warehouse [][]string) Position? {
     for y in warehouse.Indices() {
-        if let Some(x) := warehouse[y].FirstIndex(of: "@") {
-            return Some(Position{x: x, y: y})
-        }
+        x := warehouse[y].FirstIndex(of: "@") or_continue
+        return Some(Position{x: x, y: y})
     }
     return None
 }
