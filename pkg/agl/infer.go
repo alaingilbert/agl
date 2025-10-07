@@ -3457,6 +3457,16 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 				}
 			}
 		}
+
+		// Type check the if condition if present
+		if stmt.IfCond != nil {
+			infer.expr(stmt.IfCond)
+			ifCondT := infer.GetType2(stmt.IfCond)
+			if ifCondT != nil && !TryCast[types.BoolType](ifCondT) {
+				infer.errorf(stmt.IfCond, "condition must be boolean, got %v", to(ifCondT))
+			}
+		}
+
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}
@@ -3521,6 +3531,14 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			}
 		}
 	skipValue:
+		// Type check the condition if present
+		if stmt.Cond != nil {
+			infer.expr(stmt.Cond)
+			condT := infer.GetType2(stmt.Cond)
+			if condT != nil && !TryCast[types.BoolType](condT) {
+				infer.errorf(stmt.Cond, "condition must be boolean, got %v", to(condT))
+			}
+		}
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}

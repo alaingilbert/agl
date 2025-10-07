@@ -2845,6 +2845,13 @@ func (p *parser) parseForStmt() ast.Stmt {
 		p.exprLev = prevLev
 	}
 
+	// Check for optional "if" condition (for "for x in y if cond" syntax)
+	var ifCond ast.Expr
+	if p.tok == token.IF {
+		p.next()
+		ifCond = p.parseRhs()
+	}
+
 	body := p.parseBlockStmt()
 	p.expectSemi()
 
@@ -2866,6 +2873,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 		// parseSimpleStmt returned a right-hand side that
 		// is a single unary expression of the form "range x"
 		x := as.Rhs[0].(*ast.UnaryExpr).X
+
 		return &ast.RangeStmt{
 			For:    pos,
 			Key:    key,
@@ -2874,17 +2882,19 @@ func (p *parser) parseForStmt() ast.Stmt {
 			Tok:    as.Tok,
 			Range:  as.Rhs[0].Pos(),
 			X:      x,
+			Cond:   ifCond,
 			Body:   body,
 		}
 	}
 
 	// regular for statement
 	return &ast.ForStmt{
-		For:  pos,
-		Init: s1,
-		Cond: p.makeExpr(s2, "boolean or range expression"),
-		Post: s3,
-		Body: body,
+		For:    pos,
+		Init:   s1,
+		Cond:   p.makeExpr(s2, "boolean or range expression"),
+		Post:   s3,
+		IfCond: ifCond,
+		Body:   body,
 	}
 }
 

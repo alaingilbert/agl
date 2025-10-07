@@ -2986,6 +2986,13 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	cc1 := g.genStmt(stmt.Body)
 	body := func() string { return g.incrPrefix(cc1.F) }
+
+	// Handle optional if condition for "for x in y if cond" syntax
+	var ifCondFrag GenFrag
+	if stmt.IfCond != nil {
+		ifCondFrag = g.genExpr(stmt.IfCond)
+	}
+
 	if stmt.Init == nil && stmt.Post == nil && stmt.Cond != nil {
 		if v, ok := stmt.Cond.(*ast.BinaryExpr); ok {
 			if v.Op == token.IN {
@@ -3055,6 +3062,14 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							panic(fmt.Sprintf("%v", to(v.X)))
 						}
 					}
+
+					// Add if condition check if present
+					if stmt.IfCond != nil {
+						out += e(g.prefix+"\t") + e("if !(") + ifCondFrag.F() + e(") {\n")
+						out += e(g.prefix+"\t\t") + e("continue\n")
+						out += e(g.prefix+"\t") + e("}\n")
+					}
+
 					out += body()
 					out += e(g.prefix + "}\n")
 					return out
@@ -3137,6 +3152,13 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 	}
 
 	c4 := g.genStmt(stmt.Body)
+
+	// Handle optional condition
+	var condFrag GenFrag
+	if stmt.Cond != nil {
+		condFrag = g.genExpr(stmt.Cond)
+	}
+
 	return GenFrag{F: func() string {
 		var out string
 		e := EmitWith(g, stmt)
@@ -3164,6 +3186,14 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 		} else {
 			out += e(g.prefix+"for ") + c2.F() + e(", ") + c3.F() + e(" "+op.String()+" range ") + content3() + e(" {\n")
 		}
+
+		// Add condition check if present
+		if stmt.Cond != nil {
+			out += e(g.prefix+"\t") + e("if !(") + condFrag.F() + e(") {\n")
+			out += e(g.prefix+"\t\t") + e("continue\n")
+			out += e(g.prefix+"\t") + e("}\n")
+		}
+
 		out += g.incrPrefix(c4.F)
 		out += e(g.prefix + "}\n")
 		return out

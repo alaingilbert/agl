@@ -10220,6 +10220,51 @@ type AglTupleStruct_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGenForInIf(t *testing.T) {
+	src := `package main
+func main() {
+	for el in []int{1, 2, 3, 4, 5} if el > 2 {
+		printf("%d\n", el)
+	}
+	for (k, v) in map[string]int{"a": 1, "b": 2, "c": 3} if v > 1 {
+		printf("%s: %d\n", k, v)
+	}
+	for i in 0..10 if i % 2 == 0 {
+		printf("%d\n", i)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for _, el := range []int{1, 2, 3, 4, 5} {
+		if !(el > 2) {
+			continue
+		}
+		AglPrintf("%d\n", el)
+	}
+	for k, v := range map[string]int{"a": 1, "b": 2, "c": 3} {
+		if !(v > 1) {
+			continue
+		}
+		AglPrintf("%s: %d\n", k, v)
+	}
+	for i := range AglNewRange[int](0, 10, false).Iter() {
+		if !(i % 2 == 0) {
+			continue
+		}
+		AglPrintf("%d\n", i)
+	}
+}
+type AglTupleStruct_string_int struct {
+	Arg0 string
+	Arg1 int
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 func TestCodeGen333(t *testing.T) {
 	src := `package main
 func main() {
