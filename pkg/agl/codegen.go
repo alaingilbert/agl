@@ -2749,6 +2749,19 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 				out += e(" = ") + g.genExprs(spec.Values).F()
 			}
 			out += e("\n")
+			// Add AglNoop for variables without initializers when AllowUnused is enabled
+			if g.allowUnused && spec.Values == nil {
+				// Filter out blank identifiers
+				var nonBlankNames []string
+				for _, name := range spec.Names {
+					if name.Name != "_" {
+						nonBlankNames = append(nonBlankNames, name.Name)
+					}
+				}
+				if len(nonBlankNames) > 0 {
+					out += e(g.prefix + "AglNoop(" + strings.Join(nonBlankNames, ", ") + ")\n")
+				}
+			}
 			return out
 		case *ast.TypeSpec:
 			e := EmitWith(g, spec)
