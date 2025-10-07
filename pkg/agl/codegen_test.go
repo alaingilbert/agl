@@ -13245,6 +13245,75 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen432(t *testing.T) {
+	src := `package main
+type MyEnum enum {
+	foo
+	bar
+}
+func main() {
+	e := MyEnum.foo
+	a := []int{1, 2}
+	res := a.Reduce(0, |res, el| {
+		match e {
+		case .foo: res + u8(1)
+		case .bar: res + u8(2)
+		}
+	})
+	print(res)
+}`
+	expected := `// agl:generated
+package main
+type MyEnumTag int
+const (
+	MyEnum_foo MyEnumTag = iota
+	MyEnum_bar
+)
+type MyEnum struct {
+	Tag MyEnumTag
+}
+func (v MyEnum) String() string {
+	switch v.Tag {
+	case MyEnum_foo:
+		return "foo"
+	case MyEnum_bar:
+		return "bar"
+	default:
+		panic("")
+	}
+}
+func (v MyEnum) RawValue() int {
+	return int(v.Tag)
+}
+func Make_MyEnum_foo() MyEnum {
+	return MyEnum{Tag: MyEnum_foo}
+}
+func Make_MyEnum_bar() MyEnum {
+	return MyEnum{Tag: MyEnum_bar}
+}
+
+func main() {
+	e := Make_MyEnum_foo()
+	a := []int{1, 2}
+	res := AglVecReduce(a, 0, func(res int, el int) int {
+		var aglTmp1 int
+		if e.Tag == MyEnum_foo {
+			aglTmp1 = res + uint8(1)
+		} else if e.Tag == MyEnum_bar {
+			aglTmp1 = res + uint8(2)
+		} else {
+			panic("match on enum should be exhaustive")
+		}
+		return AglIdentity(aglTmp1)
+	})
+	AglPrint(res)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

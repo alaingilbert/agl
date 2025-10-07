@@ -815,7 +815,60 @@ func handleTupleExpr(prefix, n string, v *ast.TupleExpr, out *string, e EmitterF
 
 func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 	e := EmitWith(g, expr)
-	c1 := g.genStmt(expr.Body)
+
+	// Check if we need an implicit return (same logic as genFuncDecl)
+	var c1 GenFrag
+	implicitReturn := false
+
+	// Get the function type to check if it has a return type
+	ftTmp := g.env.GetType(expr)
+	if v, ok := ftTmp.(types.LabelledType); ok {
+		ftTmp = v.W
+	}
+	t := ftTmp.(types.FuncType)
+	hasReturnType := t.Return != nil && !TryCast[types.VoidType](t.Return)
+
+	// Check if body is a BlockStmt with a single expression
+	if blockStmt, ok := expr.Body.(*ast.BlockStmt); ok && hasReturnType && len(blockStmt.List) > 0 {
+		// Find the first non-empty statement
+		var firstNonEmpty ast.Stmt
+		nonEmptyCount := 0
+		for _, stmt := range blockStmt.List {
+			if _, isEmpty := stmt.(*ast.EmptyStmt); !isEmpty {
+				if nonEmptyCount == 0 {
+					firstNonEmpty = stmt
+				}
+				nonEmptyCount++
+			}
+		}
+		// If there's exactly one non-empty statement and it's an expression, add implicit return
+		if nonEmptyCount == 1 {
+			if exprStmt, ok := firstNonEmpty.(*ast.ExprStmt); ok {
+				// Single expression in function with return type - implicit return
+				implicitReturn = true
+				// Generate the expression first
+				exprFrag := g.genExpr(exprStmt.X)
+				// Create a GenFrag that executes B functions then returns the expression
+				c1 = GenFrag{
+					F: func() string {
+						var out string
+						// Execute B functions first (like genStmts does)
+						for _, b := range exprFrag.B {
+							out += b()
+						}
+						// Then add the return statement (like genReturnStmt does)
+						out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+						return out
+					},
+				}
+			}
+		}
+	}
+
+	if !implicitReturn {
+		c1 = g.genStmt(expr.Body)
+	}
+
 	return GenFrag{F: func() string {
 		var out string
 		ftTmp := g.env.GetType(expr)
@@ -1599,7 +1652,52 @@ func (g *Generator) genParenExpr(expr *ast.ParenExpr) GenFrag {
 
 func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
 	e := EmitWith(g, expr)
-	c1 := g.genStmt(expr.Body)
+
+	// Check if we need an implicit return (same logic as genFuncDecl)
+	var c1 GenFrag
+	implicitReturn := false
+	if expr.Body != nil {
+		hasReturnType := expr.Type.Result != nil && !TryCast[types.VoidType](g.env.GetType(expr.Type.Result))
+		if hasReturnType && len(expr.Body.List) > 0 {
+			// Find the first non-empty statement
+			var firstNonEmpty ast.Stmt
+			nonEmptyCount := 0
+			for _, stmt := range expr.Body.List {
+				if _, isEmpty := stmt.(*ast.EmptyStmt); !isEmpty {
+					if nonEmptyCount == 0 {
+						firstNonEmpty = stmt
+					}
+					nonEmptyCount++
+				}
+			}
+			// If there's exactly one non-empty statement and it's an expression, add implicit return
+			if nonEmptyCount == 1 {
+				if exprStmt, ok := firstNonEmpty.(*ast.ExprStmt); ok {
+					// Single expression in function with return type - implicit return
+					implicitReturn = true
+					// Generate the expression first
+					exprFrag := g.genExpr(exprStmt.X)
+					// Create a GenFrag that executes B functions then returns the expression
+					c1 = GenFrag{
+						F: func() string {
+							var out string
+							// Execute B functions first (like genStmts does)
+							for _, b := range exprFrag.B {
+								out += b()
+							}
+							// Then add the return statement (like genReturnStmt does)
+							out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+							return out
+						},
+					}
+				}
+			}
+		}
+		if !implicitReturn {
+			c1 = g.genStmt(expr.Body)
+		}
+	}
+
 	return GenFrag{F: func() string {
 		var out string
 		out += g.genFuncType(expr.Type).F() + e(" {\n")
