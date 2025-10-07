@@ -42,7 +42,7 @@ func bfs(grid [][]string, start Position, end Position) []Meta {
             return path.Reversed()
         }
         for dir in dirs {
-            nx, ny := (e.x + dir.0, e.y + dir.1)
+            nx, ny := e.x + dir.0, e.y + dir.1
             next := Position{x: nx, y: ny}
             if nx >= 0 && nx < width && ny >= 0 && ny < height && grid[ny][nx] != "#" && !seen.ContainsKey(next) && next != start {
                 seen[next] = e
