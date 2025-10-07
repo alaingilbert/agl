@@ -906,6 +906,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.TrimSuffix", "func (s, suffix string) string")
 		e.DefineFn(nenv, "agl1.String.TrimSpace", "func (s string) string")
 		e.DefineFn(nenv, "agl1.String.Count", "func (s, substr string) int")
+		e.DefineFn(nenv, "agl1.String.Index", "func (s, substr string) int")
 		e.DefineFn(nenv, "agl1.String.Contains", "func (s, substr string) bool")
 		e.DefineFn(nenv, "agl1.String.ContainsAny", "func (s, chars string) bool")
 		e.DefineFn(nenv, "agl1.String.HasPrefix", "func (s, prefix string) bool")
