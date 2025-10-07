@@ -99,13 +99,11 @@ func main() {
     origin := GetOrigPathPositions1(data, guardPosition)
     printf("part1: %d", origin.Len())
     var count int
-    for pos in origin {
-        if pos != guardPosition {
-            mut localData := CloneData(data)
-            localData[pos.1][pos.0] = "#"
-            if GetOrigPathPositions2(localData, guardPosition) {
-                count++
-            }
+    for pos in origin where pos != guardPosition {
+        mut localData := CloneData(data)
+        localData[pos.1][pos.0] = "#"
+        if GetOrigPathPositions2(localData, guardPosition) {
+            count++
         }
     }
     printf("part2: %d", count)
