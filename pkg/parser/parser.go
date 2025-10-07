@@ -88,6 +88,24 @@ func (p *parser) init(file *token.File, src []byte, mode Mode) {
 // ----------------------------------------------------------------------------
 // Parsing support
 
+// canStartExpr returns true if the token can start an expression or type.
+// This is used to determine if a keyword should be treated as a potential
+// label or if it's the start of an expression/type.
+func canStartExpr(tok token.Token) bool {
+	switch tok {
+	// Keywords that can start expressions
+	case token.IF, token.MATCH, token.FUNC, token.SOME, token.OK, token.ERR, token.NONE:
+		return true
+	// Keywords that can start types (which can appear in expressions like make(chan int))
+	case token.CHAN, token.MAP, token.SET, token.STRUCT, token.INTERFACE:
+		return true
+	// Keywords that can prefix expressions (mut x)
+	case token.MUT:
+		return true
+	}
+	return false
+}
+
 func (p *parser) printTrace(a ...any) {
 	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
 	const n = len(dots)
@@ -1015,6 +1033,22 @@ BEGIN:
 		return // don't allow ...type "|" ...
 
 	default:
+		// Check if we have a keyword that could be a label
+		// Keywords can be used as labels since they're unambiguous in this context
+		if p.tok.IsKeyword() {
+			// Tentatively parse keyword as potential label
+			labelPos := p.pos
+			labelName := p.tok.String()
+			p.next() // consume keyword
+
+			if p.tok == token.COLON {
+				// It's a label!
+				f.label = &ast.Ident{NamePos: labelPos, Name: labelName}
+				p.next() // consume colon
+				goto BEGIN
+			}
+			// Not a label, fall through to error handling
+		}
 		// TODO(rfindley): this is incorrect in the case of type parameter lists
 		//                 (should be "']'" in that case)
 		p.errorExpected(p.pos, "')'")
@@ -1917,11 +1951,36 @@ func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != token.RPAREN && p.tok != token.EOF && !ellipsis.IsValid() {
-		x := p.parseRhs()
-		// Handle optional arg labels
-		if lbl, ok := x.(*ast.Ident); ok && p.tok == token.COLON {
+		var x ast.Expr
+
+		// Check if we have a keyword followed by colon (argument label)
+		// Keywords can be used as labels since they're unambiguous in this context
+		// But exclude keywords that can start expressions (if, match, func, etc.)
+		if p.tok.IsKeyword() && !canStartExpr(p.tok) {
+			// Save position in case this is a label
+			labelPos := p.pos
+			labelName := p.tok.String()
 			p.next()
-			x = &ast.LabelledArg{Label: lbl, X: p.parseRhs()}
+
+			if p.tok == token.COLON {
+				// It's a label!
+				lbl := &ast.Ident{NamePos: labelPos, Name: labelName}
+				p.next()
+				x = &ast.LabelledArg{Label: lbl, X: p.parseRhs()}
+			} else {
+				// Not a label, this will likely cause an error but let normal parsing handle it
+				// We can't easily "un-consume" the token, so report an error
+				p.errorExpected(labelPos, "operand")
+				p.advance(stmtStart)
+				continue
+			}
+		} else {
+			x = p.parseRhs()
+			// Handle optional arg labels for regular identifiers
+			if lbl, ok := x.(*ast.Ident); ok && p.tok == token.COLON {
+				p.next()
+				x = &ast.LabelledArg{Label: lbl, X: p.parseRhs()}
+			}
 		}
 		list = append(list, x) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
