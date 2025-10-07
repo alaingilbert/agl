@@ -32,7 +32,7 @@ func part1() {
             }
         }
     }
-    printf("%d", res)
+    print(res)
 }
 
 func main() {

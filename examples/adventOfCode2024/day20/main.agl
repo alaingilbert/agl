@@ -93,11 +93,11 @@ func findRes(maxCheats int) int {
 }
 
 func part1() {
-    printf("%d", findRes(2))
+    print(findRes(2))
 }
 
 func part2() {
-    printf("%d", findRes(20))
+    print(findRes(20))
 }
 
 func main() {
