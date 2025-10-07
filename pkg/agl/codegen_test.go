@@ -13440,6 +13440,49 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen436(t *testing.T) {
+	src := `package main
+func main() {
+	s := "hello world"
+	before, after := s.Cut(" ")?
+	assert(before == "hello")
+	assert(after == "world")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "hello world"
+	aglVar1 := AglStringCut(s, " ").Unwrap()
+	before, after := aglVar1.Arg0, aglVar1.Arg1
+	AglAssert(before == "hello", "assert failed line 5")
+	AglAssert(after == "world", "assert failed line 6")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen437(t *testing.T) {
+	src := `package main
+func main() {
+	s := "hello world"
+	a := s.Cut(" ")?
+	print(a.0)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "hello world"
+	a := AglStringCut(s, " ").Unwrap()
+	AglPrint(a.Arg0)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

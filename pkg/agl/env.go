@@ -899,6 +899,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.Split", "func (s, sep string) []string", WithDesc("Split slices s into all substrings separated by sep and returns a slice of\nthe substrings between those separators."))
 		e.DefineFn(nenv, "agl1.String.Replace", "func (s, old, new string, n int) string")
 		e.DefineFn(nenv, "agl1.String.ReplaceAll", "func (s, old, new string) string")
+		e.DefineFn(nenv, "agl1.String.Cut", "func (s, sep string) (string, string)?")
 		e.DefineFn(nenv, "agl1.String.CutPrefix", "func (s, prefix string) string?")
 		e.DefineFn(nenv, "agl1.String.CutSuffix", "func (s, suffix string) string?")
 		e.DefineFn(nenv, "agl1.String.TrimPrefix", "func (s, prefix string) string")

@@ -14,7 +14,7 @@ func ContainsAny(s, chars string) bool
 func ContainsFunc(s string, f func(rune) bool) bool
 func ContainsRune(s string, r rune) bool
 func Count(s, substr string) int
-func Cut(s, sep string) (string, string, bool)
+func Cut(s, sep string) (string, string)?
 func CutPrefix(s, prefix string) (string, bool)
 func CutSuffix(s, suffix string) (string, bool)
 func EqualFold(s, t string) bool

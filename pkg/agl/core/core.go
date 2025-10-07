@@ -1184,6 +1184,19 @@ func AglStringTrimPrefix(s string, prefix string) string {
 	return strings.TrimPrefix(s, prefix)
 }
 
+type AglTupleStruct_string_string struct {
+	Arg0 string
+	Arg1 string
+}
+
+func AglStringCut(s string, sep string) Option[AglTupleStruct_string_string] {
+	before, after, found := strings.Cut(s, sep)
+	if !found {
+		return MakeOptionNone[AglTupleStruct_string_string]()
+	}
+	return MakeOptionSome(AglTupleStruct_string_string{Arg0: before, Arg1: after})
+}
+
 func AglStringCutPrefix(s string, prefix string) Option[string] {
 	after, found := strings.CutPrefix(s, prefix)
 	if !found {
