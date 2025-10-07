@@ -1241,6 +1241,10 @@ func AglStringCount(s, substr string) int {
 	return strings.Count(s, substr)
 }
 
+func AglStringRepeat(s string, count int) string {
+	return strings.Repeat(s, count)
+}
+
 func AglStringHasSuffix(s string, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
