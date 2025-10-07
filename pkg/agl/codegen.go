@@ -3645,15 +3645,50 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 			out += e(gPrefix + "if !" + varName + " {\n")
 			out += body()
 			out += e(gPrefix + "}\n")
+			if g.allowUnused {
+				out += e(gPrefix+"AglNoop(") + lhs() + e(")\n")
+			}
 		} else {
 			out += e(gPrefix+varName+" := ") + rhs() + e("\n")
 			out += e(gPrefix + "if " + cond + " {\n")
 			out += body()
 			out += e(gPrefix + "}\n")
-			out += e(gPrefix) + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
-		}
-		if g.allowUnused {
-			out += e(gPrefix+"AglNoop(") + lhs() + e(")\n")
+
+			// Handle tuple destructuring for multiple LHS values
+			if len(ass.Lhs) > 1 {
+				// Generate tuple destructuring: aglVar1 := tmp.Unwrap()
+				tupleVarName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
+				out += e(gPrefix + tupleVarName + " := " + varName + "." + unwrapFn + "()\n")
+
+				// Generate LHS names - directly get identifier names
+				var lhsNames []string
+				for _, lhsExpr := range ass.Lhs {
+					if ident, ok := lhsExpr.(*ast.Ident); ok {
+						lhsNames = append(lhsNames, ident.Name)
+					} else {
+						// Fallback to generating the expression
+						lhsNames = append(lhsNames, g.genExpr(lhsExpr).F())
+					}
+				}
+
+				// Generate individual assignments: a, b := aglVar1.Arg0, aglVar1.Arg1
+				var rhsParts []string
+				for i := range ass.Lhs {
+					rhsParts = append(rhsParts, tupleVarName+".Arg"+strconv.Itoa(i))
+				}
+				out += e(gPrefix + strings.Join(lhsNames, ", ") + " := " + strings.Join(rhsParts, ", ") + "\n")
+
+				if g.allowUnused {
+					for _, name := range lhsNames {
+						out += e(gPrefix + "AglNoop(" + name + ")\n")
+					}
+				}
+			} else {
+				out += e(gPrefix) + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
+				if g.allowUnused {
+					out += e(gPrefix+"AglNoop(") + lhs() + e(")\n")
+				}
+			}
 		}
 		return out
 	}}

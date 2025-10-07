@@ -13508,6 +13508,8 @@ func main() {
 	if let Some((before, after)) := s.Cut(" ") {
 		print(before, after)
 	}
+	guard let Some((before, after)) := s.Cut(" ") else { return }
+	print(before, after)
 }`
 	expected := `// agl:generated
 package main
@@ -13518,6 +13520,13 @@ func main() {
 		before, after := aglVar2.Arg0, aglVar2.Arg1
 		AglPrint(before, after)
 	}
+	aglTmp3 := AglStringCut(s, " ")
+	if aglTmp3.IsNone() {
+		return
+	}
+	aglVar4 := aglTmp3.Unwrap()
+	before, after := aglVar4.Arg0, aglVar4.Arg1
+	AglPrint(before, after)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

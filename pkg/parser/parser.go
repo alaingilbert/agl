@@ -2613,13 +2613,31 @@ func (p *parser) parseGuardLetStmt(pos token.Pos) *ast.GuardLetStmt {
 		op = p.tok
 		p.next()
 		p.expect(token.LPAREN)
-		id := p.parseIdentOrMutIdent()
+		var lhs []ast.Expr
+		// Check if we have a tuple pattern like Some((a, b))
+		if p.tok == token.LPAREN {
+			p.next() // consume LPAREN
+			// Parse comma-separated identifiers
+			for p.tok != token.RPAREN && p.tok != token.EOF {
+				id := p.parseIdentOrMutIdent()
+				lhs = append(lhs, id)
+				if p.tok != token.COMMA {
+					break
+				}
+				p.next() // consume comma
+			}
+			p.expect(token.RPAREN) // closing paren of tuple
+		} else {
+			// Single identifier
+			id := p.parseIdentOrMutIdent()
+			lhs = []ast.Expr{id}
+		}
 		p.expect(token.RPAREN)
 		p.expect(token.DEFINE)
 		pos := p.pos
 		//p.next()
 		y := p.parsePrimaryExpr2()
-		ass = &ast.AssignStmt{Lhs: []ast.Expr{id}, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
+		ass = &ast.AssignStmt{Lhs: lhs, TokPos: pos, Tok: token.DEFINE, Rhs: []ast.Expr{y}}
 	default:
 		x := p.parseExpr()
 		p.expect(token.DEFINE)
