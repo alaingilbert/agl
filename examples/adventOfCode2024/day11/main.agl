@@ -38,7 +38,7 @@ func part2(dataIn []uint) {
             val := newData.Get(k).UnwrapOrDefault()
             newData[k] = val + mult
         }
-        for stone, mult := range data {
+        for (stone, mult) in data {
             if stone == 0 {
                 mutMapFn(1, mult)
             } else {

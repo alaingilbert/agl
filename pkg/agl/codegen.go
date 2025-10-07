@@ -2949,7 +2949,14 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 				c1 := g.genExpr(v.Y)
 				c2 := g.genExpr(v.X)
 				return GenFrag{F: func() (out string) {
-					if tup, ok := xT.(types.TupleType); ok && !TryCast[types.MapType](yT) {
+					// Check MapType first before checking TupleType
+					if _, ok := types.Unwrap(yT).(types.MapType); ok {
+						xTup := v.X.(*ast.TupleExpr)
+						key := g.genExpr(xTup.Values[0]).F
+						val := g.genExpr(xTup.Values[1]).F
+						y := c1.F
+						out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
+					} else if tup, ok := xT.(types.TupleType); ok {
 						varName := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 						// For sets, range only on keys (not index, key)
 						if TryCast[types.SetType](types.Unwrap(yT)) {
@@ -2983,12 +2990,6 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.SetType:
 							out += e(g.prefix+"for ") + c2.F() + e(" := range (") + c1.F() + e(").Iter() {\n")
-						case types.MapType:
-							xTup := v.X.(*ast.TupleExpr)
-							key := g.genExpr(xTup.Values[0]).F
-							val := g.genExpr(xTup.Values[1]).F
-							y := c1.F
-							out += e(g.prefix+"for ") + key() + e(", ") + val() + e(" := range ") + y() + e(" {\n")
 						case types.RangeType:
 							out += e(g.prefix + "for ")
 							c2V := c2.F()
@@ -3062,12 +3063,34 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 	c1 := g.genExpr(stmt.X)
 	c2 := GenFrag{F: emptyContent}
 	c3 := GenFrag{F: emptyContent}
-	if stmt.Key != nil {
-		c2 = g.genExpr(stmt.Key)
+
+	// Check if ranging over a map with tuple destructuring syntax: for (k, v) in m
+	xType := g.env.GetType(stmt.X)
+	if v, ok := xType.(types.MutType); ok {
+		xType = v.W
 	}
-	if stmt.Value != nil {
-		c3 = g.genExpr(stmt.Value)
+	isMap := TryCast[types.MapType](xType)
+
+	// Check if Key is a TupleExpr (indicating tuple destructuring syntax)
+	var keyName, valueName string
+	if tupleKey, ok := stmt.Key.(*ast.TupleExpr); ok && isMap && len(tupleKey.Values) == 2 {
+		// Extract the names from the tuple
+		if id0, ok := tupleKey.Values[0].(*ast.Ident); ok {
+			keyName = id0.Name
+		}
+		if id1, ok := tupleKey.Values[1].(*ast.Ident); ok {
+			valueName = id1.Name
+		}
+	} else {
+		// Normal case: separate key and value
+		if stmt.Key != nil {
+			c2 = g.genExpr(stmt.Key)
+		}
+		if stmt.Value != nil {
+			c3 = g.genExpr(stmt.Value)
+		}
 	}
+
 	c4 := g.genStmt(stmt.Body)
 	return GenFrag{F: func() string {
 		var out string
@@ -3085,7 +3108,11 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 			return out
 		}
 		op := stmt.Tok
-		if stmt.Key == nil && stmt.Value == nil {
+
+		// If we have keyName and valueName from tuple destructuring, use them directly
+		if keyName != "" && valueName != "" {
+			out += e(g.prefix+"for ") + e(keyName) + e(", ") + e(valueName) + e(" "+op.String()+" range ") + content3() + e(" {\n")
+		} else if stmt.Key == nil && stmt.Value == nil {
 			out += e(g.prefix+"for range ") + content3() + e(" {\n")
 		} else if stmt.Value == nil {
 			out += e(g.prefix+"for ") + c2.F() + e(" "+op.String()+" range ") + content3() + e(" {\n")

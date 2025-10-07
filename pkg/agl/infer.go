@@ -3459,7 +3459,22 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			infer.errorf(stmt.Value, "Type not found for: %v", stmt.X)
 			return
 		}
-		if stmt.Key != nil {
+		// Check if Key is a TupleExpr (for syntax like: for (k, v) in m)
+		if tupleKey, ok := stmt.Key.(*ast.TupleExpr); ok {
+			xT = types.Unwrap(xT)
+			if mapT, ok := xT.(types.MapType); ok && len(tupleKey.Values) == 2 {
+				// Define key and value from the tuple
+				if keyId, ok := tupleKey.Values[0].(*ast.Ident); ok {
+					infer.env.Define(keyId, keyId.Name, mapT.K)
+					infer.SetType(keyId, mapT.K)
+				}
+				if valId, ok := tupleKey.Values[1].(*ast.Ident); ok {
+					infer.env.Define(valId, valId.Name, mapT.V)
+					infer.SetType(valId, mapT.V)
+				}
+				infer.SetType(stmt.Key, types.TupleType{Elts: []types.Type{mapT.K, mapT.V}})
+			}
+		} else if stmt.Key != nil {
 			var t types.Type = types.IntType{}
 			xT = types.Unwrap(xT)
 			if v, ok := xT.(types.MapType); ok {
@@ -3470,6 +3485,10 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 			infer.SetType(stmt.Key, t)
 		}
 		if stmt.Value != nil {
+			// Skip if Key is a TupleExpr (already handled above)
+			if _, isTuple := stmt.Key.(*ast.TupleExpr); isTuple {
+				goto skipValue
+			}
 			name := stmt.Value.(*ast.Ident).Name
 			xT = types.Unwrap(xT)
 			switch v := xT.(type) {
@@ -3488,6 +3507,7 @@ func (infer *FileInferrer) rangeStmt(stmt *ast.RangeStmt) {
 				return
 			}
 		}
+	skipValue:
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}
@@ -3720,9 +3740,8 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				var lhsIdName string
 				infer.expr(v.X)
 				infer.expr(v.Index)
-				if TryCast[types.UntypedNumType](infer.GetType(v.Index)) {
-					infer.SetType(v.Index, types.IntType{})
-				}
+				// Don't set untyped nums to int yet - we need to know the map key type first
+				// This will be set later based on the map type (line 3861)
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
@@ -3739,8 +3758,16 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				switch vv := lhsIdNameT.(type) {
 				case types.MapType:
 					lhsWantedT = vv.V
+					// Set index type to match map key type if it's still untyped
+					if TryCast[types.UntypedNumType](infer.GetType(v.Index)) || TryCast[types.UntypedStringType](infer.GetType(v.Index)) {
+						infer.SetType(v.Index, vv.K)
+					}
 				case types.ArrayType:
 					lhsWantedT = vv.Elt
+					// For arrays, index should be int
+					if TryCast[types.UntypedNumType](infer.GetType(v.Index)) {
+						infer.SetType(v.Index, types.IntType{})
+					}
 				case types.SetType:
 				default:
 					infer.errorf(lhs, "%v %v", lhsIdName, to(lhsIdNameT))

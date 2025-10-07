@@ -13314,6 +13314,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen433(t *testing.T) {
+	src := `package main
+func main() {
+	mut m := make(map[u8]u16)
+	m[1] = 2
+	for (k, v) in m {
+		print(k, v)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := make(map[uint8]uint16)
+	m[1] = 2
+	for k, v := range m {
+		AglPrint(k, v)
+	}
+}
+type AglTupleStruct_uint8_uint16 struct {
+	Arg0 uint8
+	Arg1 uint16
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
