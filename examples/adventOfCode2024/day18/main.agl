@@ -60,11 +60,9 @@ func buildGrid(idx int) [][]bool {
     for i in 0..height {
         grid[i] = make([]bool, width)
     }
-    for i in data.Indices() {
-        if i < idx {
-            x, y := coord(i)
-            grid[y][x] = true
-        }
+    for i in data.Indices() where i < idx {
+        x, y := coord(i)
+        grid[y][x] = true
     }
     return grid
 }
