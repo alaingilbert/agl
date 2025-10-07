@@ -52,7 +52,7 @@ func findTrails2(head (int, int)) int {
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day10/data.txt")!)
-    data = fileContent.Lines().Map({ $0.Split("").Map({ string($0).Int()? }) })
+    data = fileContent.Lines().Map({ $0.Split("").Map({ $0.Int()? }) })
     width = data[0].Len()
     height = data.Len()
     heads := findHeads()
