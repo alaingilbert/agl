@@ -10,10 +10,8 @@ var directions = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}
 func findHeads() [](int, int) {
     var mut heads [](int, int)
     for y in data.Indices() {
-        for x in data[y].Indices() {
-            if data[y][x] == 0 {
-                heads.Push((x, y))
-            }
+        for x in data[y].Indices() where data[y][x] == 0 {
+            heads.Push((x, y))
         }
     }
     return heads
