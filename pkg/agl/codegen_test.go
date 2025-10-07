@@ -13534,6 +13534,24 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen440(t *testing.T) {
+	src := `package main
+func main() {
+	s := "-"
+	assert(s.Repeat(5) == "-----")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "-"
+	AglAssert(AglStringRepeat(s, 5) == "-----", "assert failed line 4")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
