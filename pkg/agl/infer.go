@@ -66,6 +66,7 @@ type FileInferrer struct {
 	destructure     bool
 	indexValue      types.Type
 	imports         map[string]*ast.ImportSpec
+	inForLoopInit   bool
 }
 
 type InferError struct {
@@ -3374,6 +3375,15 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 
 func (infer *FileInferrer) incDecStmt(stmt *ast.IncDecStmt) {
 	infer.expr(stmt.X)
+
+	// Check mutability for ++ and -- operators
+	if id, ok := stmt.X.(*ast.Ident); ok {
+		idT := infer.env.GetType(stmt.X)
+		if infer.mutEnforced && !TryCast[types.MutType](idT) {
+			infer.errorf(id, "cannot assign to immutable variable '%s'", id.Name)
+		}
+	}
+
 	infer.SetType(stmt, types.VoidType{})
 }
 
@@ -3439,7 +3449,9 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			}
 		} else {
 			if stmt.Init != nil {
+				infer.inForLoopInit = true
 				infer.stmt(stmt.Init)
+				infer.inForLoopInit = false
 				if len(infer.Errors) > 0 {
 					return
 				}
@@ -3902,14 +3914,14 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			switch v := lhs.(type) {
 			case *ast.Ident:
 				lhsID = v
-				mutable = v.Mutable.IsValid()
+				mutable = v.Mutable.IsValid() || infer.inForLoopInit
 			case *ast.StarExpr:
 				lhsID = v.X.(*ast.Ident)
-				mutable = v.X.(*ast.Ident).Mutable.IsValid()
+				mutable = v.X.(*ast.Ident).Mutable.IsValid() || infer.inForLoopInit
 			case *ast.IndexExpr:
 				if v, ok := v.X.(*ast.Ident); ok {
 					lhsID = v
-					mutable = v.Mutable.IsValid()
+					mutable = v.Mutable.IsValid() || infer.inForLoopInit
 				} else {
 					return
 				}

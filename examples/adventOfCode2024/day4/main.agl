@@ -24,7 +24,7 @@ func part1(lines [][]string, width, height int) int {
         }
     }
     target := "XMAS".Split("")
-    found := 0
+    mut found := 0
     for (y, line) in lines.Enumerated() {
         for x in line.Indices() {
             direction_loop:
@@ -44,7 +44,7 @@ func part1(lines [][]string, width, height int) int {
 }
 
 func part2(lines [][]string, width, height int) int {
-    found := 0
+    mut found := 0
     arr := []string{"MS", "SM"}
     for y in 1..(height-1) {
         for x in 1..(width-1) where lines[y][x] == "A" {
