@@ -11843,17 +11843,37 @@ func AglVecLen_T_string(v []string) int {
 func TestCodeGen396(t *testing.T) {
 	src := `package main
 func main() {
-	cache := make([]map[int]int)
+	cache := make([]map[int]int, 0)
 	cache.Reduce(into: set[int]{}, { $0.FormUnion($1.Keys()) })
 }`
 	expected := `// agl:generated
 package main
 func main() {
-	cache := make([]map[int]int)
+	cache := make([]map[int]int, 0)
 	AglVecReduceInto(cache, AglSet[int]{}, func(aglArg0 *AglSet[int], aglArg1 map[int]int) AglVoid {
-		AglSetFormUnion(*aglArg0, AglIdentity(AglMapKeys(aglArg1)))
+		AglSetFormUnion(*aglArg0, AglIdentity(AglMapKeys(aglArg1)).Iter())
 		return AglVoid{}
 	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen396_1(t *testing.T) {
+	src := `package main
+func main() {
+	mut s := set[int]{1, 2}
+	a := []int{3, 4}
+	s.FormUnion(a)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := AglSet[int]{1: {}, 2: {}}
+	a := []int{3, 4}
+	AglSetFormUnion(s, AglVec[int](a).Iter())
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

@@ -874,7 +874,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 							out += b()
 						}
 						// Then add the return statement (like genReturnStmt does)
-						out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+						out += e(g.prefix+"return ") + exprFrag.F() + e("\n")
 						return out
 					},
 				}
@@ -1703,7 +1703,7 @@ func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
 								out += b()
 							}
 							// Then add the return statement (like genReturnStmt does)
-							out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+							out += e(g.prefix+"return ") + exprFrag.F() + e("\n")
 							return out
 						},
 					}
@@ -2261,7 +2261,30 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 	case types.SetType:
 		fnName := x.Sel.Name
 		switch fnName {
-		case "Union", "FormUnion", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
+		case "FormUnion":
+			arg0 := expr.Args[0]
+			content2 := func() string {
+				switch v := types.Unwrap(g.env.GetType(arg0)).(type) {
+				case types.ArrayType:
+					return e("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(")")
+				default:
+					return g.genExpr(arg0).F()
+				}
+			}
+			c1 := g.genExpr(x.X)
+			c1T := g.env.GetType(x.X)
+			if v, ok := c1T.(types.MutType); ok {
+				c1T = v.W
+			}
+			return GenFrag{F: func() (out string) {
+				out += e("AglSet" + fnName + "(")
+				if TryCast[types.StarType](c1T) {
+					out += e("*")
+				}
+				out += c1.F() + e(", ") + content2() + e(".Iter())")
+				return
+			}}
+		case "Union", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint",
 			"Filter", "Map":
 			arg0 := expr.Args[0]
@@ -3832,7 +3855,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 									out += b()
 								}
 								// Then add the return statement (like genReturnStmt does)
-								out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+								out += e(g.prefix+"return ") + exprFrag.F() + e("\n")
 								return out
 							},
 						}
