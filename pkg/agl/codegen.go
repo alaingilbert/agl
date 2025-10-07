@@ -585,6 +585,23 @@ func (g *Generator) genImports(imports []*ast.ImportSpec) (out string) {
 	return
 }
 
+// matchHasExplicitReturns checks if a match expression has explicit return statements in its body
+func matchHasExplicitReturns(matchExpr *ast.MatchExpr) bool {
+	if matchExpr.Body == nil {
+		return false
+	}
+	for _, clause := range matchExpr.Body.List {
+		if mc, ok := clause.(*ast.MatchClause); ok {
+			for _, stmt := range mc.Body {
+				if _, isReturn := stmt.(*ast.ReturnStmt); isReturn {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (g *Generator) genStmt(s ast.Stmt) GenFrag {
 	//p("genStmt", to(s))
 	switch stmt := s.(type) {
@@ -3797,22 +3814,28 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			// If there's exactly one non-empty statement and it's an expression, add implicit return
 			if nonEmptyCount == 1 {
 				if exprStmt, ok := firstNonEmpty.(*ast.ExprStmt); ok {
-					// Single expression in function with return type - implicit return
-					implicitReturn = true
-					// Generate the expression first
-					exprFrag := g.genExpr(exprStmt.X)
-					// Create a GenFrag that executes B functions then returns the expression
-					c1 = GenFrag{
-						F: func() string {
-							var out string
-							// Execute B functions first (like genStmts does)
-							for _, b := range exprFrag.B {
-								out += b()
-							}
-							// Then add the return statement (like genReturnStmt does)
-							out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
-							return out
-						},
+					// Check if this is a match expression with explicit returns
+					if matchExpr, ok := exprStmt.X.(*ast.MatchExpr); ok && matchHasExplicitReturns(matchExpr) {
+						// Don't add implicit return - match has explicit returns
+						implicitReturn = false
+					} else {
+						// Single expression in function with return type - implicit return
+						implicitReturn = true
+						// Generate the expression first
+						exprFrag := g.genExpr(exprStmt.X)
+						// Create a GenFrag that executes B functions then returns the expression
+						c1 = GenFrag{
+							F: func() string {
+								var out string
+								// Execute B functions first (like genStmts does)
+								for _, b := range exprFrag.B {
+									out += b()
+								}
+								// Then add the return statement (like genReturnStmt does)
+								out += e(g.prefix + "return ") + exprFrag.F() + e("\n")
+								return out
+							},
+						}
 					}
 				}
 			}
