@@ -22,10 +22,8 @@ func getRobotPosition(warehouse [][]string) Position? {
 func getBoxes(warehouse [][]string, c string) []Position {
     var mut boxes []Position
     for y in warehouse.Indices() {
-        for x in warehouse[y].Indices() {
-            if warehouse[y][x] == c {
-                boxes.Push(Position{x: x, y: y})
-            }
+        for x in warehouse[y].Indices() where warehouse[y][x] == c {
+            boxes.Push(Position{x: x, y: y})
         }
     }
     return boxes
