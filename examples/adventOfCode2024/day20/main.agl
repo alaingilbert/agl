@@ -17,13 +17,12 @@ type Meta struct {
 
 var dirs = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}
 
-func findChar(data [][]string, c string) Position? {
+func findChar(data [][]string, c string) Position {
     for y in data.Indices() {
-        if Some(x) := data[y].FirstIndex(of: c) {
-            return Some(Position{x: x, y: y})
-        }
+        x := data[y].FirstIndex(of: c) or_continue
+        return Position{x: x, y: y}
     }
-    return None
+    panic("character not found")
 }
 
 func bfs(grid [][]string, start Position, end Position) []Meta {
@@ -36,7 +35,7 @@ func bfs(grid [][]string, start Position, end Position) []Meta {
             var mut path []Meta
             mut distEnd := 0
             for {
-                if Some(current) := el {
+                if let Some(current) := el {
                     path.Push(Meta{pos: current, distEnd: distEnd})
                     distEnd += 1
                     el = seen.Get(current)
@@ -74,8 +73,8 @@ func cheatRange(maxCheats int) [](int, int) {
 
 func findRes(maxCheats int) int {
     var mut count = 0
-    s := findChar(data, "S")?
-    e := findChar(data, "E")?
+    s := findChar(data, "S")
+    e := findChar(data, "E")
     shortest := bfs(data, s, e)
     cache := shortest.Reduce(into: make(map[Position]Meta), { $0[$1.pos] = $1 })
     for (distStart, cheatStart) in shortest.Enumerated() {
@@ -83,7 +82,7 @@ func findRes(maxCheats int) int {
             cheatEndPos := Position{x: cheatStart.pos.x + dx, y: cheatStart.pos.y + dy}
             cheatDist := manhattanDistance(cheatStart.pos, cheatEndPos)
             guard cheatDist <= maxCheats else { continue }
-            guard Some(cheatEnd) := cache.Get(cheatEndPos) else { continue }
+            guard let Some(cheatEnd) := cache.Get(cheatEndPos) else { continue }
             saved := shortest.Len() - (distStart + cheatEnd.distEnd + cheatDist)
             if saved >= 100 {
                 count += 1
