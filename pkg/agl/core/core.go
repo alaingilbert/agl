@@ -1184,6 +1184,10 @@ func AglStringTrimPrefix(s string, prefix string) string {
 	return strings.TrimPrefix(s, prefix)
 }
 
+func AglStringTrimSuffix(s string, suffix string) string {
+	return strings.TrimSuffix(s, suffix)
+}
+
 type AglTupleStruct_string_string struct {
 	Arg0 string
 	Arg1 string
