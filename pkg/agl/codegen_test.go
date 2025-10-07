@@ -12969,15 +12969,15 @@ func Make_MyEnum_bar() MyEnum {
 
 func main() {
 	e := Make_MyEnum_foo()
-	var aglTmp2 uint8
+	var aglTmp1 uint8
 	if e.Tag == MyEnum_foo {
-		aglTmp2 = uint8(1)
+		aglTmp1 = uint8(1)
 	} else if e.Tag == MyEnum_bar {
-		aglTmp2 = uint8(2)
+		aglTmp1 = uint8(2)
 	} else {
 		panic("match on enum should be exhaustive")
 	}
-	AglNoop(aglTmp2)
+	AglIdentity(aglTmp1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -13045,6 +13045,68 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen429(t *testing.T) {
+	src := `package main
+type MyEnum enum {
+	foo
+	bar
+}
+func main() {
+	e := MyEnum.foo
+	match e {
+	case .foo: _ = print("foo")
+	case .bar: _ = print("bar")
+	}
+	var b int
+}`
+	expected := `// agl:generated
+package main
+type MyEnumTag int
+const (
+	MyEnum_foo MyEnumTag = iota
+	MyEnum_bar
+)
+type MyEnum struct {
+	Tag MyEnumTag
+}
+func (v MyEnum) String() string {
+	switch v.Tag {
+	case MyEnum_foo:
+		return "foo"
+	case MyEnum_bar:
+		return "bar"
+	default:
+		panic("")
+	}
+}
+func (v MyEnum) RawValue() int {
+	return int(v.Tag)
+}
+func Make_MyEnum_foo() MyEnum {
+	return MyEnum{Tag: MyEnum_foo}
+}
+func Make_MyEnum_bar() MyEnum {
+	return MyEnum{Tag: MyEnum_bar}
+}
+
+func main() {
+	e := Make_MyEnum_foo()
+	if e.Tag == MyEnum_foo {
+		_ = AglPrint("foo")
+	} else if e.Tag == MyEnum_bar {
+		_ = AglPrint("bar")
+	} else {
+		panic("match on enum should be exhaustive")
+	}
+	var b int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 2, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
 

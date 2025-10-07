@@ -1175,6 +1175,107 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 	e := EmitWith(g, expr)
 	content1 := g.genExpr(expr.Init)
 	initT := g.env.GetType(expr.Init)
+
+	// For enum types, check if this is a value-returning match
+	if v, ok := initT.(types.EnumType); ok {
+		if expr.Body != nil {
+			matchT := g.env.GetType(expr)
+			if matchT != nil && !TryCast[types.VoidType](matchT) {
+				// Value-returning enum match - use the B field pattern
+				tmpId := g.varCounter.Add(1)
+				matchReturnsTmp := fmt.Sprintf("aglTmp%d", tmpId)
+
+				var bs []func() string
+				bs = append(bs, func() string {
+					var out string
+					gPrefix := g.prefix
+					out += e(gPrefix + "var " + matchReturnsTmp + " " + matchT.GoStrType() + "\n")
+
+					var hasDefault bool
+					for i, cc := range expr.Body.List {
+						c := cc.(*ast.MatchClause)
+						if i > 0 {
+							out += e(gPrefix + "} else ")
+						}
+						if c.Expr != nil {
+							switch cv := c.Expr.(type) {
+							case *ast.CallExpr:
+								sel := cv.Fun.(*ast.SelectorExpr)
+								prefix := ""
+								if i == 0 {
+									prefix = gPrefix
+								}
+								out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
+								for j, id := range cv.Args {
+									rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
+									if id.(*ast.Ident).Name == "_" {
+										out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
+									} else {
+										out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
+										if g.allowUnused {
+											out += e(gPrefix+"\tAglNoop(") + g.genExpr(id).F() + e(")\n")
+										}
+									}
+								}
+								if len(c.Body) > 0 {
+									lastStmt := c.Body[len(c.Body)-1]
+									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+									} else {
+										out += g.incrPrefix(g.genStmts(c.Body).F)
+									}
+								}
+							case *ast.SelectorExpr:
+								prefix := ""
+								if i == 0 {
+									prefix = gPrefix
+								}
+								out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
+								if len(c.Body) > 0 {
+									lastStmt := c.Body[len(c.Body)-1]
+									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+									} else {
+										out += g.incrPrefix(g.genStmts(c.Body).F)
+									}
+								}
+							default:
+								panic(fmt.Sprintf("%v", to(c.Expr)))
+							}
+						} else {
+							hasDefault = true
+							out += e("{\n")
+							if len(c.Body) > 0 {
+								lastStmt := c.Body[len(c.Body)-1]
+								if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
+									out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
+								} else {
+									out += g.incrPrefix(g.genStmts(c.Body).F)
+								}
+							}
+							out += e(gPrefix + "}")
+						}
+					}
+					if !hasDefault {
+						out += e(gPrefix + "} else {\n")
+						out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
+						out += e(gPrefix + "}")
+					}
+					out += e("\n")
+					return out
+				})
+
+				return GenFrag{
+					F: func() string {
+						return e("AglIdentity(" + matchReturnsTmp + ")")
+					},
+					B: bs,
+				}
+			}
+		}
+	}
+
+	// Non-value-returning or non-enum matches use the original pattern
 	return GenFrag{F: func() string {
 		var out string
 		id := g.varCounter.Add(1)
@@ -1243,17 +1344,8 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 				}, "\n")
 			}
 		case types.EnumType:
+			// Non-value-returning enum match
 			if expr.Body != nil {
-				// Check if match expression returns a value
-				matchT := g.env.GetType(expr)
-				var matchReturnsTmp string
-				if _, isVoid := matchT.(types.VoidType); !isVoid {
-					// Declare temp variable for match result
-					tmpId := g.varCounter.Add(1)
-					matchReturnsTmp = fmt.Sprintf("aglTmp%d", tmpId)
-					out += e("var " + matchReturnsTmp + " " + matchT.GoStrType() + "\n")
-				}
-
 				var hasDefault bool
 				for i, cc := range expr.Body.List {
 					c := cc.(*ast.MatchClause)
@@ -1264,12 +1356,7 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 						switch cv := c.Expr.(type) {
 						case *ast.CallExpr:
 							sel := cv.Fun.(*ast.SelectorExpr)
-							// Add prefix if we're at i==0 and there's a temp variable (since var declaration broke the flow)
-							prefix := ""
-							if i == 0 && matchReturnsTmp != "" {
-								prefix = gPrefix
-							}
-							out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
+							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
 							for j, id := range cv.Args {
 								rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
 								if id.(*ast.Ident).Name == "_" {
@@ -1281,56 +1368,17 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 									}
 								}
 							}
-							if matchReturnsTmp != "" {
-								// For value-returning matches, assign the last expression to temp var
-								if len(c.Body) > 0 {
-									lastStmt := c.Body[len(c.Body)-1]
-									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-									} else {
-										out += g.incrPrefix(g.genStmts(c.Body).F)
-									}
-								}
-							} else {
-								out += g.incrPrefix(g.genStmts(c.Body).F)
-							}
+							out += g.incrPrefix(g.genStmts(c.Body).F)
 						case *ast.SelectorExpr:
-							// Add prefix if we're at i==0 and there's a temp variable (since var declaration broke the flow)
-							prefix := ""
-							if i == 0 && matchReturnsTmp != "" {
-								prefix = gPrefix
-							}
-							out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-							if matchReturnsTmp != "" {
-								// For value-returning matches, assign the last expression to temp var
-								if len(c.Body) > 0 {
-									lastStmt := c.Body[len(c.Body)-1]
-									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-									} else {
-										out += g.incrPrefix(g.genStmts(c.Body).F)
-									}
-								}
-							} else {
-								out += g.incrPrefix(g.genStmts(c.Body).F)
-							}
+							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
+							out += g.incrPrefix(g.genStmts(c.Body).F)
 						default:
 							panic(fmt.Sprintf("%v", to(c.Expr)))
 						}
 					} else {
 						hasDefault = true
 						out += e("{\n")
-						if matchReturnsTmp != "" && len(c.Body) > 0 {
-							// For default case with return value
-							lastStmt := c.Body[len(c.Body)-1]
-							if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-								out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-							} else {
-								out += g.incrPrefix(g.genStmts(c.Body).F)
-							}
-						} else {
-							out += g.incrPrefix(g.genStmts(c.Body).F)
-						}
+						out += g.incrPrefix(g.genStmts(c.Body).F)
 						out += e(gPrefix + "}")
 					}
 				}
@@ -1338,11 +1386,6 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					out += e(gPrefix + "} else {\n")
 					out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
 					out += e(gPrefix + "}")
-				}
-
-				// If match returns a value, add AglNoop
-				if matchReturnsTmp != "" {
-					out += e("\n" + gPrefix + "AglNoop(" + matchReturnsTmp + ")")
 				}
 			}
 		default:
