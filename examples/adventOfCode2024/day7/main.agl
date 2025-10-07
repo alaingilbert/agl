@@ -43,13 +43,12 @@ func combination(ops []Op, n int) [][]Op {
 
 func solve(expected i64, vals []i64, ops []Op) bool {
     combination(ops, vals.Len()).Any(|comb| {
-        vals.Enumerated().Reduce(i64(0), |mut res, (i, el)| {
-            switch comb[i] {
-                case .add: res += el
-                case .mul: res *= el
-                case .cat: res = cc(res, el)
+        vals.Enumerated().Reduce(i64(0), |res, (i, el)| {
+            match comb[i] {
+                case .add: res + el
+                case .mul: res * el
+                case .cat: cc(res, el)
             }
-            return res
         }) == expected
     })
 }
