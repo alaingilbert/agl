@@ -1265,6 +1265,10 @@ func AglStringSplit(s string, sep string) []string {
 	return strings.Split(s, sep)
 }
 
+func AglStringSplitAfter(s string, sep string) []string {
+	return strings.SplitAfter(s, sep)
+}
+
 func AglStringLowercased(s string) string {
 	return strings.ToLower(s)
 }
