@@ -9,10 +9,11 @@ func isDesignPossible(design string) bool {
     if design.IsEmpty() {
         return true
     }
-    for towel in towels where design.HasPrefix(towel) {
-        subDesign := design.TrimPrefix(towel)
-        if isDesignPossible(subDesign) {
-            return true
+    for towel in towels {
+        if let Some(subDesign) := design.CutPrefix(towel) {
+            if isDesignPossible(subDesign) {
+                return true
+            }
         }
     }
     return false
@@ -26,9 +27,10 @@ func countDesignPossible(design string, mut cache map[string]int) int {
         return cached
     }
     mut count := 0
-    for towel in towels where design.HasPrefix(towel) {
-        subDesign := design.TrimPrefix(towel)
-        count += countDesignPossible(subDesign, mut cache)
+    for towel in towels {
+        if let Some(subDesign) := design.CutPrefix(towel) {
+            count += countDesignPossible(subDesign, mut cache)
+        }
     }
     cache[design] = count
     return count
