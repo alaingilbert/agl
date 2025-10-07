@@ -21,12 +21,12 @@ type Metadata struct {
     dir  int
 }
 
-func findChar(data [][]string, c string) Position? {
+func findChar(data [][]string, c string) Position {
     for y in data.Indices() {
         x := data[y].FirstIndex(of: c) or_continue
-        return Some(Position{x: x, y: y})
+        return Position{x: x, y: y}
     }
-    return None
+    panic("character not found")
 }
 
 func getDir(p1, p2 Position) int {
@@ -77,10 +77,10 @@ func dijkstra(s, e Position) int {
 }
 
 func part1(data [][]string) {
-    s := findChar(data, "S")?
-    e := findChar(data, "E")?
+    s := findChar(data, "S")
+    e := findChar(data, "E")
     res := dijkstra(s, e)
-    printf("%d", res)
+    print(res)
 }
 
 func main() {
