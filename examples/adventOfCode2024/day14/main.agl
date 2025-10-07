@@ -71,7 +71,7 @@ func main() {
     getRobots := func() []Robot {
         fileContent.
             Lines().
-            Map({ nums($0) }).
+            Map(nums).
             Map({ Robot{Position: ($0[0], $0[1]), Velocity: ($0[2], $0[3])} })
     }
     part1(getRobots())

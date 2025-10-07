@@ -86,12 +86,12 @@ func part2() {
         }
     }
     x, y := coord(low-1)
-    printf("%d", "%d,%d", x, y)
+    printf("%d,%d", x, y)
 }
 
 func main() {
     fileContent := string(os.ReadFile("examples/adventOfCode2024/day18/data.txt")!)
-    data = fileContent.Lines().Map({ nums($0) })
+    data = fileContent.Lines().Map(nums)
     part1()
     part2()
 }
