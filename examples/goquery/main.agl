@@ -1,7 +1,6 @@
 package main
 
 import (
-    "fmt"
     "github.com/PuerkitoBio/goquery"
     "agl1/net/http"
 )
@@ -14,6 +13,6 @@ func main() {
     doc := goquery.NewDocumentFromReader(res.Body)!
     doc.Find(".left-content article .post-title").Each(func(i int, s *goquery.Selection) {
 		title := s.Find("a").Text()
-		fmt.Printf("Review %d: %s\n", i, title)
+		printf("Review %d: %s", i, title)
 	})
 }
