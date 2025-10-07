@@ -1249,6 +1249,14 @@ func AglStringTrim(s, cutset string) string {
 	return strings.Trim(s, cutset)
 }
 
+func AglStringTrimLeft(s, cutset string) string {
+	return strings.TrimLeft(s, cutset)
+}
+
+func AglStringTrimRight(s, cutset string) string {
+	return strings.TrimRight(s, cutset)
+}
+
 func AglStringHasSuffix(s string, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
