@@ -11,9 +11,8 @@ func main() {
     data = string(fileContent).Lines().Map({ $0.Split("") })
     width = data.Len()
     height = data.First()?.Len()
-    for y, row := range data {
-        for x, col := range row {
-            guard col != "." && col != "#" else { continue }
+    for (y, row) in data.Enumerated() {
+        for (x, col) in row.Enumerated() where col != "." && col != "#" {
             antenasDict[col].Push((x, y))
         }
     }
@@ -25,8 +24,7 @@ func part1() {
     mut antinodes := set[(int, int)]{}
     for antenas in antenasDict.Values() {
         for a1 in antenas {
-            for a2 in antenas {
-                guard a2 != a1 else { continue }
+            for a2 in antenas where a2 != a1 {
                 dx := a2.0 - a1.0
                 dy := a2.1 - a1.1
                 pos := (a2.0 + dx, a2.1 + dy)
@@ -36,15 +34,14 @@ func part1() {
             }
         }
     }
-    printf("%d", antinodes.Len())
+    print(antinodes.Len())
 }
 
 func part2() {
     mut antinodes := set[(int, int)]{}
     for antenas in antenasDict.Values() {
         for a1 in antenas {
-            for a2 in antenas {
-                guard a2 != a1 else { continue }
+            for a2 in antenas where a2 != a1 {
                 dx := a2.0 - a1.0
                 dy := a2.1 - a1.1
                 pos := (a2.0, a2.1)
@@ -56,5 +53,5 @@ func part2() {
             }
         }
     }
-    printf("%d", antinodes.Len())
+    print(antinodes.Len())
 }
