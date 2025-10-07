@@ -13501,6 +13501,30 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen439(t *testing.T) {
+	src := `package main
+func main() {
+	s := "hello world"
+	if let Some((before, after)) := s.Cut(" ") {
+		print(before, after)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "hello world"
+	if aglTmp1 := AglStringCut(s, " "); aglTmp1.IsSome() {
+		aglVar2 := aglTmp1.Unwrap()
+		before, after := aglVar2.Arg0, aglVar2.Arg1
+		AglPrint(before, after)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -4459,10 +4459,55 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 				}
 			}
 		}
-		infer.SetType(lhs, lhsT)
-		infer.withDestructure(func() {
-			infer.stmt(stmt.Ass)
-		})
+
+		// Handle tuple destructuring for multiple LHS values (but not for type assertions)
+		if len(stmt.Ass.Lhs) > 1 && !TryCast[*ast.TypeAssertExpr](stmt.Ass.Rhs[0]) {
+			// First, infer the RHS to get the Option[Tuple] type
+			rhs := stmt.Ass.Rhs[0]
+			infer.expr(rhs)
+			rhsType := infer.GetType(rhs)
+
+			// Unwrap the Option to get the Tuple type
+			var tupleType types.Type
+			if optType, ok := rhsType.(types.OptionType); ok {
+				tupleType = optType.W
+			} else {
+				infer.errorf(rhs, "expected Option type for if let Some with tuple destructuring")
+				return
+			}
+
+			// The tuple should have the same number of elements as LHS
+			if tupleT, ok := tupleType.(types.TupleType); ok {
+				if len(tupleT.Elts) != len(stmt.Ass.Lhs) {
+					infer.errorf(lhs, "tuple destructuring count mismatch: %d variables for %d tuple elements",
+						len(stmt.Ass.Lhs), len(tupleT.Elts))
+					return
+				}
+
+				// Define each variable with its corresponding tuple element type
+				for i, lhsExpr := range stmt.Ass.Lhs {
+					if ident, ok := lhsExpr.(*ast.Ident); ok {
+						t := tupleT.Elts[i]
+						if ident.Mutable.IsValid() {
+							t = types.MutType{W: t}
+						}
+						infer.env.Define(lhsExpr, ident.Name, t)
+						infer.SetType(lhsExpr, t)
+					} else {
+						infer.errorf(lhsExpr, "expected identifier in tuple destructuring")
+					}
+				}
+			} else {
+				infer.errorf(rhs, "expected tuple type for multi-variable destructuring, got %T", tupleType)
+				return
+			}
+		} else {
+			infer.SetType(lhs, lhsT)
+			infer.withDestructure(func() {
+				infer.stmt(stmt.Ass)
+			})
+		}
+
 		if stmt.Body != nil {
 			infer.stmt(stmt.Body)
 		}
