@@ -13410,6 +13410,16 @@ type AglTupleStruct_uint8_uint16 struct {
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
+func TestCodeGen434(t *testing.T) {
+	src := `package main
+func main() {
+	found := 0
+	found++
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 1, len(test.errs))
+	tassert.Contains(t, test.errs[0].Error(), "4:2: cannot assign to immutable variable 'found'")
+}
 
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
