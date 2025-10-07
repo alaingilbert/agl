@@ -13483,6 +13483,24 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen438(t *testing.T) {
+	src := `package main
+func main() {
+	s := "hello world"
+	print(s.Cut(" ")?.0)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "hello world"
+	AglPrint(AglStringCut(s, " ").Unwrap().Arg0)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

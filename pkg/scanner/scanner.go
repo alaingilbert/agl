@@ -890,9 +890,9 @@ scanAgain:
 			tok = token.IDENT
 		}
 	case isDecimal(ch) || (ch == '.' && isDecimal(rune(s.peek()))):
-		// Check if we're after an identifier
-		if s.offset > 0 && prevTok == token.IDENT {
-			// If we're after an identifier, treat the period as a separate token
+		// Check if we're after an identifier or a token that can be followed by a selector
+		if s.offset > 0 && (prevTok == token.IDENT || prevTok == token.QUESTION || prevTok == token.NOT) {
+			// If we're after an identifier or bubble operator, treat the period as a separate token
 			tok = token.PERIOD
 			lit = "."
 			s.next()
