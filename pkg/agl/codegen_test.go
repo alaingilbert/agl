@@ -13644,6 +13644,44 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen446(t *testing.T) {
+	src := `package main
+type Test struct {
+	Val int
+}
+func main() {
+	var a *Test
+	b := &Test{Val: 1}
+	c := a ?? &Test{Val: 2}
+	d := b ?? &Test{Val: 3}
+	assertEq(c.Val, 2)
+	assertEq(d.Val, 1)
+}`
+	expected := `// agl:generated
+package main
+type Test struct {
+	Val int
+}
+func main() {
+	var a *Test
+	b := &Test{Val: 1}
+	c := a
+	if c == nil {
+		c = &Test{Val: 2}
+	}
+	d := b
+	if d == nil {
+		d = &Test{Val: 3}
+	}
+	AglAssertEq(c.Val, 2, "assert failed line 10")
+	AglAssertEq(d.Val, 1, "assert failed line 11")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

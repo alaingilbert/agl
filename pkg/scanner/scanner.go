@@ -1024,8 +1024,14 @@ scanAgain:
 			tok = s.switch2(token.NOT, token.NEQ)
 			insertSemi = true
 		case '?':
-			tok = token.QUESTION
-			lit = "?"
+			if s.ch == '?' {
+				s.next()
+				tok = token.NIL_COALESCE
+				lit = "??"
+			} else {
+				tok = token.QUESTION
+				lit = "?"
+			}
 			insertSemi = true
 		case '&':
 			if s.ch == '^' {

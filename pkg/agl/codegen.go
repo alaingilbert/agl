@@ -2633,6 +2633,24 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 	c2 := g.genExpr(expr.Y)
 	bs = append(bs, c1.B...)
 	bs = append(bs, c2.B...)
+
+	// Handle nil-coalesce operator (??)
+	if expr.Op.String() == "??" {
+		tmpId := g.varCounter.Add(1)
+		tmpVar := fmt.Sprintf("aglTmp%d", tmpId)
+		bs = append(bs, func() (out string) {
+			gPrefix := g.prefix
+			out += e(gPrefix+tmpVar+" := ") + c1.F() + e("\n")
+			out += e(gPrefix + "if " + tmpVar + " == nil {\n")
+			out += e(gPrefix+"\t"+tmpVar+" = ") + c2.F() + e("\n")
+			out += e(gPrefix + "}\n")
+			return out
+		})
+		return GenFrag{F: func() string {
+			return tmpVar
+		}, B: bs}
+	}
+
 	return GenFrag{F: func() string {
 		content1 := c1.F
 		content2 := c2.F
@@ -3346,6 +3364,29 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			lhs = c1.F
 		}
 	}
+	// Handle nil-coalesce operator specially in assignments
+	if len(stmt.Rhs) == 1 && len(stmt.Lhs) == 1 {
+		if binExpr, ok := stmt.Rhs[0].(*ast.BinaryExpr); ok && binExpr.Op.String() == "??" {
+			// Generate: lhs := leftExpr; if lhs == nil { lhs = rightExpr }
+			c1 := g.genExpr(binExpr.X)
+			c2 := g.genExpr(binExpr.Y)
+			var bs []func() string
+			bs = append(bs, c1.B...)
+			bs = append(bs, c2.B...)
+			return GenFrag{F: func() string {
+				var out string
+				if !g.inlineStmt {
+					out += e(g.prefix)
+				}
+				out += lhs() + e(" "+stmt.Tok.String()+" ") + c1.F() + e("\n")
+				out += e(g.prefix+"if ") + lhs() + e(" == nil {\n")
+				out += e(g.prefix+"\t") + lhs() + e(" = ") + c2.F() + e("\n")
+				out += e(g.prefix + "}\n")
+				return out
+			}, B: bs}
+		}
+	}
+
 	content2 := g.genExprs(stmt.Rhs)
 	if len(stmt.Rhs) == 1 {
 		if v, ok := g.env.GetType(stmt.Rhs[0]).(types.ResultType); ok && v.Native {

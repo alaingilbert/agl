@@ -36,6 +36,7 @@ const (
 	operator_beg
 
 	QUESTION
+	NIL_COALESCE // ??
 
 	// Operators and delimiters
 	ADD // +
@@ -169,7 +170,8 @@ var tokens = [...]string{
 	CHAR:   "CHAR",
 	STRING: "STRING",
 
-	QUESTION: "?",
+	QUESTION:     "?",
+	NIL_COALESCE: "??",
 
 	ADD: "+",
 	SUB: "-",
@@ -315,6 +317,8 @@ const (
 // is LowestPrecedence.
 func (op Token) Precedence() int {
 	switch op {
+	case NIL_COALESCE:
+		return 1
 	case LOR:
 		return 1
 	case LAND:
