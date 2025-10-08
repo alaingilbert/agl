@@ -1387,6 +1387,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 					}
 					arg := expr.Args[i]
 					if TryCast[types.MutType](pp) {
+						// Skip checking for struct literal fields (KeyValueExpr)
+						// Struct field initializers don't need to be mutable
+						if _, ok := arg.(*ast.KeyValueExpr); ok {
+							continue
+						}
 						var id *ast.Ident
 						switch vv := arg.(type) {
 						case *ast.Ident:
@@ -1394,9 +1399,23 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 						case *ast.SelectorExpr:
 							id = vv.X.(*ast.Ident)
 						case *ast.UnaryExpr:
-							id = vv.X.(*ast.Ident)
+							// Check if the unary expression is taking address of a composite literal
+							// e.g. &Foo{...}, which is allowed for mutable parameters
+							if _, ok := vv.X.(*ast.CompositeLit); ok {
+								continue
+							}
+							// Otherwise extract the identifier from the unary expression
+							if ident, ok := vv.X.(*ast.Ident); ok {
+								id = ident
+							} else {
+								panic(fmt.Sprintf("unsupported unary expr type %v for arg %v in callexpr %v", to(vv.X), to(arg), to(expr.Fun)))
+							}
+						case *ast.BasicLit, *ast.CallExpr:
+							// Literals and call expressions don't need mutability checks
+							// as they create new values
+							continue
 						default:
-							panic(fmt.Sprintf("unsupported type %v", to(arg)))
+							panic(fmt.Sprintf("unsupported type %v for arg at index %d in callexpr with fun %v (type %T)", to(arg), i, expr.Fun, expr.Fun))
 						}
 						if !id.Mutable.IsValid() {
 							infer.errorf(arg, "missing mut keyword")
