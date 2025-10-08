@@ -1959,7 +1959,7 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 			return out
 		}}}
 	default:
-		panic("")
+		panic(fmt.Sprintf("%v", exprXT))
 	}
 }
 
