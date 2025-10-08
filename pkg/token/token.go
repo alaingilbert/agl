@@ -319,14 +319,18 @@ func (op Token) Precedence() int {
 		return 1
 	case LAND:
 		return 2
-	case EQL, NEQ, LSS, LEQ, GTR, GEQ, IN:
+	case IN:
 		return 3
-	case ADD, SUB, OR, XOR:
+	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
 		return 4
-	case MUL, QUO, REM, SHL, SHR, AND, AND_NOT:
+	case RANGEOP, RANGEOPEQ:
 		return 5
-	case POW, RANGEOP, RANGEOPEQ:
+	case ADD, SUB, OR, XOR:
 		return 6
+	case MUL, QUO, REM, SHL, SHR, AND, AND_NOT:
+		return 7
+	case POW:
+		return 8
 	}
 	return LowestPrec
 }

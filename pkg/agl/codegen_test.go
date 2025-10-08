@@ -13588,6 +13588,44 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen443(t *testing.T) {
+	src := `package main
+func main() {
+	for _ in 0..5-1 {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for _ = range AglNewRange[int](0, 5 - 1, false).Iter() {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen444(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	if 1 in a && 2 in a {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	if AglIn(1, AglVec[int](a)) && AglIn(2, AglVec[int](a)) {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
