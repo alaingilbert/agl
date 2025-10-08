@@ -4,11 +4,11 @@ func lengthOfLongestSubstring(s string) int {
     mut seen := set[byte]{}
     var mut l, mut res int
     for r in 0..s.Len() {
-        for seen.Contains(byte(s[r])) {
-            seen.Remove(byte(s[l]))
+        for seen.Contains(s[r]) {
+            seen.Remove(s[l])
             l++
         }
-        seen.Insert(byte(s[r]))
+        seen.Insert(s[r])
         res = max(res, r - l + 1)
     }
     return res
