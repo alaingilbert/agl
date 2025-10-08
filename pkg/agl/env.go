@@ -329,6 +329,7 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 		e.DefineFn(nenv, "println", "func (args ...any)")
 		e.DefineFn(nenv, "printf", "func (format string, a ...any)")
 		e.DefineFn(nenv, "assert", "func (pred bool, msg ...string)")
+		e.DefineFn(nenv, "assertEq", "func [T comparable](left, right T, msg ...string)")
 		e.DefineFn(nenv, "make", "func[T, U any](t T, size ...U) T")
 		e.DefineFn(nenv, "recover", "func () any")
 		e.DefineFn(nenv, "len", "func [T any](v T) int")

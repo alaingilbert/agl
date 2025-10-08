@@ -318,6 +318,16 @@ func AglAssert(pred bool, msg ...string) {
 	}
 }
 
+func AglAssertEq[T comparable](left, right T, msg ...string) {
+	if left != right {
+		m := ""
+		if len(msg) > 0 {
+			m = msg[0]
+		}
+		panic(m)
+	}
+}
+
 func AglVecIn[T cmp.Ordered](a []T, v T) bool {
 	for _, el := range a {
 		if el == v {

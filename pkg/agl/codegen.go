@@ -2056,6 +2056,26 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			out += e(")")
 			return out
 		}}
+	} else if x.Name == "assertEq" {
+		var contents []func() string
+		for _, arg := range expr.Args {
+			contents = append(contents, g.genExpr(arg).F)
+		}
+		return GenFrag{F: func() string {
+			var out string
+			out = e("AglAssertEq(")
+			line := g.fset.Position(expr.Pos()).Line
+			msg := fmt.Sprintf(`"assert failed line %d"`, line)
+			if len(contents) == 2 {
+				contents = append(contents, func() string { return e(msg) })
+			} else {
+				tmp := contents[2]
+				contents[2] = func() string { return e(msg+` + " " + `) + tmp() }
+			}
+			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
+			out += e(")")
+			return out
+		}}
 	} else if x.Name == "printf" {
 		var contents []func() string
 		for _, arg := range expr.Args {
