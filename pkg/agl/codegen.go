@@ -2622,6 +2622,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 		if xT != nil && yT != nil {
 			if op == "in" {
 				t := g.env.GetType(expr.Y)
+				t = types.Unwrap(t)
 				switch t.(type) {
 				case types.ArrayType:
 					t = t.(types.ArrayType).Elt
