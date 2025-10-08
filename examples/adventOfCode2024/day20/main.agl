@@ -71,7 +71,7 @@ func cheatRange(maxCheats int) [](int, int) {
 }
 
 func findRes(maxCheats int) int {
-    var mut count = 0
+    mut count := 0
     s := findChar(data, "S")
     e := findChar(data, "E")
     shortest := bfs(data, s, e)
@@ -84,7 +84,7 @@ func findRes(maxCheats int) int {
             guard let Some(cheatEnd) := cache.Get(cheatEndPos) else { continue }
             saved := shortest.Len() - (distStart + cheatEnd.distEnd + cheatDist)
             if saved >= 100 {
-                count += 1
+                count++
             }
         }
     }
