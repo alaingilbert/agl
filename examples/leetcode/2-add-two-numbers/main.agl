@@ -27,18 +27,18 @@ func addTwoNumbers(l1 *ListNode, l2 *ListNode) *ListNode {
     return helper(l1, l2, 0)
 }
 
-func helper(l1 *ListNode, l2 *ListNode, rem int) *ListNode {
+func helper(l1 *ListNode, l2 *ListNode, mut rem int) *ListNode {
     mut h1, mut h2 := l1, l2
     mut v := h1.Val + h2.Val + rem
-    rem1 := v / 10
+    rem = v / 10
     v %= 10
     var mut next *ListNode
     if h1.Next != nil || h2.Next != nil {
         h1.Next = h1.Next ?? &ListNode{}
         h2.Next = h2.Next ?? &ListNode{}
-        next = helper(h1.Next, h2.Next, rem1)
-    } else if rem1 > 0 {
-        next = &ListNode{Val: rem1}
+        next = helper(h1.Next, h2.Next, mut rem)
+    } else if rem > 0 {
+        next = &ListNode{Val: rem}
     }
     return &ListNode{Val: v, Next: next}
 }
