@@ -3,8 +3,8 @@ package main
 import "agl1/os"
 
 func main() {
-    data := os.ReadFile("examples/adventOfCode2024/day1/data.txt")!
-    lines := string(data).Lines().Map({
+    data := string(os.ReadFile("examples/adventOfCode2024/day1/data.txt")!)
+    lines := data.Lines().Map({
         $0.Split("   ").Map({ $0.Int()? })
     })
     list1 := lines.Map({ $0[0] }).Sorted()
