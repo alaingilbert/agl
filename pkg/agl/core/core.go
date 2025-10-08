@@ -324,6 +324,7 @@ func AglAssertEq[T comparable](left, right T, msg ...string) {
 		if len(msg) > 0 {
 			m = msg[0]
 		}
+		m = fmt.Sprintf("%s, left: %v, right: %v", m, left, right)
 		panic(m)
 	}
 }
