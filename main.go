@@ -334,6 +334,246 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	return spawnGoBuild(fileName, outputFlag, standalone)
 }
 
+// extractIdentifiers extracts all capitalized identifiers from a line of code
+func extractIdentifiers(line string) []string {
+	var result []string
+	words := strings.FieldsFunc(line, func(r rune) bool {
+		return !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_')
+	})
+	for _, word := range words {
+		if len(word) > 0 && word[0] >= 'A' && word[0] <= 'Z' {
+			// Remove generic brackets
+			word = strings.Split(word, "[")[0]
+			result = append(result, word)
+		}
+	}
+	return result
+}
+
+// filterUnusedCode removes functions and types from coreBody that aren't referenced in src
+func filterUnusedCode(src string, coreBody []string) []string {
+	// Find all identifiers used in src
+	usedIdents := make(map[string]bool)
+
+	lines := strings.Split(src, "\n")
+	for _, line := range lines {
+		for _, word := range extractIdentifiers(line) {
+			usedIdents[word] = true
+		}
+	}
+
+	// Parse coreBody to identify function/type definitions and their dependencies
+	type Definition struct {
+		name         string
+		receiverType string // For methods - the type they belong to
+		lines        []string
+		deps         map[string]bool
+	}
+
+	definitions := []Definition{}
+	var currentDef *Definition
+
+	for i := 0; i < len(coreBody); i++ {
+		line := coreBody[i]
+		trimmed := strings.TrimSpace(line)
+
+		// Check for function or type definition
+		if strings.HasPrefix(trimmed, "func ") || strings.HasPrefix(trimmed, "type ") {
+			// Save previous definition
+			if currentDef != nil {
+				definitions = append(definitions, *currentDef)
+			}
+
+			// Start new definition
+			currentDef = &Definition{
+				lines: []string{line},
+				deps:  make(map[string]bool),
+			}
+
+			// Extract name
+			if strings.HasPrefix(trimmed, "func ") {
+				// Handle: func Name(...) or func (r Receiver) Name(...)
+				parts := strings.Fields(trimmed)
+				if len(parts) >= 2 {
+					if parts[1] == "(" || strings.HasPrefix(parts[1], "(") {
+						// Method: func (r Receiver) Name or func (r Receiver[T]) Name
+						// Find the receiver type - it's between ( and )
+						fullLine := strings.TrimPrefix(trimmed, "func ")
+						if idx := strings.Index(fullLine, ")"); idx != -1 {
+							receiverPart := fullLine[1:idx] // Skip the opening (
+							methodNamePart := strings.TrimSpace(fullLine[idx+1:])
+
+							// Extract receiver type (last word in receiver part)
+							receiverFields := strings.Fields(receiverPart)
+							receiverType := ""
+							if len(receiverFields) > 0 {
+								receiverType = receiverFields[len(receiverFields)-1]
+								// Remove pointer, closing ), and generics
+								receiverType = strings.TrimPrefix(receiverType, "*")
+								receiverType = strings.TrimSuffix(receiverType, ")")
+								receiverType = strings.Split(receiverType, "[")[0]
+								currentDef.receiverType = receiverType
+								currentDef.deps[receiverType] = true
+							}
+
+							// Extract method name
+							if len(methodNamePart) > 0 {
+								methodName := strings.Split(methodNamePart, "(")[0]
+								methodName = strings.Split(methodName, "[")[0]
+								// Make method names unique by combining with receiver type
+								if receiverType != "" {
+									currentDef.name = receiverType + "." + methodName
+								} else {
+									currentDef.name = methodName
+								}
+							}
+						}
+					} else {
+						// Function: func Name
+						currentDef.name = strings.Split(parts[1], "(")[0]
+						currentDef.name = strings.Split(currentDef.name, "[")[0] // Remove generics
+					}
+				}
+			} else if strings.HasPrefix(trimmed, "type ") {
+				parts := strings.Fields(trimmed)
+				if len(parts) >= 2 {
+					currentDef.name = parts[1]
+					// Handle generic types like Iterator[T]
+					currentDef.name = strings.Split(currentDef.name, "[")[0]
+				}
+			}
+
+			// Find dependencies in this line (look for all identifiers)
+			for _, word := range extractIdentifiers(line) {
+				if word != currentDef.name {
+					currentDef.deps[word] = true
+				}
+			}
+		} else if currentDef != nil {
+			// Continue current definition
+			currentDef.lines = append(currentDef.lines, line)
+
+			// Find dependencies
+			for _, word := range extractIdentifiers(line) {
+				if word != currentDef.name {
+					currentDef.deps[word] = true
+				}
+			}
+
+			// Check if definition ends (blank line or next definition)
+			if trimmed == "" || i == len(coreBody)-1 {
+				definitions = append(definitions, *currentDef)
+				currentDef = nil
+			}
+		}
+	}
+
+	// Add last definition if exists
+	if currentDef != nil {
+		definitions = append(definitions, *currentDef)
+	}
+
+	// Find all needed definitions recursively
+	needed := make(map[string]bool)
+	var addDeps func(name string)
+	addDeps = func(name string) {
+		if needed[name] {
+			return
+		}
+		needed[name] = true
+
+		// Find definition and add its dependencies
+		for _, def := range definitions {
+			if def.name == name {
+				for dep := range def.deps {
+					addDeps(dep)
+				}
+				break
+			}
+		}
+
+		// Also add all methods for this type
+		for _, def := range definitions {
+			if def.receiverType == name {
+				addDeps(def.name)
+			}
+		}
+	}
+
+	// Debug: print what we found
+	if false { // Set to true to debug
+		fmt.Printf("=== DEBUG: Found %d definitions ===\n", len(definitions))
+		for _, def := range definitions {
+			if def.name == "Result" || def.name == "AglMap" || def.name == "AglSet" || def.name == "Rev" {
+				fmt.Printf("Type %s, lines: %d, deps: %v\n", def.name, len(def.lines), def.deps)
+			}
+		}
+		fmt.Printf("=== Used identifiers ===\n")
+		for k := range usedIdents {
+			if k == "Result" || k == "AglMap" || k == "AglSet" || k == "Rev" {
+				fmt.Printf("  %s\n", k)
+			}
+		}
+	}
+
+	// Start with identifiers used in src
+	for ident := range usedIdents {
+		addDeps(ident)
+	}
+
+	// Build filtered coreBody
+	var result []string
+	for _, def := range definitions {
+		if needed[def.name] {
+			result = append(result, def.lines...)
+		}
+	}
+
+	return result
+}
+
+// filterUnusedImports removes import statements that aren't used in the code
+func filterUnusedImports(code string, imports []string) []string {
+	var result []string
+
+	for _, imp := range imports {
+		// Extract package name from import line
+		// Format: "\t\"package/path\"" or "\t\"package/path\" // comment"
+		trimmed := strings.TrimSpace(imp)
+		if trimmed == "" {
+			continue
+		}
+
+		// Remove leading tab and quotes
+		importPath := strings.Trim(trimmed, "\t \"")
+		importPath = strings.Split(importPath, "//")[0] // Remove comments
+		importPath = strings.TrimSpace(importPath)
+
+		// Get package name (last part of path)
+		pkgName := importPath
+		if idx := strings.LastIndex(importPath, "/"); idx != -1 {
+			pkgName = importPath[idx+1:]
+		}
+
+		// Check if package is used in code
+		// Look for: pkgName.Something or direct uses for common packages
+		if strings.Contains(code, pkgName+".") ||
+		   (pkgName == "fmt" && (strings.Contains(code, "fmt.") || strings.Contains(code, "Sprintf") || strings.Contains(code, "Printf"))) ||
+		   (pkgName == "strings" && strings.Contains(code, "strings.")) ||
+		   (pkgName == "bytes" && strings.Contains(code, "bytes.")) ||
+		   (pkgName == "slices" && strings.Contains(code, "slices.")) ||
+		   (pkgName == "maps" && strings.Contains(code, "maps.")) ||
+		   (pkgName == "sort" && strings.Contains(code, "sort.")) ||
+		   (pkgName == "strconv" && strings.Contains(code, "strconv.")) ||
+		   (pkgName == "math" && strings.Contains(code, "math.")) ||
+		   (pkgName == "iter" && strings.Contains(code, "iter.")) {
+			result = append(result, imp)
+		}
+	}
+
+	return result
+}
+
 func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused bool, m *agl.PkgVisited) error {
 	if m.ContainsAdd(fileName) {
 		return nil
@@ -444,16 +684,13 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 			}
 		}
 
-		// Extract core imports (without the import keyword and parens) and body
+		// Extract core imports and body
 		var coreImports []string
 		var coreBody []string
 		if coreImportStart != -1 && coreImportEnd != -1 {
-			// Get imports between "import (" and ")"
 			coreImports = coreLines[coreImportStart+1 : coreImportEnd-1]
-			// Get everything after imports
 			coreBody = coreLines[coreImportEnd:]
 		} else {
-			// No imports in core, just get body after package declaration
 			for i := 3; i < len(coreLines); i++ {
 				if strings.TrimSpace(coreLines[i]) != "" {
 					coreBody = coreLines[i:]
@@ -461,6 +698,13 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 				}
 			}
 		}
+
+		// Filter core library to only include used functions/types
+		coreBody = filterUnusedCode(src, coreBody)
+
+		// Filter imports to only include those used in src + coreBody
+		allCode := src + "\n" + strings.Join(coreBody, "\n")
+		coreImports = filterUnusedImports(allCode, coreImports)
 
 		// Merge core library into generated code
 		srcLines := strings.Split(src, "\n")
