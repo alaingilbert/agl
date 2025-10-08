@@ -1,0 +1,36 @@
+package main
+
+func lengthOfLongestSubstring(s string) int {
+    if s.Len() <= 1 {
+        return s.Len()
+    }
+    var mut l, mut r, mut res int
+    mut seen := set[byte]{s[l]}
+    outer: for r < s.Len() {
+        seen.Insert(byte(s[r]))
+        r++
+        if r >= s.Len() || byte(s[r]) in seen {
+            res = max(res, r-l)
+            for {
+                seen.Remove(byte(s[l]))
+                old := s[l]
+                l++
+                if l >= s.Len() || r >= s.Len() {
+                    break outer
+                }
+                if l == r || old == s[r] {
+                    break
+                }
+            }
+        }
+    }
+    return res
+}
+
+func main() {
+    assert(lengthOfLongestSubstring("abcabcbb") == 3)
+    assert(lengthOfLongestSubstring("bbbbb")    == 1)
+    assert(lengthOfLongestSubstring("pwwkew")   == 3)
+    assert(lengthOfLongestSubstring("dvdf")     == 3)
+    assert(lengthOfLongestSubstring("nfpdmpi")  == 5)
+}
