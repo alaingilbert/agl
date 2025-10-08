@@ -1399,11 +1399,11 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 							panic(fmt.Sprintf("unsupported type %v", to(arg)))
 						}
 						if !id.Mutable.IsValid() {
-							infer.errorf(arg, "%s: missing mut keyword", infer.Pos(arg))
+							infer.errorf(arg, "missing mut keyword")
 							return
 						}
 						if !TryCast[types.MutType](infer.env.GetType(id)) {
-							infer.errorf(id, "%s: cannot use immutable '%s'", infer.Pos(id), id.Name)
+							infer.errorf(id, "cannot use immutable '%s'", id.Name)
 							return
 						}
 					}
