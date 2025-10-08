@@ -16,9 +16,8 @@ func (l *ListNode) String() string {
 }
 
 func NewListNode(s string) *ListNode {
-    vals := s.Split(",")
     var mut next *ListNode
-    for val in vals.Reversed() {
+    for val in s.Split(",").Reversed() {
         next = &ListNode{Val: val.Int()?, Next: next}
     }
     return next
@@ -29,15 +28,10 @@ func addTwoNumbers(l1 *ListNode, l2 *ListNode) *ListNode {
 }
 
 func helper(l1 *ListNode, l2 *ListNode, rem int) *ListNode {
-    var mut h1, mut h2 *ListNode
-    h1 = l1
-    h2 = l2
-    mut rem1 := 0
+    mut h1, mut h2 := l1, l2
     mut v := h1.Val + h2.Val + rem
-    for v >= 10 {
-        rem1++
-        v -= 10
-    }
+    rem1 := v / 10
+    v %= 10
     var mut next *ListNode
     if h1.Next != nil || h2.Next != nil {
         if h1.Next == nil {
@@ -47,7 +41,7 @@ func helper(l1 *ListNode, l2 *ListNode, rem int) *ListNode {
             h2.Next = &ListNode{}
         }
         next = helper(h1.Next, h2.Next, rem1)
-    } else if (h1.Next == nil && h2.Next == nil) && rem1 > 0 {
+    } else if rem1 > 0 {
         next = &ListNode{Val: rem1}
     }
     return &ListNode{Val: v, Next: next}
