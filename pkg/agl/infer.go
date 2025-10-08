@@ -3309,6 +3309,8 @@ func (infer *FileInferrer) indexExpr(expr *ast.IndexExpr) {
 			t = types.MutType{W: t}
 		}
 		infer.SetType(expr, t)
+	case types.StringType:
+		infer.SetType(expr, types.ByteType{})
 	default:
 		infer.SetType(expr, infer.GetType(expr.X))
 	}
