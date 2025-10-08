@@ -72,6 +72,7 @@ func main() {
 					&cli.BoolFlag{Name: "sourceMap"},
 					&cli.BoolFlag{Name: "no-mut-check", Usage: "disable mutation checking"},
 					&cli.BoolFlag{Name: "allow-unused", Usage: ""},
+					&cli.BoolFlag{Name: "standalone", Usage: "embed core library in generated file"},
 				},
 				Usage:  "build command",
 				Action: buildAction,
@@ -173,7 +174,7 @@ func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, p
 	return err
 }
 
-func spawnGoBuild(fileName, outputFlag string) error {
+func spawnGoBuild(fileName, outputFlag string, standalone bool) error {
 	isAgl := strings.HasSuffix(fileName, ".agl")
 	fileName = strings.Replace(fileName, ".agl", ".go", 1)
 	var cmdArgs []string
@@ -183,7 +184,8 @@ func spawnGoBuild(fileName, outputFlag string) error {
 	}
 	dir := filepath.Dir(fileName)
 	cmdArgs = append(cmdArgs, fileName)
-	if isAgl {
+	// Only include aglCore.go if not in standalone mode
+	if isAgl && !standalone {
 		cmdArgs = append(cmdArgs, filepath.Join(dir, "aglCore.go"))
 	}
 	cmd := exec.Command("go", cmdArgs...)
@@ -314,6 +316,7 @@ func cleanupAction(ctx context.Context, cmd *cli.Command) error {
 func buildAction(ctx context.Context, cmd *cli.Command) error {
 	noMutCheck := cmd.Bool("no-mut-check")
 	allowUnused := cmd.Bool("allow-unused")
+	standalone := cmd.Bool("standalone")
 	mutEnforced := !noMutCheck
 
 	if cmd.NArg() == 0 {
@@ -324,14 +327,14 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	sourceMapFlag := cmd.Bool("sourceMap")
 	fileName := cmd.Args().Get(0)
 	m := agl.NewPkgVisited()
-	err := buildFile(fileName, forceFlag, sourceMapFlag, mutEnforced, allowUnused, m)
+	err := buildFile(fileName, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m)
 	if err != nil {
 		panic(err)
 	}
-	return spawnGoBuild(fileName, outputFlag)
+	return spawnGoBuild(fileName, outputFlag, standalone)
 }
 
-func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced, allowUnused bool, m *agl.PkgVisited) error {
+func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused bool, m *agl.PkgVisited) error {
 	if m.ContainsAdd(fileName) {
 		return nil
 	}
@@ -369,7 +372,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced, allowUnus
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, mutEnforced, allowUnused, m); err != nil {
+					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m); err != nil {
 						panic(err)
 					}
 				}
@@ -391,7 +394,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced, allowUnus
 				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 					continue
 				}
-				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, mutEnforced, allowUnused, m); err != nil {
+				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m); err != nil {
 					panic(err)
 				}
 			}
@@ -421,6 +424,118 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced, allowUnus
 			panic(fmt.Sprintf("%s would be overwritten, use -f to force", path))
 		}
 	}
+
+	// If standalone mode is enabled, embed the core library in the generated file
+	if standalone {
+		packageName := g.PkgName()
+		coreContent := agl.GenCore(packageName)
+		coreLines := strings.Split(coreContent, "\n")
+
+		// Find where core imports and body start
+		coreImportStart := -1
+		coreImportEnd := -1
+		for i, line := range coreLines {
+			trimmed := strings.TrimSpace(line)
+			if coreImportStart == -1 && strings.HasPrefix(trimmed, "import") {
+				coreImportStart = i
+			} else if coreImportStart != -1 && coreImportEnd == -1 && trimmed == ")" {
+				coreImportEnd = i + 1
+				break
+			}
+		}
+
+		// Extract core imports (without the import keyword and parens) and body
+		var coreImports []string
+		var coreBody []string
+		if coreImportStart != -1 && coreImportEnd != -1 {
+			// Get imports between "import (" and ")"
+			coreImports = coreLines[coreImportStart+1 : coreImportEnd-1]
+			// Get everything after imports
+			coreBody = coreLines[coreImportEnd:]
+		} else {
+			// No imports in core, just get body after package declaration
+			for i := 3; i < len(coreLines); i++ {
+				if strings.TrimSpace(coreLines[i]) != "" {
+					coreBody = coreLines[i:]
+					break
+				}
+			}
+		}
+
+		// Merge core library into generated code
+		srcLines := strings.Split(src, "\n")
+
+		// Find import block
+		importLineIdx := -1
+		importEndIdx := -1
+		for i, line := range srcLines {
+			trim := strings.TrimSpace(line)
+			if importLineIdx == -1 && strings.HasPrefix(trim, "import") {
+				importLineIdx = i
+				// Check format: "import (" vs "import \"...\""
+				if strings.Contains(trim, "(") {
+					// Multi-line import - find closing )
+					for j := i + 1; j < len(srcLines); j++ {
+						if strings.TrimSpace(srcLines[j]) == ")" {
+							importEndIdx = j
+							break
+						}
+					}
+				} else {
+					// Single-line import like: import "pkg"
+					// We'll convert to multi-line
+					importPath := strings.TrimSpace(strings.TrimPrefix(trim, "import"))
+					srcLines[i] = "import ("
+					// Insert the import path and closing paren
+					newLines := make([]string, 0, len(srcLines)+2)
+					newLines = append(newLines, srcLines[:i+1]...)
+					if importPath != "" {
+						newLines = append(newLines, "\t"+importPath)
+					}
+					newLines = append(newLines, ")")
+					newLines = append(newLines, srcLines[i+1:]...)
+					srcLines = newLines
+					importEndIdx = i + 2
+					if importPath == "" {
+						importEndIdx = i + 1
+					}
+				}
+				break
+			}
+		}
+
+		// Insert core imports and body
+		var result []string
+		if importLineIdx != -1 && importEndIdx != -1 {
+			// Insert core imports before closing )
+			result = append(result, srcLines[:importEndIdx]...)
+			result = append(result, coreImports...)
+			result = append(result, srcLines[importEndIdx:]...)
+		} else {
+			// No imports - add after package line
+			pkgIdx := -1
+			for i, line := range srcLines {
+				if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+					pkgIdx = i
+					break
+				}
+			}
+			if pkgIdx != -1 {
+				result = append(result, srcLines[:pkgIdx+1]...)
+				result = append(result, "import (")
+				result = append(result, coreImports...)
+				result = append(result, ")")
+				result = append(result, srcLines[pkgIdx+1:]...)
+			} else {
+				result = srcLines
+			}
+		}
+
+		// Append core body
+		result = append(result, coreBody...)
+		src = strings.Join(result, "\n")
+	}
+
 	if err := os.WriteFile(path, []byte(src), 0644); err != nil {
 		return err
 	}
@@ -432,11 +547,14 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, mutEnforced, allowUnus
 		}
 	}
 
-	packageName := g.PkgName()
-	coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
-	err = os.WriteFile(coreFile, []byte(agl.GenCore(packageName)), 0644)
-	if err != nil {
-		return err
+	// Only write separate aglCore.go if not in standalone mode
+	if !standalone {
+		packageName := g.PkgName()
+		coreFile := filepath.Join(filepath.Dir(path), "aglCore.go")
+		err = os.WriteFile(coreFile, []byte(agl.GenCore(packageName)), 0644)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
