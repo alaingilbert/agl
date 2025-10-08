@@ -1,0 +1,13 @@
+package main
+
+func twoSum(nums []int, target int) []int {
+    mut m := make(map[int]int)
+    for (i, el) in nums.Enumerated() {
+        other := target-el
+        if let Some(v) := m.Get(other) {
+            return []int{v, i}
+        }
+        m[el] = i
+    }
+    return []int{}
+}
