@@ -15,9 +15,9 @@ func lengthOfLongestSubstring(s string) int {
 }
 
 func main() {
-    assert(lengthOfLongestSubstring("abcabcbb") == 3)
-    assert(lengthOfLongestSubstring("bbbbb")    == 1)
-    assert(lengthOfLongestSubstring("pwwkew")   == 3)
-    assert(lengthOfLongestSubstring("dvdf")     == 3)
-    assert(lengthOfLongestSubstring("nfpdmpi")  == 5)
+    assertEq(lengthOfLongestSubstring("abcabcbb"), 3)
+    assertEq(lengthOfLongestSubstring("bbbbb"),    1)
+    assertEq(lengthOfLongestSubstring("pwwkew"),   3)
+    assertEq(lengthOfLongestSubstring("dvdf"),     3)
+    assertEq(lengthOfLongestSubstring("nfpdmpi"),  5)
 }
