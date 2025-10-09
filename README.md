@@ -274,19 +274,19 @@ func main() {
     // match branches must be exhaustive
     match home {
     case .V4(a, b, c, d):
-        println(a, b, c, d)
+        print(a, b, c, d)
     case .V6(addr):
-        println(addr)
+        print(addr)
     }
 
     // if-let can be used to pattern match
     if let IpAddr.V4(a, b, c, d) := home {
-        println(a, b, c, d)
+        print(a, b, c, d)
     }
 
     // guard-let can also be used to pattern match
     guard let IpAddr.V4(a, b, c, d) := home else { return }
-    println(a, b, c, d)
+    print(a, b, c, d)
 }
 ```
 
