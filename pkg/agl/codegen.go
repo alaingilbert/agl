@@ -3367,21 +3367,24 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	// Handle nil-coalesce operator specially in assignments
 	if len(stmt.Rhs) == 1 && len(stmt.Lhs) == 1 {
 		if binExpr, ok := stmt.Rhs[0].(*ast.BinaryExpr); ok && binExpr.Op.String() == "??" {
-			// Generate: lhs := leftExpr; if lhs == nil { lhs = rightExpr }
+			// Generate: tmpVar := leftExpr; if tmpVar == nil { tmpVar = rightExpr }; lhs := tmpVar
 			c1 := g.genExpr(binExpr.X)
 			c2 := g.genExpr(binExpr.Y)
 			var bs []func() string
 			bs = append(bs, c1.B...)
 			bs = append(bs, c2.B...)
+			tmpId := g.varCounter.Add(1)
+			tmpVar := fmt.Sprintf("aglTmp%d", tmpId)
 			return GenFrag{F: func() string {
 				var out string
 				if !g.inlineStmt {
 					out += e(g.prefix)
 				}
-				out += lhs() + e(" "+stmt.Tok.String()+" ") + c1.F() + e("\n")
-				out += e(g.prefix+"if ") + lhs() + e(" == nil {\n")
-				out += e(g.prefix+"\t") + lhs() + e(" = ") + c2.F() + e("\n")
-				out += e(g.prefix + "}\n")
+				out += e(tmpVar+" := ") + c1.F() + e("\n")
+				out += e(g.prefix+"if "+tmpVar+" == nil {\n")
+				out += e(g.prefix+"\t"+tmpVar+" = ") + c2.F() + e("\n")
+				out += e(g.prefix+"}\n")
+				out += e(g.prefix) + lhs() + e(" "+stmt.Tok.String()+" "+tmpVar+"\n")
 				return out
 			}, B: bs}
 		}

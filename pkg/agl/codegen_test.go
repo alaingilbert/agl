@@ -13665,14 +13665,16 @@ type Test struct {
 func main() {
 	var a *Test
 	b := &Test{Val: 1}
-	c := a
-	if c == nil {
-		c = &Test{Val: 2}
+	aglTmp1 := a
+	if aglTmp1 == nil {
+		aglTmp1 = &Test{Val: 2}
 	}
-	d := b
-	if d == nil {
-		d = &Test{Val: 3}
+	c := aglTmp1
+	aglTmp2 := b
+	if aglTmp2 == nil {
+		aglTmp2 = &Test{Val: 3}
 	}
+	d := aglTmp2
 	AglAssertEq(c.Val, 2, "assert failed line 10")
 	AglAssertEq(d.Val, 1, "assert failed line 11")
 }
