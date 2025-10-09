@@ -109,6 +109,15 @@ type Container struct {
 	Val int
 }
 
+/*
+    a := c1 ?? &Container{Val: 42}
+    // is equivalent to -->
+    a := c1
+    if a == nil {
+        a = &Container{Val: 42}
+    }
+*/
+
 func main() {
 	var c1 *Container
 	c2 := &Container{Val: 1}
