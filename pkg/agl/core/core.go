@@ -304,6 +304,10 @@ func AglPrint(a ...any) {
 	fmt.Println(a...)
 }
 
+func AglPrintln(a ...any) {
+	fmt.Println(a...)
+}
+
 func AglPrintf(format string, a ...any) {
 	fmt.Printf(format+"\n", a...)
 }
