@@ -83,6 +83,23 @@ func main() {
 }
 ```
 
+### Propagation chaining
+
+```go
+package main
+
+type Person struct { Name string }
+
+func (p Person) MaybeSelf() Person? {
+    return Some(p)
+}
+
+func main() {
+    bob := Person{Name: "bob"}
+    bob.MaybeSelf()?.MaybeSelf()?.MaybeSelf()?
+}
+```
+
 ### Nil-Coalescing operator (??)
 
 ```go
@@ -99,23 +116,6 @@ func main() {
 	print(a.Val) // 42
 	b := c2 ?? &Container{Val: 42}
 	print(b.Val) // 1
-}
-```
-
-### Propagation chaining
-
-```go
-package main
-
-type Person struct { Name string }
-
-func (p Person) MaybeSelf() Person? {
-    return Some(p)
-}
-
-func main() {
-    bob := Person{Name: "bob"}
-    bob.MaybeSelf()?.MaybeSelf()?.MaybeSelf()?
 }
 ```
 
