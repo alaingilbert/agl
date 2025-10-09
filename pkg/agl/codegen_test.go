@@ -13654,6 +13654,7 @@ func main() {
 	b := &Test{Val: 1}
 	c := a ?? &Test{Val: 2}
 	d := b ?? &Test{Val: 3}
+	print(a ?? &Test{Val: 4})
 	assertEq(c.Val, 2)
 	assertEq(d.Val, 1)
 }`
@@ -13675,6 +13676,11 @@ func main() {
 		aglTmp2 = &Test{Val: 3}
 	}
 	d := aglTmp2
+	aglTmp3 := a
+	if aglTmp3 == nil {
+		aglTmp3 = &Test{Val: 4}
+	}
+	AglPrint(aglTmp3)
 	AglAssertEq(c.Val, 2, "assert failed line 10")
 	AglAssertEq(d.Val, 1, "assert failed line 11")
 }

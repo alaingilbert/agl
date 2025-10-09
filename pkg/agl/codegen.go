@@ -2058,8 +2058,11 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 		}}
 	} else if x.Name == "assertEq" {
 		var contents []func() string
+		var bs []func() string
 		for _, arg := range expr.Args {
-			contents = append(contents, g.genExpr(arg).F)
+			argFrag := g.genExpr(arg)
+			contents = append(contents, argFrag.F)
+			bs = append(bs, argFrag.B...)
 		}
 		return GenFrag{F: func() string {
 			var out string
@@ -2075,7 +2078,7 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
 			out += e(")")
 			return out
-		}}
+		}, B: bs}
 	} else if x.Name == "printf" {
 		var contents []func() string
 		for _, arg := range expr.Args {
@@ -2089,26 +2092,32 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 		}}
 	} else if x.Name == "print" {
 		var contents []func() string
+		var bs []func() string
 		for _, arg := range expr.Args {
-			contents = append(contents, g.genExpr(arg).F)
+			argFrag := g.genExpr(arg)
+			contents = append(contents, argFrag.F)
+			bs = append(bs, argFrag.B...)
 		}
 		return GenFrag{F: func() (out string) {
 			out = e("AglPrint(")
 			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
 			out += e(")")
 			return
-		}}
+		}, B: bs}
 	} else if x.Name == "println" {
 		var contents []func() string
+		var bs []func() string
 		for _, arg := range expr.Args {
-			contents = append(contents, g.genExpr(arg).F)
+			argFrag := g.genExpr(arg)
+			contents = append(contents, argFrag.F)
+			bs = append(bs, argFrag.B...)
 		}
 		return GenFrag{F: func() (out string) {
 			out = e("AglPrintln(")
 			out += MapJoin(e, contents, func(f func() string) string { return f() }, ", ")
 			out += e(")")
 			return
-		}}
+		}, B: bs}
 	} else if x.Name == "panic" {
 		return GenFrag{F: func() string { return e("panic(nil)") }}
 	} else if x.Name == "panicWith" {
@@ -2638,17 +2647,24 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 	if expr.Op.String() == "??" {
 		tmpId := g.varCounter.Add(1)
 		tmpVar := fmt.Sprintf("aglTmp%d", tmpId)
-		bs = append(bs, func() (out string) {
+		// Only include c1.B in the before slice, c2.B will be emitted inside the if block
+		var beforeBs []func() string
+		beforeBs = append(beforeBs, c1.B...)
+		beforeBs = append(beforeBs, func() (out string) {
 			gPrefix := g.prefix
 			out += e(gPrefix+tmpVar+" := ") + c1.F() + e("\n")
 			out += e(gPrefix + "if " + tmpVar + " == nil {\n")
+			// Emit c2.B inside the if block
+			for _, b := range c2.B {
+				out += g.incrPrefix(b)
+			}
 			out += e(gPrefix+"\t"+tmpVar+" = ") + c2.F() + e("\n")
 			out += e(gPrefix + "}\n")
 			return out
 		})
 		return GenFrag{F: func() string {
-			return tmpVar
-		}, B: bs}
+			return e(tmpVar)
+		}, B: beforeBs}
 	}
 
 	return GenFrag{F: func() string {
