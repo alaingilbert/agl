@@ -4177,6 +4177,13 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 		} else {
 			infer.SetType(expr, oxT)
 		}
+	case token.NIL_COALESCE:
+		xT := infer.GetType2(expr.X)
+		if !TryCast[types.StarType](xT) {
+			infer.errorf(expr.X, "left side of nil-coalescing operator must be a pointer type")
+			return
+		}
+		infer.SetType(expr, types.Unwrap(infer.GetType2(expr.X)))
 	default:
 		infer.SetType(expr, types.Unwrap(infer.GetType(expr.X)))
 	}

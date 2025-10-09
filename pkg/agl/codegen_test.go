@@ -13127,8 +13127,8 @@ type MyEnum enum {
 func main() {
 	e := MyEnum.foo
 	match e {
-	case .foo: _ = print("foo")
-	case .bar: _ = print("bar")
+	case .foo: print("foo")
+	case .bar: print("bar")
 	}
 	var b int
 }`
@@ -13165,9 +13165,9 @@ func Make_MyEnum_bar() MyEnum {
 func main() {
 	e := Make_MyEnum_foo()
 	if e.Tag == MyEnum_foo {
-		_ = AglPrint("foo")
+		AglPrint("foo")
 	} else if e.Tag == MyEnum_bar {
-		_ = AglPrint("bar")
+		AglPrint("bar")
 	} else {
 		panic("match on enum should be exhaustive")
 	}
@@ -13175,7 +13175,7 @@ func main() {
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
-	tassert.Equal(t, 2, len(test.errs))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
 
@@ -13694,6 +13694,17 @@ func main() {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen447(t *testing.T) {
+	src := `package main
+func main() {
+	var a int
+	b := a ?? 1
+	assertEq(b, 1)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "4:7: left side of nil-coalescing operator must be a pointer type")
 }
 
 //func TestCodeGen411(t *testing.T) {
