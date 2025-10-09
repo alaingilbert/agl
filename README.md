@@ -83,6 +83,22 @@ func main() {
 }
 ```
 
+### Nil-Coalescing operator (??)
+
+```go
+package main
+
+type Container struct {
+	Val int
+}
+
+func main() {
+	var c *Container
+	a := c ?? &Container{Val: 42}
+	print(a.Val)
+}
+```
+
 ### Propagation chaining
 
 ```go
