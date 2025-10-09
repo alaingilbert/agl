@@ -1665,7 +1665,7 @@ func (g *Generator) genParenExpr(expr *ast.ParenExpr) GenFrag {
 		out += g.incrPrefix(c1.F)
 		out += e(")")
 		return out
-	}}
+	}, B: c1.B}
 }
 
 func (g *Generator) genFuncLit(expr *ast.FuncLit) GenFrag {
@@ -1876,6 +1876,9 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.X)
 	c2 := g.genExpr(expr.Sel)
+	var bs []func() string
+	bs = append(bs, c1.B...)
+	bs = append(bs, c2.B...)
 	return GenFrag{F: func() string {
 		name := expr.Sel.Name
 		t := types.Unwrap(g.env.GetType(expr.X))
@@ -1895,7 +1898,7 @@ func (g *Generator) genSelectorExpr(expr *ast.SelectorExpr) GenFrag {
 			return out
 		}
 		return c1.F() + e("."+name)
-	}}
+	}, B: bs}
 }
 
 func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
