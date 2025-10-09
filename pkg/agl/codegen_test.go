@@ -13681,8 +13681,8 @@ func main() {
 		aglTmp3 = &Test{Val: 4}
 	}
 	AglPrint(aglTmp3)
-	AglAssertEq(c.Val, 2, "assert failed line 10")
-	AglAssertEq(d.Val, 1, "assert failed line 11")
+	AglAssertEq(c.Val, 2, "assert failed line 11")
+	AglAssertEq(d.Val, 1, "assert failed line 12")
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
