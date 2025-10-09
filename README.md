@@ -93,9 +93,12 @@ type Container struct {
 }
 
 func main() {
-	var c *Container
-	a := c ?? &Container{Val: 42}
-	print(a.Val)
+	var c1 *Container
+	c2 := &Container{Val: 1}
+	a := c1 ?? &Container{Val: 42}
+	print(a.Val) // 42
+	b := c2 ?? &Container{Val: 42}
+	print(b.Val) // 1
 }
 ```
 
