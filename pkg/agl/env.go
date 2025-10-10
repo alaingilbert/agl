@@ -1191,10 +1191,10 @@ func (e *Env) Assign(parentInfo *Info, n ast.Node, name string, fset *token.File
 	}
 	t := e.Get(name)
 	if t == nil {
-		return fmt.Errorf("%s: undeclared %s", fset.Position(n.Pos()), name)
+		return fmt.Errorf("undeclared %s", name)
 	}
 	if mutEnforced && !TryCast[types.MutType](t) {
-		return fmt.Errorf("%s: cannot assign to immutable variable '%s'", fset.Position(n.Pos()), name)
+		return fmt.Errorf("cannot assign to immutable variable '%s'", name)
 	}
 	e.lspNodeOrCreate(n).Definition = parentInfo.Definition
 	return nil

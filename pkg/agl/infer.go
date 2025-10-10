@@ -3610,7 +3610,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	}
 	myAssign := func(parentInfo *Info, n ast.Node, name string, _ types.Type) {
 		if err := infer.env.Assign(parentInfo, n, name, infer.fset, infer.mutEnforced); err != nil {
-			infer.errorf(n, "%s: %s", infer.Pos(n), err)
+			infer.errorf(n, "%s", err)
 			return
 		}
 	}
