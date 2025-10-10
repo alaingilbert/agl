@@ -1,0 +1,23 @@
+package main
+
+func convert(s string, numRows int) string {
+    if numRows == 1 {
+        return s
+    }
+    mut rows := make([]string, numRows)
+    mut backward := true
+    mut index := 0
+    for c in s {
+        rows[index] += string(c)
+        if index == 0 || index == numRows-1 {
+            backward = !backward
+        }
+        index += if backward { -1 } else { 1 }
+    }
+    return rows.Joined("")
+}
+
+func main() {
+    assertEq(convert("PAYPALISHIRING", 3), "PAHNAPLSIIGYIR")
+    assertEq(convert("PAYPALISHIRING", 4), "PINALSIGYAHRPI")
+}
