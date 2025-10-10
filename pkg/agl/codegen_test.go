@@ -13741,6 +13741,35 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen450(t *testing.T) {
+	src := `package main
+
+func convert(s string, numRows int) string {
+    if numRows == 1 {
+        return s
+    }
+    mut rows := make([]string, numRows)
+    mut backward := true
+    mut index := 0
+    for c in s {
+        rows[index] += string(c)
+        if index == 0 || index == numRows-1 {
+            backward = !backward
+        }
+        index += if backward { -1 } else { 1 }
+    }
+    return rows.Join("")
+}
+
+func main() {
+    assertEq(convert("PAYPALISHIRING", 3), "PAHNAPLSIIGYIR")
+    assertEq(convert("PAYPALISHIRING", 4), "PINALSIGYAHRPI")
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.True(t, len(test.errs) > 0)
+	tassert.Contains(t, test.errs[0].Error(), "17:17: method '.Join' does not exist on array type\n    did you mean '.Joined()' instead?")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
