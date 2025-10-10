@@ -2173,7 +2173,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
-				infer.errorf(exprT.Sel, "%s: method '%s' of type Vec does not exists", infer.Pos(exprT.Sel), fnName)
+				infer.errorf(exprT.Sel, "method '%s' of type Vec does not exists", fnName)
 				return
 			}
 			fnT := fnTRaw.(types.FuncType)
@@ -2181,7 +2181,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			gen0 := fnT.TypeParams[0].(types.GenericType).W
 			want := types.ArrayType{Elt: gen0}
 			if !cmpTypes(gen0, idTT.Elt) {
-				infer.errorf(exprT.Sel, "%s: cannot use %s as %s for %s", infer.Pos(exprT.Sel), idTT, want, fnName)
+				infer.errorf(exprT.Sel, "cannot use %s as %s for %s", idTT, want, fnName)
 				return
 			}
 			fnT = fnT.T("T", idTT.Elt)
