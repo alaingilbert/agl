@@ -312,6 +312,16 @@ func AglPrintf(format string, a ...any) {
 	fmt.Printf(format+"\n", a...)
 }
 
+func AglPrecondition(pred bool, msg ...string) {
+	if !pred {
+		m := ""
+		if len(msg) > 0 {
+			m = msg[0]
+		}
+		panic(m)
+	}
+}
+
 func AglAssert(pred bool, msg ...string) {
 	if !pred {
 		m := ""

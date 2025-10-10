@@ -13788,6 +13788,42 @@ func main() {
 	testCodeGen2(t, expected, test, ReleaseMode())
 }
 
+func TestCodeGen452_precondition_debug_mode(t *testing.T) {
+	src := `package main
+func main() {
+	print("foo")
+	precondition(true, "bar")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglPrint("foo")
+	AglPrecondition(true, "precondition failed line 4" + " " + "bar")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen453_precondition_release_mode(t *testing.T) {
+	src := `package main
+func main() {
+	print("foo")
+	precondition(true, "bar")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglPrint("foo")
+	AglPrecondition(true, "precondition failed line 4" + " " + "bar")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test, ReleaseMode())
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

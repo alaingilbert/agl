@@ -333,6 +333,7 @@ func (e *Env) loadCoreFunctions(m *PkgVisited) {
 		e.DefineFn(nenv, "print", "func (args ...any)")
 		e.DefineFn(nenv, "println", "func (args ...any)")
 		e.DefineFn(nenv, "printf", "func (format string, a ...any)")
+		e.DefineFn(nenv, "precondition", "func (pred bool, msg ...string)")
 		e.DefineFn(nenv, "assert", "func (pred bool, msg ...string)")
 		e.DefineFn(nenv, "assertEq", "func [T comparable](left, right T, msg ...string)")
 		e.DefineFn(nenv, "make", "func[T, U any](t T, size ...U) T")
