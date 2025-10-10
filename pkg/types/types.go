@@ -249,6 +249,12 @@ func (n NilType) GoStr() string     { return "nil" }
 func (n NilType) GoStrType() string { return "nil" }
 func (n NilType) String() string    { return "nil" }
 
+type ErrorType struct{} // Sentinel type for type errors during inference
+
+func (e ErrorType) GoStr() string     { return "<error>" }
+func (e ErrorType) GoStrType() string { return "<error>" }
+func (e ErrorType) String() string    { return "<error>" }
+
 type SetType struct{ K Type }
 
 func (s SetType) GoStr() string     { return fmt.Sprintf("AglSet[%s]", s.K.GoStr()) }

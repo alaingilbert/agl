@@ -36,6 +36,11 @@ type Env struct {
 	NoIdxUnwrap   bool
 	fset          *token.FileSet
 	pkgName       string
+	inferrer      InferrerErrorCollector // Optional: for collecting errors instead of panicking
+}
+
+type InferrerErrorCollector interface {
+	AddError(n ast.Node, msg string)
 }
 
 func (e *Env) WithPkgName(pkgName string, clb func()) {
@@ -1035,6 +1040,7 @@ func (e *Env) SubEnv() *Env {
 		parent:      e,
 		NoIdxUnwrap: e.NoIdxUnwrap,
 		fset:        e.fset,
+		inferrer:    e.inferrer, // Propagate inferrer reference
 	}
 	//p("SubEnv", e.ID, env.ID)
 	return env
@@ -1289,6 +1295,10 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return v.W
 		}
 		t = types.Unwrap(t)
+		// Check for error type to avoid cascading panics
+		if _, ok := t.(types.ErrorType); ok {
+			return types.ErrorType{}
+		}
 		return t.(types.FuncType).Return
 	case *ast.BasicLit:
 		switch xx.Kind {
@@ -1323,13 +1333,17 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			name := fmt.Sprintf("agl1.Vec.%s", xx.Sel.Name)
 			methodType := e.GetType2(&ast.Ident{Name: name}, fset)
 			if methodType == nil {
-				// Build a helpful error message
-				errMsg := fmt.Sprintf("%s: method '.%s' does not exist on array type", e.fset.Position(xx.Sel.Pos()), xx.Sel.Name)
+				errMsg := fmt.Sprintf("method '.%s' does not exist on array type", xx.Sel.Name)
 				// Add a suggestion if it's a common mistake
 				if xx.Sel.Name == "Join" {
 					errMsg += "\n    did you mean '.Joined()' instead?"
 				}
-				panic(errMsg)
+				// If we have an inferrer, collect the error; otherwise panic
+				if e.inferrer != nil {
+					e.inferrer.AddError(xx.Sel, errMsg)
+					return types.ErrorType{} // Return error type to prevent further panics
+				}
+				panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.Sel.Pos()), errMsg))
 			}
 			return methodType
 		case types.SetType:
@@ -1349,6 +1363,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.I64Type:
 			name := fmt.Sprintf("agl1.I64.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.ErrorType:
+			// Propagate error type to avoid cascading panics
+			return types.ErrorType{}
 		default:
 			//return nil
 			panic(fmt.Sprintf("%s: %v %v", e.fset.Position(xx.X.Pos()), xx.X, reflect.TypeOf(base)))

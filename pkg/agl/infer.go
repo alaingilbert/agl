@@ -46,6 +46,7 @@ func (infer *Inferrer) InferFile(fileName string, f *ast.File, fset *token.FileS
 		}
 	}
 	fileInferrer := &FileInferrer{fileName: fileName, env: infer.Env, f: f, fset: fset, mutEnforced: mutEnforced, imports: make(map[string]*ast.ImportSpec)}
+	fileInferrer.env.inferrer = fileInferrer // Set inferrer reference for error collection
 	fileInferrer.Infer()
 	return fileInferrer.imports, fileInferrer.Errors
 }
@@ -87,6 +88,14 @@ func (infer *FileInferrer) errorf(n ast.Node, f string, args ...any) {
 	msg += fmt.Sprintf("%d:%d: ", pos.Line, pos.Column)
 	msg += fmt.Sprintf(f, args...)
 	err := errors.New(msg)
+	infer.Errors = append(infer.Errors, &InferError{N: n, err: err})
+}
+
+// AddError adds an error without caller information (used by Env)
+func (infer *FileInferrer) AddError(n ast.Node, msg string) {
+	pos := infer.Pos(n)
+	fullMsg := fmt.Sprintf("%d:%d: %s", pos.Line, pos.Column, msg)
+	err := errors.New(fullMsg)
 	infer.Errors = append(infer.Errors, &InferError{N: n, err: err})
 }
 
