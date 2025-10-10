@@ -18,7 +18,7 @@ func myAtoi(s string) int {
         }
         if c >= '0' && c <= '9' {
             started = true
-            res = res * 10 + (int(c) - int('0'))
+            res = res * 10 + int(c - '0')
             if !neg && res > limit - 1 {
                 res = limit - 1
                 break
