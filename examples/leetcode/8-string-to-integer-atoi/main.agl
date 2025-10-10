@@ -4,6 +4,7 @@ func myAtoi(s string) int {
     mut res := 0
     mut started := false
     mut neg := false
+    limit := int(2 ** 31)
     for c in s {
         if !started && c == ' ' {
             continue
@@ -18,12 +19,12 @@ func myAtoi(s string) int {
         if c >= '0' && c <= '9' {
             started = true
             res = res * 10 + (int(c) - int('0'))
-            if !neg && res > int(pow(2, 31))-1 {
-                res = int(pow(2, 31))-1
+            if !neg && res > limit - 1 {
+                res = limit - 1
                 break
             }
-            if neg && res > int(pow(2, 31)) {
-                res = int(pow(2, 31))
+            if neg && res > limit {
+                res = limit
                 break
             }
             continue
