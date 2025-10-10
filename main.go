@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -748,32 +749,49 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 			}
 		}
 
-		// Deduplicate imports - extract existing imports from srcLines
-		existingImports := make(map[string]bool)
+		// Deduplicate imports - collect all imports (existing + core)
+		allImportsMap := make(map[string]string) // trimmed -> original with formatting
+
+		// Collect existing imports from srcLines
 		if importLineIdx != -1 && importEndIdx != -1 {
 			for i := importLineIdx + 1; i < importEndIdx; i++ {
-				trimmed := strings.TrimSpace(srcLines[i])
+				line := srcLines[i]
+				trimmed := strings.TrimSpace(line)
 				if trimmed != "" && trimmed != ")" {
-					existingImports[trimmed] = true
+					allImportsMap[trimmed] = line
 				}
 			}
 		}
 
-		// Filter out duplicate core imports
-		var uniqueCoreImports []string
+		// Add core imports (deduplicated)
 		for _, imp := range coreImports {
 			trimmed := strings.TrimSpace(imp)
-			if trimmed != "" && !existingImports[trimmed] {
-				uniqueCoreImports = append(uniqueCoreImports, imp)
+			if trimmed != "" {
+				// Keep existing formatting if already present, otherwise add new
+				if _, exists := allImportsMap[trimmed]; !exists {
+					allImportsMap[trimmed] = imp
+				}
 			}
 		}
 
-		// Insert core imports and body
+		// Sort imports for deterministic output
+		var sortedKeys []string
+		for key := range allImportsMap {
+			sortedKeys = append(sortedKeys, key)
+		}
+		sort.Strings(sortedKeys)
+
+		var allImports []string
+		for _, key := range sortedKeys {
+			allImports = append(allImports, allImportsMap[key])
+		}
+
+		// Replace existing imports with sorted, deduplicated imports
 		var result []string
 		if importLineIdx != -1 && importEndIdx != -1 {
-			// Insert core imports before closing )
-			result = append(result, srcLines[:importEndIdx]...)
-			result = append(result, uniqueCoreImports...)
+			// Replace the import block with sorted imports
+			result = append(result, srcLines[:importLineIdx+1]...)
+			result = append(result, allImports...)
 			result = append(result, srcLines[importEndIdx:]...)
 		} else {
 			// No imports - add after package line
@@ -787,7 +805,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 			if pkgIdx != -1 {
 				result = append(result, srcLines[:pkgIdx+1]...)
 				result = append(result, "import (")
-				result = append(result, uniqueCoreImports...)
+				result = append(result, allImports...)
 				result = append(result, ")")
 				result = append(result, srcLines[pkgIdx+1:]...)
 			} else {
