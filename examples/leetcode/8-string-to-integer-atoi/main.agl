@@ -1,0 +1,49 @@
+package main
+
+func myAtoi(s string) int {
+    mut res := 0
+    mut started := false
+    mut neg := false
+    for c in s {
+        if !started && c == ' ' {
+            continue
+        }
+        if !started && (c == '+' || c == '-') {
+            started = true
+            if c == '-' {
+                neg = true
+            }
+            continue
+        }
+        if c >= '0' && c <= '9' {
+            started = true
+            res = res * 10 + (int(c) - int('0'))
+            if !neg && res > int(pow(2, 31))-1 {
+                res = int(pow(2, 31))-1
+                break
+            }
+            if neg && res > int(pow(2, 31)) {
+                res = int(pow(2, 31))
+                break
+            }
+            continue
+        }
+        break
+    }
+    if neg {
+        res *= -1
+    }
+    return res
+}
+
+func main() {
+    assertEq(myAtoi("42"), 42)
+    assertEq(myAtoi(" -042"), -42)
+    assertEq(myAtoi("1337c0d3"), 1337)
+    assertEq(myAtoi("0-1"), 0)
+    assertEq(myAtoi("words and 987"), 0)
+    assertEq(myAtoi("-91283472332"), -2147483648)
+    assertEq(myAtoi("21474836460"), 2147483647)
+    assertEq(myAtoi("9223372036854775808"), 2147483647)
+    assertEq(myAtoi("-9223372036854775809"), -2147483648)
+}
