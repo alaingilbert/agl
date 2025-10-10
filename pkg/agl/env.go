@@ -1321,7 +1321,17 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return v.X
 		case types.ArrayType:
 			name := fmt.Sprintf("agl1.Vec.%s", xx.Sel.Name)
-			return e.GetType2(&ast.Ident{Name: name}, fset)
+			methodType := e.GetType2(&ast.Ident{Name: name}, fset)
+			if methodType == nil {
+				// Build a helpful error message
+				errMsg := fmt.Sprintf("%s: method '.%s' does not exist on array type", e.fset.Position(xx.Sel.Pos()), xx.Sel.Name)
+				// Add a suggestion if it's a common mistake
+				if xx.Sel.Name == "Join" {
+					errMsg += "\n    did you mean '.Joined()' instead?"
+				}
+				panic(errMsg)
+			}
+			return methodType
 		case types.SetType:
 			name := fmt.Sprintf("agl1.Set.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
