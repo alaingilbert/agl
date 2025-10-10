@@ -1,25 +1,16 @@
 package main
 
 func isPalindrome(x int) bool {
-    if x < 0 {
+    if x < 0 || x % 10 == 0 && x != 0 {
         return false
     }
     mut xx := x
-    mut s := ""
-    for xx > 0 {
-        rem := xx % 10
+    mut reverted := 0
+    for xx > reverted {
+        reverted = reverted * 10 + xx % 10
         xx /= 10
-        s += string(rem + '0')
     }
-    mut l, mut r := 0, s.Len()-1
-    for l < r {
-        if s[l] != s[r] {
-            return false
-        }
-        l++
-        r--
-    }
-    return true
+    return reverted == xx || xx == reverted / 10
 }
 
 func main() {
