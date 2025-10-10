@@ -16,11 +16,9 @@ func longestPalindrome(s string) string {
     mut res := ""
     for i in 0..=s.Len() {
         for j in (i..=s.Len()).Rev() {
-            if isPalindrome(s[i:j]) {
-                if s[i:j].Len() > res.Len() {
-                    res = s[i:j]
-                    break
-                }
+            if isPalindrome(s[i:j]) && s[i:j].Len() > res.Len() {
+                res = s[i:j]
+                break
             }
         }
     }
