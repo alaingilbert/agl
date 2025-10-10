@@ -3402,9 +3402,9 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 					out += e(g.prefix)
 				}
 				out += e(tmpVar+" := ") + c1.F() + e("\n")
-				out += e(g.prefix+"if "+tmpVar+" == nil {\n")
+				out += e(g.prefix + "if " + tmpVar + " == nil {\n")
 				out += e(g.prefix+"\t"+tmpVar+" = ") + c2.F() + e("\n")
-				out += e(g.prefix+"}\n")
+				out += e(g.prefix + "}\n")
 				out += e(g.prefix) + lhs() + e(" "+stmt.Tok.String()+" "+tmpVar+"\n")
 				return out
 			}, B: bs}
