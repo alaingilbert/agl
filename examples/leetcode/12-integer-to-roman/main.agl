@@ -1,0 +1,11 @@
+package main
+
+func intToRoman(num int) string {
+    return ""
+}
+
+func main() {
+    assertEq(intToRoman(3749), "MMMDCCXLIX")
+    assertEq(intToRoman(58), "LVIII")
+    assertEq(intToRoman(1994), "MCMXCIV")
+}
