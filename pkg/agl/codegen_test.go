@@ -13707,6 +13707,18 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "4:7: left side of nil-coalescing operator must be a pointer type")
 }
 
+func TestCodeGen448(t *testing.T) {
+	src := `package main
+func helper(s string, mut c set[string]) string {
+	a := helper(s[1:], c)
+	b := helper(s[:len(s)-1], c)
+	return if a.Len() > b.Len() { a } else { b }
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.True(t, len(test.errs) > 0)
+	tassert.Contains(t, test.errs[0].Error(), "missing mut keyword")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

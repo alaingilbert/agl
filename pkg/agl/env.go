@@ -1256,8 +1256,8 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 				return v2.Type
 			}
 		}
-		//return nil
-		panic(fmt.Sprintf("%s: %v", e.fset.Position(xx.Pos()), xx.Name))
+		return nil
+		//panic(fmt.Sprintf("%s: %v", e.fset.Position(xx.Pos()), xx.Name))
 	case *ast.FuncType:
 		return funcTypeToFuncType("", xx, e, fset, false)
 	case *ast.FuncLit:
