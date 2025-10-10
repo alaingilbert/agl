@@ -1,0 +1,22 @@
+package main
+
+import "math"
+
+func reverse(x int) int {
+    mut y := int32(x)
+    var mut a int32
+    for y != 0 {
+        if a > math.MaxInt32/10 || a < math.MinInt32/10 {
+            return 0
+        }
+        a = a*10 + y%10
+        y /= 10
+    }
+    return int(a)
+}
+
+func main() {
+    assertEq(reverse(123), 321)
+    assertEq(reverse(-123), -321)
+    assertEq(reverse(120), 21)
+}
