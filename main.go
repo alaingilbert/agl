@@ -748,12 +748,32 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 			}
 		}
 
+		// Deduplicate imports - extract existing imports from srcLines
+		existingImports := make(map[string]bool)
+		if importLineIdx != -1 && importEndIdx != -1 {
+			for i := importLineIdx + 1; i < importEndIdx; i++ {
+				trimmed := strings.TrimSpace(srcLines[i])
+				if trimmed != "" && trimmed != ")" {
+					existingImports[trimmed] = true
+				}
+			}
+		}
+
+		// Filter out duplicate core imports
+		var uniqueCoreImports []string
+		for _, imp := range coreImports {
+			trimmed := strings.TrimSpace(imp)
+			if trimmed != "" && !existingImports[trimmed] {
+				uniqueCoreImports = append(uniqueCoreImports, imp)
+			}
+		}
+
 		// Insert core imports and body
 		var result []string
 		if importLineIdx != -1 && importEndIdx != -1 {
 			// Insert core imports before closing )
 			result = append(result, srcLines[:importEndIdx]...)
-			result = append(result, coreImports...)
+			result = append(result, uniqueCoreImports...)
 			result = append(result, srcLines[importEndIdx:]...)
 		} else {
 			// No imports - add after package line
@@ -767,7 +787,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 			if pkgIdx != -1 {
 				result = append(result, srcLines[:pkgIdx+1]...)
 				result = append(result, "import (")
-				result = append(result, coreImports...)
+				result = append(result, uniqueCoreImports...)
 				result = append(result, ")")
 				result = append(result, srcLines[pkgIdx+1:]...)
 			} else {
