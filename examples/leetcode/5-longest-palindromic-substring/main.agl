@@ -1,0 +1,40 @@
+package main
+
+func isPalindrome(s string) bool {
+    mut l, mut r := 0, s.Len()-1
+    for l < r {
+        if s[l] != s[r] {
+            return false
+        }
+        l++
+        r--
+    }
+    return true
+}
+
+func longestPalindrome(s string) string {
+    mut res := ""
+    for i in 0..=s.Len() {
+        for j in (i..=s.Len()).Rev() {
+            if isPalindrome(s[i:j]) {
+                if s[i:j].Len() > res.Len() {
+                    res = s[i:j]
+                    break
+                }
+            }
+        }
+    }
+    return res
+}
+
+func main() {
+    assert(isPalindrome("b"))
+    assert(isPalindrome("bb"))
+    assert(isPalindrome("bab"))
+    assert(isPalindrome("baab"))
+    assert(!isPalindrome("baaba"))
+    assertEq(longestPalindrome("babad"), "bab")
+    assertEq(longestPalindrome("cbbd"), "bb")
+    assertEq(longestPalindrome("abb"), "bb")
+    assertEq(longestPalindrome("babaddtattarrattatddetartrateedredividerb"), "ddtattarrattatdd")
+}
