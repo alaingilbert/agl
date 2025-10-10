@@ -31,6 +31,7 @@ type Generator struct {
 	extensions    map[string]Extension
 	genMap        map[string]types.Type
 	allowUnused   bool
+	releaseMode   bool
 	inlineStmt    bool
 	fragments     Frags
 	emitEnabled   bool
@@ -86,6 +87,7 @@ type ExtensionTest struct {
 
 type GeneratorConf struct {
 	AllowUnused bool
+	ReleaseMode bool
 }
 
 type GeneratorOption func(*GeneratorConf)
@@ -93,6 +95,12 @@ type GeneratorOption func(*GeneratorConf)
 func AllowUnused() GeneratorOption {
 	return func(c *GeneratorConf) {
 		c.AllowUnused = true
+	}
+}
+
+func ReleaseMode() GeneratorOption {
+	return func(c *GeneratorConf) {
+		c.ReleaseMode = true
 	}
 }
 
@@ -112,6 +120,7 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 		genFuncDecls2: make(map[string]func() string),
 		genFuncDecls:  genFns,
 		allowUnused:   conf.AllowUnused,
+		releaseMode:   conf.ReleaseMode,
 		emitEnabled:   true,
 		imports:       imports,
 	}
@@ -3290,6 +3299,18 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 }
 
 func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
+	// Check if this is an assert/assertEq call in release mode
+	if g.releaseMode {
+		if callExpr, ok := stmt.X.(*ast.CallExpr); ok {
+			if ident, ok := callExpr.Fun.(*ast.Ident); ok {
+				if ident.Name == "assert" || ident.Name == "assertEq" {
+					// Skip this statement entirely in release mode
+					return GenFrag{F: func() string { return "" }}
+				}
+			}
+		}
+	}
+
 	e := EmitWith(g, stmt)
 	xFrag := g.genExpr(stmt.X)
 	bs := xFrag.B

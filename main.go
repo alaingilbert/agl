@@ -56,6 +56,7 @@ func main() {
 					&cli.BoolFlag{Name: "debug"},
 					&cli.BoolFlag{Name: "no-mut-check", Usage: "disable mutation checking"},
 					&cli.BoolFlag{Name: "allow-unused", Usage: ""},
+					&cli.BoolFlag{Name: "release", Usage: "disable assert and assertEq code generation"},
 				},
 				Action: runAction,
 			},
@@ -74,6 +75,7 @@ func main() {
 					&cli.BoolFlag{Name: "no-mut-check", Usage: "disable mutation checking"},
 					&cli.BoolFlag{Name: "allow-unused", Usage: ""},
 					&cli.BoolFlag{Name: "standalone", Usage: "embed core library in generated file"},
+					&cli.BoolFlag{Name: "release", Usage: "disable assert and assertEq code generation"},
 				},
 				Usage:  "build command",
 				Action: buildAction,
@@ -218,7 +220,7 @@ func executeAction(ctx context.Context, cmd *cli.Command) error {
 	core, _ := agl.ContentFs.ReadFile(filepath.Join("core", "core.go"))
 	coreLines := strings.Split(string(core), "\n")
 	coreImports := []byte(strings.Join(coreLines[:18], "\n"))
-	_, _, out := genCode1("", []byte(input), coreImports, true, false)
+	_, _, out := genCode1("", []byte(input), coreImports, true, false, false)
 	lines := strings.Split(out, "\n")
 	out = strings.Join(lines, "\n")
 	out += strings.Join(coreLines[18:], "\n")
@@ -230,6 +232,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	debugFlag := cmd.Bool("debug")
 	noMutCheck := cmd.Bool("no-mut-check")
 	allowUnused := cmd.Bool("allow-unused")
+	releaseFlag := cmd.Bool("release")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -275,7 +278,7 @@ func runAction(ctx context.Context, cmd *cli.Command) error {
 	}
 	by := agl.Must(os.ReadFile(fileName))
 	mutEnforced := !noMutCheck
-	g, fset, src := genCode1(fileName, by, nil, mutEnforced, allowUnused)
+	g, fset, src := genCode1(fileName, by, nil, mutEnforced, allowUnused, releaseFlag)
 
 	// Get any additional arguments to pass to the program
 	var programArgs []string
@@ -318,17 +321,18 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	noMutCheck := cmd.Bool("no-mut-check")
 	allowUnused := cmd.Bool("allow-unused")
 	standalone := cmd.Bool("standalone")
+	releaseFlag := cmd.Bool("release")
 	mutEnforced := !noMutCheck
 
 	if cmd.NArg() == 0 {
-		return buildProject(mutEnforced)
+		return buildProject(mutEnforced, releaseFlag)
 	}
 	outputFlag := cmd.String("output")
 	forceFlag := cmd.Bool("force")
 	sourceMapFlag := cmd.Bool("sourceMap")
 	fileName := cmd.Args().Get(0)
 	m := agl.NewPkgVisited()
-	err := buildFile(fileName, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m)
+	err := buildFile(fileName, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, releaseFlag, m)
 	if err != nil {
 		panic(err)
 	}
@@ -575,7 +579,7 @@ func filterUnusedImports(code string, imports []string) []string {
 	return result
 }
 
-func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused bool, m *agl.PkgVisited) error {
+func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, releaseFlag bool, m *agl.PkgVisited) error {
 	if m.ContainsAdd(fileName) {
 		return nil
 	}
@@ -613,7 +617,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m); err != nil {
+					if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, releaseFlag, m); err != nil {
 						panic(err)
 					}
 				}
@@ -635,7 +639,7 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 				if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 					continue
 				}
-				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, m); err != nil {
+				if err := buildFile(filepath.Join(importPath, entry.Name()), forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, releaseFlag, m); err != nil {
 					panic(err)
 				}
 			}
@@ -651,6 +655,9 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 	opts := make([]agl.GeneratorOption, 0)
 	if allowUnused {
 		opts = append(opts, agl.AllowUnused())
+	}
+	if releaseFlag {
+		opts = append(opts, agl.ReleaseMode())
 	}
 	g := agl.NewGenerator(i.Env, f, f2, imports, fset, opts...)
 	src := g.Generate()
@@ -841,9 +848,9 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 	return nil
 }
 
-func buildProject(mutEnforced bool) error {
+func buildProject(mutEnforced, releaseFlag bool) error {
 	visited := make(map[string]struct{})
-	if err := buildFolder(".", mutEnforced, visited); err != nil {
+	if err := buildFolder(".", mutEnforced, releaseFlag, visited); err != nil {
 		return err
 	}
 	cmd := exec.Command("go", "build")
@@ -854,7 +861,7 @@ func buildProject(mutEnforced bool) error {
 
 const modPrefix = "agl/" // TODO get from go.mod
 
-func buildFolder(folderPath string, mutEnforced bool, visited map[string]struct{}) error {
+func buildFolder(folderPath string, mutEnforced, releaseFlag bool, visited map[string]struct{}) error {
 	if _, ok := visited[folderPath]; ok {
 		return nil
 	}
@@ -872,7 +879,7 @@ func buildFolder(folderPath string, mutEnforced bool, visited map[string]struct{
 		}
 		fileName := filepath.Join(folderPath, entry.Name())
 		if strings.HasSuffix(fileName, ".agl") {
-			if err := buildAglFile(fileName, mutEnforced); err != nil {
+			if err := buildAglFile(fileName, mutEnforced, releaseFlag); err != nil {
 				panic(fmt.Sprintf("failed to build %s", fileName))
 			}
 		} else if strings.HasSuffix(fileName, ".go") {
@@ -901,7 +908,7 @@ func buildFolder(folderPath string, mutEnforced bool, visited map[string]struct{
 							pathValue := strings.ReplaceAll(s.Path.Value, `"`, ``)
 							if strings.HasPrefix(pathValue, modPrefix) {
 								newPath := strings.TrimPrefix(pathValue, modPrefix)
-								if err := buildFolder(newPath, mutEnforced, visited); err != nil {
+								if err := buildFolder(newPath, mutEnforced, releaseFlag, visited); err != nil {
 									return err
 								}
 							}
@@ -914,7 +921,7 @@ func buildFolder(folderPath string, mutEnforced bool, visited map[string]struct{
 	return nil
 }
 
-func genCode1(fileName string, src, coreGoImports []byte, mutEnforced, allowUnused bool) (*agl.Generator, *token.FileSet, string) {
+func genCode1(fileName string, src, coreGoImports []byte, mutEnforced, allowUnused, releaseFlag bool) (*agl.Generator, *token.FileSet, string) {
 	fset, f, f2 := agl.ParseSrc(string(src))
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
@@ -935,16 +942,19 @@ func genCode1(fileName string, src, coreGoImports []byte, mutEnforced, allowUnus
 	if allowUnused {
 		opts = append(opts, agl.AllowUnused())
 	}
+	if releaseFlag {
+		opts = append(opts, agl.ReleaseMode())
+	}
 	g := agl.NewGenerator(i.Env, f, f2, imports, fset, opts...)
 	return g, fset, g.Generate()
 }
 
 func genCode(fileName string, src []byte, mutEnforced bool) string {
-	_, _, out := genCode1(fileName, src, nil, mutEnforced, false)
+	_, _, out := genCode1(fileName, src, nil, mutEnforced, false, false)
 	return out
 }
 
-func buildAglFile(fileName string, mutEnforced bool) error {
+func buildAglFile(fileName string, mutEnforced, releaseFlag bool) error {
 	by, err := os.ReadFile(fileName)
 	if err != nil {
 		return err

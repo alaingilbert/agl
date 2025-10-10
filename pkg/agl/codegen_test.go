@@ -13770,6 +13770,24 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "17:17: method '.Join' does not exist on array type\n    did you mean '.Joined()' instead?")
 }
 
+func TestCodeGen451(t *testing.T) {
+	src := `package main
+func main() {
+	print("foo")
+	assert(true, "bar")
+	assertEq(1, 1, "baz")
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	AglPrint("foo")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test, ReleaseMode())
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
