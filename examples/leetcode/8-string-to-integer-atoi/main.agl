@@ -2,8 +2,7 @@ package main
 
 func myAtoi(s string) int {
     mut res := 0
-    mut started := false
-    mut neg := false
+    var mut started, mut neg bool
     limit := int(2 ** 31)
     for c in s {
         if !started && c == ' ' {
