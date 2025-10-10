@@ -611,6 +611,41 @@ func matchHasExplicitReturns(matchExpr *ast.MatchExpr) bool {
 	return false
 }
 
+func ifExprHasExplicitReturns(ifExpr *ast.IfExpr) bool {
+	// Check if all branches end with return statements
+	if ifExpr.Body == nil || len(ifExpr.Body.List) == 0 {
+		return false
+	}
+	// Check if the then branch ends with a return
+	lastStmt := ifExpr.Body.List[len(ifExpr.Body.List)-1]
+	if _, isReturn := lastStmt.(*ast.ReturnStmt); !isReturn {
+		return false
+	}
+	// Check the else branch (if it exists)
+	if ifExpr.Else == nil {
+		// No else branch means not all paths return
+		return false
+	}
+	// Check what kind of else we have
+	switch elseStmt := ifExpr.Else.(type) {
+	case *ast.BlockStmt:
+		// Else is a block - check if it ends with return
+		if len(elseStmt.List) == 0 {
+			return false
+		}
+		_, isReturn := elseStmt.List[len(elseStmt.List)-1].(*ast.ReturnStmt)
+		return isReturn
+	case *ast.ExprStmt:
+		// Else is an expression - check if it's another if-expr with explicit returns
+		if nestedIf, ok := elseStmt.X.(*ast.IfExpr); ok {
+			return ifExprHasExplicitReturns(nestedIf)
+		}
+		return false
+	default:
+		return false
+	}
+}
+
 func (g *Generator) genStmt(s ast.Stmt) GenFrag {
 	//p("genStmt", to(s))
 	switch stmt := s.(type) {
@@ -3305,6 +3340,14 @@ func (g *Generator) genReturnStmt(stmt *ast.ReturnStmt) GenFrag {
 	e := EmitWith(g, stmt)
 	var bs []func() string
 	var resultFrag GenFrag
+
+	// Check if the result is an IfExpr with explicit returns in all branches
+	// If so, generate the if statement directly without the outer "return" keyword
+	if ifExpr, ok := stmt.Result.(*ast.IfExpr); ok && ifExprHasExplicitReturns(ifExpr) {
+		// Generate the if expression as a statement (it has its own returns)
+		return g.genStmt(&ast.ExprStmt{X: ifExpr})
+	}
+
 	if stmt.Result != nil {
 		resultFrag = g.genExpr(stmt.Result)
 		bs = append(bs, resultFrag.B...)
@@ -3846,7 +3889,9 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	genAssignStmt := func(last ast.Stmt) *ast.AssignStmt {
 		return &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: varName}}, Rhs: []ast.Expr{last.(*ast.ExprStmt).X}, Tok: token.ASSIGN}
 	}
-	if hasTyp && len(stmt.Body.List) > 0 {
+	// Check if this if-expr has explicit returns - if so, don't convert to assignments
+	hasExplicitReturns := ifExprHasExplicitReturns(stmt)
+	if hasTyp && !hasExplicitReturns && len(stmt.Body.List) > 0 {
 		last := Must(Last(stmt.Body.List))
 		stmt.Body.List[len(stmt.Body.List)-1] = genAssignStmt(last)
 	}
@@ -3854,7 +3899,7 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	c2 := g.genStmt(stmt.Body)
 	g.ifVarName = varName
 	if stmt.Else != nil {
-		if hasTyp {
+		if hasTyp && !hasExplicitReturns {
 			switch v := stmt.Else.(type) {
 			case *ast.BlockStmt:
 				if len(v.List) > 0 {
@@ -4070,10 +4115,17 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			}
 			// If there's exactly one non-empty statement and it's an expression, add implicit return
 			if nonEmptyCount == 1 {
-				if exprStmt, ok := firstNonEmpty.(*ast.ExprStmt); ok {
+				// Check if it's already a return statement - if so, don't add implicit return
+				if _, ok := firstNonEmpty.(*ast.ReturnStmt); ok {
+					// Already has explicit return, don't add implicit return
+					implicitReturn = false
+				} else if exprStmt, ok := firstNonEmpty.(*ast.ExprStmt); ok {
 					// Check if this is a match expression with explicit returns
 					if matchExpr, ok := exprStmt.X.(*ast.MatchExpr); ok && matchHasExplicitReturns(matchExpr) {
 						// Don't add implicit return - match has explicit returns
+						implicitReturn = false
+					} else if ifExpr, ok := exprStmt.X.(*ast.IfExpr); ok && ifExprHasExplicitReturns(ifExpr) {
+						// Don't add implicit return - if has explicit returns in all branches
 						implicitReturn = false
 					} else {
 						// Single expression in function with return type - implicit return

@@ -13824,6 +13824,64 @@ func main() {
 	testCodeGen2(t, expected, test, ReleaseMode())
 }
 
+func TestCodeGen454(t *testing.T) {
+	src := `package main
+func test() bool {
+	if 1 == 2 {
+		return true
+	} else if 2 == 3 {
+		return true
+	} else {
+		return false
+	}
+}`
+	expected := `// agl:generated
+package main
+func test() bool {
+	if 1 == 2 {
+		return true
+	} else if 2 == 3 {
+		return true
+	} else {
+		return false
+	}
+
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen455(t *testing.T) {
+	src := `package main
+func test() bool {
+	if 1 == 2 {
+		return true
+	} else if 2 == 3 {
+	} else {
+		return false
+	}
+	return false
+}`
+	expected := `// agl:generated
+package main
+func test() bool {
+	if 1 == 2 {
+		return true
+	} else if 2 == 3 {
+	} else {
+		return false
+	}
+
+	return false
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

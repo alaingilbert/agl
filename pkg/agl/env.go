@@ -1479,6 +1479,11 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		return e.GetType2(xx.List[len(xx.List)-1], fset)
 	case *ast.ExprStmt:
 		return e.GetType2(xx.X, fset)
+	case *ast.ReturnStmt:
+		if xx.Result == nil {
+			return types.VoidType{}
+		}
+		return e.GetType2(xx.Result, fset)
 	default:
 		//return nil
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
