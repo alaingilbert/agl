@@ -8,15 +8,13 @@ func myAtoi(s string) int {
     for c in s {
         if !started && c == ' ' {
             continue
-        }
-        if !started && (c == '+' || c == '-') {
+        } else if !started && (c == '+' || c == '-') {
             started = true
             if c == '-' {
                 neg = true
             }
             continue
-        }
-        if c >= '0' && c <= '9' {
+        } else if c >= '0' && c <= '9' {
             started = true
             res = res * 10 + int(c - '0')
             if !neg && res > limit - 1 {
@@ -31,9 +29,7 @@ func myAtoi(s string) int {
         }
         break
     }
-    if neg {
-        res *= -1
-    }
+    res *= if neg { -1 } else { 1 }
     return res
 }
 
