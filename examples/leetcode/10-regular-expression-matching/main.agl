@@ -1,19 +1,14 @@
 package main
 
 func isMatch(s string, p string) bool {
-    if s.Len() == 0 && p.Len() == 0 {
-        return true
-    } else if s.Len() == 0 && p.Len() >= 2 && p[1] == '*' {
-        return isMatch(s, p[2:])
-    } else if s.Len() == 0 || p.Len() == 0 {
-        return false
-    } else if p.Len() >= 2 && p[1] == '*' {
-        return isMatch(s, p[2:]) || ((s[0] == p[0] || p[0] == '.') && isMatch(s[1:], p))
-    } else if s[0] == p[0] || p[0] == '.' {
-        return isMatch(s[1:], p[1:])
-    } else {
-        return false
+    if p.Len() == 0 {
+        return s.Len() == 0
     }
+    firstMatch := s.Len() > 0 && (s[0] == p[0] || p[0] == '.')
+    if p.Len() >= 2 && p[1] == '*' {
+        return isMatch(s, p[2:]) || (firstMatch && isMatch(s[1:], p))
+    }
+    return firstMatch && isMatch(s[1:], p[1:])
 }
 
 func main() {
