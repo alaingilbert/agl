@@ -340,6 +340,9 @@ func main() {
     for el in (0..3).Rev() { // 2 1 0
         print(el)
     }
+	for c in "hello" {
+		print(string(c))
+	}
 }
 ```
 
