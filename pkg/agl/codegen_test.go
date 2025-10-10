@@ -13882,6 +13882,20 @@ func test() bool {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen456(t *testing.T) {
+	src := `package main
+func test() bool {
+	if 1 == 2 {
+		return true
+	} else if 2 == 3 {
+		return false
+	}
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.True(t, len(test.errs) > 0)
+	tassert.Contains(t, test.errs[0].Error(), "3:2: if expression must be exhaustive when used as return value (missing else clause)")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -657,6 +657,13 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					(len(decl.Body.List) == 2 && TryCast[*ast.EmptyStmt](decl.Body.List[1]))
 				if cond1 && decl.Type.Result != nil {
 					if v, ok := decl.Body.List[0].(*ast.ExprStmt); ok && !TryCast[*ast.MatchExpr](v.X) {
+						// Check if it's a non-exhaustive if-expression
+						if ifExpr, isIf := v.X.(*ast.IfExpr); isIf {
+							if !isIfExprExhaustive(ifExpr) {
+								infer.errorf(ifExpr, "if expression must be exhaustive when used as return value (missing else clause)")
+								return
+							}
+						}
 						decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
 					}
 				}
@@ -4709,6 +4716,22 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 		return
 	}
 	infer.SetType(stmt, types.VoidType{})
+}
+
+// isIfExprExhaustive checks if an if-expression has an else clause that covers all cases
+func isIfExprExhaustive(ifExpr *ast.IfExpr) bool {
+	if ifExpr.Else == nil {
+		return false
+	}
+	// Check if the else is another if-expression
+	if elseStmt, ok := ifExpr.Else.(*ast.ExprStmt); ok {
+		if nestedIf, ok := elseStmt.X.(*ast.IfExpr); ok {
+			// Recursively check if the nested if is exhaustive
+			return isIfExprExhaustive(nestedIf)
+		}
+	}
+	// Has an else clause that's not another if - it's exhaustive
+	return true
 }
 
 func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
