@@ -13719,6 +13719,28 @@ func helper(s string, mut c set[string]) string {
 	tassert.Contains(t, test.errs[0].Error(), "missing mut keyword")
 }
 
+func TestCodeGen449(t *testing.T) {
+	src := `package main
+func main() {
+	s := "hello"
+	for c in s {
+		print(c)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := "hello"
+	for _, c := range s {
+		AglPrint(c)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

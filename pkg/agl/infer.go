@@ -3445,6 +3445,9 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			case types.RangeType:
 				t = v.Typ
 				infer.SetType(cond.X, t)
+			case types.StringType:
+				t = types.ByteType{}
+				infer.SetType(cond.X, t)
 			case types.StructType:
 				if v.Name == "Sequence" {
 					t = v.TypeParams[0].(types.GenericType).W

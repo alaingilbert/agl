@@ -3106,6 +3106,8 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							op := utils.Ternary(c2V == "_", "=", ":=")
 							out += c2V
 							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
+						case types.StringType:
+							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.StructType:
 							if vv.Name == "Sequence" {
 								out += e(g.prefix + "for ")
