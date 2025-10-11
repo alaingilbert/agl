@@ -39,9 +39,9 @@ func (mut v *Value) * (mut other *Value) *Value {
     return out
 }
 func (mut v *Value) ** (other f64) *Value {
-    mut out := NewValue(v.Data ** f64(other), []*Value{v})
+    mut out := NewValue(v.Data ** other, []*Value{v})
     out.backward = func() {
-        v.Grad += f64(other) * (f64(v.Data) ** f64(other-1)) * out.Grad
+        v.Grad += other * (v.Data ** (other-1)) * out.Grad
     }
     return out
 }
@@ -55,13 +55,13 @@ func (mut v *Value) - (other *Value) *Value {
     return v + -other
 }
 func (mut v *Value) / (other *Value) *Value {
-    return v * other ** f64(-1)
+    return v * other ** -1.0
 }
 func (mut v *Value) / (other f64) *Value {
-    return v * other ** f64(-1)
+    return v * other ** -1.0
 }
 func (mut v *Value) __RQUO (other f64) *Value {
-    return other * v ** f64(-1)
+    return other * v ** -1.0
 }
 func (mut v *Value) __RADD (other f64) *Value {
     return v + other
@@ -70,12 +70,12 @@ func (mut v *Value) __RMUL (other f64) *Value {
     return v * other
 }
 func (mut v *Value) __NEG() *Value {
-    return v * f64(-1)
+    return v * -1.0
 }
 func (mut v *Value) Relu() *Value {
-    mut out := NewValue((if v.Data < 0.0 { f64(0.0) } else { v.Data }), []*Value{v})
+    mut out := NewValue((if v.Data < 0.0 { 0.0 } else { v.Data }), []*Value{v})
     out.backward = func() {
-        v.Grad += if out.Data > 0.0 { out.Grad } else { f64(0.0) }
+        v.Grad += if out.Data > 0.0 { out.Grad } else { 0.0 }
     }
     return out
 }

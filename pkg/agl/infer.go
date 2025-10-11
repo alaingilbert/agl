@@ -993,11 +993,10 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 	case token.STRING:
 		infer.SetType(expr, types.StringType{})
 	case token.FLOAT:
-		infer.SetType(expr, types.UntypedNumType{})
 		if infer.optType.IsDefinedFor(expr) && !TryCast[types.GenericType](infer.optType.Type) {
 			infer.SetType(expr, infer.optType.Type)
 		} else {
-			infer.SetType(expr, types.UntypedNumType{})
+			infer.SetType(expr, types.F64Type{})
 		}
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
