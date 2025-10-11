@@ -410,6 +410,25 @@ func (v agl1.Vec[string]) MyJoined(sep string) string {
 }
 ```
 
+## assert & precondition
+
+`assert` and `assertEq` will not be part of the `release` code.  
+`precondition` will be part of both `debug` and `release` code.  
+
+```go
+package main
+
+func main() {
+	a := 42
+	assert(a == 42)
+	assert(a == 42, "some message")
+	assertEq(a, 42) // assertEq gives a better error message containing the values at runtime
+	assertEq(a, 42, "some message")
+	precondition(a == 42)
+	precondition(a == 42, "some message")
+}
+```
+
 ## Using Go libraries
 
 ```go
