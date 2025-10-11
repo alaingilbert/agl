@@ -13956,6 +13956,11 @@ func test(a, b int) {
 		mut b := b
 		b += 1
 		print(b)
+		if true {
+			mut b := b
+			b += 1
+			print(b)
+		}
 	}
 	print(a, b)
 }`
@@ -13970,6 +13975,11 @@ func test(a, b int) {
 		b__ := b_
 		b__ += 1
 		AglPrint(b__)
+		if true {
+			b___ := b__
+			b___ += 1
+			AglPrint(b___)
+		}
 	}
 	AglPrint(a_, b_)
 }
