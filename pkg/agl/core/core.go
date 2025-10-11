@@ -1184,10 +1184,15 @@ func AglStringLen(s string) int {
 	return len(s)
 }
 
-func AglStringEnumerated(s string) []AglTupleStruct_int_RuneType {
-	out := make([]AglTupleStruct_int_RuneType, 0, len(s))
+type AglTupleStruct_int_int32 struct {
+	Arg0 int
+	Arg1 int32
+}
+
+func AglStringEnumerated(s string) []AglTupleStruct_int_int32 {
+	out := make([]AglTupleStruct_int_int32, 0, len(s))
 	for i, c := range s {
-		out = append(out, AglTupleStruct_int_RuneType{Arg0: i, Arg1: c})
+		out = append(out, AglTupleStruct_int_int32{Arg0: i, Arg1: c})
 	}
 	return out
 }

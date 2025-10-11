@@ -3440,14 +3440,14 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 						if _, ok := types.Unwrap(receiverType).(types.StringType); ok {
 							// Set the type of the call expression to avoid tuple struct generation
 							infer.SetType(cond.Y, receiverType)
-							// Handle tuple unpacking for (i, c) where i is int and c is rune
+							// Handle tuple unpacking for (i, c) where i is int and c is i32 (rune)
 							if xTup, ok := cond.X.(*ast.TupleExpr); ok && len(xTup.Values) == 2 {
-								tupType := types.TupleType{Elts: []types.Type{types.IntType{}, types.RuneType{}}}
+								tupType := types.TupleType{Elts: []types.Type{types.IntType{}, types.I32Type{}}}
 								infer.SetType(cond.X, tupType)
 								infer.SetType(xTup.Values[0], types.IntType{})
-								infer.SetType(xTup.Values[1], types.RuneType{})
+								infer.SetType(xTup.Values[1], types.I32Type{})
 								infer.env.Define(xTup.Values[0], xTup.Values[0].(*ast.Ident).Name, types.IntType{})
-								infer.env.Define(xTup.Values[1], xTup.Values[1].(*ast.Ident).Name, types.RuneType{})
+								infer.env.Define(xTup.Values[1], xTup.Values[1].(*ast.Ident).Name, types.I32Type{})
 							}
 							// Skip the rest of the normal for loop processing
 							goto done

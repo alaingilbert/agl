@@ -929,7 +929,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.Lines", "func (s string) []string")
 		e.DefineFn(nenv, "agl1.String.AsBytes", "func (s string) []byte")
 		e.DefineFn(nenv, "agl1.String.Len", "func (s string) int")
-		e.DefineFn(nenv, "agl1.String.Enumerated", "func (s string) [](int, rune)")
+		e.DefineFn(nenv, "agl1.String.Enumerated", "func (s string) [](int, i32)")
 		e.DefineFn(nenv, "agl1.String.Int", "func (s string) int?", WithDesc("Parse the string into an 'int' value.\nReturns None if the string cannot be parsed as an 'int'."))
 		e.DefineFn(nenv, "agl1.String.I8", "func (s string) i8?", WithDesc("Parse the string into an 'i8' value.\nReturns None if the string cannot be parsed as an 'i8'."))
 		e.DefineFn(nenv, "agl1.String.I16", "func (s string) i16?", WithDesc("Parse the string into an 'i16' value.\nReturns None if the string cannot be parsed as an 'i16'."))
