@@ -3,12 +3,12 @@ package main
 func intToRoman(num int) string {
     a1 := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
     a2 := []string{"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"}
-    mut n := num
+    mut num := num
     mut res := ""
     mut i := 0
-    for n > 0 {
-        if n >= a1[i] {
-            n -= a1[i]
+    for num > 0 {
+        if num >= a1[i] {
+            num -= a1[i]
             res += a2[i]
         } else {
             i++

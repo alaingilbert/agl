@@ -4,13 +4,13 @@ func isPalindrome(x int) bool {
     if x < 0 || x % 10 == 0 && x != 0 {
         return false
     }
-    mut xx := x
+    mut x := x
     mut reverted := 0
-    for xx > reverted {
-        reverted = reverted * 10 + xx % 10
-        xx /= 10
+    for x > reverted {
+        reverted = reverted * 10 + x % 10
+        x /= 10
     }
-    return reverted == xx || xx == reverted / 10
+    return reverted == x || x == reverted / 10
 }
 
 func main() {
