@@ -346,6 +346,9 @@ func main() {
 	for (i, c) in "hello".Enumerated() {
 		print(string(c))
 	}
+	for el in []int{1, 2, 3} where el % 2 == 0 { // for-in can have an optional where clause
+		print(el)
+	}
 }
 ```
 
