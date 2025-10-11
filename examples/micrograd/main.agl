@@ -73,7 +73,7 @@ func (mut v *Value) __NEG() *Value {
     return v * f64(-1)
 }
 func (mut v *Value) Relu() *Value {
-    mut out := NewValue(if v.Data < 0.0 { f64(0.0) } else { v.Data }, []*Value{v})
+    mut out := NewValue((if v.Data < 0.0 { f64(0.0) } else { v.Data }), []*Value{v})
     out.backward = func() {
         v.Grad += if out.Data > 0.0 { out.Grad } else { f64(0.0) }
     }
@@ -103,17 +103,20 @@ func main() {
     a := NewValue1(-4.0)
     b := NewValue1(2.0)
     mut c := a + b
-    mut d := a * b + b**f64(3)
-    c += c + f64(1)
+    mut d := a * b + b**3
+    c += c + 1
     c += f64(1) + c + -a
-    d += d * f64(2) + (b + a).Relu()
+    d += d * 2 + (b + a).Relu()
     d += f64(3) * d + (b - a).Relu()
     e := c - d
-    f := e**f64(2)
-    mut g := f / f64(2)
+    f := e**2
+    mut g := f / 2
     g += f64(10) / f
+    assertEq(fmt.Sprintf("%.4f", g.Data), "24.7041")
     fmt.Printf("%.4f\n", g.Data) // prints 24.7041, the outcome of this forward pass
     g.Backward()
+    assertEq(fmt.Sprintf("%.4f", a.Grad), "138.8338")
+    assertEq(fmt.Sprintf("%.4f", b.Grad), "645.5773")
     fmt.Printf("%.4f\n", a.Grad) // prints 138.8338, i.e. the numerical value of dg/da
     fmt.Printf("%.4f\n", b.Grad) // prints 645.5773, i.e. the numerical value of dg/db
 }

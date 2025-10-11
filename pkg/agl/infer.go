@@ -4203,10 +4203,46 @@ func (infer *FileInferrer) binaryExpr(expr *ast.BinaryExpr) {
 		infer.env.GetType(expr.Y) == nil {
 		infer.SetType(expr.Y, infer.GetType2(expr.X))
 	}
-	if t := infer.env.GetType(expr.Y); t == nil || TryCast[types.UntypedNumType](t) {
-		infer.expr(expr.Y)
-		if len(infer.Errors) > 0 {
-			return
+
+	// Check if X has a custom operator method and infer Y's type from the method signature
+	yEvaluated := false
+	if opMethod, ok := overloadMapping[expr.Op.String()]; ok {
+		xType := types.Unwrap(infer.GetType2(expr.X))
+		var methodName string
+		switch xT := xType.(type) {
+		case types.StructType:
+			methodName = xT.String() + "." + opMethod
+		case types.StarType:
+			if sT, ok := types.Unwrap(xT.X).(types.StructType); ok {
+				methodName = sT.String() + "." + opMethod
+			}
+		}
+		if methodName != "" {
+			if methodType := infer.env.Get(methodName); methodType != nil {
+				if funcType, ok := methodType.(types.FuncType); ok {
+					if len(funcType.Params) > 0 {
+						paramType := types.Unwrap(funcType.Params[0])
+						if infer.env.GetType(expr.Y) == nil || TryCast[types.UntypedNumType](infer.env.GetType(expr.Y)) {
+							infer.withOptType(expr.Y, paramType, func() {
+								infer.expr(expr.Y)
+							})
+							yEvaluated = true
+							if len(infer.Errors) > 0 {
+								return
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !yEvaluated {
+		if t := infer.env.GetType(expr.Y); t == nil || TryCast[types.UntypedNumType](t) {
+			infer.expr(expr.Y)
+			if len(infer.Errors) > 0 {
+				return
+			}
 		}
 	}
 	if infer.GetType2(expr.X) != nil && infer.GetType2(expr.Y) != nil {
