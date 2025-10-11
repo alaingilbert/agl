@@ -36,8 +36,11 @@ type Generator struct {
 	fragments     Frags
 	emitEnabled   bool
 	asType        bool
-	ifVarName     string
-	imports       map[string]*ast.ImportSpec
+	ifVarName                  string
+	imports                    map[string]*ast.ImportSpec
+	shadowedVars               map[string]string // maps original name to shadowed name (e.g., "a" -> "a_")
+	shadowingExclusionNode     ast.Node          // AST node to use old shadowing level for (RHS of mut x := x)
+	shadowingExclusionOldValue string            // the old shadow value to use for the exclusion node
 }
 
 func (g *Generator) withAsType(clb func()) {
@@ -123,6 +126,7 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 		releaseMode:   conf.ReleaseMode,
 		emitEnabled:   true,
 		imports:       imports,
+		shadowedVars:  make(map[string]string),
 	}
 }
 
@@ -789,6 +793,15 @@ func (g *Generator) genExpr(e ast.Expr) GenFrag {
 func (g *Generator) genIdent(expr *ast.Ident) GenFrag {
 	e := EmitWith(g, expr)
 	return GenFrag{F: func() string {
+		// Check if this is the exclusion node - if so, use the old shadow value
+		if expr == g.shadowingExclusionNode && g.shadowingExclusionOldValue != "" {
+			return e(g.shadowingExclusionOldValue)
+		}
+		// Otherwise, check if this identifier has been shadowed
+		if shadowedName, ok := g.shadowedVars[expr.Name]; ok {
+			return e(shadowedName)
+		}
+
 		if strings.HasPrefix(expr.Name, "$") {
 			beforeT := g.env.GetType(expr)
 			expr.Name = strings.Replace(expr.Name, "$", "aglArg", 1)
@@ -2980,7 +2993,21 @@ func (g *Generator) genStmts(s []ast.Stmt) GenFrag {
 
 func (g *Generator) genBlockStmt(stmt *ast.BlockStmt) GenFrag {
 	c1 := g.genStmts(stmt.List)
-	return GenFrag{F: c1.F, B: c1.B}
+	return GenFrag{F: func() string {
+		// Save the current shadowing state
+		savedShadows := make(map[string]string)
+		for k, v := range g.shadowedVars {
+			savedShadows[k] = v
+		}
+
+		// Generate the block
+		result := c1.F()
+
+		// Restore the shadowing state
+		g.shadowedVars = savedShadows
+
+		return result
+	}, B: c1.B}
 }
 
 func (g *Generator) genSpecs(specs []ast.Spec, tok token.Token) GenFrag {
@@ -3427,12 +3454,33 @@ func (g *Generator) genExprStmt(stmt *ast.ExprStmt) GenFrag {
 
 func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	e := EmitWith(g, stmt)
-	lhs := emptyContent
-	var after string
+
+	// Detect variable shadowing: mut x := x
+	// When a mutable variable is being assigned from an identifier with the same name,
+	// we need to generate x_ := x to avoid Go's "no new variables" error
+	var shadowingVar string
+	var shadowingRHSNode *ast.Ident
+	if stmt.Tok == token.DEFINE && len(stmt.Lhs) == 1 && len(stmt.Rhs) == 1 {
+		if lhsIdent, ok := stmt.Lhs[0].(*ast.Ident); ok {
+			if rhsIdent, ok := stmt.Rhs[0].(*ast.Ident); ok {
+				if lhsIdent.Name == rhsIdent.Name && lhsIdent.Mutable.IsValid() {
+					// This is a shadowing case: remember to rename the variable
+					// Exclude the RHS node from shadowing
+					shadowingVar = lhsIdent.Name
+					shadowingRHSNode = rhsIdent
+				}
+			}
+		}
+	}
+
+	// Generate RHS first (before applying shadowing)
 	rhsT := g.env.GetType(stmt.Rhs[0])
 	if v, ok := rhsT.(types.CustomType); ok {
 		rhsT = v.W
 	}
+
+	lhs := emptyContent
+	var after string
 	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](rhsT) {
 		enumT := rhsT.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
@@ -3574,18 +3622,40 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	var bs []func() string
 	bs = append(bs, content2.B...)
 	return GenFrag{F: func() (out string) {
+		// Apply shadowing, but RHS uses old shadow level
+		if shadowingVar != "" {
+			oldShadow, hadOldShadow := g.shadowedVars[shadowingVar]
+			newShadow := shadowingVar + "_"
+			if hadOldShadow {
+				newShadow = oldShadow + "_"
+				// RHS should use the old shadow level
+				g.shadowingExclusionOldValue = oldShadow
+			} else {
+				// RHS should use the original name (no shadow)
+				g.shadowingExclusionOldValue = shadowingVar
+			}
+			g.shadowingExclusionNode = shadowingRHSNode
+			// Update to new shadowing for LHS
+			g.shadowedVars[shadowingVar] = newShadow
+		}
 		if !g.inlineStmt {
 			out += e(g.prefix)
 		}
 		if assignOpsFrag.F != nil {
-			return out + lhs() + e(" = ") + assignOpsFrag.F() + e("\n")
+			result := out + lhs() + e(" = ") + assignOpsFrag.F() + e("\n")
+			g.shadowingExclusionNode = nil
+			g.shadowingExclusionOldValue = ""
+			return result
 		}
 		// For tuple unpacking (when after != ""), always use := for the temp variable
 		actualOp := op.String()
 		if after != "" {
 			actualOp = ":="
 		}
+
 		out += lhs() + e(" "+actualOp+" ") + content2.F()
+		g.shadowingExclusionNode = nil
+		g.shadowingExclusionOldValue = ""
 		if !g.inlineStmt && g.allowUnused {
 			// Check if all lhs are blank identifiers
 			allBlank := true

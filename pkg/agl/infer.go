@@ -3669,8 +3669,15 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		if op == token.DEFINE {
 			var hasNewVar bool
 			for _, ass := range assigns {
-				if ass.name != "_" && infer.env.GetDirect(ass.name) == nil {
-					hasNewVar = true
+				// Allow shadowing with mut (e.g., mut a := a)
+				if ass.name != "_" {
+					if infer.env.GetDirect(ass.name) == nil {
+						hasNewVar = true
+					} else if ass.mutable {
+						// This is a shadowing case: mut x := x
+						// Treat it as a new variable
+						hasNewVar = true
+					}
 				}
 			}
 			if !hasNewVar && len(assigns) > 0 {

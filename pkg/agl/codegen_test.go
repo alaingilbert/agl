@@ -13934,6 +13934,51 @@ func test() bool {
 	tassert.Contains(t, test.errs[0].Error(), "3:2: if expression must be exhaustive when used as return value (missing else clause)")
 }
 
+func TestCodeGen457(t *testing.T) {
+	src := `package main
+func test(a int) {
+	a += 1
+	print(a)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.True(t, len(test.errs) > 0)
+	tassert.Contains(t, test.errs[0].Error(), "3:2: cannot assign to immutable variable 'a'")
+}
+
+func TestCodeGen458(t *testing.T) {
+	src := `package main
+func test(a, b int) {
+	mut a := a
+	mut b := b
+	a += 1
+	b += 1
+	if true {
+		mut b := b
+		b += 1
+		print(b)
+	}
+	print(a, b)
+}`
+	expected := `// agl:generated
+package main
+func test(a, b int) {
+	a_ := a
+	b_ := b
+	a_ += 1
+	b_ += 1
+	if true {
+		b__ := b_
+		b__ += 1
+		AglPrint(b__)
+	}
+	AglPrint(a_, b_)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
