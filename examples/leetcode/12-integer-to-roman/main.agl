@@ -1,60 +1,17 @@
 package main
 
 func intToRoman(num int) string {
+    a1 := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
+    a2 := []string{"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"}
     mut n := num
     mut res := ""
+    mut i := 0
     for n > 0 {
-        if n >= 1000 {
-            n -= 1000
-            res += "M"
-        } else if n >= 500 {
-            if n >= 900 {
-                n -= 900
-                res += "CM"
-            } else {
-                n -= 500
-                res += "D"
-            }
-        } else if n >= 100 {
-            if n >= 400 {
-                n -= 400
-                res += "CD"
-            } else {
-                n -= 100
-                res += "C"
-            }
-        } else if n >= 50 {
-            if n >= 90 {
-                n -= 90
-                res += "XC"
-            } else {
-                n -= 50
-                res += "L"
-            }
-        } else if n >= 10 {
-            if n >= 40 {
-                n -= 40
-                res += "XL"
-            } else {
-                n -= 10
-                res += "X"
-            }
-        } else if n >= 5 {
-            if n == 9 {
-                n -= 9
-                res += "IX"
-            } else {
-                n -= 5
-                res += "V"
-            }
-        } else if n >= 1 {
-            if n == 4 {
-                n -= 4
-                res += "IV"
-            } else {
-                n -= 1
-                res += "I"
-            }
+        if n >= a1[i] {
+            n -= a1[i]
+            res += a2[i]
+        } else {
+            i++
         }
     }
     return res
