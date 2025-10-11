@@ -26,7 +26,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var version = "0.0.1"
+var (
+	version = "0.0.1"
+	commit  = "unknown"
+)
 
 func main() {
 	defer func() {
@@ -43,10 +46,21 @@ func main() {
 			panic(r)
 		}
 	}()
+	// If commit wasn't set via linker flags, try to get it from git
+	if commit == "unknown" {
+		gitCmd := exec.Command("git", "rev-parse", "--short=7", "HEAD")
+		if output, err := gitCmd.Output(); err == nil {
+			commit = strings.TrimSpace(string(output))
+		}
+	}
+	versionStr := version
+	if commit != "unknown" {
+		versionStr = fmt.Sprintf("%s (%s)", version, commit)
+	}
 	cmd := &cli.Command{
 		Name:    "AGL",
 		Usage:   "AnotherGoLang",
-		Version: version,
+		Version: versionStr,
 		Commands: []*cli.Command{
 			{
 				Name:    "run",
@@ -1055,6 +1069,6 @@ func modVendorAction(_ context.Context, c *cli.Command) error {
 }
 
 func versionAction(ctx context.Context, cmd *cli.Command) error {
-	fmt.Printf("AGL v%s\n", version)
+	fmt.Printf("AGL v%s (%s)\n", version, commit)
 	return nil
 }
