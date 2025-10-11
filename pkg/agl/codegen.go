@@ -3120,6 +3120,42 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 			if v.Op == token.IN {
 				xT := g.env.GetType(v.X)
 				yT := g.env.GetType(v.Y)
+
+				// Check if v.Y is a call to .Enumerated() on a string
+				if callExpr, ok := v.Y.(*ast.CallExpr); ok {
+					if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+						if selExpr.Sel.Name == "Enumerated" {
+							receiverType := g.env.GetType(selExpr.X)
+							if _, ok := types.Unwrap(receiverType).(types.StringType); ok {
+								// Optimize: for (i, c) in str.Enumerated() -> for i, c := range str
+								c1 := g.genExpr(selExpr.X)
+								return GenFrag{F: func() (out string) {
+									if tup, ok := xT.(types.TupleType); ok && len(tup.Elts) == 2 {
+										xTup := v.X.(*ast.TupleExpr)
+										idx := g.genExpr(xTup.Values[0]).F
+										val := g.genExpr(xTup.Values[1]).F
+										out += e(g.prefix+"for ") + idx() + e(", ") + val() + e(" := range ") + c1.F() + e(" {\n")
+									} else {
+										c2 := g.genExpr(v.X)
+										out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
+									}
+
+									// Add if condition check if present
+									if stmt.WhereCond != nil {
+										out += e(g.prefix+"\t") + e("if !(") + ifCondFrag.F() + e(") {\n")
+										out += e(g.prefix+"\t\t") + e("continue\n")
+										out += e(g.prefix+"\t") + e("}\n")
+									}
+
+									out += body()
+									out += e(g.prefix + "}\n")
+									return out
+								}}
+							}
+						}
+					}
+				}
+
 				c1 := g.genExpr(v.Y)
 				c2 := g.genExpr(v.X)
 				return GenFrag{F: func() (out string) {

@@ -1184,6 +1184,14 @@ func AglStringLen(s string) int {
 	return len(s)
 }
 
+func AglStringEnumerated(s string) []AglTupleStruct_int_RuneType {
+	out := make([]AglTupleStruct_int_RuneType, 0, len(s))
+	for i, c := range s {
+		out = append(out, AglTupleStruct_int_RuneType{Arg0: i, Arg1: c})
+	}
+	return out
+}
+
 func AglStringLines(s string) []string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	return strings.Split(s, "\n")

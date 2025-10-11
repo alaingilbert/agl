@@ -13741,6 +13741,44 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen449_1(t *testing.T) {
+	src := `package main
+func main() {
+	for (i, c) in "hello".Enumerated() {
+		print(i, c)
+	}
+	s := "hello"
+	for (i, c) in s.Enumerated() {
+		print(i, c)
+	}
+	for (i, c) in s.Enumerated() where c == 'l' {
+		print(i, c)
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	for i, c := range "hello" {
+		AglPrint(i, c)
+	}
+	s := "hello"
+	for i, c := range s {
+		AglPrint(i, c)
+	}
+	for i, c := range s {
+		if !(c == 'l') {
+			continue
+		}
+		AglPrint(i, c)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 func TestCodeGen450(t *testing.T) {
 	src := `package main
 

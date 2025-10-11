@@ -343,6 +343,9 @@ func main() {
 	for c in "hello" {
 		print(string(c))
 	}
+	for (i, c) in "hello".Enumerated() {
+		print(string(c))
+	}
 }
 ```
 

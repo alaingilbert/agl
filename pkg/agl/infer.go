@@ -1583,7 +1583,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr.Args[0], fnT.Params[0])
 		case "Len", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Lines",
-			"Uppercased", "Lowercased", "TrimSpace", "IsEmpty", "AsBytes":
+			"Uppercased", "Lowercased", "TrimSpace", "IsEmpty", "AsBytes", "Enumerated":
 			info = infer.env.GetNameInfo("agl1.String." + fnName)
 			fnT = infer.env.GetFn("agl1.String." + fnName).IntoRecv(idTT)
 		default:
@@ -3429,6 +3429,33 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 		if stmt.Init == nil && stmt.Cond != nil && stmt.Post == nil &&
 			TryCast[*ast.BinaryExpr](stmt.Cond) && stmt.Cond.(*ast.BinaryExpr).Op == token.IN {
 			cond := stmt.Cond.(*ast.BinaryExpr)
+
+			// Special case: optimize .Enumerated() on strings in for loops
+			// for (i, c) in str.Enumerated() -> treat as: for i, c range str
+			if callExpr, ok := cond.Y.(*ast.CallExpr); ok {
+				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+					if selExpr.Sel.Name == "Enumerated" {
+						infer.expr(selExpr.X)
+						receiverType := infer.GetType(selExpr.X)
+						if _, ok := types.Unwrap(receiverType).(types.StringType); ok {
+							// Set the type of the call expression to avoid tuple struct generation
+							infer.SetType(cond.Y, receiverType)
+							// Handle tuple unpacking for (i, c) where i is int and c is rune
+							if xTup, ok := cond.X.(*ast.TupleExpr); ok && len(xTup.Values) == 2 {
+								tupType := types.TupleType{Elts: []types.Type{types.IntType{}, types.RuneType{}}}
+								infer.SetType(cond.X, tupType)
+								infer.SetType(xTup.Values[0], types.IntType{})
+								infer.SetType(xTup.Values[1], types.RuneType{})
+								infer.env.Define(xTup.Values[0], xTup.Values[0].(*ast.Ident).Name, types.IntType{})
+								infer.env.Define(xTup.Values[1], xTup.Values[1].(*ast.Ident).Name, types.RuneType{})
+							}
+							// Skip the rest of the normal for loop processing
+							goto done
+						}
+					}
+				}
+			}
+
 			infer.expr(cond.Y)
 			yT := infer.GetType(cond.Y)
 			var t types.Type
@@ -3510,6 +3537,7 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			}
 		}
 
+	done:
 		// Type check the if condition if present
 		if stmt.WhereCond != nil {
 			infer.expr(stmt.WhereCond)
