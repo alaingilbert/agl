@@ -19,23 +19,23 @@ import (
 const GeneratedFilePrefix = "// agl:generated\n"
 
 type Generator struct {
-	fset          *token.FileSet
-	env           *Env
-	a, b          *ast.File
-	prefix        string
-	genFuncDecls2 map[string]func() string
-	tupleStructs  map[string]string
-	genFuncDecls  map[string]*ast.FuncDecl
-	varCounter    atomic.Int64
-	returnType    types.Type
-	extensions    map[string]Extension
-	genMap        map[string]types.Type
-	allowUnused   bool
-	releaseMode   bool
-	inlineStmt    bool
-	fragments     Frags
-	emitEnabled   bool
-	asType        bool
+	fset                       *token.FileSet
+	env                        *Env
+	a, b                       *ast.File
+	prefix                     string
+	genFuncDecls2              map[string]func() string
+	tupleStructs               map[string]string
+	genFuncDecls               map[string]*ast.FuncDecl
+	varCounter                 atomic.Int64
+	returnType                 types.Type
+	extensions                 map[string]Extension
+	genMap                     map[string]types.Type
+	allowUnused                bool
+	releaseMode                bool
+	inlineStmt                 bool
+	fragments                  Frags
+	emitEnabled                bool
+	asType                     bool
 	ifVarName                  string
 	imports                    map[string]*ast.ImportSpec
 	shadowedVars               map[string]string // maps original name to shadowed name (e.g., "a" -> "a_")
