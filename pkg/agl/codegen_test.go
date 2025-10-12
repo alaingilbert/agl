@@ -11337,12 +11337,14 @@ func TestCodeGen374(t *testing.T) {
 func main() {
 	s := "12345"
 	v := s[:3].Uint()?
+	print(v)
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	s := "12345"
 	v := AglStringUint(s[:3]).Unwrap()
+	AglPrint(v)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11435,6 +11437,7 @@ func TestCodeGen378(t *testing.T) {
 func main() {
 	a := if 1 == 1 { 1 } else { 2 }
 	b := if 1 == 1 { 1 } else { 2 }
+	print(a, b)
 }`
 	expected := `// agl:generated
 package main
@@ -11453,6 +11456,7 @@ func main() {
 		aglTmp2 = 2
 	}
 	b := AglIdentity(aglTmp2)
+	AglPrint(a, b)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11470,6 +11474,7 @@ func main() {
 		return (x, y)
 	})
 	t2 := a.Map({ ($0[0], $0[1]) })
+	print(t1, t2)
 }`
 	expected := `// agl:generated
 package main
@@ -11483,6 +11488,7 @@ func main() {
 	t2 := AglVecMap(a, func(aglArg0 []int) AglTupleStruct_int_int {
 		return AglTupleStruct_int_int{Arg0: aglArg0[0], Arg1: aglArg0[1]}
 	})
+	AglPrint(t1, t2)
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
