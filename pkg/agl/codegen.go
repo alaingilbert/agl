@@ -1062,7 +1062,10 @@ func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) GenFrag {
 
 func (g *Generator) genStarExpr(expr *ast.StarExpr) GenFrag {
 	e := EmitWith(g, expr)
-	c1 := g.genExpr(expr.X)
+	var c1 GenFrag
+	g.withAsType(func() {
+		c1 = g.genExpr(expr.X)
+	})
 	return GenFrag{F: func() string { return e("*") + c1.F() }}
 }
 
@@ -1846,6 +1849,9 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 		out += e(")")
 		content1 := g.incrPrefix(func() string {
 			if expr.Result != nil {
+				if resultType := g.env.GetType(expr.Result); resultType != nil {
+					return e(" ") + e(resultType.GoStrType())
+				}
 				return e(" ") + g.genExpr(expr.Result).F()
 			} else {
 				return ""

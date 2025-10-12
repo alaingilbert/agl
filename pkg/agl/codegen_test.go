@@ -11256,12 +11256,12 @@ func main() {
 func TestCodeGen370(t *testing.T) {
 	src := `package main
 func main() {
-	[]*(u8, u8){}
+	print([]*(u8, u8){})
 }`
 	expected := `// agl:generated
 package main
 func main() {
-	[]*AglTupleStruct_uint8_uint8{Arg0: uint8, Arg1: uint8}{}
+	AglPrint([]*AglTupleStruct_uint8_uint8{})
 }
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
@@ -11475,7 +11475,7 @@ func main() {
 package main
 func main() {
 	a := [][]int{{1, 2}, {3, 4}}
-	t1 := AglVecMap(a, func(a []int) AglTupleStruct_int_int{Arg0: int, Arg1: int} {
+	t1 := AglVecMap(a, func(a []int) AglTupleStruct_int_int {
 		x := a[0]
 		y := a[1]
 		return AglTupleStruct_int_int{Arg0: x, Arg1: y}
@@ -13982,6 +13982,30 @@ func test(a, b int) {
 		}
 	}
 	AglPrint(a_, b_)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen459(t *testing.T) {
+	src := `package main
+func test(clb func() void!) {
+}
+func main() {
+	test(func() void! {
+		Ok(void)
+	})
+}`
+	expected := `// agl:generated
+package main
+func test(clb func() Result[AglVoid]) {
+}
+func main() {
+	test(func() Result[AglVoid] {
+		return MakeResultOk(AglVoid{})
+	})
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
