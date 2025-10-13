@@ -1,0 +1,25 @@
+package main
+
+func longestCommonPrefix(strs []string) string {
+    mut res := ""
+    var mut c byte
+    mut idx := 0
+    for {
+        for el in strs {
+            if el.Len() <= idx || (c != 0 && c != el[idx]) {
+                return res
+            } else if c == 0 {
+                c = el[idx]
+            }
+        }
+        res += string(strs[0][idx])
+        idx++
+        c = 0
+    }
+}
+
+func main() {
+    assertEq(longestCommonPrefix([]string{"","flow","flight"}), "")
+    assertEq(longestCommonPrefix([]string{"flower","flow","flight"}), "fl")
+    assertEq(longestCommonPrefix([]string{"dog","racecar","car"}), "")
+}
