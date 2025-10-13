@@ -14019,6 +14019,29 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen460(t *testing.T) {
+	src := `package main
+func main() {
+	s := make(set[(int, int, int)])
+	print(s)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := make(AglSet[AglTupleStruct_int_int_int])
+	AglPrint(s)
+}
+type AglTupleStruct_int_int_int struct {
+	Arg0 int
+	Arg1 int
+	Arg2 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -2670,7 +2670,10 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 func (g *Generator) genSetType(expr *ast.SetType) GenFrag {
 	e := EmitWith(g, expr)
 	var bs []func() string
-	c1 := g.genExpr(expr.Key)
+	var c1 GenFrag
+	g.withAsType(func() {
+		c1 = g.genExpr(expr.Key)
+	})
 	bs = append(bs, c1.B...)
 	return GenFrag{F: func() string {
 		return e("AglSet[") + c1.F() + e("]")
