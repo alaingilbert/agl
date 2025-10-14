@@ -203,9 +203,9 @@ func (b BoolType) String() string    { return "bool" }
 
 type RuneType struct{ W Type }
 
-func (r RuneType) GoStr() string     { return "RuneType" }
-func (r RuneType) GoStrType() string { return "RuneType" }
-func (r RuneType) String() string    { return "RuneType" }
+func (r RuneType) GoStr() string     { return "rune" }
+func (r RuneType) GoStrType() string { return "rune" }
+func (r RuneType) String() string    { return "rune" }
 
 type ByteType struct{ W Type }
 
