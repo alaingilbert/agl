@@ -20,7 +20,7 @@ import "std/iter"
 //func ContainsFunc[S ~[]E, E any](s S, f func(E) bool) bool
 //func Delete[S ~[]E, E any](s S, i, j int) S
 //func DeleteFunc[S ~[]E, E any](s S, del func(E) bool) S
-//func Equal[S ~[]E, E comparable](s1, s2 S) bool
+func Equal[S ~[]E, E comparable](s1, s2 S) bool
 //func EqualFunc[S1 ~[]E1, S2 ~[]E2, E1, E2 any](s1 S1, s2 S2, eq func(E1, E2) bool) bool
 //func Grow[S ~[]E, E any](s S, n int) S
 //func Index[S ~[]E, E comparable](s S, v E) int
