@@ -1,0 +1,62 @@
+package main
+
+type ListNode struct {
+    Val int
+    mut Next *ListNode
+}
+
+func (l *ListNode) String() string {
+    if l == nil {
+        return ""
+    }
+    mut out := []int{l.Val}
+    mut n := l
+    for n.Next != nil {
+        n = n.Next
+        out.Push(n.Val)
+    }
+    return out.Map({ $0.String() }).Joined(",")
+}
+
+func NewListNode(s string) *ListNode {
+    if s == "" {
+        return nil
+    }
+    var mut next *ListNode
+    for val in s.Split(",").Reversed() {
+        next = &ListNode{Val: val.Int()?, Next: next}
+    }
+    return next
+}
+
+func removeNthFromEnd(head *ListNode, n int) *ListNode {
+    mut p1, mut p2, mut head := head, head, head
+    mut n := n
+    for p1 != nil {
+        p1 = p1.Next
+        if n >= 0 {
+            n--
+        } else {
+            p2 = p2.Next
+        }
+    }
+    if p2 != nil {
+        if p2.Next != nil {
+            if n >= 0 {
+                head = p2.Next
+            } else {
+                p2.Next = p2.Next.Next
+            }
+        } else {
+            head = nil
+        }
+    }
+    return head
+}
+
+func main() {
+    assertEq(removeNthFromEnd(NewListNode("1,2,3,4,5"), 2).String(), NewListNode("1,2,3,5").String())
+    assertEq(removeNthFromEnd(NewListNode("1"), 1).String(), NewListNode("").String())
+    assertEq(removeNthFromEnd(NewListNode("1,2"), 1).String(), NewListNode("1").String())
+    assertEq(removeNthFromEnd(NewListNode("1,2"), 2).String(), NewListNode("2").String())
+}
