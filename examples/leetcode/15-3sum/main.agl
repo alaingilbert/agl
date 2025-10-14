@@ -13,9 +13,7 @@ func threeSum(nums []int) [][]int {
         }
     }
     mut out := make([][]int, 0)
-    for el in res {
-        out.Push([]int{el.0, el.1, el.2})
-    }
+    res.ForEach({ out.Push([]int{$0.0, $0.1, $0.2}) })
     return out
 }
 
