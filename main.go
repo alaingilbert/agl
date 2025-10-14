@@ -533,22 +533,6 @@ func filterUnusedCode(src string, coreBody []string) []string {
 		}
 	}
 
-	// Debug: print what we found
-	if false { // Set to true to debug
-		fmt.Printf("=== DEBUG: Found %d definitions ===\n", len(definitions))
-		for _, def := range definitions {
-			if def.name == "Result" || def.name == "AglMap" || def.name == "AglSet" || def.name == "Rev" {
-				fmt.Printf("Type %s, lines: %d, deps: %v\n", def.name, len(def.lines), def.deps)
-			}
-		}
-		fmt.Printf("=== Used identifiers ===\n")
-		for k := range usedIdents {
-			if k == "Result" || k == "AglMap" || k == "AglSet" || k == "Rev" {
-				fmt.Printf("  %s\n", k)
-			}
-		}
-	}
-
 	// Start with identifiers used in src
 	for ident := range usedIdents {
 		addDeps(ident)
@@ -591,15 +575,15 @@ func filterUnusedImports(code string, imports []string) []string {
 		// Check if package is used in code
 		// Look for: pkgName.Something or direct uses for common packages
 		if strings.Contains(code, pkgName+".") ||
-		   (pkgName == "fmt" && (strings.Contains(code, "fmt.") || strings.Contains(code, "Sprintf") || strings.Contains(code, "Printf"))) ||
-		   (pkgName == "strings" && strings.Contains(code, "strings.")) ||
-		   (pkgName == "bytes" && strings.Contains(code, "bytes.")) ||
-		   (pkgName == "slices" && strings.Contains(code, "slices.")) ||
-		   (pkgName == "maps" && strings.Contains(code, "maps.")) ||
-		   (pkgName == "sort" && strings.Contains(code, "sort.")) ||
-		   (pkgName == "strconv" && strings.Contains(code, "strconv.")) ||
-		   (pkgName == "math" && strings.Contains(code, "math.")) ||
-		   (pkgName == "iter" && strings.Contains(code, "iter.")) {
+			(pkgName == "fmt" && (strings.Contains(code, "fmt.") || strings.Contains(code, "Sprintf") || strings.Contains(code, "Printf"))) ||
+			(pkgName == "strings" && strings.Contains(code, "strings.")) ||
+			(pkgName == "bytes" && strings.Contains(code, "bytes.")) ||
+			(pkgName == "slices" && strings.Contains(code, "slices.")) ||
+			(pkgName == "maps" && strings.Contains(code, "maps.")) ||
+			(pkgName == "sort" && strings.Contains(code, "sort.")) ||
+			(pkgName == "strconv" && strings.Contains(code, "strconv.")) ||
+			(pkgName == "math" && strings.Contains(code, "math.")) ||
+			(pkgName == "iter" && strings.Contains(code, "iter.")) {
 			result = append(result, imp)
 		}
 	}
