@@ -16,11 +16,11 @@ func postorderTraversal(root *TreeNode) []int {
     mut out := []int{}
     if root.Left != nil {
         a := postorderTraversal(root.Left)
-        out = append(out, a...)
+        out.Push(a...)
     }
     if root.Right != nil {
         b := postorderTraversal(root.Right)
-        out = append(out, b...)
+        out.Push(b...)
     }
     out.Push(root.Val)
     return out
