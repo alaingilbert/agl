@@ -352,6 +352,18 @@ func main() {
 }
 ```
 
+## Template string
+
+```go
+package main
+
+func main() {
+	name := "bob"
+	age := 42
+	print(t"{name} is {age} years old") // bob is 42 years old
+}
+```
+
 ## Operator overloading
 
 ```go
