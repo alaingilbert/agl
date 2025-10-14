@@ -5,9 +5,10 @@ import "slices"
 func twoSum(numbers []int, target int) []int {
     mut lo, mut hi := 0, numbers.Len()-1
     for hi > lo {
-        if numbers[lo] + numbers[hi] == target {
+        sum := numbers[lo] + numbers[hi]
+        if sum == target {
             return []int{lo+1, hi+1}
-        } else if numbers[lo] + numbers[hi] > target {
+        } else if sum > target {
             hi--
         } else {
             lo++
