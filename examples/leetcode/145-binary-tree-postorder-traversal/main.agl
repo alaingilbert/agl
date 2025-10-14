@@ -1,0 +1,30 @@
+package main
+
+type TreeNode struct {
+    Val int
+    Left *TreeNode
+    Right *TreeNode
+}
+
+func postorderTraversal(root *TreeNode) []int {
+    mut out := make([]int, 0)
+    if root == nil {
+        return out
+    }
+    helper(root, &mut out)
+    return out
+}
+
+func helper(root *TreeNode, mut out *[]int) {
+    if root.Left == nil && root.Right == nil {
+        out.Push(root.Val)
+        return
+    }
+    if root.Left != nil {
+        helper(root.Left, mut out)
+    }
+    if root.Right != nil {
+        helper(root.Right, mut out)
+    }
+    out.Push(root.Val)
+}
