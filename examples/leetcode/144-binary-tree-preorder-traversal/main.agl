@@ -1,0 +1,25 @@
+package main
+
+type TreeNode struct {
+    Val int
+    Left *TreeNode
+    Right *TreeNode
+}
+
+func preorderTraversal(root *TreeNode) []int {
+    mut out := []int{}
+    if root == nil {
+        return out
+    }
+    out.Push(root.Val)
+    if root.Left != nil {
+        out.Push(preorderTraversal(root.Left)...)
+    }
+    if root.Right != nil {
+        out.Push(preorderTraversal(root.Right)...)
+    }
+    return out
+}
+
+func main() {
+}
