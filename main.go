@@ -436,14 +436,17 @@ func filterUnusedCode(src string, coreBody []string) []string {
 							receiverPart := fullLine[1:idx] // Skip the opening (
 							methodNamePart := strings.TrimSpace(fullLine[idx+1:])
 
-							// Extract receiver type (last word in receiver part)
-							receiverFields := strings.Fields(receiverPart)
+							// Extract receiver type from receiver part
+							// Format: "receiverName receiverType" or "receiverName *receiverType"
+							// receiverType might be generic like "AglMap[K, V]"
 							receiverType := ""
-							if len(receiverFields) > 0 {
-								receiverType = receiverFields[len(receiverFields)-1]
-								// Remove pointer, closing ), and generics
+							// Find first space to separate receiver name from type
+							spaceIdx := strings.Index(receiverPart, " ")
+							if spaceIdx != -1 {
+								receiverType = strings.TrimSpace(receiverPart[spaceIdx+1:])
+								// Remove pointer prefix
 								receiverType = strings.TrimPrefix(receiverType, "*")
-								receiverType = strings.TrimSuffix(receiverType, ")")
+								// Remove generics - everything from first [ onwards
 								receiverType = strings.Split(receiverType, "[")[0]
 								currentDef.receiverType = receiverType
 								currentDef.deps[receiverType] = true
