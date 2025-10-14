@@ -30,21 +30,17 @@ func NewListNode(s string) *ListNode {
 }
 
 func removeNthFromEnd(head *ListNode, n int) *ListNode {
-    mut p1, mut p2, mut head, mut n := head, head, head, n
-    for p1 != nil {
+    dummy := &ListNode{Next: head}
+    mut p1, mut p2 := dummy, dummy
+    for _ in 0..n {
         p1 = p1.Next
-        if n >= 0 {
-            n--
-        } else {
-            p2 = p2.Next
-        }
     }
-    if n == 0 {
-        head = head.Next
-    } else {
-        p2.Next = p2.Next.Next
+    for p1.Next != nil {
+        p1 = p1.Next
+        p2 = p2.Next
     }
-    return head
+    p2.Next = p2.Next.Next
+    return dummy.Next
 }
 
 func main() {
