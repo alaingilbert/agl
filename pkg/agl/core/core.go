@@ -1006,6 +1006,12 @@ func AglSetMap[T comparable, R any](s AglSet[T], f func(T) R) []R {
 	return out
 }
 
+func AglSetForEach[T comparable](s AglSet[T], f func(T) AglVoid) {
+	for k := range s {
+		f(k)
+	}
+}
+
 func AglSetFilter[T comparable](s AglSet[T], pred func(T) bool) AglSet[T] {
 	newSet := make(AglSet[T])
 	for k := range s {

@@ -14042,6 +14042,27 @@ type AglTupleStruct_int_int_int struct {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen461(t *testing.T) {
+	src := `package main
+func main() {
+	s := set[int]{1, 2, 3}
+	s.ForEach({ print($0) })
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	s := AglSet[int]{1: {}, 2: {}, 3: {}}
+	AglSetForEach(s, func(aglArg0 int) AglVoid {
+		AglPrint(aglArg0)
+		return AglVoid{}
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

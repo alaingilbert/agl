@@ -1719,6 +1719,31 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			infer.SetType(expr, types.SetType{K: ft.Params[0]})
 			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		case "ForEach":
+			info = infer.env.GetNameInfo("agl1.Set.ForEach")
+			fnT = infer.env.GetFn("agl1.Set.ForEach").T("T", idTT.K).IntoRecv(idTT)
+			if len(expr.Args) < 1 {
+				return
+			}
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(expr, fnT.Return)
+			ft := fnT.GetParam(0).(types.FuncType)
+			exprArg0 := expr.Args[0]
+			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.SetType(exprArg0, ft)
+			} else if _, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				if !compareFunctionSignatures(ftReal, ft) {
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
+					return
+				}
+			}
+			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		case "Len", "Min", "Max", "Iter", "IsEmpty":
 			fnT = infer.env.GetFn("agl1.Set." + fnName)
 		}
