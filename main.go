@@ -191,6 +191,14 @@ func spawnGoRunFromBytes(g *agl.Generator, fset *token.FileSet, source []byte, p
 	return err
 }
 
+// hasGoMod checks if a go.mod file exists in the same directory as the given file
+func hasGoMod(fileName string) bool {
+	dir := filepath.Dir(fileName)
+	goModPath := filepath.Join(dir, "go.mod")
+	_, err := os.Stat(goModPath)
+	return err == nil
+}
+
 func spawnGoBuild(fileName, outputFlag string, standalone bool) error {
 	isAgl := strings.HasSuffix(fileName, ".agl")
 	fileName = strings.Replace(fileName, ".agl", ".go", 1)
@@ -345,6 +353,12 @@ func buildAction(ctx context.Context, cmd *cli.Command) error {
 	forceFlag := cmd.Bool("force")
 	sourceMapFlag := cmd.Bool("sourceMap")
 	fileName := cmd.Args().Get(0)
+
+	// Auto-enable standalone mode if no go.mod exists in the same directory
+	if !standalone && !hasGoMod(fileName) {
+		standalone = true
+	}
+
 	m := agl.NewPkgVisited()
 	err := buildFile(fileName, forceFlag, sourceMapFlag, standalone, mutEnforced, allowUnused, releaseFlag, m)
 	if err != nil {
