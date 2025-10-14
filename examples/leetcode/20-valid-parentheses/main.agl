@@ -1,0 +1,32 @@
+package main
+
+func isValid(s string) bool {
+    mut q := make([]rune, 0)
+    m := map[rune]rune {
+        '(': ')',
+        '[': ']',
+        '{': '}',
+    }
+    for c in s {
+        if c in m {
+            q.Push(c)
+        } else if let Some(o) := q.Pop() {
+            if c != m[o] {
+                return false
+            }
+        } else {
+            return false
+        }
+    }
+    return q.IsEmpty()
+}
+
+func main() {
+    assert(isValid("()"))
+    assert(isValid("()[]{}"))
+    assert(!isValid("(]"))
+    assert(isValid("([])"))
+    assert(!isValid("([)]"))
+    assert(!isValid("["))
+    assert(!isValid("]"))
+}
