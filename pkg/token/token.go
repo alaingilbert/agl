@@ -29,8 +29,9 @@ const (
 	INT    // 12345
 	FLOAT  // 123.45
 	IMAG   // 123.45i
-	CHAR   // 'a'
-	STRING // "abc"
+	CHAR            // 'a'
+	STRING          // "abc"
+	TEMPLATE_STRING // t"abc {x}"
 	literal_end
 
 	operator_beg
@@ -166,9 +167,10 @@ var tokens = [...]string{
 	IDENT:  "IDENT",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
-	IMAG:   "IMAG",
-	CHAR:   "CHAR",
-	STRING: "STRING",
+	IMAG:            "IMAG",
+	CHAR:            "CHAR",
+	STRING:          "STRING",
+	TEMPLATE_STRING: "TEMPLATE_STRING",
 
 	QUESTION:     "?",
 	NIL_COALESCE: "??",

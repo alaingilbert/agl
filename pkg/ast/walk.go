@@ -67,6 +67,9 @@ func Walk(v Visitor, node Node) {
 	// Expressions
 	case *BadExpr, *Ident, *BasicLit:
 
+	case *TemplateLit:
+		walkList(v, n.Parts)
+
 	case *LabelledIdent:
 		if n.Label != nil {
 			Walk(v, n.Label)

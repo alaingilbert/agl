@@ -1811,6 +1811,9 @@ func (p *parser) parseOperand() ast.Expr {
 		p.next()
 		return x
 
+	case token.TEMPLATE_STRING:
+		return p.parseTemplateString()
+
 	case token.FUNC:
 		return p.parseFuncTypeOrLit()
 
@@ -1830,6 +1833,107 @@ func (p *parser) parseOperand() ast.Expr {
 	p.errorExpected(pos, "operand")
 	p.advance(stmtStart)
 	return &ast.BadExpr{From: pos, To: p.pos}
+}
+
+func (p *parser) parseTemplateString() ast.Expr {
+	if p.trace {
+		defer un(trace(p, "TemplateString"))
+	}
+
+	tPos := p.pos
+	lit := p.lit
+	p.next()
+
+	// Parse the template string literal to extract parts
+	// Format: t"Hello {name}, you have {count} items"
+	// We need to parse this into alternating string literals and expressions
+
+	var parts []ast.Expr
+
+	// Remove t" prefix and trailing "
+	content := lit[2 : len(lit)-1]
+
+	i := 0
+	strStart := 0
+	for i < len(content) {
+		if content[i] == '\\' {
+			// Skip escaped character
+			i += 2
+			continue
+		}
+		if content[i] == '{' {
+			// Found start of expression
+			// Add string literal part before this
+			if i > strStart {
+				strPart := content[strStart:i]
+				parts = append(parts, &ast.BasicLit{
+					ValuePos: tPos,
+					Kind:     token.STRING,
+					Value:    `"` + strPart + `"`,
+				})
+			}
+
+			// Find matching }
+			i++
+			exprStart := i
+			braceDepth := 1
+			for i < len(content) && braceDepth > 0 {
+				if content[i] == '\\' {
+					i += 2
+					continue
+				}
+				if content[i] == '{' {
+					braceDepth++
+				} else if content[i] == '}' {
+					braceDepth--
+				}
+				i++
+			}
+
+			// Parse the expression
+			exprStr := content[exprStart : i-1]
+			expr := p.parseExprFromString(exprStr, tPos)
+			parts = append(parts, expr)
+
+			strStart = i
+		} else {
+			i++
+		}
+	}
+
+	// Add remaining string part
+	if strStart < len(content) {
+		strPart := content[strStart:]
+		parts = append(parts, &ast.BasicLit{
+			ValuePos: tPos,
+			Kind:     token.STRING,
+			Value:    `"` + strPart + `"`,
+		})
+	}
+
+	return &ast.TemplateLit{
+		TPos:   tPos,
+		Lparen: tPos + 1,
+		Parts:  parts,
+		Rparen: tPos + token.Pos(len(lit)-1),
+	}
+}
+
+func (p *parser) parseExprFromString(exprStr string, pos token.Pos) ast.Expr {
+	// Create a temporary file and parser to parse the expression
+	fset := token.NewFileSet()
+	file := fset.AddFile("", -1, len(exprStr))
+
+	var s scanner.Scanner
+	s.Init(file, []byte(exprStr), nil, 0)
+
+	// Create a minimal parser
+	tempParser := &parser{
+		file:    file,
+		scanner: s,
+	}
+	tempParser.next()
+	return tempParser.parseExpr()
 }
 
 func (p *parser) parseSelector(x ast.Expr) ast.Expr {

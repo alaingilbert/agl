@@ -719,6 +719,8 @@ func (g *Generator) genExpr(e ast.Expr) GenFrag {
 		return g.genBinaryExpr(expr)
 	case *ast.BasicLit:
 		return g.genBasicLit(expr)
+	case *ast.TemplateLit:
+		return g.genTemplateLit(expr)
 	case *ast.CompositeLit:
 		return g.genCompositeLit(expr)
 	case *ast.TupleExpr:
@@ -2722,6 +2724,53 @@ func (g *Generator) genOptionExpr(expr *ast.OptionExpr) GenFrag {
 func (g *Generator) genBasicLit(expr *ast.BasicLit) GenFrag {
 	e := EmitWith(g, expr)
 	return GenFrag{F: func() string { return e(expr.Value) }}
+}
+
+func (g *Generator) genTemplateLit(expr *ast.TemplateLit) GenFrag {
+	e := EmitWith(g, expr)
+
+	// Add fmt import since we're using fmt.Sprintf
+	if g.imports == nil {
+		g.imports = make(map[string]*ast.ImportSpec)
+	}
+	g.imports[`"fmt"`] = &ast.ImportSpec{
+		Path: &ast.BasicLit{Value: `"fmt"`},
+	}
+
+	// Generate code for all parts
+	var partFrags []GenFrag
+	var bs []func() string
+	for _, part := range expr.Parts {
+		frag := g.genExpr(part)
+		partFrags = append(partFrags, frag)
+		bs = append(bs, frag.B...)
+	}
+
+	// Build the concatenation expression
+	return GenFrag{
+		B: bs,
+		F: func() string {
+			if len(partFrags) == 0 {
+				return e(`""`)
+			}
+
+			// Use fmt.Sprintf for string concatenation
+			var args []string
+			for _, frag := range partFrags {
+				var argStr string
+				g.WithoutEmit(func() {
+					argStr = frag.F()
+				})
+				args = append(args, argStr)
+			}
+
+			formatStr := `"` + strings.Repeat("%v", len(args)) + `"`
+			if len(args) > 0 {
+				return e("fmt.Sprintf(" + formatStr + ", " + strings.Join(args, ", ") + ")")
+			}
+			return e(`""`)
+		},
+	}
 }
 
 func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {

@@ -832,6 +832,8 @@ func (infer *FileInferrer) expr(e ast.Expr) {
 		infer.funcType(expr)
 	case *ast.BasicLit:
 		infer.basicLit(expr)
+	case *ast.TemplateLit:
+		infer.templateLit(expr)
 	case *ast.ShortFuncLit:
 		infer.shortFuncLit(expr)
 	case *ast.CompositeLit:
@@ -1011,6 +1013,18 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 		infer.errorf(expr, "unknown basic literal %v %v", to(expr), expr.Kind)
 		return
 	}
+}
+
+func (infer *FileInferrer) templateLit(expr *ast.TemplateLit) {
+	if infer.env.GetType(expr) != nil {
+		return
+	}
+	// Infer types for all parts
+	for _, part := range expr.Parts {
+		infer.expr(part)
+	}
+	// Template strings always result in string type
+	infer.SetType(expr, types.StringType{})
 }
 
 func (infer *FileInferrer) getSelectorType(e ast.Expr, id *ast.Ident) types.Type {

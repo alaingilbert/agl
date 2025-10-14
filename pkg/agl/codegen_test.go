@@ -14063,6 +14063,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen462(t *testing.T) {
+	src := `package main
+func main() {
+	name := "World"
+	count := 42
+	a := t"Hello {name}"  // Generates: fmt.Sprintf("%v%v", "Hello ", name)
+	b := t"Hello {name}, you have {count} items"
+	c := t"Just a string"
+	d := t"foo {count+1} bar"
+	print(a, b, c, d)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	name := "World"
+	count := 42
+	a := fmt.Sprintf("%v%v", "Hello ", name)
+	b := fmt.Sprintf("%v%v%v%v%v", "Hello ", name, ", you have ", count, " items")
+	c := fmt.Sprintf("%v", "Just a string")
+	d := fmt.Sprintf("%v%v%v", "foo ", count + 1, " bar")
+	AglPrint(a, b, c, d)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

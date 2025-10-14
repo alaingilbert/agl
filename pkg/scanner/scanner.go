@@ -727,6 +727,38 @@ func (s *Scanner) scanString() string {
 	return string(s.src[offs:s.offset])
 }
 
+func (s *Scanner) scanTemplateString() string {
+	// 't"' already consumed
+	offs := s.offset - 2
+	braceDepth := 0
+	for {
+		ch := s.ch
+		if ch == '\n' || ch < 0 {
+			s.error(offs, "template string literal not terminated")
+			break
+		}
+		if ch == '"' && braceDepth == 0 {
+			s.next()
+			break
+		}
+		if ch == '\\' {
+			s.next()
+			if s.ch >= 0 {
+				s.next()
+			}
+			continue
+		}
+		if ch == '{' {
+			braceDepth++
+		} else if ch == '}' {
+			braceDepth--
+		}
+		s.next()
+	}
+
+	return string(s.src[offs:s.offset])
+}
+
 func stripCR(b []byte, comment bool) []byte {
 	c := make([]byte, len(b))
 	i := 0
@@ -877,17 +909,26 @@ scanAgain:
 		insertSemi = true
 		tok = token.IDENT
 	case isLetter(ch):
-		lit = s.scanIdentifier()
-		if len(lit) > 1 {
-			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.Lookup(lit)
-			switch tok {
-			case token.IDENT, token.BREAK, token.CONTINUE, token.FALLTHROUGH, token.RETURN, token.OR_BREAK, token.OR_CONTINUE, token.OR_RETURN, token.NONE:
-				insertSemi = true
-			}
-		} else {
+		// Check for template string prefix 't"'
+		if ch == 't' && s.peek() == '"' {
+			s.next() // consume 't'
+			s.next() // consume '"'
 			insertSemi = true
-			tok = token.IDENT
+			tok = token.TEMPLATE_STRING
+			lit = s.scanTemplateString()
+		} else {
+			lit = s.scanIdentifier()
+			if len(lit) > 1 {
+				// keywords are longer than one letter - avoid lookup otherwise
+				tok = token.Lookup(lit)
+				switch tok {
+				case token.IDENT, token.BREAK, token.CONTINUE, token.FALLTHROUGH, token.RETURN, token.OR_BREAK, token.OR_CONTINUE, token.OR_RETURN, token.NONE:
+					insertSemi = true
+				}
+			} else {
+				insertSemi = true
+				tok = token.IDENT
+			}
 		}
 	case isDecimal(ch) || (ch == '.' && isDecimal(rune(s.peek()))):
 		// Check if we're after an identifier or a token that can be followed by a selector
