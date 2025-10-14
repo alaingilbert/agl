@@ -7,20 +7,15 @@ type TreeNode struct {
 }
 
 func postorderTraversal(root *TreeNode) []int {
-    if root == nil {
-        return []int{}
-    }
-    if root.Left == nil && root.Right == nil {
-        return []int{root.Val}
-    }
     mut out := []int{}
+    if root == nil {
+        return out
+    }
     if root.Left != nil {
-        a := postorderTraversal(root.Left)
-        out.Push(a...)
+        out.Push(postorderTraversal(root.Left)...)
     }
     if root.Right != nil {
-        b := postorderTraversal(root.Right)
-        out.Push(b...)
+        out.Push(postorderTraversal(root.Right)...)
     }
     out.Push(root.Val)
     return out
