@@ -14076,6 +14076,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	name := "World"
 	count := 42

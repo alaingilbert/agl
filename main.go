@@ -959,12 +959,14 @@ func genCode1(fileName string, src, coreGoImports []byte, mutEnforced, allowUnus
 		panic(errs[0])
 	}
 	coreGo, _ := parser.ParseFile(fset, "", coreGoImports, parser.AllErrors|parser.ParseComments)
-	for _, i := range coreGo.Imports {
-		key := i.Path.Value
-		if i.Name != nil {
-			key = i.Name.Name + "_" + key
+	if coreGo != nil {
+		for _, i := range coreGo.Imports {
+			key := i.Path.Value
+			if i.Name != nil {
+				key = i.Name.Name + "_" + key
+			}
+			imports[key] = i
 		}
-		imports[key] = i
 	}
 	opts := make([]agl.GeneratorOption, 0)
 	if allowUnused {

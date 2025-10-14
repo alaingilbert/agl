@@ -519,6 +519,13 @@ func (g *Generator) Generate() (out string) {
 	g.scanForEnums()
 
 	out += g.Emit(GeneratedFilePrefix)
+
+	// Pre-generate all declarations to populate g.imports before collecting imports
+	// but DON'T call .F() yet - just create the fragments
+	out4 := g.genDecls(g.b)
+	out5 := g.genDecls(g.a)
+
+	// Now collect imports after declarations are generated (but not yet stringified)
 	imports := make(map[string]*ast.ImportSpec)
 	addImport := func(i *ast.ImportSpec) {
 		key := i.Path.Value
@@ -537,11 +544,15 @@ func (g *Generator) Generate() (out string) {
 	for i, k := range slices.Sorted(maps.Keys(imports)) {
 		importsArr[i] = imports[k]
 	}
+
+	// Output package and imports first
 	out += g.genPackage()
 	out += g.genImports(importsArr)
-	out4 := g.genDecls(g.b)
-	out5 := g.genDecls(g.a)
+
+	// Now output the generated declarations
 	out += out4.F() + out5.F()
+
+	// Generate function declarations and extensions
 	var genFuncDeclStr string
 	for len(g.genFuncDecls2) > 0 {
 		sorted := slices.Sorted(maps.Keys(g.genFuncDecls2))
