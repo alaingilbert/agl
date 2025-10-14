@@ -1,0 +1,18 @@
+package main
+
+type ListNode struct {
+    Val int
+    Next *ListNode
+}
+
+func getIntersectionNode(headA, headB *ListNode) *ListNode {
+    mut p1, mut p2 := headA, headB
+    for p1 != p2 {
+        p1 = if p1 == nil { headB } else { p1.Next }
+        p2 = if p2 == nil { headA } else { p2.Next }
+    }
+    return p1
+}
+
+func main() {
+}
