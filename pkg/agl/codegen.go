@@ -2837,6 +2837,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 						return e("AglMap["+kT.GoStrType()+", "+vT.GoStrType()+"](") + c2.F() + e(")")
 					}
 				case types.SetType:
+				case types.StructType:
 				default:
 					panic(fmt.Sprintf("%v", to(t)))
 				}

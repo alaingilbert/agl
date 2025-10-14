@@ -14092,6 +14092,28 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen463(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	k := "a"
+	if k in m.Keys() {
+	}
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	k := "a"
+	if AglIn(k, AglIdentity(AglMapKeys(m))) {
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
