@@ -1,0 +1,249 @@
+package main
+
+import "math/bits"
+
+func solveTrivial(mut board [][]byte, mut m [][]uint16) {
+    toggleBit := func(row, col int, v u16) {
+        m[row][col] |= 1 << (v-1)
+    }
+    const all = 0b111111111
+    mut newValues := true
+    for newValues {
+        newValues = false
+        for i in 0..9 {
+            for j in 0..9 {
+                c := board[i][j]
+                if c != '.' {
+                    v := u16(c - '0')
+                    m[i][j] = all
+                    for k in 0..9 {
+                        toggleBit(i, k, v)                 // flip bit for the row
+                        toggleBit(k, j, v)                 // flip bit for the column
+                        toggleBit(k/3+i/3*3, k%3+j/3*3, v) // flip bit for the 3x3 sub-box
+                    }
+                }
+            }
+        }
+        for i in 0..9 {
+            for j in 0..9 {
+                if bits.OnesCount16(m[i][j]) == 8 {                     // only 1 number possible remaining
+                    v := m[i][j] ^ all                                  // Find the number
+                    m[i][j] = all                                       // Mark square as "found"
+                    board[i][j] = byte(bits.TrailingZeros16(v)+1) + '0' // Update the board
+                    newValues = true
+                }
+            }
+        }
+    }
+}
+
+func createCache() [][]u16 {
+    mut m := make([][]u16, 0)
+    for i in 0..9 {
+        m.Push(make([]u16, 0))
+        for _ in 0..9 {
+            m[i].Push(0)
+        }
+    }
+    return m
+}
+
+func solveSudoku(board [][]byte)  {
+    mut board := board
+    mut m := createCache()
+    solveSudokuHelper(mut board, mut m)
+    assert(isValid(board) && isSolved(board))
+}
+
+func solveSudokuHelper(mut board [][]byte, mut m [][]u16) {
+    solveTrivial(mut board, mut m)
+    if isValid(board) && isSolved(board) {
+        return
+    }
+    guard let Some((posY, posX)) := findTrySq(board, m) else { return }
+    for choice in getChoices(m, posY, posX) {
+        mut boardClone, mut mClone := clone(board, m) // Clone current state
+        board[posY][posX] = byte(choice) + '0'
+        m[posY][posX] |= 1 << (choice-1)
+        solveSudokuHelper(mut board, mut m)
+        if isValid(board) && isSolved(board) {
+            return
+        }
+        restoreBoard(mut board, boardClone)
+        m = mClone // Restore to previous state
+    }
+}
+
+func restoreBoard(mut board, prev [][]byte) {
+    for row in 0..9 {
+        for col in 0..9 {
+            board[row][col] = prev[row][col]
+        }
+    }
+}
+
+func clone(board [][]byte, m [][]u16) ([][]byte, [][]u16) {
+    mut boardClone := make([][]byte, 0)
+    for row in 0..9 {
+        boardClone.Push(board[row].Clone())
+    }
+    mut mClone := make([][]u16, 0)
+    for row in 0..9 {
+        mClone.Push(m[row].Clone())
+    }
+    return (boardClone, mClone)
+}
+
+func getChoices(m [][]u16, row, col int) []int {
+    mut out := make([]int, 0)
+    for i in 0..9 {
+        if m[row][col] >> i & 1 == 0 {
+            out.Push(i+1)
+        }
+    }
+    return out
+}
+
+func findTrySq(board [][]byte, m [][]u16) (int, int)? {
+    for row in 0..9 {
+        for col in 0..9 {
+            if bits.OnesCount16(m[row][col]) == 7 {
+                return Some((row, col))
+            }
+        }
+    }
+    return None
+}
+
+func isSolved(board [][]byte) bool {
+    for row in 0..9 {
+        for col in 0..9 {
+            if board[row][col] == '.' {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func isValid(board [][]byte) bool {
+    toggleBit := func(mut v *u16, row, col int) bool {
+        if *v >> (u16(board[row][col] - '0') - 1) & 1 == 1 {
+            return false
+        }
+        *v |= 1 << (u16(board[row][col] - '0') - 1)
+        return true
+    }
+    // Validate rows
+    for row in 0..9 {
+        var mut v u16
+        for col in 0..9 {
+            if !toggleBit(&mut v, row, col) {
+                return false
+            }
+        }
+    }
+    // Validate columns
+    for col in 0..9 {
+        var mut v u16
+        for row in 0..9 {
+            if !toggleBit(&mut v, row, col) {
+                return false
+            }
+        }
+    }
+    // Validate 3x3 sub-boxes
+    for i in 0..3 {
+        for j in 0..3 {
+            var mut v u16
+            for y in 0..3 {
+                for x in 0..3 {
+                    row := y + i * 3
+                    col := x + j * 3
+                    if !toggleBit(&mut v, row, col) {
+                        return false
+                    }
+                }
+            }
+        }
+    }
+    return true
+}
+
+func printBoard(board [][]byte) {
+    mut rows := make([]string, 0)
+    for i in 0..9 {
+        mut row := make([]string, 0)
+        for j in 0..9 {
+            row.Push(string(board[i][j]))
+        }
+        rows.Push(row.Joined(" "))
+    }
+    print(rows.Joined("\n"))
+}
+
+func boardEq(b1, b2 [][]byte) bool {
+    for i in 0..9 {
+        for j in 0..9 {
+            if b1[i][j] != b2[i][j] {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func main() {
+    mut board := [][]byte{
+        {'5','3','.','.','7','.','.','.','.'},
+        {'6','.','.','1','9','5','.','.','.'},
+        {'.','9','8','.','.','.','.','6','.'},
+        {'8','.','.','.','6','.','.','.','3'},
+        {'4','.','.','8','.','3','.','.','1'},
+        {'7','.','.','.','2','.','.','.','6'},
+        {'.','6','.','.','.','.','2','8','.'},
+        {'.','.','.','4','1','9','.','.','5'},
+        {'.','.','.','.','8','.','.','7','9'}}
+    mut expected := [][]byte{
+        {'5','3','4','6','7','8','9','1','2'},
+        {'6','7','2','1','9','5','3','4','8'},
+        {'1','9','8','3','4','2','5','6','7'},
+        {'8','5','9','7','6','1','4','2','3'},
+        {'4','2','6','8','5','3','7','9','1'},
+        {'7','1','3','9','2','4','8','5','6'},
+        {'9','6','1','5','3','7','2','8','4'},
+        {'2','8','7','4','1','9','6','3','5'},
+        {'3','4','5','2','8','6','1','7','9'}}
+    print("problem 1")
+    solveSudoku(board)
+    assert(boardEq(board, expected))
+
+    board = [][]byte{
+        {'.','.','9','7','4','8','.','.','.'},
+        {'7','.','.','.','.','.','.','.','.'},
+        {'.','2','.','1','.','9','.','.','.'},
+        {'.','.','7','.','.','.','2','4','.'},
+        {'.','6','4','.','1','.','5','9','.'},
+        {'.','9','8','.','.','.','3','.','.'},
+        {'.','.','.','8','.','3','.','2','.'},
+        {'.','.','.','.','.','.','.','.','6'},
+        {'.','.','.','2','7','5','9','.','.'}}
+    expected = [][]byte{
+        {'5','1','9','7','4','8','6','3','2'},
+        {'7','8','3','6','5','2','4','1','9'},
+        {'4','2','6','1','3','9','8','7','5'},
+        {'3','5','7','9','8','6','2','4','1'},
+        {'2','6','4','3','1','7','5','9','8'},
+        {'1','9','8','5','2','4','3','6','7'},
+        {'9','7','5','8','6','3','1','2','4'},
+        {'8','3','2','4','9','1','7','5','6'},
+        {'6','4','1','2','7','5','9','8','3'}}
+    print("problem 2")
+    solveSudoku(board)
+    print("-".Repeat(10))
+    printBoard(board)
+    print("-".Repeat(10))
+    printBoard(expected)
+    print("-".Repeat(10))
+    assert(boardEq(board, expected))
+}
