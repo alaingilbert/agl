@@ -1324,6 +1324,21 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 	case *ast.SelectorExpr:
 		base := e.GetType2(xx.X, fset)
 		base = types.Unwrap(base)
+		// Check if base is nil (undefined variable)
+		if base == nil {
+			var varName string
+			if ident, ok := xx.X.(*ast.Ident); ok {
+				varName = ident.Name
+			} else {
+				varName = fmt.Sprintf("%v", xx.X)
+			}
+			errMsg := fmt.Sprintf("undefined variable '%s'", varName)
+			if e.inferrer != nil {
+				e.inferrer.AddError(xx.X, errMsg)
+				return types.ErrorType{}
+			}
+			panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.X.Pos()), errMsg))
+		}
 		switch v := base.(type) {
 		case types.PackageType:
 			name := fmt.Sprintf("%s.%s", v.Name, xx.Sel.Name)
