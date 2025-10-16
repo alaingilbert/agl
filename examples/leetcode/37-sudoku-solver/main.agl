@@ -37,11 +37,11 @@ func solveTrivial(mut board [][]byte, mut m [][]uint16) {
 
 func createCache() [][]u16 {
     mut m := make([][]u16, 0)
-    for i in 0..9 {
-        m.Push(make([]u16, 0))
-        for _ in 0..9 {
-            m[i].Push(0)
+    for i in 0..81 {
+        if i % 9 == 0 {
+            m.Push(make([]u16, 0))
         }
+        m[i/9].Push(0)
     }
     return m
 }
@@ -99,11 +99,10 @@ func getChoices(m [][]u16, row, col int) []int {
 }
 
 func findTrySq(board [][]byte, m [][]u16) (int, int)? {
-    for row in 0..9 {
-        for col in 0..9 {
-            if bits.OnesCount16(m[row][col]) == 7 {
-                return Some((row, col))
-            }
+    for i in 0..81 {
+        row, col := i / 9, i % 9
+        if bits.OnesCount16(m[row][col]) == 7 {
+            return Some((row, col))
         }
     }
     return None
@@ -114,12 +113,13 @@ func isSolved(board [][]byte) bool {
 }
 
 func isValid(board [][]byte) bool {
-    toggleBit := func(mut v *u16, row, col int) bool {
-        if *v >> (u16(board[row][col] - '0') - 1) & 1 == 1 {
-            return false
+    toggleBit := func(mut c *u16, row, col int) bool {
+        v := u16(board[row][col] - '0') - 1
+        if *c >> v & 1 == 0 {
+            *c |= 1 << v
+            return true
         }
-        *v |= 1 << (u16(board[row][col] - '0') - 1)
-        return true
+        return false
     }
     for i in 0..9 {
         var mut v1, mut v2, mut v3 u16
