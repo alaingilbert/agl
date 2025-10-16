@@ -1,0 +1,26 @@
+package main
+
+func mySqrt(x int) int {
+    if x == 0 || x == 1 {
+        return x
+    }
+    mut l, mut r := 1, x
+    for l <= r {
+        m := (r+l)/2
+        sq := m * m
+        if sq == x {
+            return m
+        }
+        if sq < x {
+            l = m + 1
+        } else {
+            r = m - 1
+        }
+    }
+    return r
+}
+
+func main() {
+    assertEq(mySqrt(4), 2)
+    assertEq(mySqrt(8), 2)
+}
