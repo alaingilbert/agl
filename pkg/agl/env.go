@@ -1303,7 +1303,14 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		if _, ok := t.(types.ErrorType); ok {
 			return types.ErrorType{}
 		}
-		return t.(types.FuncType).Return
+		if t == nil {
+			return types.ErrorType{}
+		}
+		ft, ok := t.(types.FuncType)
+		if !ok {
+			return types.ErrorType{}
+		}
+		return ft.Return
 	case *ast.BasicLit:
 		switch xx.Kind {
 		case token.INT:

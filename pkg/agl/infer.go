@@ -1454,7 +1454,17 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 							panic(fmt.Sprintf("unsupported type %v for arg at index %d in callexpr with fun %v (type %T)", to(arg), i, expr.Fun, expr.Fun))
 						}
 						if !id.Mutable.IsValid() {
-							infer.errorf(arg, "missing mut keyword")
+							funcName := v.Name
+							if funcName == "" {
+								if ident, ok := expr.Fun.(*ast.Ident); ok {
+									funcName = ident.Name
+								}
+							}
+							if funcName != "" {
+								infer.errorf(arg, "missing mut keyword for argument '%s' when calling '%s'", id.Name, funcName)
+							} else {
+								infer.errorf(arg, "missing mut keyword for argument '%s'", id.Name)
+							}
 							return
 						}
 						if !TryCast[types.MutType](infer.env.GetType(id)) {
