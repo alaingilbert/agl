@@ -69,13 +69,13 @@ func solveSudokuHelper(mut board [][]byte, mut m [][]u16) {
         if isValid(board) && isSolved(board) {
             return
         }
-        restoreBoard(mut board, boardClone)
-        m = mClone // Restore to previous state
+        restoreBoard(mut board, boardClone, mut m, mClone) // Restore to previous state
     }
 }
 
-func restoreBoard(mut board, prev [][]byte) {
+func restoreBoard(mut board, prev [][]byte, mut m, mClone [][]u16) {
     (0..81).ForEach(|i| board[i/9][i%9] = prev[i/9][i%9])
+    (0..81).ForEach(|i| m[i/9][i%9] = mClone[i/9][i%9])
 }
 
 func clone(board [][]byte, m [][]u16) ([][]byte, [][]u16) {
