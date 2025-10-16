@@ -2060,13 +2060,26 @@ func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 	for p.tok != token.RPAREN && p.tok != token.EOF && !ellipsis.IsValid() {
 		var x ast.Expr
 
-		// Check if we have a keyword followed by colon (argument label)
-		// Keywords can be used as labels since they're unambiguous in this context
-		// But exclude keywords that can start expressions (if, match, func, etc.)
-		// Special case: WHERE and IF are in canStartExpr for for-loop parsing,
-		// but they should still be allowed as labels in function calls
-		if p.tok.IsKeyword() && (!canStartExpr(p.tok) || p.tok == token.WHERE || p.tok == token.IF) {
-			// Save position in case this is a label
+		// Special handling for IF keyword: it can either start an if-expression or be used as a label.
+		// To disambiguate, we peek ahead to see if it's followed by a colon.
+		if p.tok == token.IF {
+			labelPos := p.pos
+			p.next()
+			if p.tok == token.COLON {
+				// It's a label: "if:"
+				lbl := &ast.Ident{NamePos: labelPos, Name: "if"}
+				p.next()
+				x = &ast.LabelledArg{Label: lbl, X: p.parseRhs()}
+			} else {
+				// Not a label, it's an if-expression
+				// We already consumed the IF token, so manually parse the if statement
+				x = p.parseIfExprAfterIf(labelPos)
+			}
+		} else if p.tok.IsKeyword() && (!canStartExpr(p.tok) || p.tok == token.WHERE) {
+			// Check if we have a keyword followed by colon (argument label)
+			// Keywords can be used as labels since they're unambiguous in this context
+			// But exclude keywords that can start expressions (match, func, etc.)
+			// Special case: WHERE can start an expression in for-loops but should be allowed as a label in function calls
 			labelPos := p.pos
 			labelName := p.tok.String()
 			p.next()
@@ -2768,6 +2781,39 @@ func (p *parser) parseGuardStmt() ast.Stmt {
 	elsePos := p.expect(token.ELSE)
 	body := p.parseBlockStmt()
 	return &ast.GuardStmt{Guard: pos, Else: elsePos, Cond: cond, Body: body}
+}
+
+// parseIfExprAfterIf parses an if-expression where the IF token has already been consumed.
+// This is used when disambiguating between "if:" (label) and "if expr { }" (if-expression).
+func (p *parser) parseIfExprAfterIf(ifPos token.Pos) ast.Expr {
+	defer decNestLev(incNestLev(p))
+
+	if p.trace {
+		defer un(trace(p, "IfExprAfterIf"))
+	}
+
+	if p.tok == token.LET {
+		return p.parseIfLetExpr(ifPos)
+	}
+
+	init, cond := p.parseIfHeader()
+	body := p.parseBlockStmt()
+
+	var else_ ast.Stmt
+	if p.tok == token.ELSE {
+		p.next()
+		switch p.tok {
+		case token.IF:
+			else_ = &ast.ExprStmt{X: p.parseIfExpr()}
+		case token.LBRACE:
+			else_ = p.parseBlockStmt()
+		default:
+			p.errorExpected(p.pos, "if statement or block")
+			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
+		}
+	}
+
+	return &ast.IfExpr{If: ifPos, Init: init, Cond: cond, Body: body, Else: else_}
 }
 
 func (p *parser) parseIfExpr() ast.Expr {
