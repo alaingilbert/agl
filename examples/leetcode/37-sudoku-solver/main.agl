@@ -75,11 +75,7 @@ func solveSudokuHelper(mut board [][]byte, mut m [][]u16) {
 }
 
 func restoreBoard(mut board, prev [][]byte) {
-    for row in 0..9 {
-        for col in 0..9 {
-            board[row][col] = prev[row][col]
-        }
-    }
+    (0..81).ForEach(|i| { board[i/9][i%9] = prev[i/9][i%9] })
 }
 
 func clone(board [][]byte, m [][]u16) ([][]byte, [][]u16) {
