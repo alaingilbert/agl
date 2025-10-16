@@ -116,14 +116,7 @@ func findTrySq(board [][]byte, m [][]u16) (int, int)? {
 }
 
 func isSolved(board [][]byte) bool {
-    for row in 0..9 {
-        for col in 0..9 {
-            if board[row][col] == '.' {
-                return false
-            }
-        }
-    }
-    return true
+    (0..81).AllSatisfy(|i| board[i/9][i%9] != '.')
 }
 
 func isValid(board [][]byte) bool {
@@ -134,36 +127,13 @@ func isValid(board [][]byte) bool {
         *v |= 1 << (u16(board[row][col] - '0') - 1)
         return true
     }
-    // Validate rows
-    for row in 0..9 {
-        var mut v u16
-        for col in 0..9 {
-            if !toggleBit(&mut v, row, col) {
+    for i in 0..9 {
+        var mut v1, mut v2, mut v3 u16
+        for j in 0..9 {
+            if !toggleBit(&mut v1, i, j) ||                // Validate rows
+               !toggleBit(&mut v2, j, i) ||                // Validate columns
+               !toggleBit(&mut v3, i/3*3+j/3, i%3*3+j%3) { // Validate 3x3 sub-boxes
                 return false
-            }
-        }
-    }
-    // Validate columns
-    for col in 0..9 {
-        var mut v u16
-        for row in 0..9 {
-            if !toggleBit(&mut v, row, col) {
-                return false
-            }
-        }
-    }
-    // Validate 3x3 sub-boxes
-    for i in 0..3 {
-        for j in 0..3 {
-            var mut v u16
-            for y in 0..3 {
-                for x in 0..3 {
-                    row := y + i * 3
-                    col := x + j * 3
-                    if !toggleBit(&mut v, row, col) {
-                        return false
-                    }
-                }
             }
         }
     }
@@ -183,14 +153,7 @@ func printBoard(board [][]byte) {
 }
 
 func boardEq(b1, b2 [][]byte) bool {
-    for i in 0..9 {
-        for j in 0..9 {
-            if b1[i][j] != b2[i][j] {
-                return false
-            }
-        }
-    }
-    return true
+    (0..81).AllSatisfy(|i| b1[i/9][i%9] == b2[i/9][i%9])
 }
 
 func main() {
