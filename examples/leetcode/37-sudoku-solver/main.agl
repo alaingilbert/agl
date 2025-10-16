@@ -10,28 +10,26 @@ func solveTrivial(mut board [][]byte, mut m [][]uint16) {
     mut newValues := true
     for newValues {
         newValues = false
-        for i in 0..9 {
-            for j in 0..9 {
-                c := board[i][j]
-                if c != '.' {
-                    v := u16(c - '0')
-                    m[i][j] = all
-                    for k in 0..9 {
-                        toggleBit(i, k, v)                 // flip bit for the row
-                        toggleBit(k, j, v)                 // flip bit for the column
-                        toggleBit(k/3+i/3*3, k%3+j/3*3, v) // flip bit for the 3x3 sub-box
-                    }
+        for i in 0..81 {
+            row, col := i / 9, i % 9
+            c := board[row][col]
+            if c != '.' {
+                v := u16(c - '0')
+                m[row][col] = all
+                for k in 0..9 {
+                    toggleBit(row, k, v)                   // flip bit for the row
+                    toggleBit(k, col, v)                   // flip bit for the column
+                    toggleBit(k/3+row/3*3, k%3+col/3*3, v) // flip bit for the 3x3 sub-box
                 }
             }
         }
-        for i in 0..9 {
-            for j in 0..9 {
-                if bits.OnesCount16(m[i][j]) == 8 {                     // only 1 number possible remaining
-                    v := m[i][j] ^ all                                  // Find the number
-                    m[i][j] = all                                       // Mark square as "found"
-                    board[i][j] = byte(bits.TrailingZeros16(v)+1) + '0' // Update the board
-                    newValues = true
-                }
+        for i in 0..81 {
+            row, col := i / 9, i % 9
+            if bits.OnesCount16(m[row][col]) == 8 {                     // only 1 number possible remaining
+                v := m[row][col] ^ all                                  // Find the number
+                m[row][col] = all                                       // Mark square as "found"
+                board[row][col] = byte(bits.TrailingZeros16(v)+1) + '0' // Update the board
+                newValues = true
             }
         }
     }
