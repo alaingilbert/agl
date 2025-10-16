@@ -86,10 +86,8 @@ func clone(board [][]byte, m [][]u16) ([][]byte, [][]u16) {
 
 func getChoices(m [][]u16, row, col int) []int {
     mut out := make([]int, 0)
-    for i in 0..9 {
-        if m[row][col] >> i & 1 == 0 {
-            out.Push(i+1)
-        }
+    for i in 0..9 where m[row][col] >> i & 1 == 0 {
+        out.Push(i+1)
     }
     return out
 }
