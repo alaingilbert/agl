@@ -19,8 +19,7 @@ func addBinary(a string, b string) string {
         if b[i] == '1' {
             carry++
         }
-        digit := if carry % 2 == 1 { "1" } else { "0" }
-        answer.Push(digit)
+        answer.Push(if carry % 2 == 1 { "1" } else { "0" })
         carry /= 2
     }
     if carry == 1 {
