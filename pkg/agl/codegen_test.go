@@ -14598,13 +14598,61 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
-//func TestCodeGen_native_multi_values(t *testing.T) {
-//	src := `package agl
-//func test() (int, int) {
-//	return 1, 2
-//}
-//`
+//	func TestCodeGen_native_multi_values(t *testing.T) {
+//		src := `package agl
+//
+//	func test() (int, int) {
+//		return 1, 2
+//	}
+//
+// `
+//
 //	expected := `// agl:generated
-//`
-//	testCodeGen2(t, expected, NewTest(src))
-//}
+//
+// `
+//
+//		testCodeGen2(t, expected, NewTest(src))
+//	}
+
+func TestCodeGen_MutAliasError(t *testing.T) {
+	// Test that creating a mutable alias to an immutable slice fails
+	src := `package main
+func process(data []int) {
+	mut data := data
+	data.Push(42)
+}
+func main() {
+	arr := []int{1, 2, 3}
+	process(arr)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Greater(t, len(test.errs), 0, "Expected at least one error when creating mut alias to immutable slice")
+	tassert.Contains(t, test.errs[0].Error(), "cannot create mutable alias 'data' to immutable reference type")
+}
+
+func TestCodeGen_MutAliasOK(t *testing.T) {
+	// Test that creating a mutable alias from a mutable parameter works
+	src := `package main
+func process(mut data []int) {
+	mut data := data
+	data.Push(42)
+}
+func main() {
+	mut arr := []int{1, 2, 3}
+	process(mut arr)
+}`
+	expected := `// agl:generated
+package main
+func process(data []int) {
+	data_ := data
+	AglVecPush((*[]int)(&data_), 42)
+}
+func main() {
+	arr := []int{1, 2, 3}
+	process(arr)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs), "Should not error when creating mut alias from mut parameter")
+	testCodeGen2(t, expected, test)
+}

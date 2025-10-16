@@ -3748,6 +3748,18 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						hasNewVar = true
 					} else if ass.mutable {
 						// This is a shadowing case: mut x := x
+						// Check if creating a mutable alias to an immutable reference type
+						origType := infer.env.Get(ass.name)
+						unwrappedType := types.Unwrap(origType)
+						isRefType := false
+						switch unwrappedType.(type) {
+						case types.ArrayType, types.MapType:
+							isRefType = true
+						}
+						if isRefType && !TryCast[types.MutType](origType) {
+							infer.errorf(ass.n, "cannot create mutable alias '%s' to immutable reference type (original '%s' is not mutable)", ass.name, ass.name)
+							return
+						}
 						// Treat it as a new variable
 						hasNewVar = true
 					}
