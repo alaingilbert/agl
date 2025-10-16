@@ -3938,13 +3938,22 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 				switch vv := v.X.(type) {
 				case *ast.Ident:
 					lhsIdName = vv.Name
+				case *ast.IndexExpr:
+					// For nested indexing like m[i][j], extract the base identifier
+					if ident, ok := vv.X.(*ast.Ident); ok {
+						lhsIdName = ident.Name
+					}
 				}
 				lhsIdNameT := infer.env.GetType(v.X)
 				if v, ok := lhsIdNameT.(types.StarType); ok {
 					lhsIdNameT = v.X
 				}
 				if infer.mutEnforced && !TryCast[types.MutType](lhsIdNameT) {
-					infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
+					if lhsIdName != "" {
+						infer.errorf(v.X, "cannot assign to immutable variable '%s'", lhsIdName)
+					} else {
+						infer.errorf(v.X, "cannot assign to immutable indexed expression")
+					}
 					return
 				}
 				lhsIdNameT = types.Unwrap(lhsIdNameT)

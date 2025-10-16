@@ -1392,6 +1392,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		return nil
 	case *ast.IndexExpr:
 		t := e.GetType2(xx.X, fset)
+		if t == nil {
+			return types.ErrorType{}
+		}
 		t = types.Unwrap(t)
 		if !e.NoIdxUnwrap {
 			switch v := t.(type) {
@@ -1410,6 +1413,8 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.SetType:
 		case types.InterfaceType:
 		case types.ArrayType:
+		case types.ErrorType:
+			return types.ErrorType{}
 		default:
 			panic(fmt.Sprintf("%s: %v %v", e.fset.Position(xx.X.Pos()), t, to(t)))
 		}
