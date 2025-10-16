@@ -825,6 +825,10 @@ func AglIteratorContains[T comparable, I Iterator[T]](it I, el T) bool {
 	return AglSequenceContains(it.Iter(), el)
 }
 
+func AglIteratorForEach[T any, I Iterator[T]](it I, f func(T) AglVoid) {
+	AglSequenceForEach(it.Iter(), f)
+}
+
 func (s AglSet[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for k := range s {

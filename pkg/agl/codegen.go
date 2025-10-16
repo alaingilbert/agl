@@ -906,14 +906,18 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 	// Check if we need an implicit return (same logic as genFuncDecl)
 	var c1 GenFrag
 	implicitReturn := false
+	hasReturnType := false
 
 	// Get the function type to check if it has a return type
 	ftTmp := g.env.GetType(expr)
-	if v, ok := ftTmp.(types.LabelledType); ok {
-		ftTmp = v.W
+	if ftTmp != nil {
+		if v, ok := ftTmp.(types.LabelledType); ok {
+			ftTmp = v.W
+		}
+		if t, ok := ftTmp.(types.FuncType); ok {
+			hasReturnType = t.Return != nil && !TryCast[types.VoidType](t.Return)
+		}
 	}
-	t := ftTmp.(types.FuncType)
-	hasReturnType := t.Return != nil && !TryCast[types.VoidType](t.Return)
 
 	// Check if body is a BlockStmt with a single expression
 	if blockStmt, ok := expr.Body.(*ast.BlockStmt); ok && hasReturnType && len(blockStmt.List) > 0 {
@@ -962,7 +966,13 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 		if v, ok := ftTmp.(types.LabelledType); ok {
 			ftTmp = v.W
 		}
-		t := ftTmp.(types.FuncType)
+		var t types.FuncType
+		if ftTmp != nil {
+			var ok bool
+			if t, ok = ftTmp.(types.FuncType); !ok {
+				panic(fmt.Sprintf("expected FuncType, got %T", ftTmp))
+			}
+		}
 		var returnStr, argsStr string
 		if len(t.Params) > 0 {
 			var tmp []string
@@ -2462,6 +2472,10 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorContains(") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "ForEach":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIteratorForEach(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
 	case types.IntType:
 		fnName := x.Sel.Name

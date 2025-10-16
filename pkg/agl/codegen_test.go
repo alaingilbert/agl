@@ -11143,6 +11143,8 @@ func main() {
 	}
 	if (0..5).Contains(4) {
 	}
+	(0..5).ForEach({ print($0) })
+	(0..5).ForEach(|e| { print(e) })
 }`
 	expected := `// agl:generated
 package main
@@ -11161,6 +11163,14 @@ func main() {
 	}
 	if AglIteratorContains((AglNewRange[int](0, 5, false)), 4) {
 	}
+	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(aglArg0 int) AglVoid {
+		AglPrint(aglArg0)
+		return AglVoid{}
+	})
+	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(e int) AglVoid {
+		AglPrint(e)
+		return AglVoid{}
+	})
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

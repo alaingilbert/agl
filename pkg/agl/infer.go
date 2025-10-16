@@ -1346,7 +1346,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1371,6 +1371,21 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "ForEach":
+			info := infer.env.GetNameInfo("agl1.Iterator.ForEach")
+			fnT := infer.env.GetFn("agl1.Iterator.ForEach")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			if len(expr.Args) < 1 {
+				return
+			}
+			// Use withOptType to ensure the type is available during shortFuncLit processing
+			ft := fnT.GetParam(0).(types.FuncType)
+			exprArg0 := expr.Args[0]
+			infer.withOptType(exprArg0, ft, func() {
+				infer.SetType(expr.Args[0], fnT.Params[0])
+				infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+				infer.SetType(expr, fnT.Return)
+			})
 		}
 	default:
 		infer.errorf(call.X, "Unresolved reference '%s'", fnName)
