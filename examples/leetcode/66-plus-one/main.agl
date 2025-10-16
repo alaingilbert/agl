@@ -1,0 +1,28 @@
+package main
+
+func plusOne(mut digits []int) []int {
+    for i in (0..digits.Len()).Rev() {
+        if digits[i] == 9 {
+            digits[i] = 0
+            if i == 0  {
+                digits = append([]int{1}, digits...)
+            }
+        } else {
+            digits[i]++
+            break
+        }
+    }
+    return digits
+}
+
+func main() {
+    cmp := func(mut a, b []int) {
+        res := plusOne(mut a)
+        assertEq(res.Len(), b.Len())
+        res.Enumerated().ForEach(|(i, e)| assertEq(b[i], e))
+    }
+    cmp([]int{1,2,3}, []int{1,2,4})
+    cmp([]int{4,3,2,1}, []int{4,3,2,2})
+    cmp([]int{9}, []int{1,0})
+    cmp([]int{1,9}, []int{2,0})
+}
