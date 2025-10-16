@@ -1,0 +1,26 @@
+package main
+
+func isValidSudoku(board [][]byte) bool {
+    toggleBit := func(mut c *u16, row, col int) bool {
+        v := u16(board[row][col] - '0') - 1
+        if *c >> v & 1 == 0 {
+            *c |= 1 << v
+            return true
+        }
+        return false
+    }
+    for i in 0..9 {
+        var mut v1, mut v2, mut v3 u16
+        for j in 0..9 {
+            if !toggleBit(&mut v1, i, j) ||                // Validate rows
+               !toggleBit(&mut v2, j, i) ||                // Validate columns
+               !toggleBit(&mut v3, i/3*3+j/3, i%3*3+j%3) { // Validate 3x3 sub-boxes
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func main() {
+}
