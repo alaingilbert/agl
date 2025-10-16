@@ -1,15 +1,8 @@
 package main
 
-func addBinary(a string, b string) string {
-    mut a := a
-    mut b := b
-    if a.Len() > b.Len() {
-        diff := a.Len() - b.Len()
-        b = "0".Repeat(diff) + b
-    } else if b.Len() > a.Len() {
-       diff := b.Len() - a.Len()
-       a = "0".Repeat(diff) + a
-    }
+func addBinary(aa string, bb string) string {
+    n := max(aa.Len(), bb.Len())
+    a, b := aa.ZFill(n), bb.ZFill(n)
     var mut answer []string
     mut carry := 0
     for i in (0..a.Len()).Rev() {
