@@ -54,9 +54,6 @@ func solveSudoku(mut board [][]byte)  {
 
 func solveSudokuHelper(mut board [][]byte, mut m [][]u16) {
     solveTrivial(mut board, mut m)
-    if isValid(board) && isSolved(board) {
-        return
-    }
     guard let Some((posY, posX)) := findTrySq(board, m) else { return }
     for choice in getChoices(m, posY, posX) {
         mut boardClone, mut mClone := clone(board, m) // Clone current state
