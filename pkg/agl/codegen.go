@@ -2319,10 +2319,11 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")
 			}}
 		case "Push":
-			paramsStr := func() (out string) {
-				out += MapJoin(e, expr.Args, func(arg ast.Expr) string { return g.genExpr(arg).F() }, ", ")
-				return
-			}
+			argFrags := g.genExprs(expr.Args)
+			paramsStr := argFrags.F
+			var bs []func() string
+			bs = append(bs, c1.B...)
+			bs = append(bs, argFrags.B...)
 			ellipsis := func() (out string) {
 				if expr.Ellipsis.IsValid() {
 					out = e("...")
@@ -2346,7 +2347,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 							out += e(g.prefix+"AglVec"+fnName+"(&"+varName+", ") + paramsStr() + ellipsis() + e(")\n")
 							out += e(g.prefix) + genEX() + e(" = "+varName) // put the temp value back in the map
 							return out
-						}}
+						}, B: bs}
 					}
 				}
 			}
@@ -2354,11 +2355,11 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			if _, ok := tmpoeXT.(types.StarType); ok {
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"(") + genEX() + e(", ") + paramsStr() + ellipsis() + e(")")
-				}}
+				}, B: bs}
 			} else {
 				return GenFrag{F: func() string {
 					return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + paramsStr() + ellipsis() + e(")")
-				}}
+				}, B: bs}
 			}
 		default:
 			extName := "agl1.Vec." + fnName
