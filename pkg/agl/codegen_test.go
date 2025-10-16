@@ -14181,6 +14181,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen466(t *testing.T) {
+	src := `package main
+func test(if: pred func() bool) {
+	if pred() {
+		print("true")
+	}
+}
+func main() {
+	test(if: { true })
+}`
+	expected := `// agl:generated
+package main
+func test(pred func() bool) {
+	if pred() {
+		AglPrint("true")
+	}
+}
+func main() {
+	test(func() bool {
+		return true
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

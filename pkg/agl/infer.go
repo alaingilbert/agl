@@ -3339,7 +3339,18 @@ func (infer *FileInferrer) setTypeExpr(expr *ast.SetType) {
 }
 
 func (infer *FileInferrer) labelledArg(expr *ast.LabelledArg) {
-	infer.expr(expr.X)
+	// If there's an optType for this LabelledArg, unwrap it and pass to inner expr
+	if infer.optType.IsDefinedFor(expr) {
+		innerType := infer.optType.Type
+		if lt, ok := innerType.(types.LabelledType); ok {
+			innerType = lt.W
+		}
+		infer.withOptType(expr.X, innerType, func() {
+			infer.expr(expr.X)
+		})
+	} else {
+		infer.expr(expr.X)
+	}
 	t := infer.GetType2(expr.X)
 	infer.SetType(expr, t)
 }
