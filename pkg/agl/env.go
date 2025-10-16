@@ -1366,6 +1366,14 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		case types.I64Type:
 			name := fmt.Sprintf("agl1.I64.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.RangeType:
+			// Range types are iterators, check for iterator methods
+			if xx.Sel.Name == "Rev" {
+				name := "agl1.DoubleEndedIterator.Rev"
+				return e.GetType2(&ast.Ident{Name: name}, fset)
+			}
+			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.ErrorType:
 			// Propagate error type to avoid cascading panics
 			return types.ErrorType{}
@@ -1486,6 +1494,14 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return types.VoidType{}
 		}
 		return e.GetType2(xx.Result, fset)
+	case *ast.RangeExpr:
+		sT := e.GetType2(xx.Start, fset)
+		eT := e.GetType2(xx.End_, fset)
+		t := sT
+		if _, ok := t.(types.UntypedNumType); ok {
+			t = eT
+		}
+		return types.RangeType{Typ: t}
 	default:
 		//return nil
 		panic(fmt.Sprintf("unhandled type %v %v", xx, reflect.TypeOf(xx)))
