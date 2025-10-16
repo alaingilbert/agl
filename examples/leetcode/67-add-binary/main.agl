@@ -6,12 +6,8 @@ func addBinary(aa string, bb string) string {
     var mut answer []string
     mut carry := 0
     for i in (0..a.Len()).Rev() {
-        if a[i] == '1' {
-            carry++
-        }
-        if b[i] == '1' {
-            carry++
-        }
+        carry += if a[i] == '1' { 1 } else { 0 }
+        carry += if b[i] == '1' { 1 } else { 0 }
         answer.Push(if carry % 2 == 1 { "1" } else { "0" })
         carry /= 2
     }
