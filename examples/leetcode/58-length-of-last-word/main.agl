@@ -1,0 +1,20 @@
+package main
+
+func lengthOfLastWord(s string) int {
+    mut p1, mut p2 := -1, -1
+    for i in (0..s.Len()).Rev() {
+        if s[i] == ' ' && p2 != -1 {
+            p1 = i
+            break
+        } else if s[i] != ' ' && p2 == -1 {
+            p2 = i
+        }
+    }
+    return p2 - p1
+}
+
+func main() {
+    assertEq(lengthOfLastWord("Hello World"), 5)
+    assertEq(lengthOfLastWord("   fly me   to   the moon  "), 4)
+    assertEq(lengthOfLastWord("luffy is still joyboy"), 6)
+}
