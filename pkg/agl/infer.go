@@ -1375,17 +1375,9 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 			info := infer.env.GetNameInfo("agl1.Iterator.ForEach")
 			fnT := infer.env.GetFn("agl1.Iterator.ForEach")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
-			if len(expr.Args) < 1 {
-				return
-			}
-			// Use withOptType to ensure the type is available during shortFuncLit processing
-			ft := fnT.GetParam(0).(types.FuncType)
-			exprArg0 := expr.Args[0]
-			infer.withOptType(exprArg0, ft, func() {
-				infer.SetType(expr.Args[0], fnT.Params[0])
-				infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-				infer.SetType(expr, fnT.Return)
-			})
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		}
 	default:
 		infer.errorf(call.X, "Unresolved reference '%s'", fnName)
@@ -2687,8 +2679,10 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		singleExprStmt := len(bodyBlock.List) == 1 && TryCast[*ast.ExprStmt](bodyBlock.List[0])
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
 		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](lastStmt()) }
+		astModified := false
 		if (singleExprStmt || (multStmt && !lastIsRetStmt())) && retIsVoid {
 			bodyBlock.List = append(bodyBlock.List, voidReturnStmt)
+			astModified = true
 		} else if multStmt && lastIsRetStmt() {
 			returnStmt := lastStmt().(*ast.ReturnStmt).Result
 			inferExpr(returnStmt, ft)
@@ -2696,6 +2690,22 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 			returnStmt := lastStmt().(*ast.ExprStmt).X
 			inferExpr(returnStmt, ft)
 			bodyBlock.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
+			astModified = true
+		}
+		// Re-store the type if AST was modified (End() position may have changed)
+		// For the retIsVoid case, use ftTmp since inferExpr wasn't called
+		// For the singleExprStmt case, use the current type which may have been updated by inferExpr
+		if astModified {
+			typeToStore := ftTmp
+			if !retIsVoid {
+				// inferExpr may have updated the type (e.g., resolved generics)
+				if currentType := infer.env.GetType(expr); currentType != nil {
+					typeToStore = currentType
+				}
+			}
+			if typeToStore != nil {
+				infer.SetTypeForce(expr, typeToStore)
+			}
 		}
 		// expr type is set in CallExpr
 	})

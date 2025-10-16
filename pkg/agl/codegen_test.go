@@ -11145,6 +11145,7 @@ func main() {
 	}
 	(0..5).ForEach({ print($0) })
 	(0..5).ForEach(|e| { print(e) })
+	(0..5).ForEach(|e| print(e))
 }`
 	expected := `// agl:generated
 package main
@@ -11165,6 +11166,10 @@ func main() {
 	}
 	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(aglArg0 int) AglVoid {
 		AglPrint(aglArg0)
+		return AglVoid{}
+	})
+	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(e int) AglVoid {
+		AglPrint(e)
 		return AglVoid{}
 	})
 	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(e int) AglVoid {
