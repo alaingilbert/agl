@@ -4,9 +4,9 @@ func mySqrt(x int) int {
     if x == 0 || x == 1 {
         return x
     }
-    mut l, mut r := 1, x
+    mut l, mut r := 2, x/2
     for l <= r {
-        m := (r+l)/2
+        m := l+(r-l)/2
         sq := m * m
         if sq == x {
             return m
