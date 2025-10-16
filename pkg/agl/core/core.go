@@ -1212,6 +1212,13 @@ func AglStringLines(s string) []string {
 	return strings.Split(s, "\n")
 }
 
+func AglStringZFill(s string, width int) string {
+	if len(s) >= width {
+		return s
+	}
+	return strings.Repeat("0", width-len(s)) + s
+}
+
 func AglStringReplace(s string, old, new string, n int) string {
 	return strings.Replace(s, old, new, n)
 }
