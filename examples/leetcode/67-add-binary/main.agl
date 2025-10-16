@@ -1,0 +1,35 @@
+package main
+
+func addBinary(a string, b string) string {
+    mut a := a
+    mut b := b
+    if a.Len() > b.Len() {
+        diff := a.Len() - b.Len()
+        b = "0".Repeat(diff) + b
+    } else if b.Len() > a.Len() {
+       diff := b.Len() - a.Len()
+       a = "0".Repeat(diff) + a
+    }
+    var mut answer []string
+    mut carry := 0
+    for i in (0..a.Len()).Rev() {
+        if a[i] == '1' {
+            carry++
+        }
+        if b[i] == '1' {
+            carry++
+        }
+        digit := if carry % 2 == 1 { "1" } else { "0" }
+        answer.Push(digit)
+        carry /= 2
+    }
+    if carry == 1 {
+        answer.Push("1")
+    }
+    return answer.Reversed().Joined("")
+}
+
+func main() {
+    assertEq(addBinary("11", "1"), "100")
+    assertEq(addBinary("1010", "1011"), "10101")
+}
