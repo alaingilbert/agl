@@ -5,6 +5,7 @@
 		{"include": "#comments"},
 		{"include": "#keywords"},
 		{"include": "#strings"},
+		{"include": "#characters"},
 		{"include": "#raw_strings"},
 		{"include": "#types" },
 		{"include": "#functions"}
@@ -51,6 +52,17 @@
 			"name": "string.quoted.double.agl",
 			"begin": "\"",
 			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.agl",
+					"match": "\\."
+				}
+			]
+		},
+		"characters": {
+			"name": "string.quoted.single.agl",
+			"begin": "'",
+			"end": "'",
 			"patterns": [
 				{
 					"name": "constant.character.escape.agl",
