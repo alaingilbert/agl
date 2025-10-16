@@ -1,0 +1,23 @@
+package main
+
+func climbStairs(n int) int {
+    return helper(n, map[int]int{})
+}
+
+func helper(n int, mut c map[int]int) int {
+    if let Some(v) := c.Get(n) {
+        return v
+    }
+    if n == 1 || n == 2 {
+        return n
+    }
+    res := helper(n-1, mut c) + helper(n-2, mut c)
+    c[n] = res
+    return res
+}
+
+func main() {
+    assertEq(climbStairs(2), 2)
+    assertEq(climbStairs(3), 3)
+    assertEq(climbStairs(45), 1836311903)
+}
