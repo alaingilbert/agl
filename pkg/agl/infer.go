@@ -1446,8 +1446,8 @@ func (infer *FileInferrer) callExpr(expr *ast.CallExpr) {
 							} else {
 								panic(fmt.Sprintf("unsupported unary expr type %v for arg %v in callexpr %v", to(vv.X), to(arg), to(expr.Fun)))
 							}
-						case *ast.BasicLit, *ast.CallExpr:
-							// Literals and call expressions don't need mutability checks
+						case *ast.BasicLit, *ast.CallExpr, *ast.CompositeLit:
+							// Literals, call expressions, and composite literals don't need mutability checks
 							// as they create new values
 							continue
 						default:

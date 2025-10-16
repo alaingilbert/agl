@@ -14129,6 +14129,30 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen464(t *testing.T) {
+	src := `package main
+func test(mut arr []int) []int {
+	arr.Push(3)
+	return arr
+}
+func main() {
+	test([]int{1, 2})
+}`
+	expected := `// agl:generated
+package main
+func test(arr []int) []int {
+	AglVecPush((*[]int)(&arr), 3)
+	return arr
+}
+func main() {
+	test([]int{1, 2})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
