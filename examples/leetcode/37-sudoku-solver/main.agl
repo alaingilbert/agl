@@ -46,8 +46,7 @@ func createCache() [][]u16 {
     return m
 }
 
-func solveSudoku(board [][]byte)  {
-    mut board := board
+func solveSudoku(mut board [][]byte)  {
     mut m := createCache()
     solveSudokuHelper(mut board, mut m)
     assert(isValid(board) && isSolved(board))
@@ -172,7 +171,7 @@ func main() {
         {'2','8','7','4','1','9','6','3','5'},
         {'3','4','5','2','8','6','1','7','9'}}
     print("problem 1")
-    solveSudoku(board)
+    solveSudoku(mut board)
     assert(boardEq(board, expected))
 
     board = [][]byte{
@@ -196,7 +195,7 @@ func main() {
         {'8','3','2','4','9','1','7','5','6'},
         {'6','4','1','2','7','5','9','8','3'}}
     print("problem 2")
-    solveSudoku(board)
+    solveSudoku(mut board)
     print("-".Repeat(10))
     printBoard(board)
     print("-".Repeat(10))
