@@ -1138,7 +1138,7 @@ func (f FuncType) GoStrType() string {
 	if result := f.Return; result != nil {
 		if _, ok := result.(VoidType); !ok {
 			if v, ok := result.(ResultType); ok && utils.TryCast[VoidType](v.W) {
-				resultStr = " !"
+				resultStr = " " + v.GoStr()
 			} else {
 				val := result.GoStrType()
 				if val != "" {
