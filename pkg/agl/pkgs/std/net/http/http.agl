@@ -16,6 +16,26 @@ type Response struct {
 type Request struct {
 }
 
+type ServeMux struct {
+}
+
+func NewServeMux() *ServeMux {}
+
+func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request)) {}
+
+type Header map[string][]string
+
+type ResponseWriter interface {
+	Header() Header
+	Write([]byte) (int, error)
+	WriteHeader(statusCode int)
+}
+
+type Handler interface {
+	ServeHTTP(ResponseWriter, *Request)
+}
+
+
 func (c *Client) Do(req *Request) (*Response, error)
 func (c *Client) Get(url string) (*Response, error)
 func (c *Client) Post(url, contentType string, body io.Reader) (*Response, error)
@@ -27,3 +47,5 @@ func Get (url string) (*Response, error)
 func ReadRequest(b *bufio.Reader) (*Request, error)
 
 func NewRequest(method, url string, body io.Reader) (*Request, error)
+
+func ListenAndServe(addr string, handler Handler) error
