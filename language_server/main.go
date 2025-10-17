@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"reflect"
 	"runtime/debug"
+	"strings"
 
 	"agl/pkg/agl"
 	"agl/pkg/ast"
@@ -65,6 +67,19 @@ func (s *Server) Exit(ctx context.Context) error {
 	return nil
 }
 
+// uriToFilePath converts a file:// URI to a filesystem path
+func uriToFilePath(uri string) string {
+	// Remove file:// prefix if present
+	if strings.HasPrefix(uri, "file://") {
+		uri = strings.TrimPrefix(uri, "file://")
+		// URL decode to handle spaces and special characters
+		if decoded, err := url.PathUnescape(uri); err == nil {
+			return decoded
+		}
+	}
+	return uri
+}
+
 func (s *Server) DidOpen(ctx context.Context, params lsp.DidOpenTextDocumentParams) error {
 	uri := string(params.TextDocument.URI)
 	content := params.TextDocument.Text
@@ -93,9 +108,12 @@ func (s *Server) updateDocument(uri string, content string) error {
 			debug.PrintStack()
 		}
 	}()
+	// Convert URI to file path for import resolution
+	filePath := uriToFilePath(uri)
+
 	// Parse the file
-	f2, _ := parser.ParseFile(s.fset, uri, agl.CoreFns(), 0)
-	file, err := parser.ParseFile(s.fset, uri, content, 0)
+	f2, _ := parser.ParseFile(s.fset, filePath, agl.CoreFns(), 0)
+	file, err := parser.ParseFile(s.fset, filePath, content, 0)
 	if err != nil {
 		// Convert parser errors to LSP diagnostics
 		if parserErr, ok := err.(scanner.ErrorList); ok {
@@ -131,7 +149,7 @@ func (s *Server) updateDocument(uri string, content string) error {
 	env := agl.NewEnv(s.fset)
 	inferrer := agl.NewInferrer(env)
 	_, _ = inferrer.InferFile("core.agl", f2, s.fset, false)
-	_, errs := inferrer.InferFile(uri, file, s.fset, false)
+	_, errs := inferrer.InferFile(filePath, file, s.fset, false)
 	if len(errs) > 0 {
 		diagnostics := make([]lsp.Diagnostic, 0, len(errs))
 		for _, e := range errs {
