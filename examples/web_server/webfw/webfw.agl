@@ -1,0 +1,82 @@
+package webfw
+
+import (
+    "agl1/net/http"
+)
+
+const (
+    HeaderContentType = "Content-Type"
+    charsetUTF8 = "charset=UTF-8"
+    MIMETextPlain = "text/plain"
+    MIMETextHTML = "text/html"
+    MIMETextHTMLCharsetUTF8  = MIMETextHTML + "; " + charsetUTF8
+    MIMETextPlainCharsetUTF8 = MIMETextPlain + "; " + charsetUTF8
+)
+
+type Context interface {
+    Request() *http.Request
+    Response() http.ResponseWriter
+    String(int, string) !
+    HTML(int, string) !
+}
+
+type context struct {
+    request *http.Request
+    writer http.ResponseWriter
+}
+
+func (c *context) Request() *http.Request {
+    return c.request
+}
+
+func (c *context) Response() http.ResponseWriter {
+    return c.writer
+}
+
+func (c *context) WriteContentType(value string) {
+    header := c.Response().Header()
+    if header.Get(HeaderContentType) == "" {
+        header.Set(HeaderContentType, value)
+    }
+}
+
+func (c *context) Blob(code int, contentType string, b []byte) ! {
+    c.WriteContentType(contentType)
+    c.writer.WriteHeader(code)
+    c.writer.Write(b)
+    return Ok(void)
+}
+
+func (c *context) HTMLBlob(code int, b []byte) ! {
+    c.Blob(code, MIMETextHTMLCharsetUTF8, []byte(b))
+}
+
+func (c *context) HTML(code int, html string) ! {
+    c.HTMLBlob(code, []byte(html))
+}
+
+func (c *context) String(code int, s string) ! {
+    c.Blob(code, MIMETextPlainCharsetUTF8, []byte(s))
+}
+
+type WebFW[C any] struct {
+    mux *http.ServeMux
+    c C
+}
+
+func (w *WebFW[C]) Start(addr string) ! {
+    printf("listening on %s", addr)
+    return http.ListenAndServe(addr, w.mux)
+}
+
+func (w *WebFW[C]) GET(path string, handler func(Context) !) {
+    w.mux.HandleFunc(path, func(writer http.ResponseWriter, request *http.Request) {
+        c := &context{request: request, writer: writer}
+        handler(c)!
+    })
+}
+
+func New[T any](c T) *WebFW[T] {
+    mux := http.NewServeMux()
+    return &WebFW[T]{mux: mux, c: c}
+}

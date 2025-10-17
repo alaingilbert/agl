@@ -1,0 +1,28 @@
+package main
+
+import (
+    "webserver/pkg/webfw"
+)
+
+type DB struct {
+}
+
+type CustomCtx struct {
+    DB *DB
+}
+
+func main() {
+    db := &DB{}
+    w := webfw.New[*CustomCtx](&CustomCtx{DB: db})
+    w.GET("/test", |c| {
+        c.String(200, "test")
+    })
+    w.GET("/home", homeHandler)
+    if let Err(err) := w.Start(":8081") {
+        print(err)
+    }
+}
+
+func homeHandler(c webfw.Context) ! {
+    c.HTML(200, "<b>Home</b>")
+}
