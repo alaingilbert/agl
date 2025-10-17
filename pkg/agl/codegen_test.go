@@ -8775,7 +8775,7 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "[]byte", test.TypeAt(4, 2).String())
 	tassert.Equal(t, "error", test.TypeAt(4, 6).String())
-	tassert.Equal(t, expected, test.GenCode())
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen280(t *testing.T) {
@@ -8795,7 +8795,7 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "f64", test.TypeAt(4, 2).String())
 	tassert.Equal(t, "f64", test.TypeAt(4, 5).String())
-	tassert.Equal(t, expected, test.GenCode())
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen281(t *testing.T) {
@@ -8813,7 +8813,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, expected, test.GenCode())
+	testCodeGen2(t, expected, test)
 }
 
 func TestCodeGen282(t *testing.T) {
