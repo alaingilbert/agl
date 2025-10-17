@@ -320,20 +320,74 @@ func (s StructType) GoStr() string {
 	return out
 }
 
+// GoStrMonomorphized generates a monomorphized name for this struct type
+// if all type parameters are concrete. Otherwise returns the regular GoStr().
+// This is used for user-defined generic structs that are being monomorphized.
+func (s StructType) GoStrMonomorphized() string {
+	if s.String() == "" {
+		return "struct{}"
+	}
+	out := s.String1()
+	if len(s.TypeParams) > 0 {
+		// Check if all type parameters are concrete (not GenericType)
+		allConcrete := true
+		for _, t := range s.TypeParams {
+			if _, ok := t.(GenericType); ok {
+				allConcrete = false
+				break
+			}
+		}
+
+		if allConcrete {
+			// Generate monomorphized name like Test_T_string
+			for _, t := range s.TypeParams {
+				out += "_T_" + t.GoStr()
+			}
+		} else {
+			tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
+				if v, ok := t.(GenericType); ok {
+					return v.W.GoStrType()
+				} else {
+					return t.GoStr()
+				}
+			}, ", ")
+			out += fmt.Sprintf("[%s]", tmp)
+		}
+	}
+	return out
+}
+
 func (s StructType) GoStrType() string {
 	if s.String() == "" {
 		return "struct{}"
 	}
 	out := s.String1()
 	if len(s.TypeParams) > 0 {
-		tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
-			if v, ok := t.(GenericType); ok {
-				return v.W.GoStrType()
-			} else {
-				return t.GoStrType()
+		// Check if all type parameters are concrete (not GenericType)
+		// If so, generate the monomorphized name instead of parameterized form
+		allConcrete := true
+		for _, t := range s.TypeParams {
+			if _, ok := t.(GenericType); ok {
+				allConcrete = false
+				break
 			}
-		}, ", ")
-		out += fmt.Sprintf("[%s]", tmp)
+		}
+
+		if allConcrete {
+			// Generate monomorphized name like Test_T_string
+			for _, t := range s.TypeParams {
+				out += "_T_" + t.GoStrType()
+			}
+		} else {
+			tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
+				if v, ok := t.(GenericType); ok {
+					return v.W.GoStrType()
+				} else {
+					return t.GoStrType()
+				}
+			}, ", ")
+			out += fmt.Sprintf("[%s]", tmp)
+		}
 	}
 	return out
 }
@@ -359,6 +413,10 @@ func (s StructType) String1() string {
 		out = s.Pkg + "." + out
 	}
 	return out
+}
+
+func (s StructType) IsGeneric() bool {
+	return len(s.TypeParams) > 0
 }
 
 type InterfaceMethod struct {
@@ -1002,8 +1060,8 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		for _, p := range t1.TypeParams {
 			if v, ok := p.(GenericType); ok {
 				if v.Name == name {
-					v.W = newTyp
-					p = v
+					// Replace the GenericType with the concrete type
+					p = newTyp
 				}
 			}
 			typeParams = append(typeParams, p)
@@ -1048,7 +1106,12 @@ func FindGen(a, b Type) map[string]Type {
 func findGenHelper(m map[string]Type, a, b Type) {
 	switch t1 := a.(type) {
 	case GenericType:
-		m[t1.Name] = b
+		// If b is also a GenericType, unwrap it to get the actual type
+		if t2, ok := b.(GenericType); ok {
+			m[t1.Name] = t2.W
+		} else {
+			m[t1.Name] = b
+		}
 	case ArrayType:
 		b = Unwrap(b)
 		findGenHelper(m, t1.Elt, b.(ArrayType).Elt)

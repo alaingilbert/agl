@@ -5065,11 +5065,11 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
-type TestStruct[T any] struct {
-	a T
+type TestStruct_T_string struct {
+	a string
 }
 func main() {
-	i := TestStruct[string]{a: "foo"}
+	i := TestStruct_T_string{a: "foo"}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -14247,33 +14247,33 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
-//func TestCodeGen468(t *testing.T) {
-//	src := `package main
-//type Test[T any] struct {
-//	C T
-//}
-//func New[T any](c T) *Test {
-//	return &Test{C: c}
-//}
-//func main() {
-//	print(New("test"))
-//}`
-//	expected := `// agl:generated
-//package main
-//type Test_T_string struct {
-//	C string
-//}
-//func main() {
-//	AglPrint(New_T_string("test"))
-//}
-//func New_T_string(c string) *Test {
-//	return &Test{C: c}
-//}
-//`
-//	test := NewTest(src, WithMutEnforced(true))
-//	tassert.Equal(t, 0, len(test.errs))
-//	testCodeGen2(t, expected, test)
-//}
+func TestCodeGen468(t *testing.T) {
+	src := `package main
+type Test[T any] struct {
+	C T
+}
+func New[T any](c T) *Test {
+	return &Test{C: c}
+}
+func main() {
+	print(New("test"))
+}`
+	expected := `// agl:generated
+package main
+type Test_T_string struct {
+	C string
+}
+func main() {
+	AglPrint(New_T_string("test"))
+}
+func New_T_string(c string) *Test_T_string {
+	return &Test_T_string{C: c}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
 
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main

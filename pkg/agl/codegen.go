@@ -26,6 +26,8 @@ type Generator struct {
 	genFuncDecls2              map[string]func() string
 	tupleStructs               map[string]string
 	genFuncDecls               map[string]*ast.FuncDecl
+	genTypeDecls               map[string]*ast.TypeSpec
+	genTypeDecls2              map[string]func() string
 	varCounter                 atomic.Int64
 	returnType                 types.Type
 	extensions                 map[string]Extension
@@ -122,6 +124,8 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 		tupleStructs:  make(map[string]string),
 		genFuncDecls2: make(map[string]func() string),
 		genFuncDecls:  genFns,
+		genTypeDecls:  make(map[string]*ast.TypeSpec),
+		genTypeDecls2: make(map[string]func() string),
 		allowUnused:   conf.AllowUnused,
 		releaseMode:   conf.ReleaseMode,
 		emitEnabled:   true,
@@ -514,9 +518,87 @@ func (g *Generator) Generate2() (out1, out2 string) {
 	return
 }
 
+// typeToGoStr converts a type to its Go string representation.
+// For user-defined structs with concrete type parameters, it uses the monomorphized name.
+func (g *Generator) typeToGoStr(t types.Type) string {
+	// Get the default string representation
+	defaultStr := t.GoStr()
+
+	// Check if the base type (unwrapped) is a user-defined struct
+	unwrapped := types.Unwrap(t)
+	if structType, ok := unwrapped.(types.StructType); ok {
+		// Check if this is a user-defined struct (in genTypeDecls)
+		if structType.IsGeneric() {
+			// Try to find this struct in genTypeDecls
+			// The key format is "StructName[any]" for generic structs
+			baseName := structType.String1()
+			// Check if any key in genTypeDecls matches the base name
+			for key := range g.genTypeDecls {
+				if structType.String1() == "" {
+					continue
+				}
+				// Check if the key starts with the struct base name
+				if len(key) > len(baseName) && key[:len(baseName)] == baseName {
+					// This is a user-defined struct - use monomorphized name
+					monomorphizedName := structType.GoStrMonomorphized()
+					// If the original type was a pointer, add the pointer prefix
+					if len(defaultStr) > 0 && defaultStr[0] == '*' {
+						return "*" + monomorphizedName
+					}
+					return monomorphizedName
+				}
+			}
+		}
+	}
+
+	// Default behavior
+	return defaultStr
+}
+
+func (g *Generator) scanForGenericStructs() {
+	// Scan both AST files for generic struct declarations and store them in genTypeDecls
+	scanDecls := func(decls []ast.Decl) {
+		for _, decl := range decls {
+			if genDecl, ok := decl.(*ast.GenDecl); ok {
+				if genDecl.Tok == token.TYPE {
+					for _, spec := range genDecl.Specs {
+						if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+							hasTypeParams := typeSpec.TypeParams != nil && len(typeSpec.TypeParams.List) > 0
+							_, isStructType := typeSpec.Type.(*ast.StructType)
+
+							if hasTypeParams && isStructType {
+								// Get the struct type from environment
+								typeT := g.env.Get(typeSpec.Name.Name)
+								if typeT != nil {
+									if tt, ok := typeT.(types.TypeType); ok {
+										typeT = tt.W
+									}
+									if structT, ok := types.Unwrap(typeT).(types.StructType); ok {
+										key := structT.String()
+										g.genTypeDecls[key] = typeSpec
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if g.a != nil {
+		scanDecls(g.a.Decls)
+	}
+	if g.b != nil {
+		scanDecls(g.b.Decls)
+	}
+}
+
 func (g *Generator) Generate() (out string) {
 	// Scan for enums first to add necessary imports
 	g.scanForEnums()
+
+	// Scan for generic structs to populate genTypeDecls before code generation
+	g.scanForGenericStructs()
 
 	out += g.Emit(GeneratedFilePrefix)
 
@@ -549,18 +631,42 @@ func (g *Generator) Generate() (out string) {
 	out += g.genPackage()
 	out += g.genImports(importsArr)
 
-	// Now output the generated declarations
-	out += out4.F() + out5.F()
-
-	// Generate function declarations and extensions
+	// Generate function and type declarations iteratively
+	// Type declarations can be added during function generation, so we need to keep generating until both are empty
 	var genFuncDeclStr string
-	for len(g.genFuncDecls2) > 0 {
-		sorted := slices.Sorted(maps.Keys(g.genFuncDecls2))
-		key := sorted[0]
-		genFuncDeclStr += g.genFuncDecls2[key]()
-		delete(g.genFuncDecls2, key)
-	}
-	out += genFuncDeclStr
+	var genTypeDeclStr string
+	var originalDecls string
+
+	// First, generate original declarations WITHOUT emitting to fragments (just to populate genTypeDecls2/genFuncDecls2)
+	g.WithoutEmit(func() {
+		originalDecls = out4.F() + out5.F()
+	})
+	// Now generate monomorphized types and functions WITHOUT emitting
+	// Keep generating until both maps are empty
+	// Functions may add type declarations, so we need to iterate
+	g.WithoutEmit(func() {
+		for len(g.genFuncDecls2) > 0 || len(g.genTypeDecls2) > 0 {
+			// First, generate ALL type declarations (generating functions may add more types)
+			for len(g.genTypeDecls2) > 0 {
+				sorted := slices.Sorted(maps.Keys(g.genTypeDecls2))
+				key := sorted[0]
+				genTypeDeclStr += g.genTypeDecls2[key]()
+				delete(g.genTypeDecls2, key)
+			}
+			// Then generate functions (they may add more type declarations, which will be handled in next iteration)
+			if len(g.genFuncDecls2) > 0 {
+				sorted := slices.Sorted(maps.Keys(g.genFuncDecls2))
+				key := sorted[0]
+				genFuncDeclStr += g.genFuncDecls2[key]()
+				delete(g.genFuncDecls2, key)
+			}
+		}
+	})
+
+	// Finally, emit everything in the correct order to fragments
+	out += g.Emit(genTypeDeclStr)
+	out += g.Emit(originalDecls)
+	out += g.Emit(genFuncDeclStr)
 	var extStr string
 	for len(g.extensions) > 0 {
 		sorted := slices.Sorted(maps.Keys(g.extensions))
@@ -826,7 +932,18 @@ func (g *Generator) genIdent(expr *ast.Ident) GenFrag {
 		}
 		t := g.env.GetType(expr)
 		switch v := t.(type) {
+		case types.GenericType:
+			// Handle GenericType directly (not wrapped in TypeType)
+			// This is a value with a generic type - just use the identifier name
+			// Don't replace it with the concrete type
+			return e(expr.Name)
 		case types.TypeType:
+			// Check if this identifier is a type parameter that should be replaced
+			if g.genMap != nil {
+				if replacement, ok := g.genMap[expr.Name]; ok {
+					return e(replacement.GoStr())
+				}
+			}
 			t = v.W
 			switch typ := t.(type) {
 			case types.GenericType:
@@ -849,10 +966,38 @@ func (g *Generator) genIdent(expr *ast.Ident) GenFrag {
 		case "pow":
 			return e("AglPow")
 		}
-		if v := g.env.Get(expr.Name); v != nil {
+		v := g.env.Get(expr.Name)
+		if v != nil {
 			switch vv := v.(type) {
+			case types.StructType:
+				// Check if this is a generic struct type that needs monomorphization
+				lookupKey := vv.String()
+				if vv.IsGeneric() && g.genMap != nil {
+					// Generate monomorphized struct if needed
+					typeDecl := g.genTypeDecls[lookupKey]
+					if typeDecl != nil {
+						m := make(map[string]types.Type)
+						for k, v := range g.genMap {
+							m[k] = v
+						}
+						outTypeDecl := func() (out string) {
+							g.WithGenMapping(m, func() {
+								out = g.decrPrefix(g.genSpec(typeDecl, token.TYPE).F)
+							})
+							return
+						}
+						name := expr.Name
+						for _, k := range slices.Sorted(maps.Keys(m)) {
+							name += "_" + k + "_" + m[k].GoStr()
+						}
+						g.genTypeDecls2[name] = outTypeDecl
+						return e(name)
+					}
+				}
+				// For non-generic or when genMap is nil, return the type name
+				return e(vv.GoStr())
 			case types.TypeType:
-				return e(v.GoStr())
+				return e(vv.W.GoStr())
 			case types.FuncType:
 				name := expr.Name
 				if vv.Pub {
@@ -1821,7 +1966,9 @@ func (g *Generator) genStructType(expr *ast.StructType) GenFrag {
 			out += e(gPrefix + "\t")
 			out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return e(n.Name) }, ", ")
 			out += e(" ")
-			g.withAsType(func() { out += g.genExpr(field.Type).F() })
+			g.withAsType(func() {
+				out += g.genExpr(field.Type).F()
+			})
 			if field.Tag != nil {
 				out += e(" ") + g.genExpr(field.Tag).F()
 			}
@@ -1887,6 +2034,119 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 
 func (g *Generator) genIndexExpr(expr *ast.IndexExpr) GenFrag {
 	e := EmitWith(g, expr)
+
+	// Check if this is a generic struct type instantiation (e.g., TestStruct[string])
+	t := g.env.GetType(expr)
+
+	// If type is nil, this might be a type-level index expression like TestStruct[string]
+	// where we're applying a type parameter to a generic struct
+	if t == nil {
+		if baseIdent, ok := expr.X.(*ast.Ident); ok {
+			baseType := g.env.Get(baseIdent.Name)
+
+			if structT, ok := baseType.(types.StructType); ok && structT.IsGeneric() {
+				// This is a generic struct - get the concrete type parameter
+				// The index should be a type identifier
+				if indexIdent, ok := expr.Index.(*ast.Ident); ok {
+					concreteType := g.env.Get(indexIdent.Name)
+
+					// Build the monomorphized struct
+					lookupKey := structT.String() // e.g., "TestStruct[any]"
+					typeDecl := g.genTypeDecls[lookupKey]
+
+					if typeDecl != nil {
+						// Build type parameter mapping
+						m := make(map[string]types.Type)
+						if typeDecl.TypeParams != nil && len(typeDecl.TypeParams.List) > 0 {
+							// Assume single type parameter for now
+							field := typeDecl.TypeParams.List[0]
+							if len(field.Names) > 0 {
+								m[field.Names[0].Name] = concreteType
+							}
+						}
+
+						// Generate the monomorphized struct
+						outTypeDecl := func() (out string) {
+							g.WithGenMapping(m, func() {
+								out = g.decrPrefix(g.genSpec(typeDecl, token.TYPE).F)
+							})
+							return
+						}
+
+						name := baseIdent.Name
+						for _, k := range slices.Sorted(maps.Keys(m)) {
+							name += "_" + k + "_" + m[k].GoStr()
+						}
+
+						g.genTypeDecls2[name] = outTypeDecl
+
+						return GenFrag{F: func() string {
+							return e(name)
+						}}
+					}
+				}
+			}
+		}
+	}
+
+	if tt, ok := t.(types.TypeType); ok {
+		t = tt.W
+	}
+
+	// If this is a struct type with concrete type parameters, monomorphize it
+	if structT, ok := t.(types.StructType); ok && structT.IsGeneric() {
+		// Check if all type parameters are concrete (not GenericType)
+		allConcrete := true
+		for _, tp := range structT.TypeParams {
+			if _, isGeneric := tp.(types.GenericType); isGeneric {
+				allConcrete = false
+				break
+			}
+		}
+
+		if allConcrete {
+			// This is a monomorphizable struct - generate it and return the monomorphized name
+			if baseIdent, ok := expr.X.(*ast.Ident); ok {
+				lookupKey := structT.String1() + "[any]" // Generic key
+				typeDecl := g.genTypeDecls[lookupKey]
+
+				if typeDecl != nil {
+					// Build type parameter mapping
+					m := make(map[string]types.Type)
+					if typeDecl.TypeParams != nil {
+						for i, field := range typeDecl.TypeParams.List {
+							if i < len(structT.TypeParams) {
+								for _, name := range field.Names {
+									m[name.Name] = structT.TypeParams[i]
+								}
+							}
+						}
+					}
+
+					// Generate the monomorphized struct
+					outTypeDecl := func() (out string) {
+						g.WithGenMapping(m, func() {
+							out = g.decrPrefix(g.genSpec(typeDecl, token.TYPE).F)
+						})
+						return
+					}
+
+					name := baseIdent.Name
+					for _, k := range slices.Sorted(maps.Keys(m)) {
+						name += "_" + k + "_" + m[k].GoStr()
+					}
+
+					g.genTypeDecls2[name] = outTypeDecl
+
+					return GenFrag{F: func() string {
+						return e(name)
+					}}
+				}
+			}
+		}
+	}
+
+	// Default behavior for non-struct or non-monomorphizable cases
 	c1 := g.genExpr(expr.X)
 	c2 := g.genExpr(expr.Index)
 	return GenFrag{F: func() string {
@@ -2277,7 +2537,15 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		switch fnName {
 		case "Sum":
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
-			recvT := fnT.Recv[0].(types.StructType).TypeParams[0].(types.GenericType).W.GoStrType()
+			structType := fnT.Recv[0].(types.StructType)
+			// Handle both GenericType and concrete types
+			var recvTType types.Type
+			if genType, ok := structType.TypeParams[0].(types.GenericType); ok {
+				recvTType = genType.W
+			} else {
+				recvTType = structType.TypeParams[0]
+			}
+			recvT := recvTType.GoStrType()
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
 		case "Filter", "Joined":
@@ -3146,23 +3414,54 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 			if v, ok := spec.Type.(*ast.EnumType); ok {
 				out += e(g.prefix) + e(g.genEnumType(spec.Name.Name, v)) + e("\n")
 			} else {
-				out += e(g.prefix + "type " + spec.Name.Name)
-				if typeParams := spec.TypeParams; typeParams != nil {
-					if len(typeParams.List) > 0 {
-						out += e("[")
-					}
-					out += MapJoin(e, typeParams.List, func(field *ast.Field) (out string) {
-						out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return g.genIdent(n.Ident).F() }, ", ")
-						if len(field.Names) > 0 {
-							out += e(" ")
+				// Check if this is a generic type declaration
+				// Check if the type has generic type parameters
+				hasTypeParams := spec.TypeParams != nil && len(spec.TypeParams.List) > 0
+
+				// Also check if it's a struct type
+				_, isStructType := spec.Type.(*ast.StructType)
+
+				if hasTypeParams && isStructType && g.genMap == nil {
+					// This is a generic struct type declaration - store it for later monomorphization
+					typeT := g.env.Get(spec.Name.Name)
+					if typeT != nil {
+						if tt, ok := typeT.(types.TypeType); ok {
+							typeT = tt.W
 						}
-						out += g.genExpr(field.Type).F()
-						return
-					}, ", ")
-					if len(typeParams.List) > 0 {
-						out += e("]")
+						if _, ok := types.Unwrap(typeT).(types.StructType); ok {
+							// Generic struct already stored in scanForGenericStructs
+							return out
+						}
 					}
 				}
+
+				// When we have a genMap, use monomorphized name and skip type parameters
+				if g.genMap != nil {
+					out += e(g.prefix + "type " + spec.Name.Name)
+					for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
+						v := g.genMap[k]
+						out += e(fmt.Sprintf("_%v_%v", k, v.GoStr()))
+					}
+				} else {
+					out += e(g.prefix + "type " + spec.Name.Name)
+					if typeParams := spec.TypeParams; typeParams != nil {
+						if len(typeParams.List) > 0 {
+							out += e("[")
+						}
+						out += MapJoin(e, typeParams.List, func(field *ast.Field) (out string) {
+							out += MapJoin(e, field.Names, func(n *ast.LabelledIdent) string { return g.genIdent(n.Ident).F() }, ", ")
+							if len(field.Names) > 0 {
+								out += e(" ")
+							}
+							out += g.genExpr(field.Type).F()
+							return
+						}, ", ")
+						if len(typeParams.List) > 0 {
+							out += e("]")
+						}
+					}
+				}
+
 				out += e(" ") + g.genExpr(spec.Type).F() + e("\n")
 			}
 			return out
@@ -4278,7 +4577,9 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		paramsStr = strings.Join(fieldsItems, ", ")
 	}
 	if result := decl.Type.Result; result != nil {
-		resultStr = types.ReplGenM(g.env.GetType(result), g.genMap).GoStr()
+		resultType := types.ReplGenM(g.env.GetType(result), g.genMap)
+		// Check if this is a user-defined struct that should use monomorphized name
+		resultStr = g.typeToGoStr(resultType)
 		resultStr = utils.PrefixIf(resultStr, " ")
 	}
 	if g.genMap != nil {

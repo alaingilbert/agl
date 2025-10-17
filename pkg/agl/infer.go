@@ -1046,11 +1046,31 @@ func (infer *FileInferrer) inferStructType(sT types.StructType, expr *ast.Select
 	t := infer.env.Get(name)
 
 	m := make(map[string]types.Type)
-	for _, pp := range sT.TypeParams {
-		if v, ok := pp.(types.GenericType); ok {
-			m[v.Name] = v.W
+
+	// Get the generic definition of the struct to map type parameters
+	if len(sT.TypeParams) > 0 {
+		// Look up the generic struct definition
+		genericStructName := sT.String1()
+		genericStructRaw := infer.env.Get(genericStructName)
+		if genericStruct, ok := genericStructRaw.(types.StructType); ok {
+			// Map generic parameter names to concrete types by position
+			for i, genericParam := range genericStruct.TypeParams {
+				if i < len(sT.TypeParams) {
+					if genType, ok := genericParam.(types.GenericType); ok {
+						m[genType.Name] = sT.TypeParams[i]
+					}
+				}
+			}
+		} else {
+			// Fallback to old logic if we can't find the generic definition
+			for _, pp := range sT.TypeParams {
+				if v, ok := pp.(types.GenericType); ok {
+					m[v.Name] = v.W
+				}
+			}
 		}
 	}
+
 	t = types.ReplGenM(t, m)
 
 	if t != nil {
@@ -1794,12 +1814,21 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.StructType:
+		// Helper to unwrap type param - handles both GenericType and concrete types
+		getTypeParam := func(t types.Type) types.Type {
+			if genType, ok := t.(types.GenericType); ok {
+				return genType.W
+			}
+			return t
+		}
+
 		if fnName == "Sum" {
-			rT := idTT.TypeParams[0].(types.GenericType).W
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			rT := typeParam0
 			if infer.indexValue != nil {
 				rT = infer.indexValue
 			}
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).T("R", rT)
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).T("R", rT)
 			fnT.Recv = []types.Type{oidT}
 			if len(fnT.Params) > 0 {
 				if TryCast[types.MutType](fnT.Params[0]) {
@@ -1813,17 +1842,20 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Filter" || fnName == "Joined" {
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, fnT.GetParam(0))
 			infer.SetTypeForce(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Sorted" {
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
 			infer.SetTypeForce(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
 		} else if fnName == "Len" {
-			fnT := infer.env.GetFn("Sequence."+fnName).T("T", idTT.TypeParams[0].(types.GenericType).W).IntoRecv(oidT)
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
 			infer.SetTypeForce(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
 		}
