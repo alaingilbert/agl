@@ -14275,6 +14275,34 @@ func New_T_string(c string) *Test_T_string {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen469(t *testing.T) {
+	src := `package main
+type Test[T any] struct {
+	C T
+}
+func New[T any](c T) *Test {
+	return &Test{C: c}
+}
+func main() {
+	print(New([]int{1, 2}))
+}`
+	expected := `// agl:generated
+package main
+type Test_T___int struct {
+	C []int
+}
+func main() {
+	AglPrint(New_T___int([]int{1, 2}))
+}
+func New_T___int(c []int) *Test_T___int {
+	return &Test_T___int{C: c}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

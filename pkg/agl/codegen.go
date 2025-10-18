@@ -988,7 +988,7 @@ func (g *Generator) genIdent(expr *ast.Ident) GenFrag {
 						}
 						name := expr.Name
 						for _, k := range slices.Sorted(maps.Keys(m)) {
-							name += "_" + k + "_" + m[k].GoStr()
+							name += "_" + k + "_" + types.NormalizeTypeForMonomorphization(m[k].GoStr())
 						}
 						g.genTypeDecls2[name] = outTypeDecl
 						return e(name)
@@ -2075,7 +2075,7 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) GenFrag {
 
 						name := baseIdent.Name
 						for _, k := range slices.Sorted(maps.Keys(m)) {
-							name += "_" + k + "_" + m[k].GoStr()
+							name += "_" + k + "_" + types.NormalizeTypeForMonomorphization(m[k].GoStr())
 						}
 
 						g.genTypeDecls2[name] = outTypeDecl
@@ -2133,7 +2133,7 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) GenFrag {
 
 					name := baseIdent.Name
 					for _, k := range slices.Sorted(maps.Keys(m)) {
-						name += "_" + k + "_" + m[k].GoStr()
+						name += "_" + k + "_" + types.NormalizeTypeForMonomorphization(m[k].GoStr())
 					}
 
 					g.genTypeDecls2[name] = outTypeDecl
@@ -2913,7 +2913,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 				}
 				name := g.genExpr(v).FNoEmit(g)
 				for _, k := range slices.Sorted(maps.Keys(m)) {
-					name += "_" + k + "_" + m[k].GoStr()
+					name += "_" + k + "_" + types.NormalizeTypeForMonomorphization(m[k].GoStr())
 				}
 				g.genFuncDecls2[name] = outFnDecl
 				content1 = func() string { return e(name) }
@@ -3440,7 +3440,7 @@ func (g *Generator) genSpec(s ast.Spec, tok token.Token) GenFrag {
 					out += e(g.prefix + "type " + spec.Name.Name)
 					for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
 						v := g.genMap[k]
-						out += e(fmt.Sprintf("_%v_%v", k, v.GoStr()))
+						out += e(fmt.Sprintf("_%v_%v", k, types.NormalizeTypeForMonomorphization(v.GoStr())))
 					}
 				} else {
 					out += e(g.prefix + "type " + spec.Name.Name)
@@ -4586,7 +4586,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 		typeParamsFn = emptyContent
 		for _, k := range slices.Sorted(maps.Keys(g.genMap)) {
 			v := g.genMap[k]
-			name += fmt.Sprintf("_%v_%v", k, v.GoStr())
+			name += fmt.Sprintf("_%v_%v", k, types.NormalizeTypeForMonomorphization(v.GoStr()))
 		}
 	}
 	c1 := GenFrag{F: emptyContent}

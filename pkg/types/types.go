@@ -15,6 +15,17 @@ type Type interface {
 	String() string
 }
 
+// NormalizeTypeForMonomorphization normalizes a type string for use in monomorphized names.
+// It replaces special characters like brackets and asterisks with underscores.
+func NormalizeTypeForMonomorphization(typeStr string) string {
+	r := strings.NewReplacer(
+		"[", "_",
+		"]", "_",
+		"*", "_",
+	)
+	return r.Replace(typeStr)
+}
+
 type BaseType struct {
 }
 
@@ -341,7 +352,7 @@ func (s StructType) GoStrMonomorphized() string {
 		if allConcrete {
 			// Generate monomorphized name like Test_T_string
 			for _, t := range s.TypeParams {
-				out += "_T_" + t.GoStr()
+				out += "_T_" + NormalizeTypeForMonomorphization(t.GoStr())
 			}
 		} else {
 			tmp := utils.MapJoin(s.TypeParams, func(t Type) string {
