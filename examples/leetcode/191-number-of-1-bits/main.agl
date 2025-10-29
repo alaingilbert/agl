@@ -1,0 +1,19 @@
+package main
+
+func hammingWeight(n int) int {
+    mut n := n
+    mut out := 0
+    for n > 0 {
+        if n & 1 == 1 {
+            out++
+        }
+        n >>= 1
+    }
+    return out
+}
+
+func main() {
+    assertEq(hammingWeight(11), 3)
+    assertEq(hammingWeight(128), 1)
+    assertEq(hammingWeight(2147483645), 30)
+}
