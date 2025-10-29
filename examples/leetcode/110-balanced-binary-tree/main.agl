@@ -6,7 +6,7 @@ type TreeNode struct {
     Right *TreeNode
 }
 
- func helper(root *TreeNode, depth int) int {
+func helper(root *TreeNode, depth int) int {
     if root == nil {
         return depth
     }
