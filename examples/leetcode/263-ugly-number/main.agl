@@ -1,0 +1,20 @@
+package main
+
+func isUgly(n int) bool {
+    if n <= 0 {
+        return false
+    }
+    mut n := n
+    for d in []int{2, 3, 5} {
+        for n % d == 0 {
+            n /= d
+        }
+    }
+    return n == 1
+}
+
+func main() {
+    assert(isUgly(6))
+    assert(isUgly(1))
+    assert(!isUgly(14))
+}
