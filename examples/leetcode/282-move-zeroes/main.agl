@@ -4,7 +4,7 @@ func moveZeroes(mut nums []int)  {
     mut lastNonZero, mut curr := 0, 0
     for curr < nums.Len() {
         if nums[curr] != 0 {
-            nums[lastNonZero], nums[curr] = nums[curr], nums[lastNonZero]
+            nums.Swap(lastNonZero, curr)
             lastNonZero++
         }
         curr++
