@@ -524,6 +524,10 @@ type Equatable[T any] interface {
 	__EQ(rhs T) bool
 }
 
+type ExpressibleByStringLiteral[T any] interface {
+	FromStringLit(string) T
+}
+
 type AglInt struct{ int }
 
 func (i AglInt) __EQ(rhs AglInt) bool { return i == rhs }
