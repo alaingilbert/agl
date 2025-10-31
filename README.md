@@ -447,6 +447,31 @@ func main() {
 }
 ```
 
+## ExpressibleByStringLiteral
+
+```go
+package main
+
+type Point struct {
+	X, Y int
+}
+
+// Point implements ExpressibleByStringLiteral
+func (Point) FromStringLit(s string) Point {
+	parts := s.Split(":")
+	return Point{X: parts[0].Int()?, Y: parts[1].Int()?}
+}
+
+func PrintPoint(p Point) {
+	print(p.X, p.Y)
+}
+
+func main() {
+	PrintPoint("1:2")
+	PrintPoint(Point{X: 1, Y: 2})
+}
+```
+
 ## Using Go libraries
 
 ```go
