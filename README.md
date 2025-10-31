@@ -467,7 +467,7 @@ func PrintPoint(p Point) {
 }
 
 func main() {
-	PrintPoint("1:2")
+	PrintPoint("1:2") // a string literal can be used to create a Point
 	PrintPoint(Point{X: 1, Y: 2})
 }
 ```
