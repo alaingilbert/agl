@@ -1,13 +1,12 @@
 package main
 
 func moveZeroes(mut nums []int)  {
-    mut lastNonZero, mut curr := 0, 0
-    for curr < nums.Len() {
+    mut lastNonZero := 0
+    for curr := 0; curr < nums.Len(); curr++ {
         if nums[curr] != 0 {
             nums.Swap(lastNonZero, curr)
             lastNonZero++
         }
-        curr++
     }
 }
 
