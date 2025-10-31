@@ -1,0 +1,14 @@
+package main
+
+func missingNumber(nums []int) int {
+    l := nums.Len()
+    expected := l*(l+1)/2
+    actual := nums.Sum()
+    return expected - actual
+}
+
+func main() {
+    assertEq(missingNumber([]int{3,0,1}), 2)
+    assertEq(missingNumber([]int{0,1}), 2)
+    assertEq(missingNumber([]int{9,6,4,2,3,5,7,0,1}), 8)
+}
