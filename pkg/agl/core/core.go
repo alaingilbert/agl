@@ -500,6 +500,18 @@ func (v AglVec[T]) Iter() Sequence[T] {
 	}
 }
 
+func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
+	if len(v) != len(rhs) {
+		return false
+	}
+	for i := range v {
+		if any(v[i]) != any(rhs[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func AglVecIter[T any](v AglVec[T]) Sequence[T] {
 	return v.Iter()
 }
