@@ -8509,14 +8509,14 @@ func main() {
 func TestCodeGen266_3(t *testing.T) {
 	src := `package main
 type A struct {
-	prop int
+	mut prop int
 }
 func test(mut a A) {
-	a = 43
+	a.prop = 43
 }
 func main() {
 	a := A{}
-	test(mut a.prop)
+	test(mut a)
 }`
 	tassert.Contains(t, NewTest(src).errs[0].Error(), "10:7: cannot use immutable 'a'")
 }
