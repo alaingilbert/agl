@@ -1,0 +1,12 @@
+package main
+
+func countBits(n int) []int {
+    mut out := make([]int, n+1)
+    for x in 0..=n {
+        out[x] = out[x >> 1] + (x & 1)
+    }
+    return out
+}
+
+func main() {
+}
