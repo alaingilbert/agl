@@ -236,7 +236,7 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	}
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypesLoose(tt, t) {
-			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) {
+			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) && !TryCast[types.TypeAssertType](tt) {
 				panic(fmt.Sprintf("type already declared for pos:%s key:%s a:%v toa:%v aT:%v t:%v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
@@ -3071,11 +3071,19 @@ func cmpTypes(a, b types.Type) bool {
 		bb := MustCast[types.EllipsisType](b)
 		return cmpTypesLoose(aa.Elt, bb.Elt)
 	}
-	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
-		return true // TODO
+	if TryCast[types.StructType](a) && TryCast[types.StructType](b) {
+		aa := MustCast[types.StructType](a)
+		bb := MustCast[types.StructType](b)
+		return aa.Name == bb.Name && aa.Pkg == bb.Pkg
+	}
+	if TryCast[types.StructType](a) && TryCast[types.ArrayType](b) {
+		return true
 	}
 	if TryCast[types.InterfaceType](a) || TryCast[types.InterfaceType](b) {
 		return true // TODO
+	}
+	if TryCast[types.StructType](a) || TryCast[types.StructType](b) {
+		return false
 	}
 	if TryCast[types.ArrayType](a) && TryCast[types.ArrayType](b) {
 		aa := MustCast[types.ArrayType](a)

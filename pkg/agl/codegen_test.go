@@ -14303,6 +14303,21 @@ func New_T___int(c []int) *Test_T___int {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen470(t *testing.T) {
+	src := `package main
+type Coordinate struct {
+	Galaxy, System, Position i64
+	Type string
+}
+func test(c Coordinate) {
+}
+func main() {
+	test("1:2:3")
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "9:7: types not equal, Coordinate string")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
