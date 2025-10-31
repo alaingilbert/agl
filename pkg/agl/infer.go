@@ -1148,6 +1148,29 @@ func (infer *FileInferrer) callExprIdent(expr *ast.CallExpr, call *ast.Ident) {
 				}
 				arg = v.X
 			}
+
+			// Check if the expected type has a FromStringLit method and arg is a string literal
+			if basicLit, ok := expr.Args[i].(*ast.BasicLit); ok && basicLit.Kind == token.STRING {
+				// Unwrap the expected type to get the base type
+				expectedType := types.Unwrap(oArg)
+				if structType, ok := expectedType.(types.StructType); ok {
+					methodName := structType.String() + ".FromStringLit"
+					if methodType := infer.env.Get(methodName); methodType != nil {
+						// Transform the string literal into Type{}.FromStringLit(literal)
+						expr.Args[i] = &ast.CallExpr{
+							Fun: &ast.SelectorExpr{
+								X:   &ast.CompositeLit{Type: &ast.Ident{Name: structType.Name}},
+								Sel: &ast.Ident{Name: "FromStringLit"},
+							},
+							Args: []ast.Expr{basicLit},
+						}
+						// Re-infer the transformed expression
+						infer.expr(expr.Args[i])
+						got = infer.GetType(expr.Args[i])
+					}
+				}
+			}
+
 			if !cmpTypesLoose(oArg, got) {
 				infer.errorf(arg, "types not equal, %v %v", oArg, got)
 				return

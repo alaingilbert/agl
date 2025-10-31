@@ -14318,6 +14318,40 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "9:7: types not equal, Coordinate string")
 }
 
+func TestCodeGen471(t *testing.T) {
+	src := `package main
+type Coordinate struct {
+	Galaxy, System, Position i64
+	Type string
+}
+func (Coordinate) FromStringLit(s string) Coordinate {
+	return Coordinate{}
+}
+func test(c1, c2 Coordinate) {
+}
+func main() {
+	test("1:2:3", "1:2:4")
+}`
+	expected := `// agl:generated
+package main
+type Coordinate struct {
+	Galaxy, System, Position int64
+	Type string
+}
+func (Coordinate) FromStringLit(s string) Coordinate {
+	return Coordinate{}
+}
+func test(c1, c2 Coordinate) {
+}
+func main() {
+	test(Coordinate{}.FromStringLit("1:2:3"), Coordinate{}.FromStringLit("1:2:4"))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
