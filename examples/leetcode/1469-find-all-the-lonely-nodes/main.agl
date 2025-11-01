@@ -1,0 +1,30 @@
+package main
+
+type TreeNode struct {
+    Val int
+    Left *TreeNode
+    Right *TreeNode
+}
+
+func getLonelyNodes(root *TreeNode) []int {
+    mut out := []int{}
+    helper(root, &mut out)
+    return out
+}
+
+func helper(root *TreeNode, mut arr *[]int) {
+    if root == nil {
+        return
+    }
+    if root.Left != nil && root.Right != nil {
+    } else if root.Left != nil {
+        arr.Push(root.Left.Val)
+    } else if root.Right != nil {
+        arr.Push(root.Right.Val)
+    }
+    helper(root.Left, mut arr)
+    helper(root.Right, mut arr)
+}
+
+func main() {
+}
