@@ -1,0 +1,29 @@
+package main
+
+func countCharacters(words []string, chars string) int {
+    mut ans := 0
+    charsMap := make(map[rune]int)
+    for c in chars {
+        charsMap[c]++
+    }
+    for word in words {
+        wordMap := make(map[rune]int)
+        for c in word {
+            wordMap[c]++
+        }
+        mut ok := true
+        for (k, v) in wordMap where charsMap[k] < v {
+            ok = false
+            break
+        }
+        if ok {
+            ans += word.Len()
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(countCharacters([]string{"cat","bt","hat","tree"}, "atach"), 6)
+    assertEq(countCharacters([]string{"hello","world","leetcode"}, "welldonehoneyr"), 10)
+}
