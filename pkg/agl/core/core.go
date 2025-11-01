@@ -1624,6 +1624,15 @@ func AglMapMap[K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R
 	return out
 }
 
+func AglMapAllSatisfy[K comparable, V any](m map[K]V, pred func(DictEntry[K, V]) bool) bool {
+	for k, v := range m {
+		if !pred(DictEntry[K, V]{Key: k, Value: v}) {
+			return false
+		}
+	}
+	return true
+}
+
 func AglMapKeys[K comparable, V any](m map[K]V) Sequence[K] {
 	return Sequence[K](maps.Keys(m))
 }

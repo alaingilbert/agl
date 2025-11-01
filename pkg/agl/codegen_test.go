@@ -14352,6 +14352,28 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen472(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]int{1: 2, 3: 4, 5: 6}
+	m.AllSatisfy(|(k, v)| k + v > 1)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int]int{1: 2, 3: 4, 5: 6}
+	AglMapAllSatisfy(m, func(aglArg0 DictEntry[int, int]) bool {
+		k := aglArg0.Key
+		v := aglArg0.Value
+		return k + v > 1
+	})
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -1031,16 +1031,42 @@ func (g *Generator) decrPrefix(clb func() string) string {
 }
 
 func handleTupleExpr(prefix, n string, v *ast.TupleExpr, out *string, e EmitterFunc) {
+	handleTupleExprWithType(prefix, n, v, out, e, nil)
+}
+
+func handleTupleExprWithType(prefix, n string, v *ast.TupleExpr, out *string, e EmitterFunc, paramType types.Type) {
+	// Check if this is a DictEntry type
+	isDictEntry := false
+	if paramType != nil {
+		if structT, ok := types.Unwrap(paramType).(types.StructType); ok {
+			if structT.Name == "DictEntry" {
+				isDictEntry = true
+			}
+		}
+	}
+
 	for i, val := range v.Values {
 		switch vv := val.(type) {
 		case *ast.Ident:
 			if vv.Name != "_" {
-				path := fmt.Sprintf("%s.Arg%d", n, i)
+				var path string
+				if isDictEntry {
+					// For DictEntry, use .Key and .Value
+					if i == 0 {
+						path = fmt.Sprintf("%s.Key", n)
+					} else if i == 1 {
+						path = fmt.Sprintf("%s.Value", n)
+					} else {
+						path = fmt.Sprintf("%s.Arg%d", n, i)
+					}
+				} else {
+					path = fmt.Sprintf("%s.Arg%d", n, i)
+				}
 				*out += e(fmt.Sprintf("%s%s := %s\n", prefix, vv.Name, path))
 			}
 		case *ast.TupleExpr:
 			nextPath := fmt.Sprintf("%s.Arg%d", n, i)
-			handleTupleExpr(prefix, nextPath, vv, out, e)
+			handleTupleExprWithType(prefix, nextPath, vv, out, e, nil)
 		}
 	}
 }
@@ -1146,7 +1172,7 @@ func (g *Generator) genShortFuncLit(expr *ast.ShortFuncLit) GenFrag {
 				switch v := expr.Args[i].(type) {
 				case *ast.TupleExpr:
 					out += g.incrPrefix(func() (out string) {
-						handleTupleExpr(g.prefix, n, v, &out, e)
+						handleTupleExprWithType(g.prefix, n, v, &out, e, t.Params[i])
 						return
 					})
 				}
@@ -2835,6 +2861,12 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapMap(") + c1.F() + e(", ") + c2.F() + e("))")
+			}}
+		case "AllSatisfy":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string {
+				return e("AglMapAllSatisfy(") + c1.F() + e(", ") + c2.F() + e(")")
 			}}
 		case "Reduce", "ReduceInto":
 			c1 := g.genExpr(x.X)

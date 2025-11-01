@@ -2351,7 +2351,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprT.Sel, getFnT)
 		} else if fnName == "Reduce" {
 			infer.inferMapReduce(expr, exprT, idTT)
-		} else if fnName == "Filter" {
+		} else if InArray(fnName, []string{"Filter", "AllSatisfy"}) {
 			fnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			if len(expr.Args) < 1 {
 				return
@@ -2698,7 +2698,30 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 					infer.env.Define(nil, v.Name, paramType)
 					infer.SetType(arg, paramType)
 				case *ast.TupleExpr:
-					infer.defineDestructuredTuple(v.Values, params[i].(types.TupleType))
+					// Check if the parameter is a DictEntry, which can be destructured like a tuple
+					if structT, ok := types.Unwrap(params[i]).(types.StructType); ok && structT.Name == "DictEntry" {
+						// DictEntry[K, V] can be destructured as (k, v)
+						// Extract K and V from the type parameters
+						if len(v.Values) == 2 && len(structT.TypeParams) == 2 {
+							kType := types.Unwrap(structT.TypeParams[0])
+							vType := types.Unwrap(structT.TypeParams[1])
+							for j, val := range v.Values {
+								if ident, ok := val.(*ast.Ident); ok {
+									if j == 0 {
+										infer.env.Define(nil, ident.Name, kType)
+										infer.SetType(val, kType)
+									} else if j == 1 {
+										infer.env.Define(nil, ident.Name, vType)
+										infer.SetType(val, vType)
+									}
+								}
+							}
+							// Set the type of the TupleExpr itself
+							infer.SetType(v, params[i])
+						}
+					} else {
+						infer.defineDestructuredTuple(v.Values, params[i].(types.TupleType))
+					}
 				default:
 					panic("")
 				}
