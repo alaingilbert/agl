@@ -1,0 +1,23 @@
+package main
+
+func isPathCrossing(path string) bool {
+    mut pos := (0, 0)
+    mut seen := set[(int, int)]{pos}
+    for c in path {
+        switch c {
+            case 'N': pos.1--
+            case 'E': pos.0++
+            case 'S': pos.1++
+            case 'W': pos.0--
+        }
+        if !seen.Insert(pos) {
+            return true
+        }
+    }
+    return false
+}
+
+func main() {
+    assert(!isPathCrossing("NES"))
+    assert(isPathCrossing("NESWW"))
+}
