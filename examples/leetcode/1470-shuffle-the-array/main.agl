@@ -1,0 +1,13 @@
+package main
+
+func shuffle(nums []int, n int) []int {
+    mut out := []int{}
+    mid := nums.Len()/2
+    for (a, b) in zip(nums[:mid], nums[mid:]) {
+        out.Push(a, b)
+    }
+    return out
+}
+
+func main() {
+}
