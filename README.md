@@ -303,11 +303,11 @@ type IpAddr enum {
 func main() {
     // enum values can be destructured
     addr1 := IpAddr.v4(127, 0, 0, 1)
-    a, b, c, d := addr1
+	(a, b, c, d) := addr1
 
     // tuple can be destructured
     tuple := (1, "hello", true)
-    e, f, g := tuple
+	(e, f, g) := tuple
 
     print(a, b, c, d, e, f, g)
 }
@@ -458,7 +458,7 @@ type Point struct {
 
 // Point implements ExpressibleByStringLiteral
 func (Point) FromStringLit(s string) Point {
-    p1, p2 := s.Cut(":")?
+	(p1, p2) := s.Cut(":")?
     return Point{X: p1.Int()?, Y: p2.Int()?}
 }
 

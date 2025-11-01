@@ -549,3 +549,21 @@ func main() {
 }`
 	tassert.Equal(t, "6\n", testGenOutput(src))
 }
+
+func Test34(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	moves := map[rune](int, int) {
+        'N': ( 0, -1),
+        'S': ( 0,  1),
+        'W': (-1,  0),
+        'E': ( 1,  0),
+    }
+	tup, ok := moves['N']
+	print(tup, ok)
+	(dx, dy) := moves['N']
+	print(dx, dy)
+}`
+	tassert.Equal(t, "(0, -1) true\n0 -1\n", testGenOutput(src))
+}

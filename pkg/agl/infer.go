@@ -3564,6 +3564,26 @@ func (infer *FileInferrer) spec(s ast.Spec) {
 				tt = types.MutType{W: tt}
 			}
 			if len(spec.Values) > 0 {
+				// Check if the expected type has a FromStringLit method and value is a string literal
+				if basicLit, ok := spec.Values[i].(*ast.BasicLit); ok && basicLit.Kind == token.STRING {
+					// Unwrap the expected type to get the base type
+					expectedType := types.Unwrap(tt)
+					if structType, ok := expectedType.(types.StructType); ok {
+						methodName := structType.String() + ".FromStringLit"
+						if methodType := infer.env.Get(methodName); methodType != nil {
+							// Transform the string literal into Type{}.FromStringLit(literal)
+							spec.Values[i] = &ast.CallExpr{
+								Fun: &ast.SelectorExpr{
+									X:   &ast.CompositeLit{Type: &ast.Ident{Name: structType.Name}},
+									Sel: &ast.Ident{Name: "FromStringLit"},
+								},
+								Args: []ast.Expr{basicLit},
+							}
+							// Re-infer the transformed expression
+							infer.expr(spec.Values[i])
+						}
+					}
+				}
 				infer.exprs(spec.Values)
 				value := spec.Values[i]
 				valueT := infer.env.GetType(value)
@@ -3803,6 +3823,55 @@ func (infer *FileInferrer) Pos(n ast.Node) token.Position {
 	return infer.fset.Position(n.Pos())
 }
 
+// extractLhsIdents extracts identifiers from LHS of an assignment.
+// If LHS is a single TupleExpr, extracts identifiers from it.
+// If requireParens is true and LHS has multiple elements without TupleExpr wrapping, returns error.
+// Returns the list of identifiers and whether they came from a TupleExpr.
+func (infer *FileInferrer) extractLhsIdents(stmt *ast.AssignStmt, expectedCount int, requireParens bool) ([]*ast.Ident, bool, error) {
+	if len(stmt.Lhs) == 1 {
+		if tupleExpr, ok := stmt.Lhs[0].(*ast.TupleExpr); ok {
+			// LHS is a TupleExpr: (a, b, c) := ...
+			if expectedCount > 0 && len(tupleExpr.Values) != expectedCount {
+				return nil, false, fmt.Errorf("Assignment count mismatch: %d = %d", len(tupleExpr.Values), expectedCount)
+			}
+			idents := make([]*ast.Ident, len(tupleExpr.Values))
+			for i, val := range tupleExpr.Values {
+				ident, ok := val.(*ast.Ident)
+				if !ok {
+					return nil, false, fmt.Errorf("Expected identifier in tuple destructuring, got %T", val)
+				}
+				idents[i] = ident
+			}
+			return idents, true, nil
+		}
+		// Single LHS, not a TupleExpr - just return it if it's an ident
+		if ident, ok := stmt.Lhs[0].(*ast.Ident); ok && expectedCount <= 1 {
+			return []*ast.Ident{ident}, false, nil
+		}
+		if requireParens && expectedCount > 1 {
+			return nil, false, fmt.Errorf("To destructure a tuple, use parentheses on the LHS: (a, b) := ...")
+		}
+		return nil, false, nil // Not an ident, will be handled elsewhere
+	}
+	// Multiple LHS elements without TupleExpr wrapping
+	// Check count mismatch first to give a better error message
+	if expectedCount > 0 && len(stmt.Lhs) != expectedCount {
+		return nil, false, fmt.Errorf("Assignment count mismatch: %d = %d", len(stmt.Lhs), expectedCount)
+	}
+	if requireParens && expectedCount > 1 {
+		return nil, false, fmt.Errorf("To destructure a tuple, use parentheses on the LHS: (a, b) := ...")
+	}
+	idents := make([]*ast.Ident, len(stmt.Lhs))
+	for i, lhs := range stmt.Lhs {
+		ident, ok := lhs.(*ast.Ident)
+		if !ok {
+			return nil, false, fmt.Errorf("Expected identifier, got %T", lhs)
+		}
+		idents[i] = ident
+	}
+	return idents, false, nil
+}
+
 func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 	infer.SetType(stmt, types.VoidType{})
 	type AssignStruct struct {
@@ -3872,7 +3941,11 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			assignFn(ass.n, ass.name, ass.mutable, ass.typ)
 		}
 	}
-	if len(stmt.Rhs) == 1 && len(stmt.Lhs) > 1 { // eg: `e, ok := m[0]`
+	// Handle special cases where one RHS produces multiple values:
+	// 1. len(stmt.Lhs) > 1: multiple LHS without parentheses, e.g. `e, ok := m[0]`
+	// 2. len(stmt.Lhs) == 1 && TupleExpr: tuple destructuring with parentheses, e.g. `(dx, dy) := moves['N']`
+	isLhsTuple := len(stmt.Lhs) == 1 && TryCast[*ast.TupleExpr](stmt.Lhs[0])
+	if len(stmt.Rhs) == 1 && (len(stmt.Lhs) > 1 || isLhsTuple) {
 		rhs := stmt.Rhs[0]
 		infer.expr(rhs)
 		if len(infer.Errors) > 0 {
@@ -3880,40 +3953,59 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 		}
 		switch rhs1 := rhs.(type) {
 		case *ast.TupleExpr:
+			// Extract LHS identifiers, requiring parentheses for tuple destructuring
+			lhsIdents, isTupleExpr, err := infer.extractLhsIdents(stmt, len(rhs1.Values), true)
+			if err != nil {
+				infer.errorf(stmt, "%s", err.Error())
+				return
+			}
+			// Tuple destructuring with parentheses
+			if isTupleExpr {
+				infer.SetType(stmt.Lhs[0], infer.GetType(rhs1))
+			}
 			for i, x := range rhs1.Values {
-				lhs := stmt.Lhs[i]
-				lhsID := MustCast[*ast.Ident](lhs)
-				infer.SetType(lhs, infer.GetType(x))
+				lhsID := lhsIdents[i]
+				infer.SetType(lhsID, infer.GetType(x))
 				assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
 			}
 		case *ast.Ident:
 			rhsIdT := infer.env.Get(rhs1.Name)
 			switch v := rhsIdT.(type) {
 			case types.TupleType:
-				if len(v.Elts) != len(stmt.Lhs) {
-					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(v.Elts))
+				// Extract LHS identifiers, requiring parentheses for tuple destructuring
+				lhsIdents, isTupleExpr, err := infer.extractLhsIdents(stmt, len(v.Elts), true)
+				if err != nil {
+					infer.errorf(stmt, "%s", err.Error())
 					return
 				}
+				// Tuple destructuring with parentheses
+				if isTupleExpr {
+					infer.SetType(stmt.Lhs[0], v)
+				}
 				for i, x := range v.Elts {
-					lhs := stmt.Lhs[i]
-					lhsID := MustCast[*ast.Ident](lhs)
-					infer.SetType(lhs, x)
-					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+					lhsID := lhsIdents[i]
+					infer.SetType(lhsID, x)
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), x})
 				}
 			case types.EnumType:
 				f := Find(v.Fields, func(f types.EnumFieldType) bool { return f.Name == v.SubTyp })
 				if f == nil {
 					panic(fmt.Sprintf("Field not found: %s", v.SubTyp))
 				}
-				if len(f.Elts) != len(stmt.Lhs) {
-					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(f.Elts))
+				// Extract LHS identifiers, requiring parentheses for enum destructuring
+				lhsIdents, isTupleExpr, err := infer.extractLhsIdents(stmt, len(f.Elts), true)
+				if err != nil {
+					infer.errorf(stmt, "%s", err.Error())
 					return
 				}
+				// Enum destructuring with parentheses
+				if isTupleExpr {
+					infer.SetType(stmt.Lhs[0], v)
+				}
 				for i, x := range f.Elts {
-					lhs := stmt.Lhs[i]
-					lhsID := MustCast[*ast.Ident](lhs)
-					infer.SetType(lhs, x)
-					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+					lhsID := lhsIdents[i]
+					infer.SetType(lhsID, x)
+					assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), x})
 				}
 			default:
 				panic("")
@@ -3926,15 +4018,46 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			switch rhsId1XTT := rhsId1XT.(type) {
 			case types.MapType:
 				// Check if the map value is a tuple that should be destructured
-				if tupleT, ok := rhsId1XTT.V.(types.TupleType); ok && len(tupleT.Elts) == len(stmt.Lhs) {
-					// Destructure the tuple value
-					for i, eltT := range tupleT.Elts {
-						lhs := stmt.Lhs[i].(*ast.Ident)
-						infer.SetType(lhs, eltT)
-						assigns = append(assigns, AssignStruct{lhs, lhs.Name, lhs.Mutable.IsValid(), eltT})
+				// Tuple destructuring from maps requires parentheses: (dx, dy) := moves['N']
+				// This disambiguates from the standard Go pattern: value, ok := m['N']
+				if tupleT, ok := rhsId1XTT.V.(types.TupleType); ok {
+					if len(stmt.Lhs) == 1 {
+						if tupleExpr, ok := stmt.Lhs[0].(*ast.TupleExpr); ok {
+							// Destructure the tuple value: (dx, dy) := moves['N']
+							if len(tupleExpr.Values) != len(tupleT.Elts) {
+								infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(tupleExpr.Values), len(tupleT.Elts))
+								return
+							}
+							// Set the type of the TupleExpr itself to the tuple type
+							infer.SetType(tupleExpr, tupleT)
+							for i, eltT := range tupleT.Elts {
+								lhs := tupleExpr.Values[i].(*ast.Ident)
+								infer.SetType(lhs, eltT)
+								assigns = append(assigns, AssignStruct{lhs, lhs.Name, lhs.Mutable.IsValid(), eltT})
+							}
+						} else {
+							// Single LHS but not a TupleExpr - assign the whole tuple: value := moves['N']
+							lhs0 := stmt.Lhs[0].(*ast.Ident)
+							lhs0T := rhsId1XTT.V
+							infer.SetType(lhs0, rhsId1XTT.V)
+							assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
+						}
+					} else if len(stmt.Lhs) == 2 {
+						// value, ok pattern: value, ok := moves['N'] (value is the whole tuple)
+						lhs0 := stmt.Lhs[0].(*ast.Ident)
+						lhs0T := rhsId1XTT.V
+						infer.SetType(lhs0, rhsId1XTT.V)
+						assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
+						lhs1 := stmt.Lhs[1].(*ast.Ident)
+						lhs1T := types.BoolType{}
+						infer.SetType(lhs1, lhs1T)
+						assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable.IsValid(), lhs1T})
+					} else {
+						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), 1)
+						return
 					}
 				} else {
-					// Standard map value or value+ok pattern
+					// Standard map value or value+ok pattern (non-tuple values)
 					switch len(stmt.Lhs) {
 					case 2:
 						lhs1 := stmt.Lhs[1].(*ast.Ident)
@@ -4009,15 +4132,22 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						v.KeepRaw = keepRaw
 						infer.SetTypeForce(rhs, v)
 					}
-					if len(v.Elts) != len(stmt.Lhs) {
-						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(v.Elts))
+					// Extract LHS identifiers, NOT requiring parentheses for function calls returning tuples
+					lhsIdents, isTupleExpr, err := infer.extractLhsIdents(stmt, len(v.Elts), false)
+					if err != nil {
+						infer.errorf(stmt, "%s", err.Error())
 						return
 					}
+					// Function calls returning tuples can use either syntax:
+					// - i, f := math.Modf(3.14)
+					// - (i, f) := math.Modf(3.14)
+					if isTupleExpr {
+						infer.SetType(stmt.Lhs[0], v)
+					}
 					for i, x := range v.Elts {
-						lhs := stmt.Lhs[i]
-						lhsID := MustCast[*ast.Ident](lhs)
-						infer.SetType(lhs, x)
-						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), infer.GetType(lhsID)})
+						lhsID := lhsIdents[i]
+						infer.SetType(lhsID, x)
+						assigns = append(assigns, AssignStruct{lhsID, lhsID.Name, lhsID.Mutable.IsValid(), x})
 					}
 				case types.TypeAssertType:
 					if len(stmt.Lhs) > 0 {

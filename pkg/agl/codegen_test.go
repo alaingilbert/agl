@@ -1062,6 +1062,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	res := AglTupleStruct_int_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 	AglAssert(res.Arg0 == 1, "assert failed line 4")
@@ -1072,6 +1073,9 @@ type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
+}
+func (t AglTupleStruct_int_string_bool) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -1085,7 +1089,7 @@ type AglTupleStruct_int_string_bool struct {
 func TestCodeGen_TupleDestructuring1(t *testing.T) {
 	src := `package main
 func main() {
-	a, b, c := (1, "hello", true)
+	(a, b, c) := (1, "hello", true)
 	assert(a == 1)
 	assert(b == "hello")
 	assert(c == true)
@@ -1093,6 +1097,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	aglVar1 := AglTupleStruct_int_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 	a, b, c := aglVar1.Arg0, aglVar1.Arg1, aglVar1.Arg2
@@ -1104,6 +1109,9 @@ type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
+}
+func (t AglTupleStruct_int_string_bool) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -1125,6 +1133,7 @@ func main() {
 `
 	expected := `// agl:generated
 package main
+import "fmt"
 func testTuple() AglTupleStruct_uint8_string_bool {
 	return AglTupleStruct_uint8_string_bool{Arg0: 1, Arg1: "hello", Arg2: true}
 }
@@ -1138,6 +1147,9 @@ type AglTupleStruct_uint8_string_bool struct {
 	Arg0 uint8
 	Arg1 string
 	Arg2 bool
+}
+func (t AglTupleStruct_uint8_string_bool) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -1791,7 +1803,7 @@ type Color enum {
 }
 func main() {
 	other := Color.other(1, "yellow")
-	a, b := other
+	(a, b) := other
 }
 `
 	expected := `// agl:generated
@@ -3513,12 +3525,12 @@ type IpAddr enum {
 func main() {
     // enum values can be destructured
     addr1 := IpAddr.v4(127, 0, 0, 1)
-    a, b, c, d := addr1
-	
+    (a, b, c, d) := addr1
+
     // tuple can be destructured
     tuple := (1, "hello", true)
-    e, f, g := tuple
-	
+    (e, f, g) := tuple
+
 	fmt.Println(a, b, c, d, e, f, g)
 }
 `
@@ -3571,6 +3583,9 @@ type AglTupleStruct_int_string_bool struct {
 	Arg0 int
 	Arg1 string
 	Arg2 bool
+}
+func (t AglTupleStruct_int_string_bool) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5142,6 +5157,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
 	return t
 }
@@ -5154,6 +5170,9 @@ func main() {
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func (t AglTupleStruct_int_bool) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5168,12 +5187,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	arr := []AglTupleStruct_int_bool{AglTupleStruct_int_bool{Arg0: 1, Arg1: true}, AglTupleStruct_int_bool{Arg0: 2, Arg1: false}}
 }
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func (t AglTupleStruct_int_bool) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5192,6 +5215,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func test(t AglTupleStruct_int_bool) AglTupleStruct_int_bool {
 	return t
 }
@@ -5204,6 +5228,9 @@ func main() {
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func (t AglTupleStruct_int_bool) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5238,6 +5265,9 @@ func main() {
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func (t AglTupleStruct_int_bool) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5305,6 +5335,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	t := AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
 	m := map[string]AglTupleStruct_int_int{"a": t}
@@ -5312,6 +5343,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5326,12 +5360,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	m := map[string]AglTupleStruct_int_int{"a": AglTupleStruct_int_int{Arg0: 1, Arg1: 2}}
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5346,12 +5384,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	arr := []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}}
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -5391,9 +5433,15 @@ type AglTupleStruct_bool_int struct {
 	Arg0 bool
 	Arg1 int
 }
+func (t AglTupleStruct_bool_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_int_bool struct {
 	Arg0 int
 	Arg1 bool
+}
+func (t AglTupleStruct_int_bool) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src)
@@ -6686,7 +6734,7 @@ func Crawl(url string, depth int, fetcher1 Fetcher) {
 	}
 	match fetcher1.Fetch(url) {
 	    case Ok(res):
-            body, urls := res
+            (body, urls) := res
             fmt.Printf("found: %s %q\n", url, body)
             for _, u := range urls {
                 Crawl(u, depth-1, fetcher1)
@@ -6788,6 +6836,9 @@ var fetcher = fakeFetcher{"https://golang.org/": &fakeResult{"The Go Programming
 type AglTupleStruct_string___string struct {
 	Arg0 string
 	Arg1 []string
+}
+func (t AglTupleStruct_string___string) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src)
@@ -7571,9 +7622,9 @@ func main () {
 package main
 import (
 	"fmt"
+	"golang.org/x/net/html"
 	"io"
 	"net/http"
-	"golang.org/x/net/html"
 )
 func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
@@ -7759,12 +7810,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 0}, AglTupleStruct_uint8_uint8{Arg0: 0, Arg1: 1}}
 }
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -7789,6 +7844,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func test(t AglTupleStruct_uint8_uint8) {
 }
 func main() {
@@ -7797,6 +7853,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -7843,6 +7902,9 @@ type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
 }
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
@@ -7868,6 +7930,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -7896,6 +7961,9 @@ func test_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -7934,6 +8002,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	AglVecMap(zip3_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
 		return aglArg0.Arg0 + aglArg0.Arg1
@@ -7960,9 +8029,15 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_int_uint8 struct {
 	Arg0 int
 	Arg1 uint8
+}
+func (t AglTupleStruct_int_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src)
@@ -9197,6 +9272,9 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 `
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
@@ -9211,6 +9289,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	tuples := []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: 0}, AglTupleStruct_int_int{Arg0: 1, Arg1: 1}}
 	AglVecRemove((*[]AglTupleStruct_int_int)(&tuples), 0)
@@ -9218,6 +9297,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
@@ -9413,12 +9495,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := AglSet[AglTupleStruct_int_int]{}
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(false))
@@ -9745,6 +9831,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	AglVecMap(zip_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
 		return aglArg0.Arg0 + aglArg0.Arg1
@@ -9777,9 +9864,15 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_int_uint8 struct {
 	Arg0 int
 	Arg1 uint8
+}
+func (t AglTupleStruct_int_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10192,6 +10285,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	for _, el := range []int{1, 2, 3} {
 	}
@@ -10214,6 +10308,9 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
@@ -10235,6 +10332,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	for _, el := range []int{1, 2, 3, 4, 5} {
 		if !(el > 2) {
@@ -10258,6 +10356,9 @@ func main() {
 type AglTupleStruct_string_int struct {
 	Arg0 string
 	Arg1 int
+}
+func (t AglTupleStruct_string_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src)
@@ -10577,6 +10678,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	tmp := AglVecFlatMap_R_Option_uint__T_AglTupleStruct_int_string(AglVecEnumerated_T_string(AglStringSplit("1 2 3 4", "")), func(aglArg0 AglTupleStruct_int_string) []Option[uint] {
 		return []Option[uint]{AglStringUint((aglArg0.Arg1))}
@@ -10603,6 +10705,9 @@ type AglTupleStruct_int_string struct {
 	Arg0 int
 	Arg1 string
 }
+func (t AglTupleStruct_int_string) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
@@ -10624,6 +10729,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	tmp := AglVecFlatMap_R_Option_int__T_AglTupleStruct_int_string(AglVecEnumerated_T_string(AglStringSplit("1 2 3 4 5", "")), func(aglArg0 AglTupleStruct_int_string) []Option[int] {
 		var tmp Option[int]
@@ -10655,6 +10761,9 @@ func AglVecFlatMap_R_Option_int__T_AglTupleStruct_int_string(v []AglTupleStruct_
 type AglTupleStruct_int_string struct {
 	Arg0 int
 	Arg1 string
+}
+func (t AglTupleStruct_int_string) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10932,12 +11041,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	var t Option[AglTupleStruct_uint_uint]
 }
 type AglTupleStruct_uint_uint struct {
 	Arg0 uint
 	Arg1 uint
+}
+func (t AglTupleStruct_uint_uint) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10953,6 +11066,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	var t AglTupleStruct_uint_uint
 	t = AglTupleStruct_uint_uint{Arg0: 1, Arg1: 2}
@@ -10960,6 +11074,9 @@ func main() {
 type AglTupleStruct_uint_uint struct {
 	Arg0 uint
 	Arg1 uint
+}
+func (t AglTupleStruct_uint_uint) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10975,6 +11092,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	var t Option[AglTupleStruct_uint_uint]
 	t = MakeOptionSome(AglTupleStruct_uint_uint{Arg0: 1, Arg1: 2})
@@ -10982,6 +11100,9 @@ func main() {
 type AglTupleStruct_uint_uint struct {
 	Arg0 uint
 	Arg1 uint
+}
+func (t AglTupleStruct_uint_uint) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11043,6 +11164,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := []AglTupleStruct_uint8_uint8_uint8{AglTupleStruct_uint8_uint8_uint8{Arg0: 1, Arg1: 2, Arg2: 3}}
 	AglVecMap(a, func(aglArg0 AglTupleStruct_uint8_uint8_uint8) uint8 {
@@ -11056,6 +11178,9 @@ type AglTupleStruct_uint8_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
 	Arg2 uint8
+}
+func (t AglTupleStruct_uint8_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11071,6 +11196,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := []AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: AglTupleStruct_uint8_uint8{Arg0: uint8(2), Arg1: uint8(3)}}}
 	AglVecMap(a, func(aglArg0 AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) uint8 {
@@ -11084,9 +11210,15 @@ type AglTupleStruct_uint8_AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 AglTupleStruct_uint8_uint8
 }
+func (t AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11102,6 +11234,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := []AglTupleStruct_uint8_AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: AglTupleStruct_uint8_AglTupleStruct_uint8_uint8{Arg0: uint8(2), Arg1: AglTupleStruct_uint8_uint8{Arg0: uint8(3), Arg1: uint8(4)}}}}
 	AglVecMap(a, func(aglArg0 AglTupleStruct_uint8_AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) uint8 {
@@ -11116,13 +11249,22 @@ type AglTupleStruct_uint8_AglTupleStruct_uint8_AglTupleStruct_uint8_uint8 struct
 	Arg0 uint8
 	Arg1 AglTupleStruct_uint8_AglTupleStruct_uint8_uint8
 }
+func (t AglTupleStruct_uint8_AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_uint8_AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 AglTupleStruct_uint8_uint8
 }
+func (t AglTupleStruct_uint8_AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11238,6 +11380,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := []AglTupleStruct_uint8_uint8{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}}
 	AglVecWith((*[]AglTupleStruct_uint8_uint8)(&a), 0, func(t *AglTupleStruct_uint8_uint8) AglVoid {
@@ -11248,6 +11391,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11275,12 +11421,16 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	AglPrint([]*AglTupleStruct_uint8_uint8{})
 }
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11293,10 +11443,14 @@ func TestCodeGen371(t *testing.T) {
 var directions = [](int, int){(0, -1), (1, 0), (0, 1), (-1, 0)}`
 	expected := `// agl:generated
 package main
+import "fmt"
 var directions = []AglTupleStruct_int_int{AglTupleStruct_int_int{Arg0: 0, Arg1: -1}, AglTupleStruct_int_int{Arg0: 1, Arg1: 0}, AglTupleStruct_int_int{Arg0: 0, Arg1: 1}, AglTupleStruct_int_int{Arg0: -1, Arg1: 0}}
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11493,6 +11647,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	a := [][]int{{1, 2}, {3, 4}}
 	t1 := AglVecMap(a, func(a []int) AglTupleStruct_int_int {
@@ -11508,6 +11663,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11525,6 +11683,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 var a []AglTupleStruct_int_int
 func main() {
 	tmp := AglVecMap(AglStringSplit("1 2|3 4", "|"), func(aglArg0 string) []int {
@@ -11539,6 +11698,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11555,12 +11717,16 @@ type S struct {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 type S struct {
 	A AglTupleStruct_int_int
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11579,6 +11745,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 type S struct {
 	A AglTupleStruct_int_int
 }
@@ -11589,6 +11756,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11607,6 +11777,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 type S struct {
 	A AglTupleStruct_int_int
 }
@@ -11617,6 +11788,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11679,6 +11853,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 type S struct {
 	P AglTupleStruct_int_int
 }
@@ -11689,6 +11864,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11803,12 +11981,16 @@ func getDirection(move string) (int, int) {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func getDirection(move string) AglTupleStruct_int_int {
 	return AglTupleStruct_int_int{Arg0: -1, Arg1: 0}
 }
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -11827,6 +12009,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	heads := []AglTupleStruct_int_int{}
 	part1 := AglVecMap(heads, func(aglArg0 AglTupleStruct_int_int) int {
@@ -11837,6 +12020,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12796,6 +12982,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func test() AglTupleStruct_int_int {
 	return AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
 }
@@ -12810,6 +12997,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12828,6 +13018,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func test() AglTupleStruct_int_int {
 	return AglTupleStruct_int_int{Arg0: 1, Arg1: 2}
 }
@@ -12850,6 +13041,9 @@ func main() {
 type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12922,6 +13116,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 3}: {}}
 	for aglTmp1 := range (s) {
@@ -12932,6 +13127,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12949,6 +13147,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	s := AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}}
 	for aglTmp1 := range (s) {
@@ -12959,6 +13158,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -12975,6 +13177,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	for aglTmp1 := range (AglSet[AglTupleStruct_uint8_uint8]{AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 1}: {}, AglTupleStruct_uint8_uint8{Arg0: 1, Arg1: 2}: {}}) {
 		e := aglTmp1
@@ -12984,6 +13187,9 @@ func main() {
 type AglTupleStruct_uint8_uint8 struct {
 	Arg0 uint8
 	Arg1 uint8
+}
+func (t AglTupleStruct_uint8_uint8) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -13415,6 +13621,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	m := make(map[uint8]uint16)
 	m[1] = 2
@@ -13425,6 +13632,9 @@ func main() {
 type AglTupleStruct_uint8_uint16 struct {
 	Arg0 uint8
 	Arg1 uint16
+}
+func (t AglTupleStruct_uint8_uint16) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -14042,6 +14252,7 @@ func main() {
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	s := make(AglSet[AglTupleStruct_int_int_int])
 	AglPrint(s)
@@ -14050,6 +14261,9 @@ type AglTupleStruct_int_int_int struct {
 	Arg0 int
 	Arg1 int
 	Arg2 int
+}
+func (t AglTupleStruct_int_int_int) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -14330,7 +14544,8 @@ func (Coordinate) FromStringLit(s string) Coordinate {
 func test(c1, c2 Coordinate) {
 }
 func main() {
-	test("1:2:3", "1:2:4")
+	var p Coordinate = "1:2:4"
+	test("1:2:3", p)
 }`
 	expected := `// agl:generated
 package main
@@ -14344,7 +14559,8 @@ func (Coordinate) FromStringLit(s string) Coordinate {
 func test(c1, c2 Coordinate) {
 }
 func main() {
-	test(Coordinate{}.FromStringLit("1:2:3"), Coordinate{}.FromStringLit("1:2:4"))
+	var p Coordinate = Coordinate{}.FromStringLit("1:2:4")
+	test(Coordinate{}.FromStringLit("1:2:3"), p)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -14384,13 +14600,14 @@ func main() {
         'E': ( 1,  0),
     }
     var mut pos (int, int)
-	dx, dy := moves['N']
+	(dx, dy) := moves['N']
 	pos.0 += dx
 	pos.1 += dy
 	print(pos)
 }`
 	expected := `// agl:generated
 package main
+import "fmt"
 func main() {
 	moves := map[rune]AglTupleStruct_int_int{'N': AglTupleStruct_int_int{Arg0: 0, Arg1: -1}, 'S': AglTupleStruct_int_int{Arg0: 0, Arg1: 1}, 'W': AglTupleStruct_int_int{Arg0: -1, Arg1: 0}, 'E': AglTupleStruct_int_int{Arg0: 1, Arg1: 0}}
 	var pos AglTupleStruct_int_int
@@ -14404,9 +14621,54 @@ type AglTupleStruct_int_int struct {
 	Arg0 int
 	Arg1 int
 }
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen474(t *testing.T) {
+	src := `package main
+func main() {
+	moves := map[rune](int, int) {
+        'N': ( 0, -1),
+        'S': ( 0,  1),
+        'W': (-1,  0),
+        'E': ( 1,  0),
+    }
+	tup, ok := moves['N']
+	print(tup, ok)
+	(dx, dy) := moves['N']
+	print(dx, dy)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	moves := map[rune]AglTupleStruct_int_int{'N': AglTupleStruct_int_int{Arg0: 0, Arg1: -1}, 'S': AglTupleStruct_int_int{Arg0: 0, Arg1: 1}, 'W': AglTupleStruct_int_int{Arg0: -1, Arg1: 0}, 'E': AglTupleStruct_int_int{Arg0: 1, Arg1: 0}}
+	tup, ok := moves['N']
+	AglPrint(tup, ok)
+	aglVar1 := moves['N']
+	dx, dy := aglVar1.Arg0, aglVar1.Arg1
+	AglPrint(dx, dy)
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "(int, int)", test.TypeAt(9, 2).String())
+	tassert.Equal(t, "bool", test.TypeAt(9, 7).String())
+	tassert.Equal(t, "int", test.TypeAt(11, 3).String())
+	tassert.Equal(t, "int", test.TypeAt(11, 7).String())
 	testCodeGen2(t, expected, test)
 }
 

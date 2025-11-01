@@ -603,44 +603,21 @@ func (g *Generator) Generate() (out string) {
 	out += g.Emit(GeneratedFilePrefix)
 
 	// Pre-generate all declarations to populate g.imports before collecting imports
-	// but DON'T call .F() yet - just create the fragments
 	out4 := g.genDecls(g.b)
 	out5 := g.genDecls(g.a)
 
-	// Now collect imports after declarations are generated (but not yet stringified)
-	imports := make(map[string]*ast.ImportSpec)
-	addImport := func(i *ast.ImportSpec) {
-		key := i.Path.Value
-		if i.Name != nil {
-			key = i.Name.Name + "_" + key
-		}
-		imports[key] = i
-	}
-	for _, i := range g.imports {
-		addImport(i)
-	}
-	for _, i := range g.a.Imports {
-		addImport(i)
-	}
-	importsArr := make([]*ast.ImportSpec, len(imports))
-	for i, k := range slices.Sorted(maps.Keys(imports)) {
-		importsArr[i] = imports[k]
-	}
-
-	// Output package and imports first
-	out += g.genPackage()
-	out += g.genImports(importsArr)
+	// Execute the declarations to populate g.imports (especially for tuple structs that need fmt)
+	// This needs to happen before collecting imports
+	var originalDecls string
+	g.WithoutEmit(func() {
+		originalDecls = out4.F() + out5.F()
+	})
 
 	// Generate function and type declarations iteratively
 	// Type declarations can be added during function generation, so we need to keep generating until both are empty
 	var genFuncDeclStr string
 	var genTypeDeclStr string
-	var originalDecls string
 
-	// First, generate original declarations WITHOUT emitting to fragments (just to populate genTypeDecls2/genFuncDecls2)
-	g.WithoutEmit(func() {
-		originalDecls = out4.F() + out5.F()
-	})
 	// Now generate monomorphized types and functions WITHOUT emitting
 	// Keep generating until both maps are empty
 	// Functions may add type declarations, so we need to iterate
@@ -663,18 +640,51 @@ func (g *Generator) Generate() (out string) {
 		}
 	})
 
+	// Generate extensions WITHOUT emitting (they may create tuple structs that need fmt import)
+	var extStr string
+	g.WithoutEmit(func() {
+		for len(g.extensions) > 0 {
+			sorted := slices.Sorted(maps.Keys(g.extensions))
+			extKey := sorted[0]
+			extStr += g.genExtension(g.extensions[extKey])
+			delete(g.extensions, extKey)
+		}
+	})
+
+	// Now collect imports after ALL code generation (declarations, monomorphized functions, and extensions)
+	imports := make(map[string]*ast.ImportSpec)
+	addImport := func(i *ast.ImportSpec) {
+		// Normalize agl1/ prefix to match what will be generated
+		pathValue := i.Path.Value
+		if strings.HasPrefix(pathValue, `"agl1/`) {
+			pathValue = `"` + pathValue[6:]
+		}
+		key := pathValue
+		if i.Name != nil {
+			key = i.Name.Name + "_" + key
+		}
+		imports[key] = i
+	}
+	for _, i := range g.imports {
+		addImport(i)
+	}
+	for _, i := range g.a.Imports {
+		addImport(i)
+	}
+	importsArr := make([]*ast.ImportSpec, len(imports))
+	for i, k := range slices.Sorted(maps.Keys(imports)) {
+		importsArr[i] = imports[k]
+	}
+
+	// Output package and imports first
+	out += g.genPackage()
+	out += g.genImports(importsArr)
+
 	// Finally, emit everything in the correct order to fragments
 	out += g.Emit(genTypeDeclStr)
 	out += g.Emit(originalDecls)
 	out += g.Emit(genFuncDeclStr)
-	var extStr string
-	for len(g.extensions) > 0 {
-		sorted := slices.Sorted(maps.Keys(g.extensions))
-		extKey := sorted[0]
-		extStr += g.genExtension(g.extensions[extKey])
-		delete(g.extensions, extKey)
-	}
-	out += extStr
+	out += g.Emit(extStr)
 	var tupleStr string
 	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
 		tupleStr += g.tupleStructs[k]
@@ -3319,6 +3329,27 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 	structStr := fmt.Sprintf("type %s struct {\n", structName)
 	structStr += strings.Join(args, "")
 	structStr += "}\n"
+
+	// Generate String() method for tuple
+	structStr += fmt.Sprintf("func (t %s) String() string {\n", structName)
+	structStr += "\treturn fmt.Sprintf(\"("
+	for i := range expr.Values {
+		if i > 0 {
+			structStr += ", "
+		}
+		structStr += "%v"
+	}
+	structStr += ")\""
+	for i := range expr.Values {
+		structStr += fmt.Sprintf(", t.Arg%d", i)
+	}
+	structStr += ")\n}\n"
+
+	// Add fmt import since we're using fmt.Sprintf in the String() method
+	g.imports[`"fmt"`] = &ast.ImportSpec{
+		Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
+	}
+
 	g.tupleStructs[structName] = structStr
 	return GenFrag{F: func() string {
 		if isType {
@@ -3901,8 +3932,23 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 	if len(stmt.Rhs) == 1 && TryCast[types.EnumType](rhsT) {
 		enumT := rhsT.(types.EnumType)
 		if len(stmt.Lhs) == 1 {
-			c1 := g.genExprs(stmt.Lhs)
-			lhs = c1.F
+			// Check if LHS is a TupleExpr (enum destructuring with parentheses)
+			if tupleExpr, ok := stmt.Lhs[0].(*ast.TupleExpr); ok {
+				// Generate enum destructuring: extract identifiers from TupleExpr
+				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
+				lhs = func() string { return e(varName) }
+				var names, exprs []string
+				for i, ident := range tupleExpr.Values {
+					name := ident.(*ast.Ident).Name
+					names = append(names, name)
+					exprs = append(exprs, fmt.Sprintf("%s.%s_%d", varName, enumT.SubTyp, i))
+				}
+				after += strings.Join(names, ", ") + " := " + strings.Join(exprs, ", ")
+			} else {
+				// Single LHS, not a TupleExpr - assign the whole enum
+				c1 := g.genExprs(stmt.Lhs)
+				lhs = c1.F
+			}
 		} else {
 			varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
 			lhs = func() string { return e(varName) }
@@ -3914,9 +3960,49 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 			after += strings.Join(names, ", ") + " := " + strings.Join(exprs, ", ")
 		}
 	} else if len(stmt.Rhs) == 1 && TryCast[types.TupleType](rhsT) {
-		if len(stmt.Lhs) == 1 {
+		// Check if this is a map index expression with value+ok pattern (e.g., tup, ok := map['key'])
+		// In this case, don't destructure the tuple even though rhsT is a TupleType
+		isMapIndexWithOk := false
+		if len(stmt.Lhs) == 2 {
+			if indexExpr, ok := stmt.Rhs[0].(*ast.IndexExpr); ok {
+				mapType := types.Unwrap(g.env.GetType(indexExpr.X))
+				if _, isMap := mapType.(types.MapType); isMap {
+					isMapIndexWithOk = true
+				}
+			}
+		}
+
+		if isMapIndexWithOk {
+			// Don't destructure - this is value, ok := map['key'] where value is a tuple
 			c1 := g.genExprs(stmt.Lhs)
 			lhs = c1.F
+		} else if len(stmt.Lhs) == 1 {
+			// Check if LHS is a TupleExpr (tuple destructuring with parentheses)
+			if tupleExpr, ok := stmt.Lhs[0].(*ast.TupleExpr); ok {
+				// Generate tuple destructuring: extract identifiers from TupleExpr
+				varName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
+				lhs = func() string { return e(varName) }
+				var names, exprs []string
+				for i, ident := range tupleExpr.Values {
+					name := ident.(*ast.Ident).Name
+					names = append(names, name)
+					exprs = append(exprs, fmt.Sprintf("%s.Arg%d", varName, i))
+				}
+				// Use the same operator as the original statement
+				op := stmt.Tok.String()
+				after += fmt.Sprintf("%s %s %s", strings.Join(names, ", "), op, strings.Join(exprs, ", "))
+				if g.allowUnused {
+					// Add AglNoop for non-blank identifiers
+					nonBlankNames := Filter(names, func(s string) bool { return s != "_" })
+					if len(nonBlankNames) > 0 {
+						after += "\n\tAglNoop(" + strings.Join(nonBlankNames, ", ") + ")"
+					}
+				}
+			} else {
+				// Single LHS, not a TupleExpr - assign the whole tuple
+				c1 := g.genExprs(stmt.Lhs)
+				lhs = c1.F
+			}
 		} else {
 			if v, ok := rhsT.(types.TupleType); ok && v.KeepRaw {
 				c1 := g.genExprs(stmt.Lhs)
@@ -4414,9 +4500,18 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	}
 	// Check if this if-expr has explicit returns - if so, don't convert to assignments
 	hasExplicitReturns := ifExprHasExplicitReturns(stmt)
+	// Also check if the last statement is actually a return
+	if hasTyp && len(stmt.Body.List) > 0 {
+		if _, isReturn := stmt.Body.List[len(stmt.Body.List)-1].(*ast.ReturnStmt); isReturn {
+			hasExplicitReturns = true
+		}
+	}
 	if hasTyp && !hasExplicitReturns && len(stmt.Body.List) > 0 {
 		last := Must(Last(stmt.Body.List))
-		stmt.Body.List[len(stmt.Body.List)-1] = genAssignStmt(last)
+		// Only convert if the last statement is actually an ExprStmt
+		if _, ok := last.(*ast.ExprStmt); ok {
+			stmt.Body.List[len(stmt.Body.List)-1] = genAssignStmt(last)
+		}
 	}
 	g.ifVarName = ""
 	c2 := g.genStmt(stmt.Body)
@@ -4427,7 +4522,10 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 			case *ast.BlockStmt:
 				if len(v.List) > 0 {
 					last := Must(Last(v.List))
-					v.List[len(v.List)-1] = genAssignStmt(last)
+					// Only convert if the last statement is actually an ExprStmt
+					if _, ok := last.(*ast.ExprStmt); ok {
+						v.List[len(v.List)-1] = genAssignStmt(last)
+					}
 				}
 			}
 		}
@@ -4447,12 +4545,12 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 	bs = append(bs, c3.B...)
 	tmp := func() (out string) {
 		gPrefix := g.prefix
-		if hasTyp && isFirst {
+		if hasTyp && isFirst && !hasExplicitReturns {
 			out += e(gPrefix + "var " + varName + " " + ifT.GoStrType() + "\n")
-		}
-		if hasTyp && isFirst {
 			out += e(gPrefix)
 		}
+		// For explicit returns, don't add prefix - it's already in g.prefix from parent context
+		// For non-first if-expressions (else if), the prefix will be added by the parent
 		out += e("if ")
 		if stmt.Init != nil {
 			g.WithInlineStmt(func() {
@@ -4484,12 +4582,12 @@ func (g *Generator) genIfExpr(stmt *ast.IfExpr) GenFrag {
 		} else {
 			out += e(gPrefix + "}")
 		}
-		if hasTyp && isFirst {
+		if hasTyp && isFirst && !hasExplicitReturns {
 			out += e("\n")
 		}
 		return out
 	}
-	if hasTyp && isFirst {
+	if hasTyp && isFirst && !hasExplicitReturns {
 		bs = append(bs, tmp)
 		tmp = func() string {
 			return e("AglIdentity(" + varName + ")")
