@@ -11,11 +11,7 @@ func countCharacters(words []string, chars string) int {
         for c in word {
             wordMap[c]++
         }
-        mut ok := true
-        for (k, v) in wordMap where charsMap[k] < v {
-            ok = false
-            break
-        }
+        ok := wordMap.AllSatisfy(|(k, v)| charsMap[k] >= v)
         if ok {
             ans += word.Len()
         }
