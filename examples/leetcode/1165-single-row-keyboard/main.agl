@@ -3,10 +3,9 @@ package main
 func calculateTime(keyboard string, word string) int {
     var mut ans, mut curr int
     for c1 in word {
-        for (i, c2) in keyboard.Enumerated() where c2 == c1 {
-            ans += abs(curr - i)
-            curr = i
-        }
+        i := keyboard.Index(string(c1))
+        ans += abs(curr - i)
+        curr = i
     }
     return ans
 }
