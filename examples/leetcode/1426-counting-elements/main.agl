@@ -1,14 +1,8 @@
 package main
 
 func countElements(arr []int) int {
-    mut ans := 0
     s := Set(arr)
-    for el in arr {
-        if s.Contains(el + 1) {
-            ans++
-        }
-    }
-    return ans
+    return arr.Filter({ s.Contains($0 + 1) }).Len()
 }
 
 func main() {
