@@ -2,8 +2,8 @@ package main
 
 func calculateTime(keyboard string, word string) int {
     var mut ans, mut curr int
-    for c1 in word {
-        i := keyboard.Index(string(c1))
+    for c in word {
+        i := keyboard.Index(string(c))
         ans += abs(curr - i)
         curr = i
     }
