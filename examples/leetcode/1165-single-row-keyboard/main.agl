@@ -1,14 +1,11 @@
 package main
 
 func calculateTime(keyboard string, word string) int {
-    mut ans := 0
-    mut curr := 0
+    var mut ans, mut curr int
     for c1 in word {
-        for (j, c2) in keyboard.Enumerated() {
-            if c2 == c1 {
-                ans += abs(curr - j)
-                curr = j
-            }
+        for (i, c2) in keyboard.Enumerated() where c2 == c1 {
+            ans += abs(curr - i)
+            curr = i
         }
     }
     return ans
