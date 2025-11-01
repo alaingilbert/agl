@@ -453,22 +453,22 @@ func main() {
 package main
 
 type Point struct {
-	X, Y int
+    X, Y int
 }
 
 // Point implements ExpressibleByStringLiteral
 func (Point) FromStringLit(s string) Point {
-	parts := s.Split(":")
-	return Point{X: parts[0].Int()?, Y: parts[1].Int()?}
+    p1, p2 := s.Cut(":")?
+    return Point{X: p1.Int()?, Y: p2.Int()?}
 }
 
 func PrintPoint(p Point) {
-	print(p.X, p.Y)
+    print(p.X, p.Y)
 }
 
 func main() {
-	PrintPoint("1:2") // a string literal can be used to create a Point
-	PrintPoint(Point{X: 1, Y: 2})
+    PrintPoint("1:2") // a string literal can be used to create a Point
+    PrintPoint(Point{X: 1, Y: 2})
 }
 ```
 
