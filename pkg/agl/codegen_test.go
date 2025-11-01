@@ -14374,6 +14374,42 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen473(t *testing.T) {
+	src := `package main
+func main() {
+	moves := map[rune](int, int) {
+        'N': ( 0, -1),
+        'S': ( 0,  1),
+        'W': (-1,  0),
+        'E': ( 1,  0),
+    }
+    var mut pos (int, int)
+	dx, dy := moves['N']
+	pos.0 += dx
+	pos.1 += dy
+	print(pos)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	moves := map[rune]AglTupleStruct_int_int{'N': AglTupleStruct_int_int{Arg0: 0, Arg1: -1}, 'S': AglTupleStruct_int_int{Arg0: 0, Arg1: 1}, 'W': AglTupleStruct_int_int{Arg0: -1, Arg1: 0}, 'E': AglTupleStruct_int_int{Arg0: 1, Arg1: 0}}
+	var pos AglTupleStruct_int_int
+	aglVar1 := moves['N']
+	dx, dy := aglVar1.Arg0, aglVar1.Arg1
+	pos.Arg0 += dx
+	pos.Arg1 += dy
+	AglPrint(pos)
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

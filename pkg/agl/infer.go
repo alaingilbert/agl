@@ -3925,21 +3925,32 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 			}
 			switch rhsId1XTT := rhsId1XT.(type) {
 			case types.MapType:
-				switch len(stmt.Lhs) {
-				case 2:
-					lhs1 := stmt.Lhs[1].(*ast.Ident)
-					lhs1T := types.BoolType{}
-					infer.SetType(lhs1, lhs1T)
-					assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable.IsValid(), lhs1T})
-					fallthrough
-				case 1:
-					lhs0 := stmt.Lhs[0].(*ast.Ident)
-					lhs0T := rhsId1XTT.V
-					infer.SetType(lhs0, rhsId1XTT.V)
-					assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
-				default:
-					infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
-					return
+				// Check if the map value is a tuple that should be destructured
+				if tupleT, ok := rhsId1XTT.V.(types.TupleType); ok && len(tupleT.Elts) == len(stmt.Lhs) {
+					// Destructure the tuple value
+					for i, eltT := range tupleT.Elts {
+						lhs := stmt.Lhs[i].(*ast.Ident)
+						infer.SetType(lhs, eltT)
+						assigns = append(assigns, AssignStruct{lhs, lhs.Name, lhs.Mutable.IsValid(), eltT})
+					}
+				} else {
+					// Standard map value or value+ok pattern
+					switch len(stmt.Lhs) {
+					case 2:
+						lhs1 := stmt.Lhs[1].(*ast.Ident)
+						lhs1T := types.BoolType{}
+						infer.SetType(lhs1, lhs1T)
+						assigns = append(assigns, AssignStruct{lhs1, lhs1.Name, lhs1.Mutable.IsValid(), lhs1T})
+						fallthrough
+					case 1:
+						lhs0 := stmt.Lhs[0].(*ast.Ident)
+						lhs0T := rhsId1XTT.V
+						infer.SetType(lhs0, rhsId1XTT.V)
+						assigns = append(assigns, AssignStruct{lhs0, lhs0.Name, lhs0.Mutable.IsValid(), lhs0T})
+					default:
+						infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
+						return
+					}
 				}
 			default:
 				infer.errorf(stmt, "Assignment count mismatch: %d = %d", len(stmt.Lhs), len(stmt.Rhs))
@@ -4136,6 +4147,7 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					}
 				case types.StructType:
 					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
+					lhsWantedT = selT
 					if infer.mutEnforced && !TryCast[types.MutType](selT) {
 						infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
 						return
