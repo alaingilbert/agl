@@ -1,0 +1,17 @@
+package main
+
+func countElements(arr []int) int {
+    mut ans := 0
+    s := Set(arr)
+    for el in arr {
+        if s.Contains(el + 1) {
+            ans++
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(countElements([]int{1,2,3}), 2)
+    assertEq(countElements([]int{1,1,3,3,5,5,7,7}), 0)
+}
