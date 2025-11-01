@@ -1,0 +1,20 @@
+package main
+
+func calculateTime(keyboard string, word string) int {
+    mut ans := 0
+    mut curr := 0
+    for c1 in word {
+        for (j, c2) in keyboard.Enumerated() {
+            if c2 == c1 {
+                ans += abs(curr - j)
+                curr = j
+            }
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(calculateTime("abcdefghijklmnopqrstuvwxyz", "cba"), 4)
+    assertEq(calculateTime("pqrstuvwxyzabcdefghijklmno", "leetcode"), 73)
+}
