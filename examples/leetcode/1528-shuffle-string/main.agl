@@ -1,0 +1,14 @@
+package main
+
+func restoreString(s string, indices []int) string {
+    mut out := make([]string, s.Len())
+    for (i, indice) in indices.Enumerated() {
+        out[indice] = string(s[i])
+    }
+    return out.Joined("")
+}
+
+func main() {
+    assertEq(restoreString("codeleet", []int{4,5,6,7,0,2,1,3}), "leetcode")
+    assertEq(restoreString("abc", []int{0,1,2}), "abc")
+}
