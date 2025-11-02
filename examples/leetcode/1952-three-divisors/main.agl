@@ -1,0 +1,14 @@
+package main
+
+func isThree(n int) bool {
+    mut nb := 0
+    for i in 2..=n/2 where n % i == 0 {
+        nb++
+    }
+    return nb == 1
+}
+
+func main() {
+    assert(!isThree(2))
+    assert(isThree(4))
+}
