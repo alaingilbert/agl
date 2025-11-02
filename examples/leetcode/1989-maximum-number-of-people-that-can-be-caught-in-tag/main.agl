@@ -8,7 +8,7 @@ func catchMaximumAmountofPeople(mut team []int, dist int) int {
         for ptr < team.Len() && team[ptr] == 1 {
             ptr++
         }
-        if ptr <= i + dist && ptr < team.Len() && team[ptr] == 0 {
+        if ptr <= i + dist && ptr < team.Len() {
             ptr++
             ans++
         }
