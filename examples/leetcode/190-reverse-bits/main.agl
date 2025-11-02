@@ -1,0 +1,16 @@
+package main
+
+func reverseBits(n int) int {
+    mut n := n
+    mut ans := 0
+    for _ in 0..32 {
+        ans = (ans << 1) | (n & 1)
+        n >>= 1
+    }
+    return ans
+}
+
+func main() {
+    assertEq(reverseBits(43261596), 964176192)
+    assertEq(reverseBits(2147483644), 1073741822)
+}
