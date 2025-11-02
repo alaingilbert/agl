@@ -1,0 +1,22 @@
+package main
+
+import "math/bits"
+
+func tripletCount(a []int, b []int, c []int) int {
+    mut ans := 0
+    for i in a {
+        for j in b {
+            for k in c {
+                if bits.OnesCount(uint(i ^ j ^ k)) % 2 == 0 {
+                    ans++
+                }
+            }
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(tripletCount([]int{1}, []int{2}, []int{3}), 1)
+    assertEq(tripletCount([]int{1,1}, []int{2,3}, []int{1,5}), 4)
+}
