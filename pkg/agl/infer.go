@@ -2094,12 +2094,25 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
 				infer.expr(arg0)
 				var rT types.Type
-				switch v := infer.GetTypeFn(arg0).Return.(type) {
+				// Try to get the actual return type from the lambda
+				lambdaReturnType := infer.GetTypeFn(arg0).Return
+				switch v := lambdaReturnType.(type) {
 				case types.OptionType:
 					rT = v.W
+				case types.GenericType:
+					// If still generic, try to infer from the lambda body's return statements
+					rT = infer.inferReturnTypeFromLambdaBody(arg0)
+					if rT != nil {
+						// Update the lambda's type with the concrete return type
+						updatedFnT := infer.GetTypeFn(arg0)
+						updatedFnT.Return = types.OptionType{W: rT}
+						infer.SetTypeForce(arg0, updatedFnT)
+					}
 				}
-				infer.SetType(expr, types.ArrayType{Elt: rT})
-				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+				if rT != nil {
+					infer.SetType(expr, types.ArrayType{Elt: rT})
+					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
+				}
 			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
 				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
 				if !compareFunctionSignatures(ftReal, clbFnT) {
@@ -2435,6 +2448,50 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 	}
 }
 
+func (infer *FileInferrer) inferReturnTypeFromLambdaBody(lambda *ast.ShortFuncLit) types.Type {
+	// Extract the concrete return type from the lambda's return statements
+	var returnType types.Type
+
+	// Helper function to recursively find return statements
+	var findReturnType func(node ast.Node) types.Type
+	findReturnType = func(node ast.Node) types.Type {
+		switch n := node.(type) {
+		case *ast.ReturnStmt:
+			if n.Result == nil {
+				return nil
+			}
+			// Check if it's Some(value)
+			if someExpr, ok := n.Result.(*ast.SomeExpr); ok {
+				argType := infer.GetType(someExpr.X)
+				return argType
+			}
+		case *ast.BlockStmt:
+			for _, stmt := range n.List {
+				if t := findReturnType(stmt); t != nil {
+					return t
+				}
+			}
+		case *ast.IfExpr:
+			if n.Body != nil {
+				if t := findReturnType(n.Body); t != nil {
+					return t
+				}
+			}
+			if n.Else != nil {
+				if t := findReturnType(n.Else); t != nil {
+					return t
+				}
+			}
+		case *ast.ExprStmt:
+			return findReturnType(n.X)
+		}
+		return nil
+	}
+
+	returnType = findReturnType(lambda.Body)
+	return returnType
+}
+
 func (infer *FileInferrer) inferVecReduce(expr *ast.CallExpr, exprFun *ast.SelectorExpr, idTArr types.ArrayType) {
 	eltT := idTArr.Elt
 	forceReturnType := infer.forceReturnType
@@ -2732,6 +2789,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		}
 		inferExpr := func(returnStmt ast.Expr, ft types.FuncType) {
 			if infer.env.GetType(returnStmt) != nil && infer.env.GetType(expr) != nil {
+				// Unwrap return type to get to the generic parameter (original simpler logic)
 				if t, ok := ft.Return.(types.ArrayType); ok {
 					ft.Return = t.Elt
 				}
@@ -2741,6 +2799,7 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 				if t, ok := ft.Return.(types.ResultType); ok {
 					ft.Return = t.W
 				}
+				// If we have a generic type, resolve it with the concrete type from the return statement
 				if t, ok := ft.Return.(types.GenericType); ok {
 					ft = ft.T(t.Name, infer.env.GetType(returnStmt))
 					infer.SetType(expr, ft)
@@ -2766,6 +2825,15 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		voidReturnStmt := &ast.ReturnStmt{Result: &ast.CompositeLit{Type: &ast.Ident{Name: "void"}}}
 		multStmt := len(bodyBlock.List) > 0
 		singleExprStmt := len(bodyBlock.List) == 1 && TryCast[*ast.ExprStmt](bodyBlock.List[0])
+		// Check if the single statement is an ExprStmt wrapping an IfExpr
+		var singleIfExpr bool
+		if len(bodyBlock.List) == 1 {
+			if exprStmt, ok := bodyBlock.List[0].(*ast.ExprStmt); ok {
+				if _, ok := exprStmt.X.(*ast.IfExpr); ok {
+					singleIfExpr = true
+				}
+			}
+		}
 		retIsVoid := (TryCast[types.TypeType](ft.Return) && TryCast[types.VoidType](ft.Return.(types.TypeType).W)) || TryCast[types.VoidType](ft.Return)
 		lastIsRetStmt := func() bool { return TryCast[*ast.ReturnStmt](lastStmt()) }
 		astModified := false
@@ -2775,6 +2843,36 @@ func (infer *FileInferrer) shortFuncLit(expr *ast.ShortFuncLit) {
 		} else if multStmt && lastIsRetStmt() {
 			returnStmt := lastStmt().(*ast.ReturnStmt).Result
 			inferExpr(returnStmt, ft)
+		} else if singleIfExpr {
+			// Handle if-else expression that contains return statements
+			// Treat it like a regular expression for now (will be handled by inferExpr)
+			returnStmt := lastStmt().(*ast.ExprStmt).X
+
+			// Try to infer the concrete type from the return statements within the if-else
+			concreteRetType := infer.inferReturnTypeFromLambdaBody(expr)
+			if concreteRetType != nil {
+				// Unwrap TypeType if present
+				if tt, ok := concreteRetType.(types.TypeType); ok {
+					concreteRetType = tt.W
+				}
+				// Resolve the generic R with the concrete type
+				if unwrappedReturn, ok := ft.Return.(types.OptionType); ok {
+					// Unwrap TypeType from the option's inner type if present
+					innerType := unwrappedReturn.W
+					if tt, ok := innerType.(types.TypeType); ok {
+						innerType = tt.W
+					}
+					if genType, isGeneric := innerType.(types.GenericType); isGeneric {
+						ft = ft.T(genType.Name, concreteRetType)
+						infer.SetType(expr, ft)
+					}
+				}
+			}
+
+			// Standard handling: infer the if-else expression and wrap in return
+			inferExpr(returnStmt, ft)
+			bodyBlock.List = []ast.Stmt{&ast.ReturnStmt{Result: returnStmt}}
+			astModified = true
 		} else if singleExprStmt {
 			returnStmt := lastStmt().(*ast.ExprStmt).X
 			inferExpr(returnStmt, ft)
@@ -2855,6 +2953,11 @@ func (infer *FileInferrer) noneExpr(expr *ast.NoneExpr) {
 	var t types.Type
 	if infer.optType1 != nil {
 		t = infer.optType1.Type
+	} else if infer.optType != nil {
+		// Try to extract the inner type from optType if it's an Option
+		if opt, ok := infer.optType.Type.(types.OptionType); ok {
+			t = opt.W
+		}
 	}
 	infer.SetType(expr, types.OptionType{W: t})
 }
@@ -3150,6 +3253,24 @@ func cmpTypes(a, b types.Type) bool {
 			return true
 		}
 		return cmpTypesLoose(a.(types.OptionType).W, b.(types.OptionType).W)
+	}
+	// Handle VoidType vs OptionType{W: GenericType} - this can happen with if-else expressions
+	// that contain return statements
+	if TryCast[types.VoidType](a) && TryCast[types.OptionType](b) {
+		if wType := b.(types.OptionType).W; wType != nil {
+			if TryCast[types.GenericType](wType) || TryCast[types.VoidType](wType) {
+				return true
+			}
+		}
+		return true
+	}
+	if TryCast[types.OptionType](a) && TryCast[types.VoidType](b) {
+		if wType := a.(types.OptionType).W; wType != nil {
+			if TryCast[types.GenericType](wType) || TryCast[types.VoidType](wType) {
+				return true
+			}
+		}
+		return true
 	}
 	if TryCast[types.ResultType](a) && TryCast[types.ResultType](b) {
 		return cmpTypesLoose(a.(types.ResultType).W, b.(types.ResultType).W)
@@ -4501,7 +4622,7 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 				rT = v.X
 			}
 			if !cmpTypesLoose(rT, infer.returnType) {
-				infer.errorf(stmt.Result, "type mismatch")
+				infer.errorf(stmt.Result, "type mismatch %v %v", rT, infer.returnType)
 				return
 			}
 			infer.expr(stmt.Result)
