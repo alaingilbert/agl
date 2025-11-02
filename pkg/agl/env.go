@@ -872,10 +872,10 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 			},
 		}
 		e.Define(nil, "Sequence", types.StructType{
-			Pkg:  "",
-			Name: "Sequence",
+			Pkg:        "",
+			Name:       "Sequence",
 			TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}, IsType: true}},
-			Fields: []types.FieldType{{Name: "__alias", Typ: seqFuncType}},
+			Fields:     []types.FieldType{{Name: "__alias", Typ: seqFuncType}},
 		})
 		e.Define(nil, "DoubleEndedIterator", types.InterfaceType{Pkg: "agl1", Name: "DoubleEndedIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.Type{
