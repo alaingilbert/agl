@@ -3,14 +3,12 @@ package main
 func catchMaximumAmountofPeople(mut team []int, dist int) int {
     mut ans := 0
     mut ptr := 0
-    mut converted := set[int]{}
-    for (i, el) in team.Enumerated() where el == 1 && !converted.Contains(i) {
+    for (i, el) in team.Enumerated() where el == 1 {
         ptr = max(i - dist, ptr)
         for ptr <= i + dist && ptr < team.Len() {
             if team[ptr] == 0 {
-                converted.Insert(ptr)
-                team[ptr] = 1
                 ans++
+                ptr++
                 break
             }
             ptr++
@@ -25,4 +23,5 @@ func main() {
     assertEq(catchMaximumAmountofPeople([]int{0}, 1), 0)
     assertEq(catchMaximumAmountofPeople([]int{1,0}, 1), 1)
     assertEq(catchMaximumAmountofPeople([]int{1,1,1,1,0,0,0,0}, 2), 2)
+    assertEq(catchMaximumAmountofPeople([]int{1,1,0,1,0,1}, 2), 2)
 }
