@@ -1,0 +1,9 @@
+package main
+
+func orArray(nums []int) []int {
+    zip(nums, nums[1:]).Map(|(a, b)| a|b)
+}
+
+func main() {
+    print(orArray([]int{1,3,7,15}))
+}
