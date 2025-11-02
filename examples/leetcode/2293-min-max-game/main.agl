@@ -1,0 +1,22 @@
+package main
+
+func minMaxGame(mut nums []int) int {
+    for nums.Len() > 1 {
+        mut newNums := make([]int, nums.Len()/2)
+        for i in 0..newNums.Len() {
+            if i % 2 == 0 {
+                newNums[i] = min(nums[2*i], nums[2*i+1])
+            } else {
+                newNums[i] = max(nums[2*i], nums[2*i+1])
+            }
+        }
+        nums = newNums
+    }
+    return nums[0]
+}
+
+func main() {
+    assertEq(minMaxGame([]int{1,3,5,2,4,8,2,2}), 1)
+    assertEq(minMaxGame([]int{3}), 3)
+    assertEq(minMaxGame([]int{70,38,21,22}), 22)
+}
