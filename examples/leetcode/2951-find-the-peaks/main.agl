@@ -4,7 +4,7 @@ func findPeaks(mountain []int) []int {
     mountain.
         Enumerated().
         Filter(|(i, _)| i >= 1 && i < mountain.Len()-1).
-        FilterMap(|(i, _)| { if mountain[i] > mountain[i-1] && mountain[i] > mountain[i+1] { Some(i) } else { None } })
+        FilterMap(|(i, e)| { if mountain[i-1] < e && e > mountain[i+1] { Some(i) } else { None } })
 }
 
 func main() {
