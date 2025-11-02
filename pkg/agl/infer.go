@@ -522,6 +522,42 @@ func (infer *FileInferrer) typeSpec(spec *ast.TypeSpec) {
 	case *ast.FuncType:
 		t.TypeParams = spec.TypeParams
 		toDef = funcTypeToFuncType("", t, infer.env, infer.fset, false)
+	case *ast.IndexExpr, *ast.IndexListExpr, *ast.SelectorExpr:
+		// Handle type aliases like `type Sequence[T any] iter.Seq[T]`
+		// We need to treat this as equivalent to a StructType with type params
+		if spec.TypeParams != nil {
+			// Create a StructType to hold the generic type alias
+			// This allows it to be indexed and made concrete like other generic types
+			structT := types.StructType{Name: spec.Name.Name}
+			infer.env.withEnv(func(nenv *Env) {
+				// Register type parameters
+				for _, tp := range spec.TypeParams.List {
+					for _, n := range tp.Names {
+						tpTyp := infer.GetType2(tp.Type)
+						structT.TypeParams = append(structT.TypeParams, types.GenericType{Name: n.Name, W: tpTyp, IsType: true})
+						nenv.Define(spec.Name, n.Name, types.GenericType{Name: n.Name, W: tpTyp})
+					}
+				}
+				// Resolve the aliased type within this environment
+				typ := nenv.GetType2(t, infer.fset)
+				if typ == nil {
+					infer.errorf(spec.Name, "type not found for alias")
+					return
+				}
+				// Wrap the resolved type in a CustomType and attach it to the struct
+				// The struct serves as a container for the type parameters
+				structT.Fields = []types.FieldType{{Name: "__alias", Typ: typ}}
+				toDef = structT
+			})
+		} else {
+			// Simple type alias without parameters
+			typ := infer.GetType2(t)
+			if typ == nil {
+				infer.errorf(spec.Name, "type not found for alias")
+				return
+			}
+			toDef = types.CustomType{Name: spec.Name.Name, W: typ}
+		}
 	default:
 		infer.errorf(spec.Name, "%v", to(spec.Type))
 		return
@@ -637,15 +673,44 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 			returnTyp = infer.GetType2(decl.Type.Result)
 			if v, ok := decl.Type.Result.(*ast.IndexExpr); ok {
 				iT := infer.GetType2(v.Index)
-				switch vv := returnTyp.(type) {
+				// Unwrap CustomType to get to the actual type
+				unwrapped := returnTyp
+				var customName string
+				if ct, ok := returnTyp.(types.CustomType); ok {
+					customName = ct.Name
+					unwrapped = ct.W
+				}
+				switch vv := unwrapped.(type) {
 				case types.FuncType:
-					returnTyp = vv.Concrete([]types.Type{iT})
+					concreteTyp := vv.Concrete([]types.Type{iT})
+					if customName != "" {
+						returnTyp = types.CustomType{Name: customName, W: concreteTyp}
+					} else {
+						returnTyp = concreteTyp
+					}
 				case types.InterfaceType:
-					returnTyp = vv.Concrete([]types.Type{iT})
+					concreteTyp := vv.Concrete([]types.Type{iT})
+					if customName != "" {
+						returnTyp = types.CustomType{Name: customName, W: concreteTyp}
+					} else {
+						returnTyp = concreteTyp
+					}
 				case types.StructType:
-					returnTyp = vv.Concrete([]types.Type{iT})
+					concreteTyp := vv.Concrete([]types.Type{iT})
+					if customName != "" {
+						returnTyp = types.CustomType{Name: customName, W: concreteTyp}
+					} else {
+						returnTyp = concreteTyp
+					}
 				default:
-					panic(fmt.Sprintf("%v", to(returnTyp)))
+					// For other types (like IndexExpr that resolved to a generic function type),
+					// just use the resolved type as-is
+					// This handles cases like iter.Seq[T] which is already concrete
+					if customName != "" {
+						returnTyp = types.CustomType{Name: customName, W: unwrapped}
+					} else {
+						returnTyp = unwrapped
+					}
 				}
 			}
 			infer.SetType(decl.Type.Result, returnTyp)
@@ -1252,7 +1317,22 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 
 	fnName := call.Sel.Name
 	oexprFunT := exprFunT
-	exprFunT = types.Unwrap(exprFunT)
+	// Unwrap wrapper types but preserve StructType (including type aliases)
+	for {
+		switch v := exprFunT.(type) {
+		case types.TypeType:
+			exprFunT = v.W
+		case types.LabelledType:
+			exprFunT = v.W
+		case types.MutType:
+			exprFunT = v.W
+		case types.StarType:
+			exprFunT = v.X
+		default:
+			goto afterUnwrap3
+		}
+	}
+afterUnwrap3:
 	switch idTT := exprFunT.(type) {
 	case types.TypeType:
 	case types.UntypedNumType:
@@ -1281,41 +1361,64 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		infer.SetType(call, tr)
 		infer.SetType(expr, tr)
 	case types.StructType:
-		if call.Sel.Name != "Sum" {
-			name := idTT.GetFieldName(call.Sel.Name)
-			nameT := infer.env.Get(name)
+		name := idTT.GetFieldName(call.Sel.Name)
+		nameT := infer.env.Get(name)
 
-			// Handle struct composition. If we did not find the method for the struct,
-			// we need to check other structs that are "inherited" (composition).
-			if nameT == nil {
-				for _, field := range idTT.Fields {
-					if field.Name == "" {
-						fieldType := types.Unwrap(field.Typ)
-						if v, ok := fieldType.(types.StructType); ok {
-							name = v.GetFieldName(call.Sel.Name)
-							nameT = infer.env.Get(name)
-							nameT = types.Unwrap(nameT)
-						}
+		// Handle struct composition. If we did not find the method for the struct,
+		// we need to check other structs that are "inherited" (composition).
+		if nameT == nil {
+			for _, field := range idTT.Fields {
+				if field.Name == "" {
+					fieldType := types.Unwrap(field.Typ)
+					if v, ok := fieldType.(types.StructType); ok {
+						name = v.GetFieldName(call.Sel.Name)
+						nameT = infer.env.Get(name)
+						nameT = types.Unwrap(nameT)
 					}
 				}
 			}
+		}
 
-			if nameT == nil {
-				infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
-				return
-			}
-			fnT := infer.env.GetFn(name)
-			if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
-				if infer.mutEnforced && !exprFunTIsParen && !TryCast[types.MutType](oexprFunT) {
-					infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
-					return
+		if nameT == nil {
+			infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
+			return
+		}
+		fnT := infer.env.GetFn(name)
+		if fnT.Name == "" {
+			// GetFn failed, nameT might not be a function
+			infer.errorf(call.Sel, "method '%s' is not a function in struct '%v'", call.Sel.Name, idTT.Name)
+			return
+		}
+
+		// Monomorphize the method if the struct has type parameters
+		if len(idTT.TypeParams) > 0 && len(fnT.Params) > 0 {
+			// Build a map from generic parameter names to concrete types
+			// Match type parameters from the receiver in the method signature
+			// Don't unwrap - we need the StructType to match parameters
+			recvType := fnT.Params[0]
+			if recvStruct, ok := recvType.(types.StructType); ok {
+				for i, p := range recvStruct.TypeParams {
+					if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
+						fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+					}
 				}
 			}
-			toReturn := fnT.Return
-			toReturn = alterResultBubble(infer.returnType, toReturn)
-			infer.SetType(call.Sel, fnT)
-			infer.SetType(expr, toReturn)
 		}
+		// Convert to receiver form only if not already in receiver form
+		if len(fnT.Recv) == 0 && len(fnT.Params) > 0 {
+			fnT = fnT.IntoRecv(idTT)
+		}
+
+		if len(fnT.Recv) > 0 && TryCast[types.MutType](fnT.Recv[0]) {
+			if infer.mutEnforced && !exprFunTIsParen && !TryCast[types.MutType](oexprFunT) {
+				infer.errorf(call.Sel, "method '%s' cannot be called on immutable type '%s'", call.Sel.Name, idTT.Name)
+				return
+			}
+		}
+		toReturn := fnT.Return
+		toReturn = alterResultBubble(infer.returnType, toReturn)
+		infer.SetType(call.Sel, fnT)
+		infer.SetType(expr, toReturn)
 	case types.InterfaceType:
 		t := idTT.GetMethodByName(call.Sel.Name)
 		//name := fmt.Sprintf("%s.%s", idTT, fnName)
@@ -1693,9 +1796,18 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			//	envFnName := "agl1.Set.ContainsWhere"
 			//}
 			infer.SetType(expr.Args[0], fnT.Params[1])
-		case "Insert", "Remove", "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
+		case "Union", "FormUnion", "Subtracting", "Subtract", "Intersection", "FormIntersection",
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset",
-			"IsDisjoint", "Intersects", "Equals":
+			"IsDisjoint", "Intersects":
+			// These methods accept Sequence[T] but can take []T which gets converted during codegen
+			// Do NOT pre-set argument type, let it be inferred naturally
+			info = infer.env.GetNameInfo("agl1.Set." + fnName)
+			fnT = infer.env.GetFn("agl1.Set."+fnName).T("T", idTT.K)
+			if len(expr.Args) < 1 {
+				return
+			}
+		case "Insert", "Remove", "Equals":
+			// These methods take the element type directly, not a sequence
 			info = infer.env.GetNameInfo("agl1.Set." + fnName)
 			fnT = infer.env.GetFn("agl1.Set."+fnName).T("T", idTT.K)
 			if len(expr.Args) < 1 {
@@ -2304,7 +2416,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			// Manually add imports for functions in core.agl that are not going to be generated unless they're used
 			switch fnFullName {
 			case "agl1.Vec.Iter":
-				infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
+				//infer.imports["iter"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"iter"`}}
 			case "agl1.Vec.Shuffled":
 				infer.imports["math/rand"] = &ast.ImportSpec{Path: &ast.BasicLit{Value: `"math/rand"`}}
 			}

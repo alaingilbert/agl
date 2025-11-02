@@ -177,6 +177,22 @@ func (c CustomType) GoStr() string {
 func (c CustomType) GoStrType() string { return c.GoStr() }
 func (c CustomType) String() string    { return c.GoStr() }
 
+// Concrete makes a CustomType concrete by delegating to the wrapped type if it supports Concrete
+func (c CustomType) Concrete(typs []Type) CustomType {
+	// Try to make the wrapped type concrete
+	switch w := c.W.(type) {
+	case FuncType:
+		c.W = w.Concrete(typs)
+	case StructType:
+		c.W = w.Concrete(typs)
+	case InterfaceType:
+		c.W = w.Concrete(typs)
+	case CustomType:
+		c.W = w.Concrete(typs)
+	}
+	return c
+}
+
 type LabelledType struct {
 	Label string
 	W     Type
@@ -454,6 +470,21 @@ func (i InterfaceType) Concrete(typs []Type) InterfaceType {
 }
 
 func (s StructType) Concrete(typs []Type) StructType {
+	// If this is a type alias (has __alias field), build substitution map before modifying TypeParams
+	var aliasSubstMap map[string]Type
+	if len(s.Fields) == 1 && s.Fields[0].Name == "__alias" {
+		aliasSubstMap = make(map[string]Type)
+		typIdx := 0
+		for _, p := range s.TypeParams {
+			if gp, ok := p.(GenericType); ok {
+				if typIdx < len(typs) {
+					aliasSubstMap[gp.Name] = typs[typIdx]
+					typIdx++
+				}
+			}
+		}
+	}
+
 	var newParams []Type
 	for idx, p := range s.TypeParams {
 		if _, ok := p.(GenericType); ok {
@@ -461,6 +492,12 @@ func (s StructType) Concrete(typs []Type) StructType {
 		}
 	}
 	s.TypeParams = newParams
+
+	// Apply substitution to the aliased type if this is a type alias
+	if aliasSubstMap != nil {
+		s.Fields[0].Typ = ReplGenM(s.Fields[0].Typ, aliasSubstMap)
+	}
+
 	return s
 }
 
@@ -666,17 +703,35 @@ func (m MutType) GoStrType() string { return m.W.GoStrType() }
 func (m MutType) String() string    { return "mut " + m.W.String() }
 
 func Unwrap(t Type) Type {
-	if v, ok := t.(LabelledType); ok {
-		t = v.W
-	}
-	if v, ok := t.(MutType); ok {
-		t = v.Unwrap()
-	}
-	if starT, ok := t.(StarType); ok {
-		t = starT.X
-	}
-	if v, ok := t.(TypeType); ok {
-		t = v.W
+	changed := true
+	// Keep unwrapping until no more changes
+	for changed {
+		changed = false
+		if v, ok := t.(LabelledType); ok {
+			t = v.W
+			changed = true
+		}
+		if v, ok := t.(MutType); ok {
+			t = v.Unwrap()
+			changed = true
+		}
+		if starT, ok := t.(StarType); ok {
+			t = starT.X
+			changed = true
+		}
+		if v, ok := t.(TypeType); ok {
+			t = v.W
+			changed = true
+		}
+		// Note: We don't unwrap CustomType here as it represents a named type
+		// that should be preserved in most contexts
+		// Unwrap type aliases represented as StructType with __alias field
+		if v, ok := t.(StructType); ok {
+			if len(v.Fields) == 1 && v.Fields[0].Name == "__alias" {
+				t = v.Fields[0].Typ
+				changed = true
+			}
+		}
 	}
 	return t
 }
@@ -761,6 +816,31 @@ func (f FuncType) IntoRecv(idTT Type) FuncType {
 }
 
 func (f FuncType) Concrete(typs []Type) FuncType {
+	// Build substitution map
+	substMap := make(map[string]Type)
+	typIdx := 0
+	for _, p := range f.TypeParams {
+		if gp, ok := p.(GenericType); ok {
+			if typIdx < len(typs) {
+				substMap[gp.Name] = typs[typIdx]
+				typIdx++
+			}
+		}
+	}
+
+	// Substitute in params
+	var newFuncParams []Type
+	for _, p := range f.Params {
+		newFuncParams = append(newFuncParams, ReplGenM(p, substMap))
+	}
+	f.Params = newFuncParams
+
+	// Substitute in return type
+	if f.Return != nil {
+		f.Return = ReplGenM(f.Return, substMap)
+	}
+
+	// Update type params to concrete types
 	var newParams []Type
 	for i, p := range f.TypeParams {
 		if _, ok := p.(GenericType); ok {

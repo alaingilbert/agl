@@ -43,7 +43,7 @@ func zip2[T, U any](a Sequence[T], b Sequence[U]) iter.Seq[(T, U)] {
 	}
 }
 
-func (v agl1.Vec[T]) Iter() iter.Seq[T] {
+func (v agl1.Vec[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for _, e := range v {
 			if !yield(e) {

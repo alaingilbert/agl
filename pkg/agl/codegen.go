@@ -941,6 +941,14 @@ func (g *Generator) genIdent(expr *ast.Ident) GenFrag {
 			expr.Name = strings.Replace(expr.Name, "@COLUMN", fmt.Sprintf(`"%d"`, g.fset.Position(expr.Pos()).Column), 1)
 		}
 		t := g.env.GetType(expr)
+
+		// If type is nil but we have a generic mapping, try to replace
+		if t == nil && g.genMap != nil {
+			if replacement, ok := g.genMap[expr.Name]; ok {
+				return e(replacement.GoStr())
+			}
+		}
+
 		switch v := t.(type) {
 		case types.GenericType:
 			// Handle GenericType directly (not wrapped in TypeType)
@@ -2036,12 +2044,31 @@ func (g *Generator) genFuncType(expr *ast.FuncType) GenFrag {
 				}
 				if _, ok := field.Type.(*ast.TupleExpr); ok {
 					out += e(types.ReplGenM(g.env.GetType(field.Type), g.genMap).GoStr())
-				} else if id, ok := field.Type.(*ast.Ident); ok && TryCast[types.GenericType](g.env.GetType(id)) {
-					typ := g.env.GetType(id).(types.GenericType)
-					if vv, ok := g.genMap[id.Name]; ok {
-						typ.Name = vv.GoStr()
-						typ.W = vv
-						out += e(typ.GoStr())
+				} else if fieldType := g.env.GetType(field.Type); fieldType != nil {
+					// Check if it's a FuncType that needs generic replacement
+					if ft, ok := fieldType.(types.FuncType); ok {
+						if g.genMap != nil {
+							replacedType := types.ReplGenM(ft, g.genMap).(types.FuncType)
+							out += e(replacedType.GoStrType())
+						} else {
+							out += g.genExpr(field.Type).F()
+						}
+					} else if v, ok := fieldType.(types.TypeType); ok {
+						// Handle TypeType - check if it wraps a FuncType
+						if _, ok := v.W.(types.FuncType); ok {
+							out += e(types.ReplGenM(v.W, g.genMap).(types.FuncType).GoStrType())
+						} else {
+							out += g.genExpr(field.Type).F()
+						}
+					} else if id, ok := field.Type.(*ast.Ident); ok && TryCast[types.GenericType](fieldType) {
+						typ := fieldType.(types.GenericType)
+						if vv, ok := g.genMap[id.Name]; ok {
+							typ.Name = vv.GoStr()
+							typ.W = vv
+							out += e(typ.GoStr())
+						} else {
+							out += g.genExpr(field.Type).F()
+						}
 					} else {
 						out += g.genExpr(field.Type).F()
 					}
@@ -2563,7 +2590,23 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorExpr) GenFrag {
 	e := EmitWith(g, expr)
 	oeXT := g.env.GetType(x.X)
-	eXT := types.Unwrap(oeXT)
+	// Unwrap wrapper types but preserve StructType (including type aliases)
+	eXT := oeXT
+	for {
+		switch v := eXT.(type) {
+		case types.TypeType:
+			eXT = v.W
+		case types.LabelledType:
+			eXT = v.W
+		case types.MutType:
+			eXT = v.W
+		case types.StarType:
+			eXT = v.X
+		default:
+			goto afterUnwrap4
+		}
+	}
+afterUnwrap4:
 	switch eXTT := eXT.(type) {
 	case types.StructType:
 		c1 := g.genExpr(x.X)
@@ -3168,6 +3211,8 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					}
 				case types.SetType:
 				case types.StructType:
+				case types.FuncType:
+					// This is a Sequence[T] (iter.Seq[T]), no wrapping needed
 				default:
 					panic(fmt.Sprintf("%v", to(t)))
 				}
@@ -3323,7 +3368,11 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 	if g.asType {
 		isType = true
 	}
-	tup := types.ReplGenM(t, g.genMap).(types.TupleType)
+	replaced := types.ReplGenM(t, g.genMap)
+	if replaced == nil {
+		panic(fmt.Sprintf("ReplGenM returned nil for type %v with genMap %v", t, g.genMap))
+	}
+	tup := replaced.(types.TupleType)
 	structName := tup.GoStr()
 	var args []string
 	for i, x := range expr.Values {

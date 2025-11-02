@@ -859,7 +859,24 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/cmp", "", m)
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/iter", "", m)
 		e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
-		e.Define(nil, "Sequence", types.StructType{Pkg: "", Name: "Sequence", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
+		// Define Sequence[T] as a type alias struct that wraps iter.Seq[T]
+		// This represents: type Sequence[T any] iter.Seq[T]
+		// iter.Seq[T] is: func(yield func(T) bool)
+		// We need to create this type with T as the generic parameter
+		seqFuncType := types.FuncType{
+			Params: []types.Type{
+				types.FuncType{
+					Params: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}},
+					Return: types.BoolType{},
+				},
+			},
+		}
+		e.Define(nil, "Sequence", types.StructType{
+			Pkg:  "",
+			Name: "Sequence",
+			TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}, IsType: true}},
+			Fields: []types.FieldType{{Name: "__alias", Typ: seqFuncType}},
+		})
 		e.Define(nil, "DoubleEndedIterator", types.InterfaceType{Pkg: "agl1", Name: "DoubleEndedIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.Type{
 			types.GenericType{Name: "K", W: types.AnyType{}},
@@ -1001,7 +1018,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.UnwrapOrDefault", "func [T any]() T")
 		e.DefineFn(nenv, "agl1.Result.IsOk", "func () bool")
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
-		e.DefineFn(nenv, "Sequence.Sum", "func [T, R Number](a []T) R")
+		e.DefineFn(nenv, "Sequence.Sum", "func [T, R Number](a Sequence[T]) R")
 		e.DefineFn(nenv, "Sequence.Sorted", "func [T cmp.Ordered](s Sequence[T]) []T")
 		e.DefineFn(nenv, "Sequence.Joined", "func (s Sequence[string], sep string) string")
 		e.DefineFn(nenv, "Sequence.Filter", "func [T any](s Sequence[T], f func(e T) bool) Sequence[T]")
@@ -1097,7 +1114,22 @@ func (e *Env) GetOrCreateNameInfo(name string) *Info {
 }
 
 func (e *Env) GetFn(name string) types.FuncType {
-	return types.Unwrap(e.Get(name)).(types.FuncType)
+	t := e.Get(name)
+	// Unwrap wrappers but preserve type structure
+	for {
+		switch v := t.(type) {
+		case types.TypeType:
+			t = v.W
+		case types.MutType:
+			t = v.W
+		case types.LabelledType:
+			t = v.W
+		case types.StarType:
+			t = v.X
+		default:
+			return t.(types.FuncType)
+		}
+	}
 }
 
 func (e *Env) DefineFn(nenv *Env, name string, fnStr string, opts ...SetTypeOption) {
@@ -1327,7 +1359,22 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		}
 	case *ast.SelectorExpr:
 		base := e.GetType2(xx.X, fset)
-		base = types.Unwrap(base)
+		// Unwrap wrapper types but preserve StructType for method lookup
+		for {
+			switch v := base.(type) {
+			case types.TypeType:
+				base = v.W
+			case types.LabelledType:
+				base = v.W
+			case types.MutType:
+				base = v.W
+			case types.StarType:
+				base = v.X
+			default:
+				goto afterUnwrap2
+			}
+		}
+	afterUnwrap2:
 		// Check if base is nil (undefined variable)
 		if base == nil {
 			var varName string
@@ -1351,7 +1398,48 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			return e.GetType2(&ast.Ident{Name: v.NameStr()}, fset)
 		case types.StructType:
 			name := v.GetFieldName(xx.Sel.Name)
-			return e.GetType2(&ast.Ident{Name: name}, fset)
+			methodType := e.GetType2(&ast.Ident{Name: name}, fset)
+			if methodType == nil {
+				// For type aliases, try looking up the method on the base type name
+				if len(v.Fields) == 1 && v.Fields[0].Name == "__alias" {
+					// This is a type alias, use just the struct name
+					baseName := v.String1() + "." + xx.Sel.Name
+					methodType = e.GetType2(&ast.Ident{Name: baseName}, fset)
+				}
+				if methodType == nil {
+					// Method not found, report error
+					errMsg := fmt.Sprintf("Unresolved reference '%s'", xx.Sel.Name)
+					if e.inferrer != nil {
+						e.inferrer.AddError(xx, errMsg)
+						return types.ErrorType{}
+					}
+					return nil
+				}
+			}
+			// If this is a method on a generic type, monomorphize it
+			if fnType, ok := methodType.(types.FuncType); ok && len(v.TypeParams) > 0 {
+				// Build a map from generic parameter names to concrete types
+				// We need to match the receiver type in the method with the base type
+				// For now, assume the type parameters match by position
+				genMap := make(map[string]types.Type)
+				if len(fnType.Params) > 0 {
+					recvType := types.Unwrap(fnType.Params[0])
+					if recvStruct, ok := recvType.(types.StructType); ok {
+						// Match type parameters from receiver to base
+						for i, p := range recvStruct.TypeParams {
+							if gp, ok := p.(types.GenericType); ok && i < len(v.TypeParams) {
+								genMap[gp.Name] = v.TypeParams[i]
+							}
+						}
+					}
+				}
+				// Apply substitutions
+				for name, typ := range genMap {
+					methodType = fnType.ReplaceGenericParameter(name, typ)
+					fnType = methodType.(types.FuncType)
+				}
+			}
+			return methodType
 		case types.TupleType:
 			idx, err := strconv.Atoi(xx.Sel.Name)
 			if err != nil {
@@ -1415,23 +1503,56 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		if t == nil {
 			return types.ErrorType{}
 		}
-		t = types.Unwrap(t)
+
+		// Unwrap wrapper types but preserve the type structure (StructType, FuncType, etc.)
+		for {
+			switch v := t.(type) {
+			case types.TypeType:
+				t = v.W
+			case types.LabelledType:
+				t = v.W
+			case types.MutType:
+				t = v.W
+			case types.StarType:
+				t = v.X
+			default:
+				goto afterUnwrap
+			}
+		}
+	afterUnwrap:
+
 		if !e.NoIdxUnwrap {
 			switch v := t.(type) {
 			case types.ArrayType:
 				return v.Elt
 			}
 		}
+
+		// Get the index type
+		indexType := e.GetType2(xx.Index, fset)
+
 		switch v := t.(type) {
 		case types.StructType:
-			t = v.RenameGenericParameter("T", xx.Index.(*ast.Ident).Name)
+			// For generic types like Sequence[V], instantiate with the index type
+			if len(v.TypeParams) > 0 {
+				t = v.Concrete([]types.Type{indexType})
+			} else {
+				t = v.RenameGenericParameter("T", xx.Index.(*ast.Ident).Name)
+			}
 		case types.FuncType:
-			t = v.RenameGenericParameter("V", "T")
+			if len(v.TypeParams) > 0 {
+				t = v.Concrete([]types.Type{indexType})
+			} else {
+				t = v.RenameGenericParameter("V", "T")
+			}
 		case types.MapType:
 			t = v.V
 		case types.EnumType:
 		case types.SetType:
 		case types.InterfaceType:
+			if len(v.TypeParams) > 0 {
+				t = v.Concrete([]types.Type{indexType})
+			}
 		case types.ArrayType:
 		case types.ErrorType:
 			return types.ErrorType{}
