@@ -2,11 +2,10 @@ package main
 
 func catchMaximumAmountofPeople(mut team []int, dist int) int {
     var mut ans, mut ptr int
-    l := team.Len()
     for (i, el) in team.Enumerated() where el == 1 {
         ptr = max(i - dist, ptr)
         ptr += team[ptr:].FirstIndex(0) or_break
-        if ptr <= i + dist && ptr < l {
+        if ptr <= i + dist {
             ptr++
             ans++
         }
