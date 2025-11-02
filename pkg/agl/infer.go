@@ -1715,11 +1715,14 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 	var fnT types.FuncType
 	info := &Info{}
 	switch idTT := idT.(type) {
-	case types.IntType:
+	case types.IntType, types.UntypedNumType:
 		switch fnName {
 		case "String":
 			info = infer.env.GetNameInfo("agl1.Int.String")
 			fnT = infer.env.GetFn("agl1.Int.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.Int.Sqrt")
+			fnT = infer.env.GetFn("agl1.Int.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)

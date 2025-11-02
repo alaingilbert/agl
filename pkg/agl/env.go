@@ -961,6 +961,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.String.U64", "func (s string) u64?", WithDesc("Parse the string into an 'u64' value.\nReturns None if the string cannot be parsed as an 'u64'."))
 		e.DefineFn(nenv, "agl1.String.F32", "func (s string) f32?", WithDesc("Parse the string into an 'f32' value.\nReturns None if the string cannot be parsed as an 'f32'."))
 		e.DefineFn(nenv, "agl1.String.F64", "func (s string) f64?", WithDesc("Parse the string into an 'f64' value.\nReturns None if the string cannot be parsed as an 'f64'."))
+		e.DefineFn(nenv, "agl1.Int.Sqrt", "func (int) int")
 		e.DefineFn(nenv, "agl1.Int.String", "func (int) string")
 		e.DefineFn(nenv, "agl1.I64.String", "func (i64) string")
 		e.DefineFn(nenv, "agl1.Uint.String", "func (uint) string")

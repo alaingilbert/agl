@@ -2829,12 +2829,15 @@ afterUnwrap4:
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorFilter(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
-	case types.IntType:
+	case types.IntType, types.UntypedNumType:
 		fnName := x.Sel.Name
 		switch fnName {
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglIntString(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglIntSqrt(") + c1.F() + e(")") }}
 		}
 	case types.I64Type:
 		fnName := x.Sel.Name

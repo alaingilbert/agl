@@ -1715,6 +1715,8 @@ func AglNewSet[T comparable](els ...T) *Set[T] {
 	return s
 }
 
+func AglIntSqrt(v int) int { return int(math.Sqrt(float64(v))) }
+
 func AglIntString(v int) string   { return strconv.FormatInt(int64(v), 10) }
 func AglI8String(v int8) string   { return strconv.FormatInt(int64(v), 10) }
 func AglI16String(v int16) string { return strconv.FormatInt(int64(v), 10) }
