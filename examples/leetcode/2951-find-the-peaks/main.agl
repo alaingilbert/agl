@@ -3,7 +3,8 @@ package main
 func findPeaks(mountain []int) []int {
     mountain.
         Enumerated().
-        Filter(|(i, _)| i >= 1 && i < mountain.Len()-1).
+        DropFirst(1).
+        DropLast(1).
         FilterMap(|(i, e)| if mountain[i-1] < e && e > mountain[i+1] { Some(i) } else { None })
 }
 
