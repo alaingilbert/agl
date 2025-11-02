@@ -2781,6 +2781,10 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorForEach(") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "Filter":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIteratorFilter(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
 	case types.IntType:
 		fnName := x.Sel.Name

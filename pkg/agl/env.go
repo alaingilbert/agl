@@ -963,7 +963,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.With", "func [T any](mut a []T, i int, clb func(*T))")
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
-		//e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) iter.Seq[T]")
+		//e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) Sequence[T]")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
 		e.DefineFn(nenv, "agl1.Vec.Pop", "func [T any](mut a []T) T?")
@@ -1012,6 +1012,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.AllSatisfy", "func[T any] (it Iterator[T], pred func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Contains", "func[T any] (it Iterator[T], el T) bool")
 		e.DefineFn(nenv, "agl1.Iterator.ForEach", "func[T any] (it Iterator[T], f func(T))")
+		e.DefineFn(nenv, "agl1.Iterator.Filter", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
 		//e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) []R")
 	})
 }

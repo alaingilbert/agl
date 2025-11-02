@@ -1389,7 +1389,7 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1417,6 +1417,13 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 		case "ForEach":
 			info := infer.env.GetNameInfo("agl1.Iterator.ForEach")
 			fnT := infer.env.GetFn("agl1.Iterator.ForEach")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "Filter":
+			info := infer.env.GetNameInfo("agl1.Iterator.Filter")
+			fnT := infer.env.GetFn("agl1.Iterator.Filter")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))

@@ -865,6 +865,10 @@ func AglIteratorForEach[T any, I Iterator[T]](it I, f func(T) AglVoid) {
 	AglSequenceForEach(it.Iter(), f)
 }
 
+func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) Sequence[T] {
+	return AglSequenceFilter(it.Iter(), f)
+}
+
 func (s AglSet[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for k := range s {
