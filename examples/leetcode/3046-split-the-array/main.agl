@@ -2,13 +2,10 @@ package main
 
 func isPossibleToSplit(nums []int) bool {
     mut h := make(map[int]int)
-    for n in nums {
-        h[n]++
-        if h[n] > 2 {
-            return false
-        }
-    }
-    return true
+    return nums.AllSatisfy({
+        h[$0]++
+        return h[$0] < 3
+    })
 }
 
 func main() {
