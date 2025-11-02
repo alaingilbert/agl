@@ -1,15 +1,13 @@
 package main
 
-import "math"
-
 func getSneakyNumbers(nums []int) []int {
     n := nums.Len() - 2
     sum := nums.Sum()
     sqSum := nums.Map({ $0 * $0 }).Sum()
     sum2 := sum - n * (n - 1) / 2
     sqSum2 := sqSum - n * (n - 1) * (2 * n - 1) / 6
-    x1 := (sum2 - int(math.Sqrt(f64(2 * sqSum2 - sum2 * sum2)))) / 2
-    x2 := (sum2 + int(math.Sqrt(f64(2 * sqSum2 - sum2 * sum2)))) / 2
+    x1 := (sum2 - (2 * sqSum2 - sum2 * sum2).Sqrt()) / 2
+    x2 := (sum2 + (2 * sqSum2 - sum2 * sum2).Sqrt()) / 2
     return []int{x1, x2}
 }
 
