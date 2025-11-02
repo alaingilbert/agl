@@ -218,6 +218,26 @@ func AglVecFilter[T any](a []T, f func(T) bool) []T {
 	return out
 }
 
+func AglVecDropFirst[T any](a []T, k int) []T {
+	if k <= 0 {
+		return a
+	}
+	if k >= len(a) {
+		return []T{}
+	}
+	return a[k:]
+}
+
+func AglVecDropLast[T any](a []T, k int) []T {
+	if k <= 0 {
+		return a
+	}
+	if k >= len(a) {
+		return []T{}
+	}
+	return a[:len(a)-k]
+}
+
 func AglVecFirstIndex[T comparable](a []T, e T) Option[int] {
 	for i, v := range a {
 		if v == e {

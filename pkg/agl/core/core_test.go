@@ -42,6 +42,54 @@ func (c CustomStruct) __EQ(rhs CustomStruct) bool {
 	return true
 }
 
+func TestAglVecDropFirst(t *testing.T) {
+	// Test normal case
+	arr := []int{1, 2, 3, 4, 5}
+	result := AglVecDropFirst(arr, 2)
+	tassert.Equal(t, []int{3, 4, 5}, result)
+
+	// Test drop 0
+	result = AglVecDropFirst(arr, 0)
+	tassert.Equal(t, arr, result)
+
+	// Test drop more than length
+	result = AglVecDropFirst(arr, 10)
+	tassert.Equal(t, []int{}, result)
+
+	// Test negative value
+	result = AglVecDropFirst(arr, -1)
+	tassert.Equal(t, arr, result)
+
+	// Test empty array
+	empty := []int{}
+	result = AglVecDropFirst(empty, 5)
+	tassert.Equal(t, []int{}, result)
+}
+
+func TestAglVecDropLast(t *testing.T) {
+	// Test normal case
+	arr := []int{1, 2, 3, 4, 5}
+	result := AglVecDropLast(arr, 2)
+	tassert.Equal(t, []int{1, 2, 3}, result)
+
+	// Test drop 0
+	result = AglVecDropLast(arr, 0)
+	tassert.Equal(t, arr, result)
+
+	// Test drop more than length
+	result = AglVecDropLast(arr, 10)
+	tassert.Equal(t, []int{}, result)
+
+	// Test negative value
+	result = AglVecDropLast(arr, -1)
+	tassert.Equal(t, arr, result)
+
+	// Test empty array
+	empty := []int{}
+	result = AglVecDropLast(empty, 5)
+	tassert.Equal(t, []int{}, result)
+}
+
 func TestAglSet1(t *testing.T) {
 	s1 := AglSet1[AglInt]{}
 	s1.Insert(AglInt{1})

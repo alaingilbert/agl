@@ -2602,7 +2602,7 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 				return e("AglVec"+fnName+"(") + genEX() + e(")")
 			}}
 		case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined",
-			"FirstIndex", "FirstIndexWhere", "__ADD", "SortedBy":
+			"FirstIndex", "FirstIndexWhere", "__ADD", "SortedBy", "DropFirst", "DropLast":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
