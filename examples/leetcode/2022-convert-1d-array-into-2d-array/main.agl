@@ -1,10 +1,10 @@
 package main
 
 func construct2DArray(original []int, m int, n int) [][]int {
-    if m * n != original.Len() {
-        return [][]int{}
-    }
     mut out := [][]int{}
+    if m * n != original.Len() {
+        return out
+    }
     for i := 0; i < m; i++ {
         out.Push(original[i*n:i*n+n])
     }
