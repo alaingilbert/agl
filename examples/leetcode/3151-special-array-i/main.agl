@@ -1,0 +1,11 @@
+package main
+
+func isArraySpecial(nums []int) bool {
+    zip(nums, nums[1:]).AllSatisfy(|(a, b)| a % 2 != b % 2)
+}
+
+func main() {
+    assert(isArraySpecial([]int{1}))
+    assert(isArraySpecial([]int{2,1,4}))
+    assert(!isArraySpecial([]int{4,3,1,6}))
+}
