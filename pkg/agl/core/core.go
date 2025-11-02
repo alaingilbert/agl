@@ -865,7 +865,7 @@ func AglIteratorForEach[T any, I Iterator[T]](it I, f func(T) AglVoid) {
 	AglSequenceForEach(it.Iter(), f)
 }
 
-func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) Sequence[T] {
+func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) Iterator[T] {
 	return AglSequenceFilter(it.Iter(), f)
 }
 
