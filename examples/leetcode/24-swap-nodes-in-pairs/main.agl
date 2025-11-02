@@ -1,0 +1,24 @@
+package main
+
+type ListNode struct {
+    Val int
+    mut Next *ListNode
+}
+
+func swapPairs(mut head *ListNode) *ListNode {
+	dummy := &ListNode{Next: head}
+	mut prev := dummy
+	for head != nil && head.Next != nil {
+		mut first := head
+		mut second := head.Next
+		prev.Next = second
+		first.Next = second.Next
+		second.Next = first
+		prev = first
+		head = first.Next
+	}
+	return dummy.Next
+}
+
+func main() {
+}
