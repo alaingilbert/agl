@@ -14717,6 +14717,29 @@ func (t AglTupleStruct_int_int) String() string {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen476(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int]int{1: 1, 2: 2, 3: 3}
+	a := Array(m.Keys()).Sorted()
+	print(a)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int]int{1: 1, 2: 2, 3: 3}
+	a := AglVecSorted(AglBuildArray(AglIdentity(AglMapKeys(m))))
+	AglPrint(a)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "map[int]int", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (map[int]int) Keys() Sequence[int]", test.TypeAt(4, 15).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
