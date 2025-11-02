@@ -1,0 +1,15 @@
+package main
+
+func smallestNumber(n int) int {
+    mut ans := 1
+    for ans < n {
+        ans = ans * 2 + 1
+    }
+    return ans
+}
+
+func main() {
+    assertEq(smallestNumber(5), 7)
+    assertEq(smallestNumber(10), 15)
+    assertEq(smallestNumber(3), 3)
+}
