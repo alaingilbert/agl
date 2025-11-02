@@ -6,4 +6,6 @@ func orArray(nums []int) []int {
 
 func main() {
     print(orArray([]int{1,3,7,15}))
+    print(orArray([]int{8,4,2}))
+    print(orArray([]int{5,4,9,11}))
 }
