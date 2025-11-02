@@ -1,0 +1,22 @@
+package main
+
+func minimumMoves(s string) int {
+    mut ans := 0
+    l := s.Len()
+    mut i := 0
+    for i < l {
+        if s[i] == 'X' {
+            ans++
+            i += 3
+        } else {
+            i++
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(minimumMoves("XXX"), 1)
+    assertEq(minimumMoves("XXOX"), 2)
+    assertEq(minimumMoves("OOOO"), 0)
+}
