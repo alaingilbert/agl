@@ -209,13 +209,7 @@ func AglVec__ADD[T any](a, b []T) []T {
 }
 
 func AglVecFilter[T any](a []T, f func(T) bool) []T {
-	var out []T
-	for _, v := range a {
-		if f(v) {
-			out = append(out, v)
-		}
-	}
-	return out
+	return AglBuildArray(AglSequenceFilter(AglVec[T](a).Iter(), f))
 }
 
 func AglVecDropFirst[T any](a []T, k int) []T {
@@ -257,30 +251,15 @@ func AglVecFirstIndexWhere[T any](a []T, p func(T) bool) Option[int] {
 }
 
 func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
-	for _, v := range a {
-		if !f(v) {
-			return false
-		}
-	}
-	return true
+	return AglSequenceAllSatisfy(AglVec[T](a).Iter(), f)
 }
 
 func AglVecContains[T comparable](a []T, e T) bool {
-	for _, v := range a {
-		if v == e {
-			return true
-		}
-	}
-	return false
+	return AglSequenceContains(AglVec[T](a).Iter(), e)
 }
 
 func AglVecContainsWhere[T comparable](a []T, p func(T) bool) bool {
-	for _, v := range a {
-		if p(v) {
-			return true
-		}
-	}
-	return false
+	return AglSequenceContainsWhere(AglVec[T](a).Iter(), p)
 }
 
 func AglVecAny[T any](a []T, f func(T) bool) bool {
