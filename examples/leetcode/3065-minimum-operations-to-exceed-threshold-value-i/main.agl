@@ -1,0 +1,11 @@
+package main
+
+func minOperations(nums []int, k int) int {
+    nums.Filter({ $0 < k }).Len()
+}
+
+func main() {
+    assertEq(minOperations([]int{2,11,10,1,3}, 10), 3)
+    assertEq(minOperations([]int{1,1,2,4,9}, 1), 0)
+    assertEq(minOperations([]int{1,1,2,4,9}, 9), 4)
+}
