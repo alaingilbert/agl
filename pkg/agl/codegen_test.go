@@ -14667,6 +14667,58 @@ func (t AglTupleStruct_int_int) String() string {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen475(t *testing.T) {
+	src := `package main
+func findPeaks2(mountain []int) []int {
+	return mountain.Enumerated().FilterMap(|(i, e)| {
+		if i >= 1 && i < mountain.Len()-1 && mountain[i] > mountain[i-1] && mountain[i] > mountain[i+1] {
+			return Some(e)
+		} else {
+			return None
+		}
+	})
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func findPeaks2(mountain []int) []int {
+	return AglVecFilterMap(AglVecEnumerated_T_int(mountain), func(aglArg0 AglTupleStruct_int_int) Option[int] {
+		i := aglArg0.Arg0
+		e := aglArg0.Arg1
+		if i >= 1 && i < AglVecLen_T_int(mountain) - 1 && mountain[i] > mountain[i - 1] && mountain[i] > mountain[i + 1] {
+			return MakeOptionSome(e)
+		} else {
+			return MakeOptionNone[int]()
+		}
+	})
+}
+func AglVecEnumerated_T_int(v []int) []AglTupleStruct_int_int {
+	out := make([]AglTupleStruct_int_int, 0)
+	for i := range v {
+		AglVecPush((*[]AglTupleStruct_int_int)(&out), AglTupleStruct_int_int{Arg0: i, Arg1: v[i]})
+	}
+	return out
+}
+func AglVecLen_T_int(v []int) int {
+	return len(v)
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([](int, int)) FilterMap(func((int, int)) int?) []int", test.TypeAt(3, 31).String())
+	tassert.Equal(t, "int", test.TypeAt(3, 43).String())
+	tassert.Equal(t, "int", test.TypeAt(3, 46).String())
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
