@@ -5,13 +5,12 @@ func catchMaximumAmountofPeople(mut team []int, dist int) int {
     mut ptr := 0
     for (i, el) in team.Enumerated() where el == 1 {
         ptr = max(i - dist, ptr)
-        for ptr <= i + dist && ptr < team.Len() {
-            if team[ptr] == 0 {
-                ans++
-                ptr++
-                break
-            }
+        for ptr < team.Len() && team[ptr] == 1 {
             ptr++
+        }
+        if ptr <= i + dist && ptr < team.Len() && team[ptr] == 0 {
+            ptr++
+            ans++
         }
     }
     return ans
