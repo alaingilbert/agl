@@ -2082,21 +2082,15 @@ func main() {
 func TestCodeGen_TypeAssertion(t *testing.T) {
 	src := `
 package main
-
 import "agl1/fmt"
-
 type Writer interface {}
-
 type WriterA struct {}
-
 type WriterB struct {}
-
 func test(w Writer) {
-   if _, ok := w.(WriterA); ok {
-       fmt.Println("A")
-   }
+	if _, ok := w.(WriterA); ok {
+		fmt.Println("A")
+	}
 }
-
 func main() {
    w := WriterA{}
    test(w)
@@ -2125,6 +2119,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "bool", test.TypeAt(8, 8).String())
 	testCodeGen2(t, expected, test)
 }
 
