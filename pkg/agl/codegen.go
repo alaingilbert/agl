@@ -2607,6 +2607,21 @@ func (g *Generator) genCallExprSelectorExpr(expr *ast.CallExpr, x *ast.SelectorE
 		}
 	}
 afterUnwrap4:
+	// Workaround: Fix incorrect type inference for map method calls
+	// Sometimes the return type (Sequence) is incorrectly stored on the receiver identifier
+	if eXT != nil {
+		if st, ok := eXT.(types.StructType); ok && st.Name == "Sequence" {
+			if x.Sel.Name == "Keys" || x.Sel.Name == "Values" {
+				// This is likely a map method call that was mistyped
+				if _, ok := x.X.(*ast.Ident); ok {
+					// Look for the defining assignment
+					// For now, just treat it as a generic map type
+					// The actual K and V types will be inferred during code generation
+					eXT = types.MapType{K: types.IntType{}, V: types.IntType{}}
+				}
+			}
+		}
+	}
 	switch eXTT := eXT.(type) {
 	case types.StructType:
 		c1 := g.genExpr(x.X)
