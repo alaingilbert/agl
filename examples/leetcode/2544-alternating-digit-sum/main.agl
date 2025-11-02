@@ -1,0 +1,21 @@
+package main
+
+func alternateDigitSum(n int) int {
+    mut n := n
+    mut ans := 0
+    mut s := n.String().Len() % 2 != 0
+    for n > 0 {
+        r := n % 10
+        ans += if s { r } else { -r }
+        n /= 10
+        s = !s
+    }
+    return ans
+}
+
+func main() {
+    assertEq(alternateDigitSum(521), 4)
+    assertEq(alternateDigitSum(111), 1)
+    assertEq(alternateDigitSum(886996), 0)
+    assertEq(alternateDigitSum(10), 1)
+}
