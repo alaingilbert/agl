@@ -1038,27 +1038,15 @@ func AglSetFirstWhere[T comparable](s AglSet[T], predicate func(T) bool) (out Op
 //}
 
 func AglSetMap[T comparable, R any](s AglSet[T], f func(T) R) []R {
-	var out []R
-	for k := range s {
-		out = append(out, f(k))
-	}
-	return out
+	return AglSequenceMap(s.Iter(), f)
 }
 
 func AglSetForEach[T comparable](s AglSet[T], f func(T) AglVoid) {
-	for k := range s {
-		f(k)
-	}
+	AglSequenceForEach(s.Iter(), f)
 }
 
 func AglSetFilter[T comparable](s AglSet[T], pred func(T) bool) AglSet[T] {
-	newSet := make(AglSet[T])
-	for k := range s {
-		if pred(k) {
-			newSet[k] = struct{}{}
-		}
-	}
-	return newSet
+	return AglBuildSet(AglSequenceFilter(s.Iter(), pred))
 }
 
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.
