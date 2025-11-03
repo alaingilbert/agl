@@ -600,56 +600,82 @@ func (g *Generator) Generate() (out string) {
 	// Scan for generic structs to populate genTypeDecls before code generation
 	g.scanForGenericStructs()
 
-	out += g.Emit(GeneratedFilePrefix)
-
 	// Pre-generate all declarations to populate g.imports before collecting imports
 	out4 := g.genDecls(g.b)
 	out5 := g.genDecls(g.a)
 
-	// Execute the declarations to populate g.imports (especially for tuple structs that need fmt)
+	// Execute the declarations WITHOUT emitting to populate g.imports (especially for tuple structs that need fmt)
 	// This needs to happen before collecting imports
-	var originalDecls string
 	g.WithoutEmit(func() {
-		originalDecls = out4.F() + out5.F()
+		_ = out4.F() + out5.F()
 	})
 
-	// Generate function and type declarations iteratively
-	// Type declarations can be added during function generation, so we need to keep generating until both are empty
-	var genFuncDeclStr string
-	var genTypeDeclStr string
-
-	// Now generate monomorphized types and functions WITHOUT emitting
+	// Now generate monomorphized types and functions WITHOUT emitting (to discover all imports first)
 	// Keep generating until both maps are empty
 	// Functions may add type declarations, so we need to iterate
+	// Save the generation functions for later regeneration
+	var savedGenFuncDecls2 []struct {
+		key string
+		fn  func() string
+	}
+	var savedGenTypeDecls2 []struct {
+		key string
+		fn  func() string
+	}
 	g.WithoutEmit(func() {
 		for len(g.genFuncDecls2) > 0 || len(g.genTypeDecls2) > 0 {
 			// First, generate ALL type declarations (generating functions may add more types)
 			for len(g.genTypeDecls2) > 0 {
 				sorted := slices.Sorted(maps.Keys(g.genTypeDecls2))
 				key := sorted[0]
-				genTypeDeclStr += g.genTypeDecls2[key]()
+				fn := g.genTypeDecls2[key]
+				savedGenTypeDecls2 = append(savedGenTypeDecls2, struct {
+					key string
+					fn  func() string
+				}{key, fn})
+				_ = fn()
 				delete(g.genTypeDecls2, key)
 			}
 			// Then generate functions (they may add more type declarations, which will be handled in next iteration)
 			if len(g.genFuncDecls2) > 0 {
 				sorted := slices.Sorted(maps.Keys(g.genFuncDecls2))
 				key := sorted[0]
-				genFuncDeclStr += g.genFuncDecls2[key]()
+				fn := g.genFuncDecls2[key]
+				savedGenFuncDecls2 = append(savedGenFuncDecls2, struct {
+					key string
+					fn  func() string
+				}{key, fn})
+				_ = fn()
 				delete(g.genFuncDecls2, key)
 			}
 		}
 	})
 
 	// Generate extensions WITHOUT emitting (they may create tuple structs that need fmt import)
-	var extStr string
+	// Save them for later regeneration
+	var savedExtensions []struct {
+		key string
+		ext Extension
+	}
 	g.WithoutEmit(func() {
 		for len(g.extensions) > 0 {
 			sorted := slices.Sorted(maps.Keys(g.extensions))
 			extKey := sorted[0]
-			extStr += g.genExtension(g.extensions[extKey])
+			ext := g.extensions[extKey]
+			savedExtensions = append(savedExtensions, struct {
+				key string
+				ext Extension
+			}{extKey, ext})
+			_ = g.genExtension(ext)
 			delete(g.extensions, extKey)
 		}
 	})
+
+	// Collect tuple structs
+	var tupleStr string
+	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
+		tupleStr += g.tupleStructs[k]
+	}
 
 	// Now collect imports after ALL code generation (declarations, monomorphized functions, and extensions)
 	imports := make(map[string]*ast.ImportSpec)
@@ -676,19 +702,36 @@ func (g *Generator) Generate() (out string) {
 		importsArr[i] = imports[k]
 	}
 
-	// Output package and imports first
+	// Clear fragments and regenerate everything WITH emitting in the correct order
+	g.fragments = nil
+	g.varCounter.Store(0) // Reset counter so variable names match the first pass
+
+	// Emit in correct order
+	out += g.Emit(GeneratedFilePrefix)
 	out += g.genPackage()
 	out += g.genImports(importsArr)
 
-	// Finally, emit everything in the correct order to fragments
-	out += g.Emit(genTypeDeclStr)
-	out += g.Emit(originalDecls)
-	out += g.Emit(genFuncDeclStr)
-	out += g.Emit(extStr)
-	var tupleStr string
-	for _, k := range slices.Sorted(maps.Keys(g.tupleStructs)) {
-		tupleStr += g.tupleStructs[k]
+	// Regenerate monomorphized types first (they need to be before functions that use them)
+	for _, saved := range savedGenTypeDecls2 {
+		out += saved.fn()
 	}
+
+	// Regenerate everything WITH emitting in the correct order
+	out4 = g.genDecls(g.b)
+	out5 = g.genDecls(g.a)
+	out += out4.F() + out5.F()
+
+	// Regenerate monomorphized functions WITH emitting
+	for _, saved := range savedGenFuncDecls2 {
+		out += saved.fn()
+	}
+
+	// Regenerate extensions WITH emitting
+	for _, saved := range savedExtensions {
+		out += g.genExtension(saved.ext)
+	}
+
+	// Emit tuple structs (already generated above)
 	out += g.Emit(tupleStr)
 	return
 }
@@ -3754,6 +3797,13 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
 						case types.StringType:
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
+						case types.FuncType:
+							// Handle iter.Seq-style iterators (unwrapped Sequence types)
+							out += e(g.prefix + "for ")
+							c2V := c2.F()
+							op := utils.Ternary(c2V == "_", "=", ":=")
+							out += c2V
+							out += e(" "+op+" range ") + c1.F() + e(" {\n")
 						case types.StructType:
 							if vv.Name == "Sequence" {
 								out += e(g.prefix + "for ")
