@@ -274,21 +274,20 @@ func main() {
 func Test15(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	for el in []int{1, 2, 3} {
-		fmt.Print(el)
+		print(el)
 	}
 	var mut tmp []int
 	for el in set[int]{1, 2, 3} {
 		tmp.Push(el)
 	}
-	fmt.Print(tmp.Sorted())
+	print(tmp.Sorted())
     for (a, b, c) in [](int, string, bool){(1, "foo", true), (2, "bar", false)} {
-        fmt.Print(a, b, c)
+        print(a, b, c)
     }
 }`
-	tassert.Equal(t, "123[1 2 3]1footrue2barfalse", testGenOutput(src))
+	tassert.Equal(t, "1\n2\n3\n[1 2 3]\n1 foo true\n2 bar false\n", testGenOutput(src))
 }
 
 func Test16(t *testing.T) {
