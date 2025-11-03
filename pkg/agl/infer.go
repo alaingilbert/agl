@@ -4909,6 +4909,12 @@ func (infer *FileInferrer) identExpr(expr *ast.Ident) {
 	if InArray(expr.Name, []string{"true", "false"}) {
 		v = types.BoolType{}
 	}
+	// For nil, if a type is already set (from context), use that instead
+	if expr.Name == "nil" {
+		if existingType := infer.env.GetType(expr); existingType != nil {
+			return
+		}
+	}
 	infer.SetType(expr, v, WithDefinition(info))
 }
 

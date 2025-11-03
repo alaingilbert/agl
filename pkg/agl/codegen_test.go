@@ -14785,6 +14785,36 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen477(t *testing.T) {
+	src := `package main
+type ListNode struct {
+    Val int
+    mut Next *ListNode
+}
+func partition(mut head *ListNode, x int) *ListNode {
+    d1, d2 := &ListNode{}, &ListNode{}
+    mut l1, mut l2 := d1, d2
+    l2.Next = nil
+    return d1.Next
+}`
+	expected := `// agl:generated
+package main
+type ListNode struct {
+	Val int
+	Next *ListNode
+}
+func partition(head *ListNode, x int) *ListNode {
+	d1, d2 := &ListNode{}, &ListNode{}
+	l1, l2 := d1, d2
+	l2.Next = nil
+	return d1.Next
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
