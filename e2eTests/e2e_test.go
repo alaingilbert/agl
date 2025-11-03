@@ -376,13 +376,14 @@ func main() {
 func Test20(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
     m := map[int]u8{1: 200, 2: 55, 3: 10}
-	fmt.Println(m.Values().Sum())
-	fmt.Println(m.Values().Sum[int]())
+	print(m.Values().Sum())
+	print(m.Values().Sum[int]())
+	print(m.Values().Max()?)
+	print(m.Values().Min()?)
 }`
-	tassert.Equal(t, "9\n265\n", testGenOutput(src))
+	tassert.Equal(t, "9\n265\n200\n10\n", testGenOutput(src))
 }
 
 func Test21(t *testing.T) {
