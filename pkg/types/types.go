@@ -643,9 +643,9 @@ func (u U64Type) String() string    { return "u64" }
 
 type I8Type struct{}
 
-func (i I8Type) GoStr() string     { return "i8" }
-func (i I8Type) GoStrType() string { return "i8" }
-func (i I8Type) String() string    { return "int8" }
+func (i I8Type) GoStr() string     { return "int8" }
+func (i I8Type) GoStrType() string { return "int8" }
+func (i I8Type) String() string    { return "i8" }
 
 type I16Type struct{}
 
