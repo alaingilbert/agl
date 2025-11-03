@@ -1,0 +1,26 @@
+package main
+
+func isInterleave(s1 string, s2 string, s3 string) bool {
+    if s1.Len() + s2.Len() != s3.Len() {
+        return false
+    }
+    if s3 == "" {
+        return true
+    }
+    var mut a, mut b bool
+    if s1.Len() > 0 && s1[0] == s3[0] {
+        a = isInterleave(s1[1:], s2[:], s3[1:])
+    }
+    if s2.Len() > 0 && s2[0] == s3[0] {
+        b = isInterleave(s1[:], s2[1:], s3[1:])
+    }
+    return a || b
+}
+
+func main() {
+    assert(isInterleave("aabcc", "dbbca", "aadbbcbcac"))
+    assert(!isInterleave("aabcc", "dbbca", "aadbbbaccc"))
+    assert(isInterleave("", "", ""))
+    assert(!isInterleave("a", "b", "a"))
+    assert(!isInterleave("abababababababababababababababababababababababababababababababababababababababababababababababababbb", "abababababababababababababababababababababababababababababababababababababababababababababababababab", "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababbb"))
+}
