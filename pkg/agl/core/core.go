@@ -407,34 +407,22 @@ func AglSequenceLen[T any](s Sequence[T]) (out int) {
 
 func AglSequenceMax[T cmp.Ordered](s Sequence[T]) Option[T] {
 	var out Option[T]
-	found := false
 	for v := range s {
-		if out.IsNone() {
-			out = MakeOptionSome(v)
-		} else {
-			out = MakeOptionSome(max(out.Unwrap(), v))
+		if !out.IsNone() {
+			v = max(out.Unwrap(), v)
 		}
-		found = true
-	}
-	if !found {
-		return MakeOptionNone[T]()
+		out = MakeOptionSome(v)
 	}
 	return out
 }
 
 func AglSequenceMin[T cmp.Ordered](s Sequence[T]) Option[T] {
 	var out Option[T]
-	found := false
 	for v := range s {
-		if out.IsNone() {
-			out = MakeOptionSome(v)
-		} else {
-			out = MakeOptionSome(min(out.Unwrap(), v))
+		if !out.IsNone() {
+			v = min(out.Unwrap(), v)
 		}
-		found = true
-	}
-	if !found {
-		return MakeOptionNone[T]()
+		out = MakeOptionSome(v)
 	}
 	return out
 }
