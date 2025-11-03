@@ -1019,6 +1019,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Result.UnwrapOrDefault", "func [T any]() T")
 		e.DefineFn(nenv, "agl1.Result.IsOk", "func () bool")
 		e.DefineFn(nenv, "agl1.Result.IsErr", "func () bool")
+		e.DefineFn(nenv, "Sequence.Contains", "func [T comparable](s Sequence[T], e T) bool")
 		e.DefineFn(nenv, "Sequence.Sum", "func [T, R Number](a Sequence[T]) R")
 		e.DefineFn(nenv, "Sequence.Sorted", "func [T cmp.Ordered](s Sequence[T]) []T")
 		e.DefineFn(nenv, "Sequence.Joined", "func (s Sequence[string], sep string) string")
