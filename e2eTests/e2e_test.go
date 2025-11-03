@@ -378,12 +378,12 @@ func Test20(t *testing.T) {
 	src := `package main
 func main() {
     m := map[int]u8{1: 200, 2: 55, 3: 10}
-	print(m.Values().Sum())
-	print(m.Values().Sum[int]())
-	print(m.Values().Max()?)
-	print(m.Values().Min()?)
+	assertEq(m.Values().Sum(), 9)
+	assertEq(m.Values().Sum[int](), 265)
+	assertEq(m.Values().Max()?, 200)
+	assertEq(m.Values().Min()?, 10)
 }`
-	tassert.Equal(t, "9\n265\n200\n10\n", testGenOutput(src))
+	testGenOutput(src)
 }
 
 func Test21(t *testing.T) {
