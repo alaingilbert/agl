@@ -1,0 +1,27 @@
+package main
+
+type ListNode struct {
+    Val int
+    mut Next *ListNode
+}
+
+func partition(mut head *ListNode, x int) *ListNode {
+    d1, d2 := &ListNode{}, &ListNode{}
+    mut l1, mut l2 := d1, d2
+    for head != nil {
+        if head.Val < x {
+            l1.Next = head
+            l1 = l1.Next
+        } else {
+            l2.Next = head
+            l2 = l2.Next
+        }
+        head = head.Next
+    }
+    l1.Next = d2.Next
+    l2.Next = nil
+    return d1.Next
+}
+
+func main() {
+}
