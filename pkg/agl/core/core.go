@@ -1307,12 +1307,20 @@ func AglStringContainsAny(s, chars string) bool {
 	return strings.ContainsAny(s, chars)
 }
 
-func AglStringIndex(s, substr string) int {
-	return strings.Index(s, substr)
+func AglStringIndex(s, substr string) Option[int] {
+	idx := strings.Index(s, substr)
+	if idx == -1 {
+		return MakeOptionNone[int]()
+	}
+	return MakeOptionSome(idx)
 }
 
-func AglStringLastIndex(s, substr string) int {
-	return strings.LastIndex(s, substr)
+func AglStringLastIndex(s, substr string) Option[int] {
+	idx := strings.LastIndex(s, substr)
+	if idx == -1 {
+		return MakeOptionNone[int]()
+	}
+	return MakeOptionSome(idx)
 }
 
 func AglStringCount(s, substr string) int {
