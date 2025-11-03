@@ -166,8 +166,8 @@ func Test8(t *testing.T) {
 func main() {
 	a := []int{1, 2, 3}
 	assert(a.Get(-1).IsNone())
-	assert(a.Get(0).Unwrap() == 1)
-	assert(a.Get(2).Unwrap() == 3)
+	assert(a.Get(0)? == 1)
+	assert(a.Get(2)? == 3)
 	assert(a.Get(3).IsNone())
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
