@@ -82,10 +82,9 @@ func testGenOutput(src string) string {
 func Test1(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a := 1
-	fmt.Println(a)
+	print(a)
 }`
 	tassert.Equal(t, "1\n", testGenOutput(src))
 }
@@ -93,11 +92,10 @@ func main() {
 func Test2(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func test() int? { Some(42) }
 func main() {
 	guard let Some(a) := test() else { return }
-	fmt.Println(a)
+	print(a)
 }`
 	tassert.Equal(t, "42\n", testGenOutput(src))
 }
@@ -206,12 +204,11 @@ func Test11(t *testing.T) {
 	t.Parallel()
 	src := `package main
 import "regexp"
-import "fmt"
 func main() {
 	data := "mul(42,43)"
 	rgxMul := regexp.MustCompile("mul\\((\\d+),(\\d+)\\)")
 	matches := rgxMul.FindAllStringSubmatch(data, -1)
-	fmt.Println(matches.Map({ $0[1].Int()? }).Sum())
+	print(matches.Map({ $0[1].Int()? }).Sum())
 }`
 	tassert.Equal(t, "42\n", testGenOutput(src))
 }
@@ -219,12 +216,11 @@ func main() {
 func Test12(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a := []int{1, 2, 3}
 	b := []int{4, 5, 6}
 	c := a + b
-	fmt.Println(c)
+	print(c)
 }`
 	tassert.Equal(t, "[1 2 3 4 5 6]\n", testGenOutput(src))
 }
@@ -232,7 +228,6 @@ func main() {
 func Test13(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a := set[int]{1, 2, 3}
 	b := a.Union([]int{3, 4, 5})
@@ -240,7 +235,7 @@ func main() {
 	for el := range b {
 		out.Push(el)
 	}
-	fmt.Println(out.Sorted())
+	print(out.Sorted())
 }`
 	tassert.Equal(t, "[1 2 3 4 5]\n", testGenOutput(src))
 }
@@ -383,7 +378,7 @@ func main() {
 	assertEq(m.Values().Max()?, 200)
 	assertEq(m.Values().Min()?, 10)
 }`
-	testGenOutput(src)
+	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
 
 func Test21(t *testing.T) {
@@ -400,10 +395,9 @@ func main() {
 func Test22(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
     s := set[int]{1, 2, 3, 4}
-	fmt.Println(s.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sorted())
+	print(s.Filter({ $0 % 2 == 0 }).Map({ $0 + 1 }).Sorted())
 }`
 	tassert.Equal(t, "[3 5]\n", testGenOutput(src))
 }
@@ -411,12 +405,11 @@ func main() {
 func Test23(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
     a := []int{1, 2, 3, 4}
-	fmt.Println(a.Sorted())
-	fmt.Println(a.Sorted(by: func(a, b int) bool { return a > b }))
-	fmt.Println(a.Sorted(by: { $0 > $1 }))
+	print(a.Sorted())
+	print(a.Sorted(by: func(a, b int) bool { return a > b }))
+	print(a.Sorted(by: { $0 > $1 }))
 }`
 	tassert.Equal(t, "[1 2 3 4]\n[4 3 2 1]\n[4 3 2 1]\n", testGenOutput(src))
 }
@@ -453,14 +446,13 @@ func main() {
 func Test26(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	s1 := set[int]{1, 2, 3}
 	a1 := Array(s1).Sorted()
 	m1 := map[int]int{1: 1, 2: 2, 3: 3}
 	a2 := Array(m1.Keys()).Sorted()
-	fmt.Println(a1)
-	fmt.Println(a2)
+	print(a1)
+	print(a2)
 }`
 	tassert.Equal(t, "[1 2 3]\n[1 2 3]\n", testGenOutput(src))
 }
@@ -468,11 +460,10 @@ func main() {
 func Test27(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	m := map[int]int{1: 1, 2: 2, 3: 3, 4: 4}
 	a := m.Filter({ $0.Key % 2 == 0 }).Keys().Sorted()
-	fmt.Println(a)
+	print(a)
 }`
 	tassert.Equal(t, "[2 4]\n", testGenOutput(src))
 }
@@ -480,12 +471,11 @@ func main() {
 func Test28(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a1 := []int{1, 2, 3}
-	fmt.Println(a1.Last())
+	print(a1.Last())
 	a2 := []int{}
-	fmt.Println(a2.Last())
+	print(a2.Last())
 }`
 	tassert.Equal(t, "Some(3)\nNone\n", testGenOutput(src))
 }
@@ -493,11 +483,10 @@ func main() {
 func Test29(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a1 := []int{1, 2, 3}
-	fmt.Println(a1.Get(1))
-	fmt.Println(a1.Get(42))
+	print(a1.Get(1))
+	print(a1.Get(42))
 }`
 	tassert.Equal(t, "Some(2)\nNone\n", testGenOutput(src))
 }
@@ -505,12 +494,11 @@ func main() {
 func Test30(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
 	a := []u8{1, 2, 3}
-	fmt.Println(a.First())
-	fmt.Println(a.First(where: { $0 == 2 }))
-	fmt.Println(a.First(where: { $0 == 42 }))
+	print(a.First())
+	print(a.First(where: { $0 == 2 }))
+	print(a.First(where: { $0 == 42 }))
 }`
 	tassert.Equal(t, "Some(1)\nSome(2)\nNone\n", testGenOutput(src))
 }
@@ -518,11 +506,10 @@ func main() {
 func Test31(t *testing.T) {
 	t.Parallel()
 	src := `package main
-import "fmt"
 func main() {
-	fmt.Println(pow(2, 3))
-	fmt.Printf("%.4f\n", pow(2, 3.4))
-	fmt.Printf("%.4f\n", 2 ** 3.4)
+	print(pow(2, 3))
+	printf("%.4f", pow(2, 3.4))
+	printf("%.4f", 2 ** 3.4)
 }`
 	tassert.Equal(t, "8\n10.5561\n10.5561\n", testGenOutput(src))
 }
