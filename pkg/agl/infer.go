@@ -1673,6 +1673,41 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 			fnT.Params = append(fnT.Params, arg0T)
 		}
 		infer.SetType(expr.Fun, fnT)
+	case "zip":
+		// Dynamic zip function that adapts to the number of arguments
+		fnT := infer.env.GetFn("zip")
+
+		// Clear the default params and return type, we'll rebuild them
+		fnT.Params = nil
+		fnT.TypeParams = nil
+
+		// Build tuple element types and params for each argument
+		tupleElts := make([]types.Type, 0, len(expr.Args))
+		for i, arg := range expr.Args {
+			argT := infer.GetType2(arg)
+			argT = types.Unwrap(argT)
+
+			// Extract element type from array
+			if arrT, ok := argT.(types.ArrayType); ok {
+				elemT := arrT.Elt
+				tupleElts = append(tupleElts, elemT)
+
+				// Create generic type parameter name (T1, T2, T3, ...)
+				genericName := fmt.Sprintf("T%d", i+1)
+				fnT.TypeParams = append(fnT.TypeParams, types.GenericType{Name: genericName, W: types.AnyType{}})
+				fnT = fnT.T(genericName, elemT)
+
+				// Add param for this slice
+				fnT.Params = append(fnT.Params, types.ArrayType{Elt: elemT})
+			} else {
+				infer.errorf(arg, "zip expects array type, got %v", argT)
+				return
+			}
+		}
+
+		// Set return type as []TupleType
+		fnT.Return = types.ArrayType{Elt: types.TupleType{Elts: tupleElts}}
+		infer.SetType(expr.Fun, fnT)
 	case "append":
 		fnT := infer.env.GetFn("append")
 		arg0 := expr.Args[0]

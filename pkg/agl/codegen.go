@@ -3046,7 +3046,7 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 			content1 = func() string { return e(v.Name) }
 			content2 = c2.F
 		} else if fnT, ok := t1.(types.FuncType); ok {
-			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "pow", "min", "max"}) && fnT.IsGeneric() {
+			if !InArray(v.Name, []string{"make", "append", "len", "new", "abs", "pow", "min", "max", "zip"}) && fnT.IsGeneric() {
 				isSet = true
 				oFnT := g.env.Get(v.Name)
 				newFnT := g.env.GetType(v)
@@ -3091,6 +3091,29 @@ func (g *Generator) genCallExpr(expr *ast.CallExpr) GenFrag {
 						out += MapJoin(e, expr.Args[1:], func(e ast.Expr) string { return g.genExpr(e).F() }, ", ")
 					}
 					return out
+				}
+			} else if v.Name == "zip" {
+				isSet = true
+				newFnT := g.env.GetType(v).(types.FuncType)
+
+				// Build the monomorphized function name
+				name := "zip"
+				for i := 0; i < len(expr.Args); i++ {
+					genericName := fmt.Sprintf("T%d", i+1)
+					argType := types.Unwrap(g.env.GetType(expr.Args[i]))
+					if arrT, ok := argType.(types.ArrayType); ok {
+						name += fmt.Sprintf("_%s_%s", genericName, types.NormalizeTypeForMonomorphization(arrT.Elt.GoStr()))
+					}
+				}
+
+				// Generate the zip function implementation if not already generated
+				if g.genFuncDecls2[name] == nil {
+					g.genFuncDecls2[name] = g.generateZipFunc(name, newFnT, expr.Args)
+				}
+
+				content1 = func() string { return e(name) }
+				content2 = func() (out string) {
+					return MapJoin(e, expr.Args, func(arg ast.Expr) string { return g.genExpr(arg).F() }, ", ")
 				}
 			}
 		}
@@ -4947,4 +4970,108 @@ func GenCore(packageName string) string {
 	by = append(by, Must(ContentFs.ReadFile(filepath.Join("core", "core.go")))...)
 	by = bytes.Replace(by, []byte("package main"), []byte(fmt.Sprintf("package %s", packageName)), 1)
 	return string(by)
+}
+
+func (g *Generator) generateZipFunc(name string, fnT types.FuncType, args []ast.Expr) func() string {
+	return func() string {
+		// Extract element types from the arguments
+		var paramNames []string
+		var paramTypes []string
+		var elemTypes []types.Type
+
+		for i, arg := range args {
+			paramName := string(rune('a' + i))
+			if i >= 26 {
+				// Handle more than 26 parameters by using a1, a2, etc.
+				paramName = fmt.Sprintf("arg%d", i)
+			}
+			paramNames = append(paramNames, paramName)
+
+			argType := types.Unwrap(g.env.GetType(arg))
+			if arrT, ok := argType.(types.ArrayType); ok {
+				elemTypes = append(elemTypes, arrT.Elt)
+				paramTypes = append(paramTypes, arrT.GoStr())
+			}
+		}
+
+		// Build the tuple return type
+		tupleType := types.TupleType{Elts: elemTypes}
+		returnType := types.ArrayType{Elt: tupleType}
+
+		// Generate tuple struct definition if not already generated
+		structName := tupleType.GoStr()
+		if g.tupleStructs[structName] == "" {
+			structStr := fmt.Sprintf("type %s struct {\n", structName)
+			for i, elemType := range elemTypes {
+				structStr += fmt.Sprintf("\tArg%d %s\n", i, elemType.GoStr())
+			}
+			structStr += "}\n"
+
+			// Generate String() method for tuple
+			structStr += fmt.Sprintf("func (t %s) String() string {\n", structName)
+			structStr += "\treturn fmt.Sprintf(\"("
+			for i := range elemTypes {
+				if i > 0 {
+					structStr += ", "
+				}
+				structStr += "%v"
+			}
+			structStr += ")\""
+			for i := range elemTypes {
+				structStr += fmt.Sprintf(", t.Arg%d", i)
+			}
+			structStr += ")\n}\n"
+
+			g.tupleStructs[structName] = structStr
+
+			// Add fmt import since we're using fmt.Sprintf in the String() method
+			if g.imports == nil {
+				g.imports = make(map[string]*ast.ImportSpec)
+			}
+			g.imports[`"fmt"`] = &ast.ImportSpec{
+				Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
+			}
+		}
+
+		// Generate the function signature
+		out := g.Emit(fmt.Sprintf("func %s(", name))
+		for i, paramName := range paramNames {
+			if i > 0 {
+				out += g.Emit(", ")
+			}
+			out += g.Emit(fmt.Sprintf("%s %s", paramName, paramTypes[i]))
+		}
+		out += g.Emit(fmt.Sprintf(") %s {\n", returnType.GoStr()))
+
+		// Generate the function body
+		out += g.Emit(fmt.Sprintf("\tout := make(%s, 0)\n", returnType.GoStr()))
+		out += g.Emit("\tfor i := range a {\n")
+
+		// Generate length checks for all arrays
+		out += g.Emit("\t\tif ")
+		for i, paramName := range paramNames {
+			if i > 0 {
+				out += g.Emit(" || ")
+			}
+			out += g.Emit(fmt.Sprintf("len(%s) <= i", paramName))
+		}
+		out += g.Emit(" {\n")
+		out += g.Emit("\t\t\tbreak\n")
+		out += g.Emit("\t\t}\n")
+
+		// Generate the push statement
+		out += g.Emit(fmt.Sprintf("\t\tAglVecPush((*%s)(&out), %s{", returnType.GoStr(), tupleType.GoStr()))
+		for i, paramName := range paramNames {
+			if i > 0 {
+				out += g.Emit(", ")
+			}
+			out += g.Emit(fmt.Sprintf("Arg%d: %s[i]", i, paramName))
+		}
+		out += g.Emit("})\n")
+		out += g.Emit("\t}\n")
+		out += g.Emit("\treturn out\n")
+		out += g.Emit("}\n")
+
+		return out
+	}
 }
