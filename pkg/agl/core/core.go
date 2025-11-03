@@ -183,11 +183,7 @@ func MakeResultErr[T any](err error) Result[T] {
 }
 
 func AglVecMap[T, R any](a []T, f func(T) R) []R {
-	var out []R
-	for _, v := range a {
-		out = append(out, f(v))
-	}
-	return out
+	return AglSequenceMap(AglVec[T](a).Iter(), f)
 }
 
 func AglVecFilterMap[T, R any](a []T, f func(T) Option[R]) []R {
