@@ -263,12 +263,7 @@ func AglVecContainsWhere[T comparable](a []T, p func(T) bool) bool {
 }
 
 func AglVecAny[T any](a []T, f func(T) bool) bool {
-	for _, v := range a {
-		if f(v) {
-			return true
-		}
-	}
-	return false
+	return AglSequenceAny(AglVec[T](a).Iter(), f)
 }
 
 func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
@@ -447,6 +442,15 @@ func AglSequenceAllSatisfy[T any](s Sequence[T], pred func(T) bool) bool {
 		}
 	}
 	return true
+}
+
+func AglSequenceAny[T any](s Sequence[T], f func(T) bool) bool {
+	for v := range s {
+		if f(v) {
+			return true
+		}
+	}
+	return false
 }
 
 func AglSequenceMap[T, R any](s Sequence[T], f func(T) R) []R {
