@@ -267,17 +267,11 @@ func AglVecAny[T any](a []T, f func(T) bool) bool {
 }
 
 func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
-	for _, v := range a {
-		acc = f(acc, v)
-	}
-	return acc
+	return AglSequenceReduce(AglVec[T](a).Iter(), acc, f)
 }
 
 func AglVecReduceInto[T, R any](a []T, acc R, f func(*R, T) AglVoid) R {
-	for _, v := range a {
-		f(&acc, v)
-	}
-	return acc
+	return AglSequenceReduceInto(AglVec[T](a).Iter(), acc, f)
 }
 
 func AglMapReduce[K comparable, V, R any](m map[K]V, acc R, f func(R, DictEntry[K, V]) R) R {

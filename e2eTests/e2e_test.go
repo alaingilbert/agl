@@ -554,3 +554,14 @@ func main() {
 }`
 	tassert.Equal(t, "(0, -1) true\n0 -1\n", testGenOutput(src))
 }
+
+func Test35(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	arr := []int{1, 2, 3, 4, 5}
+	print(arr.Reduce(0, { $0 + $1 }))
+	print(arr.Reduce(into: [][]int{}, { $0.Push([]int{$1}) }))
+}`
+	tassert.Equal(t, "15\n[[1] [2] [3] [4] [5]]\n", testGenOutput(src))
+}
