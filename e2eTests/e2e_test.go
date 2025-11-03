@@ -191,11 +191,11 @@ func Test10(t *testing.T) {
 	src := `package main
 func main() {
 	a := []u8{1, 2, 3}
-	assert(a.First().Unwrap() == 1)
-	assert(a.First(where: { $0 == 3 }).Unwrap() == 3)
+	assertEq(a.First()?, 1)
+	assertEq(a.First(where: { $0 == 3 })?, 3)
 	assert(a.First(where: { $0 == 4 }).IsNone())
-	assert(a.Min().Unwrap() == 1)
-	assert(a.Max().Unwrap() == 3)
+	assertEq(a.Min()?, 1)
+	assertEq(a.Max()?, 3)
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
