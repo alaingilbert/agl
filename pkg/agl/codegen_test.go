@@ -9822,19 +9822,23 @@ func TestCodeGen315(t *testing.T) {
 func main() {
 	zip([]int{1}, []int{2}).Map({ $0.0 + $0.1 })
 	zip([]int{1}, []u8{2}).Map({ $0.0 + int($0.1) })
+	zip([]int{1}, []u8{2}, []u16{3})
+	zip([]int{1}, []u8{2}, []u16{3}, []u32{4})
 }`
 	expected := `// agl:generated
 package main
 import "fmt"
 func main() {
-	AglVecMap(zip_T_int_U_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
+	AglVecMap(zip_T1_int_T2_int([]int{1}, []int{2}), func(aglArg0 AglTupleStruct_int_int) int {
 		return aglArg0.Arg0 + aglArg0.Arg1
 	})
-	AglVecMap(zip_T_int_U_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
+	AglVecMap(zip_T1_int_T2_uint8([]int{1}, []uint8{2}), func(aglArg0 AglTupleStruct_int_uint8) int {
 		return aglArg0.Arg0 + int(aglArg0.Arg1)
 	})
+	zip_T1_int_T2_uint8_T3_uint16([]int{1}, []uint8{2}, []uint16{3})
+	zip_T1_int_T2_uint8_T3_uint16_T4_uint32([]int{1}, []uint8{2}, []uint16{3}, []uint32{4})
 }
-func zip_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
+func zip_T1_int_T2_int(a []int, b []int) []AglTupleStruct_int_int {
 	out := make([]AglTupleStruct_int_int, 0)
 	for i := range a {
 		if len(a) <= i || len(b) <= i {
@@ -9844,13 +9848,33 @@ func zip_T_int_U_int(a []int, b []int) []AglTupleStruct_int_int {
 	}
 	return out
 }
-func zip_T_int_U_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
+func zip_T1_int_T2_uint8(a []int, b []uint8) []AglTupleStruct_int_uint8 {
 	out := make([]AglTupleStruct_int_uint8, 0)
 	for i := range a {
 		if len(a) <= i || len(b) <= i {
 			break
 		}
 		AglVecPush((*[]AglTupleStruct_int_uint8)(&out), AglTupleStruct_int_uint8{Arg0: a[i], Arg1: b[i]})
+	}
+	return out
+}
+func zip_T1_int_T2_uint8_T3_uint16(a []int, b []uint8, c []uint16) []AglTupleStruct_int_uint8_uint16 {
+	out := make([]AglTupleStruct_int_uint8_uint16, 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i || len(c) <= i {
+			break
+		}
+		AglVecPush((*[]AglTupleStruct_int_uint8_uint16)(&out), AglTupleStruct_int_uint8_uint16{Arg0: a[i], Arg1: b[i], Arg2: c[i]})
+	}
+	return out
+}
+func zip_T1_int_T2_uint8_T3_uint16_T4_uint32(a []int, b []uint8, c []uint16, d []uint32) []AglTupleStruct_int_uint8_uint16_uint32 {
+	out := make([]AglTupleStruct_int_uint8_uint16_uint32, 0)
+	for i := range a {
+		if len(a) <= i || len(b) <= i || len(c) <= i || len(d) <= i {
+			break
+		}
+		AglVecPush((*[]AglTupleStruct_int_uint8_uint16_uint32)(&out), AglTupleStruct_int_uint8_uint16_uint32{Arg0: a[i], Arg1: b[i], Arg2: c[i], Arg3: d[i]})
 	}
 	return out
 }
@@ -9868,11 +9892,30 @@ type AglTupleStruct_int_uint8 struct {
 func (t AglTupleStruct_int_uint8) String() string {
 	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
+type AglTupleStruct_int_uint8_uint16 struct {
+	Arg0 int
+	Arg1 uint8
+	Arg2 uint16
+}
+func (t AglTupleStruct_int_uint8_uint16) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", t.Arg0, t.Arg1, t.Arg2)
+}
+type AglTupleStruct_int_uint8_uint16_uint32 struct {
+	Arg0 int
+	Arg1 uint8
+	Arg2 uint16
+	Arg3 uint32
+}
+func (t AglTupleStruct_int_uint8_uint16_uint32) String() string {
+	return fmt.Sprintf("(%v, %v, %v, %v)", t.Arg0, t.Arg1, t.Arg2, t.Arg3)
+}
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "func zip([]int, []int) [](int, int)", test.TypeAt(3, 2).String())
 	tassert.Equal(t, "func zip([]int, []u8) [](int, u8)", test.TypeAt(4, 2).String())
+	tassert.Equal(t, "func zip([]int, []u8, []u16) [](int, u8, u16)", test.TypeAt(5, 2).String())
+	tassert.Equal(t, "func zip([]int, []u8, []u16, []u32) [](int, u8, u16, u32)", test.TypeAt(6, 2).String())
 	testCodeGen2(t, expected, test)
 }
 
