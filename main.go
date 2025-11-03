@@ -811,25 +811,35 @@ func buildFile(fileName string, forceFlag, sourceMapFlag, standalone, mutEnforce
 		// Replace existing imports with sorted, deduplicated imports
 		var result []string
 		if importLineIdx != -1 && importEndIdx != -1 {
-			// Replace the import block with sorted imports
-			result = append(result, srcLines[:importLineIdx+1]...)
-			result = append(result, allImports...)
-			result = append(result, srcLines[importEndIdx:]...)
-		} else {
-			// No imports - add after package line
-			pkgIdx := -1
-			for i, line := range srcLines {
-				if strings.HasPrefix(strings.TrimSpace(line), "package ") {
-					pkgIdx = i
-					break
-				}
-			}
-			if pkgIdx != -1 {
-				result = append(result, srcLines[:pkgIdx+1]...)
-				result = append(result, "import (")
+			// Replace the import block with sorted imports (or remove if empty)
+			if len(allImports) > 0 {
+				result = append(result, srcLines[:importLineIdx+1]...)
 				result = append(result, allImports...)
-				result = append(result, ")")
-				result = append(result, srcLines[pkgIdx+1:]...)
+				result = append(result, srcLines[importEndIdx:]...)
+			} else {
+				// Remove empty import block
+				result = append(result, srcLines[:importLineIdx]...)
+				result = append(result, srcLines[importEndIdx:]...)
+			}
+		} else {
+			// No imports - add after package line if there are any imports to add
+			if len(allImports) > 0 {
+				pkgIdx := -1
+				for i, line := range srcLines {
+					if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+						pkgIdx = i
+						break
+					}
+				}
+				if pkgIdx != -1 {
+					result = append(result, srcLines[:pkgIdx+1]...)
+					result = append(result, "import (")
+					result = append(result, allImports...)
+					result = append(result, ")")
+					result = append(result, srcLines[pkgIdx+1:]...)
+				} else {
+					result = srcLines
+				}
 			} else {
 				result = srcLines
 			}
