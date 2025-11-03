@@ -1708,12 +1708,7 @@ func AglI64String(v int64) string { return strconv.FormatInt(int64(v), 10) }
 func AglUintString(v uint) string { return strconv.FormatInt(int64(v), 10) }
 
 func AglIn[T comparable](e T, it Iterator[T]) bool {
-	for el := range it.Iter() {
-		if el == e {
-			return true
-		}
-	}
-	return false
+	return AglSequenceContains(it.Iter(), e)
 }
 
 func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
