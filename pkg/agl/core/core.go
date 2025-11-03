@@ -336,7 +336,7 @@ func AglVecIn[T comparable](a []T, v T) bool {
 	return false
 }
 
-func AglNoop(_ ...any) Result[AglVoid] { return MakeResultOk(AglVoid{}) }
+func AglNoop(_ ...any) {}
 
 func AglTypeAssert[T any](v any) Option[T] {
 	if v, ok := v.(T); ok {
