@@ -9871,6 +9871,8 @@ func (t AglTupleStruct_int_uint8) String() string {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func zip([]int, []int) [](int, int)", test.TypeAt(3, 2).String())
+	tassert.Equal(t, "func zip([]int, []u8) [](int, u8)", test.TypeAt(4, 2).String())
 	testCodeGen2(t, expected, test)
 }
 
