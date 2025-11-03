@@ -2687,7 +2687,7 @@ afterUnwrap4:
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
 		case "Filter", "Joined":
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
-		case "Len", "Sorted":
+		case "Len", "Sorted", "Max", "Min":
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }}
 		}
 	case types.ArrayType:
