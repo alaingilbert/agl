@@ -327,7 +327,7 @@ func AglAssertEq[T comparable](left, right T, msg ...string) {
 	}
 }
 
-func AglVecIn[T cmp.Ordered](a []T, v T) bool {
+func AglVecIn[T comparable](a []T, v T) bool {
 	for _, el := range a {
 		if el == v {
 			return true
