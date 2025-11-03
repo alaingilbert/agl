@@ -179,9 +179,9 @@ func Test9(t *testing.T) {
 func main() {
 	a := []u8{3, 1, 2}
 	b := a.Sorted()
-	assert(b[0] == 1)
-	assert(b[1] == 2)
-	assert(b[2] == 3)
+	assertEq(b[0], 1)
+	assertEq(b[1], 2)
+	assertEq(b[2], 3)
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
