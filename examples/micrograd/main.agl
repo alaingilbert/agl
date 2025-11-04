@@ -164,13 +164,7 @@ func (l *Layer) Call(x []*Value) []*Value {
 }
 
 func (l *Layer) Parameters() []*Value {
-    mut out := make([]*Value, 0)
-    for n in l.Neurons {
-        for p in n.Parameters() {
-            out.Push(p)
-        }
-    }
-    return out
+    l.Neurons.FlatMap(|neuron| neuron.Parameters())
 }
 
 type MLP struct {
@@ -195,14 +189,8 @@ func (m *MLP) Call(x []*Value) []*Value {
     return out
 }
 
-func (m *MLP) Paramters() []*Value {
-    mut out := make([]*Value, 0)
-    for layer in m.Layers {
-        for p in layer.Parameters() {
-            out.Push(p)
-        }
-    }
-    return out
+func (m *MLP) Parameters() []*Value {
+    m.Layers.FlatMap(|layer| layer.Parameters())
 }
 
 func main() {
