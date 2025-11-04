@@ -123,12 +123,11 @@ type Neuron struct {
 }
 
 func NewNeuron(nin int, nonlin bool) *Neuron {
-    mut n := &Neuron{Nonlin: nonlin}
-    for _ in 0..nin {
-        n.W.Push(NewValue1(-1+rand.Float64()*2))
+    &Neuron{
+        W: Array((0..nin).Map({ NewValue1(-1+rand.Float64()*2) })),
+        B: NewValue1(0),
+        Nonlin: nonlin,
     }
-    n.B = NewValue1(0)
-    return n
 }
 
 func (n *Neuron) Parameters() []*Value {
@@ -137,9 +136,7 @@ func (n *Neuron) Parameters() []*Value {
 
 func (n *Neuron) Call(x []*Value) *Value {
     mut act := n.B
-    for (wi, xi) in zip(n.W, x) {
-        act += wi * xi
-    }
+    zip(n.W, x).ForEach(|(wi, xi)| act += wi * xi)
     return if n.Nonlin { act.Relu() } else { act }
 }
 
@@ -168,13 +165,10 @@ type MLP struct {
 }
 
 func NewMLP(nin int, nouts []int) *MLP {
-    mut m := &MLP{}
     sz := append([]int{nin}, nouts...)
-    m.Layers = make([]*Layer, 0)
-    for i in 0..nouts.Len() {
-        m.Layers.Push(NewLayer(sz[i], sz[i+1], i!=nouts.Len()-1))
+    return &MLP{
+        Layers: Array((0..nouts.Len()).Map(|i| NewLayer(sz[i], sz[i+1], i!=nouts.Len()-1))),
     }
-    return m
 }
 
 func (m *MLP) Call(x []*Value) []*Value {
