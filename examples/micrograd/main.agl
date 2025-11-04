@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+    "fmt"
+    "math/rand"
+)
 
 type Value struct {
     mut Data f64
@@ -97,6 +100,109 @@ func (mut v *Value) Backward() {
     for el in topo.Reversed() {
         el.backward()
     }
+}
+
+type Module struct {
+}
+
+func (m *Module) ZeroGrad() {
+    for p in m.Parameters() {
+        mut p := p
+        p.Grad = 0
+    }
+}
+
+func (m *Module) Parameters() []*Value {
+    return make([]*Value, 0)
+}
+
+type Neuron struct {
+    mut W []*Value
+    mut B *Value
+    Nonlin bool
+}
+
+func NewNeuron(nin int, nonlin bool) *Neuron {
+    mut n := &Neuron{Nonlin: nonlin}
+    for _ in 0..nin {
+        n.W.Push(NewValue1(-1+rand.Float64()*2))
+    }
+    n.B = NewValue1(0)
+    return n
+}
+
+func (n *Neuron) Parameters() []*Value {
+    return n.W + []*Value{n.B}
+}
+
+func (n *Neuron) Call(x []*Value) *Value {
+    mut act := n.B
+    for (wi, xi) in zip(n.W, x) {
+        act += wi * xi
+    }
+    return if n.Nonlin { act.Relu() } else { act }
+}
+
+type Layer struct {
+    mut Neurons []*Neuron
+}
+
+func NewLayer(nin, nout int, nonlin bool) *Layer {
+    mut l := &Layer{}
+    for _ in 0..nout {
+        l.Neurons.Push(NewNeuron(nin, nonlin))
+    }
+    return l
+}
+
+func (l *Layer) Call(x []*Value) []*Value {
+    mut out := make([]*Value, 0)
+    for n in l.Neurons {
+        out.Push(n.Call(x))
+    }
+    return out
+}
+
+func (l *Layer) Parameters() []*Value {
+    mut out := make([]*Value, 0)
+    for n in l.Neurons {
+        for p in n.Parameters() {
+            out.Push(p)
+        }
+    }
+    return out
+}
+
+type MLP struct {
+    mut Layers []*Layer
+}
+
+func NewMLP(nin int, nouts []int) *MLP {
+    mut m := &MLP{}
+    sz := append([]int{nin}, nouts...)
+    m.Layers = make([]*Layer, 0)
+    for i in 0..nouts.Len() {
+        m.Layers.Push(NewLayer(sz[i], sz[i+1], i!=nouts.Len()-1))
+    }
+    return m
+}
+
+func (m *MLP) Call(x []*Value) []*Value {
+    mut out := x
+    for layer in m.Layers {
+        out = layer.Call(out)
+    }
+    return out
+}
+
+func (m *MLP) Paramters() []*Value {
+    mut out := make([]*Value, 0)
+    for layer in m.Layers {
+        for p in layer.Parameters() {
+            out.Push(p)
+        }
+    }
+    return out
 }
 
 func main() {
