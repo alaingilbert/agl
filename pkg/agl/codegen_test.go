@@ -1907,7 +1907,7 @@ func (p Person) __EQL_Person(other Person) bool {
 func main() {
 	p1 := Person{name: "foo", age: 42}
 	p2 := Person{name: "bar", age: 42}
-	AglAssert(p1.__EQL(p2), "assert failed line 12")
+	AglAssert(p1.__EQL_Person(p2), "assert failed line 12")
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

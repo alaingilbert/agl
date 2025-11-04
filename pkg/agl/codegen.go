@@ -3336,7 +3336,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 						if op == "!=" {
 							out += e("!")
 						}
-						out += content1() + e(".__EQL(") + content2() + e(")")
+						out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 						return out
 					} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
 						return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
@@ -3360,7 +3360,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					if op == "!=" {
 						out += e("!")
 					}
-					out += content1() + e(".__EQL(") + content2() + e(")")
+					out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 					return out
 				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
 					return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
@@ -3383,7 +3383,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					if op == "!=" {
 						out += e("!")
 					}
-					out += content1() + e(".__EQL(") + content2() + e(")")
+					out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 					return out
 				} else if op == "+" && g.env.Get(rhsName+".__RADD") != nil {
 					return content2() + e(".__RADD_"+lhsName+"(") + content1() + e(")")
