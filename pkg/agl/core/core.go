@@ -501,6 +501,20 @@ func AglSequenceJoined(s Sequence[string], sep string) string {
 	return strings.Join(AglBuildArray(s), sep)
 }
 
+type AglVecEq[T Equatable[T]] []T
+
+func (v AglVecEq[T]) __EQ(rhs AglVecEq[T]) bool {
+	if len(v) != len(rhs) {
+		return false
+	}
+	for i := range v {
+		if !v[i].__EQ(rhs[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
