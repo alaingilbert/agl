@@ -145,11 +145,7 @@ type Layer struct {
 }
 
 func NewLayer(nin, nout int, nonlin bool) *Layer {
-    mut l := &Layer{}
-    for _ in 0..nout {
-        l.Neurons.Push(NewNeuron(nin, nonlin))
-    }
-    return l
+    &Layer{Neurons: Array((0..nout).Map({ NewNeuron(nin, nonlin) }))}
 }
 
 func (l *Layer) Call(x []*Value) []*Value {
