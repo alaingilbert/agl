@@ -2870,26 +2870,10 @@ afterUnwrap4:
 		case "Rev":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
-		case "AllSatisfy":
+		case "AllSatisfy", "Contains", "ForEach", "Filter", "Map":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglIteratorAllSatisfy(") + c1.F() + e(", ") + c2.F() + e(")") }}
-		case "Contains":
-			c1 := g.genExpr(x.X)
-			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglIteratorContains(") + c1.F() + e(", ") + c2.F() + e(")") }}
-		case "ForEach":
-			c1 := g.genExpr(x.X)
-			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglIteratorForEach(") + c1.F() + e(", ") + c2.F() + e(")") }}
-		case "Filter":
-			c1 := g.genExpr(x.X)
-			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglIteratorFilter(") + c1.F() + e(", ") + c2.F() + e(")") }}
-		case "Map":
-			c1 := g.genExpr(x.X)
-			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglIteratorMap(") + c1.F() + e(", ") + c2.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglIterator"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
 	case types.IntType, types.UntypedNumType:
 		fnName := x.Sel.Name
