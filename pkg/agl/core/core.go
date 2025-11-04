@@ -878,6 +878,16 @@ func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) Iterator[T] {
 	return AglSequenceFilter(it.Iter(), f)
 }
 
+func AglIteratorMap[T, R any, I Iterator[T]](it I, f func(T) R) Sequence[R] {
+	return func(yield func(R) bool) {
+		for v := range it.Iter() {
+			if !yield(f(v)) {
+				return
+			}
+		}
+	}
+}
+
 func (s AglSet[T]) Iter() Sequence[T] {
 	return func(yield func(T) bool) {
 		for k := range s {

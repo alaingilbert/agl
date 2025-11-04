@@ -2886,6 +2886,10 @@ afterUnwrap4:
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorFilter(") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "Map":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIteratorMap(") + c1.F() + e(", ") + c2.F() + e(")") }}
 		}
 	case types.IntType, types.UntypedNumType:
 		fnName := x.Sel.Name

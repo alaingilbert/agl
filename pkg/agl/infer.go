@@ -1521,7 +1521,7 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1560,6 +1560,44 @@ afterUnwrap3:
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "Map":
+			info := infer.env.GetNameInfo("agl1.Iterator.Map")
+			mapFnT := infer.env.GetFn("agl1.Iterator.Map").T("T", idTT.Typ).IntoRecv(idTT)
+			clbFnT := mapFnT.GetParam(0).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
+			exprArg0 := expr.Args[0]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
+			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.expr(arg0)
+				rT := infer.GetTypeFn(arg0).Return
+				mapFnT = mapFnT.T("R", rT)
+				infer.SetType(expr, mapFnT.Return)
+				infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
+			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					exprPos := infer.Pos(expr)
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					rT := tmp.Return
+					mapFnT = mapFnT.T("R", rT)
+					infer.SetType(expr, mapFnT.Return)
+					infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
+				}
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					exprPos := infer.Pos(expr)
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			}
 		}
 	default:
 		infer.errorf(call.X, "Unresolved reference '%s'", fnName)

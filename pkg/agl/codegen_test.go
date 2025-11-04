@@ -14819,6 +14819,26 @@ func partition(head *ListNode, x int) *ListNode {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen478(t *testing.T) {
+	src := `package main
+func main() {
+	var arr []int = Array((0..10).Map({ $0 }))
+	print(arr)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	var arr []int = AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+		return aglArg0
+	}))
+	AglPrint(arr)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
