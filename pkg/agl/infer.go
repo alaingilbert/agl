@@ -724,12 +724,30 @@ func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 					if v, ok := decl.Body.List[0].(*ast.ExprStmt); ok && !TryCast[*ast.MatchExpr](v.X) {
 						// Check if it's a non-exhaustive if-expression
 						if ifExpr, isIf := v.X.(*ast.IfExpr); isIf {
-							if !isIfExprExhaustive(ifExpr) {
-								infer.errorf(ifExpr, "if expression must be exhaustive when used as return value (missing else clause)")
-								return
+							// Check if the if-expression is exhaustive (has else clause)
+							isExhaustive := isIfExprExhaustive(ifExpr)
+							hasReturns := containsReturnStmt(ifExpr)
+
+							if hasReturns && isExhaustive {
+								// This is an if-statement with explicit returns in all branches
+								// Don't convert to implicit return - it's already complete
+							} else if !isExhaustive {
+								// Not exhaustive - either it's missing an else clause
+								// Convert to implicit return so the error can be caught
+								decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
+								if hasReturns {
+									// Has explicit returns but missing else - this will cause a type error later
+									infer.errorf(ifExpr, "if expression must be exhaustive when used as return value (missing else clause)")
+									return
+								}
+							} else {
+								// Exhaustive if-expression without explicit returns
+								decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
 							}
+						} else {
+							// Not an if-expression, convert to implicit return
+							decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
 						}
-						decl.Body.List = []ast.Stmt{&ast.ReturnStmt{Result: v.X}}
 					}
 				}
 				infer.stmt(decl.Body)
@@ -1068,7 +1086,11 @@ func (infer *FileInferrer) basicLit(expr *ast.BasicLit) {
 	case token.INT:
 		infer.SetType(expr, types.UntypedNumType{})
 		if infer.optType.IsDefinedFor(expr) && !TryCast[types.GenericType](infer.optType.Type) {
-			infer.SetType(expr, infer.optType.Type)
+			// Don't automatically wrap literals in OptionType or ResultType
+			optT := infer.optType.Type
+			if !TryCast[types.OptionType](optT) && !TryCast[types.ResultType](optT) {
+				infer.SetType(expr, optT)
+			}
 		} else {
 			infer.SetType(expr, types.UntypedNumType{})
 		}
@@ -2468,7 +2490,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 
 			fnTRaw := infer.env.Get(fnFullName)
 			if fnTRaw == nil {
-				infer.errorf(exprT.Sel, "method '%s' of type Vec does not exists", fnName)
+				errMsg := fmt.Sprintf("method '%s' of type Vec does not exists", fnName)
+				if fnName == "Join" {
+					errMsg += "\n    did you mean '.Joined()' instead?"
+				}
+				infer.AddError(exprT.Sel, errMsg)
 				return
 			}
 			fnT := fnTRaw.(types.FuncType)
@@ -4781,15 +4807,18 @@ func (infer *FileInferrer) returnStmt(stmt *ast.ReturnStmt) {
 					}
 				}
 			}
+			// Infer the expression with the optional type hint
+			infer.expr(stmt.Result)
 			rT := infer.GetType2(stmt.Result)
 			if v, ok := rT.(types.UnaryType); ok {
 				rT = v.X
 			}
+			// Check if the inferred type matches the expected return type
+			// This check happens AFTER inference, so operator overloading is handled
 			if !cmpTypesLoose(rT, infer.returnType) {
 				infer.errorf(stmt.Result, "type mismatch %v %v", rT, infer.returnType)
 				return
 			}
-			infer.expr(stmt.Result)
 			if _, ok := infer.GetType(stmt.Result).(types.OptionType); ok {
 				if v, ok := infer.returnType.(types.OptionType); ok {
 					infer.SetTypeForce(stmt.Result, types.OptionType{W: v.W})
@@ -5428,6 +5457,30 @@ func isIfExprExhaustive(ifExpr *ast.IfExpr) bool {
 	}
 	// Has an else clause that's not another if - it's exhaustive
 	return true
+}
+
+// containsReturnStmt checks if a statement or block contains any return statements
+func containsReturnStmt(node ast.Node) bool {
+	switch n := node.(type) {
+	case *ast.ReturnStmt:
+		return true
+	case *ast.BlockStmt:
+		for _, stmt := range n.List {
+			if containsReturnStmt(stmt) {
+				return true
+			}
+		}
+	case *ast.IfExpr:
+		if containsReturnStmt(n.Body) {
+			return true
+		}
+		if n.Else != nil && containsReturnStmt(n.Else) {
+			return true
+		}
+	case *ast.ExprStmt:
+		return containsReturnStmt(n.X)
+	}
+	return false
 }
 
 func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {

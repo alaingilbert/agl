@@ -14078,7 +14078,7 @@ func main() {
 }`
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.True(t, len(test.errs) > 0)
-	tassert.Contains(t, test.errs[0].Error(), "17:17: method '.Join' does not exist on array type\n    did you mean '.Joined()' instead?")
+	tassert.Contains(t, test.errs[0].Error(), "17:17: method 'Join' of type Vec does not exists\n    did you mean '.Joined()' instead?")
 }
 
 func TestCodeGen451(t *testing.T) {
