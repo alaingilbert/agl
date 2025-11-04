@@ -1385,9 +1385,16 @@ afterUnwrap3:
 		}
 		fnT := infer.env.GetFn(name)
 		if fnT.Name == "" {
-			// GetFn failed, nameT might not be a function
-			infer.errorf(call.Sel, "method '%s' is not a function in struct '%v'", call.Sel.Name, idTT.Name)
-			return
+			// GetFn returned a function without a name - this might be a function field
+			// Check if nameT unwrapped is a FuncType
+			unwrapped := types.Unwrap(nameT)
+			if funcType, ok := unwrapped.(types.FuncType); ok {
+				// This is a function field, use it directly
+				fnT = funcType
+			} else {
+				infer.errorf(call.Sel, "method '%s' is not a function in struct '%v'", call.Sel.Name, idTT.Name)
+				return
+			}
 		}
 
 		// Monomorphize the method if the struct has type parameters

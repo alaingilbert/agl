@@ -406,6 +406,42 @@ func main() {
 	tassert.Equal(t, "[]int", test.TypeAt(5, 5).String())
 }
 
+func TestInfer23(t *testing.T) {
+	src := `package main
+type Foo struct {
+	mut bar func()
+}
+func main() {
+	mut f := Foo{
+		bar: func() {
+			print("hello")
+		},
+	}
+	f.bar()
+}`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+}
+
+func TestInfer24(t *testing.T) {
+	// Test function field with closures that capture mutable state
+	src := `package main
+type Value struct {
+	mut data f64
+	mut backward func()
+}
+func main() {
+	mut v := Value{data: 5.0}
+	v.backward = func() {
+		v.data += 1.0
+	}
+	v.backward()
+	assertEq(v.data, 6.0)
+}`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

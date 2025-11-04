@@ -61,7 +61,7 @@ func (mut v *Value) / (other f64) *Value {
     return v * other ** -1.0
 }
 func (mut v *Value) __RQUO (other f64) *Value {
-    return other * v ** -1.0
+    return NewValue1(other) * v ** -1.0
 }
 func (mut v *Value) __RADD (other f64) *Value {
     return v + other
