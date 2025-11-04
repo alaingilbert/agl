@@ -3338,18 +3338,21 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 						}
 						out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 						return out
-					} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
-						return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
-					} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
-						return content1() + e(".__SUB_"+rhsName+"(") + content2() + e(")")
-					} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
-						return content1() + e(".__MUL_"+rhsName+"(") + content2() + e(")")
-					} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
-						return content1() + e(".__POW_"+rhsName+"(") + content2() + e(")")
-					} else if op == "/" && g.env.Get(lhsName+".__POW") != nil {
-						return content1() + e(".__QUO_"+rhsName+"(") + content2() + e(")")
-					} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
-						return content1() + e(".__REM_"+rhsName+"(") + content2() + e(")")
+					}
+
+					// Map operators to method names
+					opMap := map[string]string{
+						"+":  "__ADD",
+						"-":  "__SUB",
+						"*":  "__MUL",
+						"**": "__POW",
+						"/":  "__QUO",
+						"%":  "__REM",
+					}
+					if methodName, ok := opMap[op]; ok {
+						if g.env.Get(lhsName+"."+methodName) != nil {
+							return content1() + e("."+methodName+"_"+rhsName+"(") + content2() + e(")")
+						}
 					}
 				}
 			} else if TryCast[types.StructType](xT) {
@@ -3362,18 +3365,21 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					}
 					out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 					return out
-				} else if op == "+" && g.env.Get(lhsName+".__ADD") != nil {
-					return content1() + e(".__ADD_"+rhsName+"(") + content2() + e(")")
-				} else if op == "-" && g.env.Get(lhsName+".__SUB") != nil {
-					return content1() + e(".__SUB_"+rhsName+"(") + content2() + e(")")
-				} else if op == "*" && g.env.Get(lhsName+".__MUL") != nil {
-					return content1() + e(".__MUL_"+rhsName+"(") + content2() + e(")")
-				} else if op == "**" && g.env.Get(lhsName+".__POW") != nil {
-					return content1() + e(".__POW_"+rhsName+"(") + content2() + e(")")
-				} else if op == "/" && g.env.Get(lhsName+".__QUO") != nil {
-					return content1() + e(".__QUO_"+rhsName+"(") + content2() + e(")")
-				} else if op == "%" && g.env.Get(lhsName+".__REM") != nil {
-					return content1() + e(".__REM_"+rhsName+"(") + content2() + e(")")
+				}
+
+				// Map operators to method names
+				opMap := map[string]string{
+					"+":  "__ADD",
+					"-":  "__SUB",
+					"*":  "__MUL",
+					"**": "__POW",
+					"/":  "__QUO",
+					"%":  "__REM",
+				}
+				if methodName, ok := opMap[op]; ok {
+					if g.env.Get(lhsName+"."+methodName) != nil {
+						return content1() + e("."+methodName+"_"+rhsName+"(") + content2() + e(")")
+					}
 				}
 			} else if TryCast[types.StructType](yT) {
 				lhsName := xT.GoStrType()
@@ -3385,22 +3391,21 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					}
 					out += content1() + e(".__EQL_"+rhsName+"(") + content2() + e(")")
 					return out
-				} else if op == "+" && g.env.Get(rhsName+".__RADD") != nil {
-					return content2() + e(".__RADD_"+lhsName+"(") + content1() + e(")")
-				} else if op == "+" && g.env.Get(rhsName+".__RQUO") != nil {
-					return content2() + e(".__RQUO_"+lhsName+"(") + content1() + e(")")
-				} else if op == "+" && g.env.Get(rhsName+".__RMUL") != nil {
-					return content2() + e(".__RMUL_"+lhsName+"(") + content1() + e(")")
-				} else if op == "-" && g.env.Get(rhsName+".__RSUB") != nil {
-					return content2() + e(".__RSUB_"+lhsName+"(") + content1() + e(")")
-				} else if op == "*" && g.env.Get(rhsName+".__RMUL") != nil {
-					return content2() + e(".__RMUL_"+lhsName+"(") + content1() + e(")")
-				} else if op == "**" && g.env.Get(rhsName+".__RPOW") != nil {
-					return content2() + e(".__RPOW_"+lhsName+"(") + content1() + e(")")
-				} else if op == "/" && g.env.Get(rhsName+".__RQUO") != nil {
-					return content2() + e(".__RQUO_"+lhsName+"(") + content1() + e(")")
-				} else if op == "%" && g.env.Get(rhsName+".__RREM") != nil {
-					return content2() + e(".__RREM_"+lhsName+"(") + content1() + e(")")
+				}
+
+				// Map operators to reverse method names
+				opMap := map[string]string{
+					"+":  "__RADD",
+					"-":  "__RSUB",
+					"*":  "__RMUL",
+					"**": "__RPOW",
+					"/":  "__RQUO",
+					"%":  "__RREM",
+				}
+				if methodName, ok := opMap[op]; ok {
+					if g.env.Get(rhsName+"."+methodName) != nil {
+						return content2() + e("."+methodName+"_"+lhsName+"(") + content1() + e(")")
+					}
 				}
 			}
 		}
