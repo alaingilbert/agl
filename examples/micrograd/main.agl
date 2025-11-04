@@ -156,11 +156,7 @@ func NewLayer(nin, nout int, nonlin bool) *Layer {
 }
 
 func (l *Layer) Call(x []*Value) []*Value {
-    mut out := make([]*Value, 0)
-    for n in l.Neurons {
-        out.Push(n.Call(x))
-    }
-    return out
+    l.Neurons.Map(|n| n.Call(x))
 }
 
 func (l *Layer) Parameters() []*Value {
