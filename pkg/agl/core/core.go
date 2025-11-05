@@ -469,6 +469,24 @@ func AglSequenceStepBy[T any](s Sequence[T], step int) Sequence[T] {
 	}
 }
 
+// AglSequenceIntersperse creates a new iterator which places a copy of separator between adjacent items of the original iterator.
+func AglSequenceIntersperse[T any](s Sequence[T], separator T) Sequence[T] {
+	return func(yield func(T) bool) {
+		pos := 0
+		for v := range s {
+			if pos > 0 {
+				if !yield(separator) {
+					return
+				}
+			}
+			if !yield(v) {
+				return
+			}
+			pos++
+		}
+	}
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {

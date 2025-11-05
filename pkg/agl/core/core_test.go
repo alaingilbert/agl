@@ -129,3 +129,16 @@ func TestAglSequenceStepBy(t *testing.T) {
 	tassert.Equal(t, agl.First(next()), 4)
 	tassert.False(t, agl.Second(next()))
 }
+
+func TestAglSequenceIntersperse(t *testing.T) {
+	arr := []int{0, 1, 2}
+	it := AglVec[int](arr).Iter()
+	it = AglSequenceIntersperse(it, 100)
+	next, _ := iter.Pull(iter.Seq[int](it))
+	tassert.Equal(t, agl.First(next()), 0)
+	tassert.Equal(t, agl.First(next()), 100)
+	tassert.Equal(t, agl.First(next()), 1)
+	tassert.Equal(t, agl.First(next()), 100)
+	tassert.Equal(t, agl.First(next()), 2)
+	tassert.False(t, agl.Second(next()))
+}
