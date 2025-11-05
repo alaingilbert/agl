@@ -5,7 +5,7 @@ func plusOne(mut digits []int) []int {
         if digits[i] == 9 {
             digits[i] = 0
             if i == 0  {
-                digits = append([]int{1}, digits...)
+                digits = []int{1} + digits
             }
         } else {
             digits[i]++
