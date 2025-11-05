@@ -10104,6 +10104,7 @@ func main() {
 	a := []int{1, 2, 3}
 	b := []int{4, 5, 6}
 	c := a + b
+	print(c)
 }`
 	expected := `// agl:generated
 package main
@@ -10111,6 +10112,7 @@ func main() {
 	a := []int{1, 2, 3}
 	b := []int{4, 5, 6}
 	c := AglVec__ADD(a, b)
+	AglPrint(c)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
