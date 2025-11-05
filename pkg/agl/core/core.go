@@ -436,12 +436,7 @@ func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 }
 
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
-	for v := range s {
-		if v == e {
-			return true
-		}
-	}
-	return false
+	return AglSequenceContainsWhere(s, func(t T) bool { return t == e })
 }
 
 func AglSequenceContainsWhere[T any](s Sequence[T], pred func(T) bool) bool {
@@ -463,12 +458,7 @@ func AglSequenceAllSatisfy[T any](s Sequence[T], pred func(T) bool) bool {
 }
 
 func AglSequenceAny[T any](s Sequence[T], f func(T) bool) bool {
-	for v := range s {
-		if f(v) {
-			return true
-		}
-	}
-	return false
+	return AglSequenceContainsWhere(s, f)
 }
 
 func AglSequenceMap[T, R any](s Sequence[T], f func(T) R) []R {
