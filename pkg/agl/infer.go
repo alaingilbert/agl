@@ -4106,8 +4106,19 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 								infer.SetType(cond.X, tupType)
 								infer.SetType(xTup.Values[0], types.IntType{})
 								infer.SetType(xTup.Values[1], types.I32Type{})
-								infer.env.Define(xTup.Values[0], xTup.Values[0].(*ast.Ident).Name, types.IntType{})
-								infer.env.Define(xTup.Values[1], xTup.Values[1].(*ast.Ident).Name, types.I32Type{})
+								// Check if the identifiers are marked as mutable
+								ident0 := xTup.Values[0].(*ast.Ident)
+								var type0 types.Type = types.IntType{}
+								if ident0.Mutable.IsValid() {
+									type0 = types.MutType{W: types.IntType{}}
+								}
+								infer.env.Define(xTup.Values[0], ident0.Name, type0)
+								ident1 := xTup.Values[1].(*ast.Ident)
+								var type1 types.Type = types.I32Type{}
+								if ident1.Mutable.IsValid() {
+									type1 = types.MutType{W: types.I32Type{}}
+								}
+								infer.env.Define(xTup.Values[1], ident1.Name, type1)
 							}
 							// Skip the rest of the normal for loop processing
 							goto done
@@ -4165,10 +4176,21 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 			}
 			switch v := cond.X.(type) {
 			case *ast.Ident:
-				infer.env.Define(cond.X, v.Name, t)
+				// Check if the identifier is marked as mutable
+				varType := t
+				if v.Mutable.IsValid() {
+					varType = types.MutType{W: t}
+				}
+				infer.env.Define(cond.X, v.Name, varType)
 			case *ast.TupleExpr:
 				for i, e := range v.Values {
-					infer.env.Define(e, e.(*ast.Ident).Name, t.(types.TupleType).Elts[i])
+					ident := e.(*ast.Ident)
+					elemType := t.(types.TupleType).Elts[i]
+					// Check if the identifier is marked as mutable
+					if ident.Mutable.IsValid() {
+						elemType = types.MutType{W: elemType}
+					}
+					infer.env.Define(e, ident.Name, elemType)
 				}
 			default:
 				infer.errorf(cond.X, "unsupported type %v", to(cond.X))

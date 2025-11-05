@@ -14839,6 +14839,187 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen479(t *testing.T) {
+	src := `package main
+type Tmp struct {
+	mut Val int
+}
+func main() {
+	arr := []*Tmp{{Val: 1}, {Val: 2}}
+	for mut el in arr {
+		el.Val = 1
+	}
+	print(arr)
+}`
+	expected := `// agl:generated
+package main
+type Tmp struct {
+	Val int
+}
+func main() {
+	arr := []*Tmp{{Val: 1}, {Val: 2}}
+	for _, el := range arr {
+		el.Val = 1
+	}
+	AglPrint(arr)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen480(t *testing.T) {
+	// Test: immutable loop variable should fail on assignment
+	src := `package main
+type Tmp struct {
+	mut Val int
+}
+func main() {
+	arr := []*Tmp{{Val: 1}, {Val: 2}}
+	for el in arr {
+		el.Val = 1
+	}
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 1, len(test.errs))
+	tassert.Contains(t, test.errs[0].Error(), "cannot assign to immutable variable 'el'")
+}
+
+func TestCodeGen481(t *testing.T) {
+	// Test: immutable loop variable is fine without assignment
+	src := `package main
+type Tmp struct {
+	Val int
+}
+func main() {
+	arr := []*Tmp{{Val: 1}, {Val: 2}}
+	for el in arr {
+		print(el.Val)
+	}
+}`
+	expected := `// agl:generated
+package main
+type Tmp struct {
+	Val int
+}
+func main() {
+	arr := []*Tmp{{Val: 1}, {Val: 2}}
+	for _, el := range arr {
+		AglPrint(el.Val)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen482(t *testing.T) {
+	// Test: mut keyword with arrays of values
+	src := `package main
+func main() {
+	mut arr := []int{1, 2, 3}
+	for mut el in arr {
+		el = el + 1
+	}
+	print(arr)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	arr := []int{1, 2, 3}
+	for _, el := range arr {
+		el = el + 1
+	}
+	AglPrint(arr)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen483(t *testing.T) {
+	// Test: mut keyword with tuple unpacking in map iteration
+	src := `package main
+func main() {
+	mut m := map[int]int{1: 10, 2: 20}
+	for (mut k, mut v) in m {
+		m[k] = v + 1
+	}
+	print(m)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int]int{1: 10, 2: 20}
+	for k, v := range m {
+		m[k] = v + 1
+	}
+	AglPrint(m)
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen484(t *testing.T) {
+	// Test: immutable tuple unpacking should fail on assignment to loop variable
+	src := `package main
+func main() {
+	m := map[int]int{1: 10, 2: 20}
+	for (k, v) in m {
+		v = v + 1
+	}
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 1, len(test.errs))
+	tassert.Contains(t, test.errs[0].Error(), "cannot assign to immutable variable 'v'")
+}
+
+func TestCodeGen485(t *testing.T) {
+	// Test: mixed mutability in tuple unpacking
+	src := `package main
+func main() {
+	mut m := map[int]int{1: 10, 2: 20}
+	for (k, mut v) in m {
+		v = v + 1
+		print(k, v)
+	}
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int]int{1: 10, 2: 20}
+	for k, v := range m {
+		v = v + 1
+		AglPrint(k, v)
+	}
+}
+type AglTupleStruct_int_int struct {
+	Arg0 int
+	Arg1 int
+}
+func (t AglTupleStruct_int_int) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
