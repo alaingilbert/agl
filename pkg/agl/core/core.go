@@ -1730,7 +1730,18 @@ func AglNewSet[T comparable](els ...T) *Set[T] {
 	return s
 }
 
-func AglIntSqrt(v int) int { return int(math.Sqrt(float64(v))) }
+func AglF32Sqrt(v float32) float32 { return float32(math.Sqrt(float64(v))) }
+func AglF64Sqrt(v float64) float64 { return float64(math.Sqrt(float64(v))) }
+func AglIntSqrt(v int) int         { return int(math.Sqrt(float64(v))) }
+func AglI8Sqrt(v int8) int8        { return int8(math.Sqrt(float64(v))) }
+func AglI16Sqrt(v int16) int16     { return int16(math.Sqrt(float64(v))) }
+func AglI32Sqrt(v int32) int32     { return int32(math.Sqrt(float64(v))) }
+func AglI64Sqrt(v int64) int64     { return int64(math.Sqrt(float64(v))) }
+func AglUintSqrt(v uint) uint      { return uint(math.Sqrt(float64(v))) }
+func AglU8Sqrt(v uint8) uint8      { return uint8(math.Sqrt(float64(v))) }
+func AglU16Sqrt(v uint16) uint16   { return uint16(math.Sqrt(float64(v))) }
+func AglU32Sqrt(v uint32) uint32   { return uint32(math.Sqrt(float64(v))) }
+func AglU64Sqrt(v uint64) uint64   { return uint64(math.Sqrt(float64(v))) }
 
 func AglIntString(v int) string   { return strconv.FormatInt(int64(v), 10) }
 func AglI8String(v int8) string   { return strconv.FormatInt(int64(v), 10) }
