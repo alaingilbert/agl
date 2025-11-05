@@ -423,6 +423,32 @@ func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence
 	}
 }
 
+func AglSequenceFlatMap[T, R any](s Sequence[T], f func(T) []R) Sequence[R] {
+	return func(yield func(R) bool) {
+		for el := range s {
+			subArr := f(el)
+			for _, el1 := range subArr {
+				if !yield(el1) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func AglSequenceCompactMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
+	return func(yield func(R) bool) {
+		for el := range s {
+			res := f(el)
+			if res.IsSome() {
+				if !yield(res.Unwrap()) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	return func(yield func(T) bool) {
 		for v := range s {
