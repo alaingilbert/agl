@@ -1,8 +1,7 @@
 package main
 
 func coinChange(coins []int, amount int) int {
-    mut dp := make([]int, amount+1)
-    dp.Enumerated().ForEach(|(i, _)| dp[i] = amount+1)
+    mut dp := Array((0..amount+1).Map({ amount+1 }))
     dp[0] = 0
     for coin in coins {
         for x in coin..amount+1 {
