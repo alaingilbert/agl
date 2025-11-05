@@ -106,8 +106,7 @@ type Module struct {
 }
 
 func (m *Module) ZeroGrad() {
-    for p in m.Parameters() {
-        mut p := p
+    for mut p in m.Parameters() {
         p.Grad = 0
     }
 }
