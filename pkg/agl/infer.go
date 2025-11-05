@@ -1833,6 +1833,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I64.String")
 			fnT = infer.env.GetFn("agl1.I64.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.I64.Sqrt")
+			fnT = infer.env.GetFn("agl1.I64.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1841,6 +1844,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I32.String")
 			fnT = infer.env.GetFn("agl1.I32.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.I32.Sqrt")
+			fnT = infer.env.GetFn("agl1.I32.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1849,6 +1855,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I16.String")
 			fnT = infer.env.GetFn("agl1.I16.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.I16.Sqrt")
+			fnT = infer.env.GetFn("agl1.I16.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1857,6 +1866,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.I8.String")
 			fnT = infer.env.GetFn("agl1.I8.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.I8.Sqrt")
+			fnT = infer.env.GetFn("agl1.I8.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1865,6 +1877,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.U8.String")
 			fnT = infer.env.GetFn("agl1.U8.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.U8.Sqrt")
+			fnT = infer.env.GetFn("agl1.U8.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1873,6 +1888,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.U16.String")
 			fnT = infer.env.GetFn("agl1.U16.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.U16.Sqrt")
+			fnT = infer.env.GetFn("agl1.U16.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1881,6 +1899,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.U32.String")
 			fnT = infer.env.GetFn("agl1.U32.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.U32.Sqrt")
+			fnT = infer.env.GetFn("agl1.U32.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1889,6 +1910,9 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.U64.String")
 			fnT = infer.env.GetFn("agl1.U64.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.U64.Sqrt")
+			fnT = infer.env.GetFn("agl1.U64.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
@@ -1897,6 +1921,25 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		case "String":
 			info = infer.env.GetNameInfo("agl1.Uint.String")
 			fnT = infer.env.GetFn("agl1.Uint.String").IntoRecv(idTT)
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.Uint.Sqrt")
+			fnT = infer.env.GetFn("agl1.Uint.Sqrt").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.F32Type:
+		switch fnName {
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.F32.Sqrt")
+			fnT = infer.env.GetFn("agl1.F32.Sqrt").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.F64Type:
+		switch fnName {
+		case "Sqrt":
+			info = infer.env.GetNameInfo("agl1.F64.Sqrt")
+			fnT = infer.env.GetFn("agl1.F64.Sqrt").IntoRecv(idTT)
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)

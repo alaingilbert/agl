@@ -2891,6 +2891,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglI64String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI64Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.I32Type:
 		fnName := x.Sel.Name
@@ -2898,6 +2901,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglI32String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI32Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.I16Type:
 		fnName := x.Sel.Name
@@ -2905,6 +2911,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglI16String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI16Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.I8Type:
 		fnName := x.Sel.Name
@@ -2912,6 +2921,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglI8String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI8Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.U8Type:
 		fnName := x.Sel.Name
@@ -2919,6 +2931,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglU8String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglU8Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.U16Type:
 		fnName := x.Sel.Name
@@ -2926,6 +2941,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglU16String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglU16Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.U32Type:
 		fnName := x.Sel.Name
@@ -2933,6 +2951,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglU32String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglU32Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.U64Type:
 		fnName := x.Sel.Name
@@ -2940,6 +2961,9 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglU64String(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglU64Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.UintType:
 		fnName := x.Sel.Name
@@ -2947,6 +2971,23 @@ afterUnwrap4:
 		case "String":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglUintString(") + c1.F() + e(")") }}
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglUintSqrt(") + c1.F() + e(")") }}
+		}
+	case types.F32Type:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglF32Sqrt(") + c1.F() + e(")") }}
+		}
+	case types.F64Type:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "Sqrt":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglF64Sqrt(") + c1.F() + e(")") }}
 		}
 	case types.StringType, types.UntypedStringType:
 		fnName := x.Sel.Name
