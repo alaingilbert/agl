@@ -468,6 +468,18 @@ func AglSequenceFindMap[T, R any](s Sequence[T], f func(T) Option[R]) Option[R] 
 	return MakeOptionNone[R]()
 }
 
+// AglSequencePosition searches for an element in an iterator, returning its index.
+func AglSequencePosition[T any](s Sequence[T], f func(T) bool) Option[int] {
+	pos := 0
+	for v := range s {
+		if f(v) {
+			return MakeOptionSome(pos)
+		}
+		pos++
+	}
+	return MakeOptionNone[int]()
+}
+
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
 	return AglSequenceContainsWhere(s, func(t T) bool { return t == e })
 }
