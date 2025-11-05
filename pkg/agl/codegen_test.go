@@ -15618,3 +15618,34 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs), "Should not error when creating mut alias from mut parameter")
 	testCodeGen2(t, expected, test)
 }
+
+func TestCodeGen_SequenceFilterMap(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int](int, int?){1: (1, Some(10)), 2: (2, None), 3: (3, Some(30))}
+	result := m.Values().FilterMap(|x| x.1).Len()
+	print(result)
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int]AglTupleStruct_int_Option_int_{1: AglTupleStruct_int_Option_int_{Arg0: 1, Arg1: MakeOptionSome(10)}, 2: AglTupleStruct_int_Option_int_{Arg0: 2, Arg1: MakeOptionNone[int]()}, 3: AglTupleStruct_int_Option_int_{Arg0: 3, Arg1: MakeOptionSome(30)}}
+	result := AglSequenceLen(AglSequenceFilterMap[AglTupleStruct_int_Option_int_, int](AglIdentity(AglMapValues(m)), func(x AglTupleStruct_int_Option_int_) Option[int] {
+		return x.Arg1
+	}))
+	AglPrint(result)
+}
+type AglTupleStruct_int_Option_int_ struct {
+	Arg0 int
+	Arg1 Option[int]
+}
+func (t AglTupleStruct_int_Option_int_) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func (Sequence[(int, int?)]) FilterMap(func((int, int?)) int?) Sequence[int]", test.TypeAt(4, 25).String())
+	testCodeGen2(t, expected, test)
+}

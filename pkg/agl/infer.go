@@ -2225,6 +2225,67 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
 			infer.SetTypeForce(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
+		} else if fnName == "FilterMap" {
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			mapFnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
+			clbFnT := mapFnT.GetParam(0).(types.FuncType)
+			if len(expr.Args) < 1 {
+				return
+			}
+			exprArg0 := expr.Args[0]
+			infer.SetType(exprArg0, clbFnT)
+			infer.SetType(expr, mapFnT.Return)
+			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
+				infer.expr(arg0)
+				var rT types.Type
+				// Try to get the actual return type from the lambda
+				lambdaReturnType := infer.GetTypeFn(arg0).Return
+				switch v := lambdaReturnType.(type) {
+				case types.OptionType:
+					rT = v.W
+				case types.GenericType:
+					// If still generic, try to infer from the lambda body's return statements
+					rT = infer.inferReturnTypeFromLambdaBody(arg0)
+					if rT != nil {
+						// Update the lambda's type with the concrete return type
+						updatedFnT := infer.GetTypeFn(arg0)
+						updatedFnT.Return = types.OptionType{W: rT}
+						infer.SetTypeForce(arg0, updatedFnT)
+					}
+				}
+				if rT != nil {
+					resultSeqType := mapFnT.T("R", rT).Return
+					infer.SetType(expr, resultSeqType)
+					infer.SetTypeForce(exprT.Sel, mapFnT.T("R", rT))
+				}
+			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
+				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					exprPos := infer.Pos(expr)
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
+				infer.expr(exprArg0)
+				aT := infer.env.GetType(exprArg0)
+				if tmp, ok := aT.(types.FuncType); ok {
+					var rT types.Type
+					switch v := tmp.Return.(type) {
+					case types.OptionType:
+						rT = v.W
+					}
+					if rT != nil {
+						resultSeqType := mapFnT.T("R", rT).Return
+						infer.SetType(expr, resultSeqType)
+						infer.SetTypeForce(exprT.Sel, mapFnT.T("R", rT))
+					}
+				}
+				if !compareFunctionSignatures(ftReal, clbFnT) {
+					exprPos := infer.Pos(expr)
+					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
+					return
+				}
+			}
 		}
 	case types.ArrayType:
 		exprPos := infer.Pos(expr)

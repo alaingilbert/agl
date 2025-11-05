@@ -1049,6 +1049,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "Sequence.Sorted", "func [T cmp.Ordered](s Sequence[T]) []T")
 		e.DefineFn(nenv, "Sequence.Joined", "func (s Sequence[string], sep string) string")
 		e.DefineFn(nenv, "Sequence.Filter", "func [T any](s Sequence[T], f func(e T) bool) Sequence[T]")
+		e.DefineFn(nenv, "Sequence.FilterMap", "func [T, R any](s Sequence[T], f func(e T) R?) Sequence[R]")
 		e.DefineFn(nenv, "Sequence.Len", "func [T any](s Sequence[T]) int")
 		e.DefineFn(nenv, "Sequence.Max", "func [T cmp.Ordered](s Sequence[T]) T?")
 		e.DefineFn(nenv, "Sequence.Min", "func [T cmp.Ordered](s Sequence[T]) T?")

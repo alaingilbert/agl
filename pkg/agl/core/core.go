@@ -187,14 +187,7 @@ func AglVecMap[T, R any](a []T, f func(T) R) []R {
 }
 
 func AglVecFilterMap[T, R any](a []T, f func(T) Option[R]) []R {
-	var out []R
-	for _, v := range a {
-		res := f(v)
-		if res.IsSome() {
-			out = append(out, res.Unwrap())
-		}
-	}
-	return out
+	return AglBuildArray(AglSequenceFilterMap(AglVec[T](a).Iter(), f))
 }
 
 func AglVec__ADD[T any](a, b []T) []T {
@@ -415,6 +408,19 @@ func AglSequenceMin[T cmp.Ordered](s Sequence[T]) Option[T] {
 		out = MakeOptionSome(v)
 	}
 	return out
+}
+
+func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
+	return func(yield func(R) bool) {
+		for v := range s {
+			res := f(v)
+			if res.IsSome() {
+				if !yield(res.Unwrap()) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
