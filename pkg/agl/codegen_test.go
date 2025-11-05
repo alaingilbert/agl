@@ -15022,6 +15022,47 @@ func (t AglTupleStruct_int_int) String() string {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen486(t *testing.T) {
+	// Test: type inference for if-expression with Array from Map
+	src := `package main
+func main() {
+	mut dp1 := Array((0..10).Map({ 1 }))
+	a := if dp1[1] != 1 { dp1[1] } else { -1 }
+	var mut dp2 []int = Array((0..10).Map({ 1 }))
+	b := if dp2[1] != 1 { dp2[1] } else { -1 }
+	print(a, b)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	dp1 := AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+		return 1
+	}))
+	var aglTmp1 int
+	if dp1[1] != 1 {
+		aglTmp1 = dp1[1]
+	} else {
+		aglTmp1 = -1
+	}
+	a := AglIdentity(aglTmp1)
+	var dp2 []int = AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+		return 1
+	}))
+	var aglTmp2 int
+	if dp2[1] != 1 {
+		aglTmp2 = dp2[1]
+	} else {
+		aglTmp2 = -1
+	}
+	b := AglIdentity(aglTmp2)
+	AglPrint(a, b)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

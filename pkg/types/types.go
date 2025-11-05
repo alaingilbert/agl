@@ -959,6 +959,19 @@ func ReplGenM(t Type, m map[string]Type) (out Type) {
 }
 
 func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
+	// Handle Sequence[T] before unwrapping to preserve type parameters
+	if currTS, okCurr := currTyp.(StructType); okCurr && currTS.Name == "Sequence" {
+		if newTS, okNew := newTyp.(StructType); okNew && newTS.Name == "Sequence" {
+			if len(currTS.TypeParams) > 0 && len(newTS.TypeParams) > 0 {
+				concreteType := Unwrap(newTS.TypeParams[0])
+				for _, p := range currTS.TypeParams {
+					t = t.(FuncType).ReplaceGenericParameter(p.String(), concreteType)
+				}
+			}
+			return t
+		}
+	}
+
 	currTyp = Unwrap(currTyp)
 	newTyp = Unwrap(Unwrap(newTyp))
 	switch currT := currTyp.(type) {
