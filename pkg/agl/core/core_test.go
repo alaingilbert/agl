@@ -1,8 +1,10 @@
 package main
 
 import (
+	"agl/pkg/agl"
 	"encoding/binary"
 	"hash/fnv"
+	"iter"
 	"testing"
 
 	tassert "github.com/stretchr/testify/assert"
@@ -115,4 +117,15 @@ func TestAglSet1(t *testing.T) {
 	tassert.False(t, s4.Insert(innerSet))
 	tassert.True(t, s4.Contains(innerSet))
 	tassert.False(t, s4.Contains(s1))
+}
+
+func TestAglSequenceStepBy(t *testing.T) {
+	arr := []int{0, 1, 2, 3, 4, 5}
+	it := AglVec[int](arr).Iter()
+	it = AglSequenceStepBy(it, 2)
+	next, _ := iter.Pull(iter.Seq[int](it))
+	tassert.Equal(t, agl.First(next()), 0)
+	tassert.Equal(t, agl.First(next()), 2)
+	tassert.Equal(t, agl.First(next()), 4)
+	tassert.False(t, agl.Second(next()))
 }
