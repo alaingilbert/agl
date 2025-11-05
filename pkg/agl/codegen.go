@@ -2892,6 +2892,27 @@ afterUnwrap4:
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglI64String(") + c1.F() + e(")") }}
 		}
+	case types.I32Type:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "String":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI32String(") + c1.F() + e(")") }}
+		}
+	case types.I16Type:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "String":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI16String(") + c1.F() + e(")") }}
+		}
+	case types.I8Type:
+		fnName := x.Sel.Name
+		switch fnName {
+		case "String":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglI8String(") + c1.F() + e(")") }}
+		}
 	case types.UintType:
 		fnName := x.Sel.Name
 		switch fnName {

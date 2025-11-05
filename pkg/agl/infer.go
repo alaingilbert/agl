@@ -1836,6 +1836,30 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
+	case types.I32Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.I32.String")
+			fnT = infer.env.GetFn("agl1.I32.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.I16Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.I16.String")
+			fnT = infer.env.GetFn("agl1.I16.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.I8Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.I8.String")
+			fnT = infer.env.GetFn("agl1.I8.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
 	case types.UintType:
 		switch fnName {
 		case "String":
