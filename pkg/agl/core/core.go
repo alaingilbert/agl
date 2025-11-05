@@ -1748,7 +1748,7 @@ func AglI8String(v int8) string    { return strconv.FormatInt(int64(v), 10) }
 func AglI16String(v int16) string  { return strconv.FormatInt(int64(v), 10) }
 func AglI32String(v int32) string  { return strconv.FormatInt(int64(v), 10) }
 func AglI64String(v int64) string  { return strconv.FormatInt(int64(v), 10) }
-func AglUintString(v uint) string  { return strconv.FormatInt(int64(v), 10) }
+func AglUintString(v uint) string  { return strconv.FormatUint(uint64(v), 10) }
 func AglU8String(v uint8) string   { return strconv.FormatUint(uint64(v), 10) }
 func AglU16String(v uint16) string { return strconv.FormatUint(uint64(v), 10) }
 func AglU32String(v uint32) string { return strconv.FormatUint(uint64(v), 10) }
