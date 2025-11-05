@@ -447,6 +447,7 @@ func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	}
 }
 
+// AglSequenceFind searches for an element of an iterator that satisfies a predicate.
 func AglSequenceFind[T any](s Sequence[T], f func(T) bool) Option[T] {
 	for v := range s {
 		if f(v) {
@@ -454,6 +455,17 @@ func AglSequenceFind[T any](s Sequence[T], f func(T) bool) Option[T] {
 		}
 	}
 	return MakeOptionNone[T]()
+}
+
+// AglSequenceFindMap applies function to the elements of iterator and returns the first non-none result.
+func AglSequenceFindMap[T, R any](s Sequence[T], f func(T) Option[R]) Option[R] {
+	for v := range s {
+		res := f(v)
+		if res.IsSome() {
+			return MakeOptionSome(res.Unwrap())
+		}
+	}
+	return MakeOptionNone[R]()
 }
 
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
