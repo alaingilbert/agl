@@ -438,6 +438,22 @@ func AglSequenceNth[T any](s Sequence[T], n int) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+// AglSequenceChain takes two iterators and creates a new iterator over both in sequence.
+func AglSequenceChain[T any](s, other Sequence[T]) Sequence[T] {
+	return func(yield func(T) bool) {
+		for v := range s {
+			if !yield(v) {
+				return
+			}
+		}
+		for v := range other {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {
