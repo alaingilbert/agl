@@ -341,12 +341,7 @@ func AglTypeAssert[T any](v any) Option[T] {
 func AglIdentity[T any](v T) T { return v }
 
 func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
-	for _, v := range a {
-		if f(v) {
-			return MakeOptionSome(v)
-		}
-	}
-	return MakeOptionNone[T]()
+	return AglSequenceFind(AglVec[T](a).Iter(), f)
 }
 
 type VecIter[T any] struct {
@@ -424,7 +419,7 @@ func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence
 }
 
 func AglSequenceCompactMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
-	return AglSequenceFilterMap(s, f)
+	return AglSequenceFilterMap()
 }
 
 func AglSequenceFlatMap[T, R any](s Sequence[T], f func(T) []R) Sequence[R] {
@@ -450,6 +445,15 @@ func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 			}
 		}
 	}
+}
+
+func AglSequenceFind[T any](s Sequence[T], f func(T) bool) Option[T] {
+	for v := range s {
+		if f(v) {
+			return MakeOptionSome(v)
+		}
+	}
+	return MakeOptionNone[T]()
 }
 
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
