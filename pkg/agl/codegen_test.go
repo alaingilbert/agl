@@ -15063,6 +15063,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen487(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int](int, int?){1: (1, Some(10)), 2: (2, None), 3: (3, Some(30))}
+	print(m)
+
+}`
+	expected := `// agl:generated
+package main
+import "fmt"
+func main() {
+	m := map[int]AglTupleStruct_int_Option_int_{1: AglTupleStruct_int_Option_int_{Arg0: 1, Arg1: MakeOptionSome(10)}, 2: AglTupleStruct_int_Option_int_{Arg0: 2, Arg1: MakeOptionNone[int]()}, 3: AglTupleStruct_int_Option_int_{Arg0: 3, Arg1: MakeOptionSome(30)}}
+	AglPrint(m)
+}
+type AglTupleStruct_int_Option_int_ struct {
+	Arg0 int
+	Arg1 Option[int]
+}
+func (t AglTupleStruct_int_Option_int_) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	test.PrintErrors()
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

@@ -3957,8 +3957,15 @@ func (infer *FileInferrer) keyValueExpr(expr *ast.KeyValueExpr) {
 			infer.errorf(expr.Value, "map key type not specified")
 			return
 		}
-	default:
 		infer.expr(expr.Value)
+	default:
+		if infer.mapVT != nil {
+			infer.withOptType(expr.Value, infer.mapVT, func() {
+				infer.expr(expr.Value)
+			})
+		} else {
+			infer.expr(expr.Value)
+		}
 	}
 	//infer.SetType(expr,) // TODO
 }
