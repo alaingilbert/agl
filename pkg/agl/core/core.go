@@ -405,6 +405,18 @@ func AglSequenceMin[T cmp.Ordered](s Sequence[T]) Option[T] {
 	return out
 }
 
+// AglSequenceInspect does something with each element of an iterator, passing the value on.
+func AglSequenceInspect[T any](s Sequence[T], f func(T) AglVoid) Sequence[T] {
+	return func(yield func(T) bool) {
+		for v := range s {
+			f(v)
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {
