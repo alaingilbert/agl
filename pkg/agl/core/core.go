@@ -454,6 +454,21 @@ func AglSequenceChain[T any](s, other Sequence[T]) Sequence[T] {
 	}
 }
 
+// AglSequenceStepBy creates an iterator starting at the same point, but stepping by the given amount at each iteration.
+func AglSequenceStepBy[T any](s Sequence[T], step int) Sequence[T] {
+	return func(yield func(T) bool) {
+		pos := 0
+		for v := range s {
+			if pos%step == 0 {
+				if !yield(v) {
+					return
+				}
+			}
+			pos++
+		}
+	}
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {
