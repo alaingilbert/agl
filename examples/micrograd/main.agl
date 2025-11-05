@@ -160,7 +160,7 @@ type MLP struct {
 }
 
 func NewMLP(nin int, nouts []int) *MLP {
-    sz := append([]int{nin}, nouts...)
+    sz := []int{nin} + nouts
     return &MLP{
         Layers: Array((0..nouts.Len()).Map(|i| NewLayer(sz[i], sz[i+1], i!=nouts.Len()-1))),
     }
