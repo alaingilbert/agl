@@ -2816,6 +2816,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 					return
 				}
 			}
+		} else {
+			infer.errorf(exprT.Sel, "no method '.%s' for type map", fnName)
 		}
 	case types.OptionType:
 		if fnName == "Map" {

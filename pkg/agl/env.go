@@ -1521,6 +1521,29 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			}
 			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.MapType:
+			name := fmt.Sprintf("agl1.Map.%s", xx.Sel.Name)
+			methodType := e.GetType2(&ast.Ident{Name: name}, fset)
+			// Check if method exists (nil or VoidType means it doesn't exist)
+			_, isVoid := methodType.(types.VoidType)
+			if methodType == nil || isVoid {
+				errMsg := fmt.Sprintf("no method '.%s' for type map", xx.Sel.Name)
+				// If we have an inferrer, collect the error; otherwise panic
+				if e.inferrer != nil {
+					e.inferrer.AddError(xx.Sel, errMsg)
+					return types.ErrorType{} // Return error type to prevent further panics
+				}
+				panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.Sel.Pos()), errMsg))
+			}
+			return methodType
+		case types.VoidType:
+			// VoidType shouldn't have methods
+			errMsg := fmt.Sprintf("no method '.%s' for type void", xx.Sel.Name)
+			if e.inferrer != nil {
+				e.inferrer.AddError(xx.Sel, errMsg)
+				return types.ErrorType{}
+			}
+			panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.Sel.Pos()), errMsg))
 		case types.ErrorType:
 			// Propagate error type to avoid cascading panics
 			return types.ErrorType{}

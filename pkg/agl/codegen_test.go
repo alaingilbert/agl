@@ -15091,6 +15091,17 @@ func (t AglTupleStruct_int_Option_int_) String() string {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen488(t *testing.T) {
+	src := `package main
+func main() {
+	m := map[int](int, int?){1: (1, Some(10)), 2: (2, None), 3: (3, Some(30))}
+	result := m.values().filterMap(|x| x.1).len()
+	print(result)
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Contains(t, test.errs[0].Error(), "4:14: no method '.values' for type map")
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
