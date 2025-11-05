@@ -1860,6 +1860,38 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 		}
 		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
+	case types.U8Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.U8.String")
+			fnT = infer.env.GetFn("agl1.U8.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.U16Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.U16.String")
+			fnT = infer.env.GetFn("agl1.U16.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.U32Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.U32.String")
+			fnT = infer.env.GetFn("agl1.U32.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
+	case types.U64Type:
+		switch fnName {
+		case "String":
+			info = infer.env.GetNameInfo("agl1.U64.String")
+			fnT = infer.env.GetFn("agl1.U64.String").IntoRecv(idTT)
+		}
+		infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
+		infer.SetType(expr, fnT.Return)
 	case types.UintType:
 		switch fnName {
 		case "String":
