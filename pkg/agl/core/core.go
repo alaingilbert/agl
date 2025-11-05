@@ -417,6 +417,15 @@ func AglSequenceInspect[T any](s Sequence[T], f func(T) AglVoid) Sequence[T] {
 	}
 }
 
+// AglSequenceLast consumes the iterator, returning the last element.
+func AglSequenceLast[T any](s Sequence[T]) Option[T] {
+	out := MakeOptionNone[T]()
+	for v := range s {
+		out = MakeOptionSome(v)
+	}
+	return out
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {
