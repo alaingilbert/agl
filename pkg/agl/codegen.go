@@ -2698,9 +2698,9 @@ afterUnwrap4:
 
 		// Generate call to standalone function
 		switch fnName {
-		case "Filter":
+		case "Filter", "TakeWhile":
 			return GenFrag{F: func() string {
-				return e("AglIteratorFilter["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
 		case "Map":
 			// Extract return type parameter

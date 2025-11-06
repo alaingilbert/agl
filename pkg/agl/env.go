@@ -1074,6 +1074,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.Contains", "func[T any] (it Iterator[T], el T) bool")
 		e.DefineFn(nenv, "agl1.Iterator.ForEach", "func[T any] (it Iterator[T], f func(T))")
 		e.DefineFn(nenv, "agl1.Iterator.Filter", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
+		e.DefineFn(nenv, "agl1.Iterator.TakeWhile", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Sequence[R]")
 	})
 }
