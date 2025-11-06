@@ -487,6 +487,21 @@ func AglSequenceIntersperse[T any](s Sequence[T], separator T) Sequence[T] {
 	}
 }
 
+// AglSequenceTakeWhile creates an iterator that yields elements based on a predicate.
+func AglSequenceTakeWhile[T any](s Sequence[T], f func(T) bool) Sequence[T] {
+	return func(yield func(T) bool) {
+		for v := range s {
+			if f(v) {
+				if !yield(v) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
 func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
 	return func(yield func(R) bool) {
 		for v := range s {

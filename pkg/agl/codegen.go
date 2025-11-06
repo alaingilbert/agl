@@ -2685,7 +2685,7 @@ afterUnwrap4:
 			recvT := recvTType.GoStrType()
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
-		case "Filter", "Joined":
+		case "Filter", "Joined", "TakeWhile":
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
 		case "FilterMap":
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -2706,7 +2706,9 @@ afterUnwrap4:
 				retTType = retType.TypeParams[0]
 			}
 			retT := retTType.GoStrType()
-			return GenFrag{F: func() string { return e("AglSequenceFilterMap["+recvT+", "+retT+"](") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+			return GenFrag{F: func() string {
+				return e("AglSequenceFilterMap["+recvT+", "+retT+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		case "Len", "Sorted", "Max", "Min":
 			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }}
 		}

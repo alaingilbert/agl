@@ -2225,6 +2225,13 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
 			infer.SetTypeForce(exprT.Sel, fnT)
 			infer.SetType(expr, fnT.Return)
+		} else if fnName == "TakeWhile" {
+			typeParam0 := getTypeParam(idTT.TypeParams[0])
+			fnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
+			exprArg0 := expr.Args[0]
+			infer.SetType(exprArg0, fnT.GetParam(0))
+			infer.SetTypeForce(exprT.Sel, fnT)
+			infer.SetType(expr, fnT.Return)
 		} else if fnName == "FilterMap" {
 			typeParam0 := getTypeParam(idTT.TypeParams[0])
 			mapFnT := infer.env.GetFn("Sequence."+fnName).T("T", typeParam0).IntoRecv(oidT)
