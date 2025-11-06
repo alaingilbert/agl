@@ -8431,13 +8431,15 @@ func main() {
 	s1 := set[int]{1, 2, 3}
 	s2 := set[int]{3, 4, 5}
 	s3 := s1.Union(s2)
+	print(s3)
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	s1 := AglSet[int]{1: {}, 2: {}, 3: {}}
 	s2 := AglSet[int]{3: {}, 4: {}, 5: {}}
-	s3 := AglSetUnion(s1, s2)
+	s3 := AglSetUnion(s1, s2.Iter())
+	AglPrint(s3)
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
