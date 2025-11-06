@@ -993,6 +993,26 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 				if len(v.TypeParams) > 0 {
 					newTyp = v.TypeParams[0]
 				}
+			case StructType:
+				// Handle Sequence[T] which is a StructType wrapping a FuncType
+				if v.Name == "Sequence" && len(v.TypeParams) > 0 {
+					newTyp = v.TypeParams[0]
+				}
+			case FuncType:
+				// FuncType represents iter.Seq[T] - extract T from the function signature
+				// iter.Seq[T] is: func(yield func(T) bool)
+				if len(v.Params) > 0 {
+					if yieldFn, ok := v.Params[0].(FuncType); ok && len(yieldFn.Params) > 0 {
+						newTyp = yieldFn.Params[0]
+					} else {
+						// Fallback: keep newTyp as is and don't try to extract
+						// This handles cases where the FuncType structure is different
+						return t
+					}
+				} else {
+					// No params, can't extract type
+					return t
+				}
 			default:
 				panic(fmt.Sprintf("%v", reflect.TypeOf(newTyp)))
 			}

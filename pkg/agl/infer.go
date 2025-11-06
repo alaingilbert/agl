@@ -1449,18 +1449,19 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT)
 		infer.SetType(expr, toReturn)
 	case types.InterfaceType:
-		// Build the method name - it's already in the format "pkg.InterfaceName.MethodName"
-		name := fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName)
+		// Build the method name - it's in the format "pkg.InterfaceName.MethodName" or "InterfaceName.MethodName" for local interfaces
+		var name string
+		if idTT.Pkg != "" {
+			name = fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName)
+		} else {
+			name = fmt.Sprintf("%s.%s", idTT.Name, fnName)
+		}
 		t := infer.env.Get(name)
 		if t == nil {
 			infer.errorf(call.Sel, "method '%s' not found on interface '%s.%s'", fnName, idTT.Pkg, idTT.Name)
 			return
 		}
 		fnT := infer.env.GetFn(name)
-		if fnT.Name == "" {
-			infer.errorf(call.Sel, "method '%s' on interface '%s.%s' is not a function", fnName, idTT.Pkg, idTT.Name)
-			return
-		}
 		// Monomorphize if needed - replace generic type parameters with concrete ones
 		if len(idTT.TypeParams) > 0 {
 			for i, p := range idTT.TypeParams {

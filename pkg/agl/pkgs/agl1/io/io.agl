@@ -2,9 +2,7 @@ package io
 
 type EOF struct{}
 type Reader struct{}
-type ReadCloser interface{
-    Close() !
-}
+type ReadCloser interface{}
 type RuneReader interface{}
 type Seeker interface{}
 type StringWriter interface{}
@@ -21,4 +19,4 @@ func CopyN(dst Writer, src Reader, n int64) int64!
 func Copy(dst Writer, src Reader) int64!
 //func Pipe(*PipeReader, *PipeWriter)
 func (ReadCloser) Read(p []byte) int!
-//func (ReadCloser) Close() !
+func (ReadCloser) Close() !

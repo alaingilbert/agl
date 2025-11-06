@@ -2620,6 +2620,20 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 			out += e("AglBuildArray(")
 			if TryCast[types.ArrayType](arg0T) {
 				out += e("AglVec["+arg0T.(types.ArrayType).Elt.GoStrType()+"](") + c1.F() + e(")")
+			} else if TryCast[types.SetType](arg0T) {
+				// Sets have an Iter() method that returns Iterator[T]
+				out += c1.F() + e(".Iter()")
+			} else if structT, ok := arg0T.(types.StructType); ok && structT.Name == "Sequence" && len(structT.TypeParams) > 0 {
+				// Sequence[T] is iter.Seq[T], convert it to Iterator[T] via iter.Pull
+				// Need to import "iter" package
+				if g.imports == nil {
+					g.imports = make(map[string]*ast.ImportSpec)
+				}
+				g.imports[`"iter"`] = &ast.ImportSpec{
+					Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
+				}
+				elemType := structT.TypeParams[0].GoStrType()
+				out += e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + c1.F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
 			} else {
 				out += c1.F()
 			}
@@ -2671,9 +2685,6 @@ afterUnwrap4:
 		genEX := c1.F
 		fnName := x.Sel.Name
 
-		// Get the function type to extract type parameters
-		fnT := g.env.GetType(x.Sel).(types.FuncType)
-
 		// Extract type parameter from the interface
 		var tType string
 		var tTypeObj types.Type
@@ -2703,6 +2714,8 @@ afterUnwrap4:
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
 		case "Map":
+			// Get the function type to extract return type parameters
+			fnT := g.env.GetType(x.Sel).(types.FuncType)
 			// Extract return type parameter
 			var rType string
 			if retT, ok := fnT.Return.(types.StructType); ok && len(retT.TypeParams) > 0 {
@@ -2919,10 +2932,45 @@ afterUnwrap4:
 			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint",
 			"Filter", "ForEach", "Map":
 			arg0 := expr.Args[0]
+			arg0T := g.env.GetType(arg0)
 			content2 := func() string {
-				switch v := types.Unwrap(g.env.GetType(arg0)).(type) {
+				unwrapped := types.Unwrap(arg0T)
+				switch v := unwrapped.(type) {
 				case types.ArrayType:
-					return e("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(")")
+					// Arrays need to be converted to Iterator via .Iter()
+					return e("AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(").Iter()")
+				case types.SetType:
+					// Sets need to be converted to Iterator via .Iter()
+					return g.genExpr(arg0).F() + e(".Iter()")
+				case types.FuncType:
+					// FuncType represents iter.Seq[T] which is func(func(T) bool)
+					// Extract T from the yield function parameter
+					if len(v.Params) > 0 {
+						if yieldFn, ok := v.Params[0].(types.FuncType); ok && len(yieldFn.Params) > 0 {
+							elemType := yieldFn.Params[0].GoStrType()
+							if g.imports == nil {
+								g.imports = make(map[string]*ast.ImportSpec)
+							}
+							g.imports[`"iter"`] = &ast.ImportSpec{
+								Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
+							}
+							return e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + g.genExpr(arg0).F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
+						}
+					}
+					return g.genExpr(arg0).F()
+				case types.StructType:
+					if v.Name == "Sequence" && len(v.TypeParams) > 0 {
+						// Sequence[T] needs to be converted to Iterator[T]
+						elemType := v.TypeParams[0].GoStrType()
+						if g.imports == nil {
+							g.imports = make(map[string]*ast.ImportSpec)
+						}
+						g.imports[`"iter"`] = &ast.ImportSpec{
+							Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
+						}
+						return e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + g.genExpr(arg0).F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
+					}
+					return g.genExpr(arg0).F()
 				default:
 					return g.genExpr(arg0).F()
 				}
@@ -4001,7 +4049,19 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 						case types.ArrayType:
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.SetType:
-							out += e(g.prefix+"for ") + c2.F() + e(" := range (") + c1.F() + e(").Iter() {\n")
+							// AglSet[T] is map[T]struct{}, so we can range over it directly
+							// Only range over keys, ignore values
+							// Wrap in parentheses if it's a composite literal to avoid syntax issues
+							isCompositeLit := TryCast[*ast.CompositeLit](v.Y)
+							out += e(g.prefix+"for ") + c2.F() + e(" := range ")
+							if isCompositeLit {
+								out += e("(")
+							}
+							out += c1.F()
+							if isCompositeLit {
+								out += e(")")
+							}
+							out += e(" {\n")
 						case types.RangeType:
 							out += e(g.prefix + "for ")
 							c2V := c2.F()

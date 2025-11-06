@@ -419,7 +419,7 @@ func defineFromSrc(depth int, t *TreeDrawer, env, nenv *Env, path, pkgName strin
 		panic(err)
 	}
 	nenv.WithPkgName(pkgName, func() {
-		loadAglImports(path, depth, t, nenv, nenv, node, m, fset)
+		loadAglImports(path, depth, t, env, nenv, node, m, fset)
 		loadDecls(env, nenv, node, path, pkgName, fset)
 	})
 }
@@ -482,6 +482,26 @@ func loadDecls(env, nenv *Env, node *ast.File, path, pkgName string, fset *token
 			}
 			if err := env.DefineFnNative2(fullName, ft, opts...); err != nil {
 				assert(false, err.Error())
+			}
+			// If this is an interface method, update the interface type to include this method
+			// Only do this for interfaces (not structs)
+			if decl.Recv != nil {
+				t := decl.Recv.List[0].Type
+				// Skip pointer receivers and non-identifier receivers (they're for structs)
+				if ident, ok := t.(*ast.Ident); ok {
+					recvName := ident.Name
+					interfaceName := pkgName + "." + recvName
+					if interfaceInfo := env.Get(interfaceName); interfaceInfo != nil {
+						if interfaceT, ok := interfaceInfo.(types.InterfaceType); ok {
+							// This is an interface method - add it to the interface
+							methodName := decl.Name.Name
+							ft.Name = methodName
+							interfaceT.Methods = append(interfaceT.Methods, types.InterfaceMethod{Name: methodName, Typ: ft})
+							// Update the interface in the environment
+							env.Define(nil, interfaceName, interfaceT)
+						}
+					}
+				}
 			}
 		case *ast.GenDecl:
 			for _, s := range decl.Specs {
