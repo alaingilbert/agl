@@ -1449,13 +1449,50 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT)
 		infer.SetType(expr, toReturn)
 	case types.InterfaceType:
-		t := idTT.GetMethodByName(call.Sel.Name)
-		//name := fmt.Sprintf("%s.%s", idTT, fnName)
-		//t := infer.env.Get(name)
-		tr := t.(types.FuncType).Return
-		infer.SetType(call.Sel, t)
+		// Build the method name - it's already in the format "pkg.InterfaceName.MethodName"
+		name := fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName)
+		t := infer.env.Get(name)
+		if t == nil {
+			infer.errorf(call.Sel, "method '%s' not found on interface '%s.%s'", fnName, idTT.Pkg, idTT.Name)
+			return
+		}
+		fnT := infer.env.GetFn(name)
+		if fnT.Name == "" {
+			infer.errorf(call.Sel, "method '%s' on interface '%s.%s' is not a function", fnName, idTT.Pkg, idTT.Name)
+			return
+		}
+		// Monomorphize if needed - replace generic type parameters with concrete ones
+		if len(idTT.TypeParams) > 0 {
+			for i, p := range idTT.TypeParams {
+				if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
+					fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+				}
+			}
+		}
+		// Convert to receiver form
+		if len(fnT.Recv) == 0 && len(fnT.Params) > 0 {
+			fnT = fnT.IntoRecv(idTT)
+		}
+
+		// Infer the arguments with the expected parameter types
+		oParams := fnT.Params
+		for i := range expr.Args {
+			arg := expr.Args[i]
+			if i < len(oParams) {
+				oArg := oParams[i]
+				infer.withOptType(arg, oArg, func() {
+					infer.expr(arg)
+				})
+			} else {
+				infer.expr(arg)
+			}
+		}
+
+		tr := fnT.Return
+		infer.SetType(call.Sel, fnT)
 		infer.SetType(call, tr)
 		infer.SetType(expr, tr)
+		return
 	case types.EnumType:
 		sub := call.Sel.Name
 		if sub == "RawValue" {

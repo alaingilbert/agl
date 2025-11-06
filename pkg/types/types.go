@@ -989,6 +989,10 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 				newTyp = v.K
 			case SetType:
 				newTyp = v.K
+			case InterfaceType:
+				if len(v.TypeParams) > 0 {
+					newTyp = v.TypeParams[0]
+				}
 			default:
 				panic(fmt.Sprintf("%v", reflect.TypeOf(newTyp)))
 			}
@@ -1238,6 +1242,12 @@ func findGenHelper(m map[string]Type, a, b Type) {
 	case StructType:
 		for i, rawParam := range t1.TypeParams {
 			findGenHelper(m, rawParam, b.(StructType).TypeParams[i])
+		}
+	case InterfaceType:
+		for i, rawParam := range t1.TypeParams {
+			if b2, ok := b.(InterfaceType); ok && i < len(b2.TypeParams) {
+				findGenHelper(m, rawParam, b2.TypeParams[i])
+			}
 		}
 	case StarType:
 		findGenHelper(m, t1.X, b.(StarType).X)

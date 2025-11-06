@@ -2666,6 +2666,66 @@ afterUnwrap4:
 		}
 	}
 	switch eXTT := eXT.(type) {
+	case types.InterfaceType:
+		c1 := g.genExpr(x.X)
+		genEX := c1.F
+		fnName := x.Sel.Name
+
+		// Get the function type to extract type parameters
+		fnT := g.env.GetType(x.Sel).(types.FuncType)
+
+		// Extract type parameter from the interface
+		var tType string
+		var tTypeObj types.Type
+		if len(eXTT.TypeParams) > 0 {
+			tTypeObj = eXTT.TypeParams[0]
+			tType = tTypeObj.GoStrType()
+		}
+
+		// Create a genMap for generic type parameters
+		genMap := make(map[string]types.Type)
+		genMap["T"] = tTypeObj
+
+		// Generate argument with proper type mapping
+		var genArgFn func(i int) string
+		genArgFn = func(i int) string {
+			var result string
+			g.WithGenMapping(genMap, func() {
+				result = g.genExpr(expr.Args[i]).F()
+			})
+			return result
+		}
+
+		// Generate call to standalone function
+		switch fnName {
+		case "Filter":
+			return GenFrag{F: func() string {
+				return e("AglIteratorFilter["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
+		case "Map":
+			// Extract return type parameter
+			var rType string
+			if retT, ok := fnT.Return.(types.StructType); ok && len(retT.TypeParams) > 0 {
+				rType = retT.TypeParams[0].GoStrType()
+			}
+			return GenFrag{F: func() string {
+				return e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
+		case "Any", "AllSatisfy":
+			return GenFrag{F: func() string {
+				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
+		case "Contains", "ForEach":
+			return GenFrag{F: func() string {
+				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
+		default:
+			// Fallback: call method directly (may not work for all interfaces)
+			argFrags := g.genExprs(expr.Args)
+			return GenFrag{F: func() string {
+				return genEX() + e("."+fnName+"(") + argFrags.F() + e(")")
+			}}
+		}
 	case types.StructType:
 		c1 := g.genExpr(x.X)
 		genEX := c1.F
@@ -2720,6 +2780,10 @@ afterUnwrap4:
 		eltTStr := eltT.GoStr()
 		fnName := x.Sel.Name
 		switch fnName {
+		case "Iter":
+			return GenFrag{F: func() string {
+				return e("AglVecIter["+eltTStr+"](") + genEX() + e(")")
+			}}
 		case "Sum", "Clone", "Indices", "Sorted":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(")")

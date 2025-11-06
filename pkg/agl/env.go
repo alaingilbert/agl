@@ -858,7 +858,19 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 	e.withEnv(func(nenv *Env) {
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/cmp", "", m)
 		_ = e.loadPkgAglStd(0, nil, nenv, "agl1/iter", "", m)
-		e.Define(nil, "Iterator", types.InterfaceType{Pkg: "agl1", Name: "Iterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
+		e.Define(nil, "Iterator", types.InterfaceType{
+			Pkg:        "agl1",
+			Name:       "Iterator",
+			TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}},
+			Methods: []types.InterfaceMethod{
+				{Name: "Any", Typ: types.FuncType{}},
+				{Name: "AllSatisfy", Typ: types.FuncType{}},
+				{Name: "Contains", Typ: types.FuncType{}},
+				{Name: "ForEach", Typ: types.FuncType{}},
+				{Name: "Filter", Typ: types.FuncType{}},
+				{Name: "Map", Typ: types.FuncType{}},
+			},
+		})
 		// Define Sequence[T] as a type alias struct that wraps iter.Seq[T]
 		// This represents: type Sequence[T any] iter.Seq[T]
 		// iter.Seq[T] is: func(yield func(T) bool)
@@ -1006,7 +1018,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.With", "func [T any](mut a []T, i int, clb func(*T))")
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
-		//e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) Sequence[T]")
+		e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
 		e.DefineFn(nenv, "agl1.Vec.Pop", "func [T any](mut a []T) T?")
@@ -1055,7 +1067,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "Sequence.Min", "func [T cmp.Ordered](s Sequence[T]) T?")
 		e.DefineFn(nenv, "Sequence.TakeWhile", "func [T any](s Sequence[T], f func(T) bool) Sequence[T]")
 		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")
-		e.DefineFn(nenv, "Array", "func[T any] (it Sequence[T]) []T")
+		e.DefineFn(nenv, "Array", "func[T any] (it Iterator[T]) []T")
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 		e.DefineFn(nenv, "agl1.Iterator.Any", "func [T any](it Iterator[T], f func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.AllSatisfy", "func[T any] (it Iterator[T], pred func(T) bool) bool")
