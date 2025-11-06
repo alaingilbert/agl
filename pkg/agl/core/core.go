@@ -183,11 +183,11 @@ func MakeResultErr[T any](err error) Result[T] {
 }
 
 func AglVecMap[T, R any](a []T, f func(T) R) []R {
-	return AglSequenceMap(AglVec[T](a).Iter(), f)
+	return AglBuildArray(AglIteratorMap(AglVec[T](a).Iter(), f))
 }
 
 func AglVecFilterMap[T, R any](a []T, f func(T) Option[R]) []R {
-	return AglBuildArray(AglSequenceFilterMap(AglVec[T](a).Iter(), f))
+	return AglBuildArray(AglIteratorFilterMap(AglVec[T](a).Iter(), f))
 }
 
 func AglVec__ADD[T any](a, b []T) []T {
@@ -198,7 +198,7 @@ func AglVec__ADD[T any](a, b []T) []T {
 }
 
 func AglVecFilter[T any](a []T, f func(T) bool) []T {
-	return AglBuildArray(AglSequenceFilter(AglVec[T](a).Iter(), f))
+	return AglBuildArray(AglIteratorFilter(AglVec[T](a).Iter(), f))
 }
 
 func AglVecDropFirst[T any](a []T, k int) []T {
@@ -240,27 +240,27 @@ func AglVecFirstIndexWhere[T any](a []T, p func(T) bool) Option[int] {
 }
 
 func AglVecAllSatisfy[T any](a []T, f func(T) bool) bool {
-	return AglSequenceAllSatisfy(AglVec[T](a).Iter(), f)
+	return AglIteratorAllSatisfy(AglVec[T](a).Iter(), f)
 }
 
 func AglVecContains[T comparable](a []T, e T) bool {
-	return AglSequenceContains(AglVec[T](a).Iter(), e)
+	return AglIteratorContains(AglVec[T](a).Iter(), e)
 }
 
 func AglVecContainsWhere[T comparable](a []T, p func(T) bool) bool {
-	return AglSequenceContainsWhere(AglVec[T](a).Iter(), p)
+	return AglIteratorContainsWhere(AglVec[T](a).Iter(), p)
 }
 
 func AglVecAny[T any](a []T, f func(T) bool) bool {
-	return AglSequenceAny(AglVec[T](a).Iter(), f)
+	return AglIteratorContainsWhere(AglVec[T](a).Iter(), f)
 }
 
 func AglVecReduce[T, R any](a []T, acc R, f func(R, T) R) R {
-	return AglSequenceReduce(AglVec[T](a).Iter(), acc, f)
+	return AglIteratorReduce(AglVec[T](a).Iter(), acc, f)
 }
 
 func AglVecReduceInto[T, R any](a []T, acc R, f func(*R, T) AglVoid) R {
-	return AglSequenceReduceInto(AglVec[T](a).Iter(), acc, f)
+	return AglIteratorReduceInto(AglVec[T](a).Iter(), acc, f)
 }
 
 func AglMapReduce[K comparable, V, R any](m map[K]V, acc R, f func(R, DictEntry[K, V]) R) R {
@@ -341,7 +341,7 @@ func AglTypeAssert[T any](v any) Option[T] {
 func AglIdentity[T any](v T) T { return v }
 
 func AglVecFind[T any](a []T, f func(T) bool) Option[T] {
-	return AglSequenceFind(AglVec[T](a).Iter(), f)
+	return AglIteratorFind(AglVec[T](a).Iter(), f)
 }
 
 type VecIter[T any] struct {
@@ -360,10 +360,6 @@ func (v *VecIter[T]) Next() Option[T] {
 
 // Sequence anything that can be turned into an Iterator
 type Sequence[T any] iter.Seq[T]
-
-func (s Sequence[T]) Iter() Sequence[T] {
-	return s
-}
 
 func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	for e := range s {
@@ -498,21 +494,31 @@ func AglSequenceTakeWhile[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	}
 }
 
-func AglSequenceFilterMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
-	return func(yield func(R) bool) {
-		for v := range s {
-			res := f(v)
-			if res.IsSome() {
-				if !yield(res.Unwrap()) {
-					return
-				}
-			}
-		}
-	}
+type FilterMap[T, R any] struct {
+	iter Iterator[T]
+	f    func(T) Option[R]
 }
 
-func AglSequenceCompactMap[T, R any](s Sequence[T], f func(T) Option[R]) Sequence[R] {
-	return AglSequenceFilterMap(s, f)
+func (i *FilterMap[T, R]) Next() Option[R] {
+	for {
+		v := i.iter.Next()
+		if v.IsNone() {
+			break
+		}
+		res := i.f(v.Unwrap())
+		if res.IsSome() {
+			return res
+		}
+	}
+	return MakeOptionNone[R]()
+}
+
+func AglIteratorFilterMap[T, R any](it Iterator[T], f func(T) Option[R]) *FilterMap[T, R] {
+	return &FilterMap[T, R]{iter: it, f: f}
+}
+
+func AglIteratorCompactMap[T, R any](it Iterator[T], f func(T) Option[R]) Iterator[R] {
+	return AglIteratorFilterMap(it, f)
 }
 
 func AglSequenceFlatMap[T, R any](s Sequence[T], f func(T) []R) Sequence[R] {
@@ -540,11 +546,15 @@ func AglSequenceFilter[T any](s Sequence[T], f func(T) bool) Sequence[T] {
 	}
 }
 
-// AglSequenceFind searches for an element of an iterator that satisfies a predicate.
-func AglSequenceFind[T any](s Sequence[T], f func(T) bool) Option[T] {
-	for v := range s {
-		if f(v) {
-			return MakeOptionSome(v)
+// AglIteratorFind searches for an element of an iterator that satisfies a predicate.
+func AglIteratorFind[T any](it Iterator[T], f func(T) bool) Option[T] {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		if f(v.Unwrap()) {
+			return MakeOptionSome(v.Unwrap())
 		}
 	}
 	return MakeOptionNone[T]()
@@ -607,16 +617,24 @@ func AglSequenceMap[T, R any](s Sequence[T], f func(T) R) []R {
 	return out
 }
 
-func AglSequenceReduce[T, R any](s Sequence[T], acc R, f func(R, T) R) R {
-	for v := range s {
-		acc = f(acc, v)
+func AglIteratorReduce[T, R any](it Iterator[T], acc R, f func(R, T) R) R {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		acc = f(acc, v.Unwrap())
 	}
 	return acc
 }
 
-func AglSequenceReduceInto[T, R any](s Sequence[T], acc R, f func(*R, T) AglVoid) R {
-	for v := range s {
-		f(&acc, v)
+func AglIteratorReduceInto[T, R any](it Iterator[T], acc R, f func(*R, T) AglVoid) R {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		f(&acc, v.Unwrap())
 	}
 	return acc
 }
@@ -631,7 +649,7 @@ func AglSequenceSorted[T cmp.Ordered](s Sequence[T]) []T {
 	return slices.Sorted(iter.Seq[T](s))
 }
 
-func AglSequenceJoined(s Sequence[string], sep string) string {
+func AglIteratorJoined(s Iterator[string], sep string) string {
 	return strings.Join(AglBuildArray(s), sep)
 }
 
@@ -649,18 +667,33 @@ func (v AglVecEq[T]) __EQ(rhs AglVecEq[T]) bool {
 	return true
 }
 
+type IterVec[T any] struct {
+	next func() (T, bool)
+	stop func()
+}
+
+func (i *IterVec[T]) Next() Option[T] {
+	e, ok := i.next()
+	if !ok {
+		return MakeOptionNone[T]()
+	}
+	return MakeOptionSome(e)
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
 
-func (v AglVec[T]) Iter() Sequence[T] {
-	return func(yield func(T) bool) {
+func (v AglVec[T]) Iter() Iterator[T] {
+	seq := func(yield func(T) bool) {
 		for _, e := range v {
 			if !yield(e) {
 				return
 			}
 		}
 	}
+	next, stop := iter.Pull(seq)
+	return &IterVec[T]{next: next, stop: stop}
 }
 
 func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
@@ -675,7 +708,7 @@ func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
 	return true
 }
 
-func AglVecIter[T any](v AglVec[T]) Sequence[T] {
+func AglVecIter[T any](v AglVec[T]) Iterator[T] {
 	return v.Iter()
 }
 
@@ -960,13 +993,11 @@ type IntoIterator[T any] interface {
 }
 
 type Iterator[T any] interface {
-	Iter() Sequence[T]
-	//Next() Option[T]
+	Next() Option[T]
 }
 
 type DoubleEndedIterator[T any] interface {
 	Iterator[T]
-	Next() Option[T]
 	NextBack() Option[T]
 }
 
@@ -1001,43 +1032,136 @@ func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 }
 
 func AglIteratorAllSatisfy[T any, I Iterator[T]](it I, pred func(T) bool) bool {
-	return AglSequenceAllSatisfy(it.Iter(), pred)
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		if !pred(v.Unwrap()) {
+			return false
+		}
+	}
+	return true
 }
 
 func AglIteratorContains[T comparable, I Iterator[T]](it I, el T) bool {
-	return AglSequenceContains(it.Iter(), el)
+	return AglIteratorContainsWhere(it, func(v T) bool { return el == v })
+}
+
+func AglIteratorContainsWhere[T any, I Iterator[T]](it I, f func(T) bool) bool {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		if f(v.Unwrap()) {
+			return true
+		}
+	}
+	return false
 }
 
 func AglIteratorForEach[T any, I Iterator[T]](it I, f func(T) AglVoid) {
-	AglSequenceForEach(it.Iter(), f)
-}
-
-func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) Iterator[T] {
-	return AglSequenceFilter(it.Iter(), f)
-}
-
-func AglIteratorMap[T, R any, I Iterator[T]](it I, f func(T) R) Sequence[R] {
-	return func(yield func(R) bool) {
-		for v := range it.Iter() {
-			if !yield(f(v)) {
-				return
-			}
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
 		}
+		f(v.Unwrap())
 	}
 }
 
-func (s AglSet[T]) Iter() Sequence[T] {
-	return func(yield func(T) bool) {
+type Filter[T any] struct {
+	iter      Iterator[T]
+	predicate func(T) bool
+}
+
+func (i *Filter[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
+		if i.predicate(n.Unwrap()) {
+			return n
+		}
+	}
+	return MakeOptionNone[T]()
+}
+
+func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) *Filter[T] {
+	return &Filter[T]{iter: it, predicate: f}
+}
+
+type TakeWhile[T any] struct {
+	iter      Iterator[T]
+	predicate func(T) bool
+}
+
+func (i *TakeWhile[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() || !i.predicate(n.Unwrap()) {
+			break
+		}
+		return n
+	}
+	return MakeOptionNone[T]()
+}
+
+// AglIteratorTakeWhile creates an iterator that yields elements based on a predicate.
+func AglIteratorTakeWhile[T any](it Iterator[T], f func(T) bool) *TakeWhile[T] {
+	return &TakeWhile[T]{iter: it, predicate: f}
+}
+
+type Map[T, R any] struct {
+	iter Iterator[T]
+	f    func(T) R
+}
+
+func (i *Map[T, R]) Next() Option[R] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
+		return MakeOptionSome(i.f(n.Unwrap()))
+	}
+	return MakeOptionNone[R]()
+}
+
+func AglIteratorMap[T, R any, I Iterator[T]](it I, f func(T) R) *Map[T, R] {
+	return &Map[T, R]{iter: it, f: f}
+}
+
+type IterSet[T comparable] struct {
+	s    AglSet[T]
+	next func() (T, bool)
+	stop func()
+}
+
+func (i *IterSet[T]) Next() Option[T] {
+	n, ok := i.next()
+	if !ok {
+		return MakeOptionNone[T]()
+	}
+	return MakeOptionSome[T](n)
+}
+
+func (s AglSet[T]) Iter() Iterator[T] {
+	seq := func(yield func(T) bool) {
 		for k := range s {
 			if !yield(k) {
 				return
 			}
 		}
 	}
+	next, stop := iter.Pull(seq)
+	return &IterSet[T]{s: s, next: next, stop: stop}
 }
 
-func AglSetIter[T comparable](s AglSet[T]) Sequence[T] {
-	return Sequence[T](s.Iter())
+func AglSetIter[T comparable](s AglSet[T]) Iterator[T] {
+	return s.Iter()
 }
 
 func (s AglSet[T]) String() string {
@@ -1060,46 +1184,44 @@ func AglSetLen[T comparable](s AglSet[T]) int {
 	return len(s)
 }
 
-func AglIterMin[T cmp.Ordered](it Sequence[T]) Option[T] {
-	var out T
-	first := true
-	for e := range it {
-		if first {
-			out = e
-			first = false
-		} else {
-			out = min(out, e)
-		}
-	}
-	if first {
+func AglIteratorMin[T cmp.Ordered](it Iterator[T]) Option[T] {
+	v := it.Next()
+	if v.IsNone() {
 		return MakeOptionNone[T]()
+	}
+	out := v.Unwrap()
+	for {
+		v = it.Next()
+		if v.IsNone() {
+			break
+		}
+		out = min(out, v.Unwrap())
 	}
 	return MakeOptionSome(out)
 }
 
-func AglIterMax[T cmp.Ordered](it Sequence[T]) Option[T] {
-	var out T
-	first := true
-	for e := range it {
-		if first {
-			out = e
-			first = false
-		} else {
-			out = max(out, e)
-		}
-	}
-	if first {
+func AglIteratorMax[T cmp.Ordered](it Iterator[T]) Option[T] {
+	v := it.Next()
+	if v.IsNone() {
 		return MakeOptionNone[T]()
+	}
+	out := v.Unwrap()
+	for {
+		v = it.Next()
+		if v.IsNone() {
+			break
+		}
+		out = max(out, v.Unwrap())
 	}
 	return MakeOptionSome(out)
 }
 
 func AglSetMin[T cmp.Ordered](s AglSet[T]) Option[T] {
-	return AglIterMin(s.Iter())
+	return AglIteratorMin(s.Iter())
 }
 
 func AglSetMax[T cmp.Ordered](s AglSet[T]) Option[T] {
-	return AglIterMax(s.Iter())
+	return AglIteratorMax(s.Iter())
 }
 
 // AglSetEquals returns a Boolean value indicating whether two sets have equal elements.
@@ -1200,15 +1322,15 @@ func AglSetFirstWhere[T comparable](s AglSet[T], predicate func(T) bool) (out Op
 //}
 
 func AglSetMap[T comparable, R any](s AglSet[T], f func(T) R) []R {
-	return AglSequenceMap(s.Iter(), f)
+	return AglBuildArray(AglIteratorMap(s.Iter(), f))
 }
 
 func AglSetForEach[T comparable](s AglSet[T], f func(T) AglVoid) {
-	AglSequenceForEach(s.Iter(), f)
+	AglIteratorForEach(s.Iter(), f)
 }
 
 func AglSetFilter[T comparable](s AglSet[T], pred func(T) bool) AglSet[T] {
-	return AglBuildSet(AglSequenceFilter(s.Iter(), pred))
+	return AglBuildSet(AglIteratorFilter(s.Iter(), pred))
 }
 
 // AglSetUnion returns a new set with the elements of both this set and the given sequence.
@@ -1217,9 +1339,10 @@ func AglSetUnion[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	for k := range s {
 		newSet[k] = struct{}{}
 	}
-	for k := range other.Iter() {
+	AglIteratorForEach(other, func(k T) AglVoid {
 		newSet[k] = struct{}{}
-	}
+		return AglVoid{}
+	})
 	return newSet
 }
 
@@ -1235,16 +1358,18 @@ func AglSetSubtracting[T comparable](s AglSet[T], other Iterator[T]) AglSet[T] {
 	for k := range s {
 		newSet[k] = struct{}{}
 	}
-	for k := range other.Iter() {
+	AglIteratorForEach(other, func(k T) AglVoid {
 		delete(newSet, k)
-	}
+		return AglVoid{}
+	})
 	return newSet
 }
 
 func AglSetSubtract[T comparable](s AglSet[T], other Iterator[T]) {
-	for k := range other.Iter() {
+	AglIteratorForEach(other, func(k T) AglVoid {
 		delete(s, k)
-	}
+		return AglVoid{}
+	})
 }
 
 // AglSetIntersection returns a new set with the elements that are common to both this set and the given sequence.
@@ -1285,13 +1410,14 @@ func AglSetSymmetricDifference[T comparable](s, other AglSet[T]) AglSet[T] {
 
 // AglSetFormSymmetricDifference removes the elements of the set that are also in the given sequence and adds the members of the sequence that are not already in the set.
 func AglSetFormSymmetricDifference[T comparable](s AglSet[T], other Iterator[T]) {
-	for k := range other.Iter() {
+	AglIteratorForEach(other, func(k T) AglVoid {
 		if _, ok := s[k]; !ok {
 			s[k] = struct{}{}
 		} else {
 			delete(s, k)
 		}
-	}
+		return AglVoid{}
+	})
 }
 
 // AglSetIsSubset returns a Boolean value that indicates whether the set is a subset of the given sequence.
@@ -1326,8 +1452,12 @@ func AglSetIsStrictSubset[T comparable](s, other AglSet[T]) bool {
 // Return: true if the set is a superset of other; otherwise, false.
 // Set A is a superset of another set B if every member of B is also a member of A.
 func AglSetIsSuperset[T comparable](s AglSet[T], other Iterator[T]) bool {
-	for k := range other.Iter() {
-		if _, ok := s[k]; !ok {
+	for {
+		v := other.Next()
+		if v.IsNone() {
+			break
+		}
+		if _, ok := s[v.Unwrap()]; !ok {
 			return false
 		}
 	}
@@ -1354,14 +1484,11 @@ func AglSetIsStrictSuperset[T comparable](s, other AglSet[T]) bool {
 // Return: true if the set has no elements in common with other; otherwise, false.
 func AglSetIsDisjoint[T comparable](s AglSet[T], other Iterator[T]) bool {
 	var otherSet AglSet[T]
-	if v, ok := other.(AglSet[T]); ok {
-		otherSet = v
-	} else {
-		otherSet = make(AglSet[T])
-		for e := range other.Iter() {
-			otherSet[e] = struct{}{}
-		}
-	}
+	otherSet = make(AglSet[T])
+	AglIteratorForEach(other, func(e T) AglVoid {
+		otherSet[e] = struct{}{}
+		return AglVoid{}
+	})
 	for k := range s {
 		if _, ok := otherSet[k]; ok {
 			return false
@@ -1901,20 +2028,28 @@ func AglU32String(v uint32) string { return strconv.FormatUint(uint64(v), 10) }
 func AglU64String(v uint64) string { return strconv.FormatUint(uint64(v), 10) }
 
 func AglIn[T comparable](e T, it Iterator[T]) bool {
-	return AglSequenceContains(it.Iter(), e)
+	return AglIteratorContains(it, e)
 }
 
 func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {
 	out = make(AglSet[T])
-	for el := range it.Iter() {
-		AglSetInsert(out, el)
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		AglSetInsert(out, v.Unwrap())
 	}
 	return
 }
 
 func AglBuildArray[T any](it Iterator[T]) (out []T) {
-	for el := range it.Iter() {
-		out = append(out, el)
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		out = append(out, v.Unwrap())
 	}
 	return
 }

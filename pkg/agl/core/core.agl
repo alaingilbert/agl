@@ -3,16 +3,6 @@ package main
 import "math/rand"
 import "iter"
 
-func (v agl1.Vec[T]) Iter() Sequence[T] {
-	return func(yield func(T) bool) {
-		for _, e := range v {
-			if !yield(e) {
-				return
-			}
-		}
-	}
-}
-
 func (v agl1.Vec[T]) Enumerated() [](int, T) {
 	mut out := make([](int, T), 0)
 	for i := range v {
