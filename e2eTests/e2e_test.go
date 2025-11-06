@@ -565,3 +565,15 @@ func main() {
 }`
 	tassert.Equal(t, "15\n[[1] [2] [3] [4] [5]]\n", testGenOutput(src))
 }
+
+func Test36(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    a := []int{1, 2, 3, 4}
+    it := a.Iter()
+    print(Array(it.TakeWhile({ $0 != 3 })))
+    print(Array(it.TakeWhile({ $0 != 3 })))
+}`
+	tassert.Equal(t, "[1 2]\n[4]\n", testGenOutput(src))
+}
