@@ -8803,19 +8803,10 @@ func main() {
 	expected := `// agl:generated
 package main
 func AglPub_test(a []int) {
-	AglVecIter_T_int(a)
+	AglVecIter[int](a)
 }
 func main() {
 	AglPub_test([]int{1, 2})
-}
-func AglVecIter_T_int(v []int) Sequence[int] {
-	return func(yield func(int) bool) {
-		for _, e := range v {
-			if !yield(e) {
-				return
-			}
-		}
-	}
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -10332,7 +10323,7 @@ import "fmt"
 func main() {
 	for _, el := range []int{1, 2, 3} {
 	}
-	for el := range (AglSet[int]{1: {}, 2: {}, 3: {}}).Iter() {
+	for el := range (AglSet[int]{1: {}, 2: {}, 3: {}}) {
 	}
 	for k, v := range map[int]int{1: 1, 2: 2, 3: 3} {
 	}
@@ -11383,34 +11374,6 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	testCodeGen2(t, expected, test)
-}
-
-func TestCodeGen367(t *testing.T) {
-	src := `package main
-func main() {
-	for e := range []int{1, 2, 3}.Iter() {
-	}
-}`
-	expected := `// agl:generated
-package main
-func main() {
-	for e := range AglVecIter_T_int([]int{1, 2, 3}) {
-	}
-}
-func AglVecIter_T_int(v []int) Sequence[int] {
-	return func(yield func(int) bool) {
-		for _, e := range v {
-			if !yield(e) {
-				return
-			}
-		}
-	}
-}
-`
-	test := NewTest(src, WithMutEnforced(true))
-	tassert.Equal(t, 0, len(test.errs))
-	//tassert.Equal(t, "func ([]int) Iter() iter.Seq[int]", test.TypeAt(3, 32).String()) // TODO
 	testCodeGen2(t, expected, test)
 }
 
@@ -14781,7 +14744,7 @@ func main() {
 package main
 func main() {
 	m := map[int]int{1: 1, 2: 2, 3: 3}
-	a := AglVecSorted(AglBuildArray(AglIdentity(AglMapKeys(m))))
+	a := AglVecSorted(AglBuildArray(AglIdentity(AglMapKeys(m)).Iter()))
 	AglPrint(a)
 }
 `

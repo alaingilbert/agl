@@ -1095,7 +1095,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.ForEach", "func[T any] (it Iterator[T], f func(T))")
 		e.DefineFn(nenv, "agl1.Iterator.Filter", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.TakeWhile", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
-		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Sequence[R]")
+		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Iterator[R]")
 	})
 }
 
@@ -1258,7 +1258,9 @@ func (e *Env) defineHelper(n ast.Node, name string, typ types.Type, force bool, 
 		t := e.GetDirect(name)
 		if t != nil {
 			//p("?", name, t, e.ID)
-			//return fmt.Errorf("duplicate declaration of %s", name)
+			// If the name is already defined, don't overwrite it
+			// This ensures that agl1 packages take precedence over std packages
+			return nil
 		}
 	}
 	info := e.GetOrCreateNameInfo(name)
