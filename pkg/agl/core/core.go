@@ -1019,6 +1019,17 @@ type DoubleEndedIterator[T any] interface {
 	NextBack() Option[T]
 }
 
+type ExactSizeIterator[T any] interface {
+	Iterator[T]
+	Len() int
+	IsEmpty() bool
+}
+
+type DoubleEndedExactSizeIterator[T any] interface {
+	DoubleEndedIterator[T]
+	ExactSizeIterator[T]
+}
+
 type Rev[T any] struct {
 	it DoubleEndedIterator[T]
 }
