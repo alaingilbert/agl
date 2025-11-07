@@ -15091,6 +15091,30 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen490(t *testing.T) {
+	src := `package main
+func main() {
+    a := set[int]{1, 2, 3, 4}
+    it := a.Iter()
+    var arr []int = Array(it.TakeWhile({ $0 != 3 }))
+    print(arr)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := AglSet[int]{1: {}, 2: {}, 3: {}, 4: {}}
+	it := AglSetIter(a)
+	var arr []int = AglBuildArray(AglIteratorTakeWhile[int](it, func(aglArg0 int) bool {
+		return aglArg0 != 3
+	}))
+	AglPrint(arr)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
