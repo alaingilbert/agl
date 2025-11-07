@@ -688,6 +688,13 @@ func (v AglVecEq[T]) __EQ(rhs AglVecEq[T]) bool {
 type IterVec[T any] struct {
 	next func() (T, bool)
 	stop func()
+
+func (i *IterVec[T]) Len() int {
+	return len(i.v)
+}
+
+func (i *IterVec[T]) IsEmpty() bool {
+	return i.Len() == 0
 }
 
 func (i *IterVec[T]) Next() Option[T] {
