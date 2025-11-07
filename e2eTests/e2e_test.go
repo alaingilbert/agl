@@ -582,7 +582,7 @@ func Test37(t *testing.T) {
 	t.Parallel()
 	src := `package main
 func main() {
-    a := []string{"1", "2"}
+    a := []int{1, 2}
     it := a.Iter().Cycle()
     for _ in 0..5 {
         print(it.Next()?)
