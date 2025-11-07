@@ -2624,16 +2624,7 @@ func (g *Generator) genCallExprIdent(expr *ast.CallExpr, x *ast.Ident) GenFrag {
 				// Sets have an Iter() method that returns Iterator[T]
 				out += c1.F() + e(".Iter()")
 			} else if structT, ok := arg0T.(types.StructType); ok && structT.Name == "Sequence" && len(structT.TypeParams) > 0 {
-				// Sequence[T] is iter.Seq[T], convert it to Iterator[T] via iter.Pull
-				// Need to import "iter" package
-				if g.imports == nil {
-					g.imports = make(map[string]*ast.ImportSpec)
-				}
-				g.imports[`"iter"`] = &ast.ImportSpec{
-					Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
-				}
-				elemType := structT.TypeParams[0].GoStrType()
-				out += e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + c1.F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
+				out += c1.F() + e(".Iter()")
 			} else {
 				out += c1.F()
 			}
@@ -2947,28 +2938,8 @@ afterUnwrap4:
 					// Extract T from the yield function parameter
 					if len(v.Params) > 0 {
 						if yieldFn, ok := v.Params[0].(types.FuncType); ok && len(yieldFn.Params) > 0 {
-							elemType := yieldFn.Params[0].GoStrType()
-							if g.imports == nil {
-								g.imports = make(map[string]*ast.ImportSpec)
-							}
-							g.imports[`"iter"`] = &ast.ImportSpec{
-								Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
-							}
-							return e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + g.genExpr(arg0).F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
+							return g.genExpr(arg0).F() + e(".Iter()")
 						}
-					}
-					return g.genExpr(arg0).F()
-				case types.StructType:
-					if v.Name == "Sequence" && len(v.TypeParams) > 0 {
-						// Sequence[T] needs to be converted to Iterator[T]
-						elemType := v.TypeParams[0].GoStrType()
-						if g.imports == nil {
-							g.imports = make(map[string]*ast.ImportSpec)
-						}
-						g.imports[`"iter"`] = &ast.ImportSpec{
-							Path: &ast.BasicLit{Kind: token.STRING, Value: `"iter"`},
-						}
-						return e("func() Iterator["+elemType+"] { next, stop := iter.Pull(iter.Seq["+elemType+"](") + g.genExpr(arg0).F() + e(")); return &IterVec["+elemType+"]{next: next, stop: stop} }()")
 					}
 					return g.genExpr(arg0).F()
 				default:

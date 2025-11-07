@@ -358,8 +358,26 @@ func (v *VecIter[T]) Next() Option[T] {
 	return MakeOptionSome(res)
 }
 
+type SeqIter[T any] struct {
+	next func() (T, bool)
+	stop func()
+}
+
+func (s *SeqIter[T]) Next() Option[T] {
+	e, ok := s.next()
+	if !ok {
+		return MakeOptionNone[T]()
+	}
+	return MakeOptionSome(e)
+}
+
 // Sequence anything that can be turned into an Iterator
 type Sequence[T any] iter.Seq[T]
+
+func (s Sequence[T]) Iter() Iterator[T] {
+	next, stop := iter.Pull(iter.Seq[T](s))
+	return &SeqIter[T]{next: next, stop: stop}
+}
 
 func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	for e := range s {
