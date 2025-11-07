@@ -1859,6 +1859,20 @@ func (infer *FileInferrer) langFns(expr *ast.CallExpr, call *ast.Ident) {
 			infer.errorf(arg0, "%v", to(arg0T))
 			return
 		}
+	case "delete":
+		fnT := infer.env.GetFn("delete")
+		arg0 := expr.Args[0]
+		arg0T := infer.GetType2(arg0)
+		arg0T = types.Unwrap(arg0T)
+		switch v := arg0T.(type) {
+		case types.MapType:
+			fnT = fnT.T("K", v.K).T("V", v.V)
+			infer.SetType(expr.Fun, fnT)
+			infer.SetType(expr, fnT.Return)
+		default:
+			infer.errorf(arg0, "delete expects map type, got %v", to(arg0T))
+			return
+		}
 	case "abs":
 		info := infer.env.GetNameInfo("abs")
 		fnT := infer.env.GetFn("abs")
