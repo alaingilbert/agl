@@ -2723,6 +2723,10 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
+		case "Joined":
+			return GenFrag{F: func() string {
+				return e("AglIterator"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		default:
 			// Fallback: call method directly (may not work for all interfaces)
 			argFrags := g.genExprs(expr.Args)
