@@ -614,3 +614,17 @@ func main() {
 }`
 	tassert.Equal(t, "1 2\n3 4\n5 6\n", testGenOutput(src))
 }
+
+func Test40(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    a1 := []int{1, 2, 3}
+	assertEq(a1.Iter().Sum(), int(6))
+	a2 := []u8{255, 10}
+	assertEq(a2.Iter().Sum(), u8(9))
+	a3 := []u8{255, 10}
+	assertEq(a3.Iter().Sum[int](), int(265))
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

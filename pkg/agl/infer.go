@@ -1494,6 +1494,22 @@ afterUnwrap3:
 			}
 		}
 
+		// Special handling for Sum method: default R to T when no explicit type arg
+		if fnName == "Sum" {
+			if infer.indexValue != nil {
+				fnT = fnT.T("R", infer.indexValue)
+			}
+			if infer.indexValue == nil && len(idTT.TypeParams) > 0 {
+				// Get the element type T
+				typeParam := idTT.TypeParams[0]
+				if genType, ok := typeParam.(types.GenericType); ok {
+					typeParam = genType.W
+				}
+				// Substitute R with T
+				fnT = fnT.T("R", typeParam)
+			}
+		}
+
 		tr := fnT.Return
 		infer.SetType(call.Sel, fnT)
 		infer.SetType(call, tr)

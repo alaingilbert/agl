@@ -1102,6 +1102,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Iterator[R]")
 		e.DefineFn(nenv, "agl1.Iterator.Count", "func [T any](it Iterator[T]) int")
 		e.DefineFn(nenv, "agl1.Iterator.Cycle", "func [T any](it CloneIterator[T]) Iterator[T]")
+		e.DefineFn(nenv, "agl1.Iterator.Sum", "func [T, R Number](it Iterator[T]) R")
 	})
 }
 

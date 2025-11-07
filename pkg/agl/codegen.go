@@ -2727,6 +2727,14 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
 			}}
+		case "Sum":
+			// Get the function type to extract the return type R
+			// This is set by type inference and handles both default (R=T) and explicit type args (Sum[R]())
+			fnT := g.env.GetType(x.Sel).(types.FuncType)
+			retT := fnT.Return.GoStrType()
+			return GenFrag{F: func() string {
+				return e("AglIteratorSum["+tType+", "+retT+"](") + genEX() + e(")")
+			}}
 		case "Cycle":
 			return GenFrag{F: func() string {
 				return e("AglIteratorCycle["+tType+"](") + genEX() + e(")")
@@ -4087,12 +4095,12 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 								optTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 								out += e(g.prefix) + e(iterTmp) + e(" := ") + c1.F() + e("\n")
 								out += e(g.prefix + "for {\n")
-								out += e(g.prefix + "\t") + e(optTmp) + e(" := ") + e(iterTmp) + e(".Next()\n")
-								out += e(g.prefix + "\t") + e("if ") + e(optTmp) + e(".IsNone() {\n")
+								out += e(g.prefix+"\t") + e(optTmp) + e(" := ") + e(iterTmp) + e(".Next()\n")
+								out += e(g.prefix+"\t") + e("if ") + e(optTmp) + e(".IsNone() {\n")
 								out += e(g.prefix + "\t\tbreak\n")
 								out += e(g.prefix + "\t}\n")
 								varName := v.X.(*ast.Ident).Name
-								out += e(g.prefix + "\t") + e(varName) + e(" := ") + e(optTmp) + e(".Unwrap()\n")
+								out += e(g.prefix+"\t") + e(varName) + e(" := ") + e(optTmp) + e(".Unwrap()\n")
 							} else {
 								panic(fmt.Sprintf("unexpected interface type: %s", vv.Name))
 							}
