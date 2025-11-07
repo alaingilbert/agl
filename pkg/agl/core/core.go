@@ -1039,6 +1039,11 @@ type Iterator[T any] interface {
 	Next() Option[T]
 }
 
+type CloneIterator[T any] interface {
+	Iterator[T]
+	Clone() CloneIterator[T]
+}
+
 type DoubleEndedIterator[T any] interface {
 	Iterator[T]
 	NextBack() Option[T]
