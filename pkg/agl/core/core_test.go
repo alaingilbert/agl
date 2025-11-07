@@ -184,7 +184,7 @@ func TestAglIteratorMap(t *testing.T) {
 
 func TestAglIteratorMin(t *testing.T) {
 	arr := []int{1, 2, 3, 4}
-	tassert.Equal(t, 1, AglIteratorMin(AglVec[int](arr).Iter()).Unwrap())
+	tassert.Equal(t, 1, AglIteratorMin[int](AglVec[int](arr).Iter()).Unwrap())
 	s := AglSet[int]{4: struct{}{}, 2: struct{}{}, 3: struct{}{}}
 	tassert.Equal(t, 2, AglIteratorMin(s.Iter()).Unwrap())
 }
@@ -197,7 +197,7 @@ func TestAglIteratorAllSatisfy(t *testing.T) {
 
 func TestAglIteratorTake(t *testing.T) {
 	arr := []int{1, 2, 3}
-	it := AglIteratorTake(AglVec[int](arr).Iter(), 2)
+	it := AglIteratorTake[int](AglVec[int](arr).Iter(), 2)
 	tassert.Equal(t, 1, it.Next().Unwrap())
 	tassert.Equal(t, 2, it.Next().Unwrap())
 	tassert.True(t, it.Next().IsNone())
@@ -205,7 +205,7 @@ func TestAglIteratorTake(t *testing.T) {
 
 func TestAglIteratorSkip(t *testing.T) {
 	arr := []int{1, 2, 3}
-	it := AglIteratorSkip(AglVec[int](arr).Iter(), 2)
+	it := AglIteratorSkip[int](AglVec[int](arr).Iter(), 2)
 	tassert.Equal(t, 3, it.Next().Unwrap())
 	tassert.True(t, it.Next().IsNone())
 }
@@ -217,4 +217,11 @@ func TestAglIteratorSkipWhile(t *testing.T) {
 	tassert.Equal(t, 1, it.Next().Unwrap())
 	tassert.Equal(t, -2, it.Next().Unwrap())
 	tassert.True(t, it.Next().IsNone())
+}
+
+func TestAglIteratorRPosition(t *testing.T) {
+	arr := []int{1, 2, 3}
+	it := AglVec[int](arr).Iter()
+	tassert.Equal(t, 2, AglIteratorRPosition(it, func(e int) bool { return e == 3 }).Unwrap())
+	tassert.True(t, AglIteratorRPosition(it, func(e int) bool { return e == 5 }).IsNone())
 }

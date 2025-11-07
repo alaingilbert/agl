@@ -601,6 +601,21 @@ func AglSequencePosition[T any](s Sequence[T], f func(T) bool) Option[int] {
 	return MakeOptionNone[int]()
 }
 
+func AglIteratorRPosition[T any, I DoubleEndedExactSizeIterator[T]](it I, f func(T) bool) Option[int] {
+	pos := 0
+	for {
+		v := it.NextBack()
+		if v.IsNone() {
+			break
+		}
+		if f(v.Unwrap()) {
+			return MakeOptionSome(it.Len() - 1 - pos)
+		}
+		pos++
+	}
+	return MakeOptionNone[int]()
+}
+
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
 	return AglSequenceContainsWhere(s, func(t T) bool { return t == e })
 }
