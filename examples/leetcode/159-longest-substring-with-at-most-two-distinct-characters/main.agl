@@ -7,7 +7,7 @@ func lengthOfLongestSubstringTwoDistinct(s string) int {
     if n < 3 {
         return n
     }
-    for left < s.Len() && right < s.Len() {
+    for right < n {
         m[s[right]] = right
         right++
         if m.Len() > 2 {
