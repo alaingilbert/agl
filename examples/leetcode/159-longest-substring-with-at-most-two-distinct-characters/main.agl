@@ -1,0 +1,40 @@
+package main
+
+func lengthOfLongestSubstringTwoDistinct(s string) int {
+    mut m := make(map[byte]int)
+    mut p1, mut p2, mut ans := 0, 0, 0
+    if s == "" {
+        return ans
+    }
+    if s.Len() == 1 {
+        return 1
+    }
+    m[s[p1]]++
+    for p1 < s.Len() && p2 < s.Len() {
+        if m.Len() <= 2 {
+            p2++
+            if p2 >= s.Len() {
+                break
+            }
+            m[s[p2]]++
+        } else if m.Len() > 2 {
+            c := s[p1]
+            m[c]--
+            if m[c] == 0 {
+                delete(m, c)
+            }
+            p1++
+        }
+        if m.Len() <= 2 {
+            ans = max(ans, p2-p1+1)
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(lengthOfLongestSubstringTwoDistinct(""), 0)
+    assertEq(lengthOfLongestSubstringTwoDistinct("a"), 1)
+    assertEq(lengthOfLongestSubstringTwoDistinct("eceba"), 3)
+    assertEq(lengthOfLongestSubstringTwoDistinct("ccaabbb"), 5)
+}
