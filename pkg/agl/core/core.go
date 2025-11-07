@@ -720,7 +720,7 @@ type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
 
-func (v AglVec[T]) Iter() Iterator[T] {
+func (v AglVec[T]) Iter() *IterVec[T] {
 	seq := func(yield func(T) bool) {
 		for _, e := range v {
 			if !yield(e) {
