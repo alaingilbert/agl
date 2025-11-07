@@ -209,3 +209,12 @@ func TestAglIteratorSkip(t *testing.T) {
 	tassert.Equal(t, 3, it.Next().Unwrap())
 	tassert.True(t, it.Next().IsNone())
 }
+
+func TestAglIteratorSkipWhile(t *testing.T) {
+	arr := []int{-1, 0, 1, -2}
+	it := AglIteratorSkipWhile(AglVec[int](arr).Iter(), func(e int) bool { return e < 0 })
+	tassert.Equal(t, 0, it.Next().Unwrap())
+	tassert.Equal(t, 1, it.Next().Unwrap())
+	tassert.Equal(t, -2, it.Next().Unwrap())
+	tassert.True(t, it.Next().IsNone())
+}

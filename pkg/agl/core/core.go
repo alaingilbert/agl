@@ -1164,12 +1164,12 @@ type Skip[T any] struct {
 func (i *Skip[T]) Next() Option[T] {
 	for {
 		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
 		if i.i < i.n {
 			i.i++
 			continue
-		}
-		if n.IsNone() {
-			break
 		}
 		return n
 	}
@@ -1179,6 +1179,32 @@ func (i *Skip[T]) Next() Option[T] {
 // AglIteratorSkip creates an iterator that skips the first n elements.
 func AglIteratorSkip[T any](it Iterator[T], n int) *Skip[T] {
 	return &Skip[T]{iter: it, n: n}
+}
+
+type SkipWhile[T any] struct {
+	iter      Iterator[T]
+	predicate func(T) bool
+	found     bool
+}
+
+func (i *SkipWhile[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
+		if i.predicate(n.Unwrap()) && !i.found {
+			continue
+		}
+		i.found = true
+		return n
+	}
+	return MakeOptionNone[T]()
+}
+
+// AglIteratorSkipWhile creates an iterator that skips elements based on a predicate.
+func AglIteratorSkipWhile[T any](it Iterator[T], f func(T) bool) *SkipWhile[T] {
+	return &SkipWhile[T]{iter: it, predicate: f}
 }
 
 type Map[T, R any] struct {
