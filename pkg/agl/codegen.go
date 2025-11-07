@@ -3184,6 +3184,16 @@ afterUnwrap4:
 		case "Keys", "Values":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglIdentity(AglMap"+fnName+"(") + c1.F() + e("))") }}
+		case "Iter":
+			c1 := g.genExpr(x.X)
+			xT := g.env.GetType(x.X)
+			if mapT, ok := types.Unwrap(xT).(types.MapType); ok {
+				kType := mapT.K.GoStr()
+				vType := mapT.V.GoStr()
+				return GenFrag{F: func() string {
+					return e("AglMap[") + e(kType) + e(", ") + e(vType) + e("](") + c1.F() + e(").Iter()")
+				}}
+			}
 		case "Filter":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])

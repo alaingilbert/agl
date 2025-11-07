@@ -787,9 +787,34 @@ type DictEntry[K comparable, V any] struct {
 	Value V
 }
 
+type IterMap[K comparable, V any] struct {
+	m    map[K]V
+	next func() (DictEntry[K, V], bool)
+	stop func()
+}
+
+func (i *IterMap[K, V]) Next() Option[DictEntry[K, V]] {
+	e, ok := i.next()
+	if !ok {
+		i.stop()
+		return MakeOptionNone[DictEntry[K, V]]()
+	}
+	return MakeOptionSome(e)
+}
+
 type AglMap[K comparable, V any] map[K]V
 
-func (m AglMap[K, V]) Iter() Sequence[K] { return AglMapKeys(m) }
+func (m AglMap[K, V]) Iter() Iterator[DictEntry[K, V]] {
+	seq := func(yield func(DictEntry[K, V]) bool) {
+		for k := range m {
+			if !yield(DictEntry[K, V]{Key: k, Value: m[k]}) {
+				return
+			}
+		}
+	}
+	next, stop := iter.Pull(seq)
+	return &IterMap[K, V]{m: m, next: next, stop: stop}
+}
 
 func (m AglMap[K, V]) Len() int { return len(m) }
 

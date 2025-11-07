@@ -602,3 +602,15 @@ func main() {
 }`
 	tassert.Equal(t, "1\n2\n3\n", testGenOutput(src))
 }
+
+func Test39(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    m := map[int]int{1: 2, 3: 4, 5: 6}
+    for e in m.Iter() {
+        print(e.Key, e.Value)
+    }
+}`
+	tassert.Equal(t, "1 2\n3 4\n5 6\n", testGenOutput(src))
+}
