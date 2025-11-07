@@ -8,15 +8,12 @@ func lengthOfLongestSubstringTwoDistinct(s string) int {
         return n
     }
     for left < s.Len() && right < s.Len() {
-        m[s[right]]++
+        m[s[right]] = right
         right++
         if m.Len() > 2 {
-            c := s[left]
-            m[c]--
-            if m[c] == 0 {
-                delete(m, c)
-            }
-            left++
+            delIdx := m.Values().Min()?
+            delete(m, s[delIdx])
+            left = delIdx + 1
         }
         ans = max(ans, right-left)
     }
