@@ -1111,6 +1111,29 @@ func AglIteratorFilter[T any, I Iterator[T]](it I, f func(T) bool) *Filter[T] {
 	return &Filter[T]{iter: it, predicate: f}
 }
 
+type Take[T any] struct {
+	iter Iterator[T]
+	n    int
+	i    int
+}
+
+func (i *Take[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() || i.i >= i.n {
+			break
+		}
+		i.i++
+		return n
+	}
+	return MakeOptionNone[T]()
+}
+
+// AglIteratorTake creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
+func AglIteratorTake[T any](it Iterator[T], n int) *Take[T] {
+	return &Take[T]{iter: it, n: n}
+}
+
 type TakeWhile[T any] struct {
 	iter      Iterator[T]
 	predicate func(T) bool

@@ -194,3 +194,11 @@ func TestAglIteratorAllSatisfy(t *testing.T) {
 	tassert.True(t, AglIteratorAllSatisfy(AglVec[int](arr).Iter(), func(e int) bool { return e > 0 }))
 	tassert.False(t, AglIteratorAllSatisfy(AglVec[int](arr).Iter(), func(e int) bool { return e > 2 }))
 }
+
+func TestAglIteratorTake(t *testing.T) {
+	arr := []int{1, 2, 3}
+	it := AglIteratorTake(AglVec[int](arr).Iter(), 2)
+	tassert.Equal(t, 1, it.Next().Unwrap())
+	tassert.Equal(t, 2, it.Next().Unwrap())
+	tassert.True(t, it.Next().IsNone())
+}
