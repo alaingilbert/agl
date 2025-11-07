@@ -12,7 +12,7 @@ func lengthOfLongestSubstringTwoDistinct(s string) int {
         right++
         if m.Len() > 2 {
             delIdx := m.Values().Min()?
-            delete(m, s[delIdx])
+            m.Remove(s[delIdx])
             left = delIdx + 1
         }
         ans = max(ans, right-left)
