@@ -1155,6 +1155,32 @@ func AglIteratorTakeWhile[T any](it Iterator[T], f func(T) bool) *TakeWhile[T] {
 	return &TakeWhile[T]{iter: it, predicate: f}
 }
 
+type Skip[T any] struct {
+	iter Iterator[T]
+	n    int
+	i    int
+}
+
+func (i *Skip[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if i.i < i.n {
+			i.i++
+			continue
+		}
+		if n.IsNone() {
+			break
+		}
+		return n
+	}
+	return MakeOptionNone[T]()
+}
+
+// AglIteratorSkip creates an iterator that skips the first n elements.
+func AglIteratorSkip[T any](it Iterator[T], n int) *Skip[T] {
+	return &Skip[T]{iter: it, n: n}
+}
+
 type Map[T, R any] struct {
 	iter Iterator[T]
 	f    func(T) R
