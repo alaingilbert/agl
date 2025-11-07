@@ -2,32 +2,23 @@ package main
 
 func lengthOfLongestSubstringTwoDistinct(s string) int {
     mut m := make(map[byte]int)
-    mut p1, mut p2, mut ans := 0, 0, 0
-    if s == "" {
-        return ans
+    mut left, mut right, mut ans := 0, 0, 0
+    n := s.Len()
+    if n < 3 {
+        return n
     }
-    if s.Len() == 1 {
-        return 1
-    }
-    m[s[p1]]++
-    for p1 < s.Len() && p2 < s.Len() {
-        if m.Len() <= 2 {
-            p2++
-            if p2 >= s.Len() {
-                break
-            }
-            m[s[p2]]++
-        } else if m.Len() > 2 {
-            c := s[p1]
+    for left < s.Len() && right < s.Len() {
+        m[s[right]]++
+        right++
+        if m.Len() > 2 {
+            c := s[left]
             m[c]--
             if m[c] == 0 {
                 delete(m, c)
             }
-            p1++
+            left++
         }
-        if m.Len() <= 2 {
-            ans = max(ans, p2-p1+1)
-        }
+        ans = max(ans, right-left)
     }
     return ans
 }
