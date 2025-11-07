@@ -2173,6 +2173,13 @@ func AglI64Abs(v int64) int64     { return int64(math.Abs(float64(v))) }
 func AglF32Abs(v float32) float32 { return float32(math.Abs(float64(v))) }
 func AglF64Abs(v float64) float64 { return math.Abs(v) }
 
+func AglIntCheckedDiv(v, d int) Option[int] {
+	if d == 0 {
+		return MakeOptionNone[int]()
+	}
+	return MakeOptionSome(v / d)
+}
+
 func AglIntString(v int) string    { return strconv.FormatInt(int64(v), 10) }
 func AglI8String(v int8) string    { return strconv.FormatInt(int64(v), 10) }
 func AglI16String(v int16) string  { return strconv.FormatInt(int64(v), 10) }
