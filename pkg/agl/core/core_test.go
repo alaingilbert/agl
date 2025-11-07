@@ -255,3 +255,10 @@ func TestAglIteratorMapWhile(t *testing.T) {
 	tassert.Equal(t, 4, it.Next().Unwrap())
 	tassert.True(t, it.Next().IsNone())
 }
+
+func TestAglIteratorCount(t *testing.T) {
+	arr := []int{1, 2, 3}
+	tassert.Equal(t, 3, AglIteratorCount[int](AglVec[int](arr).Iter()))
+	arr = []int{1, 2, 3, 4, 5}
+	tassert.Equal(t, 5, AglIteratorCount[int](AglVec[int](arr).Iter()))
+}

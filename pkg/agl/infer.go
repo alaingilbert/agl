@@ -1596,6 +1596,12 @@ afterUnwrap3:
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "Count":
+			info := infer.env.GetNameInfo("agl1.Iterator.Count")
+			fnT := infer.env.GetFn("agl1.Iterator.Count")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case "Filter":
 			info := infer.env.GetNameInfo("agl1.Iterator.Filter")
 			fnT := infer.env.GetFn("agl1.Iterator.Filter")

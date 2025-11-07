@@ -1315,6 +1315,19 @@ func AglIteratorMapWhile[T, R any](it Iterator[T], f func(T) Option[R]) *MapWhil
 	return &MapWhile[T, R]{iter: it, f: f}
 }
 
+// AglIteratorCount consumes the iterator, counting the number of iterations and returning it.
+func AglIteratorCount[T any](it Iterator[T]) int {
+	count := 0
+	for {
+		n := it.Next()
+		if n.IsNone() {
+			break
+		}
+		count++
+	}
+	return count
+}
+
 type IterSet[T comparable] struct {
 	s    AglSet[T]
 	next func() (T, bool)
