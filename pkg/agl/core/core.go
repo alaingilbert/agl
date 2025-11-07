@@ -390,6 +390,17 @@ func AglSequenceSum[T, R Number](s Sequence[T]) (out R) {
 	return out
 }
 
+func AglIteratorSum[T, R Number](it Iterator[T]) (out R) {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		out += R(v.Unwrap())
+	}
+	return out
+}
+
 func AglSequenceLen[T any](s Sequence[T]) (out int) {
 	for range s {
 		out++

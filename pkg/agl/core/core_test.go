@@ -262,3 +262,12 @@ func TestAglIteratorCount(t *testing.T) {
 	arr = []int{1, 2, 3, 4, 5}
 	tassert.Equal(t, 5, AglIteratorCount[int](AglVec[int](arr).Iter()))
 }
+
+func TestAglIteratorSum(t *testing.T) {
+	arr1 := []uint8{255, 10}
+	tassert.Equal(t, uint8(9), AglIteratorSum[uint8, uint8](AglVec[uint8](arr1).Iter()))
+	arr2 := []uint8{255, 10}
+	tassert.Equal(t, 265, AglIteratorSum[uint8, int](AglVec[uint8](arr2).Iter()))
+	arr3 := []int{255, 10}
+	tassert.Equal(t, 265, AglIteratorSum[int, int](AglVec[int](arr3).Iter()))
+}
