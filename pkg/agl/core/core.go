@@ -1291,6 +1291,30 @@ func AglIteratorMap[T, R any, I Iterator[T]](it I, f func(T) R) *Map[T, R] {
 	return &Map[T, R]{iter: it, f: f}
 }
 
+type MapWhile[T, R any] struct {
+	iter Iterator[T]
+	f    func(T) Option[R]
+}
+
+func (i *MapWhile[T, R]) Next() Option[R] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
+		res := i.f(n.Unwrap())
+		if res.IsNone() {
+			break
+		}
+		return res
+	}
+	return MakeOptionNone[R]()
+}
+
+func AglIteratorMapWhile[T, R any](it Iterator[T], f func(T) Option[R]) *MapWhile[T, R] {
+	return &MapWhile[T, R]{iter: it, f: f}
+}
+
 type IterSet[T comparable] struct {
 	s    AglSet[T]
 	next func() (T, bool)

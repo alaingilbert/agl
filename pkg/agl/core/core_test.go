@@ -247,3 +247,11 @@ func TestAglIteratorCycle(t *testing.T) {
 	tassert.Equal(t, 3, it.Next().Unwrap())
 	tassert.Equal(t, 1, it.Next().Unwrap())
 }
+
+func TestAglIteratorMapWhile(t *testing.T) {
+	arr := []int{-1, 4, 0, 1}
+	it := AglIteratorMapWhile(AglVec[int](arr).Iter(), func(e int) Option[int] { return AglIntCheckedDiv(16, e) })
+	tassert.Equal(t, -16, it.Next().Unwrap())
+	tassert.Equal(t, 4, it.Next().Unwrap())
+	tassert.True(t, it.Next().IsNone())
+}
