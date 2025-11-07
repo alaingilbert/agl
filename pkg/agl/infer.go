@@ -4302,6 +4302,19 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					infer.errorf(cond.Y, "unsupported type %v", to(yT))
 					return
 				}
+			case types.InterfaceType:
+				if v.Name == "Iterator" {
+					if len(v.TypeParams) > 0 {
+						t = v.TypeParams[0]
+						infer.SetType(cond.X, t)
+					} else {
+						infer.errorf(cond.Y, "Iterator must have type parameter")
+						return
+					}
+				} else {
+					infer.errorf(cond.Y, "unsupported interface type %v", v.Name)
+					return
+				}
 			default:
 				infer.errorf(cond.Y, "unsupported type %v", to(yT))
 				return

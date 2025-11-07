@@ -4070,6 +4070,22 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							} else {
 								panic("")
 							}
+						case types.InterfaceType:
+							if vv.Name == "Iterator" {
+								// Generate iterator loop using .Next() and .Unwrap()
+								iterTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+								optTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
+								out += e(g.prefix) + e(iterTmp) + e(" := ") + c1.F() + e("\n")
+								out += e(g.prefix + "for {\n")
+								out += e(g.prefix + "\t") + e(optTmp) + e(" := ") + e(iterTmp) + e(".Next()\n")
+								out += e(g.prefix + "\t") + e("if ") + e(optTmp) + e(".IsNone() {\n")
+								out += e(g.prefix + "\t\tbreak\n")
+								out += e(g.prefix + "\t}\n")
+								varName := v.X.(*ast.Ident).Name
+								out += e(g.prefix + "\t") + e(varName) + e(" := ") + e(optTmp) + e(".Unwrap()\n")
+							} else {
+								panic(fmt.Sprintf("unexpected interface type: %s", vv.Name))
+							}
 						default:
 							panic(fmt.Sprintf("%v", to(v.X)))
 						}

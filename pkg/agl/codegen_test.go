@@ -15135,6 +15135,34 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen492(t *testing.T) {
+	src := `package main
+func main() {
+    a := []int{1, 2, 3}
+    for e in a.Iter() {
+        print(e)
+    }
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	aglTmp1 := AglVecIter[int](a)
+	for {
+		aglTmp2 := aglTmp1.Next()
+		if aglTmp2.IsNone() {
+			break
+		}
+		e := aglTmp2.Unwrap()
+		AglPrint(e)
+	}
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
