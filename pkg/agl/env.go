@@ -1087,7 +1087,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "Sequence.Max", "func [T cmp.Ordered](s Sequence[T]) T?")
 		e.DefineFn(nenv, "Sequence.Min", "func [T cmp.Ordered](s Sequence[T]) T?")
 		e.DefineFn(nenv, "Sequence.TakeWhile", "func [T any](s Sequence[T], f func(T) bool) Sequence[T]")
-		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")
+		e.DefineFn(nenv, "Set", "func[T comparable] (it Iterator[T]) agl1.Set[T]")
 		e.DefineFn(nenv, "Array", "func[T any] (it Iterator[T]) []T")
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 		e.DefineFn(nenv, "agl1.Iterator.Next", "func [T any](it Iterator[T]) T?")
