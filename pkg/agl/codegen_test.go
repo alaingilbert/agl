@@ -15067,6 +15067,30 @@ func main() {
 	tassert.Contains(t, test.errs[0].Error(), "4:14: no method '.values' for type map")
 }
 
+func TestCodeGen489(t *testing.T) {
+	src := `package main
+func main() {
+    a := []int{1, 2, 3, 4}
+    it := a.Iter()
+    print(Array(it.TakeWhile({ $0 != 3 }).Filter({ $0 % 2 == 0 })))
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3, 4}
+	it := AglVecIter[int](a)
+	AglPrint(AglBuildArray(AglIteratorFilter[int](AglIteratorTakeWhile[int](it, func(aglArg0 int) bool {
+		return aglArg0 != 3
+	}), func(aglArg0 int) bool {
+		return aglArg0 % 2 == 0
+	})))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {

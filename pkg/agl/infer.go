@@ -1463,10 +1463,15 @@ afterUnwrap3:
 		}
 		fnT := infer.env.GetFn(name)
 		// Monomorphize if needed - replace generic type parameters with concrete ones
-		if len(idTT.TypeParams) > 0 {
-			for i, p := range idTT.TypeParams {
-				if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
-					fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+		// We need to get the generic parameter names from the function's receiver type
+		// (which has the generic form) and substitute them with the concrete types from idTT
+		if len(idTT.TypeParams) > 0 && len(fnT.Params) > 0 {
+			recvType := fnT.Params[0]
+			if recvInterface, ok := recvType.(types.InterfaceType); ok {
+				for i, p := range recvInterface.TypeParams {
+					if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
+						fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+					}
 				}
 			}
 		}
