@@ -2179,6 +2179,14 @@ func AglMapValues[K comparable, V any](m map[K]V) Sequence[V] {
 	return Sequence[V](maps.Values(m))
 }
 
+func AglMapRemove[K comparable, V any](m map[K]V, k K) Option[V] {
+	if v, ok := m[k]; ok {
+		delete(m, k)
+		return MakeOptionSome(v)
+	}
+	return MakeOptionNone[V]()
+}
+
 func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
 	var body io.Reader
 	if b.IsSome() {

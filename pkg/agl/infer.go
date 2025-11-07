@@ -2859,7 +2859,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
-		} else if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey", "Iter"}) {
+		} else if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey", "Iter", "Remove"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)

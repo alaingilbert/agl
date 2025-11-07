@@ -1067,6 +1067,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Map.Map", "func [K comparable, V, R any](m map[K]V, f func(DictEntry[K, V]) R) []R")
 		e.DefineFn(nenv, "agl1.Map.Reduce", "func [K comparable, V, R any](m map[K]V, R, f func(R, DictEntry[K, V]) R) R")
 		e.DefineFn(nenv, "agl1.Map.ReduceInto", "func [K comparable, V, R any](m map[K]V, into: r R, f func(mut a *R, e DictEntry[K, V])) R")
+		e.DefineFn(nenv, "agl1.Map.Remove", "func [K comparable, V any](m map[K]V, k K) V?", WithDesc("Removes a key from the map, returning the value at the key if the key was previously in the map."))
 		e.DefineFn(nenv, "agl1.Map.Values", "func [K comparable, V any](m map[K]V) Sequence[V]")
 		e.DefineFn(nenv, "agl1.Option.IsNone", "func () bool")
 		e.DefineFn(nenv, "agl1.Option.IsSome", "func () bool")

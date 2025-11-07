@@ -3189,6 +3189,12 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapContainsKey(") + c1.F() + e(", ") + c2.F() + e("))")
 			}}
+		case "Remove":
+			c1 := g.genExpr(x.X)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string {
+				return e("AglIdentity(AglMapRemove(") + c1.F() + e(", ") + c2.F() + e("))")
+			}}
 		case "Keys", "Values":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglIdentity(AglMap"+fnName+"(") + c1.F() + e("))") }}
