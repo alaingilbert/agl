@@ -706,6 +706,10 @@ type IterVec[T any] struct {
 	end   int
 }
 
+func (i *IterVec[T]) Clone() CloneIterator[T] {
+	return &IterVec[T]{v: i.v, start: i.start, end: i.end}
+}
+
 func (i *IterVec[T]) Len() int {
 	return max(i.end-i.start, 0)
 }
