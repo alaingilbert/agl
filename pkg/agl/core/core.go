@@ -609,7 +609,7 @@ func AglIteratorRPosition[T any, I DoubleEndedExactSizeIterator[T]](it I, f func
 			break
 		}
 		if f(v.Unwrap()) {
-			return MakeOptionSome(it.Len() - 1 - pos)
+			return MakeOptionSome(it.Len() - pos)
 		}
 		pos++
 	}
@@ -701,14 +701,13 @@ func (v AglVecEq[T]) __EQ(rhs AglVecEq[T]) bool {
 }
 
 type IterVec[T any] struct {
-	v    []T
-	next func() (T, bool)
-	stop func()
-	end  int
+	v     []T
+	start int
+	end   int
 }
 
 func (i *IterVec[T]) Len() int {
-	return len(i.v)
+	return max(i.end-i.start, 0)
 }
 
 func (i *IterVec[T]) IsEmpty() bool {
@@ -716,8 +715,9 @@ func (i *IterVec[T]) IsEmpty() bool {
 }
 
 func (i *IterVec[T]) Next() Option[T] {
-	e, ok := i.next()
-	if !ok {
+	e := i.v[i.start]
+	i.start++
+	if i.start > i.end {
 		return MakeOptionNone[T]()
 	}
 	return MakeOptionSome(e)
@@ -725,7 +725,7 @@ func (i *IterVec[T]) Next() Option[T] {
 
 func (i *IterVec[T]) NextBack() Option[T] {
 	i.end--
-	if i.end < 0 {
+	if i.end < i.start {
 		return MakeOptionNone[T]()
 	}
 	return MakeOptionSome(i.v[i.end])
@@ -736,15 +736,7 @@ type AglVec[T any] []T
 func (v AglVec[T]) Len() int { return len(v) }
 
 func (v AglVec[T]) Iter() *IterVec[T] {
-	seq := func(yield func(T) bool) {
-		for _, e := range v {
-			if !yield(e) {
-				return
-			}
-		}
-	}
-	next, stop := iter.Pull(seq)
-	return &IterVec[T]{v: v, next: next, stop: stop, end: len(v)}
+	return &IterVec[T]{v: v, start: 0, end: len(v)}
 }
 
 func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
@@ -1054,8 +1046,8 @@ type DoubleEndedIterator[T any] interface {
 
 type ExactSizeIterator[T any] interface {
 	Iterator[T]
-	Len() int
-	IsEmpty() bool
+	Len() int      // Returns the exact remaining length of the iterator.
+	IsEmpty() bool // Returns true if the iterator is empty.
 }
 
 type DoubleEndedExactSizeIterator[T any] interface {
