@@ -686,8 +686,11 @@ func (v AglVecEq[T]) __EQ(rhs AglVecEq[T]) bool {
 }
 
 type IterVec[T any] struct {
+	v    []T
 	next func() (T, bool)
 	stop func()
+	end  int
+}
 
 func (i *IterVec[T]) Len() int {
 	return len(i.v)
@@ -705,6 +708,14 @@ func (i *IterVec[T]) Next() Option[T] {
 	return MakeOptionSome(e)
 }
 
+func (i *IterVec[T]) NextBack() Option[T] {
+	i.end--
+	if i.end < 0 {
+		return MakeOptionNone[T]()
+	}
+	return MakeOptionSome(i.v[i.end])
+}
+
 type AglVec[T any] []T
 
 func (v AglVec[T]) Len() int { return len(v) }
@@ -718,7 +729,7 @@ func (v AglVec[T]) Iter() Iterator[T] {
 		}
 	}
 	next, stop := iter.Pull(seq)
-	return &IterVec[T]{next: next, stop: stop}
+	return &IterVec[T]{v: v, next: next, stop: stop, end: len(v)}
 }
 
 func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
