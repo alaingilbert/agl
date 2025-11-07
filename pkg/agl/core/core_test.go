@@ -224,4 +224,11 @@ func TestAglIteratorRPosition(t *testing.T) {
 	it := AglVec[int](arr).Iter()
 	tassert.Equal(t, 2, AglIteratorRPosition(it, func(e int) bool { return e == 3 }).Unwrap())
 	tassert.True(t, AglIteratorRPosition(it, func(e int) bool { return e == 5 }).IsNone())
+
+	a := []int{-1, 2, 3, 4}
+	iter := AglVec[int](a).Iter()
+	tassert.Equal(t, 3, AglIteratorRPosition(iter, func(x int) bool { return x >= 2 }).Unwrap())
+	// we can still use `iter`, as there are more elements.
+	tassert.Equal(t, -1, iter.Next().Unwrap())
+	tassert.Equal(t, 3, iter.NextBack().Unwrap())
 }
