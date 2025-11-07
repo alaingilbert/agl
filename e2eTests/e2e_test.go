@@ -577,3 +577,16 @@ func main() {
 }`
 	tassert.Equal(t, "[1 2]\n[4]\n", testGenOutput(src))
 }
+
+func Test37(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    a := []string{"1", "2"}
+    it := a.Iter().Cycle()
+    for _ in 0..5 {
+        print(it.Next().Unwrap())
+    }
+}`
+	tassert.Equal(t, "1\n2\n1\n2\n1\n", testGenOutput(src))
+}

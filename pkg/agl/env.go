@@ -1089,6 +1089,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "Set", "func[T any] (it Iterator[T]) agl1.Set[T]")
 		e.DefineFn(nenv, "Array", "func[T any] (it Iterator[T]) []T")
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]] () *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
+		e.DefineFn(nenv, "agl1.Iterator.Next", "func [T any](it Iterator[T]) Option[T]")
 		e.DefineFn(nenv, "agl1.Iterator.Any", "func [T any](it Iterator[T], f func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Joined", "func (it Iterator[string], sep string) string")
 		e.DefineFn(nenv, "agl1.Iterator.AllSatisfy", "func[T any] (it Iterator[T], pred func(T) bool) bool")
@@ -1098,6 +1099,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.TakeWhile", "func [T any] (it Iterator[T], f func(T) bool) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Iterator[R]")
 		e.DefineFn(nenv, "agl1.Iterator.Count", "func [T any](it Iterator[T]) int")
+		e.DefineFn(nenv, "agl1.Iterator.Cycle", "func [T any](it Iterator[T]) Iterator[T]")
 	})
 }
 

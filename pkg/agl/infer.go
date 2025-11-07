@@ -1602,6 +1602,12 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "Cycle":
+			info := infer.env.GetNameInfo("agl1.Iterator.Cycle")
+			fnT := infer.env.GetFn("agl1.Iterator.Cycle")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case "Filter":
 			info := infer.env.GetNameInfo("agl1.Iterator.Filter")
 			fnT := infer.env.GetFn("agl1.Iterator.Filter")
