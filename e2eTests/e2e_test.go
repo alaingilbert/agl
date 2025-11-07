@@ -585,7 +585,7 @@ func main() {
     a := []string{"1", "2"}
     it := a.Iter().Cycle()
     for _ in 0..5 {
-        print(it.Next().Unwrap())
+        print(it.Next()?)
     }
 }`
 	tassert.Equal(t, "1\n2\n1\n2\n1\n", testGenOutput(src))
