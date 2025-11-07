@@ -715,11 +715,11 @@ func (i *IterVec[T]) IsEmpty() bool {
 }
 
 func (i *IterVec[T]) Next() Option[T] {
-	e := i.v[i.start]
-	i.start++
-	if i.start > i.end {
+	if i.start >= i.end {
 		return MakeOptionNone[T]()
 	}
+	e := i.v[i.start]
+	i.start++
 	return MakeOptionSome(e)
 }
 
