@@ -235,3 +235,15 @@ func TestAglIteratorRPosition(t *testing.T) {
 	tassert.Equal(t, 2, iter.Next().Unwrap())
 	tassert.True(t, iter.IsEmpty())
 }
+
+func TestAglIteratorCycle(t *testing.T) {
+	arr := []int{1, 2, 3}
+	it := AglIteratorCycle[int](AglVec[int](arr).Iter())
+	tassert.Equal(t, 1, it.Next().Unwrap())
+	tassert.Equal(t, 2, it.Next().Unwrap())
+	tassert.Equal(t, 3, it.Next().Unwrap())
+	tassert.Equal(t, 1, it.Next().Unwrap())
+	tassert.Equal(t, 2, it.Next().Unwrap())
+	tassert.Equal(t, 3, it.Next().Unwrap())
+	tassert.Equal(t, 1, it.Next().Unwrap())
+}

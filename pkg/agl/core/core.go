@@ -616,6 +616,25 @@ func AglIteratorRPosition[T any, I DoubleEndedExactSizeIterator[T]](it I, f func
 	return MakeOptionNone[int]()
 }
 
+type Cycle[T any] struct {
+	orig CloneIterator[T]
+	iter Iterator[T]
+	pos  int
+}
+
+func (i *Cycle[T]) Next() Option[T] {
+	v := i.iter.Next()
+	if v.IsNone() {
+		i.iter = i.orig.Clone()
+		v = i.iter.Next()
+	}
+	return MakeOptionSome(v.Unwrap())
+}
+
+func AglIteratorCycle[T any](it CloneIterator[T]) *Cycle[T] {
+	return &Cycle[T]{orig: it.Clone(), iter: it}
+}
+
 func AglSequenceContains[T comparable](s Sequence[T], e T) bool {
 	return AglSequenceContainsWhere(s, func(t T) bool { return t == e })
 }
