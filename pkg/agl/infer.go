@@ -2870,7 +2870,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
 			if len(getFnT.Params) > 0 && TryCast[types.MutType](getFnT.Params[0]) {
 				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
-					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'map'", infer.Pos(exprT.Sel), fnName)
+					infer.errorf(exprT.Sel, "method '%s' cannot be called on immutable type 'map'", fnName)
 					return
 				}
 				getFnT.Recv = []types.Type{types.MutType{W: idT}}
