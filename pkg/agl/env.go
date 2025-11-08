@@ -1105,6 +1105,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.ForEach", "func[T any](it Iterator[T], f func(T))")
 		e.DefineFn(nenv, "agl1.Iterator.Joined", "func (it Iterator[string], sep string) string")
 		e.DefineFn(nenv, "agl1.Iterator.Map", "func [T, R any](it Iterator[T], f func(T) R) Iterator[R]")
+		e.DefineFn(nenv, "agl1.Iterator.Max", "func [T cmp.Ordered](it Iterator[T]) T?")
+		e.DefineFn(nenv, "agl1.Iterator.Min", "func [T cmp.Ordered](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Next", "func [T any](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Sum", "func [T, R Number](it Iterator[T]) R")
 		e.DefineFn(nenv, "agl1.Iterator.Take", "func [T any](it Iterator[T], n int) Iterator[T]")

@@ -196,6 +196,8 @@ func main() {
 	assert(a.First(where: { $0 == 4 }).IsNone())
 	assertEq(a.Min()?, 1)
 	assertEq(a.Max()?, 3)
+	assertEq(a.Iter().Min()?, 1)
+	assertEq(a.Iter().Max()?, 3)
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }

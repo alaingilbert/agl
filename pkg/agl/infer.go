@@ -1580,7 +1580,7 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map", "Min", "Max"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
@@ -1636,6 +1636,18 @@ afterUnwrap3:
 			fnT := infer.env.GetFn("agl1.Iterator.Take")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "Min":
+			info := infer.env.GetNameInfo("agl1.Iterator.Min")
+			fnT := infer.env.GetFn("agl1.Iterator.Min")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "Max":
+			info := infer.env.GetNameInfo("agl1.Iterator.Max")
+			fnT := infer.env.GetFn("agl1.Iterator.Max")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "Map":

@@ -2733,6 +2733,14 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
 			}}
+		case "Min":
+			return GenFrag{F: func() string {
+				return e("AglIteratorMin["+tType+"](") + genEX() + e(")")
+			}}
+		case "Max":
+			return GenFrag{F: func() string {
+				return e("AglIteratorMax["+tType+"](") + genEX() + e(")")
+			}}
 		case "Sum":
 			// Get the function type to extract the return type R
 			// This is set by type inference and handles both default (R=T) and explicit type args (Sum[R]())
