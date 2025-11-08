@@ -645,7 +645,7 @@ func Test42(t *testing.T) {
 	t.Parallel()
 	src := `package main
 func main() {
-    m := map[int]int{1: 2, 3: 4, 5: 6}
+    mut m := map[int]int{1: 2, 3: 4, 5: 6}
 	assertEq(m.Len(), 3)
 	assertEq(m.Remove(3)?, 4)
 	assertEq(m.Len(), 2)
@@ -657,7 +657,7 @@ func Test43(t *testing.T) {
 	t.Parallel()
 	src := `package main
 func main() {
-    m := map[int]int{1: 2, 3: 4}
+    mut m := map[int]int{1: 2, 3: 4}
 	assert(!m.IsEmpty())
 	assertEq(m.Remove(1)?, 2)
 	assertEq(m.Remove(3)?, 4)
@@ -670,7 +670,7 @@ func Test44(t *testing.T) {
 	t.Parallel()
 	src := `package main
 func main() {
-    m := map[int]int{1: 2, 3: 4}
+    mut m := map[int]int{1: 2, 3: 4}
 	assert(m.Insert(5, 6).IsNone())
 	assertEq(m.Get(5)?, 6)
 	assertEq(m.Insert(5, 7)?, 6)
@@ -683,7 +683,7 @@ func Test45(t *testing.T) {
 	t.Parallel()
 	src := `package main
 func main() {
-    m := map[int]string{1: "a", 2: "b"}
+    mut m := map[int]string{1: "a", 2: "b"}
 	for e in m.Drain().Take(1) {
 		assert(e.Key == 1 || e.Key == 2)
 		assert(e.Value == "a" || e.Value == "b")

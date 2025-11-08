@@ -2862,11 +2862,25 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, ft.Return)
 		}
 	case types.MapType:
-		if InArray(fnName, []string{"Len", "IsEmpty", "Drain"}) {
+		if InArray(fnName, []string{"Len", "IsEmpty"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
-		} else if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey", "Iter", "Remove", "Insert"}) {
+		} else if InArray(fnName, []string{"Drain", "Remove", "Insert"}) {
+			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V)
+			if len(getFnT.Params) > 0 && TryCast[types.MutType](getFnT.Params[0]) {
+				if infer.mutEnforced && !TryCast[types.MutType](infer.env.GetType(exprT.X)) {
+					infer.errorf(exprT.Sel, "%s: method '%s' cannot be called on immutable type 'map'", infer.Pos(exprT.Sel), fnName)
+					return
+				}
+				getFnT.Recv = []types.Type{types.MutType{W: idT}}
+				getFnT.Params = getFnT.Params[1:]
+			} else {
+				getFnT = getFnT.IntoRecv(idTT)
+			}
+			infer.SetType(expr, getFnT.Return)
+			infer.SetType(exprT.Sel, getFnT)
+		} else if InArray(fnName, []string{"Get", "Keys", "Values", "ContainsKey", "Iter"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)
