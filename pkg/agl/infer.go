@@ -1659,6 +1659,13 @@ afterUnwrap3:
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "Chain":
+			info := infer.env.GetNameInfo("agl1.Iterator.Chain")
+			fnT := infer.env.GetFn("agl1.Iterator.Chain")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case "Min":
 			info := infer.env.GetNameInfo("agl1.Iterator.Min")
 			fnT := infer.env.GetFn("agl1.Iterator.Min")

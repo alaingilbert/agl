@@ -463,6 +463,24 @@ func AglSequenceNth[T any](s Sequence[T], n int) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+type Chain[T any] struct {
+	a Iterator[T]
+	b Iterator[T]
+}
+
+func (i *Chain[T]) Next() Option[T] {
+	v := i.a.Next()
+	if v.IsNone() {
+		return i.b.Next()
+	}
+	return v
+}
+
+// AglIteratorChain takes two iterators and creates a new iterator over both in sequence.
+func AglIteratorChain[T any](a, b Iterator[T]) *Chain[T] {
+	return &Chain[T]{a: a, b: b}
+}
+
 // AglSequenceChain takes two iterators and creates a new iterator over both in sequence.
 func AglSequenceChain[T any](s, other Sequence[T]) Sequence[T] {
 	return func(yield func(T) bool) {

@@ -1098,6 +1098,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]]() *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 		e.DefineFn(nenv, "agl1.Iterator.AllSatisfy", "func[T any](it Iterator[T], pred func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Any", "func [T any](it Iterator[T], f func(T) bool) bool")
+		e.DefineFn(nenv, "agl1.Iterator.Chain", "func[T any](it Iterator[T], b Iterator[T]) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.Contains", "func[T any](it Iterator[T], el T) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Count", "func [T any](it Iterator[T]) int")
 		e.DefineFn(nenv, "agl1.Iterator.Cycle", "func [T any](it CloneIterator[T]) Iterator[T]")
