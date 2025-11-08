@@ -610,11 +610,13 @@ func Test39(t *testing.T) {
 	src := `package main
 func main() {
     m := map[int]int{1: 2, 3: 4, 5: 6}
+	arr := []int{}
     for e in m.Iter() {
-        print(e.Key, e.Value)
+		arr.Push(e.Key, e.Value)
     }
+	print(arr.Sorted())
 }`
-	tassert.Equal(t, "1 2\n3 4\n5 6\n", testGenOutput(src))
+	tassert.Equal(t, "[1 2 3 4 5 6]\n", testGenOutput(src))
 }
 
 func Test40(t *testing.T) {
