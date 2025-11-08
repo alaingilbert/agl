@@ -3177,6 +3177,9 @@ afterUnwrap4:
 		case "Len":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglIdentity(AglMapLen(") + c1.F() + "))" }}
+		case "IsEmpty":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string { return e("AglIdentity(AglMapIsEmpty(") + c1.F() + "))" }}
 		case "Get":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])

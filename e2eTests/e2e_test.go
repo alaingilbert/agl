@@ -652,3 +652,16 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test43(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    m := map[int]int{1: 2, 3: 4}
+	assert(!m.IsEmpty())
+	assertEq(m.Remove(1)?, 2)
+	assertEq(m.Remove(3)?, 4)
+	assert(m.IsEmpty())
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

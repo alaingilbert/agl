@@ -2187,6 +2187,10 @@ func AglMapRemove[K comparable, V any](m map[K]V, k K) Option[V] {
 	return MakeOptionNone[V]()
 }
 
+func AglMapIsEmpty[K comparable, V any](m map[K]V) bool {
+	return AglMapLen(m) == 0
+}
+
 func AglHttpNewRequest(method, url string, b Option[io.Reader]) Result[*http.Request] {
 	var body io.Reader
 	if b.IsSome() {
