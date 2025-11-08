@@ -2721,6 +2721,10 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
+		case "Position", "RPosition":
+			return GenFrag{F: func() string {
+				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		case "Any", "AllSatisfy":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")

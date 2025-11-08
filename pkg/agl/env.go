@@ -912,6 +912,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		})
 		e.Define(nil, "DoubleEndedIterator", types.InterfaceType{Pkg: "agl1", Name: "DoubleEndedIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "CloneIterator", types.InterfaceType{Pkg: "agl1", Name: "CloneIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
+		e.Define(nil, "DoubleEndedExactSizeIterator", types.InterfaceType{Pkg: "agl1", Name: "DoubleEndedExactSizeIterator", TypeParams: []types.Type{types.GenericType{Name: "T", W: types.AnyType{}}}})
 		e.Define(nil, "DictEntry", types.StructType{Pkg: "", Name: "DictEntry", TypeParams: []types.Type{
 			types.GenericType{Name: "K", W: types.AnyType{}},
 			types.GenericType{Name: "V", W: types.AnyType{}},
@@ -1109,6 +1110,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.Max", "func [T cmp.Ordered](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Min", "func [T cmp.Ordered](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Next", "func [T any](it Iterator[T]) T?")
+		e.DefineFn(nenv, "agl1.Iterator.Position", "func [T any](it Iterator[T], f func(T) bool) int?")
+		e.DefineFn(nenv, "agl1.Iterator.RPosition", "func [T any](it DoubleEndedExactSizeIterator[T], f func(T) bool) int?")
 		e.DefineFn(nenv, "agl1.Iterator.Skip", "func [T any](it Iterator[T], n int) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.SkipWhile", "func [T any](it Iterator[T], f func(T) bool) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.StepBy", "func [T any](it Iterator[T], n int) Iterator[T]")

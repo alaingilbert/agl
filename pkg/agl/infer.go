@@ -1618,6 +1618,18 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "Position":
+			info := infer.env.GetNameInfo("agl1.Iterator.Position")
+			fnT := infer.env.GetFn("agl1.Iterator.Position")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "RPosition":
+			info := infer.env.GetNameInfo("agl1.Iterator.RPosition")
+			fnT := infer.env.GetFn("agl1.Iterator.RPosition")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case "Cycle":
 			info := infer.env.GetNameInfo("agl1.Iterator.Cycle")
 			fnT := infer.env.GetFn("agl1.Iterator.Cycle")

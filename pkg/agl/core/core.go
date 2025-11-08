@@ -634,6 +634,21 @@ func AglSequencePosition[T any](s Sequence[T], f func(T) bool) Option[int] {
 	return MakeOptionNone[int]()
 }
 
+func AglIteratorPosition[T any, I Iterator[T]](it I, f func(T) bool) Option[int] {
+	pos := 0
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		if f(v.Unwrap()) {
+			return MakeOptionSome(pos)
+		}
+		pos++
+	}
+	return MakeOptionNone[int]()
+}
+
 func AglIteratorRPosition[T any, I DoubleEndedExactSizeIterator[T]](it I, f func(T) bool) Option[int] {
 	pos := 0
 	for {
