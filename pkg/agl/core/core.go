@@ -2187,6 +2187,15 @@ func AglMapRemove[K comparable, V any](m map[K]V, k K) Option[V] {
 	return MakeOptionNone[V]()
 }
 
+func AglMapInsert[K comparable, V any](m map[K]V, k K, v V) Option[V] {
+	prev, ok := m[k]
+	m[k] = v
+	if ok {
+		return MakeOptionSome(prev)
+	}
+	return MakeOptionNone[V]()
+}
+
 func AglMapIsEmpty[K comparable, V any](m map[K]V) bool {
 	return AglMapLen(m) == 0
 }

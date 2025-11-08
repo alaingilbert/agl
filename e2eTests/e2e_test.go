@@ -665,3 +665,16 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test44(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    m := map[int]int{1: 2, 3: 4}
+	assert(m.Insert(5, 6).IsNone())
+	assertEq(m.Get(5)?, 6)
+	assertEq(m.Insert(5, 7)?, 6)
+	assertEq(m.Get(5)?, 7)
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
