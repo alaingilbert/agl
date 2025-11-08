@@ -1,0 +1,19 @@
+package main
+
+func findMissingRanges(nums []int, lower int, upper int) [][]int {
+    mut ans := make([][]int, 0)
+    mut p := lower
+    for el in nums + []int{upper+1} {
+        if p < el {
+            ans.Push([]int{p, el-1})
+        }
+        p = el + 1
+    }
+    return ans
+}
+
+func main() {
+    print(findMissingRanges([]int{0,1,3,50,75}, 0, 99)) // [[2,2],[4,49],[51,74],[76,99]]
+    print(findMissingRanges([]int{-1}, -1, -1)) // []
+    print(findMissingRanges([]int{}, 1, 1)) // [[1,1]]
+}
