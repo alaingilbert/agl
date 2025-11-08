@@ -822,7 +822,7 @@ func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
 	return true
 }
 
-func AglVecIter[T any](v AglVec[T]) Iterator[T] {
+func AglVecIter[T any](v AglVec[T]) *IterVec[T] {
 	return v.Iter()
 }
 

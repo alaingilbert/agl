@@ -2733,6 +2733,10 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
+		case "Peekable":
+			return GenFrag{F: func() string {
+				return e("AglIteratorPeekable["+tType+"](") + genEX() + e(")")
+			}}
 		case "Count":
 			return GenFrag{F: func() string {
 				return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
