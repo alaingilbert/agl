@@ -1108,6 +1108,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Iterator.Max", "func [T cmp.Ordered](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Min", "func [T cmp.Ordered](it Iterator[T]) T?")
 		e.DefineFn(nenv, "agl1.Iterator.Next", "func [T any](it Iterator[T]) T?")
+		e.DefineFn(nenv, "agl1.Iterator.Skip", "func [T any](it Iterator[T], n int) Iterator[T]")
+		e.DefineFn(nenv, "agl1.Iterator.SkipWhile", "func [T any](it Iterator[T], f func(T) bool) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.Sum", "func [T, R Number](it Iterator[T]) R")
 		e.DefineFn(nenv, "agl1.Iterator.Take", "func [T any](it Iterator[T], n int) Iterator[T]")
 		e.DefineFn(nenv, "agl1.Iterator.TakeWhile", "func [T any](it Iterator[T], f func(T) bool) Iterator[T]")

@@ -1631,9 +1631,23 @@ afterUnwrap3:
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
+		case "SkipWhile":
+			info := infer.env.GetNameInfo("agl1.Iterator.SkipWhile")
+			fnT := infer.env.GetFn("agl1.Iterator.SkipWhile")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
 		case "Take":
 			info := infer.env.GetNameInfo("agl1.Iterator.Take")
 			fnT := infer.env.GetFn("agl1.Iterator.Take")
+			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			infer.SetType(expr.Args[0], fnT.Params[0])
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "Skip":
+			info := infer.env.GetNameInfo("agl1.Iterator.Skip")
+			fnT := infer.env.GetFn("agl1.Iterator.Skip")
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
