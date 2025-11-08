@@ -1325,6 +1325,32 @@ func AglIteratorSkipWhile[T any](it Iterator[T], f func(T) bool) *SkipWhile[T] {
 	return &SkipWhile[T]{iter: it, predicate: f}
 }
 
+type StepBy[T any] struct {
+	iter Iterator[T]
+	step int
+	i    int
+}
+
+func (i *StepBy[T]) Next() Option[T] {
+	for {
+		n := i.iter.Next()
+		if n.IsNone() {
+			break
+		}
+		if i.i%i.step == 0 {
+			i.i++
+			return n
+		}
+		i.i++
+	}
+	return MakeOptionNone[T]()
+}
+
+// AglIteratorStepBy creates an iterator starting at the same point, but stepping by the given amount at each iteration.
+func AglIteratorStepBy[T any](it Iterator[T], n int) *StepBy[T] {
+	return &StepBy[T]{iter: it, step: n}
+}
+
 type Map[T, R any] struct {
 	iter Iterator[T]
 	f    func(T) R

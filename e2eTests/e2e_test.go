@@ -719,3 +719,17 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test48(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    a := []int{0, 1, 2, 3, 4, 5}
+	it := a.Iter().StepBy(2)
+	assertEq(it.Next()?, 0)
+	assertEq(it.Next()?, 2)
+	assertEq(it.Next()?, 4)
+	assert(it.Next().IsNone())
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
