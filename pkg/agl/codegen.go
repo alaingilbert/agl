@@ -2681,7 +2681,13 @@ afterUnwrap4:
 		var tTypeObj types.Type
 		if len(eXTT.TypeParams) > 0 {
 			tTypeObj = eXTT.TypeParams[0]
-			tType = tTypeObj.GoStrType()
+			// For generic type parameters in function calls, we need the parameterized form
+			// (e.g., DictEntry[int, string]) not the monomorphized form (e.g., DictEntry_T_int_T_string)
+			if structT, ok := types.Unwrap(tTypeObj).(types.StructType); ok {
+				tType = structT.GoStr()
+			} else {
+				tType = tTypeObj.GoStrType()
+			}
 		}
 
 		// Create a genMap for generic type parameters
@@ -3204,6 +3210,11 @@ afterUnwrap4:
 			c3 := g.genExpr(expr.Args[1])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapInsert(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e("))")
+			}}
+		case "Drain":
+			c1 := g.genExpr(x.X)
+			return GenFrag{F: func() string {
+				return e("AglIdentity(AglMapDrain(") + c1.F() + e("))")
 			}}
 		case "Keys", "Values":
 			c1 := g.genExpr(x.X)

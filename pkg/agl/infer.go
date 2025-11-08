@@ -2862,7 +2862,7 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, ft.Return)
 		}
 	case types.MapType:
-		if InArray(fnName, []string{"Len", "IsEmpty"}) {
+		if InArray(fnName, []string{"Len", "IsEmpty", "Drain"}) {
 			getFnT := infer.env.GetFn("agl1.Map."+fnName).T("K", idTT.K).T("V", idTT.V).IntoRecv(idTT)
 			infer.SetType(expr, getFnT.Return)
 			infer.SetType(exprT.Sel, getFnT)

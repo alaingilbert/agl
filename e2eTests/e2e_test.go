@@ -678,3 +678,17 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test45(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+    m := map[int]string{1: "a", 2: "b"}
+	for e in m.Drain().Take(1) {
+		assert(e.Key == 1 || e.Key == 2)
+		assert(e.Value == "a" || e.Value == "b")
+	}
+	assert(m.IsEmpty())
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

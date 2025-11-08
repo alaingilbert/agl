@@ -813,6 +813,20 @@ func (i *IterMap[K, V]) Next() Option[DictEntry[K, V]] {
 	return MakeOptionSome(e)
 }
 
+type IterMapDrain[K comparable, V any] struct {
+	next func() (DictEntry[K, V], bool)
+	stop func()
+}
+
+func (i *IterMapDrain[K, V]) Next() Option[DictEntry[K, V]] {
+	e, ok := i.next()
+	if !ok {
+		i.stop()
+		return MakeOptionNone[DictEntry[K, V]]()
+	}
+	return MakeOptionSome(e)
+}
+
 type AglMap[K comparable, V any] map[K]V
 
 func (m AglMap[K, V]) Iter() Iterator[DictEntry[K, V]] {
@@ -2194,6 +2208,20 @@ func AglMapInsert[K comparable, V any](m map[K]V, k K, v V) Option[V] {
 		return MakeOptionSome(prev)
 	}
 	return MakeOptionNone[V]()
+}
+
+func AglMapDrain[K comparable, V any](m map[K]V) *IterMapDrain[K, V] {
+	seq := func(yield func(DictEntry[K, V]) bool) {
+		for k := range m {
+			entry := DictEntry[K, V]{Key: k, Value: m[k]}
+			delete(m, k)
+			if !yield(entry) {
+				return
+			}
+		}
+	}
+	next, stop := iter.Pull(seq)
+	return &IterMapDrain[K, V]{next: next, stop: stop}
 }
 
 func AglMapIsEmpty[K comparable, V any](m map[K]V) bool {

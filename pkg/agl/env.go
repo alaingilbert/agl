@@ -1059,6 +1059,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.__ADD", "func [T any](a, b []T) []T")
 		e.DefineFn(nenv, "agl1.Map.AllSatisfy", "func [K comparable, V any](m map[K]V, f func(DictEntry[K, V]) bool) bool")
 		e.DefineFn(nenv, "agl1.Map.ContainsKey", "func [K comparable, V any](m map[K]V, k K) bool")
+		e.DefineFn(nenv, "agl1.Map.Drain", "func [K comparable, V any](m map[K]V) Iterator[DictEntry[K, V]]")
 		e.DefineFn(nenv, "agl1.Map.Filter", "func [K comparable, V any](m map[K]V, f func(DictEntry[K, V]) bool) map[K]V")
 		e.DefineFn(nenv, "agl1.Map.Get", "func [K comparable, V any](m map[K]V) V?")
 		e.DefineFn(nenv, "agl1.Map.Insert", "func [K comparable, V any](m map[K]V, k K, v V) V?")
