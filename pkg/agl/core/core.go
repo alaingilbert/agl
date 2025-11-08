@@ -822,8 +822,34 @@ func (v AglVec[T]) __EQ(rhs AglVec[T]) bool {
 	return true
 }
 
-func AglVecIter[T any](v AglVec[T]) *IterVec[T] {
+func AglVecIter[T any](v AglVec[T]) Iterator[T] {
 	return v.Iter()
+}
+
+type Peekable[T any] struct {
+	iter Iterator[T]
+	el   Option[T]
+}
+
+func (p *Peekable[T]) Peek() Option[T] {
+	if p.el.IsSome() {
+		return p.el
+	}
+	p.el = p.iter.Next()
+	return p.el
+}
+
+func (p *Peekable[T]) Next() Option[T] {
+	if p.el.IsSome() {
+		cur := p.el
+		p.el = MakeOptionNone[T]()
+		return cur
+	}
+	return p.iter.Next()
+}
+
+func AglIteratorPeekable[T any](it Iterator[T]) *Peekable[T] {
+	return &Peekable[T]{iter: it}
 }
 
 type DictEntry[K comparable, V any] struct {

@@ -271,3 +271,16 @@ func TestAglIteratorSum(t *testing.T) {
 	arr3 := []int{255, 10}
 	tassert.Equal(t, 265, AglIteratorSum[int, int](AglVec[int](arr3).Iter()))
 }
+
+func TestAglIteratorPeekable(t *testing.T) {
+	arr := []int{1, 2, 3}
+	it := AglIteratorPeekable(AglVecIter(arr))
+	tassert.Equal(t, 1, it.Peek().Unwrap())
+	tassert.Equal(t, 1, it.Next().Unwrap())
+	tassert.Equal(t, 2, it.Next().Unwrap())
+	tassert.Equal(t, 3, it.Peek().Unwrap())
+	tassert.Equal(t, 3, it.Peek().Unwrap())
+	tassert.Equal(t, 3, it.Next().Unwrap())
+	tassert.True(t, it.Peek().IsNone())
+	tassert.True(t, it.Next().IsNone())
+}
