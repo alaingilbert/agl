@@ -1,0 +1,15 @@
+package main
+
+func anagramMappings(nums1 []int, nums2 []int) []int {
+    var mut out []int
+    for e in nums1 {
+        i := nums2.FirstIndex(e)?
+        out.Push(i)
+    }
+    return out
+}
+
+func main() {
+    print(anagramMappings([]int{12,28,46,32,50}, []int{50,12,32,46,28})) //, []int{1,4,3,2,0})
+    print(anagramMappings([]int{84,46}, []int{84,46})) //, []int{0,1})
+}
