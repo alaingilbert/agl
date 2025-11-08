@@ -1,0 +1,22 @@
+package main
+
+func validWordSquare(words []string) bool {
+    for (wordNum, word) in words.Enumerated() {
+        for charPos in 0..word.Len() {
+            if charPos >= words.Len() ||
+                wordNum >= words[charPos].Len() ||
+                words[charPos][wordNum] != word[charPos] {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func main() {
+    assert(validWordSquare([]string{"abcd","bnrt","crmy","dtye"}))
+    assert(validWordSquare([]string{"abcd","bnrt","crm","dt"}))
+    assert(!validWordSquare([]string{"ball","area","read","lady"}))
+    assert(!validWordSquare([]string{"ball","asee","let","lep"}))
+    assert(!validWordSquare([]string{"abc","b"}))
+}
