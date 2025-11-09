@@ -4424,6 +4424,31 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					infer.errorf(cond.Y, "unsupported interface type %v", v.Name)
 					return
 				}
+			case types.FuncType:
+				// Handle iter.Seq[T] which is: func(yield func(T) bool)
+				// This is what Sequence[T] unwraps to
+				if len(v.Params) == 1 {
+					if innerFunc, ok := v.Params[0].(types.FuncType); ok {
+						if len(innerFunc.Params) == 1 {
+							if _, isBool := innerFunc.Return.(types.BoolType); isBool {
+								t = innerFunc.Params[0]
+								infer.SetType(cond.X, t)
+							} else {
+								infer.errorf(cond.Y, "unsupported type %v", to(yT))
+								return
+							}
+						} else {
+							infer.errorf(cond.Y, "unsupported type %v", to(yT))
+							return
+						}
+					} else {
+						infer.errorf(cond.Y, "unsupported type %v", to(yT))
+						return
+					}
+				} else {
+					infer.errorf(cond.Y, "unsupported type %v", to(yT))
+					return
+				}
 			default:
 				infer.errorf(cond.Y, "unsupported type %v", to(yT))
 				return

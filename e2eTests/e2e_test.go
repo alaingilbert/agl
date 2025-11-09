@@ -69,7 +69,10 @@ func testGenOutput(src string) string {
 	env := agl.NewEnv(fset)
 	i := agl.NewInferrer(env)
 	i.InferFile("", f2, fset, true)
-	imports, _ := i.InferFile("", f, fset, true)
+	imports, errs := i.InferFile("", f, fset, true)
+	if len(errs) > 0 {
+		panic(errs[0])
+	}
 	g := agl.NewGenerator(env, f, f2, imports, fset)
 	outSrc := g.Generate()
 	out, err := spawnGoRunFromBytes(g, fset, []byte(outSrc), nil)
@@ -610,7 +613,7 @@ func Test39(t *testing.T) {
 	src := `package main
 func main() {
     m := map[int]int{1: 2, 3: 4, 5: 6}
-	arr := []int{}
+	mut arr := []int{}
     for e in m.Iter() {
 		arr.Push(e.Key, e.Value)
     }
