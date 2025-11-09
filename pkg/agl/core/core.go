@@ -1156,26 +1156,17 @@ func (r *AglRangeInclusive[T]) NextBack() Option[T] {
 
 func (r *AglRange[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
-		for {
-			if el := r.Next(); el.IsSome() {
-				if !yield(el.Unwrap()) {
-					return
-				}
-			} else {
+		for el := r.Next(); el.IsSome(); el = r.Next() {
+			if !yield(el.Unwrap()) {
 				return
 			}
 		}
 	}
 }
-
 func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
-		for {
-			if el := r.Next(); el.IsSome() {
-				if !yield(el.Unwrap()) {
-					return
-				}
-			} else {
+		for el := r.Next(); el.IsSome(); el = r.Next() {
+			if !yield(el.Unwrap()) {
 				return
 			}
 		}
@@ -1184,12 +1175,8 @@ func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
 
 func (r *AglRangeFrom[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
-		for {
-			if el := r.Next(); el.IsSome() {
-				if !yield(el.Unwrap()) {
-					return
-				}
-			} else {
+		for el := r.Next(); el.IsSome(); el = r.Next() {
+			if !yield(el.Unwrap()) {
 				return
 			}
 		}
