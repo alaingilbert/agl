@@ -1114,13 +1114,66 @@ type AglSet[T comparable] map[T]struct{}
 
 func (s AglSet[T]) Len() int { return len(s) }
 
-type AglRange[T Integer] struct {
-	Start, End T
-	IsEq       bool // ".." vs "..="
+type AglRangeFrom[T Integer] struct {
+	Start T
 }
 
-func AglNewRange[T Integer](start, end T, isEq bool) *AglRange[T] {
-	r := &AglRange[T]{Start: start, End: end, IsEq: isEq}
+func AglNewRangeFrom[T Integer](start T) *AglRangeFrom[T] {
+	r := &AglRangeFrom[T]{Start: start}
+	return r
+}
+
+type AglRangeInclusive[T Integer] struct {
+	Start, End T
+}
+
+func AglNewRangeInclusive[T Integer](start, end T) *AglRangeInclusive[T] {
+	r := &AglRangeInclusive[T]{Start: start, End: end}
+	return r
+}
+
+func (r *AglRangeInclusive[T]) Next() Option[T] {
+	if r.Start > r.End {
+		return MakeOptionNone[T]()
+	}
+	res := MakeOptionSome(r.Start)
+	r.Start++
+	return res
+}
+
+func (r *AglRangeInclusive[T]) NextBack() Option[T] {
+	if r.Start > r.End {
+		return MakeOptionNone[T]()
+	}
+	res := MakeOptionSome(r.End)
+	r.End--
+	return res
+}
+
+func (r *AglRangeInclusive[T]) Iter() Sequence[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
+func (r *AglRangeInclusive[T]) Rev() *Rev[T] {
+	return AglDoubleEndedIteratorRev[T](r)
+}
+
+type AglRange[T Integer] struct {
+	Start, End T
+}
+
+func AglNewRange[T Integer](start, end T) *AglRange[T] {
+	r := &AglRange[T]{Start: start, End: end}
 	return r
 }
 
@@ -1137,7 +1190,7 @@ func (r *AglRange[T]) AllSatisfy(pred func(T) bool) bool {
 }
 
 func (r *AglRange[T]) Next() Option[T] {
-	if (r.IsEq && r.Start > r.End) || (!r.IsEq && r.Start >= r.End) {
+	if r.Start >= r.End {
 		return MakeOptionNone[T]()
 	}
 	res := MakeOptionSome(r.Start)
@@ -1146,17 +1199,11 @@ func (r *AglRange[T]) Next() Option[T] {
 }
 
 func (r *AglRange[T]) NextBack() Option[T] {
-	if (r.IsEq && r.Start > r.End) || (!r.IsEq && r.Start >= r.End) {
+	if r.Start >= r.End {
 		return MakeOptionNone[T]()
 	}
-	if r.IsEq {
-		res := MakeOptionSome(r.End)
-		r.End--
-		return res
-	} else {
-		r.End--
-		return MakeOptionSome(r.End)
-	}
+	r.End--
+	return MakeOptionSome(r.End)
 }
 
 func (r *AglRange[T]) Iter() Sequence[T] {
@@ -1171,6 +1218,10 @@ func (r *AglRange[T]) Iter() Sequence[T] {
 			}
 		}
 	}
+}
+
+func (r *AglRange[T]) Rev() *Rev[T] {
+	return AglDoubleEndedIteratorRev[T](r)
 }
 
 type IntoIterator[T any] interface {

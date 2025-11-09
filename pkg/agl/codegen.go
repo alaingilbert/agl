@@ -2268,12 +2268,12 @@ func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
 	e := EmitWith(g, expr)
 	start := g.genExpr(expr.Start)
 	end := g.genExpr(expr.End_)
-	op := func() string {
-		opStr := utils.Ternary(expr.Op == token.RANGEOPEQ, "true", "false")
-		return e(opStr)
-	}
 	return GenFrag{F: func() (out string) {
-		out += e("AglNewRange["+g.env.GetType(expr).(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(", ") + op() + e(")")
+		if expr.Op == token.RANGEOPEQ {
+			out += e("AglNewRangeInclusive["+g.env.GetType(expr).(types.RangeInclusiveType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
+		} else {
+			out += e("AglNewRange["+g.env.GetType(expr).(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
+		}
 		return
 	}}
 }
@@ -4328,6 +4328,12 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							op := utils.Ternary(c2V == "_", "=", ":=")
 							out += c2V
 							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
+						case types.RangeInclusiveType:
+							out += e(g.prefix + "for ")
+							c2V := c2.F()
+							op := utils.Ternary(c2V == "_", "=", ":=")
+							out += c2V
+							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
 						case types.StringType:
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.FuncType:
@@ -4344,6 +4350,12 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 								op := utils.Ternary(c2V == "_", "=", ":=")
 								out += c2V
 								out += e(" "+op+" range ") + c1.F() + e(" {\n")
+							} else if vv.Name == "Rev" {
+								out += e(g.prefix + "for ")
+								c2V := c2.F()
+								op := utils.Ternary(c2V == "_", "=", ":=")
+								out += c2V
+								out += e(" "+op+" range ") + c1.F() + e(".Iter() {\n")
 							} else {
 								panic("")
 							}

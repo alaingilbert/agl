@@ -66,6 +66,14 @@ func (r RangeType) GoStr() string     { return "RangeType" }
 func (r RangeType) GoStrType() string { return "RangeType" }
 func (r RangeType) String() string    { return fmt.Sprintf("Range[%s]", r.Typ.String()) }
 
+type RangeInclusiveType struct {
+	Typ Type
+}
+
+func (r RangeInclusiveType) GoStr() string     { return "RangeInclusiveType" }
+func (r RangeInclusiveType) GoStrType() string { return "RangeInclusiveType" }
+func (r RangeInclusiveType) String() string    { return fmt.Sprintf("RangeInclusive[%s]", r.Typ.String()) }
+
 type ChanType struct{ W Type }
 
 func (m ChanType) GoStr() string     { return fmt.Sprintf("chan %s", m.W) }

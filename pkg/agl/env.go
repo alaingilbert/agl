@@ -1595,6 +1595,14 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			}
 			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
+		case types.RangeInclusiveType:
+			// Range types are iterators, check for iterator methods
+			if xx.Sel.Name == "Rev" {
+				name := "agl1.DoubleEndedIterator.Rev"
+				return e.GetType2(&ast.Ident{Name: name}, fset)
+			}
+			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)
+			return e.GetType2(&ast.Ident{Name: name}, fset)
 		case types.MapType:
 			name := fmt.Sprintf("agl1.Map.%s", xx.Sel.Name)
 			methodType := e.GetType2(&ast.Ident{Name: name}, fset)
@@ -1782,6 +1790,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		t := sT
 		if _, ok := t.(types.UntypedNumType); ok {
 			t = eT
+		}
+		if xx.Op == token.RANGEOPEQ {
+			return types.RangeInclusiveType{Typ: t}
 		}
 		return types.RangeType{Typ: t}
 	default:
