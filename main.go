@@ -577,7 +577,12 @@ func filterUnusedImports(code string, imports []string) []string {
 
 		// Check if package is used in code
 		// Look for: pkgName.Something or direct uses for common packages
-		if strings.Contains(code, pkgName+".") ||
+		// Special handling for iter package to avoid false positives from struct fields named "iter"
+		if pkgName == "iter" {
+			if strings.Contains(code, "iter.Seq") || strings.Contains(code, "iter.Pull") {
+				result = append(result, imp)
+			}
+		} else if strings.Contains(code, pkgName+".") ||
 			(pkgName == "fmt" && (strings.Contains(code, "fmt.") || strings.Contains(code, "Sprintf") || strings.Contains(code, "Printf"))) ||
 			(pkgName == "strings" && strings.Contains(code, "strings.")) ||
 			(pkgName == "bytes" && strings.Contains(code, "bytes.")) ||
@@ -585,8 +590,7 @@ func filterUnusedImports(code string, imports []string) []string {
 			(pkgName == "maps" && strings.Contains(code, "maps.")) ||
 			(pkgName == "sort" && strings.Contains(code, "sort.")) ||
 			(pkgName == "strconv" && strings.Contains(code, "strconv.")) ||
-			(pkgName == "math" && strings.Contains(code, "math.")) ||
-			(pkgName == "iter" && strings.Contains(code, "iter.")) {
+			(pkgName == "math" && strings.Contains(code, "math.")) {
 			result = append(result, imp)
 		}
 	}
