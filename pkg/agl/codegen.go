@@ -3216,7 +3216,7 @@ afterUnwrap4:
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIteratorMap["+tType+", "+rType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
-		case "AllSatisfy", "Contains", "ForEach", "Filter", "Take":
+		case "AllSatisfy", "Contains", "ForEach", "Filter", "Take", "TakeWhile":
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string { return e("AglIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
