@@ -4,6 +4,7 @@ type MovingAverage struct {
     size int
     mut vals []int
     mut count int
+    mut windowSum int
 }
 
 func Constructor(size int) MovingAverage {
@@ -11,10 +12,11 @@ func Constructor(size int) MovingAverage {
 }
 
 func (mut this *MovingAverage) Next(val int) f64 {
+    prev := this.vals[this.count % this.size]
     this.vals[this.count % this.size] = val
     this.count++
-    sum := this.vals.Sum()
-    return f64(sum) / f64(min(this.count, this.size))
+    this.windowSum = this.windowSum - prev + val
+    return f64(this.windowSum) / f64(min(this.count, this.size))
 }
 
 func main() {
