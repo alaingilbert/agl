@@ -1630,10 +1630,6 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map", "Min", "Max", "Take", "TakeWhile"}) {
-			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
-			return
-		}
 		switch fnName {
 		case "Rev":
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
@@ -1692,12 +1688,11 @@ afterUnwrap3:
 					return
 				}
 			}
-		}
-	case types.RangeInclusiveType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map", "Min", "Max", "Take", "TakeWhile"}) {
+		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}
+	case types.RangeInclusiveType:
 		switch fnName {
 		case "Rev":
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator.Rev")
