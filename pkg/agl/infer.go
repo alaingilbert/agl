@@ -1630,7 +1630,7 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
-		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map", "Min", "Max"}) {
+		if !InArray(fnName, []string{"Rev", "AllSatisfy", "Contains", "ForEach", "Filter", "Map", "Min", "Max", "Take"}) {
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
 		}

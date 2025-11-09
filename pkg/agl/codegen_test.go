@@ -11328,27 +11328,27 @@ package main
 func main() {
 	for e := range (AglNewRange[int](0, 42, false)).Iter() {
 	}
-	for e := range AglDoubleEndedIteratorRev((AglNewRange[int](0, int(42), false))).Iter() {
+	for e := range AglDoubleEndedIteratorRev(AglNewRange[int](0, int(42), false)).Iter() {
 	}
-	if AglIteratorAllSatisfy((AglNewRange[int](0, 5, false)), func(e int) bool {
+	if AglIteratorAllSatisfy[int](AglNewRange[int](0, 5, false), func(e int) bool {
 		return e < 10
 	}) {
 	}
-	if AglIteratorAllSatisfy((AglNewRange[int](0, 5, false)), func(aglArg0 int) bool {
+	if AglIteratorAllSatisfy[int](AglNewRange[int](0, 5, false), func(aglArg0 int) bool {
 		return aglArg0 < 10
 	}) {
 	}
-	if AglIteratorContains((AglNewRange[int](0, 5, false)), 4) {
+	if AglIteratorContains[int](AglNewRange[int](0, 5, false), 4) {
 	}
-	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(aglArg0 int) AglVoid {
+	AglIteratorForEach[int](AglNewRange[int](0, 5, false), func(aglArg0 int) AglVoid {
 		AglPrint(aglArg0)
 		return AglVoid{}
 	})
-	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(e int) AglVoid {
+	AglIteratorForEach[int](AglNewRange[int](0, 5, false), func(e int) AglVoid {
 		AglPrint(e)
 		return AglVoid{}
 	})
-	AglIteratorForEach((AglNewRange[int](0, 5, false)), func(e int) AglVoid {
+	AglIteratorForEach[int](AglNewRange[int](0, 5, false), func(e int) AglVoid {
 		AglPrint(e)
 		return AglVoid{}
 	})
@@ -14795,7 +14795,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	var arr []int = AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+	var arr []int = AglBuildArray(AglIteratorMap[int, int](AglNewRange[int](0, 10, false), func(aglArg0 int) int {
 		return aglArg0
 	}))
 	AglPrint(arr)
@@ -15000,7 +15000,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	dp1 := AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+	dp1 := AglBuildArray(AglIteratorMap[int, int](AglNewRange[int](0, 10, false), func(aglArg0 int) int {
 		return 1
 	}))
 	var aglTmp1 int
@@ -15010,7 +15010,7 @@ func main() {
 		aglTmp1 = -1
 	}
 	a := AglIdentity(aglTmp1)
-	var dp2 []int = AglBuildArray(AglIteratorMap((AglNewRange[int](0, 10, false)), func(aglArg0 int) int {
+	var dp2 []int = AglBuildArray(AglIteratorMap[int, int](AglNewRange[int](0, 10, false), func(aglArg0 int) int {
 		return 1
 	}))
 	var aglTmp2 int
@@ -15200,6 +15200,30 @@ func main() {
 	a := []int{1, 2, 3}
 	it := AglIteratorPeekable[int](AglVecIter[int](a))
 	it = AglIteratorPeekable[int](AglIteratorSkip[int](it, 1))
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen495(t *testing.T) {
+	src := `package main
+func main() {
+	it := (0..10).Take(3)
+	assertEq(it.Next()?, 0)
+	assertEq(it.Next()?, 1)
+	assertEq(it.Next()?, 2)
+	assert(it.Next().IsNone())
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	it := AglIteratorTake[int](AglNewRange[int](0, 10, false), 3)
+	AglAssertEq(it.Next().Unwrap(), 0, "assert failed line 4")
+	AglAssertEq(it.Next().Unwrap(), 1, "assert failed line 5")
+	AglAssertEq(it.Next().Unwrap(), 2, "assert failed line 6")
+	AglAssert(it.Next().IsNone(), "assert failed line 7")
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
