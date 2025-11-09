@@ -11,10 +11,10 @@ func parseTernary(expression string) string {
             return c
         }
         if c == "T" {
-            it = it.Skip(1)
+            it.Next()
         } else {
             mut count := 1
-            it = it.Skip(1)
+            it.Next()
             for count > 0 {
                 n := it.Next()?
                 if n == ":" {

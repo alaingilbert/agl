@@ -1420,15 +1420,28 @@ afterUnwrap3:
 		}
 
 		// Monomorphize the method if the struct has type parameters
-		if len(idTT.TypeParams) > 0 && len(fnT.Params) > 0 {
-			// Build a map from generic parameter names to concrete types
-			// Match type parameters from the receiver in the method signature
-			// Don't unwrap - we need the StructType to match parameters
-			recvType := fnT.Params[0]
-			if recvStruct, ok := recvType.(types.StructType); ok {
-				for i, p := range recvStruct.TypeParams {
-					if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
-						fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+		if len(idTT.TypeParams) > 0 {
+			// First, get the generic definition of the struct to find parameter names
+			genericStructName := idTT.String1()
+			genericStructRaw := infer.env.Get(genericStructName)
+			if genericStruct, ok := genericStructRaw.(types.StructType); ok {
+				// Map generic parameter names to concrete types by position
+				for i, genericParam := range genericStruct.TypeParams {
+					if i < len(idTT.TypeParams) {
+						if genType, ok := genericParam.(types.GenericType); ok {
+							fnT = fnT.T(genType.Name, idTT.TypeParams[i])
+						}
+					}
+				}
+			} else if len(fnT.Params) > 0 {
+				// Fallback to old logic if we can't find the generic definition
+				// Match type parameters from the receiver in the method signature
+				recvType := fnT.Params[0]
+				if recvStruct, ok := recvType.(types.StructType); ok {
+					for i, p := range recvStruct.TypeParams {
+						if gp, ok := p.(types.GenericType); ok && i < len(idTT.TypeParams) {
+							fnT = fnT.T(gp.Name, idTT.TypeParams[i])
+						}
 					}
 				}
 			}
