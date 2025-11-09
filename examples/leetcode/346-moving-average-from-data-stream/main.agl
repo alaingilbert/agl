@@ -1,0 +1,21 @@
+package main
+
+type MovingAverage struct {
+    size int
+    mut vals []int
+    mut pos int
+}
+
+func Constructor(size int) MovingAverage {
+    return MovingAverage{size: size, vals: make([]int, size)}
+}
+
+func (mut this *MovingAverage) Next(val int) f64 {
+    this.vals[this.pos % this.size] = val
+    this.pos++
+    sum := this.vals.Sum()
+    return f64(sum) / f64(min(this.pos, this.vals.Len()))
+}
+
+func main() {
+}
