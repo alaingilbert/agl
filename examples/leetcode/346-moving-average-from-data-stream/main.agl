@@ -3,7 +3,7 @@ package main
 type MovingAverage struct {
     size int
     mut vals []int
-    mut pos int
+    mut count int
 }
 
 func Constructor(size int) MovingAverage {
@@ -11,10 +11,10 @@ func Constructor(size int) MovingAverage {
 }
 
 func (mut this *MovingAverage) Next(val int) f64 {
-    this.vals[this.pos % this.size] = val
-    this.pos++
+    this.vals[this.count % this.size] = val
+    this.count++
     sum := this.vals.Sum()
-    return f64(sum) / f64(min(this.pos, this.vals.Len()))
+    return f64(sum) / f64(min(this.count, this.size))
 }
 
 func main() {
