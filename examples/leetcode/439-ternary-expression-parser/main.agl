@@ -16,11 +16,9 @@ func parseTernary(expression string) string {
             mut count := 1
             it.Next()
             for count > 0 {
-                n := it.Next()?
-                if n == ":" {
-                    count -= 1
-                } else if n == "?" {
-                    count += 1
+                switch it.Next()? {
+                    case ":": count--
+                    case "?": count++
                 }
             }
         }
