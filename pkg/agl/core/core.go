@@ -1154,18 +1154,9 @@ func (r *AglRangeInclusive[T]) NextBack() Option[T] {
 	return res
 }
 
-func (r *AglRange[T]) Seq() Sequence[T] {
+func Iter2Seq[T any](it Iterator[T]) Sequence[T] {
 	return func(yield func(T) bool) {
-		for el := r.Next(); el.IsSome(); el = r.Next() {
-			if !yield(el.Unwrap()) {
-				return
-			}
-		}
-	}
-}
-func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
-	return func(yield func(T) bool) {
-		for el := r.Next(); el.IsSome(); el = r.Next() {
+		for el := it.Next(); el.IsSome(); el = it.Next() {
 			if !yield(el.Unwrap()) {
 				return
 			}
@@ -1173,14 +1164,16 @@ func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
 	}
 }
 
+func (r *AglRange[T]) Seq() Sequence[T] {
+	return Iter2Seq[T](r)
+}
+
+func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
+	return Iter2Seq[T](r)
+}
+
 func (r *AglRangeFrom[T]) Seq() Sequence[T] {
-	return func(yield func(T) bool) {
-		for el := r.Next(); el.IsSome(); el = r.Next() {
-			if !yield(el.Unwrap()) {
-				return
-			}
-		}
-	}
+	return Iter2Seq[T](r)
 }
 
 func (r *AglRangeInclusive[T]) Rev() *Rev[T] {
