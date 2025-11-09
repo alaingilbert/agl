@@ -2722,8 +2722,11 @@ afterUnwrap4:
 				return e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
 		case "Position", "RPosition":
+			// Position and RPosition need both T and I type parameters
+			//iterType := eXTT.GoStrType() // e.g., "Iterator[int]"
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				//return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
 		case "Any", "AllSatisfy":
 			return GenFrag{F: func() string {
@@ -2777,6 +2780,99 @@ afterUnwrap4:
 		genEX := c1.F
 		genArgFn := func(i int) string { return g.genExpr(expr.Args[i]).F() }
 		fnName := x.Sel.Name
+
+		// Check if this is an Iterator-like struct (e.g., Peekable, Skip, Take, etc.)
+		// These structs implement Iterator and should have access to Iterator methods
+		// Exclude IterVec as it has its own method implementations
+		if len(eXTT.TypeParams) > 0 && eXTT.Name != "IterVec" {
+			var tType string
+			var tTypeObj types.Type
+			tTypeObj = eXTT.TypeParams[0]
+			if structT, ok := types.Unwrap(tTypeObj).(types.StructType); ok {
+				tType = structT.GoStr()
+			} else {
+				tType = tTypeObj.GoStrType()
+			}
+
+			// Check if the receiver is a Peekable - if so, wrap results to maintain Peekable interface
+			isPeekable := eXTT.Name == "Peekable"
+
+			// Handle Iterator methods for Iterator-implementing structs
+			switch fnName {
+			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain":
+				return GenFrag{F: func() string {
+					result := e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+					// If called on Peekable, wrap result in Peekable to maintain peek capability
+					if isPeekable {
+						result = e("AglIteratorPeekable["+tType+"](") + result + e(")")
+					}
+					return result
+				}}
+			case "Map":
+				// Get the function type to extract return type parameters
+				fnT := g.env.GetType(x.Sel).(types.FuncType)
+				// Extract return type parameter
+				var rType string
+				if retT, ok := fnT.Return.(types.StructType); ok && len(retT.TypeParams) > 0 {
+					rType = retT.TypeParams[0].GoStrType()
+				}
+				return GenFrag{F: func() string {
+					result := e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+					// If called on Peekable, wrap result in Peekable to maintain peek capability
+					if isPeekable {
+						result = e("AglIteratorPeekable["+rType+"](") + result + e(")")
+					}
+					return result
+				}}
+			case "Position", "RPosition":
+				// Position and RPosition need both T and I type parameters
+				iterType := eXTT.GoStrType() // e.g., "*IterVec[int]" or "*Peekable[int]"
+				return GenFrag{F: func() string {
+					return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				}}
+			case "Any", "AllSatisfy":
+				return GenFrag{F: func() string {
+					return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				}}
+			case "Contains", "ForEach":
+				return GenFrag{F: func() string {
+					return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				}}
+			case "Peekable":
+				return GenFrag{F: func() string {
+					return e("AglIteratorPeekable["+tType+"](") + genEX() + e(")")
+				}}
+			case "Count":
+				return GenFrag{F: func() string {
+					return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
+				}}
+			case "Min":
+				return GenFrag{F: func() string {
+					return e("AglIteratorMin["+tType+"](") + genEX() + e(")")
+				}}
+			case "Max":
+				return GenFrag{F: func() string {
+					return e("AglIteratorMax["+tType+"](") + genEX() + e(")")
+				}}
+			case "Sum":
+				// Get the function type to extract the return type R
+				fnT := g.env.GetType(x.Sel).(types.FuncType)
+				retT := fnT.Return.GoStrType()
+				return GenFrag{F: func() string {
+					return e("AglIteratorSum["+tType+", "+retT+"](") + genEX() + e(")")
+				}}
+			case "Cycle":
+				return GenFrag{F: func() string {
+					return e("AglIteratorCycle["+tType+"](") + genEX() + e(")")
+				}}
+			case "Joined":
+				return GenFrag{F: func() string {
+					return e("AglIterator"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
+				}}
+			}
+		}
+
+		// Handle Sequence-specific methods
 		switch fnName {
 		case "Sum":
 			fnT := g.env.GetType(x.Sel).(types.FuncType)

@@ -15163,6 +15163,30 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen493(t *testing.T) {
+	src := `package main
+func main() {
+    m := map[int]u8{1: 200, 2: 55, 3: 10}
+	assertEq(m.Values().Sum(), 9)
+	assertEq(m.Values().Sum[int](), 265)
+	assertEq(m.Values().Max()?, 200)
+	assertEq(m.Values().Min()?, 10)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	m := map[int]uint8{1: 200, 2: 55, 3: 10}
+	AglAssertEq(AglIteratorSum[uint8, uint8](AglIdentity(AglMapValues(m).Iter())), 9, "assert failed line 4")
+	AglAssertEq(AglIteratorSum[uint8, int](AglIdentity(AglMapValues(m).Iter())), 265, "assert failed line 5")
+	AglAssertEq(AglIteratorMax[uint8](AglIdentity(AglMapValues(m).Iter())).Unwrap(), 200, "assert failed line 6")
+	AglAssertEq(AglIteratorMin[uint8](AglIdentity(AglMapValues(m).Iter())).Unwrap(), 10, "assert failed line 7")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
