@@ -1128,20 +1128,6 @@ func (r *AglRangeFrom[T]) Next() Option[T] {
 	return res
 }
 
-func (r *AglRangeFrom[T]) Iter() Sequence[T] {
-	return func(yield func(T) bool) {
-		for {
-			if el := r.Next(); el.IsSome() {
-				if !yield(el.Unwrap()) {
-					return
-				}
-			} else {
-				return
-			}
-		}
-	}
-}
-
 type AglRangeInclusive[T Integer] struct {
 	Start, End T
 }
@@ -1168,7 +1154,35 @@ func (r *AglRangeInclusive[T]) NextBack() Option[T] {
 	return res
 }
 
+func (r *AglRange[T]) Seq() Sequence[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
 func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
+func (r *AglRangeFrom[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -1221,20 +1235,6 @@ func (r *AglRange[T]) NextBack() Option[T] {
 	}
 	r.End--
 	return MakeOptionSome(r.End)
-}
-
-func (r *AglRange[T]) Seq() Sequence[T] {
-	return func(yield func(T) bool) {
-		for {
-			if el := r.Next(); el.IsSome() {
-				if !yield(el.Unwrap()) {
-					return
-				}
-			} else {
-				return
-			}
-		}
-	}
 }
 
 func (r *AglRange[T]) Rev() *Rev[T] {
