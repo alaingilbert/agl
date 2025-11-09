@@ -2882,13 +2882,16 @@ afterUnwrap4:
 						}
 					}
 				}
-				return GenFrag{F: func() string {
-					result := e("AglIteratorFilterMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				return GenFrag{F: func() (out string) {
+					if isPeekable {
+						out += e("AglIteratorPeekable[" + rType + "](")
+					}
+					out += e("AglIteratorFilterMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 					// If called on Peekable, wrap result in Peekable to maintain peek capability
 					if isPeekable {
-						result = e("AglIteratorPeekable["+rType+"](") + result + e(")")
+						out += e(")")
 					}
-					return result
+					return
 				}}
 			case "Position", "RPosition":
 				// Position and RPosition need both T and I type parameters
