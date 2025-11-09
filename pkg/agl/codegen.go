@@ -3725,18 +3725,31 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 			if op == "in" {
 				t := g.env.GetType(expr.Y)
 				t = types.Unwrap(t)
-				switch t.(type) {
+				switch tt := t.(type) {
 				case types.ArrayType:
-					t = t.(types.ArrayType).Elt
-					content2 = func() string { return e("AglVec["+t.GoStrType()+"](") + c2.F() + e(")") }
-				case types.MapType:
-					kT := t.(types.MapType).K
-					vT := t.(types.MapType).V
+					t = tt.Elt
 					content2 = func() string {
-						return e("AglMap["+kT.GoStrType()+", "+vT.GoStrType()+"](") + c2.F() + e(")")
+						return e("AglIteratorIntoIterator["+t.GoStrType()+"](AglVecIter["+t.GoStrType()+"](") + c2.F() + e("))")
+					}
+				case types.MapType:
+					kT := tt.K
+					vT := tt.V
+					content2 = func() string {
+						return e("AglIteratorIntoIterator[DictEntry["+kT.GoStrType()+", "+vT.GoStrType()+"]](AglMap["+kT.GoStrType()+", "+vT.GoStrType()+"](") + c2.F() + e(").Iter())")
 					}
 				case types.SetType:
+					elemType := tt.K
+					content2 = func() string {
+						return e("AglIteratorIntoIterator["+elemType.GoStrType()+"](AglSetIter(") + c2.F() + e("))")
+					}
 				case types.InterfaceType:
+					// Check if it's an Iterator type and wrap it
+					if tt.Name == "Iterator" && len(tt.TypeParams) > 0 {
+						elemType := tt.TypeParams[0]
+						content2 = func() string {
+							return e("AglIteratorIntoIterator["+elemType.GoStrType()+"](") + c2.F() + e(")")
+						}
+					}
 				case types.StructType:
 				case types.FuncType:
 					// This is a Sequence[T] (iter.Seq[T]), no wrapping needed

@@ -10250,14 +10250,14 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	b1 := AglIn("c", AglVecIter[string]([]string{"a", "b", "c", "d"}))
-	b2 := AglIn("c", AglSetIter(AglSet[string]{"a": {}, "b": {}, "c": {}, "d": {}}))
-	b3 := AglIn("c", AglIdentity(AglMapKeys(map[string]int{"a": 1, "b": 2, "c": 3, "d": 4})))
+	b1 := AglIn("c", AglIteratorIntoIterator[string](AglVecIter[string]([]string{"a", "b", "c", "d"})))
+	b2 := AglIn("c", AglIteratorIntoIterator[string](AglSetIter(AglSet[string]{"a": {}, "b": {}, "c": {}, "d": {}})))
+	b3 := AglIn("c", AglIteratorIntoIterator[string](AglIdentity(AglMapKeys(map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}))))
 	AglAssert(b1 && b2 && b3, "assert failed line 6")
-	if AglIn(4, AglVecIter[int]([]int{1, 2, 3})) {
+	if AglIn(4, AglIteratorIntoIterator[int](AglVecIter[int]([]int{1, 2, 3}))) {
 		AglAssert(false, "assert failed line 8")
 	}
-	if !(AglIn(2, AglVecIter[int]([]int{1, 2, 3}))) {
+	if !(AglIn(2, AglIteratorIntoIterator[int](AglVecIter[int]([]int{1, 2, 3})))) {
 		AglAssert(false, "assert failed line 11")
 	}
 }
@@ -13857,7 +13857,7 @@ func main() {
 package main
 func main() {
 	a := []int{1, 2, 3}
-	if AglIn(1, AglVec[int](a)) && AglIn(2, AglVec[int](a)) {
+	if AglIn(1, AglIteratorIntoIterator[int](AglVecIter[int](a))) && AglIn(2, AglIteratorIntoIterator[int](AglVecIter[int](a))) {
 	}
 }
 `
@@ -14343,7 +14343,7 @@ package main
 func main() {
 	m := map[string]int{"a": 1, "b": 2, "c": 3}
 	k := "a"
-	if AglIn(k, AglIdentity(AglMapKeys(m))) {
+	if AglIn(k, AglIteratorIntoIterator[string](AglIdentity(AglMapKeys(m)))) {
 	}
 }
 `

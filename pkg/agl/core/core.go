@@ -2420,8 +2420,8 @@ func AglIntCheckedDiv(v, d int) Option[int] {
 	return MakeOptionSome(v / d)
 }
 
-func AglIn[T comparable](e T, it Iterator[T]) bool {
-	return AglIteratorContains(it, e)
+func AglIn[T comparable](e T, it IntoIterator[T]) bool {
+	return AglIteratorContains(it.Iter(), e)
 }
 
 func AglBuildSet[T comparable](it Iterator[T]) (out AglSet[T]) {

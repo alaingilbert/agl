@@ -816,6 +816,16 @@ func main() {
 	if !(2 in []int{1, 2, 3}.Iter()) {
 		assert(false)
 	}
+	b4 := "c" in []string{"a", "b", "c", "d"}
+	b5 := "c" in set[string]{"a", "b", "c", "d"}
+	b6 := "c" in map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}.Keys()
+	assert(b4 && b5 && b6)
+	if 4 in []int{1, 2, 3} {
+		assert(false)
+	}
+	if !(2 in []int{1, 2, 3}) {
+		assert(false)
+	}
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
