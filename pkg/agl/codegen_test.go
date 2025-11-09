@@ -10380,7 +10380,7 @@ func main() {
 		}
 		AglPrintf("%s: %d\n", k, v)
 	}
-	for i := range AglNewRange[int](0, 10).Iter() {
+	for i := range AglNewRange[int](0, 10).Seq() {
 		if !(i % 2 == 0) {
 			continue
 		}
@@ -11326,7 +11326,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	for e := range (AglNewRange[int](0, 42)).Iter() {
+	for e := range (AglNewRange[int](0, 42)).Seq() {
 	}
 	for e := range AglDoubleEndedIteratorRev(AglNewRange[int](0, int(42))).Iter() {
 	}
@@ -11497,7 +11497,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	for _ = range AglNewRange[int](0, 2).Iter() {
+	for _ = range AglNewRange[int](0, 2).Seq() {
 	}
 }
 `
@@ -13837,7 +13837,7 @@ func main() {
 	expected := `// agl:generated
 package main
 func main() {
-	for _ = range AglNewRange[int](0, 5 - 1).Iter() {
+	for _ = range AglNewRange[int](0, 5 - 1).Seq() {
 	}
 }
 `
