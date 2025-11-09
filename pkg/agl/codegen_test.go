@@ -10236,28 +10236,28 @@ func main() {
 func TestCodeGen330(t *testing.T) {
 	src := `package main
 func main() {
-	b1 := "c" in []string{"a", "b", "c", "d"}
-	b2 := "c" in set[string]{"a", "b", "c", "d"}
-	b3 := "c" in map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+	b1 := "c" in []string{"a", "b", "c", "d"}.Iter()
+	b2 := "c" in set[string]{"a", "b", "c", "d"}.Iter()
+	b3 := "c" in map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}.Keys()
 	assert(b1 && b2 && b3)
-	if 4 in []int{1, 2, 3} {
+	if 4 in []int{1, 2, 3}.Iter() {
 		assert(false)
 	}
-	if !(2 in []int{1, 2, 3}) {
+	if !(2 in []int{1, 2, 3}.Iter()) {
 		assert(false)
 	}
 }`
 	expected := `// agl:generated
 package main
 func main() {
-	b1 := AglIn("c", AglVec[string]([]string{"a", "b", "c", "d"}))
-	b2 := AglIn("c", AglSet[string]{"a": {}, "b": {}, "c": {}, "d": {}})
-	b3 := AglIn("c", AglMap[string, int](map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}))
+	b1 := AglIn("c", AglVecIter[string]([]string{"a", "b", "c", "d"}))
+	b2 := AglIn("c", AglSetIter(AglSet[string]{"a": {}, "b": {}, "c": {}, "d": {}}))
+	b3 := AglIn("c", AglIdentity(AglMapKeys(map[string]int{"a": 1, "b": 2, "c": 3, "d": 4})))
 	AglAssert(b1 && b2 && b3, "assert failed line 6")
-	if AglIn(4, AglVec[int]([]int{1, 2, 3})) {
+	if AglIn(4, AglVecIter[int]([]int{1, 2, 3})) {
 		AglAssert(false, "assert failed line 8")
 	}
-	if !(AglIn(2, AglVec[int]([]int{1, 2, 3}))) {
+	if !(AglIn(2, AglVecIter[int]([]int{1, 2, 3}))) {
 		AglAssert(false, "assert failed line 11")
 	}
 }

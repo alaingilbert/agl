@@ -801,3 +801,21 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test53(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	b1 := "c" in []string{"a", "b", "c", "d"}.Iter()
+	b2 := "c" in set[string]{"a", "b", "c", "d"}.Iter()
+	b3 := "c" in map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}.Keys()
+	assert(b1 && b2 && b3)
+	if 4 in []int{1, 2, 3}.Iter() {
+		assert(false)
+	}
+	if !(2 in []int{1, 2, 3}.Iter()) {
+		assert(false)
+	}
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}
