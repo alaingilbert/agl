@@ -1119,8 +1119,7 @@ type AglRangeFrom[T Integer] struct {
 }
 
 func AglNewRangeFrom[T Integer](start T) *AglRangeFrom[T] {
-	r := &AglRangeFrom[T]{Start: start}
-	return r
+	return &AglRangeFrom[T]{Start: start}
 }
 
 type AglRangeInclusive[T Integer] struct {
@@ -1128,8 +1127,7 @@ type AglRangeInclusive[T Integer] struct {
 }
 
 func AglNewRangeInclusive[T Integer](start, end T) *AglRangeInclusive[T] {
-	r := &AglRangeInclusive[T]{Start: start, End: end}
-	return r
+	return &AglRangeInclusive[T]{Start: start, End: end}
 }
 
 func (r *AglRangeInclusive[T]) Next() Option[T] {
@@ -1173,8 +1171,7 @@ type AglRange[T Integer] struct {
 }
 
 func AglNewRange[T Integer](start, end T) *AglRange[T] {
-	r := &AglRange[T]{Start: start, End: end}
-	return r
+	return &AglRange[T]{Start: start, End: end}
 }
 
 func (r *AglRange[T]) AllSatisfy(pred func(T) bool) bool {
