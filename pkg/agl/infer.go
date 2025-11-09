@@ -1637,17 +1637,17 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
-		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain":
+		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
 			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
 			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
-			infer.SetType(expr.Args[0], fnT.Params[0])
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case "Count", "Peekable", "Cycle", "Min", "Max":
-			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
-			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			if len(expr.Args) != len(fnT.Params) {
+				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
+				return
+			}
+			for i := 0; i < len(fnT.Params); i++ {
+				infer.SetType(expr.Args[i], fnT.Params[i])
+			}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "Map":
@@ -1700,17 +1700,17 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
-		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain":
+		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
 			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
 			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
-			infer.SetType(expr.Args[0], fnT.Params[0])
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case "Count", "Peekable", "Cycle", "Min", "Max":
-			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
-			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			if len(expr.Args) != len(fnT.Params) {
+				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
+				return
+			}
+			for i := 0; i < len(fnT.Params); i++ {
+				infer.SetType(expr.Args[i], fnT.Params[i])
+			}
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "Map":
