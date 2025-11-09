@@ -1122,6 +1122,26 @@ func AglNewRangeFrom[T Integer](start T) *AglRangeFrom[T] {
 	return &AglRangeFrom[T]{Start: start}
 }
 
+func (r *AglRangeFrom[T]) Next() Option[T] {
+	res := MakeOptionSome(r.Start)
+	r.Start++
+	return res
+}
+
+func (r *AglRangeFrom[T]) Iter() Sequence[T] {
+	return func(yield func(T) bool) {
+		for {
+			if el := r.Next(); el.IsSome() {
+				if !yield(el.Unwrap()) {
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}
+}
+
 type AglRangeInclusive[T Integer] struct {
 	Start, End T
 }
