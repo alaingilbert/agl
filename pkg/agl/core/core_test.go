@@ -272,6 +272,28 @@ func TestAglIteratorSum(t *testing.T) {
 	tassert.Equal(t, 265, AglIteratorSum[int, int](AglVec[int](arr3).Iter()))
 }
 
+func TestAglIteratorSorted(t *testing.T) {
+	// Test with integers
+	arr := []int{3, 1, 4, 1, 5, 9, 2, 6}
+	sorted := AglIteratorSorted(AglVec[int](arr).Iter())
+	tassert.Equal(t, []int{1, 1, 2, 3, 4, 5, 6, 9}, sorted)
+
+	// Test with strings
+	strs := []string{"zebra", "apple", "banana", "cherry"}
+	sortedStr := AglIteratorSorted(AglVec[string](strs).Iter())
+	tassert.Equal(t, []string{"apple", "banana", "cherry", "zebra"}, sortedStr)
+
+	// Test with empty iterator
+	empty := []int{}
+	sortedEmpty := AglIteratorSorted(AglVec[int](empty).Iter())
+	tassert.Equal(t, 0, len(sortedEmpty))
+
+	// Test with single element
+	single := []int{42}
+	sortedSingle := AglIteratorSorted(AglVec[int](single).Iter())
+	tassert.Equal(t, []int{42}, sortedSingle)
+}
+
 func TestAglIteratorPeekable(t *testing.T) {
 	arr := []int{1, 2, 3}
 	it := AglIteratorPeekable(AglVecIter(arr))

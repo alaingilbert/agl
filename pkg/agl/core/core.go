@@ -749,6 +749,12 @@ func AglSequenceSorted[T cmp.Ordered](s Sequence[T]) []T {
 	return slices.Sorted(iter.Seq[T](s))
 }
 
+func AglIteratorSorted[T cmp.Ordered](it Iterator[T]) []T {
+	arr := AglBuildArray(it)
+	slices.Sort(arr)
+	return arr
+}
+
 func AglIteratorJoined(s Iterator[string], sep string) string {
 	return strings.Join(AglBuildArray(s), sep)
 }
@@ -2270,12 +2276,12 @@ func AglMapAllSatisfy[K comparable, V any](m map[K]V, pred func(DictEntry[K, V])
 	return true
 }
 
-func AglMapKeys[K comparable, V any](m map[K]V) Sequence[K] {
-	return Sequence[K](maps.Keys(m))
+func AglMapKeys[K comparable, V any](m map[K]V) Iterator[K] {
+	return Sequence[K](maps.Keys(m)).Iter()
 }
 
-func AglMapValues[K comparable, V any](m map[K]V) Sequence[V] {
-	return Sequence[V](maps.Values(m))
+func AglMapValues[K comparable, V any](m map[K]V) Iterator[V] {
+	return Sequence[V](maps.Values(m)).Iter()
 }
 
 func AglMapRemove[K comparable, V any](m map[K]V, k K) Option[V] {

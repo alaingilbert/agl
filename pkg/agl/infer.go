@@ -1508,6 +1508,43 @@ afterUnwrap3:
 				// Substitute R with T
 				fnT = fnT.T("R", typeParam)
 			}
+		} else if fnName == "FilterMap" {
+			// Extract R from the closure's return type Option[R]
+			if len(expr.Args) > 0 {
+				arg0 := expr.Args[0]
+				if arg0Func, ok := arg0.(*ast.ShortFuncLit); ok {
+					// The closure should already be inferred by the parameter type checking above
+					var rT types.Type
+					// Try to get the actual return type from the lambda
+					lambdaReturnType := infer.GetTypeFn(arg0Func).Return
+					switch v := lambdaReturnType.(type) {
+					case types.StructType:
+						// Return type is Option[R], extract R
+						if v.Name == "Option" && len(v.TypeParams) > 0 {
+							rT = v.TypeParams[0]
+							// Unwrap GenericType if needed
+							if genT, ok := rT.(types.GenericType); ok {
+								rT = genT.W
+							}
+						}
+					case types.OptionType:
+						rT = v.W
+					case types.GenericType:
+						// If still generic, try to infer from the lambda body's return statements
+						rT = infer.inferReturnTypeFromLambdaBody(arg0Func)
+						if rT != nil {
+							// Update the lambda's type with the concrete return type
+							updatedFnT := infer.GetTypeFn(arg0Func)
+							updatedFnT.Return = types.OptionType{W: rT}
+							infer.SetTypeForce(arg0Func, updatedFnT)
+						}
+					}
+					if rT != nil {
+						// Substitute R with the inferred type
+						fnT = fnT.T("R", rT)
+					}
+				}
+			}
 		}
 
 		tr := fnT.Return

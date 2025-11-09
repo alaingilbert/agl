@@ -2681,6 +2681,10 @@ afterUnwrap4:
 		var tTypeObj types.Type
 		if len(eXTT.TypeParams) > 0 {
 			tTypeObj = eXTT.TypeParams[0]
+			// Unwrap GenericType to get the concrete type
+			if genT, ok := tTypeObj.(types.GenericType); ok {
+				tTypeObj = genT.W
+			}
 			// For generic type parameters in function calls, we need the parameterized form
 			// (e.g., DictEntry[int, string]) not the monomorphized form (e.g., DictEntry_T_int_T_string)
 			if structT, ok := types.Unwrap(tTypeObj).(types.StructType); ok {
@@ -2721,6 +2725,29 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
+		case "FilterMap":
+			// Get the function type which should have R inferred
+			fnT := g.env.GetType(x.Sel).(types.FuncType)
+			// Extract R type parameter from the inferred function type
+			var rType string
+			if retT, ok := fnT.Return.(types.InterfaceType); ok && retT.Name == "Iterator" {
+				if len(retT.TypeParams) > 0 {
+					rParam := retT.TypeParams[0]
+					// Unwrap GenericType if needed
+					if genT, ok := rParam.(types.GenericType); ok {
+						rParam = genT.W
+					}
+					// Get the string representation
+					if structT, ok := types.Unwrap(rParam).(types.StructType); ok {
+						rType = structT.GoStr()
+					} else {
+						rType = rParam.GoStrType()
+					}
+				}
+			}
+			return GenFrag{F: func() string {
+				return e("AglIteratorFilterMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		case "Position", "RPosition":
 			// Position and RPosition need both T and I type parameters
 			//iterType := eXTT.GoStrType() // e.g., "Iterator[int]"
@@ -2739,6 +2766,10 @@ afterUnwrap4:
 		case "Peekable":
 			return GenFrag{F: func() string {
 				return e("AglIteratorPeekable["+tType+"](") + genEX() + e(")")
+			}}
+		case "Sorted":
+			return GenFrag{F: func() string {
+				return e("AglIteratorSorted["+tType+"](") + genEX() + e(")")
 			}}
 		case "Count":
 			return GenFrag{F: func() string {
@@ -2788,6 +2819,10 @@ afterUnwrap4:
 			var tType string
 			var tTypeObj types.Type
 			tTypeObj = eXTT.TypeParams[0]
+			// Unwrap GenericType to get the concrete type
+			if genT, ok := tTypeObj.(types.GenericType); ok {
+				tTypeObj = genT.W
+			}
 			if structT, ok := types.Unwrap(tTypeObj).(types.StructType); ok {
 				tType = structT.GoStr()
 			} else {
@@ -2800,13 +2835,16 @@ afterUnwrap4:
 			// Handle Iterator methods for Iterator-implementing structs
 			switch fnName {
 			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain":
-				return GenFrag{F: func() string {
-					result := e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+				return GenFrag{F: func() (out string) {
+					if isPeekable {
+						out += e("AglIteratorPeekable[" + tType + "](")
+					}
+					out += e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 					// If called on Peekable, wrap result in Peekable to maintain peek capability
 					if isPeekable {
-						result = e("AglIteratorPeekable["+tType+"](") + result + e(")")
+						out += e(")")
 					}
-					return result
+					return
 				}}
 			case "Map":
 				// Get the function type to extract return type parameters
@@ -2818,6 +2856,34 @@ afterUnwrap4:
 				}
 				return GenFrag{F: func() string {
 					result := e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+					// If called on Peekable, wrap result in Peekable to maintain peek capability
+					if isPeekable {
+						result = e("AglIteratorPeekable["+rType+"](") + result + e(")")
+					}
+					return result
+				}}
+			case "FilterMap":
+				// Get the function type which should have R inferred
+				fnT := g.env.GetType(x.Sel).(types.FuncType)
+				// Extract R type parameter from the inferred function type
+				var rType string
+				if retT, ok := fnT.Return.(types.InterfaceType); ok && retT.Name == "Iterator" {
+					if len(retT.TypeParams) > 0 {
+						rParam := retT.TypeParams[0]
+						// Unwrap GenericType if needed
+						if genT, ok := rParam.(types.GenericType); ok {
+							rParam = genT.W
+						}
+						// Get the string representation
+						if structT, ok := types.Unwrap(rParam).(types.StructType); ok {
+							rType = structT.GoStr()
+						} else {
+							rType = rParam.GoStrType()
+						}
+					}
+				}
+				return GenFrag{F: func() string {
+					result := e("AglIteratorFilterMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 					// If called on Peekable, wrap result in Peekable to maintain peek capability
 					if isPeekable {
 						result = e("AglIteratorPeekable["+rType+"](") + result + e(")")
@@ -3667,6 +3733,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 						return e("AglMap["+kT.GoStrType()+", "+vT.GoStrType()+"](") + c2.F() + e(")")
 					}
 				case types.SetType:
+				case types.InterfaceType:
 				case types.StructType:
 				case types.FuncType:
 					// This is a Sequence[T] (iter.Seq[T]), no wrapping needed
@@ -4239,7 +4306,12 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 								out += e(g.prefix + "\t\tbreak\n")
 								out += e(g.prefix + "\t}\n")
 								varName := v.X.(*ast.Ident).Name
-								out += e(g.prefix+"\t") + e(varName) + e(" := ") + e(optTmp) + e(".Unwrap()\n")
+								if varName == "_" {
+									// Don't assign to _ - just call Unwrap() to consume the value
+									out += e(g.prefix+"\t") + e("_ = ") + e(optTmp) + e(".Unwrap()\n")
+								} else {
+									out += e(g.prefix+"\t") + e(varName) + e(" := ") + e(optTmp) + e(".Unwrap()\n")
+								}
 							} else {
 								panic(fmt.Sprintf("unexpected interface type: %s", vv.Name))
 							}

@@ -11566,15 +11566,15 @@ func main() {
 package main
 func main() {
 	a := map[int]uint8{1: 1, 2: 2, 3: 3}
-	AglSequenceSum[uint8, uint8](AglIdentity(AglMapValues(a)))
-	AglSequenceSum[uint8, int](AglIdentity(AglMapValues(a)))
+	AglIteratorSum[uint8, uint8](AglIdentity(AglMapValues(a)))
+	AglIteratorSum[uint8, int](AglIdentity(AglMapValues(a)))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[int]u8) Values() Sequence[u8]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (Sequence[u8]) Sum() u8", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (Sequence[u8]) Sum() int", test.TypeAt(5, 13).String())
+	tassert.Equal(t, "func (map[int]u8) Values() agl1.Iterator[u8]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl1.Iterator[u8]) Sum() u8", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (agl1.Iterator[u8]) Sum() int", test.TypeAt(5, 13).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -12172,22 +12172,22 @@ func TestCodeGen398(t *testing.T) {
 	src := `package main
 func main() {
 	m := make(map[int]int)
-	m.Values().Filter({ $0 % 2 == 0 }).Len()
+	m.Values().Filter({ $0 % 2 == 0 }).Count()
 }`
 	expected := `// agl:generated
 package main
 func main() {
 	m := make(map[int]int)
-	AglSequenceLen(AglSequenceFilter(AglIdentity(AglMapValues(m)), func(aglArg0 int) bool {
+	AglIteratorCount[int](AglIteratorFilter[int](AglIdentity(AglMapValues(m)), func(aglArg0 int) bool {
 		return aglArg0 % 2 == 0
 	}))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[int]int) Values() Sequence[int]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (Sequence[int]) Filter(func(int) bool) Sequence[int]", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (Sequence[int]) Len() int", test.TypeAt(4, 37).String())
+	tassert.Equal(t, "func (map[int]int) Values() agl1.Iterator[int]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl1.Iterator[int]) Filter(func(int) bool) agl1.Iterator[int]", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (agl1.Iterator[int]) Count() int", test.TypeAt(4, 37).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -12201,13 +12201,13 @@ func main() {
 package main
 func main() {
 	m := make(map[string]int)
-	AglSequenceJoined(AglIdentity(AglMapKeys(m)), ", ")
+	AglIteratorJoined(AglIdentity(AglMapKeys(m)), ", ")
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[string]int) Keys() Sequence[string]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (Sequence[string]) Joined(string) string", test.TypeAt(4, 11).String())
+	tassert.Equal(t, "func (map[string]int) Keys() agl1.Iterator[string]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl1.Iterator[string]) Joined(string) string", test.TypeAt(4, 11).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -14744,7 +14744,7 @@ func main() {
 package main
 func main() {
 	m := map[int]int{1: 1, 2: 2, 3: 3}
-	a := AglVecSorted(AglBuildArray(AglIdentity(AglMapKeys(m)).Iter()))
+	a := AglVecSorted(AglBuildArray(AglIdentity(AglMapKeys(m))))
 	AglPrint(a)
 }
 `
@@ -14752,7 +14752,7 @@ func main() {
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "map[int]int", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (map[int]int) Keys() Sequence[int]", test.TypeAt(4, 15).String())
+	tassert.Equal(t, "func (map[int]int) Keys() agl1.Iterator[int]", test.TypeAt(4, 15).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -15176,10 +15176,30 @@ func main() {
 package main
 func main() {
 	m := map[int]uint8{1: 200, 2: 55, 3: 10}
-	AglAssertEq(AglIteratorSum[uint8, uint8](AglIdentity(AglMapValues(m).Iter())), 9, "assert failed line 4")
-	AglAssertEq(AglIteratorSum[uint8, int](AglIdentity(AglMapValues(m).Iter())), 265, "assert failed line 5")
-	AglAssertEq(AglIteratorMax[uint8](AglIdentity(AglMapValues(m).Iter())).Unwrap(), 200, "assert failed line 6")
-	AglAssertEq(AglIteratorMin[uint8](AglIdentity(AglMapValues(m).Iter())).Unwrap(), 10, "assert failed line 7")
+	AglAssertEq(AglIteratorSum[uint8, uint8](AglIdentity(AglMapValues(m))), 9, "assert failed line 4")
+	AglAssertEq(AglIteratorSum[uint8, int](AglIdentity(AglMapValues(m))), 265, "assert failed line 5")
+	AglAssertEq(AglIteratorMax[uint8](AglIdentity(AglMapValues(m))).Unwrap(), 200, "assert failed line 6")
+	AglAssertEq(AglIteratorMin[uint8](AglIdentity(AglMapValues(m))).Unwrap(), 10, "assert failed line 7")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen494(t *testing.T) {
+	src := `package main
+func main() {
+    a := []int{1, 2, 3}
+	mut it := a.Iter().Peekable()
+	it = it.Skip(1)
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	it := AglIteratorPeekable[int](AglVecIter[int](a))
+	it = AglIteratorPeekable[int](AglIteratorSkip[int](it, 1))
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -15715,11 +15735,11 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
-func TestCodeGen_SequenceFilterMap(t *testing.T) {
+func TestCodeGen_IteratorFilterMap(t *testing.T) {
 	src := `package main
 func main() {
 	m := map[int](int, int?){1: (1, Some(10)), 2: (2, None), 3: (3, Some(30))}
-	result := m.Values().FilterMap(|x| x.1).Len()
+	result := m.Values().FilterMap(|x| x.1).Count()
 	print(result)
 }`
 	expected := `// agl:generated
@@ -15727,7 +15747,7 @@ package main
 import "fmt"
 func main() {
 	m := map[int]AglTupleStruct_int_Option_int_{1: AglTupleStruct_int_Option_int_{Arg0: 1, Arg1: MakeOptionSome(10)}, 2: AglTupleStruct_int_Option_int_{Arg0: 2, Arg1: MakeOptionNone[int]()}, 3: AglTupleStruct_int_Option_int_{Arg0: 3, Arg1: MakeOptionSome(30)}}
-	result := AglSequenceLen(AglSequenceFilterMap[AglTupleStruct_int_Option_int_, int](AglIdentity(AglMapValues(m)), func(x AglTupleStruct_int_Option_int_) Option[int] {
+	result := AglIteratorCount[int](AglIteratorFilterMap[AglTupleStruct_int_Option_int_, int](AglIdentity(AglMapValues(m)), func(x AglTupleStruct_int_Option_int_) Option[int] {
 		return x.Arg1
 	}))
 	AglPrint(result)
@@ -15742,6 +15762,7 @@ func (t AglTupleStruct_int_Option_int_) String() string {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (Sequence[(int, int?)]) FilterMap(func((int, int?)) int?) Sequence[int]", test.TypeAt(4, 25).String())
+	test.PrintErrors()
+	tassert.Equal(t, "func (agl1.Iterator[(int, int?)]) FilterMap(func((int, int?)) int?) agl1.Iterator[int]", test.TypeAt(4, 25).String())
 	testCodeGen2(t, expected, test)
 }
