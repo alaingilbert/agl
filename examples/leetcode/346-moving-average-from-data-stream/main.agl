@@ -12,8 +12,9 @@ func Constructor(size int) MovingAverage {
 }
 
 func (mut this *MovingAverage) Next(val int) f64 {
-    prev := this.vals[this.count % this.size]
-    this.vals[this.count % this.size] = val
+    idx := this.count % this.size
+    prev := this.vals[idx]
+    this.vals[idx] = val
     this.count++
     this.windowSum = this.windowSum - prev + val
     return f64(this.windowSum) / f64(min(this.count, this.size))
