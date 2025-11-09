@@ -5,7 +5,7 @@ func parseTernary(expression string) string {
     mut ans := "F"
     mut it := chars.Iter().Peekable()
     for {
-        c := it.Next() or_break
+        c := it.Next()?
         n := it.Peek()
         if (c != "F" && c != "T") || n.IsNone() || n? == ":" {
             return c
