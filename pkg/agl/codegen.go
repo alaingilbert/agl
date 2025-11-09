@@ -4327,13 +4327,13 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							c2V := c2.F()
 							op := utils.Ternary(c2V == "_", "=", ":=")
 							out += c2V
-							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
+							out += e(" "+op+" range ") + c1.F() + e(".Seq()") + e(" {\n")
 						case types.RangeInclusiveType:
 							out += e(g.prefix + "for ")
 							c2V := c2.F()
 							op := utils.Ternary(c2V == "_", "=", ":=")
 							out += c2V
-							out += e(" "+op+" range ") + c1.F() + e(".Iter()") + e(" {\n")
+							out += e(" "+op+" range ") + c1.F() + e(".Seq()") + e(" {\n")
 						case types.StringType:
 							out += e(g.prefix+"for _, ") + c2.F() + e(" := range ") + c1.F() + e(" {\n")
 						case types.FuncType:

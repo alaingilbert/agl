@@ -1168,7 +1168,7 @@ func (r *AglRangeInclusive[T]) NextBack() Option[T] {
 	return res
 }
 
-func (r *AglRangeInclusive[T]) Iter() Sequence[T] {
+func (r *AglRangeInclusive[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
@@ -1223,7 +1223,7 @@ func (r *AglRange[T]) NextBack() Option[T] {
 	return MakeOptionSome(r.End)
 }
 
-func (r *AglRange[T]) Iter() Sequence[T] {
+func (r *AglRange[T]) Seq() Sequence[T] {
 	return func(yield func(T) bool) {
 		for {
 			if el := r.Next(); el.IsSome() {
