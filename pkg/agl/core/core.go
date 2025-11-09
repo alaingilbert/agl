@@ -1181,6 +1181,18 @@ type Iterator[T any] interface {
 	Next() Option[T]
 }
 
+type IteratorIntoIterator[T any] struct {
+	iter Iterator[T]
+}
+
+func (w *IteratorIntoIterator[T]) Iter() Iterator[T] {
+	return w.iter
+}
+
+func AglIteratorIntoIterator[T any](it Iterator[T]) *IteratorIntoIterator[T] {
+	return &IteratorIntoIterator[T]{iter: it}
+}
+
 type CloneIterator[T any] interface {
 	Iterator[T]
 	Clone() CloneIterator[T]
