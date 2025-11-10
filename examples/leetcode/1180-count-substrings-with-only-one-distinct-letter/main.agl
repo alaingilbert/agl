@@ -1,0 +1,19 @@
+package main
+
+func countLetters(s string) int {
+    mut total, mut count := 1, 1
+    for i in 1..s.Len() {
+        if s[i] == s[i-1] {
+            count++
+        } else {
+            count = 1
+        }
+        total += count
+    }
+    return total
+}
+
+func main() {
+    assertEq(countLetters("aaaba"), 8)
+    assertEq(countLetters("aaaaaaaaaa"), 55)
+}
