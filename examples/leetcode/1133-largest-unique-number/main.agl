@@ -15,11 +15,7 @@ func largestUniqueNumber(nums []int) int {
             ans = Some(k)
         }
     }
-    if let Some(v) := ans {
-        return v
-    } else {
-        return -1
-    }
+    return ans.UnwrapOr(-1)
 }
 
 func main() {
