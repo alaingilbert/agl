@@ -14,11 +14,10 @@ func smallestCommonElement(mat [][]int) int {
             rowVal := row[rowIdx]
             if rowVal < ans {
                 indices[i]++
-                cont = true
             } else if rowVal > ans {
                 ans = rowVal
-                cont = true
             }
+            cont = cont || rowVal != ans
         }
     }
     return ans
