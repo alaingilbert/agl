@@ -1997,6 +1997,10 @@ type AglTupleStruct_int_int32 struct {
 	Arg1 int32
 }
 
+func (t AglTupleStruct_int_int32) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
+}
+
 func AglStringEnumerated(s string) []AglTupleStruct_int_int32 {
 	out := make([]AglTupleStruct_int_int32, 0, len(s))
 	for i, c := range s {
@@ -2044,6 +2048,10 @@ func AglStringTrimSuffix(s string, suffix string) string {
 type AglTupleStruct_string_string struct {
 	Arg0 string
 	Arg1 string
+}
+
+func (t AglTupleStruct_string_string) String() string {
+	return fmt.Sprintf("(%v, %v)", t.Arg0, t.Arg1)
 }
 
 func AglStringCut(s string, sep string) Option[AglTupleStruct_string_string] {
