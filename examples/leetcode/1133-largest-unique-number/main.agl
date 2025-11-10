@@ -5,13 +5,7 @@ func largestUniqueNumber(nums []int) int {
     for e in nums {
         m[e]++
     }
-    var mut ans int?
-    for (k, v) in m where v == 1 {
-        if ans.IsNone() || k > ans? {
-            ans = Some(k)
-        }
-    }
-    return ans.UnwrapOr(-1)
+    return m.Filter({ $0.Value == 1 }).Map({ $0.Key }).Max().UnwrapOr(-1)
 }
 
 func main() {
