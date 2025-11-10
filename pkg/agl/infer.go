@@ -1597,6 +1597,21 @@ afterUnwrap3:
 				// Substitute R with T
 				fnT = fnT.T("R", typeParam)
 			}
+		} else if fnName == "Map" {
+			// Extract R from the closure's return type
+			if len(expr.Args) > 0 {
+				arg0 := expr.Args[0]
+				if arg0Func, ok := arg0.(*ast.ShortFuncLit); ok {
+					// The closure should already be inferred by the parameter type checking above
+					lambdaReturnType := infer.GetTypeFn(arg0Func).Return
+					// Unwrap GenericType if needed
+					if genType, ok := lambdaReturnType.(types.GenericType); ok {
+						lambdaReturnType = genType.W
+					}
+					// Substitute R with the inferred type
+					fnT = fnT.T("R", lambdaReturnType)
+				}
+			}
 		} else if fnName == "FilterMap" {
 			// Extract R from the closure's return type Option[R]
 			if len(expr.Args) > 0 {
