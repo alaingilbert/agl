@@ -1597,6 +1597,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			if xx.Sel.Name == "Rev" {
 				name := "agl1.DoubleEndedIterator.Rev"
 				return e.GetType2(&ast.Ident{Name: name}, fset)
+			} else if xx.Sel.Name == "NthBack" {
+				name := "agl1.DoubleEndedIterator.NthBack"
+				return e.GetType2(&ast.Ident{Name: name}, fset)
 			}
 			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)
 			return e.GetType2(&ast.Ident{Name: name}, fset)
@@ -1604,6 +1607,9 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 			// Range types are iterators, check for iterator methods
 			if xx.Sel.Name == "Rev" {
 				name := "agl1.DoubleEndedIterator.Rev"
+				return e.GetType2(&ast.Ident{Name: name}, fset)
+			} else if xx.Sel.Name == "NthBack" {
+				name := "agl1.DoubleEndedIterator.NthBack"
 				return e.GetType2(&ast.Ident{Name: name}, fset)
 			}
 			name := fmt.Sprintf("agl1.Iterator.%s", xx.Sel.Name)

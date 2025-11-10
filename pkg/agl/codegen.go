@@ -3193,9 +3193,10 @@ afterUnwrap4:
 		case "Rev":
 			c1 := g.genExpr(rangeExpr)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
-		case "RFind":
+		case "RFind", "NthBack":
 			c1 := g.genExpr(rangeExpr)
-			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRFind(") + c1.F() + e(")") }}
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
 		case "Map":
 			// Map needs two type parameters: T and R
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -3218,6 +3219,58 @@ afterUnwrap4:
 				}
 			case types.RangeType:
 				// Map on RangeType might return another RangeType with the new element type
+				rType = retT.Typ.GoStrType()
+			}
+			c1 := g.genExpr(rangeExpr)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIteratorMap["+tType+", "+rType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "AllSatisfy", "Contains", "ForEach", "Filter", "Take", "TakeWhile":
+			c1 := g.genExpr(rangeExpr)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "Min", "Max":
+			c1 := g.genExpr(rangeExpr)
+			return GenFrag{F: func() string { return e("AglIterator"+fnName+"["+tType+"](") + c1.F() + e(")") }}
+		}
+	case types.RangeInclusiveType:
+		fnName := x.Sel.Name
+		rangeType := g.env.GetType(x.X).(types.RangeInclusiveType)
+		tType := rangeType.Typ.GoStrType()
+		// Unwrap ParenExpr if present
+		rangeExpr := x.X
+		if parenExpr, ok := rangeExpr.(*ast.ParenExpr); ok {
+			rangeExpr = parenExpr.X
+		}
+		switch fnName {
+		case "Rev":
+			c1 := g.genExpr(rangeExpr)
+			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
+		case "RFind", "NthBack":
+			c1 := g.genExpr(rangeExpr)
+			c2 := g.genExpr(expr.Args[0])
+			return GenFrag{F: func() string { return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
+		case "Map":
+			// Map needs two type parameters: T and R
+			fnT := g.env.GetType(x.Sel).(types.FuncType)
+			var rType string
+			// The return type could be InterfaceType (Iterator[R]) or StructType
+			switch retT := fnT.Return.(type) {
+			case types.InterfaceType:
+				// Iterator[R] - extract R from type parameters
+				if len(retT.TypeParams) > 0 {
+					rParam := retT.TypeParams[0]
+					// Unwrap GenericType if needed
+					if genT, ok := rParam.(types.GenericType); ok {
+						rParam = genT.W
+					}
+					if structT, ok := types.Unwrap(rParam).(types.StructType); ok {
+						rType = structT.GoStr()
+					} else {
+						rType = rParam.GoStrType()
+					}
+				}
+			case types.RangeInclusiveType:
+				// Map on RangeInclusiveType might return another RangeInclusiveType with the new element type
 				rType = retT.Typ.GoStrType()
 			}
 			c1 := g.genExpr(rangeExpr)

@@ -890,6 +890,9 @@ func main() {
 	it := a.Iter()
 	assertEq(it.NthBack(1)?, 2)
 	assert(it.NthBack(1).IsNone())
+
+	assertEq((0..=5).NthBack(1)?, 4)
+	assertEq((0..5).NthBack(1)?, 3)
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
