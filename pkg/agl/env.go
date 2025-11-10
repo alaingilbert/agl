@@ -1053,7 +1053,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Vec.FirstIndexWhere", "func [T any](a []T, where: p func(T) bool) int?")
 		e.DefineFn(nenv, "agl1.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl1.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
-		e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) Iterator[T]")
+		e.DefineFn(nenv, "agl1.Vec.Iter", "func [T any](a []T) DoubleEndedExactSizeIterator[T]")
 		e.DefineFn(nenv, "agl1.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl1.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
 		e.DefineFn(nenv, "agl1.Vec.Pop", "func [T any](mut a []T) T?")
