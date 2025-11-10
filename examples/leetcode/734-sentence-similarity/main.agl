@@ -1,0 +1,18 @@
+package main
+
+func areSentencesSimilar(sentence1 []string, sentence2 []string, similarPairs [][]string) bool {
+    if sentence1.Len() != sentence2.Len() {
+        return false
+    }
+    for (i, w1) in sentence1.Enumerated() {
+        w2 := sentence2[i]
+        if w1 != w2 && !similarPairs.Any(|p| (w1 == p[0] && w2 == p[1]) || (w2 == p[0] && w1 == p[1])) {
+            return false
+        }
+    }
+    return true
+}
+
+func main() {
+    print(areSentencesSimilar([]string{"great","acting","skills"}, []string{"fine","drama","talent"}, [][]string{{"great","fine"},{"drama","acting"},{"skills","talent"}}))
+}
