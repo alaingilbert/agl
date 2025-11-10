@@ -1292,6 +1292,19 @@ func AglDoubleEndedIteratorRev[T any, I DoubleEndedIterator[T]](it I) *Rev[T] {
 	return &Rev[T]{it: it}
 }
 
+func AglDoubleEndedIteratorRFind[T any](it DoubleEndedIterator[T], pred func(T) bool) Option[T] {
+	for {
+		if el := it.NextBack(); el.IsSome() {
+			if pred(el.Unwrap()) {
+				return el
+			}
+		} else {
+			break
+		}
+	}
+	return MakeOptionNone[T]()
+}
+
 func AglIteratorAllSatisfy[T any, I Iterator[T]](it I, pred func(T) bool) bool {
 	for {
 		v := it.Next()
