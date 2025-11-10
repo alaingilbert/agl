@@ -7,11 +7,7 @@ func largestUniqueNumber(nums []int) int {
     }
     var mut ans int?
     for (k, v) in m where v == 1 {
-        if let Some(ansv) := ans {
-            if k > ansv {
-                ans = Some(k)
-            }
-        } else {
+        if ans.IsNone() || k > ans? {
             ans = Some(k)
         }
     }
