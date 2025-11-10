@@ -1,0 +1,23 @@
+package main
+
+func confusingNumber(n int) bool {
+    var mut nn int
+    cache := map[int]int{0: 0, 1: 1, 6: 9, 8: 8, 9: 6}
+    mut m := n
+    for m > 0 {
+        r := m % 10
+        m /= 10
+        if let Some(o) := cache.Get(r) {
+            nn = nn * 10 + o
+        } else {
+            return false
+        }
+    }
+    return nn != n
+}
+
+func main() {
+    assert(confusingNumber(6))
+    assert(confusingNumber(89))
+    assert(!confusingNumber(11))
+}
