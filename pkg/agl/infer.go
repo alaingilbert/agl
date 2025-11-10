@@ -1707,17 +1707,17 @@ afterUnwrap3:
 		infer.SetType(expr, fnT.Return)
 	case types.RangeType:
 		switch fnName {
-		case "Rev", "NthBack":
+		case "Rev":
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator." + fnName)
 			fnT := infer.env.GetFn("agl1.DoubleEndedIterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ)
-			if len(expr.Args) != len(fnT.Params)-1 {
-				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
-				return
-			}
-			for i := 0; i < len(fnT.Params)-1; i++ {
-				infer.SetType(expr.Args[i], fnT.Params[i])
-			}
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "NthBack":
+			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator." + fnName)
+			fnT := infer.env.GetFn("agl1.DoubleEndedIterator." + fnName)
+			fnT = fnT.T("T", idTT.Typ)
+			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take",
@@ -1778,17 +1778,17 @@ afterUnwrap3:
 		}
 	case types.RangeInclusiveType:
 		switch fnName {
-		case "Rev", "NthBack":
+		case "Rev":
 			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator." + fnName)
 			fnT := infer.env.GetFn("agl1.DoubleEndedIterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ)
-			if len(expr.Args) != len(fnT.Params)-1 {
-				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
-				return
-			}
-			for i := 0; i < len(fnT.Params)-1; i++ {
-				infer.SetType(expr.Args[i], fnT.Params[i])
-			}
+			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
+			infer.SetType(expr, fnT.Return)
+		case "NthBack":
+			info := infer.env.GetNameInfo("agl1.DoubleEndedIterator." + fnName)
+			fnT := infer.env.GetFn("agl1.DoubleEndedIterator." + fnName)
+			fnT = fnT.T("T", idTT.Typ)
+			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take",
