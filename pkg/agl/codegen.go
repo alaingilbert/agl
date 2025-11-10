@@ -2755,6 +2755,10 @@ afterUnwrap4:
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 				//return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
+		case "RFind":
+			return GenFrag{F: func() string {
+				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
+			}}
 		case "Any", "AllSatisfy":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
@@ -3189,6 +3193,9 @@ afterUnwrap4:
 		case "Rev":
 			c1 := g.genExpr(rangeExpr)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
+		case "RFind":
+			c1 := g.genExpr(rangeExpr)
+			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRFind(") + c1.F() + e(")") }}
 		case "Map":
 			// Map needs two type parameters: T and R
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
