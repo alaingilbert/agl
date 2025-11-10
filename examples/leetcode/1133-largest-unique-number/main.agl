@@ -1,0 +1,28 @@
+package main
+
+func largestUniqueNumber(nums []int) int {
+    mut m := make(map[int]int)
+    for e in nums {
+        m[e]++
+    }
+    var mut ans int?
+    for (k, v) in m where v == 1 {
+        if let Some(ansv) := ans {
+            if k > ansv {
+                ans = Some(k)
+            }
+        } else {
+            ans = Some(k)
+        }
+    }
+    if let Some(v) := ans {
+        return v
+    } else {
+        return -1
+    }
+}
+
+func main() {
+    assertEq(largestUniqueNumber([]int{5,7,3,9,4,9,8,3,1}), 8)
+    assertEq(largestUniqueNumber([]int{9,9,8,8}), -1)
+}
