@@ -1109,6 +1109,8 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "Sequence.TakeWhile", "func [T any](s Sequence[T], f func(T) bool) Sequence[T]")
 		e.DefineFn(nenv, "Set", "func[T comparable] (it Iterator[T]) agl1.Set[T]")
 		e.DefineFn(nenv, "Array", "func[T any] (it Iterator[T]) []T")
+		e.DefineFn(nenv, "agl1.DoubleEndedIterator.AdvanceBackBy", "func[T any](it DoubleEndedIterator[T], n int) void!", WithDesc("Advances the iterator from the back by n elements."))
+		e.DefineFn(nenv, "agl1.DoubleEndedIterator.NextBack", "func[T any](it DoubleEndedIterator[T]) T?", WithDesc("Removes and returns an element from the end of the iterator."))
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.NthBack", "func[T any](it DoubleEndedIterator[T], n int) T?", WithDesc("Returns the nth element from the end of the iterator."))
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.Rev", "func[T any, I DoubleEndedIterator[T]]() *agl1.Rev[T]", WithDesc("A double-ended iterator with the direction inverted."))
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.RFind", "func[T any](it DoubleEndedIterator[T], pred func(T) bool) T?", WithDesc("Searches for an element of an iterator from the back that satisfies a predicate."))

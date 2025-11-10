@@ -2755,7 +2755,7 @@ afterUnwrap4:
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 				//return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
-		case "RFind", "NthBack":
+		case "RFind", "NthBack", "AdvanceBackBy":
 			return GenFrag{F: func() string {
 				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
@@ -3193,7 +3193,7 @@ afterUnwrap4:
 		case "Rev":
 			c1 := g.genExpr(rangeExpr)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
-		case "RFind", "NthBack":
+		case "RFind", "NthBack", "AdvanceBackBy":
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
@@ -3247,7 +3247,7 @@ afterUnwrap4:
 		case "Rev":
 			c1 := g.genExpr(rangeExpr)
 			return GenFrag{F: func() string { return e("AglDoubleEndedIteratorRev(") + c1.F() + e(")") }}
-		case "RFind", "NthBack":
+		case "RFind", "NthBack", "AdvanceBackBy":
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {

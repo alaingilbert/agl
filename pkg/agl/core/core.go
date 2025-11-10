@@ -484,6 +484,24 @@ func AglIteratorAdvanceBy[T any](it Iterator[T], n int) Result[AglVoid] {
 	return MakeResultErr[AglVoid](NewNonZeroErr(n - pos))
 }
 
+func AglDoubleEndedIteratorAdvanceBackBy[T any](it DoubleEndedIterator[T], n int) Result[AglVoid] {
+	if n == 0 {
+		return MakeResultOk(AglVoid{})
+	}
+	pos := 0
+	for {
+		v := it.NextBack()
+		if v.IsNone() {
+			break
+		}
+		pos++
+		if pos == n {
+			return MakeResultOk(AglVoid{})
+		}
+	}
+	return MakeResultErr[AglVoid](NewNonZeroErr(n - pos))
+}
+
 // AglIteratorNth returns the nth element of the iterator.
 func AglIteratorNth[T any](it Iterator[T], n int) Option[T] {
 	pos := 0
