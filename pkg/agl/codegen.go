@@ -2755,7 +2755,7 @@ afterUnwrap4:
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 				//return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
-		case "RFind":
+		case "RFind", "NthBack":
 			return GenFrag{F: func() string {
 				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
@@ -3788,7 +3788,11 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					}
 				case types.InterfaceType:
 					// Check if it's an Iterator type and wrap it
-					if (tt.Name == "Iterator" || tt.Name == "DoubleEndedIterator" || tt.Name == "CloneIterator" || tt.Name == "ExactSizeIterator" || tt.Name == "DoubleEndedExactSizeIterator") && len(tt.TypeParams) > 0 {
+					if (tt.Name == "Iterator" ||
+						tt.Name == "DoubleEndedIterator" ||
+						tt.Name == "CloneIterator" ||
+						tt.Name == "ExactSizeIterator" ||
+						tt.Name == "DoubleEndedExactSizeIterator") && len(tt.TypeParams) > 0 {
 						elemType := tt.TypeParams[0]
 						content2 = func() string {
 							return e("AglIteratorIntoIterator["+elemType.GoStrType()+"](") + c2.F() + e(")")

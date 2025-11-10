@@ -467,6 +467,21 @@ func AglIteratorNth[T any](it Iterator[T], n int) Option[T] {
 	return MakeOptionNone[T]()
 }
 
+func AglDoubleEndedIteratorNthBack[T any](it DoubleEndedIterator[T], n int) Option[T] {
+	pos := 0
+	for {
+		v := it.NextBack()
+		if v.IsNone() {
+			break
+		}
+		if pos == n {
+			return MakeOptionSome(v.Unwrap())
+		}
+		pos++
+	}
+	return MakeOptionNone[T]()
+}
+
 type Chain[T any] struct {
 	a Iterator[T]
 	b Iterator[T]
