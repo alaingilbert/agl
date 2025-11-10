@@ -619,6 +619,65 @@ var overloadMapping = map[string]string{
 	"__RMUL": "__RMUL",
 }
 
+// interfaceParents maps child interfaces to their parent interfaces
+// This allows method lookup to fall back to parent interface methods
+// Some interfaces may have multiple parents (e.g., DoubleEndedExactSizeIterator)
+var interfaceParents = map[string][]string{
+	"agl1.DoubleEndedIterator":          {"agl1.Iterator"},
+	"agl1.CloneIterator":                {"agl1.Iterator"},
+	"agl1.ExactSizeIterator":            {"agl1.Iterator"},
+	"agl1.DoubleEndedExactSizeIterator": {"agl1.DoubleEndedIterator", "agl1.ExactSizeIterator"},
+}
+
+// structImplements maps concrete struct types to the interfaces they implement
+// This allows a single concrete type to provide methods from multiple interfaces
+// without requiring combinatorial interface definitions
+var structImplements = map[string][]string{
+	"agl1.IterVec": {"agl1.Iterator", "agl1.DoubleEndedIterator", "agl1.ExactSizeIterator", "agl1.CloneIterator"},
+}
+
+// findInterfaceMethod recursively searches for a method in an interface hierarchy
+func findInterfaceMethod(env *Env, interfaceName, methodName string) (fullMethodName string, methodType types.Type) {
+	// Try direct lookup
+	name := interfaceName + "." + methodName
+	t := env.Get(name)
+	if t != nil {
+		return name, t
+	}
+
+	// Try parent interfaces
+	if parents, ok := interfaceParents[interfaceName]; ok {
+		for _, parent := range parents {
+			if foundName, foundType := findInterfaceMethod(env, parent, methodName); foundType != nil {
+				return foundName, foundType
+			}
+		}
+	}
+
+	return "", nil
+}
+
+// findStructMethod searches for a method across all interfaces a struct implements
+func findStructMethod(env *Env, structName, methodName string) (fullMethodName string, methodType types.Type) {
+	// First check direct struct methods
+	name := structName + "." + methodName
+	t := env.Get(name)
+	if t != nil {
+		return name, t
+	}
+
+	// Check all implemented interfaces
+	if interfaces, ok := structImplements[structName]; ok {
+		for _, iface := range interfaces {
+			if foundName, foundType := findInterfaceMethod(env, iface, methodName); foundType != nil {
+				return foundName, foundType
+			}
+		}
+	}
+
+	return "", nil
+}
+
 func (infer *FileInferrer) funcDecl2(decl *ast.FuncDecl) {
 	infer.withEnv(func() {
 		if decl.Recv != nil {
@@ -1401,6 +1460,20 @@ afterUnwrap3:
 			}
 		}
 
+		// If still not found, check if this struct implements interfaces with the method
+		if nameT == nil {
+			var structFullName string
+			if idTT.Pkg != "" {
+				structFullName = idTT.Pkg + "." + idTT.Name
+			} else {
+				structFullName = idTT.Name
+			}
+			if foundName, foundType := findStructMethod(infer.env, structFullName, fnName); foundType != nil {
+				name = foundName
+				nameT = foundType
+			}
+		}
+
 		if nameT == nil {
 			infer.errorf(call.Sel, "method not found '%s' in struct of type '%v'", call.Sel.Name, idTT.Name)
 			return
@@ -1462,14 +1535,17 @@ afterUnwrap3:
 		infer.SetType(call.Sel, fnT)
 		infer.SetType(expr, toReturn)
 	case types.InterfaceType:
-		// Build the method name - it's in the format "pkg.InterfaceName.MethodName" or "InterfaceName.MethodName" for local interfaces
-		var name string
+		// Build the interface name
+		var interfaceFullName string
 		if idTT.Pkg != "" {
-			name = fmt.Sprintf("%s.%s.%s", idTT.Pkg, idTT.Name, fnName)
+			interfaceFullName = idTT.Pkg + "." + idTT.Name
 		} else {
-			name = fmt.Sprintf("%s.%s", idTT.Name, fnName)
+			interfaceFullName = idTT.Name
 		}
-		t := infer.env.Get(name)
+
+		// Search for the method in the interface hierarchy
+		name, t := findInterfaceMethod(infer.env, interfaceFullName, fnName)
+
 		if t == nil {
 			infer.errorf(call.Sel, "method '%s' not found on interface '%s.%s'", fnName, idTT.Pkg, idTT.Name)
 			return
