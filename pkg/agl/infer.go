@@ -4442,12 +4442,17 @@ func (infer *FileInferrer) forStmt(stmt *ast.ForStmt) {
 					return
 				}
 			case types.InterfaceType:
-				if v.Name == "Iterator" {
+				// All iterator types (Iterator, DoubleEndedIterator, CloneIterator, etc.) have a type parameter T
+				if v.Name == "Iterator" ||
+					v.Name == "DoubleEndedIterator" ||
+					v.Name == "CloneIterator" ||
+					v.Name == "ExactSizeIterator" ||
+					v.Name == "DoubleEndedExactSizeIterator" {
 					if len(v.TypeParams) > 0 {
 						t = v.TypeParams[0]
 						infer.SetType(cond.X, t)
 					} else {
-						infer.errorf(cond.Y, "Iterator must have type parameter")
+						infer.errorf(cond.Y, "%s must have type parameter", v.Name)
 						return
 					}
 				} else {
