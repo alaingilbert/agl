@@ -2367,7 +2367,10 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 	returnType := g.returnType
 	content1 := g.genExpr(expr.X)
 	var out string
-	switch exprXT := g.env.GetInfo(expr.X).Type.(type) {
+	// Unwrap MutType if present
+	exprType := g.env.GetInfo(expr.X).Type
+	exprType = types.Unwrap(exprType)
+	switch exprXT := exprType.(type) {
 	case types.OptionType:
 		if exprXT.Bubble {
 			if exprXT.Native {

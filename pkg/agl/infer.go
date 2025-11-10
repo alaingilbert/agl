@@ -4068,6 +4068,8 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	if exprXT == nil {
 		return
 	}
+	// Unwrap MutType if present
+	exprXT = types.Unwrap(exprXT)
 	switch v := exprXT.(type) {
 	case types.OptionType:
 		infer.SetType(expr, v.W)
