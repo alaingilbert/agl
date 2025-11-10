@@ -451,12 +451,16 @@ func AglSequenceLast[T any](s Sequence[T]) Option[T] {
 	return out
 }
 
-// AglSequenceNth returns the nth element of the iterator.
-func AglSequenceNth[T any](s Sequence[T], n int) Option[T] {
+// AglIteratorNth returns the nth element of the iterator.
+func AglIteratorNth[T any](it Iterator[T], n int) Option[T] {
 	pos := 0
-	for v := range s {
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
 		if pos == n {
-			return MakeOptionSome(v)
+			return MakeOptionSome(v.Unwrap())
 		}
 		pos++
 	}

@@ -869,3 +869,15 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test57(t *testing.T) {
+	t.Parallel()
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	it := a.Iter()
+	assertEq(it.Nth(1)?, 2)
+	assert(it.Nth(1).IsNone())
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

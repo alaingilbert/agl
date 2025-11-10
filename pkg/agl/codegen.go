@@ -2710,7 +2710,7 @@ afterUnwrap4:
 
 		// Generate call to standalone function
 		switch fnName {
-		case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain":
+		case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
@@ -2838,7 +2838,7 @@ afterUnwrap4:
 
 			// Handle Iterator methods for Iterator-implementing structs
 			switch fnName {
-			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain":
+			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth":
 				return GenFrag{F: func() (out string) {
 					if isPeekable {
 						out += e("AglIteratorPeekable[" + tType + "](")
