@@ -4368,7 +4368,11 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 							}
 						case types.InterfaceType:
 							// All iterator types use the same Next() pattern
-							if vv.Name == "Iterator" || vv.Name == "DoubleEndedIterator" || vv.Name == "CloneIterator" || vv.Name == "ExactSizeIterator" || vv.Name == "DoubleEndedExactSizeIterator" {
+							if vv.Name == "Iterator" ||
+								vv.Name == "DoubleEndedIterator" ||
+								vv.Name == "CloneIterator" ||
+								vv.Name == "ExactSizeIterator" ||
+								vv.Name == "DoubleEndedExactSizeIterator" {
 								// Generate iterator loop using .Next() and .Unwrap()
 								iterTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 								optTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
