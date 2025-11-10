@@ -779,6 +779,10 @@ func AglSequenceAny[T any](s Sequence[T], f func(T) bool) bool {
 	return AglSequenceContainsWhere(s, f)
 }
 
+func AglIteratorAny[T any](it Iterator[T], f func(T) bool) bool {
+	return AglIteratorContainsWhere(it, f)
+}
+
 func AglSequenceMap[T, R any](s Sequence[T], f func(T) R) []R {
 	var out []R
 	for v := range s {
