@@ -1637,7 +1637,8 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
-		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
+		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take",
+			"TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
 			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
 			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
@@ -1700,7 +1701,8 @@ afterUnwrap3:
 			fnT = fnT.T("T", idTT.Typ)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
-		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take", "TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
+		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take",
+			"TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max":
 			info := infer.env.GetNameInfo("agl1.Iterator." + fnName)
 			fnT := infer.env.GetFn("agl1.Iterator." + fnName)
 			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
