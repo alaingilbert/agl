@@ -25,7 +25,7 @@ type Generator struct {
 	prefix                     string
 	genFuncDecls2              map[string]func() string
 	tupleStructs               map[string]string
-	coreTupleStructs           map[string]bool   // tuple structs already defined in core.go
+	coreTupleStructs           map[string]bool // tuple structs already defined in core.go
 	genFuncDecls               map[string]*ast.FuncDecl
 	genTypeDecls               map[string]*ast.TypeSpec
 	genTypeDecls2              map[string]func() string
@@ -119,8 +119,8 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 
 	// Tuple structs already defined in core.go
 	coreTuples := map[string]bool{
-		"AglTupleStruct_int_int32":      true,
-		"AglTupleStruct_string_string":  true,
+		"AglTupleStruct_int_int32":     true,
+		"AglTupleStruct_string_string": true,
 	}
 
 	return &Generator{
