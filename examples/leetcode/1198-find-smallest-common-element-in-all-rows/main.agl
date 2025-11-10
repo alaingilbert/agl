@@ -1,0 +1,30 @@
+package main
+
+func smallestCommonElement(mat [][]int) int {
+    mut indices := make([]int, mat.Len())
+    mut ans := mat.Map({ $0[0] }).Max()?
+    mut cont := true
+    for cont {
+        cont = false
+        for (i, row) in mat.Enumerated() {
+            rowIdx := indices[i]
+            if rowIdx > row.Len() {
+                return -1
+            }
+            rowVal := row[rowIdx]
+            if rowVal < ans {
+                indices[i]++
+                cont = true
+            } else if rowVal > ans {
+                ans = rowVal
+                cont = true
+            }
+        }
+    }
+    return ans
+}
+
+func main() {
+    assertEq(smallestCommonElement([][]int{{1,2,3,4,5},{2,4,5,8,10},{3,5,7,9,11},{1,3,5,7,9}}), 5)
+    assertEq(smallestCommonElement([][]int{{1,2,3},{2,3,4},{2,3,5}}), 2)
+}
