@@ -25,6 +25,7 @@ type Generator struct {
 	prefix                     string
 	genFuncDecls2              map[string]func() string
 	tupleStructs               map[string]string
+	coreTupleStructs           map[string]bool   // tuple structs already defined in core.go
 	genFuncDecls               map[string]*ast.FuncDecl
 	genTypeDecls               map[string]*ast.TypeSpec
 	genTypeDecls2              map[string]func() string
@@ -115,22 +116,30 @@ func NewGenerator(env *Env, a, b *ast.File, imports map[string]*ast.ImportSpec, 
 		opt(conf)
 	}
 	genFns := make(map[string]*ast.FuncDecl)
+
+	// Tuple structs already defined in core.go
+	coreTuples := map[string]bool{
+		"AglTupleStruct_int_int32":      true,
+		"AglTupleStruct_string_string":  true,
+	}
+
 	return &Generator{
-		fset:          fset,
-		env:           env,
-		a:             a,
-		b:             b,
-		extensions:    make(map[string]Extension),
-		tupleStructs:  make(map[string]string),
-		genFuncDecls2: make(map[string]func() string),
-		genFuncDecls:  genFns,
-		genTypeDecls:  make(map[string]*ast.TypeSpec),
-		genTypeDecls2: make(map[string]func() string),
-		allowUnused:   conf.AllowUnused,
-		releaseMode:   conf.ReleaseMode,
-		emitEnabled:   true,
-		imports:       imports,
-		shadowedVars:  make(map[string]string),
+		fset:             fset,
+		env:              env,
+		a:                a,
+		b:                b,
+		extensions:       make(map[string]Extension),
+		tupleStructs:     make(map[string]string),
+		coreTupleStructs: coreTuples,
+		genFuncDecls2:    make(map[string]func() string),
+		genFuncDecls:     genFns,
+		genTypeDecls:     make(map[string]*ast.TypeSpec),
+		genTypeDecls2:    make(map[string]func() string),
+		allowUnused:      conf.AllowUnused,
+		releaseMode:      conf.ReleaseMode,
+		emitEnabled:      true,
+		imports:          imports,
+		shadowedVars:     make(map[string]string),
 	}
 }
 
@@ -4024,36 +4033,40 @@ func (g *Generator) genTupleExpr(expr *ast.TupleExpr) GenFrag {
 	}
 	tup := replaced.(types.TupleType)
 	structName := tup.GoStr()
-	var args []string
-	for i, x := range expr.Values {
-		xT := g.env.GetType2(x, g.fset)
-		args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
-	}
-	structStr := fmt.Sprintf("type %s struct {\n", structName)
-	structStr += strings.Join(args, "")
-	structStr += "}\n"
 
-	// Generate String() method for tuple
-	structStr += fmt.Sprintf("func (t %s) String() string {\n", structName)
-	structStr += "\treturn fmt.Sprintf(\"("
-	for i := range expr.Values {
-		if i > 0 {
-			structStr += ", "
+	// Only generate tuple struct if not already in core.go
+	if !g.coreTupleStructs[structName] {
+		var args []string
+		for i, x := range expr.Values {
+			xT := g.env.GetType2(x, g.fset)
+			args = append(args, fmt.Sprintf("\tArg%d %s\n", i, types.ReplGenM(xT, g.genMap).GoStr()))
 		}
-		structStr += "%v"
-	}
-	structStr += ")\""
-	for i := range expr.Values {
-		structStr += fmt.Sprintf(", t.Arg%d", i)
-	}
-	structStr += ")\n}\n"
+		structStr := fmt.Sprintf("type %s struct {\n", structName)
+		structStr += strings.Join(args, "")
+		structStr += "}\n"
 
-	// Add fmt import since we're using fmt.Sprintf in the String() method
-	g.imports[`"fmt"`] = &ast.ImportSpec{
-		Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
-	}
+		// Generate String() method for tuple
+		structStr += fmt.Sprintf("func (t %s) String() string {\n", structName)
+		structStr += "\treturn fmt.Sprintf(\"("
+		for i := range expr.Values {
+			if i > 0 {
+				structStr += ", "
+			}
+			structStr += "%v"
+		}
+		structStr += ")\""
+		for i := range expr.Values {
+			structStr += fmt.Sprintf(", t.Arg%d", i)
+		}
+		structStr += ")\n}\n"
 
-	g.tupleStructs[structName] = structStr
+		// Add fmt import since we're using fmt.Sprintf in the String() method
+		g.imports[`"fmt"`] = &ast.ImportSpec{
+			Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
+		}
+
+		g.tupleStructs[structName] = structStr
+	}
 	return GenFrag{F: func() string {
 		if isType {
 			return e(structName)
@@ -5614,9 +5627,9 @@ func (g *Generator) generateZipFunc(name string, fnT types.FuncType, args []ast.
 		tupleType := types.TupleType{Elts: elemTypes}
 		returnType := types.ArrayType{Elt: tupleType}
 
-		// Generate tuple struct definition if not already generated
+		// Generate tuple struct definition if not already generated and not in core.go
 		structName := tupleType.GoStr()
-		if g.tupleStructs[structName] == "" {
+		if g.tupleStructs[structName] == "" && !g.coreTupleStructs[structName] {
 			structStr := fmt.Sprintf("type %s struct {\n", structName)
 			for i, elemType := range elemTypes {
 				structStr += fmt.Sprintf("\tArg%d %s\n", i, elemType.GoStr())
