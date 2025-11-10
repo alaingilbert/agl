@@ -3788,7 +3788,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 					}
 				case types.InterfaceType:
 					// Check if it's an Iterator type and wrap it
-					if tt.Name == "Iterator" && len(tt.TypeParams) > 0 {
+					if (tt.Name == "Iterator" || tt.Name == "DoubleEndedIterator" || tt.Name == "CloneIterator" || tt.Name == "ExactSizeIterator" || tt.Name == "DoubleEndedExactSizeIterator") && len(tt.TypeParams) > 0 {
 						elemType := tt.TypeParams[0]
 						content2 = func() string {
 							return e("AglIteratorIntoIterator["+elemType.GoStrType()+"](") + c2.F() + e(")")
@@ -4367,7 +4367,8 @@ func (g *Generator) genForStmt(stmt *ast.ForStmt) GenFrag {
 								panic("")
 							}
 						case types.InterfaceType:
-							if vv.Name == "Iterator" {
+							// All iterator types use the same Next() pattern
+							if vv.Name == "Iterator" || vv.Name == "DoubleEndedIterator" || vv.Name == "CloneIterator" || vv.Name == "ExactSizeIterator" || vv.Name == "DoubleEndedExactSizeIterator" {
 								// Generate iterator loop using .Next() and .Unwrap()
 								iterTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
 								optTmp := fmt.Sprintf("aglTmp%d", g.varCounter.Add(1))
