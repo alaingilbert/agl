@@ -1,0 +1,18 @@
+package main
+
+func isArmstrong(n int) bool {
+    var mut nums []int
+    mut m := n
+    for m > 0 {
+        r := m % 10
+        m /= 10
+        nums.Push(r)
+    }
+    p := nums.Len()
+    return nums.Reduce(0, { $0 + int($1**p) }) == n
+}
+
+func main() {
+    assert(isArmstrong(153))
+    assert(!isArmstrong(123))
+}
