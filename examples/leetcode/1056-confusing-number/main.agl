@@ -3,15 +3,14 @@ package main
 func confusingNumber(n int) bool {
     var mut nn int
     cache := map[int]int{0: 0, 1: 1, 6: 9, 8: 8, 9: 6}
-    mut m := n
-    for m > 0 {
-        r := m % 10
-        m /= 10
-        if let Some(o) := cache.Get(r) {
+    mut nCopy := n
+    for nCopy > 0 {
+        if let Some(o) := cache.Get(nCopy % 10) {
             nn = nn * 10 + o
         } else {
             return false
         }
+        nCopy /= 10
     }
     return nn != n
 }
