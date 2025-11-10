@@ -2710,7 +2710,7 @@ afterUnwrap4:
 
 		// Generate call to standalone function
 		switch fnName {
-		case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth":
+		case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth", "AdvanceBy":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 			}}
@@ -2838,7 +2838,7 @@ afterUnwrap4:
 
 			// Handle Iterator methods for Iterator-implementing structs
 			switch fnName {
-			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth":
+			case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth", "AdvanceBy":
 				return GenFrag{F: func() (out string) {
 					if isPeekable {
 						out += e("AglIteratorPeekable[" + tType + "](")
@@ -3196,7 +3196,9 @@ afterUnwrap4:
 		case "RFind", "NthBack":
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
+			return GenFrag{F: func() string {
+				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")")
+			}}
 		case "Map":
 			// Map needs two type parameters: T and R
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -3248,7 +3250,9 @@ afterUnwrap4:
 		case "RFind", "NthBack":
 			c1 := g.genExpr(rangeExpr)
 			c2 := g.genExpr(expr.Args[0])
-			return GenFrag{F: func() string { return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")") }}
+			return GenFrag{F: func() string {
+				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + c1.F() + e(", ") + c2.F() + e(")")
+			}}
 		case "Map":
 			// Map needs two type parameters: T and R
 			fnT := g.env.GetType(x.Sel).(types.FuncType)

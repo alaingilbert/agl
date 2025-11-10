@@ -1114,6 +1114,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.DoubleEndedIterator.RFind", "func[T any](it DoubleEndedIterator[T], pred func(T) bool) T?", WithDesc("Searches for an element of an iterator from the back that satisfies a predicate."))
 		e.DefineFn(nenv, "agl1.ExactSizeIterator.Len", "func[T any](it ExactSizeIterator[T]) int", WithDesc("Returns the exact remaining length of the iterator."))
 		e.DefineFn(nenv, "agl1.ExactSizeIterator.IsEmpty", "func[T any](it ExactSizeIterator[T]) bool", WithDesc("Returns true if the iterator is empty."))
+		e.DefineFn(nenv, "agl1.Iterator.AdvanceBy", "func[T any](it Iterator[T], n int) void!")
 		e.DefineFn(nenv, "agl1.Iterator.AllSatisfy", "func[T any](it Iterator[T], pred func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Any", "func [T any](it Iterator[T], f func(T) bool) bool")
 		e.DefineFn(nenv, "agl1.Iterator.Chain", "func[T any](it Iterator[T], b Iterator[T]) Iterator[T]")

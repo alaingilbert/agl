@@ -451,6 +451,39 @@ func AglSequenceLast[T any](s Sequence[T]) Option[T] {
 	return out
 }
 
+type NonZeroErr struct {
+	v int
+}
+
+func NewNonZeroErr(v int) *NonZeroErr {
+	if v == 0 {
+		panic("cannot create NonZeroErr with value 0")
+	}
+	return &NonZeroErr{v: v}
+}
+
+func (e *NonZeroErr) Error() string {
+	return fmt.Sprintf("non-zero value %d", e.v)
+}
+
+func AglIteratorAdvanceBy[T any](it Iterator[T], n int) Result[AglVoid] {
+	if n == 0 {
+		return MakeResultOk(AglVoid{})
+	}
+	pos := 0
+	for {
+		v := it.Next()
+		if v.IsNone() {
+			break
+		}
+		pos++
+		if pos == n {
+			return MakeResultOk(AglVoid{})
+		}
+	}
+	return MakeResultErr[AglVoid](NewNonZeroErr(n - pos))
+}
+
 // AglIteratorNth returns the nth element of the iterator.
 func AglIteratorNth[T any](it Iterator[T], n int) Option[T] {
 	pos := 0
