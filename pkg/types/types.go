@@ -997,6 +997,10 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 				newTyp = v.K
 			case SetType:
 				newTyp = v.K
+			case RangeType:
+				newTyp = v.Typ
+			case RangeInclusiveType:
+				newTyp = v.Typ
 			case InterfaceType:
 				if len(v.TypeParams) > 0 {
 					newTyp = v.TypeParams[0]
