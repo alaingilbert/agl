@@ -1,0 +1,21 @@
+package main
+
+func numWays(n int, k int) int {
+    if n == 1 {
+        return k
+    }
+    mut twoPostsBack := k
+    mut onePostBack := k * k
+    for _ in 3..n+1 {
+        curr := (k-1) * (onePostBack + twoPostsBack)
+        twoPostsBack = onePostBack
+        onePostBack = curr
+    }
+    return onePostBack
+}
+
+func main() {
+    assertEq(numWays(3, 2), 6)
+    assertEq(numWays(1, 1), 1)
+    assertEq(numWays(7, 2), 42)
+}
