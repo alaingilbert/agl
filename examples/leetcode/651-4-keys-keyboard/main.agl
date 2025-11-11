@@ -3,7 +3,7 @@ package main
 func maxA(n int) int {
     mut dp := Array(0..n+1)
     for i in 0..n-2 {
-        for j in i+3..min(n, i+6)+1 {
+        for j in i+3..=min(n, i+6) {
             dp[j] = max(dp[j], (j - i - 1) * dp[i])
         }
     }
