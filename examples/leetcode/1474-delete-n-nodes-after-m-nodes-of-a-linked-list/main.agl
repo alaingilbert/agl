@@ -1,0 +1,32 @@
+package main
+
+type ListNode struct {
+    Val int
+    mut Next *ListNode
+}
+
+func deleteNodes(head *ListNode, m int, n int) *ListNode {
+    dummy := &ListNode{Next: head}
+    mut node := dummy
+    for {
+        for _ in 0..m {
+            if node.Next == nil {
+                return dummy.Next
+            }
+            node = node.Next
+        }
+        mut p := node
+        for _ in 0..=n {
+            if p.Next == nil {
+                node.Next = p.Next
+                return dummy.Next
+            }
+            p = p.Next
+        }
+        node.Next = p
+    }
+    return dummy.Next
+}
+
+func main() {
+}
