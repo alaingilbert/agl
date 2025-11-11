@@ -6,26 +6,18 @@ type ListNode struct {
 }
 
 func deleteNodes(head *ListNode, m int, n int) *ListNode {
-    dummy := &ListNode{Next: head}
-    mut node := dummy
-    for {
-        for _ in 0..m {
-            if node.Next == nil {
-                return dummy.Next
-            }
+    mut node := &ListNode{Next: head}
+    for node.Next != nil {
+        for _ in 0..m where node.Next != nil {
             node = node.Next
         }
-        mut p := node
-        for _ in 0..=n {
-            if p.Next == nil {
-                node.Next = p.Next
-                return dummy.Next
-            }
+        mut p := node.Next
+        for _ in 0..n where p != nil {
             p = p.Next
         }
         node.Next = p
     }
-    return dummy.Next
+    return head
 }
 
 func main() {
