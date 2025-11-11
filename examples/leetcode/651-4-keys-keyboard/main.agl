@@ -1,0 +1,17 @@
+package main
+
+func maxA(n int) int {
+    mut dp := Array((0..n+1).Map({ $0 }))
+    for i in 0..n-2 {
+        for j in i+3..min(n, i+6)+1 {
+            dp[j] = max(dp[j], (j - i - 1) * dp[i])
+        }
+    }
+    return dp[n]
+}
+
+func main() {
+    assertEq(maxA(3), 3)
+    assertEq(maxA(7), 9)
+    assertEq(maxA(26), 1728)
+}
