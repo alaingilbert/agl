@@ -1229,6 +1229,12 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 		return t
 	case VoidType:
 		return t
+	case RangeType:
+		t1.Typ = ReplGen(t1.Typ, name, newTyp)
+		return t1
+	case RangeInclusiveType:
+		t1.Typ = ReplGen(t1.Typ, name, newTyp)
+		return t1
 	default:
 		return t
 		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))

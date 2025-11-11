@@ -4272,8 +4272,12 @@ func (infer *FileInferrer) labelledArg(expr *ast.LabelledArg) {
 }
 
 func (infer *FileInferrer) rangeExpr(expr *ast.RangeExpr) {
+	// Clear optType when inferring range bounds to avoid interference from outer context
+	prev := infer.optType
+	infer.optType = &OptTypeTmp{}
 	infer.expr(expr.Start)
 	infer.expr(expr.End_)
+	infer.optType = prev
 	sT := infer.GetType2(expr.Start)
 	eT := infer.GetType2(expr.End_)
 	t := sT

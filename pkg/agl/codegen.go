@@ -2278,10 +2278,11 @@ func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
 	start := g.genExpr(expr.Start)
 	end := g.genExpr(expr.End_)
 	return GenFrag{F: func() (out string) {
+		rangeType := types.ReplGenM(g.env.GetType(expr), g.genMap)
 		if expr.Op == token.RANGEOPEQ {
-			out += e("AglNewRangeInclusive["+g.env.GetType(expr).(types.RangeInclusiveType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
+			out += e("AglNewRangeInclusive["+rangeType.(types.RangeInclusiveType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
 		} else {
-			out += e("AglNewRange["+g.env.GetType(expr).(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
+			out += e("AglNewRange["+rangeType.(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
 		}
 		return
 	}}
