@@ -15234,11 +15234,14 @@ func main() {
 func TestCodeGen496_nil_conditional_assignment(t *testing.T) {
 	src := `package main
 type Person struct {
+	mut Inner *Person
 	mut Name string
 }
 func main() {
 	var mut p1, mut p2 *Person
 	p1?.Name = "foo"
+	p1?.Inner?.Name = "foo"
+	p1?.Inner?.Inner?.Name = "foo"
 	p2 = &Person{}
 	p2.Name = "bar"
 	assertEq(p2.Name, "foo")
@@ -15246,6 +15249,7 @@ func main() {
 	expected := `// agl:generated
 package main
 type Person struct {
+	Inner *Person
 	Name string
 }
 func main() {
@@ -15253,9 +15257,15 @@ func main() {
 	if p1 != nil {
 		p1.Name = "foo"
 	}
+	if p1 != nil && p1.Inner != nil {
+		p1.Inner.Name = "foo"
+	}
+	if p1 != nil && p1.Inner != nil && p1.Inner.Inner != nil {
+		p1.Inner.Inner.Name = "foo"
+	}
 	p2 = &Person{}
 	p2.Name = "bar"
-	AglAssertEq(p2.Name, "foo", "assert failed line 10")
+	AglAssertEq(p2.Name, "foo", "assert failed line 13")
 }
 `
 	test := NewTest(src, WithMutEnforced(true))

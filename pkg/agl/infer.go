@@ -4083,15 +4083,21 @@ func (infer *FileInferrer) bubbleOptionExpr(expr *ast.BubbleOptionExpr) {
 	if exprXT == nil {
 		return
 	}
-	// Unwrap MutType if present
-	exprXT = types.Unwrap(exprXT)
+	// Unwrap MutType if present, but keep StarType for nil-conditional access
+	if mutType, ok := exprXT.(types.MutType); ok {
+		exprXT = mutType.W
+	}
 	switch v := exprXT.(type) {
 	case types.OptionType:
 		infer.SetType(expr, v.W)
 	case types.TypeAssertType:
 		infer.SetType(expr, v.X)
+	case types.StarType:
+		// For nil-conditional access on pointers (e.g., p?.Name)
+		// The BubbleOptionExpr represents the dereferenced pointer
+		infer.SetType(expr, v.X)
 	default:
-		infer.errorf(expr, "expected Option type, got %v", exprXT)
+		infer.errorf(expr, "expected Option type or pointer type, got %v", exprXT)
 		return
 	}
 }
@@ -5179,47 +5185,51 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						return
 					}
 				case *ast.BubbleOptionExpr:
-					// Handle nil-conditional assignment: p?.Name = "foo"
+					// Handle nil-conditional assignment: p?.Name = "foo" or p?.Inner?.Name = "foo"
 					// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
-					if baseIdent, ok := vv.X.(*ast.Ident); ok {
-						// Get the type of the base expression (should already be defined)
-						baseType := infer.env.Get(baseIdent.Name)
-						if baseType == nil {
-							infer.errorf(lhs, "undefined identifier '%s'", baseIdent.Name)
-							return
-						}
-						infer.SetType(baseIdent, baseType)
-						// Unwrap MutType if present, but keep StarType
-						unwrappedBaseType := baseType
-						if mutType, ok := baseType.(types.MutType); ok {
-							unwrappedBaseType = mutType.W
-						}
-						// The base should be a pointer type for nil-conditional assignment
-						if starType, ok := unwrappedBaseType.(types.StarType); ok {
-							// Get the struct type
-							structType := types.Unwrap(starType.X)
-							if structT, ok := structType.(types.StructType); ok {
-								// Get the field type
-								selT := infer.env.Get(structT.Name + "." + v.Sel.Name)
-								lhsWantedT = selT
-								infer.SetType(v.Sel, selT)
-								infer.SetType(vv.X, baseType)
-								infer.SetType(vv, unwrappedBaseType)
-								infer.SetType(v, selT)
-								if infer.mutEnforced && !TryCast[types.MutType](selT) {
-									infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
-									return
-								}
-							} else {
-								infer.errorf(lhs, "expected struct type, got %v", structType)
+					// For chained case, base can be a SelectorExpr with another BubbleOptionExpr
+
+					// Type-check the base expression
+					infer.expr(vv.X)
+					if len(infer.Errors) > 0 {
+						return
+					}
+
+					// Get the type of the base expression
+					baseType := infer.env.GetType(vv.X)
+					if baseType == nil {
+						infer.errorf(lhs, "could not determine type of base expression")
+						return
+					}
+
+					// Unwrap MutType if present, but keep StarType
+					unwrappedBaseType := baseType
+					if mutType, ok := baseType.(types.MutType); ok {
+						unwrappedBaseType = mutType.W
+					}
+
+					// The base should be a pointer type for nil-conditional assignment
+					if starType, ok := unwrappedBaseType.(types.StarType); ok {
+						// Get the struct type
+						structType := types.Unwrap(starType.X)
+						if structT, ok := structType.(types.StructType); ok {
+							// Get the field type
+							selT := infer.env.Get(structT.Name + "." + v.Sel.Name)
+							lhsWantedT = selT
+							infer.SetType(v.Sel, selT)
+							infer.SetType(vv.X, baseType)
+							infer.SetType(vv, unwrappedBaseType)
+							infer.SetType(v, selT)
+							if infer.mutEnforced && !TryCast[types.MutType](selT) {
+								infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
 								return
 							}
 						} else {
-							infer.errorf(lhs, "expected pointer type for nil-conditional assignment, got %v", unwrappedBaseType)
+							infer.errorf(lhs, "expected struct type, got %v", structType)
 							return
 						}
 					} else {
-						infer.errorf(lhs, "expected identifier in nil-conditional assignment base")
+						infer.errorf(lhs, "expected pointer type for nil-conditional assignment, got %v", unwrappedBaseType)
 						return
 					}
 				default:
@@ -5347,18 +5357,38 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsIDT = types.Unwrap(lhsIDT)
 					return
 				case *ast.BubbleOptionExpr:
-					// For nil-conditional assignment: p?.Name = "foo"
+					// For nil-conditional assignment: p?.Name = "foo" or p?.Inner?.Name = "foo"
 					// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
-					if baseIdent, ok := vv.X.(*ast.Ident); ok {
-						lhsID = baseIdent
-						mutable = baseIdent.Mutable.IsValid()
-						// Type information was already set in the first switch
-						// Just set the type on the BubbleOptionExpr and SelectorExpr
-						baseType := infer.env.GetType(baseIdent)
-						infer.SetType(vv.X, baseType)
-						infer.SetType(vv, baseType)
+					// For chained case, base can be a SelectorExpr with another BubbleOptionExpr
+
+					// Try to extract the base identifier for mutability checking
+					// For simple case: p?.Name, base is Ident
+					// For chained case: p?.Inner?.Name, we need to walk down to find the base Ident
+					baseExpr := vv.X
+					for {
+						switch b := baseExpr.(type) {
+						case *ast.Ident:
+							lhsID = b
+							mutable = b.Mutable.IsValid()
+							// Type information was already set in the first switch
+							// Just set the type on the BubbleOptionExpr
+							baseType := infer.env.GetType(vv.X)
+							infer.SetType(vv.X, baseType)
+							infer.SetType(vv, baseType)
+							return
+						case *ast.SelectorExpr:
+							if bubbleExpr, ok := b.X.(*ast.BubbleOptionExpr); ok {
+								// Continue walking down the chain
+								baseExpr = bubbleExpr.X
+							} else {
+								// Non-nil-conditional selector, get the base
+								baseExpr = b.X
+							}
+						default:
+							// Give up, we can't determine mutability
+							return
+						}
 					}
-					return
 				default:
 					infer.errorf(v.Sel, "...")
 					return

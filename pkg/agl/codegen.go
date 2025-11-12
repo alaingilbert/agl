@@ -2368,9 +2368,11 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 	returnType := g.returnType
 	content1 := g.genExpr(expr.X)
 	var out string
-	// Unwrap MutType if present
+	// Unwrap MutType if present, but keep StarType for nil-conditional access
 	exprType := g.env.GetInfo(expr.X).Type
-	exprType = types.Unwrap(exprType)
+	if mutType, ok := exprType.(types.MutType); ok {
+		exprType = mutType.W
+	}
 	switch exprXT := exprType.(type) {
 	case types.OptionType:
 		if exprXT.Bubble {
@@ -2426,6 +2428,12 @@ func (g *Generator) genBubbleOptionExpr(expr *ast.BubbleOptionExpr) GenFrag {
 			out += e(g.prefix + "}\n")
 			return out
 		}}}
+	case types.StarType:
+		// For nil-conditional access on pointers (e.g., p?.Name or p?.Inner?.Name)
+		// When not in an assignment context (assignment is handled in genAssignStmt),
+		// we just generate the regular dereferenced access
+		// The BubbleOptionExpr just passes through to the inner expression
+		return content1
 	default:
 		panic(fmt.Sprintf("%v", exprXT))
 	}
@@ -4698,24 +4706,75 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		}
 	}
 
-	// Handle nil-conditional assignment: p?.Name = "value" becomes if p != nil { p.Name = "value" }
+	// Handle nil-conditional assignment: p?.Name = "value" or p?.Inner?.Name = "value"
 	// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
+	// For chained case: SelectorExpr{X: BubbleOptionExpr{X: SelectorExpr{X: BubbleOptionExpr{...}, Sel: ...}}, Sel: field}
 	if len(stmt.Lhs) == 1 {
 		if selectorExpr, ok := stmt.Lhs[0].(*ast.SelectorExpr); ok {
 			if bubbleExpr, ok := selectorExpr.X.(*ast.BubbleOptionExpr); ok {
-				// Generate: if base != nil { base.field = rhs }
-				baseExpr := g.genExpr(bubbleExpr.X)
+				// Collect all nil checks needed for chained nil-conditional access
+				// For p1?.Inner?.Name, we need to check: p1 != nil && p1.Inner != nil
+				type NilCheck struct {
+					expr ast.Expr
+					gen  GenFrag
+				}
+				var nilChecks []NilCheck
+
+				// Walk through the chain and collect all BubbleOptionExprs
+				currentExpr := bubbleExpr.X
+				for {
+					if sel, ok := currentExpr.(*ast.SelectorExpr); ok {
+						if bubble, ok := sel.X.(*ast.BubbleOptionExpr); ok {
+							// This is a chained nil-conditional: collect the check
+							nilChecks = append(nilChecks, NilCheck{expr: currentExpr, gen: g.genExpr(currentExpr)})
+							currentExpr = bubble.X
+						} else {
+							// Non-nil-conditional selector, stop here
+							nilChecks = append(nilChecks, NilCheck{expr: currentExpr, gen: g.genExpr(currentExpr)})
+							break
+						}
+					} else {
+						// Base expression (e.g., an Ident)
+						nilChecks = append(nilChecks, NilCheck{expr: currentExpr, gen: g.genExpr(currentExpr)})
+						break
+					}
+				}
+
+				// Reverse the checks so we check from base to derived
+				for i, j := 0, len(nilChecks)-1; i < j; i, j = i+1, j-1 {
+					nilChecks[i], nilChecks[j] = nilChecks[j], nilChecks[i]
+				}
+
+				// Generate the full field access expression (without the BubbleOptionExprs)
+				// For p1?.Inner?.Name, this should be p1.Inner
+				fullBaseExpr := g.genExpr(bubbleExpr.X)
 				rhsExpr := g.genExprs(stmt.Rhs)
+
 				var bs []func() string
-				bs = append(bs, baseExpr.B...)
+				for _, check := range nilChecks {
+					bs = append(bs, check.gen.B...)
+				}
+				bs = append(bs, fullBaseExpr.B...)
 				bs = append(bs, rhsExpr.B...)
+
 				return GenFrag{F: func() string {
 					var out string
 					if !g.inlineStmt {
 						out += e(g.prefix)
 					}
-					out += e("if ") + baseExpr.F() + e(" != nil {\n")
-					out += e(g.prefix+"\t") + baseExpr.F() + e("."+selectorExpr.Sel.Name+" "+stmt.Tok.String()+" ") + rhsExpr.F() + e("\n")
+
+					// Generate the if condition with all nil checks
+					out += e("if ")
+					for i, check := range nilChecks {
+						if i > 0 {
+							out += e(" && ")
+						}
+						out += check.gen.F() + e(" != nil")
+					}
+					out += e(" {\n")
+
+					// Generate the assignment inside the if block
+					out += e(g.prefix+"\t") + fullBaseExpr.F() + e("."+selectorExpr.Sel.Name+" "+stmt.Tok.String()+" ") + rhsExpr.F() + e("\n")
 					out += e(g.prefix + "}\n")
 					return out
 				}, B: bs}
