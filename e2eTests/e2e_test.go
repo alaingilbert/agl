@@ -924,3 +924,20 @@ func main() {
 }`
 	tassert.NotPanics(t, func() { testGenOutput(src) })
 }
+
+func Test61_nil_conditional_assignment(t *testing.T) {
+	t.Parallel()
+	src := `package main
+type Person struct {
+	mut Name string
+}
+func main() {
+	var mut p1, mut p2 *Person
+	p1?.Name = "foo"
+	p2 = &Person{}
+	p2.Name = "bar"
+	assertEq(p1, nil)
+	assertEq(p2.Name, "bar")
+}`
+	tassert.NotPanics(t, func() { testGenOutput(src) })
+}

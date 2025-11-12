@@ -5178,25 +5178,72 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 						infer.errorf(lhs, "%v", to(vv.X))
 						return
 					}
+				case *ast.BubbleOptionExpr:
+					// Handle nil-conditional assignment: p?.Name = "foo"
+					// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
+					if baseIdent, ok := vv.X.(*ast.Ident); ok {
+						// Get the type of the base expression (should already be defined)
+						baseType := infer.env.Get(baseIdent.Name)
+						if baseType == nil {
+							infer.errorf(lhs, "undefined identifier '%s'", baseIdent.Name)
+							return
+						}
+						infer.SetType(baseIdent, baseType)
+						// Unwrap MutType if present, but keep StarType
+						unwrappedBaseType := baseType
+						if mutType, ok := baseType.(types.MutType); ok {
+							unwrappedBaseType = mutType.W
+						}
+						// The base should be a pointer type for nil-conditional assignment
+						if starType, ok := unwrappedBaseType.(types.StarType); ok {
+							// Get the struct type
+							structType := types.Unwrap(starType.X)
+							if structT, ok := structType.(types.StructType); ok {
+								// Get the field type
+								selT := infer.env.Get(structT.Name + "." + v.Sel.Name)
+								lhsWantedT = selT
+								infer.SetType(v.Sel, selT)
+								infer.SetType(vv.X, baseType)
+								infer.SetType(vv, unwrappedBaseType)
+								infer.SetType(v, selT)
+								if infer.mutEnforced && !TryCast[types.MutType](selT) {
+									infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
+									return
+								}
+							} else {
+								infer.errorf(lhs, "expected struct type, got %v", structType)
+								return
+							}
+						} else {
+							infer.errorf(lhs, "expected pointer type for nil-conditional assignment, got %v", unwrappedBaseType)
+							return
+						}
+					} else {
+						infer.errorf(lhs, "expected identifier in nil-conditional assignment base")
+						return
+					}
 				default:
 					infer.errorf(lhs, "%v", to(v.X))
 					return
 				}
-				xT := infer.env.Get(lhsIdName)
-				xT = types.Unwrap(xT)
-				switch vv := xT.(type) {
-				case types.TupleType:
-					if argIdx, err := strconv.Atoi(v.Sel.Name); err == nil {
-						lhsWantedT = vv.Elts[argIdx]
-					} else {
-						lhsWantedT = xT
-					}
-				case types.StructType:
-					selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
-					lhsWantedT = selT
-					if infer.mutEnforced && !TryCast[types.MutType](selT) {
-						infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
-						return
+				// For BubbleOptionExpr case, lhsWantedT is already set, skip the rest
+				if lhsIdName != "" {
+					xT := infer.env.Get(lhsIdName)
+					xT = types.Unwrap(xT)
+					switch vv := xT.(type) {
+					case types.TupleType:
+						if argIdx, err := strconv.Atoi(v.Sel.Name); err == nil {
+							lhsWantedT = vv.Elts[argIdx]
+						} else {
+							lhsWantedT = xT
+						}
+					case types.StructType:
+						selT := infer.env.Get(vv.Name + "." + v.Sel.Name)
+						lhsWantedT = selT
+						if infer.mutEnforced && !TryCast[types.MutType](selT) {
+							infer.errorf(v.Sel, "assign to immutable prop '%s'", v.Sel.Name)
+							return
+						}
 					}
 				}
 			case *ast.StarExpr:
@@ -5298,6 +5345,19 @@ func (infer *FileInferrer) assignStmt(stmt *ast.AssignStmt) {
 					lhsIDT := infer.env.Get(lhsID.Name)
 					infer.SetType(lhsID, lhsIDT)
 					lhsIDT = types.Unwrap(lhsIDT)
+					return
+				case *ast.BubbleOptionExpr:
+					// For nil-conditional assignment: p?.Name = "foo"
+					// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
+					if baseIdent, ok := vv.X.(*ast.Ident); ok {
+						lhsID = baseIdent
+						mutable = baseIdent.Mutable.IsValid()
+						// Type information was already set in the first switch
+						// Just set the type on the BubbleOptionExpr and SelectorExpr
+						baseType := infer.env.GetType(baseIdent)
+						infer.SetType(vv.X, baseType)
+						infer.SetType(vv, baseType)
+					}
 					return
 				default:
 					infer.errorf(v.Sel, "...")

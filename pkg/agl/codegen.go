@@ -4698,6 +4698,31 @@ func (g *Generator) genAssignStmt(stmt *ast.AssignStmt) GenFrag {
 		}
 	}
 
+	// Handle nil-conditional assignment: p?.Name = "value" becomes if p != nil { p.Name = "value" }
+	// The AST structure is: SelectorExpr{X: BubbleOptionExpr{X: base}, Sel: field}
+	if len(stmt.Lhs) == 1 {
+		if selectorExpr, ok := stmt.Lhs[0].(*ast.SelectorExpr); ok {
+			if bubbleExpr, ok := selectorExpr.X.(*ast.BubbleOptionExpr); ok {
+				// Generate: if base != nil { base.field = rhs }
+				baseExpr := g.genExpr(bubbleExpr.X)
+				rhsExpr := g.genExprs(stmt.Rhs)
+				var bs []func() string
+				bs = append(bs, baseExpr.B...)
+				bs = append(bs, rhsExpr.B...)
+				return GenFrag{F: func() string {
+					var out string
+					if !g.inlineStmt {
+						out += e(g.prefix)
+					}
+					out += e("if ") + baseExpr.F() + e(" != nil {\n")
+					out += e(g.prefix+"\t") + baseExpr.F() + e("."+selectorExpr.Sel.Name+" "+stmt.Tok.String()+" ") + rhsExpr.F() + e("\n")
+					out += e(g.prefix + "}\n")
+					return out
+				}, B: bs}
+			}
+		}
+	}
+
 	// Generate RHS first (before applying shadowing)
 	rhsT := g.env.GetType(stmt.Rhs[0])
 	if v, ok := rhsT.(types.CustomType); ok {

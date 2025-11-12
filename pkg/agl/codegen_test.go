@@ -15231,6 +15231,38 @@ func main() {
 	testCodeGen2(t, expected, test)
 }
 
+func TestCodeGen496_nil_conditional_assignment(t *testing.T) {
+	src := `package main
+type Person struct {
+	mut Name string
+}
+func main() {
+	var mut p1, mut p2 *Person
+	p1?.Name = "foo"
+	p2 = &Person{}
+	p2.Name = "bar"
+	assertEq(p2.Name, "foo")
+}`
+	expected := `// agl:generated
+package main
+type Person struct {
+	Name string
+}
+func main() {
+	var p1, p2 *Person
+	if p1 != nil {
+		p1.Name = "foo"
+	}
+	p2 = &Person{}
+	p2.Name = "bar"
+	AglAssertEq(p2.Name, "foo", "assert failed line 10")
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
 //func TestCodeGen411(t *testing.T) {
 //	src := `package main
 //func main() {
