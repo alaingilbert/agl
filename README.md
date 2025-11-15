@@ -100,61 +100,6 @@ func main() {
 }
 ```
 
-### Nil-Coalescing operator (??)
-
-```go
-package main
-
-type Container struct {
-	Val int
-}
-
-/*
-    a := c1 ?? &Container{Val: 42}
-    // is equivalent to -->
-    a := c1
-    if a == nil {
-        a = &Container{Val: 42}
-    }
-*/
-
-func main() {
-	var c1 *Container
-	c2 := &Container{Val: 1}
-	a := c1 ?? &Container{Val: 42}
-	print(a.Val) // 42
-	b := c2 ?? &Container{Val: 42}
-	print(b.Val) // 1
-}
-```
-
-### Nil-Conditional assignment operator (?.)
-
-```go
-package main
-
-type Container struct {
-    mut Val int
-}
-
-/*
-    c1?.Val = 42
-    // is equivalent to -->
-    if c1 != nil {
-        c1.Val = 42
-    }
-*/
-
-func main() {
-    var mut c1 *Container
-    mut c2 := &Container{}
-    c1?.Val = 42
-    c2?.Val = 42
-    print(c1) // <nil>
-    print(c2) // &{42}
-}
-```
-
 ### `If let Some(val) := ... {` to use a Option[T]/Result[T] value safely
 
 This pattern works with any of `Ok`|`Err`|`Some`  
@@ -496,6 +441,61 @@ func PrintPoint(p Point) {
 func main() {
     PrintPoint("1:2") // a string literal can be used to create a Point
     PrintPoint(Point{X: 1, Y: 2})
+}
+```
+
+### Nil-Coalescing operator (??)
+
+```go
+package main
+
+type Container struct {
+	Val int
+}
+
+/*
+    a := c1 ?? &Container{Val: 42}
+    // is equivalent to -->
+    a := c1
+    if a == nil {
+        a = &Container{Val: 42}
+    }
+*/
+
+func main() {
+	var c1 *Container
+	c2 := &Container{Val: 1}
+	a := c1 ?? &Container{Val: 42}
+	print(a.Val) // 42
+	b := c2 ?? &Container{Val: 42}
+	print(b.Val) // 1
+}
+```
+
+### Nil-Conditional assignment operator (?.)
+
+```go
+package main
+
+type Container struct {
+    mut Val int
+}
+
+/*
+    c1?.Val = 42
+    // is equivalent to -->
+    if c1 != nil {
+        c1.Val = 42
+    }
+*/
+
+func main() {
+    var mut c1 *Container
+    mut c2 := &Container{}
+    c1?.Val = 42
+    c2?.Val = 42
+    print(c1) // <nil>
+    print(c2) // &{42}
 }
 ```
 
