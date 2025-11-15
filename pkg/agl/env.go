@@ -947,7 +947,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl1.Set.ForEach", "func [T comparable](s agl1.Set[T], f func(e T))")
 		e.DefineFn(nenv, "agl1.Set.FormIntersection", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
 		e.DefineFn(nenv, "agl1.Set.FormSymmetricDifference", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
-		e.DefineFn(nenv, "agl1.Set.FormUnion", "func [T comparable](mut s agl1.Set[T], other Sequence[T])")
+		e.DefineFn(nenv, "agl1.Set.FormUnion", "func [T comparable](mut s agl1.Set[T], other Iterator[T])")
 		e.DefineFn(nenv, "agl1.Set.Insert", "func [T comparable](mut s agl1.Set[T], el T) bool", WithDesc("Inserts the given element in the set if it is not already present."))
 		e.DefineFn(nenv, "agl1.Set.Intersection", "func [T comparable](s, other agl1.Set[T]) agl1.Set[T]", WithDesc("Returns a new set with the elements that are common to both this set and the given sequence."))
 		e.DefineFn(nenv, "agl1.Set.Intersects", "func [T comparable](s agl1.Set[T], other Iterator[T]) bool", WithDesc("Returns a Boolean value that indicates whether the set has members in common with the given sequence."))
