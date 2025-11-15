@@ -128,6 +128,33 @@ func main() {
 }
 ```
 
+### Nil-Conditional assignment operator (?.)
+
+```go
+package main
+
+type Container struct {
+    mut Val int
+}
+
+/*
+    c1?.Val = 42
+    // is equivalent to -->
+    if c1 != nil {
+        c1.Val = 42
+    }
+*/
+
+func main() {
+    var mut c1 *Container
+    mut c2 := &Container{}
+    c1?.Val = 42
+    c2?.Val = 42
+    print(c1) // <nil>
+    print(c2) // &{42}
+}
+```
+
 ### `If let Some(val) := ... {` to use a Option[T]/Result[T] value safely
 
 This pattern works with any of `Ok`|`Err`|`Some`  
