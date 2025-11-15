@@ -3151,9 +3151,42 @@ afterUnwrap4:
 				out += c1.F() + e(", ") + content2() + e(".Iter())")
 				return
 			}}
-		case "Union", "Intersects", "Subtracting", "Subtract", "Intersection", "FormIntersection",
-			"SymmetricDifference", "FormSymmetricDifference", "IsSubset", "IsStrictSubset", "IsSuperset", "IsStrictSuperset", "IsDisjoint",
+		case "Intersection", "FormIntersection", "SymmetricDifference", "IsSubset", "IsStrictSubset", "IsStrictSuperset":
+			// These methods accept AglSet[T] as second parameter, so do NOT call .Iter() on sets
+			arg0 := expr.Args[0]
+			arg0T := g.env.GetType(arg0)
+			content2 := func() string {
+				unwrapped := types.Unwrap(arg0T)
+				switch v := unwrapped.(type) {
+				case types.ArrayType:
+					// Arrays need to be converted to Set
+					return e("AglBuildSet(AglVec["+v.Elt.GoStrType()+"](") + g.genExpr(arg0).F() + e(").Iter())")
+				case types.SetType:
+					// Sets are passed directly without .Iter()
+					return g.genExpr(arg0).F()
+				case types.FuncType:
+					// FuncType represents iter.Seq[T] - convert to set
+					return e("AglBuildSet(") + g.genExpr(arg0).F() + e(")")
+				default:
+					return g.genExpr(arg0).F()
+				}
+			}
+			c1 := g.genExpr(x.X)
+			c1T := g.env.GetType(x.X)
+			if v, ok := c1T.(types.MutType); ok {
+				c1T = v.W
+			}
+			return GenFrag{F: func() (out string) {
+				out += e("AglSet" + fnName + "(")
+				if TryCast[types.StarType](c1T) {
+					out += e("*")
+				}
+				out += c1.F() + e(", ") + content2() + e(")")
+				return
+			}}
+		case "Union", "Intersects", "Subtracting", "Subtract", "FormSymmetricDifference", "IsSuperset", "IsDisjoint",
 			"Filter", "ForEach", "Map":
+			// These methods accept Iterator[T] as second parameter, so call .Iter() on sets
 			arg0 := expr.Args[0]
 			arg0T := g.env.GetType(arg0)
 			content2 := func() string {
