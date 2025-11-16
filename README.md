@@ -362,7 +362,7 @@ func main() {
 ```go
 package main
 
-func (v agl1.Vec[T]) Even() []T {
+func (v agl.Vec[T]) Even() []T {
     out := make([]T, 0)
     for _, el := range v {
         if el % 2 == 0 {
@@ -383,7 +383,7 @@ func main() {
 Methods can have generic type parameters
 
 ```go
-func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
     mut out := make([]R, 0)
     for _, el := range v {
         out = append(out, clb(el))
@@ -395,7 +395,7 @@ func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
 You can also extend for a specific type of vector
 
 ```go
-func (v agl1.Vec[string]) MyJoined(sep string) string {
+func (v agl.Vec[string]) MyJoined(sep string) string {
     return strings.Join(v, sep)
 }
 ```
@@ -504,7 +504,7 @@ func main() {
 ```go
 package main
 
-import "agl1/os"
+import "agl/os"
 
 func main() {
     os.WriteFile("test.txt", []byte("test"), 0755)!
@@ -522,8 +522,8 @@ And here is a [simple example](https://github.com/alaingilbert/agl/blob/master/e
 package main
 
 import (
-    "agl1/net/http"
-    "agl1/io"
+    "agl/net/http"
+    "agl/io"
 )
 
 func main() {

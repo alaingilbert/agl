@@ -1,6 +1,6 @@
 package main
 
-import "agl1/os"
+import "agl/os"
 
 var mut width, mut height int
 

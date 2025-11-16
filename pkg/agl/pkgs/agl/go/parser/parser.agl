@@ -1,0 +1,10 @@
+package parser
+
+import "agl/go/token"
+import "agl/go/ast"
+
+type AllErrors uint
+
+type Mode uint
+
+func ParseFile(fset *token.FileSet, filename string, src any, mode Mode) (*ast.File)!

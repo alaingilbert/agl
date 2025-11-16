@@ -1,8 +1,8 @@
 package main
 
 import (
-    "agl1/regexp"
-    "agl1/os"
+    "agl/regexp"
+    "agl/os"
 )
 
 var mut blocks [](int, int, int, int, int, int)

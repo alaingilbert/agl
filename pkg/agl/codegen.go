@@ -501,8 +501,8 @@ func (g *Generator) scanForEnums() {
 		hasFmt := false
 		if g.a != nil {
 			for _, imp := range g.a.Imports {
-				// Check for both "fmt" and "agl1/fmt" imports
-				if imp.Path.Value == "\"fmt\"" || imp.Path.Value == "\"agl1/fmt\"" {
+				// Check for both "fmt" and "agl/fmt" imports
+				if imp.Path.Value == "\"fmt\"" || imp.Path.Value == "\"agl/fmt\"" {
 					hasFmt = true
 					break
 				}
@@ -689,10 +689,10 @@ func (g *Generator) Generate() (out string) {
 	// Now collect imports after ALL code generation (declarations, monomorphized functions, and extensions)
 	imports := make(map[string]*ast.ImportSpec)
 	addImport := func(i *ast.ImportSpec) {
-		// Normalize agl1/ prefix to match what will be generated
+		// Normalize agl/ prefix to match what will be generated
 		pathValue := i.Path.Value
-		if strings.HasPrefix(pathValue, `"agl1/`) {
-			pathValue = `"` + pathValue[6:]
+		if strings.HasPrefix(pathValue, `"agl/`) {
+			pathValue = `"` + pathValue[5:]
 		}
 		key := pathValue
 		if i.Name != nil {
@@ -759,8 +759,8 @@ func (g *Generator) genImports(imports []*ast.ImportSpec) (out string) {
 			out += spec.Name.Name + " "
 		}
 		pathValue := spec.Path.Value
-		if strings.HasPrefix(pathValue, `"agl1/`) {
-			pathValue = `"` + pathValue[6:]
+		if strings.HasPrefix(pathValue, `"agl/`) {
+			pathValue = `"` + pathValue[5:]
 		}
 		return out + pathValue + "\n"
 	}
@@ -3089,7 +3089,7 @@ afterUnwrap4:
 				}, B: bs}
 			}
 		default:
-			extName := "agl1.Vec." + fnName
+			extName := "agl.Vec." + fnName
 			for _, a := range expr.Args {
 				if v, ok := a.(*ast.LabelledArg); ok {
 					extName += fmt.Sprintf("_%s", v.Label.Name)
@@ -3506,7 +3506,7 @@ afterUnwrap4:
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
 		default:
-			extName := "agl1.String." + fnName
+			extName := "agl.String." + fnName
 			rawFnT := g.env.Get(extName)
 			concreteT := rawFnT
 			g.addExtension(extName, ExtensionTest{raw: rawFnT, concrete: concreteT})
@@ -3918,7 +3918,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 				return e("AglIn(") + content1() + e(", ") + content2() + e(")")
 			}
 			if TryCast[types.SetType](xT) && TryCast[types.SetType](yT) {
-				if (op == "==" || op == "!=") && g.env.Get("agl1.Set.Equals") != nil {
+				if (op == "==" || op == "!=") && g.env.Get("agl.Set.Equals") != nil {
 					var out string
 					if op == "!=" {
 						out += e("!")
@@ -3929,7 +3929,7 @@ func (g *Generator) genBinaryExpr(expr *ast.BinaryExpr) GenFrag {
 			} else if TryCast[types.ArrayType](xT) && TryCast[types.ArrayType](yT) {
 				lhsT := types.Unwrap(xT.(types.ArrayType).Elt)
 				rhsT := types.Unwrap(yT.(types.ArrayType).Elt)
-				if op == "+" && g.env.Get("agl1.Vec.__ADD") != nil {
+				if op == "+" && g.env.Get("agl.Vec.__ADD") != nil {
 					return e("AglVec__ADD(") + content1() + e(", ") + content2() + e(")")
 				}
 				if TryCast[types.ByteType](lhsT) && TryCast[types.ByteType](rhsT) {
@@ -5536,7 +5536,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 			if tmp1, ok := decl.Recv.List[0].Type.(*ast.IndexExpr); ok {
 				if tmp2, ok := tmp1.X.(*ast.SelectorExpr); ok {
 					if tmp2.Sel.Name == "Vec" {
-						fnName := fmt.Sprintf("agl1.Vec.%s", decl.Name.Name)
+						fnName := fmt.Sprintf("agl.Vec.%s", decl.Name.Name)
 						for _, pp := range decl.Type.Params.List {
 							for _, n := range pp.Names {
 								if n.Label != nil {
@@ -5550,7 +5550,7 @@ func (g *Generator) genFuncDecl(decl *ast.FuncDecl) GenFrag {
 				}
 			} else if tmp2, ok := decl.Recv.List[0].Type.(*ast.SelectorExpr); ok {
 				if tmp2.Sel.Name == "String" {
-					fnName := fmt.Sprintf("agl1.String.%s", decl.Name.Name)
+					fnName := fmt.Sprintf("agl.String.%s", decl.Name.Name)
 					g.setExtensionDecl(fnName, decl)
 					return GenFrag{F: emptyContent}
 				}

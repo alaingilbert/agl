@@ -103,7 +103,7 @@ func (t *Test) TypeAt(row, col int) types.Type {
 
 func TestInfer1(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	r := http.Get("")!
 	bod := r.Body
@@ -115,7 +115,7 @@ func main() {
 
 func TestInfer2(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
@@ -126,7 +126,7 @@ func main() {
 
 func TestInfer3(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	req := http.NewRequest(http.MethodGet, "https://jsonip.com", nil)!
 }
@@ -168,7 +168,7 @@ func main() {
 }
 `
 	test := NewTest(src)
-	tassert.Equal(t, "func (set[int]) IsDisjoint(agl1.Iterator[int]) bool", test.TypeAt(5, 12).String())
+	tassert.Equal(t, "func (set[int]) IsDisjoint(agl.Iterator[int]) bool", test.TypeAt(5, 12).String())
 }
 
 func TestInfer6(t *testing.T) {
@@ -311,8 +311,8 @@ func main() {
 
 func TestInfer15(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/strings"
+import "agl/fmt"
+import "agl/strings"
 func main() {
 	var mut sb strings.Builder
 	sb.WriteString("hello world")
@@ -504,7 +504,7 @@ func main() {
 
 func TestInferOsArgs(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func main() {
 	args := os.Args
 	firstArg := os.Args[0]

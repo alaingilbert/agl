@@ -1,8 +1,8 @@
 package main
 
 import (
-    "agl1/os"
-    "agl1/regexp"
+    "agl/os"
+    "agl/regexp"
 )
 
 func nums(s string) []int {

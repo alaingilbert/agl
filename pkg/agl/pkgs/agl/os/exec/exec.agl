@@ -1,0 +1,12 @@
+package exec
+
+import "agl/io"
+
+type Cmd struct {
+    Stdout io.Writer
+    Stderr io.Writer
+}
+
+func Command(name string, arg ...string) *Cmd
+
+func (c *Cmd) Run() !

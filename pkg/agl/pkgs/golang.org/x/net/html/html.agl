@@ -1,6 +1,6 @@
 package html
 
-import "agl1/io"
+import "agl/io"
 
 type NodeType uint32
 type Attribute struct {

@@ -2,7 +2,7 @@ package main
 
 import (
     "regexp"
-    "agl1/os"
+    "agl/os"
 )
 
 func main() {

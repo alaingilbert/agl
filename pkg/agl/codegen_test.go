@@ -124,7 +124,7 @@ func add(a, b int64) Option[int64] {
 
 func TestCodeGen6(t *testing.T) {
 	src := `package main
-import "agl1/errors"
+import "agl/errors"
 func add(a, b i64) i64! {
 	if a == 0 {
 		return Err(errors.New("a cannot be zero"))
@@ -311,7 +311,7 @@ func main() {
 
 func TestCodeGen14(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := make([]int, 0)
 	fmt.Println(a)
@@ -349,7 +349,7 @@ func main() {
 
 func TestCodeGen16(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	for _, c := range "test" {
 		fmt.Println(c)
@@ -371,7 +371,7 @@ func main() {
 
 func TestCodeGen17(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	if 2 % 2 == 0 {
 		fmt.Println("test")
@@ -437,7 +437,7 @@ func findEvenNumber(arr []int) Option[int] {
 
 func TestCodeGen20(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func findEvenNumber(arr []int) int? {
   for _, num := range arr {
       if num % 2 == 0 {
@@ -473,7 +473,7 @@ func main() {
 
 func TestCodeGen21(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func findEvenNumber(arr []int) int? {
   for _, num := range arr {
       if num % 2 == 0 {
@@ -579,7 +579,7 @@ func main() {
 
 func TestCodeGen25(t *testing.T) {
 	src := `package main
-import "agl1/errors"
+import "agl/errors"
 func parseInt(s1 string) int! {
 	return Err(errors.New("some error"))
 }
@@ -615,7 +615,7 @@ func main() {
 
 func TestCodeGen26(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func add(a, b int) int {
 	return a + b
 }
@@ -639,7 +639,7 @@ func main() {
 
 func TestCodeGen27(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	fmt.Println("1")
 	fmt.Println("2")
@@ -663,7 +663,7 @@ func main() {
 
 func TestCodeGen28(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func parseInt(s string) int! {
 	num := strconv.Atoi(s)!
 	return Ok(num)
@@ -903,7 +903,7 @@ func main() {
 
 func TestCodeGen_VecBuiltInMap2(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func main() {
 	a := []int{1, 2, 3, 4}
 	b := a.Map(strconv.Itoa)
@@ -997,8 +997,8 @@ func main() {
 
 func TestCodeGen35(t *testing.T) {
 	src := `package main
-import "agl1/os"
-import "agl1/fmt"
+import "agl/os"
+import "agl/fmt"
 func main() {
 	by := os.ReadFile("test.txt")!
 	fmt.Println(by)
@@ -1349,7 +1349,7 @@ func main() {
 
 func TestCodeGen44(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := 1
 	if a == 1 {
@@ -1917,7 +1917,7 @@ func main() {
 
 func TestCodeGen_55(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := 2
 	fmt.Println("first")
@@ -2082,7 +2082,7 @@ func main() {
 func TestCodeGen_TypeAssertion(t *testing.T) {
 	src := `
 package main
-import "agl1/fmt"
+import "agl/fmt"
 type Writer interface {}
 type WriterA struct {}
 type WriterB struct {}
@@ -2127,8 +2127,8 @@ func TestCodeGen61(t *testing.T) {
 	src := `
 package main
 
-import "agl1/os"
-import "agl1/fmt"
+import "agl/os"
+import "agl/fmt"
 
 func main() {
 	os.WriteFile("test.txt", []byte("test"), 0755)!
@@ -2309,7 +2309,7 @@ func main() {
 
 func TestCodeGen66(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type Color enum {
 	red
 	other(u8, string)
@@ -2365,7 +2365,7 @@ func main() {
 
 func TestCodeGen67(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := []u8{1, 2, 3, 4, 5}
 	var b u8 = a.Find({ $0 == 2 })?
@@ -2774,8 +2774,8 @@ func main() {
 func TestCodeGen87(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/errors"
+	"agl/fmt"
+	"agl/errors"
 )
 `
 	expected := `// agl:generated
@@ -2810,7 +2810,7 @@ type Pos struct {
 func TestCodeGen89(t *testing.T) {
 	src := `
 package main
-import "agl1/fmt"
+import "agl/fmt"
 type Person struct {
 	name string
 }
@@ -3003,7 +3003,7 @@ func main() {
 
 func TestCodeGen95_3(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func main() {
 	a := []string{"1", "2"}
 	a.Map({ strconv.Atoi($0)! })
@@ -3030,7 +3030,7 @@ func main() {
 
 func TestCodeGen95_4(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func main() {
 	a := "1 2"
 	a.Split(" ").Map({ strconv.Atoi($0)! })
@@ -3057,7 +3057,7 @@ func main() {
 
 func TestCodeGen95_5(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func main() {
 	a := "1 2, 3 4"
 	a.Split(",").Map({
@@ -3088,7 +3088,7 @@ func main() {
 
 func TestCodeGen95_6(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
+import "agl/strconv"
 func main() {
 	a := "1 2, 3 4"
 	a.Split(",").Map({
@@ -3154,7 +3154,7 @@ func main() {
 
 func TestCodeGen97(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	for i := 0; i < 10; i++ {
 		fmt.Println(i)
@@ -3177,7 +3177,7 @@ func main() {
 
 func TestCodeGen98(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	for {
 		fmt.Println("hello")
@@ -3200,7 +3200,7 @@ func main() {
 
 func TestCodeGen99(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func testSome() int? {
 	return Some(42)
 }
@@ -3240,7 +3240,7 @@ func main() {
 
 func TestCodeGen100(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func testOk() int! {
 	return Ok(42)
 }
@@ -3270,7 +3270,7 @@ func main() {
 
 func TestCodeGen101(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func testOk() int! {
 	return Err("error")
 }
@@ -3300,7 +3300,7 @@ func main() {
 
 func TestCodeGen102(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func testSome() int? {
    return Some(42)
 }
@@ -3512,7 +3512,7 @@ func main() {
 
 func TestCodeGen112(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type IpAddr enum {
     v4(u8, u8, u8, u8)
     v6(string)
@@ -3590,7 +3590,7 @@ func (t AglTupleStruct_int_string_bool) String() string {
 
 func TestCodeGen113(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := 'a'
 	fmt.Println(string(a))
@@ -3611,7 +3611,7 @@ func main() {
 
 func TestCodeGen114(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := 1
 	fmt.Println(u8(a))
@@ -3632,7 +3632,7 @@ func main() {
 
 func TestCodeGen115(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	a := 1
 	b := &a
@@ -3842,7 +3842,7 @@ func main() {
 
 func TestCodeGen125(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int? { Some(42) }
 func main() {
 	num := test().UnwrapOr(1)
@@ -3867,7 +3867,7 @@ func main() {
 
 func TestCodeGen126(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int! { Ok(42) }
 func main() {
 	num := test().UnwrapOr(1)
@@ -3892,7 +3892,7 @@ func main() {
 
 func TestCodeGen127(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int! { Ok(42) }
 func main() {
 	isOk := test().IsOk()
@@ -3917,7 +3917,7 @@ func main() {
 
 func TestCodeGen128(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int! { Ok(42) }
 func main() {
 	isErr := test().IsErr()
@@ -3942,7 +3942,7 @@ func main() {
 
 func TestCodeGen129(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int? { Some(42) }
 func main() {
 	isSome := test().IsSome()
@@ -3967,7 +3967,7 @@ func main() {
 
 func TestCodeGen130(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int? { Some(42) }
 func main() {
 	isNone := test().IsNone()
@@ -3992,7 +3992,7 @@ func main() {
 
 func TestCodeGen131(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int? { Some(42) }
 func main() {
 	num := test().Unwrap()
@@ -4017,7 +4017,7 @@ func main() {
 
 func TestCodeGen132(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test() int! { Ok(42) }
 func main() {
 	num := test().Unwrap()
@@ -4042,8 +4042,8 @@ func main() {
 
 func TestCodeGen133(t *testing.T) {
 	src := `package main
-import "agl1/os"
-import "agl1/strconv"
+import "agl/os"
+import "agl/strconv"
 func test() ! {
 	os.Chdir("")!
 	return Ok(void)
@@ -4069,8 +4069,8 @@ func test() Result[AglVoid] {
 
 func TestCodeGen134(t *testing.T) {
 	src := `package main
-import "agl1/strconv"
-import "agl1/os"
+import "agl/strconv"
+import "agl/os"
 func test() string? {
 	res := os.LookupEnv("")?
 	return Some(res)
@@ -4097,8 +4097,8 @@ func test() Option[string] {
 
 func TestCodeGen135(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/net/http"
+import "agl/fmt"
+import "agl/net/http"
 func test() string! {
 	res := http.Get("https://google.com")!
 	fmt.Println(res)
@@ -4127,8 +4127,8 @@ func test() Result[string] {
 
 func TestCodeGen136(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/net/http"
+import "agl/fmt"
+import "agl/net/http"
 func main() {
 	res := http.Get("https://google.com")!
 	fmt.Println(res)
@@ -4155,8 +4155,8 @@ func main() {
 
 func TestCodeGen136_1(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import myHttp "agl1/net/http"
+import "agl/fmt"
+import myHttp "agl/net/http"
 func main() {
 	res := myHttp.Get("https://google.com")!
 	fmt.Println(res)
@@ -4217,8 +4217,8 @@ func main() {
 
 func TestCodeGen138(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test() int? {
 	Some(42)
@@ -4255,8 +4255,8 @@ func main() {
 
 func TestCodeGen139(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test(i int) int? {
     if i >= 2 {
@@ -4309,8 +4309,8 @@ func main() {
 
 func TestCodeGen140(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test(i int) int! {
     if i >= 2 {
@@ -4363,8 +4363,8 @@ func main() {
 
 func TestCodeGen141(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test(i int) int! {
     if i >= 2 {
@@ -4417,8 +4417,8 @@ func main() {
 
 func TestCodeGen142(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test(i int) int? {
     if i >= 2 {
@@ -4557,8 +4557,8 @@ func test2() int {
 
 func TestCodeGen147(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) Even() []T {
+import "agl/fmt"
+func (v agl.Vec[T]) Even() []T {
    mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
@@ -4595,8 +4595,8 @@ func AglVecEven_T_int(v []int) []int {
 
 func TestCodeGen147_1(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) Even() []T {
+import "agl/fmt"
+func (v agl.Vec[T]) Even() []T {
    mut out := make([]T, len(v))
    for _, el := range v {
        if el % 2 == 0 {
@@ -4637,8 +4637,8 @@ func AglVecEven_T_int(v []int) []int {
 
 func TestCodeGen148(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+import "agl/fmt"
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4675,8 +4675,8 @@ func AglVecMyMap_R_int_T_int(v []int, clb func(int) int) []int {
 
 func TestCodeGen148_1(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+import "agl/fmt"
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4713,8 +4713,8 @@ func AglVecMyMap_R_int64_T_int64(v []int64, clb func(int64) int64) []int64 {
 
 func TestCodeGen148_2(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+import "agl/fmt"
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4751,7 +4751,7 @@ func AglVecMyMap_R_uint8_T_int64(v []int64, clb func(int64) uint8) []uint8 {
 
 func TestCodeGen149(t *testing.T) {
 	src := `package main
-func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
 	mut out := make([]R, len(v))
 	for _, el := range v {
 		out = append(out, clb(el))
@@ -4798,14 +4798,14 @@ func AglVecMyMap_R_uint64_T_uint8(v []uint8, clb func(uint8) uint64) []uint64 {
 
 func TestCodeGen150(t *testing.T) {
 	src := `package main
-import "agl1/strings"
-func (v agl1.Vec[string]) MyJoined(sep string) string {
+import "agl/strings"
+func (v agl.Vec[string]) MyJoined(sep string) string {
 	return strings.Join(v, sep)
 }
-func (v agl1.Vec[string]) MyJoined2() string {
+func (v agl.Vec[string]) MyJoined2() string {
 	return strings.Join(v, ", ")
 }
-func (v agl1.Vec[string]) Test() {
+func (v agl.Vec[string]) Test() {
 }
 func main() {
 	arr := []string{"a", "b", "c"}
@@ -4906,8 +4906,8 @@ func main() {
 
 func TestCodeGen153(t *testing.T) {
 	src := `package main
-import "agl1/strings"
-func (v agl1.Vec[string]) MyJoined(sep string) string {
+import "agl/strings"
+func (v agl.Vec[string]) MyJoined(sep string) string {
    return strings.Join(v, sep)
 }
 func main() {
@@ -4977,7 +4977,7 @@ func main() {
 
 func TestCodeGen157(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	r := http.Get("")!
 	r.Body.Close()
@@ -5001,7 +5001,7 @@ func main() {
 
 func TestCodeGen158(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	r := http.Get("")!
 	bod := r.Body
@@ -5013,7 +5013,7 @@ func main() {
 
 func TestCodeGen159(t *testing.T) {
 	src := `package main
-import "agl1/net/http"
+import "agl/net/http"
 func main() {
 	r := http.Get("")!
 	v := r.Body.Close()!
@@ -5235,7 +5235,7 @@ func (t AglTupleStruct_int_bool) String() string {
 
 func TestCodeGen167(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test(t (int, bool)) (int, bool) {
     t.0 += 1
     return t
@@ -5398,7 +5398,7 @@ func (t AglTupleStruct_int_int) String() string {
 
 func TestCodeGen174(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test(t (int, bool)) (bool, int) {
     t.0 += 1
     return (t.1, t.0)
@@ -5464,8 +5464,8 @@ func main() {
 func TestCodeGen176(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/math"
+	"agl/fmt"
+	"agl/math"
 )
 type Abser interface {
 	Abs() f64
@@ -5528,7 +5528,7 @@ func (v *Vertex) Abs() float64 {
 
 func TestCodeGen177(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type I interface {
 	M()
 }
@@ -5567,8 +5567,8 @@ func main() {
 func TestCodeGen178(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/math"
+	"agl/fmt"
+	"agl/math"
 )
 type I interface {
 	M()
@@ -5634,7 +5634,7 @@ func describe(i I) {
 
 func TestCodeGen179(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type I interface {
 	M()
 }
@@ -5698,7 +5698,7 @@ func describe(i I) {
 
 func TestCodeGen180(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	var mut i any
 	describe(i)
@@ -5733,7 +5733,7 @@ func describe(i any) {
 
 func TestCodeGen181(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	var i any = "hello"
 	s := i.(string)
@@ -5760,7 +5760,7 @@ func main() {
 
 func TestCodeGen181_1(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test(i any) int? {
 	tmp := i.(int)?
 	return Some(tmp + 1)
@@ -5807,7 +5807,7 @@ func main() {
 
 func TestCodeGen182(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func do(i any) {
 	switch v := i.(type) {
 	case int:
@@ -5849,7 +5849,7 @@ func main() {
 
 func TestCodeGen183(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type IPAddr [4]byte
 func main() {
 	hosts := map[string]IPAddr{
@@ -5879,7 +5879,7 @@ func main() {
 
 func TestCodeGen184(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type IPAddr [4]byte
 func main() {
 	hosts := map[string]IPAddr{
@@ -5910,8 +5910,8 @@ func main() {
 func TestCodeGen185(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/time"
+	"agl/fmt"
+	"agl/time"
 )
 type MyError struct {
 	When time.Time
@@ -5959,8 +5959,8 @@ func main() {
 func TestCodeGen186(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/time"
+	"agl/fmt"
+	"agl/time"
 )
 type MyError struct {
 	When time.Time
@@ -6010,9 +6010,9 @@ func main() {
 func TestCodeGen187(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/io"
-	"agl1/strings"
+	"agl/fmt"
+	"agl/io"
+	"agl/strings"
 )
 func main() {
 	r := strings.NewReader("Hello, Reader!")
@@ -6053,9 +6053,9 @@ func main() {
 func TestCodeGen188(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/io"
-	"agl1/strings"
+	"agl/fmt"
+	"agl/io"
+	"agl/strings"
 )
 func main() {
 	r := strings.NewReader("Hello, Reader!")
@@ -6109,9 +6109,9 @@ func main() {
 func TestCodeGen188_1(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/io"
-	"agl1/strings"
+	"agl/fmt"
+	"agl/io"
+	"agl/strings"
 )
 func main() {
 	r := strings.NewReader("Hello, Reader!")
@@ -6282,8 +6282,8 @@ func main() {
 func TestCodeGen189_6(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/math"
+	"agl/fmt"
+	"agl/math"
 )
 type Vertex struct {
 	mut X, mut Y f64
@@ -6329,7 +6329,7 @@ func main() {
 
 func TestCodeGen190(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	var mut i interface{}
 	describe(i)
@@ -6364,7 +6364,7 @@ func describe(i any) {
 
 func TestCodeGen191(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func Index[T comparable](s []T, x T) int {
 	for i, v := range s {
 		if v == x {
@@ -6413,8 +6413,8 @@ func Index_T_string(s []string, x string) int {
 func TestCodeGen192(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/time"
+	"agl/fmt"
+	"agl/time"
 )
 func say(s string) {
 	for i := 0; i < 5; i++ {
@@ -6451,7 +6451,7 @@ func main() {
 
 func TestCodeGen193(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func sum(s []int, c chan int) {
 	mut sum1 := 0
 	for _, v := range s {
@@ -6493,7 +6493,7 @@ func main() {
 
 func TestCodeGen194(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func fibonacci(c, quit chan int) {
 	mut x, mut y := 0, 1
 	for {
@@ -6552,8 +6552,8 @@ func main() {
 func TestCodeGen195(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/time"
+	"agl/fmt"
+	"agl/time"
 )
 func main() {
 	start := time.Now()
@@ -6609,7 +6609,7 @@ func main() {
 
 func TestCodeGen195_1(t *testing.T) {
 	src := `package main
-import "agl1/time"
+import "agl/time"
 func main() {
 	var a time.Duration
 	a.Round(time.Millisecond)
@@ -6630,9 +6630,9 @@ func main() {
 func TestCodeGen196(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/sync"
-	"agl1/time"
+	"agl/fmt"
+	"agl/sync"
+	"agl/time"
 )
 type SafeCounter struct {
 	mu sync.Mutex
@@ -6718,7 +6718,7 @@ func main() {
 func TestCodeGen198(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
+	"agl/fmt"
 )
 type Fetcher interface {
 	Fetch(url string) (string, []string)!
@@ -6898,9 +6898,9 @@ func main() {
 func TestCodeGen202(t *testing.T) {
 	src := `package main
 import (
-   "agl1/fmt"
-   "agl1/net/http"
-   "agl1/io"
+   "agl/fmt"
+   "agl/net/http"
+   "agl/io"
 )
 func main() {
    req := http.NewRequest(http.MethodGet, "https://jsonip.com", None)!
@@ -6942,13 +6942,13 @@ func main() {
 func TestCodeGen203(t *testing.T) {
 	src := `package main
 import (
-	"agl1/go/ast"
-	"agl1/go/parser"
-	"agl1/go/token"
-	"agl1/go/types"
-	"agl1/os"
-	"agl1/path/filepath"
-	"agl1/runtime"
+	"agl/go/ast"
+	"agl/go/parser"
+	"agl/go/token"
+	"agl/go/types"
+	"agl/os"
+	"agl/path/filepath"
+	"agl/runtime"
 )
 func main() {
 	goroot := runtime.GOROOT()
@@ -7262,7 +7262,7 @@ func main() {
 
 func TestCodeGen212(t *testing.T) {
 	src := `package main
-import "agl1/go/ast"
+import "agl/go/ast"
 func main() {
 	a := []*ast.Ident{&ast.Ident{Name: "foo"}}
 	b := a.Map({ $0.Name }).Joined(", ")
@@ -7311,7 +7311,7 @@ func AglVecLast_T_int(v []int) Option[int] {
 
 func TestCodeGen214(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 type Test struct {}
 func main() {
 	var a any = Test{}
@@ -7339,7 +7339,7 @@ func main() {
 
 func TestCodeGen215(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	if dump(1 == 1) {
 		fmt.Println("test")
@@ -7423,7 +7423,7 @@ func main() {
 
 func TestCodeGen219(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	fmt.Println(@LINE, @COLUMN)
 }`
@@ -7442,7 +7442,7 @@ func main() {
 //func TestCodeGen220(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl1.NewSet()
+//	s := agl.NewSet()
 //	fmt.Println(s)
 //}`
 //	expected := `// agl:generated
@@ -7458,7 +7458,7 @@ func main() {
 //func TestCodeGen221(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl1.NewSet()
+//	s := agl.NewSet()
 //	fmt.Println(s.Len())
 //}`
 //	expected := `// agl:generated
@@ -7474,7 +7474,7 @@ func main() {
 //func TestCodeGen222(t *testing.T) {
 //	src := `package main
 //func main() {
-//	s := agl1.NewSet("a")
+//	s := agl.NewSet("a")
 //	s.Insert("b")
 //}`
 //	expected := `// agl:generated
@@ -7591,10 +7591,10 @@ func main() {
 func TestCodeGen230(t *testing.T) {
 	src := `package main
 import (
-    "agl1/fmt"
-    "agl1/net/http"
+    "agl/fmt"
+    "agl/net/http"
     "golang.org/x/net/html"
-    "agl1/io"
+    "agl/io"
 )
 func findTitle(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "title" && n.FirstChild != nil {
@@ -7655,7 +7655,7 @@ func main() {
 func TestCodeGen231(t *testing.T) {
 	src := `package main
 
-import "agl1/fmt"
+import "agl/fmt"
 
 func getInt() int! { Ok(42) }
 
@@ -7713,8 +7713,8 @@ func main() {
 func TestCodeGen232(t *testing.T) {
 	src := `package main
 
-import "agl1/fmt"
-import "agl1/time"
+import "agl/fmt"
+import "agl/time"
 
 func test(i int) int? {
     if i >= 2 {
@@ -7861,7 +7861,7 @@ func (t AglTupleStruct_uint8_uint8) String() string {
 func TestCodeGen239(t *testing.T) {
 	src := `#!/usr/bin/env agl run
 package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	fmt.Println("Hello world!")
 }`
@@ -7879,7 +7879,7 @@ func main() {
 
 func TestCodeGen240(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	arr := [](u8, u8){(0, 0)}
     fmt.Println(arr.Map({ $0.0 }))
@@ -7908,7 +7908,7 @@ func (t AglTupleStruct_uint8_uint8) String() string {
 
 func TestCodeGen241(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	arr := [](u8, u8){(0, 0)}
     fmt.Println(arr.Map(func(t (u8, u8)) u8 { t.0 }))
@@ -7937,7 +7937,7 @@ func (t AglTupleStruct_uint8_uint8) String() string {
 
 func TestCodeGen242(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func test[T, U any](a []T, b []U) [](T, U) {
 	return [](T, U){(a[0], b[0])}
 }
@@ -8140,8 +8140,8 @@ func main() {
 
 func TestCodeGen251(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyForEach(f func(T)) {
+import "agl/fmt"
+func (v agl.Vec[T]) MyForEach(f func(T)) {
 	for i := range v {
 		f(v[i])
 	}
@@ -8170,8 +8170,8 @@ func AglVecMyForEach_T_int(v []int, f func(int)) {
 
 func TestCodeGen252(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
+import "agl/fmt"
+func (v agl.Vec[T]) MyCompactMap[R any](f func(T) R?) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		if let Some(res) := f(el) {
@@ -8209,8 +8209,8 @@ func AglVecMyCompactMap_R_int_T_string(v []string, f func(string) Option[int]) [
 
 func TestCodeGen253(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-func (v agl1.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
+import "agl/fmt"
+func (v agl.Vec[T]) MyFlatMap[R any](f func(T) []R) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		subArr := f(el)
@@ -8259,7 +8259,7 @@ func AglVecFlatMap_R_int_T_int(v []int, f func(int) []int) []int {
 
 func TestCodeGen254(t *testing.T) {
 	src := `package main
-func (v agl1.Vec[T]) MyMin() T? {
+func (v agl.Vec[T]) MyMin() T? {
 	if len(v) == 0 {
 		return None
 	}
@@ -8289,7 +8289,7 @@ func AglVecMyMin_T_int(v []int) Option[int] {
 
 func TestCodeGen255(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
+import "agl/fmt"
 func main() {
 	_ = fmt.Printf("")
 }`
@@ -8595,8 +8595,8 @@ func main() {
 
 func TestCodeGen267(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/strings"
+import "agl/fmt"
+import "agl/strings"
 func main() {
 	var mut sb strings.Builder
 	sb.WriteString("hello world")
@@ -8621,8 +8621,8 @@ func main() {
 
 func TestCodeGen268(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/strings"
+import "agl/fmt"
+import "agl/strings"
 func main() {
 	var sb strings.Builder
 	sb.WriteString("hello world")
@@ -8816,7 +8816,7 @@ func main() {
 
 func TestCodeGen279(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func main() {
 	by, err := os.ReadFile("test.agl")
 	if err != nil {
@@ -8842,7 +8842,7 @@ func main() {
 
 func TestCodeGen280(t *testing.T) {
 	src := `package main
-import "agl1/math"
+import "agl/math"
 func main() {
 	i, f := math.Modf(3.14)
 }`
@@ -8900,7 +8900,7 @@ func main() {
 
 func TestCodeGen283(t *testing.T) {
 	src := `package main
-import "agl1/errors"
+import "agl/errors"
 type SomeErr struct {}
 func (e *SomeErr) Error() string { return "" }
 func main() {
@@ -9075,7 +9075,7 @@ func main() {
 
 func TestCodeGen291(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func main() {
 	os.WriteFile("test.txt", []byte("test"), 0644)!
 	os.WriteFile("test.txt", []byte("test"), 0644)!
@@ -9103,7 +9103,7 @@ func main() {
 
 func TestCodeGen292(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func test() ! {
 	by := os.ReadFile("test.txt")!
 	os.WriteFile("test.txt", []byte("test"), 0644)!
@@ -9138,8 +9138,8 @@ func main() {
 
 func TestCodeGen293(t *testing.T) {
 	src := `package main
-import "agl1/os"
-import "agl1/fmt"
+import "agl/os"
+import "agl/fmt"
 func main() {
 	match os.ReadFile("test.txt") {
 	case Ok(_):
@@ -9173,7 +9173,7 @@ func main() {
 
 func TestCodeGen294(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func test() ! {
 	_ = os.ReadFile("test.txt")!
 	return Ok(void)
@@ -9197,7 +9197,7 @@ func test() Result[AglVoid] {
 
 func TestCodeGen295(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func test() ! {
 	os.ReadFile("test.txt")!
 	return Ok(void)
@@ -9297,7 +9297,7 @@ func (t AglTupleStruct_int_int) String() string {
 func TestCodeGen299(t *testing.T) {
 	src := `package main
 import (
-	"agl1/io"
+	"agl/io"
 	"net/http"
 )
 func main() {
@@ -9325,7 +9325,7 @@ func main() {
 func TestCodeGen300(t *testing.T) {
 	src := `package main
 import (
-	"agl1/os"
+	"agl/os"
 )
 func main() {
 	os.Remove()!
@@ -9461,7 +9461,7 @@ func main() {
 }`
 	test := NewTest(src, WithMutEnforced(false))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (set[int]) Intersects(agl1.Iterator[int]) bool", test.TypeAt(4, 7).String())
+	tassert.Equal(t, "func (set[int]) Intersects(agl.Iterator[int]) bool", test.TypeAt(4, 7).String())
 }
 
 func TestCodeGen306(t *testing.T) {
@@ -9918,7 +9918,7 @@ import "strings"
 func main() {
 	assert("Test".MyLowercased() == "test")
 }
-func (s agl1.String) MyLowercased() string {
+func (s agl.String) MyLowercased() string {
 	return strings.ToLower(s)
 }`
 	expected := `// agl:generated
@@ -9956,7 +9956,7 @@ func main() {
 
 func TestCodeGen318(t *testing.T) {
 	src := `package main
-import "agl1/regexp"
+import "agl/regexp"
 func main() {
 	data := "mul(1,2)"
 	rgxMul := regexp.MustCompile("mul\\((\\d+),(\\d+)\\)")
@@ -10515,8 +10515,8 @@ func main() {
 
 func TestCodeGen338(t *testing.T) {
 	src := `package main
-import "agl1/fmt"
-import "agl1/os"
+import "agl/fmt"
+import "agl/os"
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10597,7 +10597,7 @@ func main() {
 
 func TestCodeGen341(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func main() {
 	if let Ok(file) := os.ReadFile("") {
 	}
@@ -10657,7 +10657,7 @@ func main() {
 
 func TestCodeGen342(t *testing.T) {
 	src := `package main
-import "agl1/os"
+import "agl/os"
 func main() {
 	a := string(os.ReadFile()!)
 }`
@@ -11356,7 +11356,7 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func Rev[I agl1.DoubleEndedIterator[int]]() *agl1.Rev[int]", test.TypeAt(5, 24).String())
+	tassert.Equal(t, "func Rev[I agl.DoubleEndedIterator[int]]() *agl.Rev[int]", test.TypeAt(5, 24).String())
 	tassert.Equal(t, "func (Range[UntypedNumType]) AllSatisfy(func(UntypedNumType) bool) bool", test.TypeAt(7, 12).String())
 	testCodeGen2(t, expected, test)
 }
@@ -11572,9 +11572,9 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[int]u8) Values() agl1.Iterator[u8]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (agl1.Iterator[u8]) Sum() u8", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (agl1.Iterator[u8]) Sum() int", test.TypeAt(5, 13).String())
+	tassert.Equal(t, "func (map[int]u8) Values() agl.Iterator[u8]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl.Iterator[u8]) Sum() u8", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (agl.Iterator[u8]) Sum() int", test.TypeAt(5, 13).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -12185,9 +12185,9 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[int]int) Values() agl1.Iterator[int]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (agl1.Iterator[int]) Filter(func(int) bool) agl1.Iterator[int]", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (agl1.Iterator[int]) Count() int", test.TypeAt(4, 37).String())
+	tassert.Equal(t, "func (map[int]int) Values() agl.Iterator[int]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl.Iterator[int]) Filter(func(int) bool) agl.Iterator[int]", test.TypeAt(4, 13).String())
+	tassert.Equal(t, "func (agl.Iterator[int]) Count() int", test.TypeAt(4, 37).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -12206,8 +12206,8 @@ func main() {
 `
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
-	tassert.Equal(t, "func (map[string]int) Keys() agl1.Iterator[string]", test.TypeAt(4, 4).String())
-	tassert.Equal(t, "func (agl1.Iterator[string]) Joined(string) string", test.TypeAt(4, 11).String())
+	tassert.Equal(t, "func (map[string]int) Keys() agl.Iterator[string]", test.TypeAt(4, 4).String())
+	tassert.Equal(t, "func (agl.Iterator[string]) Joined(string) string", test.TypeAt(4, 11).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -14752,7 +14752,7 @@ func main() {
 	test.PrintErrors()
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "map[int]int", test.TypeAt(4, 13).String())
-	tassert.Equal(t, "func (map[int]int) Keys() agl1.Iterator[int]", test.TypeAt(4, 15).String())
+	tassert.Equal(t, "func (map[int]int) Keys() agl.Iterator[int]", test.TypeAt(4, 15).String())
 	testCodeGen2(t, expected, test)
 }
 
@@ -15357,7 +15357,7 @@ func main() {
 //func TestCodeGen318(t *testing.T) {
 //	src := "" +
 //		"package main\n" +
-//		"import \"agl1/regexp\"\n" +
+//		"import \"agl/regexp\"\n" +
 //		"func main() {\n" +
 //		"\tdata := \"mul(1,2)\"\n" +
 //		"\trgxMul := regexp.MustCompile(`mul\\((\\d+),(\\d+)\\)`)\n" +
@@ -15399,7 +15399,7 @@ func main() {
 
 //func TestCodeGen283(t *testing.T) {
 //	src := `package main
-//import "agl1/os"
+//import "agl/os"
 //func main() {
 //	if err := os.WriteFile("test.txt", []byte("test"), 0644); err != nil {
 //	}
@@ -15498,7 +15498,7 @@ func main() {
 
 //func TestCodeGen200(t *testing.T) {
 //	src := `package main
-//import "agl1/fmt"
+//import "agl/fmt"
 //type fakeFetcher map[string]*fakeResult
 //type fakeResult struct {
 //	body string
@@ -15558,8 +15558,8 @@ func main() {
 
 //func TestCodeGen154(t *testing.T) {
 //	src := `package main
-//import "agl1/fmt"
-//func (v agl1.Vec[T]) MyMap[R any](clb func(T) R) []R {
+//import "agl/fmt"
+//func (v agl.Vec[T]) MyMap[R any](clb func(T) R) []R {
 //	mut out := make([]R, len(v))
 //	for _, el := range v {
 //		out = append(out, clb(el))
@@ -15602,8 +15602,8 @@ func main() {
 func TestCodeGen_OsArgs(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/os"
+	"agl/fmt"
+	"agl/os"
 )
 func main() {
 	if len(os.Args) > 1 {
@@ -15638,8 +15638,8 @@ func main() {
 func TestCodeGen_OsArgsWithResult(t *testing.T) {
 	src := `package main
 import (
-	"agl1/os"
-	"agl1/fmt"
+	"agl/os"
+	"agl/fmt"
 )
 func getFirstArg() string! {
 	if len(os.Args) < 2 {
@@ -15676,9 +15676,9 @@ func main() {
 func TestCodeGen_WcExample(t *testing.T) {
 	src := `package main
 import (
-	"agl1/fmt"
-	"agl1/os"
-	"agl1/strings"
+	"agl/fmt"
+	"agl/os"
+	"agl/strings"
 )
 func countLines(filename string) int! {
 	data := os.ReadFile(filename)!
@@ -15829,6 +15829,6 @@ func (t AglTupleStruct_int_Option_int_) String() string {
 	test := NewTest(src, WithMutEnforced(true))
 	tassert.Equal(t, 0, len(test.errs))
 	test.PrintErrors()
-	tassert.Equal(t, "func (agl1.Iterator[(int, int?)]) FilterMap(func((int, int?)) int?) agl1.Iterator[int]", test.TypeAt(4, 25).String())
+	tassert.Equal(t, "func (agl.Iterator[(int, int?)]) FilterMap(func((int, int?)) int?) agl.Iterator[int]", test.TypeAt(4, 25).String())
 	testCodeGen2(t, expected, test)
 }

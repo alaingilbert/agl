@@ -1,6 +1,6 @@
 package main
 
-import "agl1/os"
+import "agl/os"
 
 func main() {
     data := string(os.ReadFile("examples/adventOfCode2024/day1/data.txt")!)

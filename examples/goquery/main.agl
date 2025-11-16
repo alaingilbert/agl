@@ -2,7 +2,7 @@ package main
 
 import (
     "github.com/PuerkitoBio/goquery"
-    "agl1/net/http"
+    "agl/net/http"
 )
 
 func main() {

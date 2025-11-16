@@ -1,0 +1,55 @@
+package http
+
+import "agl/net/url"
+import "agl/io"
+import "agl/bufio"
+
+type MethodGet string
+
+type Client struct {
+}
+
+type Response struct {
+	Body io.ReadCloser
+}
+
+type Request struct {
+}
+
+type Header map[string][]string
+func (Header) Set(key, value string) {}
+func (Header) Get(key string) string {}
+
+type ResponseWriter interface {
+	Header() Header
+	Write([]byte) int!
+	WriteHeader(statusCode int)
+}
+
+type Handler interface {
+	ServeHTTP(ResponseWriter, *Request)
+}
+
+type ServeMux struct {
+}
+
+func NewServeMux() *ServeMux {}
+
+func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request)) {}
+
+type Values map[string][]string
+
+func (c *Client) Do(req *Request) (*Response)! {}
+func (c *Client) Get(url string) (*Response)! {}
+func (c *Client) Post(url, contentType string, body io.Reader) (*Response)! {}
+func (c *Client) PostForm(url string, data Values) (*Response)! {}
+func (c *Client) Head(url string) (*Response)! {}
+
+func Get (url string) (*Response)! {}
+
+func ReadRequest(b *bufio.Reader) (*Request)! {}
+
+// agl:wrapped
+func NewRequest(method, url string, body (io.Reader)?) (*Request)! {}
+
+func ListenAndServe(addr string, handler Handler) !

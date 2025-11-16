@@ -3,7 +3,7 @@ package main
 import "math/rand"
 import "iter"
 
-func (v agl1.Vec[T]) Enumerated() [](int, T) {
+func (v agl.Vec[T]) Enumerated() [](int, T) {
 	mut out := make([](int, T), 0)
 	for i := range v {
 		out.Push((i, v[i]))
@@ -11,7 +11,7 @@ func (v agl1.Vec[T]) Enumerated() [](int, T) {
 	return out
 }
 
-func (v agl1.Vec[T]) CompactMap[R any](f func(T) R?) []R {
+func (v agl.Vec[T]) CompactMap[R any](f func(T) R?) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		if let Some(res) := f(el) {
@@ -21,7 +21,7 @@ func (v agl1.Vec[T]) CompactMap[R any](f func(T) R?) []R {
 	return out
 }
 
-func (v agl1.Vec[T]) FlatMap[R any](f func(T) []R) []R {
+func (v agl.Vec[T]) FlatMap[R any](f func(T) []R) []R {
 	mut out := make([]R, 0)
 	for _, el := range v {
 		subArr := f(el)
@@ -32,20 +32,20 @@ func (v agl1.Vec[T]) FlatMap[R any](f func(T) []R) []R {
 	return out
 }
 
-func (v agl1.Vec[T]) ForEach(f func(T) void) {
+func (v agl.Vec[T]) ForEach(f func(T) void) {
 	for i := range v {
 		f(v[i])
 	}
 }
 
-func (v agl1.Vec[T]) Last() T? {
+func (v agl.Vec[T]) Last() T? {
 	if len(v) > 0 {
 		return Some(v[len(v)-1])
 	}
 	return None
 }
 
-func (v agl1.Vec[T]) Get(i int) T? {
+func (v agl.Vec[T]) Get(i int) T? {
 	if i >= 0 && i <= len(v)-1 {
 		return Some(v[i])
 	}
@@ -53,15 +53,15 @@ func (v agl1.Vec[T]) Get(i int) T? {
 }
 
 // The number of elements in the array.
-func (v agl1.Vec[T]) Len() int {
+func (v agl.Vec[T]) Len() int {
 	return len(v)
 }
 
-func (v agl1.Vec[T]) IsEmpty() bool {
+func (v agl.Vec[T]) IsEmpty() bool {
 	return len(v) == 0
 }
 
-func (v agl1.Vec[T]) Min() T? {
+func (v agl.Vec[T]) Min() T? {
 	if len(v) == 0 {
 		return None
 	}
@@ -72,7 +72,7 @@ func (v agl1.Vec[T]) Min() T? {
 	return Some(out)
 }
 
-func (v agl1.Vec[T]) Max() T? {
+func (v agl.Vec[T]) Max() T? {
 	if len(v) == 0 {
 		return None
 	}
@@ -83,7 +83,7 @@ func (v agl1.Vec[T]) Max() T? {
 	return Some(out)
 }
 
-func (v agl1.Vec[T]) Reversed() []T {
+func (v agl.Vec[T]) Reversed() []T {
 	mut out := make([]T, len(v))
 	for i := 0; i < len(v); i++ {
 		out[i] = v[len(v)-1-i]
@@ -91,14 +91,14 @@ func (v agl1.Vec[T]) Reversed() []T {
 	return out
 }
 
-func (v agl1.Vec[T]) First() T? {
+func (v agl.Vec[T]) First() T? {
 	if len(v) > 0 {
 		return Some(v[0])
 	}
 	return None
 }
 
-func (v agl1.Vec[T]) First(where: predicate func(T) bool) T? {
+func (v agl.Vec[T]) First(where: predicate func(T) bool) T? {
 	if len(v) == 0 {
 		return None
 	}
@@ -110,7 +110,7 @@ func (v agl1.Vec[T]) First(where: predicate func(T) bool) T? {
 	return None
 }
 
-// func (s agl1.Sequence[T]) Enumerated() Sequence[(int, T)] {
+// func (s agl.Sequence[T]) Enumerated() Sequence[(int, T)] {
 // 	return func(yield func(T) bool) {
 // 	    for e := range s {
 //             if !yield((i, e)) {
@@ -120,7 +120,7 @@ func (v agl1.Vec[T]) First(where: predicate func(T) bool) T? {
 // 	}
 // }
 
-func (v agl1.Vec[T]) Shuffled() []T {
+func (v agl.Vec[T]) Shuffled() []T {
 	out := make([]T, len(v))
 	for i := 0; i < len(v); i++ {
 		out[i] = v[i]
@@ -131,7 +131,7 @@ func (v agl1.Vec[T]) Shuffled() []T {
 	return out
 }
 
-//func (s agl1.Set[T]) == (other agl1.Set) bool {
+//func (s agl.Set[T]) == (other agl.Set) bool {
 //	if s.Len() != other.Len() {
 //	    return false
 //	}

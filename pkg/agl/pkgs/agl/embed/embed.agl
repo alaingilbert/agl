@@ -1,0 +1,9 @@
+package embed
+
+import "agl/io/fs"
+
+type FS struct {}
+
+func (f FS) Open(name string) fs.File!
+func (f FS) ReadDir(name string) ([]fs.DirEntry)!
+func (f FS) ReadFile(name string) ([]byte)!

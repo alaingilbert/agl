@@ -1,6 +1,6 @@
 package main
 
-import "agl1/os"
+import "agl/os"
 
 func isSafe(report []int) bool {
     direction := report[0] < report[1]

@@ -1,0 +1,9 @@
+package rand
+
+import "agl/io"
+import "agl/math/big"
+
+func Int(rand io.Reader, max *big.Int) (*big.Int)!
+func Prime(rand io.Reader, bits int) (*big.Int)!
+func Read(b []byte) int!
+func Text() string

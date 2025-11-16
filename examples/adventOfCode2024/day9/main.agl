@@ -1,8 +1,8 @@
 package main
 
 import (
-    "agl1/os"
-    "agl1/math"
+    "agl/os"
+    "agl/math"
 )
 
 func genBlocks(diskMap string) []uint? {

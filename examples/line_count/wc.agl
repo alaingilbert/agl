@@ -1,6 +1,6 @@
 package main
 
-import "agl1/os"
+import "agl/os"
 
 // Returns the line count of a filename using a result type
 func countLines(filename string) int! {
