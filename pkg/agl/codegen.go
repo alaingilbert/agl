@@ -1317,10 +1317,10 @@ func (g *Generator) genTypeAssertExpr(expr *ast.TypeAssertExpr) GenFrag {
 	if expr.Type != nil {
 		c1 := g.genExpr(expr.X)
 		c2 := g.genExpr(expr.Type)
-		return GenFrag{F: func() string { return c1.F() + e(".(") + c2.F() + e(")") }}
+		return GenFrag{F: func() string { return c1.F() + e(".(") + c2.F() + e(")") }, B: mergeB(c1, c2)}
 	} else {
 		c1 := g.genExpr(expr.X)
-		return GenFrag{F: func() string { return c1.F() + e(".(type)") }}
+		return GenFrag{F: func() string { return c1.F() + e(".(type)") }, B: c1.B}
 	}
 }
 
@@ -1330,7 +1330,7 @@ func (g *Generator) genStarExpr(expr *ast.StarExpr) GenFrag {
 	g.withAsType(func() {
 		c1 = g.genExpr(expr.X)
 	})
-	return GenFrag{F: func() string { return e("*") + c1.F() }}
+	return GenFrag{F: func() string { return e("*") + c1.F() }, B: c1.B}
 }
 
 func (g *Generator) genMapType(expr *ast.MapType) GenFrag {
@@ -1343,20 +1343,20 @@ func (g *Generator) genMapType(expr *ast.MapType) GenFrag {
 func (g *Generator) genSomeExpr(expr *ast.SomeExpr) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.X)
-	return GenFrag{F: func() string { return e("MakeOptionSome(") + c1.F() + e(")") }}
+	return GenFrag{F: func() string { return e("MakeOptionSome(") + c1.F() + e(")") }, B: c1.B}
 }
 
 func (g *Generator) genOkExpr(expr *ast.OkExpr) GenFrag {
 	e := EmitWith(g, expr)
 	c1 := g.genExpr(expr.X)
-	return GenFrag{F: func() string { return e("MakeResultOk(") + c1.F() + e(")") }}
+	return GenFrag{F: func() string { return e("MakeResultOk(") + c1.F() + e(")") }, B: c1.B}
 }
 
 func (g *Generator) genErrExpr(expr *ast.ErrExpr) GenFrag {
 	e := EmitWith(g, expr)
 	t := g.env.GetType(expr).(types.ResultType).W.GoStrType()
 	c1 := g.genExpr(expr.X)
-	return GenFrag{F: func() string { return e("MakeResultErr["+t+"](") + c1.F() + e(")") }}
+	return GenFrag{F: func() string { return e("MakeResultErr["+t+"](") + c1.F() + e(")") }, B: c1.B}
 }
 
 func (g *Generator) genChanType(expr *ast.ChanType) GenFrag {
@@ -1462,7 +1462,7 @@ func (g *Generator) genUnaryExpr(expr *ast.UnaryExpr) GenFrag {
 			}
 		}
 		return e(expr.Op.String()) + c1.F()
-	}}
+	}, B: c1.B}
 }
 
 func (g *Generator) genSendStmt(expr *ast.SendStmt) GenFrag {
@@ -2222,7 +2222,7 @@ func (g *Generator) genIndexExpr(expr *ast.IndexExpr) GenFrag {
 	c2 := g.genExpr(expr.Index)
 	return GenFrag{F: func() string {
 		return c1.F() + e("[") + c2.F() + e("]")
-	}}
+	}, B: mergeB(c1, c2)}
 }
 
 func (g *Generator) genLabelledArg(expr *ast.LabelledArg) GenFrag {
@@ -2241,7 +2241,7 @@ func (g *Generator) genRangeExpr(expr *ast.RangeExpr) GenFrag {
 			out += e("AglNewRange["+rangeType.(types.RangeType).Typ.GoStrType()+"](") + start.F() + e(", ") + end.F() + e(")")
 		}
 		return
-	}}
+	}, B: mergeB(start, end)}
 }
 
 func (g *Generator) genDumpExpr(expr *ast.DumpExpr) GenFrag {
@@ -2278,7 +2278,7 @@ func (g *Generator) genSliceExpr(expr *ast.SliceExpr) GenFrag {
 		}
 		out += e("]")
 		return out
-	}}
+	}, B: c1.B}
 }
 
 func (g *Generator) genIndexListType(expr *ast.IndexListExpr) GenFrag {
@@ -2690,7 +2690,7 @@ afterUnwrap4:
 		case "Filter", "Take", "TakeWhile", "StepBy", "Skip", "SkipWhile", "Chain", "Nth", "AdvanceBy":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Map":
 			// Get the function type to extract return type parameters
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -2701,7 +2701,7 @@ afterUnwrap4:
 			}
 			return GenFrag{F: func() string {
 				return e("AglIteratorMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "FilterMap":
 			// Get the function type which should have R inferred
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -2724,46 +2724,46 @@ afterUnwrap4:
 			}
 			return GenFrag{F: func() string {
 				return e("AglIteratorFilterMap["+tType+", "+rType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Position", "RPosition":
 			// Position and RPosition need both T and I type parameters
 			//iterType := eXTT.GoStrType() // e.g., "Iterator[int]"
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
 				//return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "RFind", "NthBack", "AdvanceBackBy":
 			return GenFrag{F: func() string {
 				return e("AglDoubleEndedIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Any", "AllSatisfy":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Contains", "ForEach":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Peekable":
 			return GenFrag{F: func() string {
 				return e("AglIteratorPeekable["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Sorted":
 			return GenFrag{F: func() string {
 				return e("AglIteratorSorted["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Count":
 			return GenFrag{F: func() string {
 				return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Min":
 			return GenFrag{F: func() string {
 				return e("AglIteratorMin["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Max":
 			return GenFrag{F: func() string {
 				return e("AglIteratorMax["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Sum":
 			// Get the function type to extract the return type R
 			// This is set by type inference and handles both default (R=T) and explicit type args (Sum[R]())
@@ -2771,21 +2771,21 @@ afterUnwrap4:
 			retT := fnT.Return.GoStrType()
 			return GenFrag{F: func() string {
 				return e("AglIteratorSum["+tType+", "+retT+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Cycle":
 			return GenFrag{F: func() string {
 				return e("AglIteratorCycle["+tType+"](") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Joined":
 			return GenFrag{F: func() string {
 				return e("AglIterator"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		default:
 			// Fallback: call method directly (may not work for all interfaces)
 			argFrags := g.genExprs(expr.Args)
 			return GenFrag{F: func() string {
 				return genEX() + e("."+fnName+"(") + argFrags.F() + e(")")
-			}}
+			}, B: mergeB(c1, argFrags)}
 		}
 	case types.StructType:
 		c1 := g.genExpr(x.X)
@@ -2826,7 +2826,7 @@ afterUnwrap4:
 						out += e(")")
 					}
 					return
-				}}
+				}, B: c1.B}
 			case "Map":
 				// Get the function type to extract return type parameters
 				fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -2842,7 +2842,7 @@ afterUnwrap4:
 						result = e("AglIteratorPeekable["+rType+"](") + result + e(")")
 					}
 					return result
-				}}
+				}, B: c1.B}
 			case "FilterMap":
 				// Get the function type which should have R inferred
 				fnT := g.env.GetType(x.Sel).(types.FuncType)
@@ -2873,52 +2873,52 @@ afterUnwrap4:
 						out += e(")")
 					}
 					return
-				}}
+				}, B: c1.B}
 			case "Position", "RPosition":
 				// Position and RPosition need both T and I type parameters
 				iterType := eXTT.GoStrType() // e.g., "*IterVec[int]" or "*Peekable[int]"
 				return GenFrag{F: func() string {
 					return e("AglIterator"+fnName+"["+tType+", "+iterType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-				}}
+				}, B: c1.B}
 			case "Any", "AllSatisfy":
 				return GenFrag{F: func() string {
 					return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-				}}
+				}, B: c1.B}
 			case "Contains", "ForEach":
 				return GenFrag{F: func() string {
 					return e("AglIterator"+fnName+"["+tType+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-				}}
+				}, B: c1.B}
 			case "Peekable":
 				return GenFrag{F: func() string {
 					return e("AglIteratorPeekable["+tType+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Count":
 				return GenFrag{F: func() string {
 					return e("AglIteratorCount["+tType+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Min":
 				return GenFrag{F: func() string {
 					return e("AglIteratorMin["+tType+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Max":
 				return GenFrag{F: func() string {
 					return e("AglIteratorMax["+tType+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Sum":
 				// Get the function type to extract the return type R
 				fnT := g.env.GetType(x.Sel).(types.FuncType)
 				retT := fnT.Return.GoStrType()
 				return GenFrag{F: func() string {
 					return e("AglIteratorSum["+tType+", "+retT+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Cycle":
 				return GenFrag{F: func() string {
 					return e("AglIteratorCycle["+tType+"](") + genEX() + e(")")
-				}}
+				}, B: c1.B}
 			case "Joined":
 				return GenFrag{F: func() string {
 					return e("AglIterator"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
-				}}
+				}, B: c1.B}
 			}
 		}
 
@@ -2936,9 +2936,9 @@ afterUnwrap4:
 			}
 			recvT := recvTType.GoStrType()
 			retT := fnT.Return.GoStrType()
-			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }}
+			return GenFrag{F: func() string { return e("AglSequence"+fnName+"["+recvT+", "+retT+"](") + genEX() + e(")") }, B: c1.B}
 		case "Filter", "Joined", "TakeWhile":
-			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }, B: c1.B}
 		case "FilterMap":
 			fnT := g.env.GetType(x.Sel).(types.FuncType)
 			structType := fnT.Recv[0].(types.StructType)
@@ -2960,9 +2960,9 @@ afterUnwrap4:
 			retT := retTType.GoStrType()
 			return GenFrag{F: func() string {
 				return e("AglSequenceFilterMap["+recvT+", "+retT+"](") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Len", "Sorted", "Max", "Min":
-			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }}
+			return GenFrag{F: func() string { return e("AglSequence"+fnName+"(") + genEX() + e(")") }, B: c1.B}
 		}
 	case types.ArrayType:
 		c1 := g.genExpr(x.X)
@@ -3109,7 +3109,7 @@ afterUnwrap4:
 				}
 				out += c1.F() + e(", ") + content2() + e(".Iter())")
 				return
-			}}
+			}, B: c1.B}
 		case "Intersection", "FormIntersection", "SymmetricDifference", "IsSubset", "IsStrictSubset", "IsStrictSuperset":
 			// These methods accept AglSet[T] as second parameter, so do NOT call .Iter() on sets
 			arg0 := expr.Args[0]
@@ -3142,7 +3142,7 @@ afterUnwrap4:
 				}
 				out += c1.F() + e(", ") + content2() + e(")")
 				return
-			}}
+			}, B: c1.B}
 		case "Union", "Intersects", "Subtracting", "Subtract", "FormSymmetricDifference", "IsSuperset", "IsDisjoint",
 			"Filter", "ForEach", "Map":
 			// These methods accept Iterator[T] as second parameter, so call .Iter() on sets
@@ -3182,16 +3182,16 @@ afterUnwrap4:
 				}
 				out += c1.F() + e(", ") + content2() + e(")")
 				return
-			}}
+			}, B: c1.B}
 		case "Insert", "Remove", "Contains", "ContainsWhere", "Equals", "FirstWhere":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglSet"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "Len", "Min", "Max", "Iter", "RemoveFirst", "First", "IsEmpty":
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglSet"+fnName+"(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglSet"+fnName+"(") + c1.F() + e(")") }, B: c1.B}
 		}
 	case types.RangeType, types.RangeInclusiveType:
 		fnName := x.Sel.Name
@@ -3252,7 +3252,7 @@ afterUnwrap4:
 		if g.env.GetNameInfo("agl."+numericTypeName(eXTT)+"."+fnName) != nil {
 			goFn := map[string]string{"String": "AglNumString", "Sqrt": "AglSqrt", "Abs": "AglAbs"}[fnName]
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e(goFn+"(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e(goFn+"(") + c1.F() + e(")") }, B: c1.B}
 		}
 	case types.StringType, types.UntypedStringType:
 		fnName := x.Sel.Name
@@ -3264,74 +3264,74 @@ afterUnwrap4:
 			c4 := g.genExpr(expr.Args[2])
 			return GenFrag{F: func() string {
 				return e("AglString"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(", ") + c4.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2, c3, c4)}
 		case "ReplaceAll":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			c3 := g.genExpr(expr.Args[1])
 			return GenFrag{F: func() string {
 				return e("AglString"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2, c3)}
 		case "Split", "SplitAfter", "Cut", "CutPrefix", "CutSuffix", "TrimPrefix", "TrimSuffix", "HasPrefix", "HasSuffix",
 			"Contains", "ContainsAny", "Index", "LastIndex", "Count", "Repeat", "Trim", "TrimLeft", "TrimRight", "ZFill":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglString"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "TrimSpace", "IsEmpty", "Lowercased", "Uppercased", "AsBytes", "Lines", "Int", "I8", "I16", "I32", "I64", "Uint", "U8", "U16", "U32", "U64", "F32", "F64", "Len":
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }, B: c1.B}
 		default:
 			extName := "agl.String." + fnName
 			rawFnT := g.env.Get(extName)
 			concreteT := rawFnT
 			g.addExtension(extName, ExtensionTest{raw: rawFnT, concrete: concreteT})
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglString"+fnName+"(") + c1.F() + e(")") }, B: c1.B}
 		}
 	case types.MapType:
 		fnName := x.Sel.Name
 		switch fnName {
 		case "Len":
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglIdentity(AglMapLen(") + c1.F() + "))" }}
+			return GenFrag{F: func() string { return e("AglIdentity(AglMapLen(") + c1.F() + "))" }, B: c1.B}
 		case "IsEmpty":
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglIdentity(AglMapIsEmpty(") + c1.F() + "))" }}
+			return GenFrag{F: func() string { return e("AglIdentity(AglMapIsEmpty(") + c1.F() + "))" }, B: c1.B}
 		case "Get":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapIndex(") + c1.F() + e(", ") + c2.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "ContainsKey":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapContainsKey(") + c1.F() + e(", ") + c2.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "Remove":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapRemove(") + c1.F() + e(", ") + c2.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "Insert":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			c3 := g.genExpr(expr.Args[1])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapInsert(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2, c3)}
 		case "Drain":
 			c1 := g.genExpr(x.X)
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapDrain(") + c1.F() + e("))")
-			}}
+			}, B: c1.B}
 		case "Keys", "Values":
 			c1 := g.genExpr(x.X)
-			return GenFrag{F: func() string { return e("AglIdentity(AglMap"+fnName+"(") + c1.F() + e("))") }}
+			return GenFrag{F: func() string { return e("AglIdentity(AglMap"+fnName+"(") + c1.F() + e("))") }, B: c1.B}
 		case "Iter":
 			c1 := g.genExpr(x.X)
 			xT := g.env.GetType(x.X)
@@ -3340,33 +3340,33 @@ afterUnwrap4:
 				vType := mapT.V.GoStr()
 				return GenFrag{F: func() string {
 					return e("AglMap[") + e(kType) + e(", ") + e(vType) + e("](") + c1.F() + e(").Iter()")
-				}}
+				}, B: c1.B}
 			}
 		case "Filter":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapFilter(") + c1.F() + e(", ") + c2.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "Map":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglIdentity(AglMapMap(") + c1.F() + e(", ") + c2.F() + e("))")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "AllSatisfy":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			return GenFrag{F: func() string {
 				return e("AglMapAllSatisfy(") + c1.F() + e(", ") + c2.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2)}
 		case "Reduce", "ReduceInto":
 			c1 := g.genExpr(x.X)
 			c2 := g.genExpr(expr.Args[0])
 			c3 := g.genExpr(expr.Args[1])
 			return GenFrag{F: func() string {
 				return e("AglMap"+fnName+"(") + c1.F() + e(", ") + c2.F() + e(", ") + c3.F() + e(")")
-			}}
+			}, B: mergeB(c1, c2, c3)}
 		}
 	case types.OptionType:
 		c1 := g.genExpr(x.X)
@@ -3375,14 +3375,14 @@ afterUnwrap4:
 		fnName := x.Sel.Name
 		switch fnName {
 		case "Map":
-			return GenFrag{F: func() string { return e("AglOption"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }}
+			return GenFrag{F: func() string { return e("AglOption"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")") }, B: c1.B}
 		}
 	default:
 		c1 := g.genExprs(expr.Args)
 		if v, ok := x.X.(*ast.Ident); ok && v.Name == "agl" && x.Sel.Name == "NewSet" {
-			return GenFrag{F: func() string { return e("AglNewSet(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglNewSet(") + c1.F() + e(")") }, B: c1.B}
 		} else if v, ok := x.X.(*ast.Ident); ok && v.Name == "http" && x.Sel.Name == "NewRequest" {
-			return GenFrag{F: func() string { return e("AglHttpNewRequest(") + c1.F() + e(")") }}
+			return GenFrag{F: func() string { return e("AglHttpNewRequest(") + c1.F() + e(")") }, B: c1.B}
 		}
 	}
 	return GenFrag{}
@@ -4428,6 +4428,14 @@ func (g *Generator) genRangeStmt(stmt *ast.RangeStmt) GenFrag {
 		out += e(g.prefix + "}\n")
 		return out
 	}}
+}
+
+// mergeB returns the concatenated before-statements of the given fragments.
+func mergeB(frags ...GenFrag) (out []func() string) {
+	for _, f := range frags {
+		out = append(out, f.B...)
+	}
+	return
 }
 
 type GenFrag struct {

@@ -15947,3 +15947,27 @@ func main() {
 	tassert.Equal(t, "func ([]int) Description() string", test.TypeAt(4, 9).String())
 	testCodeGen2(t, expected, test)
 }
+
+func TestCodeGen501(t *testing.T) {
+	// Bubble-result receiver chained through String()/Lines()/indexing inside Ok():
+	// every wrapper must propagate the receiver's unwrapping statements.
+	src := `package main
+import "agl/os"
+func firstLine() string! {
+	return Ok(os.ReadFile("f")!.String().Lines()[0])
+}`
+	expected := `// agl:generated
+package main
+import "os"
+func firstLine() Result[string] {
+	aglTmpVar1, aglTmpErr1 := os.ReadFile("f")
+	if aglTmpErr1 != nil {
+		return MakeResultErr[string](aglTmpErr1)
+	}
+	return MakeResultOk(AglStringLines(AglVecString(AglIdentity(aglTmpVar1)))[0])
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}

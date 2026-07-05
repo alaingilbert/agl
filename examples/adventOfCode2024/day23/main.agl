@@ -31,7 +31,6 @@ func part1() {
 }
 
 func main() {
-    fileContent := os.ReadFile("examples/adventOfCode2024/day23/data.txt")!.String()
-    data = fileContent.Lines().Map({ $0.Split("-") })
+    data = os.ReadFile("examples/adventOfCode2024/day23/data.txt")!.String().Lines().Map({ $0.Split("-") })
     part1()
 }
