@@ -15926,3 +15926,24 @@ func AglVecLen_T_string(v []string) int {
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
+
+func TestCodeGen500(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2, 3}
+	s := a.Description()
+	_ = s
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	a := []int{1, 2, 3}
+	s := AglVecDescription(a)
+	_ = s
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "func ([]int) Description() string", test.TypeAt(4, 9).String())
+	testCodeGen2(t, expected, test)
+}

@@ -419,6 +419,7 @@ func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) 
 					lsp.CompletionItem{Label: "Clone", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Clone", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Contains", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "Description", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Enumerated", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Filter", Kind: lsp.CIKMethod, Detail: "Filter elements"},
 					lsp.CompletionItem{Label: "Find", Kind: lsp.CIKMethod, Detail: ""},

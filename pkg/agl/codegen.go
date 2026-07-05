@@ -2976,7 +2976,7 @@ afterUnwrap4:
 			return GenFrag{F: func() string {
 				return e("AglVecIter["+eltTStr+"](") + genEX() + e(")")
 			}, B: c1.B}
-		case "Sum", "Clone", "Indices", "Sorted", "String":
+		case "Sum", "Clone", "Indices", "Sorted", "String", "Description":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(")")
 			}, B: c1.B}

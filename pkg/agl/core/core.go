@@ -2290,6 +2290,10 @@ func AglVecString(a []byte) string {
 	return string(a)
 }
 
+func AglVecDescription[T any](a []T) string {
+	return fmt.Sprintf("%v", a)
+}
+
 func AglVecSum[T cmp.Ordered](a []T) (out T) {
 	var zero T
 	return AglVecReduce(a, zero, func(acc, el T) T { return acc + el })

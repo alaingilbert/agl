@@ -1054,6 +1054,7 @@ func (e *Env) loadPkgAgl(m *PkgVisited) {
 		e.DefineFn(nenv, "agl.Vec.Indices", "func [T any](a []T) []int")
 		e.DefineFn(nenv, "agl.Vec.Insert", "func [T any](mut a []T, idx int, el T)")
 		e.DefineFn(nenv, "agl.Vec.Iter", "func [T any](a []T) DoubleEndedExactSizeIterator[T]")
+		e.DefineFn(nenv, "agl.Vec.Description", "func [T any](a []T) string", WithDesc("A string representation of the array, same as fmt.Sprintf(\"%v\", a)."))
 		e.DefineFn(nenv, "agl.Vec.Joined", "func (a []string) string", WithDesc("Returns the elements of this sequence of sequences, concatenated."))
 		e.DefineFn(nenv, "agl.Vec.String", "func (a []byte) string", WithDesc("Returns a string created from the bytes."))
 		e.DefineFn(nenv, "agl.Vec.Map", "func [T, R any](a []T, f func(T) R) []R", WithDesc("Returns an array containing the results of mapping the given closure over the sequence’s elements."))
