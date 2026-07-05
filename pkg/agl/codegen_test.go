@@ -15866,3 +15866,63 @@ func test(a int, b int32, c uint8, d float64) {
 	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
+
+func TestCodeGen498(t *testing.T) {
+	src := `package main
+func main() {
+	b := []byte{104, 105}
+	s := b.String()
+	_ = s
+}`
+	expected := `// agl:generated
+package main
+func main() {
+	b := []byte{104, 105}
+	s := AglVecString(b)
+	_ = s
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen498_1(t *testing.T) {
+	src := `package main
+func main() {
+	a := []int{1, 2}
+	a.String()
+}`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.NotEmpty(t, test.errs)
+	tassert.Contains(t, test.errs[0].Error(), "type mismatch")
+}
+
+func TestCodeGen499(t *testing.T) {
+	// Method call on a bubble-result receiver: the receiver's unwrapping
+	// statements must be emitted before the enclosing statement.
+	src := `package main
+import "agl/os"
+func countLines(filename string) int! {
+	content := os.ReadFile(filename)!.String()
+	return Ok(content.Lines().Len() - 1)
+}`
+	expected := `// agl:generated
+package main
+import "os"
+func countLines(filename string) Result[int] {
+	aglTmpVar1, aglTmpErr1 := os.ReadFile(filename)
+	if aglTmpErr1 != nil {
+		return MakeResultErr[int](aglTmpErr1)
+	}
+	content := AglVecString(AglIdentity(aglTmpVar1))
+	return MakeResultOk(AglVecLen_T_string(AglStringLines(content)) - 1)
+}
+func AglVecLen_T_string(v []string) int {
+	return len(v)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
+	testCodeGen2(t, expected, test)
+}

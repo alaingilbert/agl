@@ -3019,32 +3019,32 @@ afterUnwrap4:
 		case "Iter":
 			return GenFrag{F: func() string {
 				return e("AglVecIter["+eltTStr+"](") + genEX() + e(")")
-			}}
-		case "Sum", "Clone", "Indices", "Sorted":
+			}, B: c1.B}
+		case "Sum", "Clone", "Indices", "Sorted", "String":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(")")
-			}}
+			}, B: c1.B}
 		case "Filter", "AllSatisfy", "Contains", "ContainsWhere", "Any", "Map", "FilterMap", "Find", "Joined",
 			"FirstIndex", "FirstIndexWhere", "__ADD", "SortedBy", "DropFirst", "DropLast":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Reduce", "ReduceInto":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"(") + genEX() + e(", ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
-			}}
+			}, B: c1.B}
 		case "Insert", "Swap", "With":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(", ") + genArgFn(1) + e(")")
-			}}
+			}, B: c1.B}
 		case "PopIf", "PushFront", "Remove":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e("), ") + genArgFn(0) + e(")")
-			}}
+			}, B: c1.B}
 		case "Pop", "PopFront", "Clear", "RemoveFirst":
 			return GenFrag{F: func() string {
 				return e("AglVec"+fnName+"((*[]"+eltTStr+")(&") + genEX() + e(")") + e(")")
-			}}
+			}, B: c1.B}
 		case "Push":
 			argFrags := g.genExprs(expr.Args)
 			paramsStr := argFrags.F
@@ -3114,16 +3114,19 @@ afterUnwrap4:
 				els = append(els, fmt.Sprintf("%s_%s", "T", r.Replace(recvTName)))
 			}
 			elsStr := strings.Join(els, "_")
-			c1 := g.genExprs(expr.Args)
+			argsFrag := g.genExprs(expr.Args)
+			var bs []func() string
+			bs = append(bs, c1.B...)
+			bs = append(bs, argsFrag.B...)
 			return GenFrag{F: func() string {
 				out := e("AglVec"+fnName+"_"+elsStr+"(") + genEX()
 				if len(expr.Args) > 0 {
 					out += e(", ")
 				}
-				out += c1.F()
+				out += argsFrag.F()
 				out += e(")")
 				return out
-			}}
+			}, B: bs}
 		}
 	case types.SetType:
 		fnName := x.Sel.Name

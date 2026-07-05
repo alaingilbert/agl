@@ -439,6 +439,7 @@ func (s *Server) getCompletions(doc *Document, node ast.Node, offset token.Pos) 
 					lsp.CompletionItem{Label: "PushFront", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Reduce", Kind: lsp.CIKMethod, Detail: "Reduce elements"},
 					lsp.CompletionItem{Label: "Remove", Kind: lsp.CIKMethod, Detail: ""},
+					lsp.CompletionItem{Label: "String", Kind: lsp.CIKMethod, Detail: ""},
 					lsp.CompletionItem{Label: "Sum", Kind: lsp.CIKMethod, Detail: ""},
 				)
 			case types.MapType:

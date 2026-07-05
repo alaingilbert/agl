@@ -2286,6 +2286,10 @@ func AglVecJoined(a []string, s string) string {
 	return strings.Join(a, s)
 }
 
+func AglVecString(a []byte) string {
+	return string(a)
+}
+
 func AglVecSum[T cmp.Ordered](a []T) (out T) {
 	var zero T
 	return AglVecReduce(a, zero, func(acc, el T) T { return acc + el })

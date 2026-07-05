@@ -4,7 +4,7 @@ import "agl/os"
 
 // Returns the line count of a filename using a result type
 func countLines(filename string) int! {
-    content := string(os.ReadFile(filename)!)
+    content := os.ReadFile(filename)!.String()
 
     // Count total lines (wc -l compatible)
     totalCount := content.Lines().Len() - 1
