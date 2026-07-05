@@ -442,6 +442,59 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 }
 
+func TestInferReduceNamedFunc(t *testing.T) {
+	src := `package main
+func add(acc, el int) int { acc + el }
+func main() {
+	a := []int{1, 2, 3}
+	b := a.Reduce(0, add)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "int", test.TypeAt(5, 2).String())
+}
+
+func TestInferReduceNamedFuncMismatch(t *testing.T) {
+	src := `package main
+func bad(acc string, el int) string { acc }
+func main() {
+	a := []int{1, 2, 3}
+	b := a.Reduce(0, bad)
+}
+`
+	test := NewTest(src)
+	tassert.NotEmpty(t, test.errs)
+	tassert.Contains(t, test.errs[0].Error(), "does not match inferred type")
+}
+
+func TestInferOptionMapNamedFunc(t *testing.T) {
+	src := `package main
+func double(v int) int { v * 2 }
+func maybe() int? { Some(1) }
+func main() {
+	a := maybe()
+	b := a.Map(double)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "int?", test.TypeAt(6, 2).String())
+}
+
+func TestInferSortedByNamedFunc(t *testing.T) {
+	src := `package main
+func desc(a, b int) bool { a > b }
+func main() {
+	arr := []int{3, 1, 2}
+	b := arr.Sorted(by: desc)
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "[]int", test.TypeAt(5, 2).String())
+}
+
 //func TestInfer1(t *testing.T) {
 //	src := `
 //fn fn1(a, b int) int { return a + b }

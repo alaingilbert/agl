@@ -2881,19 +2881,30 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 // A short function literal is assigned want directly; other forms must have a signature
 // compatible with want, otherwise an error is reported and false is returned.
 func (infer *FileInferrer) checkLambdaArg(arg ast.Expr, want types.FuncType, exprPos token.Position) bool {
-	if _, ok := arg.(*ast.ShortFuncLit); ok {
+	var ftReal types.FuncType
+	var found bool
+	switch v := arg.(type) {
+	case *ast.ShortFuncLit:
 		infer.SetType(arg, want)
-	} else if v, ok := arg.(*ast.FuncType); ok {
-		ftReal := funcTypeToFuncType("", v, infer.env, infer.fset, false)
-		if !compareFunctionSignatures(ftReal, want) {
-			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
-			return false
+		return true
+	case *ast.FuncType:
+		ftReal = funcTypeToFuncType("", v, infer.env, infer.fset, false)
+		found = true
+	case *ast.Ident:
+		// Resolve the declared type by name; the node itself may have been
+		// stamped with the expected type, which would make the check a no-op.
+		if info := infer.env.GetNameInfo(v.Name); info != nil {
+			ftReal, found = info.Type.(types.FuncType)
 		}
-	} else if ftReal, ok := infer.env.GetType(arg).(types.FuncType); ok {
-		if !compareFunctionSignatures(ftReal, want) {
-			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
-			return false
+		if !found {
+			ftReal, found = infer.env.GetType(arg).(types.FuncType)
 		}
+	default:
+		ftReal, found = infer.env.GetType(arg).(types.FuncType)
+	}
+	if found && !compareFunctionSignatures(ftReal, want) {
+		infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+		return false
 	}
 	return true
 }
@@ -2904,23 +2915,28 @@ func (infer *FileInferrer) checkLambdaArg(arg ast.Expr, want types.FuncType, exp
 // function type is inferred and onReturn is called with its return type before the
 // signature check.
 func (infer *FileInferrer) checkLambdaArgWithReturn(arg ast.Expr, want types.FuncType, exprPos token.Position, onReturn func(rT types.Type)) bool {
-	if v, ok := arg.(*ast.ShortFuncLit); ok {
+	switch v := arg.(type) {
+	case *ast.ShortFuncLit:
 		infer.expr(v)
 		onReturn(infer.GetTypeFn(v).Return)
-	} else if v, ok := arg.(*ast.FuncType); ok {
+	case *ast.FuncType:
 		ftReal := funcTypeToFuncType("", v, infer.env, infer.fset, false)
 		if !compareFunctionSignatures(ftReal, want) {
 			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
 			return false
 		}
-	} else if ftReal, ok := infer.env.GetType(arg).(types.FuncType); ok {
-		infer.expr(arg)
-		if tmp, ok := infer.env.GetType(arg).(types.FuncType); ok {
-			onReturn(tmp.Return)
-		}
-		if !compareFunctionSignatures(ftReal, want) {
-			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
-			return false
+	default:
+		if _, ok := infer.env.GetType(arg).(types.FuncType); ok {
+			infer.expr(arg)
+			// Re-read the type after inference: the node may have been stamped
+			// with the expected type before, but now holds its resolved type.
+			if ftReal, ok := infer.env.GetType(arg).(types.FuncType); ok {
+				onReturn(ftReal.Return)
+				if !compareFunctionSignatures(ftReal, want) {
+					infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+					return false
+				}
+			}
 		}
 	}
 	return true
@@ -3585,13 +3601,17 @@ func compareFunctionSignatures(sig1, sig2 types.FuncType) bool {
 			return false
 		}
 	}
-	// Compare type parameters if they exist
-	if len(sig1.TypeParams) != len(sig2.TypeParams) { // TODO
-		return false
-	}
-	for i := range sig1.TypeParams {
-		if !cmpTypes(sig1.TypeParams[i], sig2.TypeParams[i]) {
+	// Compare type parameters when both signatures have them; a concrete
+	// function may satisfy a generic signature (its types already matched
+	// the generic slots above).
+	if len(sig1.TypeParams) > 0 && len(sig2.TypeParams) > 0 {
+		if len(sig1.TypeParams) != len(sig2.TypeParams) {
 			return false
+		}
+		for i := range sig1.TypeParams {
+			if !cmpTypes(sig1.TypeParams[i], sig2.TypeParams[i]) {
+				return false
+			}
 		}
 	}
 	return true
