@@ -1764,9 +1764,31 @@ func (e *Env) getType2Helper(x ast.Node, fset *token.FileSet) types.Type {
 		info.Type = types.OptionType{W: xT} // TODO ensure xT is the right thing
 		return n
 	case *ast.BubbleOptionExpr:
-		return e.GetType2(xx.X, fset).(types.OptionType).W
+		xT := e.GetType2(xx.X, fset)
+		if v, ok := xT.(types.OptionType); ok {
+			return v.W
+		}
+		errMsg := fmt.Sprintf("expected Option type, got %v", xT)
+		if e.inferrer != nil {
+			e.inferrer.AddError(xx.X, errMsg)
+			return types.ErrorType{}
+		}
+		panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.X.Pos()), errMsg))
 	case *ast.BubbleResultExpr:
-		return e.GetType2(xx.X, fset).(types.ResultType).W
+		xT := e.GetType2(xx.X, fset)
+		if v, ok := xT.(types.ResultType); ok {
+			return v.W
+		}
+		errMsg := fmt.Sprintf("expected Result type, got %v", xT)
+		if tup, ok := xT.(types.TupleType); ok && len(tup.Elts) > 0 && tup.Elts[len(tup.Elts)-1].String() == "error" {
+			errMsg += "\n    '!' only works on Result values; native Go functions return (T, error) tuples." +
+				"\n    Use the \"agl/\" prefixed import (eg: \"agl/os\") to get Result-returning versions."
+		}
+		if e.inferrer != nil {
+			e.inferrer.AddError(xx.X, errMsg)
+			return types.ErrorType{}
+		}
+		panic(fmt.Sprintf("%s: %s", e.fset.Position(xx.X.Pos()), errMsg))
 	case *ast.SliceExpr:
 		return e.GetType2(xx.X, fset) // TODO
 	case *ast.IndexListExpr:

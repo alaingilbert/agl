@@ -585,3 +585,30 @@ func main() {
 	tassert.Equal(t, 0, len(test.errs))
 	tassert.Equal(t, "int", test.TypeAt(4, 2).String())
 }
+
+func TestInferBubbleResultOnNativeTuple(t *testing.T) {
+	// Using '!' on a native Go function returning (T, error) must produce a
+	// helpful error, not a panic, in both statement and receiver positions.
+	src := `package main
+import "os"
+func main() {
+	data := os.ReadFile("f")!
+	_ = data
+}
+`
+	test := NewTest(src)
+	tassert.NotEmpty(t, test.errs)
+	tassert.Contains(t, test.errs[0].Error(), "expected Result type, got ([]byte, error)")
+	tassert.Contains(t, test.errs[0].Error(), `Use the "agl/" prefixed import`)
+
+	src2 := `package main
+import "os"
+func main() {
+	s := os.ReadFile("f")!.String()
+	_ = s
+}
+`
+	test2 := NewTest(src2)
+	tassert.NotEmpty(t, test2.errs)
+	tassert.Contains(t, test2.errs[0].Error(), "expected Result type, got ([]byte, error)")
+}

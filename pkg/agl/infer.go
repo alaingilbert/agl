@@ -3671,7 +3671,12 @@ func (infer *FileInferrer) bubbleResultExpr(expr *ast.BubbleResultExpr) {
 	if v, ok := exprXT.(types.ResultType); ok {
 		infer.SetType(expr, v.W)
 	} else {
-		infer.errorf(expr, "expected Result type, got %v", exprXT)
+		errMsg := fmt.Sprintf("expected Result type, got %v", exprXT)
+		if tup, ok := exprXT.(types.TupleType); ok && len(tup.Elts) > 0 && tup.Elts[len(tup.Elts)-1].String() == "error" {
+			errMsg += "\n    '!' only works on Result values; native Go functions return (T, error) tuples." +
+				"\n    Use the \"agl/\" prefixed import (eg: \"agl/os\") to get Result-returning versions."
+		}
+		infer.errorf(expr, "%s", errMsg)
 		return
 	}
 }
