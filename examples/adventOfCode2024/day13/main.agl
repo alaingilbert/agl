@@ -14,8 +14,8 @@ func nums(s string) []int {
 func part1() {
     mut res := 0
     blocks_loop: for block in blocks {
-        x1, y1, x2, y2, x3, y3 := block
-        mut a, mut b := (0, 0)
+        (x1, y1, x2, y2, x3, y3) := block
+        (mut a, mut b) := (0, 0)
         for {
             a += 1
             b = (x3 - (a * x1)) / x2
@@ -34,7 +34,7 @@ func part2() {
     m := 10_000_000_000_000
     mut res := 0
     for block in blocks {
-        x1, y1, x2, y2, mut x3, mut y3 := block
+        (x1, y1, x2, y2, mut x3, mut y3) := block
         x3 += m
         y3 += m
         a := (y3*x2 - x3*y2) / (y1*x2 - x1*y2)

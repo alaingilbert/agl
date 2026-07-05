@@ -237,6 +237,11 @@ func (infer *FileInferrer) SetType(a ast.Node, t types.Type, opts ...SetTypeOpti
 	if tt := infer.env.GetType(a); tt != nil {
 		if !cmpTypesLoose(tt, t) {
 			if !TryCast[types.UntypedNumType](tt) && !TryCast[types.UntypedStringType](t) && !TryCast[types.TypeAssertType](tt) {
+				if len(infer.Errors) > 0 {
+					// Inference already failed; inconsistent re-stamps are cascades of the
+					// reported error, don't panic so the real error can be shown.
+					return
+				}
 				panic(fmt.Sprintf("type already declared for pos:%s key:%s a:%v toa:%v aT:%v t:%v", infer.Pos(a), infer.env.makeKey(a), a, to(a), infer.env.GetType(a), t))
 			}
 		}
