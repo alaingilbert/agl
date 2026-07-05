@@ -1566,6 +1566,60 @@ func EmitWith(g *Generator, n ast.Node) EmitterFunc {
 	return func(s string) string { return g.Emit(s, WithNode(n)) }
 }
 
+// genEnumMatchClauses emits the if/else-if chain for the clauses of a match over an
+// enum value. firstIfPrefix is emitted before the first clause's "if"; genBody emits a
+// clause's body. A missing default clause gets an else branch panicking about
+// exhaustiveness.
+func (g *Generator) genEnumMatchClauses(e EmitterFunc, expr *ast.MatchExpr, enumT types.EnumType, firstIfPrefix string, genBody func(body []ast.Stmt) string) (out string) {
+	gPrefix := g.prefix
+	var hasDefault bool
+	for i, cc := range expr.Body.List {
+		c := cc.(*ast.MatchClause)
+		if i > 0 {
+			out += e(gPrefix + "} else ")
+		}
+		if c.Expr != nil {
+			prefix := ""
+			if i == 0 {
+				prefix = firstIfPrefix
+			}
+			switch cv := c.Expr.(type) {
+			case *ast.CallExpr:
+				sel := cv.Fun.(*ast.SelectorExpr)
+				out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+enumT.Name+"_"+sel.Sel.Name+" {\n")
+				for j, id := range cv.Args {
+					rhs := func() string { return g.genExpr(expr.Init).F() + e("."+enumT.Fields[i].Name+"_"+strconv.Itoa(j)) }
+					if id.(*ast.Ident).Name == "_" {
+						out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
+					} else {
+						out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
+						if g.allowUnused {
+							out += e(gPrefix+"\tAglNoop(") + g.genExpr(id).F() + e(")\n")
+						}
+					}
+				}
+				out += genBody(c.Body)
+			case *ast.SelectorExpr:
+				out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+enumT.Name+"_"+cv.Sel.Name+" {\n")
+				out += genBody(c.Body)
+			default:
+				panic(fmt.Sprintf("%v", to(c.Expr)))
+			}
+		} else {
+			hasDefault = true
+			out += e("{\n")
+			out += genBody(c.Body)
+			out += e(gPrefix + "}")
+		}
+	}
+	if !hasDefault {
+		out += e(gPrefix + "} else {\n")
+		out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
+		out += e(gPrefix + "}")
+	}
+	return out
+}
+
 func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 	e := EmitWith(g, expr)
 	content1 := g.genExpr(expr.Init)
@@ -1585,77 +1639,17 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 					var out string
 					gPrefix := g.prefix
 					out += e(gPrefix + "var " + matchReturnsTmp + " " + matchT.GoStrType() + "\n")
-
-					var hasDefault bool
-					for i, cc := range expr.Body.List {
-						c := cc.(*ast.MatchClause)
-						if i > 0 {
-							out += e(gPrefix + "} else ")
+					// A clause body ending in an expression assigns it to the result variable
+					genBody := func(body []ast.Stmt) string {
+						if len(body) == 0 {
+							return ""
 						}
-						if c.Expr != nil {
-							switch cv := c.Expr.(type) {
-							case *ast.CallExpr:
-								sel := cv.Fun.(*ast.SelectorExpr)
-								prefix := ""
-								if i == 0 {
-									prefix = gPrefix
-								}
-								out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
-								for j, id := range cv.Args {
-									rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
-									if id.(*ast.Ident).Name == "_" {
-										out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
-									} else {
-										out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
-										if g.allowUnused {
-											out += e(gPrefix+"\tAglNoop(") + g.genExpr(id).F() + e(")\n")
-										}
-									}
-								}
-								if len(c.Body) > 0 {
-									lastStmt := c.Body[len(c.Body)-1]
-									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-									} else {
-										out += g.incrPrefix(g.genStmts(c.Body).F)
-									}
-								}
-							case *ast.SelectorExpr:
-								prefix := ""
-								if i == 0 {
-									prefix = gPrefix
-								}
-								out += e(prefix+"if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-								if len(c.Body) > 0 {
-									lastStmt := c.Body[len(c.Body)-1]
-									if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-										out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-									} else {
-										out += g.incrPrefix(g.genStmts(c.Body).F)
-									}
-								}
-							default:
-								panic(fmt.Sprintf("%v", to(c.Expr)))
-							}
-						} else {
-							hasDefault = true
-							out += e("{\n")
-							if len(c.Body) > 0 {
-								lastStmt := c.Body[len(c.Body)-1]
-								if exprStmt, ok := lastStmt.(*ast.ExprStmt); ok {
-									out += e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
-								} else {
-									out += g.incrPrefix(g.genStmts(c.Body).F)
-								}
-							}
-							out += e(gPrefix + "}")
+						if exprStmt, ok := body[len(body)-1].(*ast.ExprStmt); ok {
+							return e(gPrefix+"\t"+matchReturnsTmp+" = ") + g.genExpr(exprStmt.X).F() + e("\n")
 						}
+						return g.incrPrefix(g.genStmts(body).F)
 					}
-					if !hasDefault {
-						out += e(gPrefix + "} else {\n")
-						out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
-						out += e(gPrefix + "}")
-					}
+					out += g.genEnumMatchClauses(e, expr, v, gPrefix, genBody)
 					out += e("\n")
 					return out
 				})
@@ -1741,47 +1735,9 @@ func (g *Generator) genMatchExpr(expr *ast.MatchExpr) GenFrag {
 		case types.EnumType:
 			// Non-value-returning enum match
 			if expr.Body != nil {
-				var hasDefault bool
-				for i, cc := range expr.Body.List {
-					c := cc.(*ast.MatchClause)
-					if i > 0 {
-						out += e(gPrefix + "} else ")
-					}
-					if c.Expr != nil {
-						switch cv := c.Expr.(type) {
-						case *ast.CallExpr:
-							sel := cv.Fun.(*ast.SelectorExpr)
-							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+sel.Sel.Name+" {\n")
-							for j, id := range cv.Args {
-								rhs := func() string { return g.genExpr(expr.Init).F() + e("."+v.Fields[i].Name+"_"+strconv.Itoa(j)) }
-								if id.(*ast.Ident).Name == "_" {
-									out += e(gPrefix+"\t_ = ") + rhs() + e("\n")
-								} else {
-									out += e(gPrefix+"\t") + g.genExpr(id).F() + e(" := ") + rhs() + e("\n")
-									if g.allowUnused {
-										out += e(gPrefix+"\tAglNoop(") + g.genExpr(id).F() + e(")\n")
-									}
-								}
-							}
-							out += g.incrPrefix(g.genStmts(c.Body).F)
-						case *ast.SelectorExpr:
-							out += e("if ") + g.genExpr(expr.Init).F() + e(".Tag == "+v.Name+"_"+cv.Sel.Name+" {\n")
-							out += g.incrPrefix(g.genStmts(c.Body).F)
-						default:
-							panic(fmt.Sprintf("%v", to(c.Expr)))
-						}
-					} else {
-						hasDefault = true
-						out += e("{\n")
-						out += g.incrPrefix(g.genStmts(c.Body).F)
-						out += e(gPrefix + "}")
-					}
-				}
-				if !hasDefault {
-					out += e(gPrefix + "} else {\n")
-					out += e(gPrefix + "\tpanic(\"match on enum should be exhaustive\")\n")
-					out += e(gPrefix + "}")
-				}
+				out += g.genEnumMatchClauses(e, expr, v, "", func(body []ast.Stmt) string {
+					return g.incrPrefix(g.genStmts(body).F)
+				})
 			}
 		default:
 			panic(fmt.Sprintf("%v", to(initT)))
@@ -4919,6 +4875,57 @@ func (g *Generator) wrapIfNative(e Emitter, x ast.Expr, v func() string) string 
 	return v()
 }
 
+// genEnumPatternArgs emits the bindings extracting each destructured enum argument of
+// an if/guard-let enum pattern (eg: x := aglTmp1.SomeProp_0).
+func (g *Generator) genEnumPatternArgs(e EmitterFunc, args []ast.Expr, prefix, varName, fieldName string) (out string) {
+	for j, arg := range args {
+		if argIdent, ok := arg.(*ast.Ident); ok {
+			if argIdent.Name == "_" {
+				out += e(prefix + "_ = " + varName + "." + fieldName + "_" + strconv.Itoa(j) + "\n")
+			} else {
+				out += e(prefix) + g.genExpr(arg).F() + e(" := "+varName+"."+fieldName+"_"+strconv.Itoa(j)+"\n")
+				if g.allowUnused {
+					out += e(prefix+"AglNoop(") + g.genExpr(arg).F() + e(")\n")
+				}
+			}
+		}
+	}
+	return out
+}
+
+// genTupleDestructure emits the tuple destructuring statements for a multi-value
+// if/guard-let (eg: aglVar1 := aglTmp1.Unwrap(); a, b := aglVar1.Arg0, aglVar1.Arg1).
+func (g *Generator) genTupleDestructure(e EmitterFunc, lhss []ast.Expr, prefix, varName, unwrapFn string) (out string) {
+	// Generate tuple destructuring: aglVar1 := tmp.Unwrap()
+	tupleVarName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
+	out += e(prefix + tupleVarName + " := " + varName + "." + unwrapFn + "()\n")
+
+	// Generate LHS names - directly get identifier names
+	var lhsNames []string
+	for _, lhsExpr := range lhss {
+		if ident, ok := lhsExpr.(*ast.Ident); ok {
+			lhsNames = append(lhsNames, ident.Name)
+		} else {
+			// Fallback to generating the expression
+			lhsNames = append(lhsNames, g.genExpr(lhsExpr).F())
+		}
+	}
+
+	// Generate individual assignments: a, b := aglVar1.Arg0, aglVar1.Arg1
+	var rhsParts []string
+	for i := range lhss {
+		rhsParts = append(rhsParts, tupleVarName+".Arg"+strconv.Itoa(i))
+	}
+	out += e(prefix + strings.Join(lhsNames, ", ") + " := " + strings.Join(rhsParts, ", ") + "\n")
+
+	if g.allowUnused {
+		for _, name := range lhsNames {
+			out += e(prefix + "AglNoop(" + name + ")\n")
+		}
+	}
+	return out
+}
+
 func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 	e := EmitWith(g, stmt)
 	ass := stmt.Ass
@@ -4987,18 +4994,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 						out += e(gPrefix + "if " + varName + ".Tag == " + enumType.Name + "_" + fieldName + " {\n")
 
 						// Extract the values from the enum
-						for j, arg := range callExpr.Args {
-							if argIdent, ok := arg.(*ast.Ident); ok {
-								if argIdent.Name == "_" {
-									out += e(gPrefix + "\t_ = " + varName + "." + fieldName + "_" + strconv.Itoa(j) + "\n")
-								} else {
-									out += e(gPrefix+"\t") + g.genExpr(arg).F() + e(" := "+varName+"."+fieldName+"_"+strconv.Itoa(j)+"\n")
-									if g.allowUnused {
-										out += e(gPrefix+"\tAglNoop(") + g.genExpr(arg).F() + e(")\n")
-									}
-								}
-							}
-						}
+						out += g.genEnumPatternArgs(e, callExpr.Args, gPrefix+"\t", varName, fieldName)
 
 						g.inlineStmt = false
 						out += g.incrPrefix(c3.F)
@@ -5020,33 +5016,7 @@ func (g *Generator) genIfLetStmt(stmt *ast.IfLetExpr) GenFrag {
 
 			// Handle tuple destructuring for multiple LHS values
 			if len(ass.Lhs) > 1 {
-				// Generate tuple destructuring: aglVar1 := tmp.Unwrap()
-				tupleVarName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
-				out += e(gPrefix + "\t" + tupleVarName + " := " + varName + "." + unwrapFn + "()\n")
-
-				// Generate LHS names - directly get identifier names
-				var lhsNames []string
-				for _, lhsExpr := range ass.Lhs {
-					if ident, ok := lhsExpr.(*ast.Ident); ok {
-						lhsNames = append(lhsNames, ident.Name)
-					} else {
-						// Fallback to generating the expression
-						lhsNames = append(lhsNames, g.genExpr(lhsExpr).F())
-					}
-				}
-
-				// Generate individual assignments: a, b := aglVar1.Arg0, aglVar1.Arg1
-				var rhsParts []string
-				for i := range ass.Lhs {
-					rhsParts = append(rhsParts, tupleVarName+".Arg"+strconv.Itoa(i))
-				}
-				out += e(gPrefix + "\t" + strings.Join(lhsNames, ", ") + " := " + strings.Join(rhsParts, ", ") + "\n")
-
-				if g.allowUnused {
-					for _, name := range lhsNames {
-						out += e(gPrefix + "\tAglNoop(" + name + ")\n")
-					}
-				}
+				out += g.genTupleDestructure(e, ass.Lhs, gPrefix+"\t", varName, unwrapFn)
 			} else {
 				out += e(gPrefix+"\t") + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
 				if g.allowUnused {
@@ -5096,14 +5066,6 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 					}
 					if enumType, ok := rhsType.(types.EnumType); ok {
 						fieldName := selExpr.Sel.Name
-						// Find field index
-						var fieldIdx int
-						for i, f := range enumType.Fields {
-							if f.Name == fieldName {
-								fieldIdx = i
-								break
-							}
-						}
 
 						out += e(gPrefix+varName+" := ") + rhs() + e("\n")
 						out += e(gPrefix + "if " + varName + ".Tag != " + enumType.Name + "_" + fieldName + " {\n")
@@ -5111,23 +5073,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 						out += e(gPrefix + "}\n")
 
 						// Extract the values from the enum
-						for j, arg := range callExpr.Args {
-							if argIdent, ok := arg.(*ast.Ident); ok {
-								if argIdent.Name == "_" {
-									out += e(gPrefix + "_ = " + varName + "." + enumType.Fields[fieldIdx].Name + "_" + strconv.Itoa(j) + "\n")
-								} else {
-									out += e(gPrefix) + g.genExpr(arg).F() + e(" := "+varName+"."+enumType.Fields[fieldIdx].Name+"_"+strconv.Itoa(j)+"\n")
-								}
-							}
-						}
-
-						if g.allowUnused {
-							for _, arg := range callExpr.Args {
-								if argIdent, ok := arg.(*ast.Ident); ok && argIdent.Name != "_" {
-									out += e(gPrefix+"AglNoop(") + g.genExpr(arg).F() + e(")\n")
-								}
-							}
-						}
+						out += g.genEnumPatternArgs(e, callExpr.Args, gPrefix, varName, fieldName)
 						return out
 					}
 				}
@@ -5150,33 +5096,7 @@ func (g *Generator) genGuardLetStmt(stmt *ast.GuardLetStmt) GenFrag {
 
 			// Handle tuple destructuring for multiple LHS values
 			if len(ass.Lhs) > 1 {
-				// Generate tuple destructuring: aglVar1 := tmp.Unwrap()
-				tupleVarName := fmt.Sprintf("aglVar%d", g.varCounter.Add(1))
-				out += e(gPrefix + tupleVarName + " := " + varName + "." + unwrapFn + "()\n")
-
-				// Generate LHS names - directly get identifier names
-				var lhsNames []string
-				for _, lhsExpr := range ass.Lhs {
-					if ident, ok := lhsExpr.(*ast.Ident); ok {
-						lhsNames = append(lhsNames, ident.Name)
-					} else {
-						// Fallback to generating the expression
-						lhsNames = append(lhsNames, g.genExpr(lhsExpr).F())
-					}
-				}
-
-				// Generate individual assignments: a, b := aglVar1.Arg0, aglVar1.Arg1
-				var rhsParts []string
-				for i := range ass.Lhs {
-					rhsParts = append(rhsParts, tupleVarName+".Arg"+strconv.Itoa(i))
-				}
-				out += e(gPrefix + strings.Join(lhsNames, ", ") + " := " + strings.Join(rhsParts, ", ") + "\n")
-
-				if g.allowUnused {
-					for _, name := range lhsNames {
-						out += e(gPrefix + "AglNoop(" + name + ")\n")
-					}
-				}
+				out += g.genTupleDestructure(e, ass.Lhs, gPrefix, varName, unwrapFn)
 			} else {
 				out += e(gPrefix) + lhs() + e(" := "+varName+"."+unwrapFn+"()\n")
 				if g.allowUnused {

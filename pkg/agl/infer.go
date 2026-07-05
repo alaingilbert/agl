@@ -5455,6 +5455,120 @@ func (infer *FileInferrer) labeledStmt(stmt *ast.LabeledStmt) {
 	infer.SetType(stmt, types.VoidType{})
 }
 
+// inferEnumPatternDestructure handles enum pattern matching in if/guard-let statements
+// (eg: if let MyEnum.SomeProp(x, y) := someEnumValue). It infers rhs and defines a
+// variable for each destructured enum argument. matched is false when lhs/rhs is not an
+// enum pattern; ok is false when an error was reported.
+func (infer *FileInferrer) inferEnumPatternDestructure(lhs, rhs ast.Expr) (matched, ok bool) {
+	callExpr, k := lhs.(*ast.CallExpr)
+	if !k {
+		return false, false
+	}
+	selExpr, k := callExpr.Fun.(*ast.SelectorExpr)
+	if !k {
+		return false, false
+	}
+	// Get the type of the RHS (the enum value)
+	infer.expr(rhs)
+	rhsType := types.Unwrap(infer.GetType(rhs))
+	enumType, k := rhsType.(types.EnumType)
+	if !k {
+		return false, false
+	}
+	// Find the matching enum field
+	fieldName := selExpr.Sel.Name
+	field := Find(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
+	if field == nil {
+		infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
+		return true, false
+	}
+	// Check argument count matches
+	if len(callExpr.Args) != len(field.Elts) {
+		infer.errorf(lhs, "invalid number of arguments, has: %d, expect: %d", len(callExpr.Args), len(field.Elts))
+		return true, false
+	}
+	// Define each destructured variable with its type
+	for i, elt := range field.Elts {
+		arg := callExpr.Args[i]
+		argIdent, k := arg.(*ast.Ident)
+		if !k {
+			infer.errorf(arg, "invalid variable name for argument #%d", i+1)
+			return true, false
+		}
+		t := elt
+		if argIdent.Mutable.IsValid() {
+			t = types.MutType{W: t}
+		}
+		infer.env.Define(arg, argIdent.Name, t)
+		infer.SetType(arg, t)
+	}
+	return true, true
+}
+
+// inferOptionTupleDestructure handles tuple destructuring for multiple LHS values in
+// if/guard-let statements. kind is used in error messages (eg: "if let", "guard let").
+func (infer *FileInferrer) inferOptionTupleDestructure(ass *ast.AssignStmt, kind string) bool {
+	// First, infer the RHS to get the Option[Tuple] type
+	rhs := ass.Rhs[0]
+	infer.expr(rhs)
+	rhsType := infer.GetType(rhs)
+	// Unwrap the Option to get the Tuple type
+	optType, ok := rhsType.(types.OptionType)
+	if !ok {
+		infer.errorf(rhs, "expected Option type for %s Some with tuple destructuring", kind)
+		return false
+	}
+	tupleType := optType.W
+	// The tuple should have the same number of elements as LHS
+	tupleT, ok := tupleType.(types.TupleType)
+	if !ok {
+		infer.errorf(rhs, "expected tuple type for multi-variable destructuring, got %T", tupleType)
+		return false
+	}
+	if len(tupleT.Elts) != len(ass.Lhs) {
+		infer.errorf(ass.Lhs[0], "tuple destructuring count mismatch: %d variables for %d tuple elements",
+			len(ass.Lhs), len(tupleT.Elts))
+		return false
+	}
+	// Define each variable with its corresponding tuple element type
+	for i, lhsExpr := range ass.Lhs {
+		if ident, ok := lhsExpr.(*ast.Ident); ok {
+			t := tupleT.Elts[i]
+			if ident.Mutable.IsValid() {
+				t = types.MutType{W: t}
+			}
+			infer.env.Define(lhsExpr, ident.Name, t)
+			infer.SetType(lhsExpr, t)
+		} else {
+			infer.errorf(lhsExpr, "expected identifier in tuple destructuring")
+		}
+	}
+	return true
+}
+
+// validateGuardBody checks that a guard body is non-empty, infers it, and ensures it
+// ends with a return/break/continue statement.
+func (infer *FileInferrer) validateGuardBody(body *ast.BlockStmt) bool {
+	if body == nil || len(body.List) == 0 {
+		infer.errorf(body, "guard body must have at least 1 statement")
+		return false
+	}
+	infer.stmt(body)
+	lastStmt := body.List[len(body.List)-1]
+	switch v := lastStmt.(type) {
+	case *ast.ReturnStmt:
+	case *ast.BranchStmt:
+		if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
+			infer.errorf(v, "guard must return/break/continue")
+			return false
+		}
+	default:
+		infer.errorf(v, "guard must return/break/continue")
+		return false
+	}
+	return true
+}
+
 func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 	infer.withEnv(func() {
 		lhs := stmt.Ass.Lhs[0]
@@ -5470,96 +5584,21 @@ func (infer *FileInferrer) ifLetExpr(stmt *ast.IfLetExpr) {
 			lhsT = types.OptionType{}
 		default:
 			// Handle enum pattern matching: if let MyEnum.SomeProp(x, y) := someEnumValue
-			if callExpr, ok := lhs.(*ast.CallExpr); ok {
-				if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
-					// Get the type of the RHS (the enum value)
-					rhs := stmt.Ass.Rhs[0]
-					infer.expr(rhs)
-					rhsType := infer.GetType(rhs)
-					// Unwrap MutType if present
-					rhsType = types.Unwrap(rhsType)
-
-					if enumType, ok := rhsType.(types.EnumType); ok {
-						// Find the matching enum field
-						fieldName := selExpr.Sel.Name
-						field := Find(enumType.Fields, func(f types.EnumFieldType) bool { return f.Name == fieldName })
-
-						if field == nil {
-							infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
-							return
-						}
-
-						// Check argument count matches
-						if len(callExpr.Args) != len(field.Elts) {
-							infer.errorf(lhs, "invalid number of arguments, has: %d, expect: %d", len(callExpr.Args), len(field.Elts))
-							return
-						}
-
-						// Define each destructured variable with its type
-						for i, elt := range field.Elts {
-							arg := callExpr.Args[i]
-							if argIdent, ok := arg.(*ast.Ident); ok {
-								t := elt
-								if argIdent.Mutable.IsValid() {
-									t = types.MutType{W: t}
-								}
-								infer.env.Define(arg, argIdent.Name, t)
-								infer.SetType(arg, t)
-							} else {
-								infer.errorf(arg, "invalid variable name for argument #%d", i+1)
-								return
-							}
-						}
-
-						// Don't need to process the assignment further for enum patterns
-						if stmt.Body != nil {
-							infer.stmt(stmt.Body)
-						}
-						return
-					}
+			if matched, ok := infer.inferEnumPatternDestructure(lhs, stmt.Ass.Rhs[0]); matched {
+				if !ok {
+					return
 				}
+				// Don't need to process the assignment further for enum patterns
+				if stmt.Body != nil {
+					infer.stmt(stmt.Body)
+				}
+				return
 			}
 		}
 
 		// Handle tuple destructuring for multiple LHS values (but not for type assertions)
 		if len(stmt.Ass.Lhs) > 1 && !TryCast[*ast.TypeAssertExpr](stmt.Ass.Rhs[0]) {
-			// First, infer the RHS to get the Option[Tuple] type
-			rhs := stmt.Ass.Rhs[0]
-			infer.expr(rhs)
-			rhsType := infer.GetType(rhs)
-
-			// Unwrap the Option to get the Tuple type
-			var tupleType types.Type
-			if optType, ok := rhsType.(types.OptionType); ok {
-				tupleType = optType.W
-			} else {
-				infer.errorf(rhs, "expected Option type for if let Some with tuple destructuring")
-				return
-			}
-
-			// The tuple should have the same number of elements as LHS
-			if tupleT, ok := tupleType.(types.TupleType); ok {
-				if len(tupleT.Elts) != len(stmt.Ass.Lhs) {
-					infer.errorf(lhs, "tuple destructuring count mismatch: %d variables for %d tuple elements",
-						len(stmt.Ass.Lhs), len(tupleT.Elts))
-					return
-				}
-
-				// Define each variable with its corresponding tuple element type
-				for i, lhsExpr := range stmt.Ass.Lhs {
-					if ident, ok := lhsExpr.(*ast.Ident); ok {
-						t := tupleT.Elts[i]
-						if ident.Mutable.IsValid() {
-							t = types.MutType{W: t}
-						}
-						infer.env.Define(lhsExpr, ident.Name, t)
-						infer.SetType(lhsExpr, t)
-					} else {
-						infer.errorf(lhsExpr, "expected identifier in tuple destructuring")
-					}
-				}
-			} else {
-				infer.errorf(rhs, "expected tuple type for multi-variable destructuring, got %T", tupleType)
+			if !infer.inferOptionTupleDestructure(stmt.Ass, "if let") {
 				return
 			}
 		} else {
@@ -5595,114 +5634,22 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 		lhsT = types.OptionType{}
 	default:
 		// Handle enum pattern matching: guard let MyEnum.SomeProp(x, y) := someEnumValue else { ... }
-		if callExpr, ok := lhs.(*ast.CallExpr); ok {
-			if selExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
-				// Get the type of the RHS (the enum value)
-				rhs := stmt.Ass.Rhs[0]
-				infer.expr(rhs)
-				rhsType := infer.GetType(rhs)
-				// Unwrap MutType if present
-				rhsType = types.Unwrap(rhsType)
-
-				if enumType, ok := rhsType.(types.EnumType); ok {
-					// Find the matching enum field
-					fieldName := selExpr.Sel.Name
-					field := Find(enumType.Fields, func(f types.EnumFieldType) bool {
-						return f.Name == fieldName
-					})
-
-					if field == nil {
-						infer.errorf(selExpr.Sel, "enum field '%s' not found in type '%s'", fieldName, enumType.Name)
-						return
-					}
-
-					// Check argument count matches
-					if len(callExpr.Args) != len(field.Elts) {
-						infer.errorf(lhs, "invalid number of arguments, has: %d, expect: %d", len(callExpr.Args), len(field.Elts))
-						return
-					}
-
-					// Define each destructured variable with its type
-					for i, elt := range field.Elts {
-						arg := callExpr.Args[i]
-						if argIdent, ok := arg.(*ast.Ident); ok {
-							t := elt
-							if argIdent.Mutable.IsValid() {
-								t = types.MutType{W: t}
-							}
-							infer.env.Define(arg, argIdent.Name, t)
-							infer.SetType(arg, t)
-						} else {
-							infer.errorf(arg, "invalid variable name for argument #%d", i+1)
-							return
-						}
-					}
-
-					// Validate guard body
-					if stmt.Body == nil || len(stmt.Body.List) == 0 {
-						infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
-						return
-					}
-					infer.stmt(stmt.Body)
-					lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
-					switch v := lastStmt.(type) {
-					case *ast.ReturnStmt:
-					case *ast.BranchStmt:
-						if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
-							infer.errorf(v, "guard must return/break/continue")
-							return
-						}
-					default:
-						infer.errorf(v, "guard must return/break/continue")
-						return
-					}
-					infer.SetType(stmt, types.VoidType{})
-					return
-				}
+		if matched, ok := infer.inferEnumPatternDestructure(lhs, stmt.Ass.Rhs[0]); matched {
+			if !ok {
+				return
 			}
+			if !infer.validateGuardBody(stmt.Body) {
+				return
+			}
+			infer.SetType(stmt, types.VoidType{})
+			return
 		}
 		panic("unreachable")
 	}
 
 	// Handle tuple destructuring for multiple LHS values (but not for type assertions)
 	if len(stmt.Ass.Lhs) > 1 && !TryCast[*ast.TypeAssertExpr](stmt.Ass.Rhs[0]) {
-		// First, infer the RHS to get the Option[Tuple] type
-		rhs := stmt.Ass.Rhs[0]
-		infer.expr(rhs)
-		rhsType := infer.GetType(rhs)
-
-		// Unwrap the Option to get the Tuple type
-		var tupleType types.Type
-		if optType, ok := rhsType.(types.OptionType); ok {
-			tupleType = optType.W
-		} else {
-			infer.errorf(rhs, "expected Option type for guard let Some with tuple destructuring")
-			return
-		}
-
-		// The tuple should have the same number of elements as LHS
-		if tupleT, ok := tupleType.(types.TupleType); ok {
-			if len(tupleT.Elts) != len(stmt.Ass.Lhs) {
-				infer.errorf(lhs, "tuple destructuring count mismatch: %d variables for %d tuple elements",
-					len(stmt.Ass.Lhs), len(tupleT.Elts))
-				return
-			}
-
-			// Define each variable with its corresponding tuple element type
-			for i, lhsExpr := range stmt.Ass.Lhs {
-				if ident, ok := lhsExpr.(*ast.Ident); ok {
-					t := tupleT.Elts[i]
-					if ident.Mutable.IsValid() {
-						t = types.MutType{W: t}
-					}
-					infer.env.Define(lhsExpr, ident.Name, t)
-					infer.SetType(lhsExpr, t)
-				} else {
-					infer.errorf(lhsExpr, "expected identifier in tuple destructuring")
-				}
-			}
-		} else {
-			infer.errorf(rhs, "expected tuple type for multi-variable destructuring, got %T", tupleType)
+		if !infer.inferOptionTupleDestructure(stmt.Ass, "guard let") {
 			return
 		}
 	} else {
@@ -5712,21 +5659,7 @@ func (infer *FileInferrer) guardLetStmt(stmt *ast.GuardLetStmt) {
 		})
 	}
 
-	if stmt.Body == nil || len(stmt.Body.List) == 0 {
-		infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
-		return
-	}
-	infer.stmt(stmt.Body)
-	lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
-	switch v := lastStmt.(type) {
-	case *ast.ReturnStmt:
-	case *ast.BranchStmt:
-		if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
-			infer.errorf(v, "guard must return/break/continue")
-			return
-		}
-	default:
-		infer.errorf(v, "guard must return/break/continue")
+	if !infer.validateGuardBody(stmt.Body) {
 		return
 	}
 	infer.SetType(stmt, types.VoidType{})
@@ -5823,23 +5756,7 @@ func (infer *FileInferrer) ifExpr(stmt *ast.IfExpr) {
 func (infer *FileInferrer) guardStmt(stmt *ast.GuardStmt) {
 	infer.withEnv(func() {
 		infer.expr(stmt.Cond)
-		if stmt.Body == nil || len(stmt.Body.List) == 0 {
-			infer.errorf(stmt.Body, "guard body msut have at least 1 statement")
-			return
-		}
-		infer.stmt(stmt.Body)
-		lastStmt := stmt.Body.List[len(stmt.Body.List)-1]
-		switch v := lastStmt.(type) {
-		case *ast.ReturnStmt:
-		case *ast.BranchStmt:
-			if v.Tok != token.BREAK && v.Tok != token.CONTINUE {
-				infer.errorf(v, "guard must return/break/continue")
-				return
-			}
-		default:
-			infer.errorf(v, "guard must return/break/continue")
-			return
-		}
+		infer.validateGuardBody(stmt.Body)
 	})
 	infer.SetType(stmt, types.VoidType{})
 }
