@@ -1371,8 +1371,16 @@ func (infer *FileInferrer) callExprSelectorExpr(expr *ast.CallExpr, call *ast.Se
 				}
 				exprFunT = v.Elts[idx]
 				infer.SetType(callXT.Sel, exprFunT)
+			case types.PackageType:
+				// eg: os.Args.Len(); call.X was already inferred above, which
+				// resolved the package member's type.
+				exprFunT = infer.env.GetType(callXT)
+				if exprFunT == nil {
+					return // error already reported while inferring call.X
+				}
 			default:
-				panic("")
+				infer.errorf(callXT.Sel, "cannot call method on %s", to(v))
+				return
 			}
 		} else {
 			//infer.SetType(callXT.X, )

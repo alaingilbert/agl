@@ -14,7 +14,7 @@ func countLines(filename string) int! {
 
 func main() {
     // Get filename from command line arguments
-    if len(os.Args) < 2 {
+    if os.Args.Len() < 2 {
         print("usage: wc <filename>")
         return
     }

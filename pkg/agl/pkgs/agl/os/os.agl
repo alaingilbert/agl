@@ -56,6 +56,6 @@ func IsPathSeparator(c uint8) bool
 func IsPermission(err error) bool
 func IsTimeout(err error) bool
 func LookupEnv(key string) string?
-type Args []string
+var Args []string
 // proc.go:62:6
 func Exit(code int)

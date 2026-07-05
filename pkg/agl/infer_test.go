@@ -572,3 +572,16 @@ func main() {
 	tassert.Equal(t, "string", test.TypeAt(5, 2).String())
 	tassert.Equal(t, "int", test.TypeAt(6, 2).String())
 }
+
+func TestInferOsArgsMethodCall(t *testing.T) {
+	src := `package main
+import "agl/os"
+func main() {
+	argCount := os.Args.Len()
+	_ = argCount
+}
+`
+	test := NewTest(src)
+	tassert.Equal(t, 0, len(test.errs))
+	tassert.Equal(t, "int", test.TypeAt(4, 2).String())
+}

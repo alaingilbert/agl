@@ -26,5 +26,5 @@ func Remove(name string) error
 func WriteFile(name string, data []byte, perm FileMode) error
 func MkdirTemp(dir, pattern string) (string, error)
 func RemoveAll(path string) error
-type Args []string
+var Args []string
 func Exit(code int)
