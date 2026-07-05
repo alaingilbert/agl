@@ -67,7 +67,7 @@ func part2(robots []Robot) {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day14/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day14/data.txt")!.String()
     getRobots := func() []Robot {
         fileContent.
             Lines().

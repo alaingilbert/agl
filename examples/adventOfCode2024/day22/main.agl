@@ -58,7 +58,7 @@ func part2() {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day22/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day22/data.txt")!.String()
     secrets = fileContent.Lines().Map({ $0.Int()? })
     part1()
     part2()

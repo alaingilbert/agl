@@ -3,7 +3,7 @@ package main
 import "agl/os"
 
 func main() {
-    data := string(os.ReadFile("examples/adventOfCode2024/day1/data.txt")!)
+    data := os.ReadFile("examples/adventOfCode2024/day1/data.txt")!.String()
     lines := data.Lines().Map({
         $0.Split("   ").Map({ $0.Int()? })
     })

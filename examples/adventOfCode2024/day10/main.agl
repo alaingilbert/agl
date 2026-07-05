@@ -49,7 +49,7 @@ func findTrails2(head (int, int)) int {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day10/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day10/data.txt")!.String()
     data = fileContent.Lines().Map({ $0.Split("").Map({ $0.Int()? }) })
     width = data[0].Len()
     height = data.Len()

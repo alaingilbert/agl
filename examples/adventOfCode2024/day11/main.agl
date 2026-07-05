@@ -3,7 +3,7 @@ package main
 import "agl/os"
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day11/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day11/data.txt")!.String()
     data := fileContent.Split(" ").Map({ $0.Uint()? })
     mut data1 := data.Clone()
     for _ in 0..25 {

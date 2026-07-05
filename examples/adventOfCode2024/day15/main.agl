@@ -109,7 +109,7 @@ func part2(warehouse [][]string, moves []string) {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day15/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day15/data.txt")!.String()
     parts := fileContent.Split("\n\n")
     warehouse := parts[0].Lines().Map({ $0.Split("") })
     moves := parts[1].Split("")

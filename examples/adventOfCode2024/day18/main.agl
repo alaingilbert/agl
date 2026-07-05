@@ -88,7 +88,7 @@ func part2() {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day18/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day18/data.txt")!.String()
     data = fileContent.Lines().Map(nums)
     part1()
     part2()

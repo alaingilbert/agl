@@ -48,7 +48,7 @@ func part2() {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day13/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day13/data.txt")!.String()
     blocks = fileContent.Split("\n\n").Map(nums).Map({ ($0[0], $0[1], $0[2], $0[3], $0[4], $0[5]) })
     part1()
     part2()

@@ -3,8 +3,8 @@ package main
 import "agl/os"
 
 func main() {
-    data := os.ReadFile("examples/adventOfCode2024/day4/data.txt")!
-    lines := string(data).Lines().Map({ $0.Split("") })
+    data := os.ReadFile("examples/adventOfCode2024/day4/data.txt")!.String()
+    lines := data.Lines().Map({ $0.Split("") })
     height := lines.Len()
     width := lines.First()?.Len()
     printf("part1: %d", part1(lines, width, height))

@@ -46,7 +46,7 @@ func part2() {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day19/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day19/data.txt")!.String()
     parts := fileContent.Split("\n\n")
     towels = parts[0].Split(", ")
     desiredDesigns = parts[1].Lines()

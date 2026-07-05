@@ -8,7 +8,7 @@ var mut antenasDict = map[string][](int, int){}
 
 func main() {
     fileContent := os.ReadFile("examples/adventOfCode2024/day8/data.txt")!
-    data = string(fileContent).Lines().Map({ $0.Split("") })
+    data = fileContent.String().Lines().Map({ $0.Split("") })
     width = data.Len()
     height = data.First()?.Len()
     for (y, row) in data.Enumerated() {

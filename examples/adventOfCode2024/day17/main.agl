@@ -28,7 +28,7 @@ func part1(programStr string) {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day17/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day17/data.txt")!.String()
     parts := fileContent.Split("\n\n")
     program := parts[1].Split(":")[1]
     part1(program)

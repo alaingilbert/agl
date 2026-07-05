@@ -8,7 +8,7 @@ var mut rules map[int]set[int]
 
 func main() {
     data := os.ReadFile("examples/adventOfCode2024/day5/data.txt")!
-    parts := string(data).Split("\n\n")
+    parts := data.String().Split("\n\n")
     data1 = parts[0].Lines().Map({ $0.Split("|").Map({ $0.Int()? }) })
     updates = parts[1].Lines().Map({ $0.Split(",").Map({ $0.Int()? }) })
     rules = make(map[int]set[int])

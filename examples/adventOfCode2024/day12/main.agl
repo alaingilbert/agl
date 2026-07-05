@@ -83,7 +83,7 @@ func part2() {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day12/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day12/data.txt")!.String()
     data = fileContent.Lines().Map({ $0.Split("") })
     width = data[0].Len()
     height = data.Len()

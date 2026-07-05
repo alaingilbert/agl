@@ -92,7 +92,7 @@ func checksum(blocks []uint?) uint {
 }
 
 func main() {
-    fileContent := string(os.ReadFile("examples/adventOfCode2024/day9/data.txt")!)
+    fileContent := os.ReadFile("examples/adventOfCode2024/day9/data.txt")!.String()
     mut blocks := genBlocks(fileContent)
     reorder(mut blocks)
     printf("part1: %d", checksum(blocks))

@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-    data := string(os.ReadFile("examples/adventOfCode2024/day3/data.txt")!)
+    data := os.ReadFile("examples/adventOfCode2024/day3/data.txt")!.String()
     printf("part1: %d", part1(data))
     printf("part2: %d", part2(data))
 }

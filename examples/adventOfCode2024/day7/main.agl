@@ -6,7 +6,7 @@ var mut data map[i64][]i64
 
 func main() {
     fileContent := os.ReadFile("examples/adventOfCode2024/day7/data.txt")!
-    data = string(fileContent).Lines().Reduce(into: map[i64][]i64{}, {
+    data = fileContent.String().Lines().Reduce(into: map[i64][]i64{}, {
         parts := $1.Split(": ")
         a := parts[0].I64()?
         b := parts[1].Split(" ").Map({ $0.I64()? })
