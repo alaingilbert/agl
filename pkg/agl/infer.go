@@ -1720,18 +1720,19 @@ afterUnwrap3:
 		fnT.Recv = []types.Type{oexprFunT}
 		infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 		infer.SetType(expr, fnT.Return)
-	case types.RangeType:
+	case types.RangeType, types.RangeInclusiveType:
+		elemT := rangeElemType(idTT)
 		switch fnName {
 		case "Rev":
 			info := infer.env.GetNameInfo("agl.DoubleEndedIterator." + fnName)
 			fnT := infer.env.GetFn("agl.DoubleEndedIterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ)
+			fnT = fnT.T("T", elemT)
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
 		case "NthBack":
 			info := infer.env.GetNameInfo("agl.DoubleEndedIterator." + fnName)
 			fnT := infer.env.GetFn("agl.DoubleEndedIterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ)
+			fnT = fnT.T("T", elemT)
 			infer.SetType(expr.Args[0], fnT.Params[0])
 			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
 			infer.SetType(expr, fnT.Return)
@@ -1739,7 +1740,7 @@ afterUnwrap3:
 			"TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max", "Nth":
 			info := infer.env.GetNameInfo("agl.Iterator." + fnName)
 			fnT := infer.env.GetFn("agl.Iterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
+			fnT = fnT.T("T", elemT).IntoRecv(idTT)
 			if len(expr.Args) != len(fnT.Params) {
 				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
 				return
@@ -1751,7 +1752,7 @@ afterUnwrap3:
 			infer.SetType(expr, fnT.Return)
 		case "Map":
 			info := infer.env.GetNameInfo("agl.Iterator.Map")
-			mapFnT := infer.env.GetFn("agl.Iterator.Map").T("T", idTT.Typ).IntoRecv(idTT)
+			mapFnT := infer.env.GetFn("agl.Iterator.Map").T("T", elemT).IntoRecv(idTT)
 			clbFnT := mapFnT.GetParam(0).(types.FuncType)
 			if len(expr.Args) < 1 {
 				return
@@ -1769,53 +1770,6 @@ afterUnwrap3:
 		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
 			return
-		}
-	case types.RangeInclusiveType:
-		switch fnName {
-		case "Rev":
-			info := infer.env.GetNameInfo("agl.DoubleEndedIterator." + fnName)
-			fnT := infer.env.GetFn("agl.DoubleEndedIterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ)
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case "NthBack":
-			info := infer.env.GetNameInfo("agl.DoubleEndedIterator." + fnName)
-			fnT := infer.env.GetFn("agl.DoubleEndedIterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ)
-			infer.SetType(expr.Args[0], fnT.Params[0])
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case "AllSatisfy", "Contains", "ForEach", "Position", "RPosition", "Filter", "Skip", "SkipWhile", "Take",
-			"TakeWhile", "StepBy", "Chain", "Count", "Peekable", "Cycle", "Min", "Max", "Nth":
-			info := infer.env.GetNameInfo("agl.Iterator." + fnName)
-			fnT := infer.env.GetFn("agl.Iterator." + fnName)
-			fnT = fnT.T("T", idTT.Typ).IntoRecv(idTT)
-			if len(expr.Args) != len(fnT.Params) {
-				infer.errorf(call.X, "wrong number of arguments for '%s'", fnName)
-				return
-			}
-			for i := 0; i < len(fnT.Params); i++ {
-				infer.SetType(expr.Args[i], fnT.Params[i])
-			}
-			infer.SetType(call.Sel, fnT, WithDesc(info.Message))
-			infer.SetType(expr, fnT.Return)
-		case "Map":
-			info := infer.env.GetNameInfo("agl.Iterator.Map")
-			mapFnT := infer.env.GetFn("agl.Iterator.Map").T("T", idTT.Typ).IntoRecv(idTT)
-			clbFnT := mapFnT.GetParam(0).(types.FuncType)
-			if len(expr.Args) < 1 {
-				return
-			}
-			exprArg0 := expr.Args[0]
-			infer.SetType(exprArg0, clbFnT)
-			infer.SetType(expr, mapFnT.Return)
-			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, infer.Pos(expr), func(rT types.Type) {
-				mapFnT = mapFnT.T("R", rT)
-				infer.SetType(expr, mapFnT.Return)
-				infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
-			}) {
-				return
-			}
 		}
 	default:
 		infer.errorf(call.X, "Unresolved reference '%s'", fnName)

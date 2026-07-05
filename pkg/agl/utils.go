@@ -15,6 +15,18 @@ import (
 
 func noop(_ ...any) {}
 
+// rangeElemType returns the element type of a RangeType or RangeInclusiveType,
+// or nil if t is neither.
+func rangeElemType(t types.Type) types.Type {
+	switch v := t.(type) {
+	case types.RangeType:
+		return v.Typ
+	case types.RangeInclusiveType:
+		return v.Typ
+	}
+	return nil
+}
+
 // numericTypeName returns the name used for a numeric type in the "agl.<Name>.<Method>"
 // extension functions (e.g. "agl.I64.Sqrt" / "AglI64Sqrt"), or "" if t is not numeric.
 func numericTypeName(t types.Type) string {
