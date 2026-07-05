@@ -1,9 +1,6 @@
 package main
 
-import (
-    "agl/os"
-    "fmt"
-)
+import "agl/os"
 
 var mut data [][]string
 
@@ -25,7 +22,7 @@ func part1() {
             for k3 in m[k2] {
                 v3 := m[k3]
                 if v3.Contains(k1) && v3.Contains(k2) {
-                    sets[fmt.Sprintf("%v", []string{k1, k2, k3}.Sorted())] = []string{k1, k2, k3}
+                    sets[[]string{k1, k2, k3}.Sorted().Description()] = []string{k1, k2, k3}
                 }
             }
         }
