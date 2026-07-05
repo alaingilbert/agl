@@ -1759,33 +1759,12 @@ afterUnwrap3:
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
-			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return
+			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, infer.Pos(expr), func(rT types.Type) {
 				mapFnT = mapFnT.T("R", rT)
 				infer.SetType(expr, mapFnT.Return)
 				infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
-			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					exprPos := infer.Pos(expr)
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				infer.expr(exprArg0)
-				aT := infer.env.GetType(exprArg0)
-				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return
-					mapFnT = mapFnT.T("R", rT)
-					infer.SetType(expr, mapFnT.Return)
-					infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
-				}
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					exprPos := infer.Pos(expr)
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
+			}) {
+				return
 			}
 		default:
 			infer.errorf(call.X, "Unresolved reference '%s'", fnName)
@@ -1830,33 +1809,12 @@ afterUnwrap3:
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
-			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return
+			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, infer.Pos(expr), func(rT types.Type) {
 				mapFnT = mapFnT.T("R", rT)
 				infer.SetType(expr, mapFnT.Return)
 				infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
-			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					exprPos := infer.Pos(expr)
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				infer.expr(exprArg0)
-				aT := infer.env.GetType(exprArg0)
-				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return
-					mapFnT = mapFnT.T("R", rT)
-					infer.SetType(expr, mapFnT.Return)
-					infer.SetType(call.Sel, mapFnT, WithDesc(info.Message))
-				}
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					exprPos := infer.Pos(expr)
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
+			}) {
+				return
 			}
 		}
 	default:
@@ -2333,19 +2291,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 					infer.SetType(exprArg0, fnT.Params[0])
 					infer.SetType(expr, fnT.Return)
 					ft := fnT.GetParam(0).(types.FuncType)
-					if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-						infer.SetType(exprArg0, ft)
-					} else if _, ok := exprArg0.(*ast.FuncType); ok {
-						ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-						if !compareFunctionSignatures(ftReal, ft) {
-							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-							return
-						}
-					} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-						if !compareFunctionSignatures(ftReal, ft) {
-							infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-							return
-						}
+					if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+						return
 					}
 					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 				}
@@ -2360,31 +2307,12 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, fnT.Return)
-			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return
+			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, exprPos, func(rT types.Type) {
 				fnT = fnT.T("R", rT)
 				infer.SetType(expr, types.ArrayType{Elt: rT})
 				infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
-			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				infer.expr(exprArg0)
-				aT := infer.env.GetType(exprArg0)
-				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return
-					fnT = fnT.T("R", rT)
-					infer.SetType(expr, types.ArrayType{Elt: rT})
-					infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
-				}
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
+			}) {
+				return
 			}
 		case "Filter":
 			info = infer.env.GetNameInfo("agl.Set.Filter")
@@ -2396,19 +2324,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, fnT.Return)
 			ft := fnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(expr, types.SetType{K: ft.Params[0]})
 			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
@@ -2422,19 +2339,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, fnT.Return)
 			ft := fnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 		case "Len", "Min", "Max", "Iter", "IsEmpty":
@@ -2580,19 +2486,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(expr, types.ArrayType{Elt: ft.Params[0]})
 			infer.SetType(exprT.Sel, filterFnT, WithDesc(info.Message))
@@ -2614,19 +2509,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				infer.SetType(exprArg0, fnT.Params[0])
 				infer.SetType(expr, fnT.Return)
 				ft := fnT.GetParam(0).(types.FuncType)
-				if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-					infer.SetType(exprArg0, ft)
-				} else if _, ok := exprArg0.(*ast.FuncType); ok {
-					ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
-				} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
+				if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+					return
 				}
 				infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 			default:
@@ -2652,19 +2536,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Contains" {
@@ -2685,19 +2558,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 				infer.SetType(exprArg0, fnT.Params[0])
 				infer.SetType(expr, fnT.Return)
 				ft := fnT.GetParam(0).(types.FuncType)
-				if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-					infer.SetType(exprArg0, ft)
-				} else if _, ok := exprArg0.(*ast.FuncType); ok {
-					ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
-				} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-					if !compareFunctionSignatures(ftReal, ft) {
-						infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-						return
-					}
+				if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+					return
 				}
 				infer.SetType(exprT.Sel, fnT, WithDesc(info.Message))
 			default:
@@ -2718,19 +2580,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(expr, filterFnT.Return)
 			ft := filterFnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(exprT.Sel, filterFnT)
 		} else if fnName == "Map" {
@@ -2743,29 +2594,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			exprArg0 := expr.Args[0]
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
-			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return
+			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, exprPos, func(rT types.Type) {
 				infer.SetType(expr, types.ArrayType{Elt: rT})
 				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
-			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				infer.expr(exprArg0)
-				aT := infer.env.GetType(exprArg0)
-				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return
-					infer.SetType(expr, types.ArrayType{Elt: rT})
-					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
-				}
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
+			}) {
+				return
 			}
 		} else if fnName == "FilterMap" {
 			info := infer.env.GetNameInfo("agl.Vec.FilterMap")
@@ -2832,19 +2665,8 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 			ft := findFnT.GetParam(0).(types.FuncType)
 			exprArg0 := expr.Args[0]
-			if _, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.SetType(exprArg0, ft)
-			} else if _, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", exprArg0.(*ast.FuncType), infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				if !compareFunctionSignatures(ftReal, ft) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, ft)
-					return
-				}
+			if !infer.checkLambdaArg(exprArg0, ft, exprPos) {
+				return
 			}
 			infer.SetType(expr, types.OptionType{W: ft.Params[0]})
 			infer.SetType(exprT.Sel, findFnT)
@@ -3087,29 +2909,11 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			infer.SetType(exprArg0, clbFnT)
 			infer.SetType(expr, mapFnT.Return)
 			exprPos := infer.Pos(expr)
-			if arg0, ok := exprArg0.(*ast.ShortFuncLit); ok {
-				infer.expr(arg0)
-				rT := infer.GetTypeFn(arg0).Return
+			if !infer.checkLambdaArgWithReturn(exprArg0, clbFnT, exprPos, func(rT types.Type) {
 				infer.SetType(expr, types.ArrayType{Elt: rT})
 				infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
-			} else if arg0, ok := exprArg0.(*ast.FuncType); ok {
-				ftReal := funcTypeToFuncType("", arg0, infer.env, infer.fset, false)
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
-			} else if ftReal, ok := infer.env.GetType(exprArg0).(types.FuncType); ok {
-				infer.expr(exprArg0)
-				aT := infer.env.GetType(exprArg0)
-				if tmp, ok := aT.(types.FuncType); ok {
-					rT := tmp.Return
-					infer.SetType(expr, types.ArrayType{Elt: rT})
-					infer.SetType(exprT.Sel, mapFnT.T("R", rT), WithDesc(info.Message))
-				}
-				if !compareFunctionSignatures(ftReal, clbFnT) {
-					infer.errorf(exprArg0, "%s: function type %s does not match inferred type %s", exprPos, ftReal, clbFnT)
-					return
-				}
+			}) {
+				return
 			}
 		} else {
 			infer.errorf(exprT.Sel, "no method '.%s' for type map", fnName)
@@ -3152,6 +2956,55 @@ func (infer *FileInferrer) inferGoExtensions(expr *ast.CallExpr, idT, oidT types
 			}
 		}
 	}
+}
+
+// checkLambdaArg type-checks a callback argument against the inferred function type want.
+// A short function literal is assigned want directly; other forms must have a signature
+// compatible with want, otherwise an error is reported and false is returned.
+func (infer *FileInferrer) checkLambdaArg(arg ast.Expr, want types.FuncType, exprPos token.Position) bool {
+	if _, ok := arg.(*ast.ShortFuncLit); ok {
+		infer.SetType(arg, want)
+	} else if v, ok := arg.(*ast.FuncType); ok {
+		ftReal := funcTypeToFuncType("", v, infer.env, infer.fset, false)
+		if !compareFunctionSignatures(ftReal, want) {
+			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+			return false
+		}
+	} else if ftReal, ok := infer.env.GetType(arg).(types.FuncType); ok {
+		if !compareFunctionSignatures(ftReal, want) {
+			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+			return false
+		}
+	}
+	return true
+}
+
+// checkLambdaArgWithReturn is checkLambdaArg for callbacks whose return type specializes
+// the method's generic result (e.g. Map's R). A short function literal is inferred and
+// onReturn is called with its concrete return type; an expression that already has a
+// function type is inferred and onReturn is called with its return type before the
+// signature check.
+func (infer *FileInferrer) checkLambdaArgWithReturn(arg ast.Expr, want types.FuncType, exprPos token.Position, onReturn func(rT types.Type)) bool {
+	if v, ok := arg.(*ast.ShortFuncLit); ok {
+		infer.expr(v)
+		onReturn(infer.GetTypeFn(v).Return)
+	} else if v, ok := arg.(*ast.FuncType); ok {
+		ftReal := funcTypeToFuncType("", v, infer.env, infer.fset, false)
+		if !compareFunctionSignatures(ftReal, want) {
+			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+			return false
+		}
+	} else if ftReal, ok := infer.env.GetType(arg).(types.FuncType); ok {
+		infer.expr(arg)
+		if tmp, ok := infer.env.GetType(arg).(types.FuncType); ok {
+			onReturn(tmp.Return)
+		}
+		if !compareFunctionSignatures(ftReal, want) {
+			infer.errorf(arg, "%s: function type %s does not match inferred type %s", exprPos, ftReal, want)
+			return false
+		}
+	}
+	return true
 }
 
 func (infer *FileInferrer) inferReturnTypeFromLambdaBody(lambda *ast.ShortFuncLit) types.Type {
