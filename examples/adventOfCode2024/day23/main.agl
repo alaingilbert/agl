@@ -30,7 +30,7 @@ func part1() {
             }
         }
     }
-    print(sets.Values().Filter({ $0.Contains(where: { $0.HasPrefix("t") }) }).Len())
+    print(sets.Values().Filter({ $0.Contains(where: { $0.HasPrefix("t") }) }).Count())
 }
 
 func main() {
