@@ -42,7 +42,7 @@ func bfs(grid [][]bool) set[Position]? {
             return Some(path)
         }
         for dir in dirs {
-            nx, ny := (e.x + dir.0, e.y + dir.1)
+            (nx, ny) := (e.x + dir.0, e.y + dir.1)
             next := Position{x: nx, y: ny}
             if nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx] && !seen.ContainsKey(next) {
                 seen[next] = e
@@ -61,7 +61,7 @@ func buildGrid(idx int) [][]bool {
         grid[i] = make([]bool, width)
     }
     for i in data.Indices() where i < idx {
-        x, y := coord(i)
+        (x, y) := coord(i)
         grid[y][x] = true
     }
     return grid
@@ -73,7 +73,7 @@ func part1() {
 }
 
 func part2() {
-    mut low, mut high := (1024, data.Len()-1)
+    (mut low, mut high) := (1024, data.Len()-1)
     for low != high {
         mid := (high + low) / 2
         grid := buildGrid(mid)
@@ -83,7 +83,7 @@ func part2() {
             low = mid + 1
         }
     }
-    x, y := coord(low-1)
+    (x, y) := coord(low-1)
     printf("%d,%d", x, y)
 }
 
