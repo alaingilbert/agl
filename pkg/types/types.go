@@ -518,7 +518,6 @@ func (i InterfaceType) GetMethodByName(name string) Type {
 		}
 	}
 	panic(fmt.Sprintf("%s", name))
-	return nil
 }
 
 func (i InterfaceType) GoStr() string     { return i.String() }
@@ -888,20 +887,13 @@ func (f FuncType) RenameGenericParameter(name, newName string) FuncType {
 	if ff.Return != nil {
 		ff.Return = RenameGen(ff.Return, name, newName)
 	}
-	if v, ok := ff.Return.(GenericType); ok {
-		if v.Name == name {
-			ff.Name = newName
-		}
-	} else if v, ok := ff.Return.(FuncType); ok {
+	// RenameGen does not touch the type-parameter lists of nested function types;
+	// recurse to rename those too.
+	if v, ok := ff.Return.(FuncType); ok {
 		ff.Return = v.RenameGenericParameter(name, newName)
 	}
-	for i, p := range ff.Params {
-		if v, ok := p.(GenericType); ok {
-			if v.Name == name {
-				v.Name = newName
-				newParams[i] = v
-			}
-		} else if v, ok := p.(FuncType); ok {
+	for i, p := range newParams {
+		if v, ok := p.(FuncType); ok {
 			newParams[i] = v.RenameGenericParameter(name, newName)
 		}
 	}
@@ -919,17 +911,6 @@ func (f FuncType) RenameGenericParameter(name, newName string) FuncType {
 }
 
 func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
-	replType := func(t Type) Type {
-		switch v := t.(type) {
-		case GenericType:
-			if v.Name == name {
-				t = typ
-			}
-		case FuncType:
-			t = v.ReplaceGenericParameter(name, typ)
-		}
-		return t
-	}
 	ff := f
 	newParams := make([]Type, 0)
 	newTypeParams := make([]Type, 0)
@@ -942,9 +923,15 @@ func (f FuncType) ReplaceGenericParameter(name string, typ Type) FuncType {
 	if ff.Return != nil {
 		ff.Return = ReplGen(ff.Return, name, typ)
 	}
-	ff.Return = replType(ff.Return)
-	for i := range ff.Params {
-		newParams[i] = replType(newParams[i])
+	// ReplGen keeps GenericType entries in nested type-parameter lists; recurse
+	// so those are dropped from nested function types too.
+	if v, ok := ff.Return.(FuncType); ok {
+		ff.Return = v.ReplaceGenericParameter(name, typ)
+	}
+	for i, p := range newParams {
+		if v, ok := p.(FuncType); ok {
+			newParams[i] = v.ReplaceGenericParameter(name, typ)
+		}
 	}
 	for i, p := range f.TypeParams {
 		if v, ok := p.(GenericType); ok {
@@ -1036,147 +1023,61 @@ func ReplGen2(t Type, currTyp, newTyp Type) (out Type) {
 		return t
 	default:
 		return t
-		panic(fmt.Sprintf("%v", reflect.TypeOf(currT)))
 	}
 }
 
-func RenameGen(t Type, name, newName string) (out Type) {
-	switch t1 := t.(type) {
-	case StarType:
-		t1.X = RenameGen(t1.X, name, newName)
-		return t1
-	case MutType:
-		t1.W = RenameGen(t1.W, name, newName)
-		return t1
-	case ArrayType:
-		t1.Elt = RenameGen(t1.Elt, name, newName)
-		return t1
-	case SetType:
-		t1.K = RenameGen(t1.K, name, newName)
-		return t1
-	case MapType:
-		t1.K = RenameGen(t1.K, name, newName)
-		t1.V = RenameGen(t1.V, name, newName)
-		return t1
-	case AnyType:
-		return t
-	case GenericType:
-		if t1.Name == name {
-			t1.Name = newName
-			return t1
-		}
-		t1.W = RenameGen(t1.W, name, newName)
-		return t1
-	case TypeType:
-		return t
-	case FuncType:
-		var params []Type
-		for _, p := range t1.Params {
-			p = RenameGen(p, name, newName)
-			params = append(params, p)
-		}
-		return FuncType{
-			Name:       t1.Name,
-			Recv:       t1.Recv,
-			TypeParams: t1.TypeParams,
-			Params:     params,
-			Return:     RenameGen(t1.Return, name, newName),
-			IsNative:   t1.IsNative,
-		}
-	case OptionType:
-		return OptionType{W: RenameGen(t1.W, name, newName)}
-	case ResultType:
-		return ResultType{W: RenameGen(t1.W, name, newName)}
-	case EllipsisType:
-		return RenameGen(t1.Elt, name, newName)
-	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType:
-		return t
-	case StructType:
-		var typeParams []Type
-		for _, p := range t1.TypeParams {
-			if v, ok := p.(GenericType); ok {
-				if v.Name == name {
-					v.Name = newName
-					p = v
-				}
-			}
-			typeParams = append(typeParams, p)
-		}
-		var fields []FieldType
-		for _, f := range t1.Fields {
-			fields = append(fields, FieldType{Name: f.Name, Typ: RenameGen(f.Typ, name, newName)})
-		}
-		return StructType{Pkg: t1.Pkg, Name: t1.Name, TypeParams: typeParams, Fields: fields}
-	case InterfaceType:
-		var params []Type
-		for _, p := range t1.TypeParams {
-			p = RenameGen(p, name, newName)
-			params = append(params, p)
-		}
-		return InterfaceType{Name: t1.Name, Pkg: t1.Pkg, TypeParams: params}
-	case TupleType:
-		var params []Type
-		for _, p := range t1.Elts {
-			p = RenameGen(p, name, newName)
-			params = append(params, p)
-		}
-		return TupleType{Elts: params}
-	default:
-		return t
-		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
-	}
+// genMapper customizes how mapGen transforms generic type parameters.
+type genMapper struct {
+	// leaf maps a GenericType encountered as a regular type
+	leaf func(GenericType) Type
+	// structParam maps an entry of a StructType type-parameter list
+	structParam func(Type) Type
+	// funcParam maps an entry of a FuncType type-parameter list; nil leaves the
+	// list untouched
+	funcParam func(Type) Type
 }
 
-func ReplGen(t Type, name string, newTyp Type) (out Type) {
+// mapGen rebuilds a type tree, applying m at each generic type parameter.
+// Leaf types (numeric, string, void, any, ...) are returned unchanged.
+func mapGen(t Type, m genMapper) Type {
 	switch t1 := t.(type) {
 	case StarType:
-		t1.X = ReplGen(t1.X, name, newTyp)
+		t1.X = mapGen(t1.X, m)
 		return t1
 	case MutType:
-		t1.W = ReplGen(t1.W, name, newTyp)
+		t1.W = mapGen(t1.W, m)
 		return t1
-	case ArrayType:
-		t1.Elt = ReplGen(t1.Elt, name, newTyp)
-		return t1
-	case SetType:
-		t1.K = ReplGen(t1.K, name, newTyp)
-		return t1
-	case MapType:
-		t1.K = ReplGen(t1.K, name, newTyp)
-		t1.V = ReplGen(t1.V, name, newTyp)
-		return t1
-	case AnyType:
-		return t
-	case GenericType:
-		if t1.Name == name {
-			return newTyp
-		}
-		t1.W = ReplGen(t1.W, name, newTyp)
-		return t1
-	case TypeType:
-		return t
 	case LabelledType:
-		t1.W = ReplGen(t1.W, name, newTyp)
+		t1.W = mapGen(t1.W, m)
 		return t1
+	case ArrayType:
+		t1.Elt = mapGen(t1.Elt, m)
+		return t1
+	case SetType:
+		t1.K = mapGen(t1.K, m)
+		return t1
+	case MapType:
+		t1.K = mapGen(t1.K, m)
+		t1.V = mapGen(t1.V, m)
+		return t1
+	case RangeType:
+		t1.Typ = mapGen(t1.Typ, m)
+		return t1
+	case RangeInclusiveType:
+		t1.Typ = mapGen(t1.Typ, m)
+		return t1
+	case GenericType:
+		return m.leaf(t1)
 	case FuncType:
 		var params []Type
 		for _, p := range t1.Params {
-			p = ReplGen(p, name, newTyp)
-			params = append(params, p)
+			params = append(params, mapGen(p, m))
 		}
-		var typeParams []Type
-		for _, p := range t1.TypeParams {
-			switch v := p.(type) {
-			case TupleType:
-				p = ReplGen(v, name, newTyp)
-				typeParams = append(typeParams, p)
-			case GenericType:
-				if v.Name == name {
-					v.W = newTyp
-				}
-				typeParams = append(typeParams, v)
-			default:
-				panic("")
+		typeParams := t1.TypeParams
+		if m.funcParam != nil {
+			typeParams = nil
+			for _, p := range t1.TypeParams {
+				typeParams = append(typeParams, m.funcParam(p))
 			}
 		}
 		return FuncType{
@@ -1184,61 +1085,100 @@ func ReplGen(t Type, name string, newTyp Type) (out Type) {
 			Recv:       t1.Recv,
 			TypeParams: typeParams,
 			Params:     params,
-			Return:     ReplGen(t1.Return, name, newTyp),
+			Return:     mapGen(t1.Return, m),
 			IsNative:   t1.IsNative,
 		}
 	case OptionType:
-		return OptionType{W: ReplGen(t1.W, name, newTyp)}
+		return OptionType{W: mapGen(t1.W, m)}
 	case ResultType:
-		return ResultType{W: ReplGen(t1.W, name, newTyp)}
+		return ResultType{W: mapGen(t1.W, m)}
 	case EllipsisType:
-		return ReplGen(t1.Elt, name, newTyp)
-	case I8Type, I16Type, I32Type, I64Type, U8Type, U16Type, U32Type, U64Type, UintType, IntType, F32Type, F64Type:
-		return t
+		return mapGen(t1.Elt, m)
 	case StructType:
 		var typeParams []Type
 		for _, p := range t1.TypeParams {
-			if v, ok := p.(GenericType); ok {
-				if v.Name == name {
-					// Replace the GenericType with the concrete type
-					p = newTyp
-				}
-			}
-			typeParams = append(typeParams, p)
+			typeParams = append(typeParams, m.structParam(p))
 		}
 		var fields []FieldType
 		for _, f := range t1.Fields {
-			fields = append(fields, FieldType{Name: f.Name, Typ: ReplGen(f.Typ, name, newTyp)})
+			fields = append(fields, FieldType{Name: f.Name, Typ: mapGen(f.Typ, m)})
 		}
 		return StructType{Pkg: t1.Pkg, Name: t1.Name, TypeParams: typeParams, Fields: fields}
 	case InterfaceType:
 		var params []Type
 		for _, p := range t1.TypeParams {
-			p = ReplGen(p, name, newTyp)
-			params = append(params, p)
+			params = append(params, mapGen(p, m))
 		}
 		return InterfaceType{Name: t1.Name, Pkg: t1.Pkg, TypeParams: params}
 	case TupleType:
 		var params []Type
 		for _, p := range t1.Elts {
-			p = ReplGen(p, name, newTyp)
-			params = append(params, p)
+			params = append(params, mapGen(p, m))
 		}
 		return TupleType{Elts: params}
-	case StringType:
-		return t
-	case VoidType:
-		return t
-	case RangeType:
-		t1.Typ = ReplGen(t1.Typ, name, newTyp)
-		return t1
-	case RangeInclusiveType:
-		t1.Typ = ReplGen(t1.Typ, name, newTyp)
-		return t1
 	default:
 		return t
-		panic(fmt.Sprintf("%v", reflect.TypeOf(t)))
 	}
+}
+
+// RenameGen renames every generic type parameter called name to newName.
+func RenameGen(t Type, name, newName string) Type {
+	var m genMapper
+	m = genMapper{
+		leaf: func(g GenericType) Type {
+			if g.Name == name {
+				g.Name = newName
+				return g
+			}
+			g.W = mapGen(g.W, m)
+			return g
+		},
+		structParam: func(p Type) Type {
+			if v, ok := p.(GenericType); ok && v.Name == name {
+				v.Name = newName
+				return v
+			}
+			return p
+		},
+	}
+	return mapGen(t, m)
+}
+
+// ReplGen replaces every generic type parameter called name with newTyp.
+func ReplGen(t Type, name string, newTyp Type) Type {
+	var m genMapper
+	m = genMapper{
+		leaf: func(g GenericType) Type {
+			if g.Name == name {
+				return newTyp
+			}
+			g.W = mapGen(g.W, m)
+			return g
+		},
+		structParam: func(p Type) Type {
+			if v, ok := p.(GenericType); ok && v.Name == name {
+				// Replace the GenericType with the concrete type
+				return newTyp
+			}
+			return p
+		},
+		// Type-parameter lists keep their GenericType entries, recording the
+		// substituted type in W instead of being replaced outright.
+		funcParam: func(p Type) Type {
+			switch v := p.(type) {
+			case TupleType:
+				return mapGen(v, m)
+			case GenericType:
+				if v.Name == name {
+					v.W = newTyp
+				}
+				return v
+			default:
+				panic("")
+			}
+		},
+	}
+	return mapGen(t, m)
 }
 
 // FindGen returns a map of substitutions to be made
