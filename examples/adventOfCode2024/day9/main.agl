@@ -44,7 +44,7 @@ func getFreeSpots(blocks []uint?) [](uint, uint) {
             }
             s = None
         } else if let Some(t) := s {
-            idx, size := t
+            (idx, size) := t
             s = Some((idx, size+1))
         } else {
             s = Some((uint(i), 1))
