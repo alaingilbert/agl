@@ -2,6 +2,7 @@ package agl
 
 import (
 	"agl/pkg/ast"
+	"agl/pkg/types"
 	"agl/pkg/utils"
 	"errors"
 	"fmt"
@@ -13,6 +14,39 @@ import (
 )
 
 func noop(_ ...any) {}
+
+// numericTypeName returns the name used for a numeric type in the "agl.<Name>.<Method>"
+// extension functions (e.g. "agl.I64.Sqrt" / "AglI64Sqrt"), or "" if t is not numeric.
+func numericTypeName(t types.Type) string {
+	switch t.(type) {
+	case types.IntType, types.UntypedNumType:
+		return "Int"
+	case types.I8Type:
+		return "I8"
+	case types.I16Type:
+		return "I16"
+	case types.I32Type:
+		return "I32"
+	case types.I64Type:
+		return "I64"
+	case types.UintType:
+		return "Uint"
+	case types.U8Type:
+		return "U8"
+	case types.U16Type:
+		return "U16"
+	case types.U32Type:
+		return "U32"
+	case types.U64Type:
+		return "U64"
+	case types.F32Type:
+		return "F32"
+	case types.F64Type:
+		return "F64"
+	default:
+		return ""
+	}
+}
 
 func printCallers(n int) {
 	fmt.Println("--- callers ---")

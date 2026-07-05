@@ -12043,7 +12043,7 @@ func cc(a, b i64) i64 {
 	expected := `// agl:generated
 package main
 func cc(a, b int64) int64 {
-	return AglStringI64((AglI64String(a) + AglI64String(b))).Unwrap()
+	return AglStringI64((AglNumString(a) + AglNumString(b))).Unwrap()
 }
 `
 	test := NewTest(src, WithMutEnforced(true))
@@ -15830,5 +15830,39 @@ func (t AglTupleStruct_int_Option_int_) String() string {
 	tassert.Equal(t, 0, len(test.errs))
 	test.PrintErrors()
 	tassert.Equal(t, "func (agl.Iterator[(int, int?)]) FilterMap(func((int, int?)) int?) agl.Iterator[int]", test.TypeAt(4, 25).String())
+	testCodeGen2(t, expected, test)
+}
+
+func TestCodeGen497(t *testing.T) {
+	src := `package main
+func test(a int, b i32, c u8, d f64) {
+	a.Sqrt()
+	a.Abs()
+	a.String()
+	b.Sqrt()
+	b.Abs()
+	b.String()
+	c.Sqrt()
+	c.String()
+	d.Sqrt()
+	d.Abs()
+}`
+	expected := `// agl:generated
+package main
+func test(a int, b int32, c uint8, d float64) {
+	AglSqrt(a)
+	AglAbs(a)
+	AglNumString(a)
+	AglSqrt(b)
+	AglAbs(b)
+	AglNumString(b)
+	AglSqrt(c)
+	AglNumString(c)
+	AglSqrt(d)
+	AglAbs(d)
+}
+`
+	test := NewTest(src, WithMutEnforced(true))
+	tassert.Equal(t, 0, len(test.errs))
 	testCodeGen2(t, expected, test)
 }
